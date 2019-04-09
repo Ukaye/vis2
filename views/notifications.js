@@ -1,4 +1,4 @@
-let init = 0,
+let init = 0, all_count,
     count = 0,
     ids = [];
 
@@ -8,16 +8,17 @@ function notifications(){
     status = false;
     $.ajax({
         type: "GET",
-        url: "/notifications/new-updates?bug="+JSON.parse(localStorage.user_obj).ID,
+        url: "/notifications/all-updates?bug="+JSON.parse(localStorage.user_obj).ID+'&&bugger='+JSON.parse(localStorage.user_obj).user_role,
         success: function (response) {
             status = true;
             init = response.length;
+            all_count = response.length;
             if (response.length === 0){
                 $('#noti-count').hide();
             }
             else{
                 $('#noti-count').show();
-                $('#noti-count').html(response.length);
+                $('#noti-count').html(all_count);
             }
             let icon,
                 link,
@@ -32,11 +33,15 @@ function notifications(){
                         break;
                     case 'Clients':
                         icon = '<i class="fa fa-users fa-4x"></i>'
-                        link = '/client-info?id='+val.client;
+                        link = '/client-info?id='+val.created_client;
                         break;
                     case 'Users':
                         icon = '<i class="fa fa-user fa-4x"></i>'
-                        link = '#';
+                        link = `/all-users/`;
+                        break;
+                    case 'Application':
+                        icon = '<i class="fa fa-table fa-4x"></i>'
+                        link = `/view-application?id=${val.affected_application}`;
                         break;
                     default:
                         icon = '<img src="atb-logo.png">'
@@ -50,7 +55,7 @@ function notifications(){
 '                                        <img class="user-avatar rounded-circle" src="/images/admin.jpg" alt="User Avatar"\n' +
 '                                             style="">\n' +
 '                                            <p>'+val.user+'</p>\n' +
-                    '                         <small onclick="markAsViewed('+val.notification_id+')" class="feed-content-menu float-right" style="margin-top: 50px">Mark as Viewed</small>\n'+
+                    '                         <small onclick="markAsViewed('+val.ID+')" class="feed-content-menu float-right" style="margin-top: 50px">Mark as Viewed</small>\n'+
 '                                    </div>\n' +
 '                                 </a>\n' +
 '                            </div>\n' +
@@ -72,37 +77,36 @@ function notifications(){
             });
             if (count === 0)
                 $('#mark-all').attr("disabled", true);
-            $('#noti-info').html(count+ ' notifications.');
+            $('#noti-info').html(count+ ' notification(s).');
         }
     });
 }
-// setInterval(notifications, 1000);
+setInterval(notifications, 1000000);
 
 function loan_notifications(){
     ids.length = 0;
-    count = 0;
+    // count = 0;
     status = false;
     $.ajax({
         type: "GET",
         url: "/notifications/application-updates?bug="+JSON.parse(localStorage.user_obj).ID+'&&bugger='+JSON.parse(localStorage.user_obj).user_role,
+        // url: "/notifications/new-updates?bug="+JSON.parse(localStorage.user_obj).ID,
         success: function (response) {
             status = true;
-            init = response.length;
+            all_count += response.length;
             if (response.length === 0){
                 $('#noti-count').hide();
             }
             else{
                 $('#noti-count').show();
-                $('#noti-count').html(response.length);
+                $('#noti-count').html(all_count);
             }
             let icon,
                 link,
                 item;
-            $('#n-dropdown').empty();
+            $('#n-app').empty();
             $.each(response, function (key, val) {
-                console.log('here')
                 count++;
-                let buttonid = 'but'+val.notificationid;
                 item = '<div class="feed-body-content">\n' +
 '                            <p class="feed-body-header">'+jQuery.timeago(val.date_created)+'</time></p>\n' +
 '                            <div class="row">\n' +
@@ -112,16 +116,16 @@ function loan_notifications(){
 '                                        <img class="user-avatar rounded-circle" src="/images/admin.jpg" alt="User Avatar"\n' +
 '                                             style="">\n' +
 '                                            <p>'+val.user+'</p>\n' +
-'                         <small onclick="markAsViewed('+val.notification_id+')" class="feed-content-menu float-right" style="margin-top: 50px" id="'+buttonid+'">Mark as Viewed</small>\n'+
+'                         <small onclick="markAsViewed('+val.notification_id+')" class="feed-content-menu float-right" style="margin-top: 50px">Mark as Viewed</small>\n'+
 '                                    </div>\n' +
 '                                 </a>\n' +
 '                            </div>\n' +
 '                        </div>'
-                $('#n-dropdown').append(item);
+                $('#n-app').append(item);
             });
             if (count === 0)
                 $('#mark-all').attr("disabled", true);
-            $('#noti-info').html(count+ ' notifications.');
+            $('#noti-info').html(count+ ' notification(s).');
         }
     });
 }
@@ -166,6 +170,7 @@ function manage(){
     $('#n-settings-panel').slideDown('slow');
     list_categories();
     $('#n-dropdown').hide();
+    $('#n-app').hide();
 }
 
 function savePreferences(){
@@ -216,6 +221,9 @@ function markAsViewed(id){
         url: "/notifications/update-pr",
         data:obj,
         success: function (response) {
+            setTimeout(function () {
+                notifications();
+            }, 10000);
         }
     });
 }
@@ -230,16 +238,15 @@ function markAll(){
         url: "/notifications/update-pr",
         data:obj,
         success: function (response) {
-            console.log(response)
-        }
+            setTimeout(function () {
+                notifications();
+            }, 10000);
+            $('#noti-count').hide();}
     });
 }
 
 jQuery(document).ready(function() {
-    notifications();
-    // loan_notifications();
+    setTimeout(function () {
+        notifications();
+    }, 10000);
 });
-
-setTimeout(function () {
-    notifications();
-}, 10000)

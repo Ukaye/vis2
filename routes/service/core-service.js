@@ -22,7 +22,7 @@ router.post('/post', function (req, res, next) {
     let data = req.body;
     let query = req.query.query;
     db.query(query, data, function (error, results, fields) {
-        if (error) {
+        if (error && error !== null) {
             res.send({
                 "status": 500,
                 "error": error,
