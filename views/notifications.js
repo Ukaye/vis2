@@ -81,7 +81,7 @@ function notifications(){
         }
     });
 }
-setInterval(notifications, 1000000);
+setInterval(notifications, 10000);
 
 function loan_notifications(){
     ids.length = 0;
