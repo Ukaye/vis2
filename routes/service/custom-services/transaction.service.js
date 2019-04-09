@@ -33,8 +33,8 @@ router.get('/get-txn-user-roles/:id', function (req, res, next) {
 
 router.get('/get-product-configs/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query = `SELECT v.ID as investmentId, v.amount,p.* FROM test.investments v
-    left join test.investment_products p on p.ID = v.productId
+    let query = `SELECT v.ID as investmentId, v.amount,p.* FROM investments v
+    left join investment_products p on p.ID = v.productId
     WHERE v.ID =${req.params.id}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
@@ -315,11 +315,11 @@ router.post('/approves', function (req, res, next) {
         .then(function (response) {
             if (response.data.status === undefined) {
                 query = `Select 
-                        (Select Count(*) as total_approved from test.investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL' AND isApproved = 1) as total_approved,
-                        (Select Count(*) as isOptional from test.investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL' AND isAllRoles = 0) as isOptional,
-                        (Select Count(*) as priorityTotal from test.investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL' AND priority IS NOT NULL) as priorityTotal,
-                        (Select Count(*) as priorityItemTotal from test.investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL' AND priority = approvedBy) as priorityItemTotal,
-                        (Select Count(*) as total_approvedBy from test.investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL') as total_approvedBy`;
+                        (Select Count(*) as total_approved from investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL' AND isApproved = 1) as total_approved,
+                        (Select Count(*) as isOptional from investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL' AND isAllRoles = 0) as isOptional,
+                        (Select Count(*) as priorityTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL' AND priority IS NOT NULL) as priorityTotal,
+                        (Select Count(*) as priorityItemTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL' AND priority = approvedBy) as priorityItemTotal,
+                        (Select Count(*) as total_approvedBy from investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL') as total_approvedBy`;
                 endpoint = '/core-service/get';
                 url = `${HOST}${endpoint}`;
                 axios.get(url, {
@@ -426,11 +426,11 @@ router.post('/reviews', function (req, res, next) {
             res.send(response.data);
             if (response.data.status === undefined) {
                 query = `Select 
-                        (Select Count(*) as total_reviewed from test.investment_op_approvals where txnId = ${data.txnId} AND isReviewed = 1 AND method = 'REVIEW') as total_reviewed,
-                        (Select Count(*) as isOptional from test.investment_op_approvals where txnId = ${data.txnId} AND isAllRoles = 0 AND method = 'REVIEW') as isOptional,
-                        (Select Count(*) as priorityTotal from test.investment_op_approvals where txnId = ${data.txnId} AND method = 'REVIEW' AND priority IS NOT NULL) as priorityTotal,
-                        (Select Count(*) as priorityItemTotal from test.investment_op_approvals where txnId = ${data.txnId} AND method = 'REVIEW' AND priority = reviewedBy) as priorityItemTotal,
-                        (Select Count(*) as total_reviewedBy from test.investment_op_approvals where txnId = ${data.txnId} AND method = 'REVIEW') as total_reviewedBy`;
+                        (Select Count(*) as total_reviewed from investment_op_approvals where txnId = ${data.txnId} AND isReviewed = 1 AND method = 'REVIEW') as total_reviewed,
+                        (Select Count(*) as isOptional from investment_op_approvals where txnId = ${data.txnId} AND isAllRoles = 0 AND method = 'REVIEW') as isOptional,
+                        (Select Count(*) as priorityTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'REVIEW' AND priority IS NOT NULL) as priorityTotal,
+                        (Select Count(*) as priorityItemTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'REVIEW' AND priority = reviewedBy) as priorityItemTotal,
+                        (Select Count(*) as total_reviewedBy from investment_op_approvals where txnId = ${data.txnId} AND method = 'REVIEW') as total_reviewedBy`;
                 endpoint = '/core-service/get';
                 url = `${HOST}${endpoint}`;
                 axios.get(url, {
@@ -535,11 +535,11 @@ router.post('/posts', function (req, res, next) {
         .then(function (response) {
             if (response.data.status === undefined) {
                 query = `Select 
-                (Select Count(*) as total_posted from test.investment_op_approvals where txnId = ${data.txnId} AND isPosted = 1 AND method = 'POST') as total_posted,
-                (Select Count(*) as isOptional from test.investment_op_approvals where txnId = ${data.txnId} AND isAllRoles = 0 AND method = 'POST') as isOptional,
-                (Select Count(*) as priorityTotal from test.investment_op_approvals where txnId = ${data.txnId} AND method = 'POST' AND priority IS NOT NULL) as priorityTotal,
-                (Select Count(*) as priorityItemTotal from test.investment_op_approvals where txnId = ${data.txnId} AND method = 'POST' AND priority = postedBy) as priorityItemTotal,
-                (Select Count(*) as total_postedBy from test.investment_op_approvals where txnId = ${data.txnId} AND method = 'POST') as total_postedBy`;
+                (Select Count(*) as total_posted from investment_op_approvals where txnId = ${data.txnId} AND isPosted = 1 AND method = 'POST') as total_posted,
+                (Select Count(*) as isOptional from investment_op_approvals where txnId = ${data.txnId} AND isAllRoles = 0 AND method = 'POST') as isOptional,
+                (Select Count(*) as priorityTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'POST' AND priority IS NOT NULL) as priorityTotal,
+                (Select Count(*) as priorityItemTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'POST' AND priority = postedBy) as priorityItemTotal,
+                (Select Count(*) as total_postedBy from investment_op_approvals where txnId = ${data.txnId} AND method = 'POST') as total_postedBy`;
                 endpoint = '/core-service/get';
                 url = `${HOST}${endpoint}`;
                 axios.get(url, {
@@ -667,7 +667,7 @@ function setcharges(data, HOST, isReversal) {
                 const chargedCost = (chargeForDeposit[0].saving_charge_opt === 'Fixed') ? parseFloat(chargeForDeposit[0].saving_fees.split(',').join('')) : ((parseFloat(chargeForDeposit[0].saving_fees.split(',').join('')) / 100) * parseFloat(data.amount.split(',').join('')));
                 let inv_txn = {
                     txn_date: dt,
-                    description: (isReversal === false) ? 'Re: ' + chargeForDeposit[0].description : 'Reverse: ' + chargeForDeposit[0].description,
+                    description: (isReversal === false) ? 'Charge: ' + chargeForDeposit[0].description : 'Reverse: ' + chargeForDeposit[0].description,
                     amount: chargedCost,
                     is_credit: 0,
                     created_date: dt,
@@ -682,14 +682,41 @@ function setcharges(data, HOST, isReversal) {
                     investmentId: data.investmentId,
                     createdBy: data.createdBy
                 };
-                
+
                 query = `INSERT INTO investment_txns SET ?`;
                 endpoint = `/core-service/post?query=${query}`;
                 let url = `${HOST}${endpoint}`;
                 axios.post(url, inv_txn)
-                    .then(function (payload) {
-                    }, err => {
-                    });
+                    .then(function (payload) {}, err => {});
+            }
+        } else {
+            let getInvestBalance = response_product.data[0];
+            let chargedCostMinBal = (getInvestBalance.minimum_bal_charges_opt === 'Fixed') ? parseFloat(getInvestBalance.minimum_bal_charges.split(',').join('')) : ((parseFloat(getInvestBalance.minimum_bal_charges.split(',').join('')) / 100) * parseFloat(getInvestBalance.txnBalance.split(',').join('')));
+            if (parseFloat(getInvestBalance.txnBalance) - parseFloat(getInvestBalance.txnAmount) < parseFloat(getInvestBalance.minimum_bal_charges.split(',').join(''))) {
+                refId = moment().utcOffset('+0100').format('YYMMDDhmmss');
+                let inv_txn = {
+                    txn_date: dt,
+                    description: 'Charge: ' + getInvestBalance.description,
+                    amount: chargedCostMinBal,
+                    is_credit: 0,
+                    created_date: dt,
+                    balance: getInvestBalance.txnBalance - chargedCostMinBal,
+                    is_capital: 0,
+                    isApproved: 1,
+                    postDone: 1,
+                    reviewDone: 1,
+                    approvalDone: 1,
+                    ref_no: refId,
+                    updated_date: dt,
+                    investmentId: data.investmentId,
+                    createdBy: data.createdBy
+                };
+
+                query = `INSERT INTO investment_txns SET ?`;
+                endpoint = `/core-service/post?query=${query}`;
+                let url = `${HOST}${endpoint}`;
+                axios.post(url, inv_txn)
+                    .then(function (payload) {}, err => {});
             }
         }
 

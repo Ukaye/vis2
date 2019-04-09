@@ -344,11 +344,11 @@ router.get('/client-investments/:id', function (req, res, next) {
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
     let query = `SELECT v.ID,v.ref_no,c.fullname,v.description,v.amount,v.txn_date,p.ID as productId,u.fullname,v.approvalDone,v.reviewDone,v.postDone,
-    p.code,p.name,v.ref_no, v.isApproved,v.is_credit,v.balance,v.is_capital,v.investmentId FROM test.investment_txns v 
-    left join test.investments i on v.investmentId = i.ID
-    left join test.clients c on i.clientId = c.ID
+    p.code,p.name,v.ref_no, v.isApproved,v.is_credit,v.balance,v.is_capital,v.investmentId FROM investment_txns v 
+    left join investments i on v.investmentId = i.ID
+    left join clients c on i.clientId = c.ID
     left join users u on u.ID = v.createdBy
-    left join test.investment_products p on i.productId = p.ID
+    left join investment_products p on i.productId = p.ID
     WHERE v.investmentId = ${req.params.id} AND (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%") LIMIT ${limit} OFFSET ${offset}`;
 
     let endpoint = '/core-service/get';
