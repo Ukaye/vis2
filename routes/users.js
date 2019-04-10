@@ -1214,7 +1214,7 @@ users.get('/user-roles', function(req, res, next) {
   	});
 });
 
-users.get('/roles/', function(req, res, next) {
+users.get('/roles/:role', function(req, res, next) {
     let query = (req.params.role === '1') ? 'SELECT * from user_roles where id not in (3, 4, 1) ' : 'SELECT * from user_roles where id not in (3, 4) ';
     db.query(query, req.params.role, function (error, results, fields) {
         if(error){
@@ -1304,7 +1304,7 @@ users.post('/edit-user/:id/:user', function(req, res, next) {
             payload.category = 'Users'
             payload.userid = req.cookies.timeout
             payload.description = 'User details updated.'
-            payload.affected_user = req.params.id
+            payload.affected = req.params.id
             notificationsService.log(req, payload)
             res.send(JSON.stringify({"status": 200, "error": null, "response": "User Details Updated"}));
 	  	}
@@ -1334,7 +1334,7 @@ users.post('/edit-client/:id', function(req, res, next) {
             payload.category = 'Clients'
             payload.userid = req.cookies.timeout
             payload.description = 'Client details updated.'
-            payload.affected_client = req.params.id
+            payload.affected = req.params.id
             notificationsService.log(req, payload)
             res.send(JSON.stringify({"status": 200, "error": null, "response": "Client Details Updated"}));
         }
@@ -1552,7 +1552,7 @@ users.post('/apply', function(req, res) {
                         payload.category = 'Application'
                         payload.userid = req.cookies.timeout
                         payload.description = 'New Application Created'
-                        payload.created_application = application[0]['ID']
+                        payload.affected = application[0]['ID']
                         notificationsService.log(req, payload)
                         db.query('INSERT INTO workflow_processes SET ?',process, function (error, results, fields) {
                             if(error){
@@ -1977,7 +1977,7 @@ users.get('/applications/delete/:id', function(req, res, next) {
                     payload.category = 'Application'
                     payload.userid = req.cookies.timeout
                     payload.description = 'Loan Application Archived'
-                    payload.affected_application = id
+                    payload.affected= id
                     notificationsService.log(req, payload)
                     res.send({"status": 200, "message": "Application archived successfully!", "response": results});
                 }
@@ -2004,7 +2004,7 @@ users.get('/requests/delete/:id', function(req, res, next) {
                     payload.category = 'Application'
                     payload.userid = req.cookies.timeout
                     payload.description = 'Loan Request Archived'
-                    payload.affected_application = id
+                    payload.affected = id
                     notificationsService.log(req, payload)
                     res.send({"status": 200, "message": "Application archived successfully!", "response": results});
                 }
@@ -2033,7 +2033,7 @@ users.post('/applications/comment/:id', function(req, res, next) {
                     payload.category = 'Application'
                     payload.userid = req.cookies.timeout
                     payload.description = 'New comment on Loan Application'
-                    payload.affected_application = id
+                    payload.affected = id
                     notificationsService.log(req, payload)
                     res.send({"status": 200, "message": "Application commented successfully!", "response": results});
                 }
@@ -2061,7 +2061,7 @@ users.post('/requests/comment/:id', function(req, res, next) {
                     payload.category = 'Application'
                     payload.userid = req.cookies.timeout
                     payload.description = 'New comment on Loan Request'
-                    payload.affected_application = id
+                    payload.affected = id
                     notificationsService.log(req, payload)
                     res.send({"status": 200, "message": "Application commented successfully!", "response": results});
                 }
@@ -2141,7 +2141,7 @@ users.post('/workflow_process/:application_id/:workflow_id', function(req, res, 
                                 payload.category = 'Application'
                                 payload.userid = req.cookies.timeout
                                 payload.description = 'Loan Application moved to next Workflow Stage'
-                                payload.affected_application = application_id
+                                payload.affected = application_id
                                 notificationsService.log(req, payload)
                                 res.send({"status": 200, "message": "Workflow Process created successfully!"});
                             }
@@ -2210,7 +2210,7 @@ users.post('/application/comments/:id/:user_id', function(req, res, next) {
                             payload.category = 'Application'
                             payload.userid = req.cookies.timeout
                             payload.description = 'New comment on Loan Application'
-                            payload.affected_application = req.params.id
+                            payload.affected = req.params.id
                             notificationsService.log(req, payload)
                             res.send({"status": 200, "message": "Application commented successfully!", "response": comments});
                         }
@@ -2297,7 +2297,7 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                         payload.category = 'Application'
                                         payload.userid = req.cookies.timeout
                                         payload.description = 'Application Schedule Approved for Loan Application'
-                                        payload.affected_application = req.params.id
+                                        payload.affected = req.params.id
                                         notificationsService.log(req, payload)
                                         res.send({"status": 200, "message": "Application schedule approved with "+count+" invoices successfully!", "response": null});
                                     });
@@ -2332,7 +2332,7 @@ users.get('/application/reject-schedule/:id', function(req, res, next) {
                     payload.category = 'Application'
                     payload.userid = req.cookies.timeout
                     payload.description = 'Schedule Rejected for Loan Application'
-                    payload.affected_application = req.params.id
+                    payload.affected = req.params.id
                     notificationsService.log(req, payload)
                     res.send({"status": 200, "message": "Application schedule with "+count+" invoices deleted successfully!", "response": null});
                 });
@@ -2361,7 +2361,7 @@ users.post('/application/add-schedule/:id', function(req, res, next) {
             payload.category = 'Application'
             payload.userid = req.cookies.timeout
             payload.description = 'New Schedule Uploaded for Loan Application'
-            payload.affected_application = req.params.id
+            payload.affected = req.params.id
             notificationsService.log(req, payload)
             res.send({"status": 200, "message": "Application scheduled with "+count+" invoices successfully!", "response": null});
         })
@@ -2391,7 +2391,7 @@ users.post('/application/add-payment/:id/:agent_id', function(req, res, next) {
             payload.category = 'Application'
             payload.userid = req.cookies.timeout
             payload.description = 'New Loan Application Payment'
-            payload.affected_application = req.params.id
+            payload.affected = req.params.id
             notificationsService.log(req, payload)
             return res.send({"status": 200, "message": "Payment added successfully!"});
             // db.query('SELECT MAX(ID) AS ID from application_schedules', function(err, invoice_obj, fields) {
@@ -2465,7 +2465,7 @@ users.post('/application/edit-schedule/:id/:modifier_id', function(req, res, nex
                                 payload.category = 'Application'
                                 payload.userid = req.cookies.timeout
                                 payload.description = 'Loan Application Schedule updated'
-                                payload.affected_application = req.params.id
+                                payload.affected = req.params.id
                                 notificationsService.log(req, payload)
                                 res.send({"status": 200, "message": "Schedule updated successfully!"});
                             }
@@ -2527,7 +2527,7 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                     payload.category = 'Application'
                     payload.userid = req.cookies.timeout
                     payload.description = 'Loan Application Payment Confirmed'
-                    payload.affected_application = req.params.id
+                    payload.affected = req.params.id
                     notificationsService.log(req, payload)
                     res.send({"status": 200, "message": "Invoice Payment confirmed successfully!"});
                 }
@@ -2616,7 +2616,7 @@ users.post('/application/disburse/:id', function(req, res, next) {
             payload.category = 'Application'
             payload.userid = req.cookies.timeout
             payload.description = 'Loan Disbursed'
-            payload.affected_application = req.params.id
+            payload.affected = req.params.id
             notificationsService.log(req, payload)
             res.send({"status": 200, "message": "Loan disbursed successfully!"});
         }
@@ -2647,7 +2647,7 @@ users.get('/application/payment-reversal/:id/:invoice_id', function(req, res, ne
                     payload.category = 'Application'
                     payload.userid = req.cookies.timeout
                     payload.description = 'Payment Reversed for Loan'
-                    payload.affected_application = req.params.id
+                    payload.affected = req.params.id
                     notificationsService.log(req, payload)
                     res.send({"status": 200, "message": "Payment reversed successfully!", "response":history});
                 }
@@ -2665,7 +2665,6 @@ users.get('/application/escrow-payment-reversal/:id', function(req, res, next) {
         }
     });
 });
-
 
 users.post('/application/loancirrus-id/:application_id', function(req, res, next) {
     db.query('UPDATE applications SET loanCirrusID=? WHERE ID=?', [req.body.id,req.params.application_id], function (error, result, fields) {
@@ -2712,7 +2711,7 @@ users.post('/application/pay-off/:id/:agentID', function(req, res, next) {
                             payload.category = 'Application'
                             payload.userid = req.cookies.timeout
                             payload.description = 'Loan Application Paid Off'
-                            payload.affected_application = req.params.id
+                            payload.affected = req.params.id
                             notificationsService.log(req, payload)
                             res.send({"status": 200, "message": "Application pay off successful!"});
                         });
@@ -2734,7 +2733,7 @@ users.post('/application/write-off/:id/:agentID', function(req, res, next) {
             payload.category = 'Application'
             payload.userid = req.cookies.timeout
             payload.description = 'Loan Application Written Off'
-            payload.affected_application = req.params.id
+            payload.affected = req.params.id
             notificationsService.log(req, payload)
             res.send({"status": 200, "message": "Application write off successful!"});
         }
@@ -2753,7 +2752,7 @@ users.post('/application/close/:id', function(req, res, next) {
             payload.category = 'Application'
             payload.userid = req.cookies.timeout
             payload.description = 'Loan Application Closed'
-            payload.affected_application = req.params.id
+            payload.affected = req.params.id
             notificationsService.log(req, payload)
             res.send({"status": 200, "message": "Application closed successful!"});
         }
@@ -2771,7 +2770,7 @@ users.get('/application/cancel/:id', function(req, res, next) {
             payload.category = 'Application'
             payload.userid = req.cookies.timeout
             payload.description = 'Loan Application Cancelled'
-            payload.affected_application = req.params.id
+            payload.affected = req.params.id
             notificationsService.log(req, payload)
             res.send({"status": 200, "message": "Application cancellation successful!"});
         }
@@ -4860,7 +4859,7 @@ users.post('/save-comment', function(req, res, next) {
                 payload.category = 'Activity'
                 payload.userid = req.cookies.timeout
                 payload.description = 'New Activity Comment'
-                payload.affected_application = id
+                payload.created_activity = postData.activityID
                 notificationsService.log(req, payload)
                 res.send(JSON.stringify({"status": 200, "error": null, "response": "Comment Posted"}));
             }
