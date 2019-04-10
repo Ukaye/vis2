@@ -138,7 +138,7 @@ function bindDataTable(id) {
                     <i class="fa fa-ellipsis-v" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     </i> 
                     <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                      <button class="dropdown-item" id="dropdownItemRevert" ${(full.postDone === 1)?'':'disabled'}>Revert</button>
+                      <button class="dropdown-item" id="dropdownItemRevert" ${(full.postDone === 1 && full.is_capital === 0)?'':'disabled'}>Revert</button>
                       <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal">Review</button>
                       <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(full.reviewDone === 1)?'':'disabled'}>Approval</button>
                       <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal"${(full.reviewDone === 1 && full.approvalDone === 1)?'':'disabled'}>Post</button>
@@ -412,50 +412,63 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
     let _operationId = (data_row.is_credit === 1) ? 3 : 1;
     let _mRoleId = [];
     let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === _operationId && status === 1);
-    if (mRoleId.length === 0) {
-        _mRoleId.push({
-            roles: "[]",
-            operationId: _operationId
-        });
-    }
-    let comment = data_row.description.split(':');
-    let _description = (comment.length > 1) ? comment[1] : data_row.description;
-    let investmentOps = {
-        amount: data_row.amount,
-        description: 'Reversal: ' + _description,
-        is_credit: _iscredit,
-        investmentId: selectedInvestment.investmentId,
-        operationId: _operationId,
-        is_capital: 0,
-        isApproved: 0,
-        approvedBy: '',
-        createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
-        roleIds: _mRoleId,
-        productId: selectedInvestment.productId,
-    };
+    swal({
+            title: "Are you sure?",
+            text: "You want to reverse this transaction!",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        })
+        .then((willDelete) => {
+            if (willDelete) {
+                if (mRoleId.length === 0) {
+                    _mRoleId.push({
+                        roles: "[]",
+                        operationId: _operationId
+                    });
+                }
+                let comment = data_row.description.split(':');
+                let _description = (comment.length > 1) ? comment[1] : data_row.description;
+                let investmentOps = {
+                    amount: data_row.amount,
+                    description: 'Reversal: ' + _description,
+                    is_credit: _iscredit,
+                    investmentId: selectedInvestment.investmentId,
+                    operationId: _operationId,
+                    is_capital: 0,
+                    isApproved: 0,
+                    approvedBy: '',
+                    createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
+                    roleIds: _mRoleId,
+                    productId: selectedInvestment.productId,
+                };
 
-    $.ajax({
-        url: `investment-txns/create`,
-        'type': 'post',
-        'data': investmentOps,
-        'success': function (data) {
-            if (data.status === undefined) {
-                $('#wait').hide();
-                $("#input_amount").val('');
-                $("#input_description").val('');
-                swal('Reversal transaction successful!', '', 'success');
-                // bindDataTable(selectedInvestment.investmentId, false);
-                table.ajax.reload(null, false);
+                $.ajax({
+                    url: `investment-txns/create`,
+                    'type': 'post',
+                    'data': investmentOps,
+                    'success': function (data) {
+                        if (data.status === undefined) {
+                            $('#wait').hide();
+                            $("#input_amount").val('');
+                            $("#input_description").val('');
+                            swal('Reversal transaction successful!', '', 'success');
+                            // bindDataTable(selectedInvestment.investmentId, false);
+                            table.ajax.reload(null, false);
+                        } else {
+                            $('#wait').hide();
+                            swal('Oops! An error occurred while executing reversal transaction', '', 'error');
+                        }
+                    },
+                    'error': function (err) {
+                        $('#wait').hide();
+                        swal('Oops! An error occurred while executing reversal transaction', '', 'error');
+                    }
+                });
             } else {
-                $('#wait').hide();
-                swal('Oops! An error occurred while executing reversal transaction', '', 'error');
+                swal("Transaction remains active!");
             }
-        },
-        'error': function (err) {
-            $('#wait').hide();
-            swal('Oops! An error occurred while executing reversal transaction', '', 'error');
-        }
-    });
+        });
 });
 
 $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemReview', function () {
