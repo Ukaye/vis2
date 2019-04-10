@@ -446,9 +446,11 @@ function set_investment_product() {
                 'success': function (data) {
                     if (data.status === 200) {
                         $('#wait').hide();
-                        swal('Investment Product created successfully!', '', 'success');
+                        swal('Investment Product created successfully!!!. Kindly select MORE button to set Requirement for REVIEW,APPROVAL and POST', '', 'success');
                         var url = "./all-investment-products";
-                        $(location).attr('href', url);
+                        setTimeout(function () {
+                            $(location).attr('href', url);
+                        }, 2500);
                         $('input').val("");
                         $('input').attr("checked", false);
                     } else {
