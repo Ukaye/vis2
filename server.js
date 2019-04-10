@@ -218,7 +218,7 @@ app.get('/dashboard', requireLogin, function (req, res) {
 
 app.get('/all-vehicles', requireLogin, function (req, res) {
     res.sendFile('all-vehicles.html', {
-        root: __dirname + '/views'
+        root: __dirname + '/views/vehicles/all-vehicles'
     });
 });
 

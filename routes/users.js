@@ -230,7 +230,7 @@ users.post('/new-client', function(req, res, next) {
                             payload.category = 'Clients'
                             payload.userid = req.cookies.timeout
                             payload.description = 'New Client Created'
-                            payload.created_clients = re[0]['ID']
+                            payload.created_client = re[0]['ID']
                             notificationsService.log(req, payload)
                             res.send(JSON.stringify({"status": 200, "error": null, "response": re}));
                         }
@@ -2137,6 +2137,12 @@ users.post('/workflow_process/:application_id/:workflow_id', function(req, res, 
                             if(error){
                                 res.send({"status": 500, "error": error, "response": null});
                             } else {
+                                let payload = {}
+                                payload.category = 'Application'
+                                payload.userid = req.cookies.timeout
+                                payload.description = 'Loan Application moved to next Workflow Stage'
+                                payload.affected_application = application_id
+                                notificationsService.log(req, payload)
                                 res.send({"status": 200, "message": "Workflow Process created successfully!"});
                             }
                         });

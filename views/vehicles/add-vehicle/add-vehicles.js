@@ -65,7 +65,7 @@ function getMakes(){
         'type': 'get',
         'data': {},
         'success': function (data) {
-            var make = $("[id*=make]");
+            var make = $("[id=make]");
             make.empty().append('<option selected="selected" id="0">-- Choose Vehicle Make --</option>');
             $.each(JSON.parse(data), function (key, val) {
                 $("#make").append('<option class="deptSp" value = "' + val.make + '" ID="' + val.make + '" spec="' + val.ID + '">' + val.make + '</option>');
@@ -81,8 +81,8 @@ function getModels(make){
         'type': 'get',
         'data': {},
         'success': function (data) {
-            var model = $("[id*=model]");
-            model.empty().append('<option selected="selected" id="0">-- Choose Vehicle Make --</option>');
+            var model = $("[id=model]");
+            model.empty().append('<option selected="selected" id="0">-- Choose Vehicle Model --</option>');
             $.each(JSON.parse(data), function (key, val) {
                 $("#model").append('<option class="deptSp" value = "' + val.model + '" ID="' + val.ID + '" spec="' + val.ID + '">' + val.model + ' ( '+val.year+ ' )</option>');
             });
@@ -119,10 +119,13 @@ function registerVehicle(){
                 test[key] = val;
             });
             if(test.status == 500){
-                swal("Please recheck entered values","","error");
+                swal('Error!', "Unable to register vehicle.","error");
             }
             else
-                swal("Vehicle Registered!","","success");
+                swal('Success!', "Vehicle Registered Successfully.","success");
+        },
+        'error': function(){
+            swal('Error', 'Internet Connection Problem. Please Try Again.', 'error');
         }
     });
 }
