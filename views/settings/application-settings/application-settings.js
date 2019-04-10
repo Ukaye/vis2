@@ -1,5 +1,6 @@
 $(document).ready(function () {
-    loadLoanPurposes();
+    getLoanPurposes();
+    getLoanBusinesses();
     getApplicationSettings();
 });
 
@@ -103,7 +104,7 @@ function saveApplicationSettings() {
     });
 }
 
-function loadLoanPurposes(){
+function getLoanPurposes(){
     $.ajax({
         'url': '/settings/application/loan_purpose',
         'type': 'get',
@@ -173,6 +174,81 @@ function removeLoanPurpose(id) {
             } else{
                 notification("Loan purpose deleted successfully!", "", "success");
                 populateLoanPurposes(response.response);
+            }
+        }
+    });
+}
+
+function getLoanBusinesses(){
+    $.ajax({
+        'url': '/settings/application/business',
+        'type': 'get',
+        'success': function (data) {
+            let businesses = data.response;
+            populateLoanBusinesses(businesses);
+        },
+        'error': function (err) {
+            console.log(err);
+        }
+    });
+}
+
+function addLoanBusiness() {
+    let business = {};
+    business.name = $('#nature_of_business').val();
+    if (!business.name)
+        return notification('Kindly input a business','','warning');
+    business.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
+    $('#wait').show();
+    $.ajax({
+        'url': '/settings/application/business',
+        'type': 'post',
+        'data': business,
+        'success': function (response) {
+            $('#wait').hide();
+            if(response.status === 500){
+                notification(response.error, "", "error");
+            } else{
+                $('#nature_of_business').val('');
+                notification("Loan business added successfully!", "", "success");
+                populateLoanBusinesses(response.response);
+            }
+        }
+    });
+}
+
+function populateLoanBusinesses(data){
+    let $businesses = $("#businesses");
+    $businesses.DataTable().clear();
+    let businesses = [];
+    $.each(data, function(k, v){
+        v.actions = '<button type="button" class="btn btn-danger" onclick="removeLoanBusiness('+v.ID+')"><i class="fa fa-remove"></i></button>';
+        businesses.push(v);
+    });
+    $businesses.DataTable({
+        dom: 'Bfrtip',
+        bDestroy: true,
+        data: businesses,
+        buttons: [],
+        columns: [
+            { data: "name" },
+            { data: "actions" }
+        ]
+    });
+}
+
+function removeLoanBusiness(id) {
+    $('#wait').show();
+    $.ajax({
+        'url': '/settings/application/business/'+id,
+        'type': 'delete',
+        'success': function (response) {
+            $('#wait').hide();
+            if(response.status === 500){
+                notification("No internet connection", "", "error");
+            } else{
+                notification("Loan business deleted successfully!", "", "success");
+                populateLoanBusinesses(response.response);
             }
         }
     });
