@@ -4,14 +4,6 @@ $(document).ready(function() {
     loadModules();
 });
 
-$(document).ajaxStart(function(){
-    $("#wait").css("display", "block");
-});
-
-$(document).ajaxComplete(function(){
-    $("#wait").css("display", "none");
-});
-
 $("#submit-activity").click(function () {
     validateActivity();
 });
@@ -242,7 +234,7 @@ let glob={};
 function getRoles(){
     $.ajax({
         type: "GET",
-        url: "/user/roles/",
+        url: "/user/roles/"+JSON.parse(localStorage.user_obj).user_role,
         data: '{}',
         success: function (response) {
             // role.empty().append('<option selected="selected" id="0">-- Choose User Role --</option>');
