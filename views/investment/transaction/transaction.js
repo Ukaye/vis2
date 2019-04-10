@@ -448,6 +448,7 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
                     'type': 'post',
                     'data': investmentOps,
                     'success': function (data) {
+                        console.log(data);
                         if (data.status === undefined) {
                             $('#wait').hide();
                             $("#input_amount").val('');
@@ -461,6 +462,7 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
                         }
                     },
                     'error': function (err) {
+                        console
                         $('#wait').hide();
                         swal('Oops! An error occurred while executing reversal transaction', '', 'error');
                     }

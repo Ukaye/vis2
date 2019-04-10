@@ -1068,7 +1068,15 @@ router.post('/terminate', function (req, res, next) {
                         endpoint = `/core-service/post?query=${query}`;
                         url = `${HOST}${endpoint}`;
                         axios.post(url, inv_txn)
-                            .then(function (_response) {})
+                            .then(function (_res_ponse) {
+                                res.send(_res_ponse.data);
+                            }, err => {
+                                res.send({
+                                    status: 500,
+                                    error: '',
+                                    response: null
+                                });
+                            })
                     }
                 })
         }
