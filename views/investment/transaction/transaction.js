@@ -70,11 +70,9 @@ function bindDataTable(id) {
                     order: tableHeaders[aoData[2].value[0].column].query
                 },
                 success: function (data) {
-                    if (aoData[3].value === 0) {
-                        selectedInvestment = data.data[0];
-                        $("#client_name").html(data.data[0].fullname);
-                        $("#inv_name").html(`${data.data[0].name} (${data.data[0].code})`);
-                    }
+                    selectedInvestment = data.data[0];
+                    $("#client_name").html(data.data[0].fullname);
+                    $("#inv_name").html(`${data.data[0].name} (${data.data[0].code})`);
                     fnCallback(data)
                 }
             });
@@ -138,11 +136,12 @@ function bindDataTable(id) {
                 "mRender": function (data, type, full) {
                     return `<div class="dropdown dropleft">
                     <i class="fa fa-ellipsis-v" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    </i>
+                    </i> 
                     <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                      <button class="dropdown-item" id="dropdownItemRevert" ${(full.postDone === 1 && full.is_capital === 0)?'':'disabled'}>Revert</button>
                       <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal">Review</button>
                       <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(full.reviewDone === 1)?'':'disabled'}>Approval</button>
-                      <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewPostModal"${(full.reviewDone === 1 && full.approvalDone === 1)?'':'disabled'}>Post</button>
+                      <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal"${(full.reviewDone === 1 && full.approvalDone === 1)?'':'disabled'}>Post</button>
                     </div>
                   </div>`;
                 }
@@ -150,6 +149,69 @@ function bindDataTable(id) {
 
         ]
     });
+}
+
+function onTerminateInvest() {
+    swal({
+            title: "Are you sure?",
+            text: "Once terminated, you will not be able to reverse this transaction!",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        })
+        .then((willDelete) => {
+            if (willDelete) {
+                let _mRoleId = [];
+                let withdrawalOperation = 3;
+                let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === withdrawalOperation && status === 1);
+                if (mRoleId.length === 0) {
+                    _mRoleId.push({
+                        roles: "[]",
+                        operationId: withdrawalOperation
+                    });
+                } else {
+                    _mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === withdrawalOperation && status === 1);
+                }
+                let investmentOps = {
+                    description: 'Terminate Investment',
+                    is_credit: 0,
+                    investmentId: selectedInvestment.investmentId,
+                    operationId: withdrawalOperation,
+                    is_capital: 0,
+                    isApproved: 0,
+                    status: 0,
+                    isterminate: 1,
+                    approvedBy: '',
+                    createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
+                    roleIds: _mRoleId,
+                    productId: selectedInvestment.productId,
+                };
+
+                $.ajax({
+                    url: `investment-txns/terminate`,
+                    'type': 'post',
+                    'data': investmentOps,
+                    'success': function (data) {
+                        if (data.status === undefined) {
+                            $('#wait').hide();
+                            $("#input_amount").val('');
+                            $("#input_description").val('');
+                            swal('Investment terminate successful!', '', 'success');
+                            bindDataTable(selectedInvestment.investmentId, false);
+                        } else {
+                            $('#wait').hide();
+                            swal('Oops! An error occurred while executing terminating investment', '', 'error');
+                        }
+                    },
+                    'error': function (err) {
+                        $('#wait').hide();
+                        swal('Oops! An error occurred while executing terminating investment', '', 'error');
+                    }
+                });
+            } else {
+                swal("Investment remains active!");
+            }
+        });
 }
 
 $(document).ready(function () {});
@@ -243,37 +305,41 @@ function setReviewRequirements(value) {
         url: `investment-txns/get-txn-user-roles/${value.ID}`,
         'type': 'get',
         'success': function (data) {
-            if (data.status === undefined) {
-                $('#viewReviewModalHeader').html(data[0].description);
-                $('#viewReviewModalHeader2').html(data[0].ref_no);
-                $('#wait').hide();
-                if (data.length > 0) {
-                    data.forEach((element, index) => {
-                        if (element.method === 'REVIEW') {
-                            $("#review_list_group").append(`<li class="list-group-item">
-                            <div class="row">
-                                <div class="form-group col-6">
-                                    <div class="form-group">
-                                        <label class="form-control-label"><strong>${(element.review_role_name===null)?'Role Not Required':element.review_role_name}</strong></label>
-                                        <div class="form-control-label">
-                                            <small>Amount: </small><small class="text-muted">${element.amount}</small>
-                                        </div>
-                                        <div class="form-control-label">
-                                            <small>Verified By: </small><small class="text-muted">${(element.fullname===null)?'Not Specified':element.fullname}</small>
-                                        </div>
-                                        <div class="form-control-label">
-                                            <small>Dated: </small><small class="text-muted">${element.txn_date}</small>
+            if (data.length > 0) {
+                if (data.status === undefined) {
+                    $('#viewReviewModalHeader').html(data[0].description);
+                    $('#viewReviewModalHeader2').html(data[0].ref_no);
+                    $('#wait').hide();
+                    if (data.length > 0) {
+                        data.forEach((element, index) => {
+                            if (element.method === 'REVIEW') {
+                                $("#review_list_group").append(`<li class="list-group-item">
+                                <div class="row">
+                                    <div class="form-group col-6">
+                                        <div class="form-group">
+                                            <label class="form-control-label"><strong>${(element.review_role_name===null)?'Role Not Required':element.review_role_name}</strong></label>
+                                            <div class="form-control-label">
+                                                <small>Amount: </small><small class="text-muted">${element.amount}</small>
+                                            </div>
+                                            <div class="form-control-label">
+                                                <small>Verified By: </small><small class="text-muted">${(element.fullname===null)?'Not Specified':element.fullname}</small>
+                                            </div>
+                                            <div class="form-control-label">
+                                                <small>Dated: </small><small class="text-muted">${element.txn_date}</small>
+                                            </div>
                                         </div>
                                     </div>
+                                    <div class="form-group col-6" style="vertical-align: middle">
+                                        <button type="button" ${(element.isReviewed===1)?'disabled':''} class="btn btn-success btn-sm" onclick="onReviewed(${1},${element.approvalId},${element.txnId})">Review</button>
+                                        <button type="button" ${(element.isReviewed===0)?'disabled':''} class="btn btn-danger btn-sm" onclick="onReviewed(${0},${element.approvalId},${element.txnId})">Deny</button>
+                                    </div>
                                 </div>
-                                <div class="form-group col-6" style="vertical-align: middle">
-                                    <button type="button" ${(element.isReviewed===1)?'disabled':''} class="btn btn-success btn-sm" onclick="onReviewed(${1},${element.approvalId},${element.txnId})">Approve</button>
-                                    <button type="button" ${(element.isReviewed===0)?'disabled':''} class="btn btn-danger btn-sm" onclick="onReviewed(${0},${element.approvalId},${element.txnId})">Deny</button>
-                                </div>
-                            </div>
-                        </li>`).trigger('change');
-                        }
-                    });
+                            </li>`).trigger('change');
+                            }
+                        });
+                    }
+                } else {
+                    $('#wait').hide();
                 }
             } else {
                 $('#wait').hide();
@@ -333,10 +399,90 @@ function onExecutiveTransaction() {
     });
 }
 
-$('#bootstrap-data-table2 tbody').on('click', '.dropdown-item', function () {
+// $('#bootstrap-data-table2 tbody').on('click', '.dropdown-item', function () {
+//     data_row = table.row($(this).parents('tr')).data();
+//     setApprovalRequirements(data_row);
+//     setReviewRequirements(data_row);
+//     setPostRequirements(data_row);
+// });dropdownItemPost
+
+$('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function () {
+    data_row = table.row($(this).parents('tr')).data();
+    let _iscredit = (data_row.is_credit === 1) ? 0 : 1;
+    let _operationId = (data_row.is_credit === 1) ? 3 : 1;
+    let _mRoleId = [];
+    let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === _operationId && status === 1);
+    swal({
+            title: "Are you sure?",
+            text: "You want to reverse this transaction!",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        })
+        .then((willDelete) => {
+            if (willDelete) {
+                if (mRoleId.length === 0) {
+                    _mRoleId.push({
+                        roles: "[]",
+                        operationId: _operationId
+                    });
+                }
+                let comment = data_row.description.split(':');
+                let _description = (comment.length > 1) ? comment[1] : data_row.description;
+                let investmentOps = {
+                    amount: data_row.amount,
+                    description: 'Reversal: ' + _description,
+                    is_credit: _iscredit,
+                    investmentId: selectedInvestment.investmentId,
+                    operationId: _operationId,
+                    is_capital: 0,
+                    isApproved: 0,
+                    approvedBy: '',
+                    createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
+                    roleIds: _mRoleId,
+                    productId: selectedInvestment.productId,
+                };
+
+                $.ajax({
+                    url: `investment-txns/create`,
+                    'type': 'post',
+                    'data': investmentOps,
+                    'success': function (data) {
+                        if (data.status === undefined) {
+                            $('#wait').hide();
+                            $("#input_amount").val('');
+                            $("#input_description").val('');
+                            swal('Reversal transaction successful!', '', 'success');
+                            // bindDataTable(selectedInvestment.investmentId, false);
+                            table.ajax.reload(null, false);
+                        } else {
+                            $('#wait').hide();
+                            swal('Oops! An error occurred while executing reversal transaction', '', 'error');
+                        }
+                    },
+                    'error': function (err) {
+                        $('#wait').hide();
+                        swal('Oops! An error occurred while executing reversal transaction', '', 'error');
+                    }
+                });
+            } else {
+                swal("Transaction remains active!");
+            }
+        });
+});
+
+$('#bootstrap-data-table2 tbody').on('click', '#dropdownItemReview', function () {
+    data_row = table.row($(this).parents('tr')).data();
+    setReviewRequirements(data_row);
+});
+
+$('#bootstrap-data-table2 tbody').on('click', '#dropdownItemApproval', function () {
     data_row = table.row($(this).parents('tr')).data();
     setApprovalRequirements(data_row);
-    setReviewRequirements(data_row);
+});
+
+$('#bootstrap-data-table2 tbody').on('click', '#dropdownItemPost', function () {
+    data_row = table.row($(this).parents('tr')).data();
     setPostRequirements(data_row);
 });
 
@@ -346,37 +492,41 @@ function setApprovalRequirements(value) {
         url: `investment-txns/get-txn-user-roles/${value.ID}`,
         'type': 'get',
         'success': function (data) {
-            if (data.status === undefined) {
-                $('#viewListApprovalModalHeader').html(data[0].description);
-                $('#viewListApprovalModalHeader2').html(data[0].ref_no);
-                $('#wait').hide();
-                if (data.length > 0) {
-                    data.forEach(element => {
-                        if (element.method === 'APPROVAL') {
-                            $("#role_list_group").append(`<li class="list-group-item">
-                            <div class="row">
-                                <div class="form-group col-6">
-                                    <div class="form-group">
-                                        <label class="form-control-label"><strong>${(element.role_name===null)?'Role Not Required':element.role_name}</strong></label>
-                                        <div class="form-control-label">
-                                            <small>Amount: </small><small class="text-muted">${element.amount}</small>
-                                        </div>
-                                        <div class="form-control-label">
-                                            <small>Verified By: </small><small class="text-muted">${(element.fullname===null)?'Not Specified':element.fullname}</small>
-                                        </div>
-                                        <div class="form-control-label">
-                                            <small>Dated: </small><small class="text-muted">${element.txn_date}</small>
+            if (data.length > 0) {
+                if (data.status === undefined) {
+                    $('#viewListApprovalModalHeader').html(data[0].description);
+                    $('#viewListApprovalModalHeader2').html(data[0].ref_no);
+                    $('#wait').hide();
+                    if (data.length > 0) {
+                        data.forEach(element => {
+                            if (element.method === 'APPROVAL') {
+                                $("#role_list_group").append(`<li class="list-group-item">
+                                <div class="row">
+                                    <div class="form-group col-6">
+                                        <div class="form-group">
+                                            <label class="form-control-label"><strong>${(element.role_name===null)?'Role Not Required':element.role_name}</strong></label>
+                                            <div class="form-control-label">
+                                                <small>Amount: </small><small class="text-muted">${element.amount}</small>
+                                            </div>
+                                            <div class="form-control-label">
+                                                <small>Verified By: </small><small class="text-muted">${(element.fullname===null)?'Not Specified':element.fullname}</small>
+                                            </div>
+                                            <div class="form-control-label">
+                                                <small>Dated: </small><small class="text-muted">${element.txn_date}</small>
+                                            </div>
                                         </div>
                                     </div>
+                                    <div class="form-group col-6" style="vertical-align: middle">
+                                        <button type="button" ${(element.isApproved===1)?'disabled':''} class="btn btn-success btn-sm" onclick="onApproved(${1},${element.approvalId},${element.txnId})">Approve</button>
+                                        <button type="button" ${(element.isApproved===0)?'disabled':''} class="btn btn-danger btn-sm" onclick="onApproved(${0},${element.approvalId},${element.txnId})">Deny</button>
+                                    </div>
                                 </div>
-                                <div class="form-group col-6" style="vertical-align: middle">
-                                    <button type="button" ${(element.isApproved===1)?'disabled':''} class="btn btn-success btn-sm" onclick="onApproved(${1},${element.approvalId},${element.txnId})">Approve</button>
-                                    <button type="button" ${(element.isApproved===0)?'disabled':''} class="btn btn-danger btn-sm" onclick="onApproved(${0},${element.approvalId},${element.txnId})">Deny</button>
-                                </div>
-                            </div>
-                        </li>`).trigger('change');
-                        }
-                    });
+                            </li>`).trigger('change');
+                            }
+                        });
+                    }
+                } else {
+                    $('#wait').hide();
                 }
             } else {
                 $('#wait').hide();
@@ -418,7 +568,7 @@ function setPostRequirements(value) {
                                     </div>
                                 </div>
                                 <div class="form-group col-6" style="vertical-align: middle">
-                                    <button type="button" ${(element.isPosted===1)?'disabled':''} class="btn btn-success btn-sm" onclick="onPost(${1},${element.approvalId},${element.txnId})">Approve</button>
+                                    <button type="button" ${(element.isPosted===1)?'disabled':''} class="btn btn-success btn-sm" onclick="onPost(${1},${element.approvalId},${element.txnId})">Post</button>
                                     <button type="button" ${(element.isPosted===0)?'disabled':''} class="btn btn-danger btn-sm" onclick="onPost(${0},${element.approvalId},${element.txnId})">Deny</button>
                                 </div>
                             </div>
