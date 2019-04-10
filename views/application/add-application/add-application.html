@@ -26,7 +26,7 @@
     <script src="assets/js/vendor/jquery-2.1.4.min.js"></script>
     <style type="text/css">
         .select2-container{
-            width: 92% !important;
+            width: 90% !important;
         }
         .select2-selection{
             height: 100% !important;
@@ -37,10 +37,16 @@
         input.invalid, span.invalid {
             border: 2px dashed red;
         }
-        #schedule-error-message{
+        #schedule-error-message {
             text-align: center;
             font-style: italic;
             color: red;
+        }
+        .radio-inline {
+            margin-right: 15px;
+        }
+        .image-upload {
+            margin-left: 15px;
         }
     </style>
 </head>
@@ -78,13 +84,223 @@
 
     <div class="content mt-3">
         <div class="animated fadeIn">
-
             <div class="row">
-
-                <div id="user-form" class="col-xs-12 col-sm-12">
+                <div id="step1" class="col-xs-12 col-sm-12">
                     <div class="card">
                         <div class="card-header">
-                            <strong>Add Application Data</strong> <small> Loan Information</small>
+                            <strong>Add Application Data (Step 1)</strong> <small> Loan Information</small>
+                        </div>
+                        <div class="card-body card-block">
+                            <div class="row">
+                                <div class="col-sm-6 form-group">
+                                    <label for="product" class="col-form-label">Select Loan Application Product <strong style="color:red"> *</strong></label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon"><i class="fa fa-list"></i></div>
+                                        <select id="product" class="form-control" required="required">
+                                            <option value="general" selected="selected">General</option>
+                                            <option value="market_loan">Market Loan</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-6 form-group">
+                                    <label for="name" class="col-form-label">Name <strong style="color:red"> *</strong></label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon"><i class="fa fa-user"></i></div>
+                                        <select id="name" class="form-control" required="required">
+                                            <option selected="selected">-- Choose Client --</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 form-group market_name-div" style="display: none;">
+                                    <label for="market_name" class="form-control-label">Name of Market<strong style="color:red"> *</strong></label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon"><i class="fa fa-building"></i></div>
+                                        <input type="text" id="market_name" class="form-control" required="required">
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 form-group market_name-div" style="display: none;">
+                                    <label for="market_leader_name" class="form-control-label">Name of Market Leader<strong style="color:red"> *</strong></label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon"><i class="fa fa-user"></i></div>
+                                        <input type="text" id="market_leader_name" class="form-control" required="required">
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 form-group market_name-div" style="display: none;">
+                                    <label for="market_leader_phone" class="form-control-label">Phone number of Market Leader<strong style="color:red"> *</strong></label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon"><i class="fa fa-phone"></i></div>
+                                        <input type="number" id="market_leader_phone" class="form-control" required="required">
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 form-group market_name-div" style="display: none;">
+                                    <label for="guarantor_name" class="form-control-label">Name of Guarantor<strong style="color:red"> *</strong></label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon"><i class="fa fa-user"></i></div>
+                                        <input type="text" id="guarantor_name" class="form-control" required="required">
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 form-group market_name-div" style="display: none;">
+                                    <label for="guarantor_phone" class="form-control-label">Phone number of Guarantor<strong style="color:red"> *</strong></label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon"><i class="fa fa-phone"></i></div>
+                                        <input type="number" id="guarantor_phone" class="form-control" required="required">
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 form-group market_name-div" style="display: none;">
+                                    <label for="guarantor_relationship" class="form-control-label">Relationship with Guarantor<strong style="color:red"> *</strong></label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon"><i class="fa fa-chain"></i></div>
+                                        <input type="text" id="guarantor_relationship" class="form-control" required="required">
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 form-group market_name-div" style="display: none;">
+                                    <label for="guarantor_address" class="form-control-label">Address of Guarantor<strong style="color:red"> *</strong></label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon"><i class="fa fa-map-marker"></i></div>
+                                        <textarea id="guarantor_address" class="form-control" required="required"></textarea>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 form-group market_name-div" style="display: none;">
+                                    <label for="businesses" class="col-form-label">Nature of Business <strong style="color:red"> *</strong></label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon"><i class="fa fa-list"></i></div>
+                                        <select id="businesses" class="form-control" required="required">
+                                            <option selected="selected">-- Choose Business --</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 form-group market_name-div" style="display: none;">
+                                    <label for="stock_value" class="form-control-label">Value of Stock<strong style="color:red"> *</strong></label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon"><i class="fa fa-plus"></i></div>
+                                        <input type="number" id="stock_value" class="form-control" required="required">
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 form-group">
+                                    <label for="loan_purposes" class="col-form-label">Select Purpose Of Loan <strong style="color:red"> *</strong></label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon"><i class="fa fa-user"></i></div>
+                                        <select id="loan_purposes" class="form-control" required="required">
+                                            <option selected="selected">-- Choose Loan Purpose --</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 form-group">
+                                    <label for="loan_amount" class="form-control-label">Loan Amount<strong style="color:red"> *</strong></label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon"><i class="fa fa-money"></i></div>
+                                        <input type="number" id="loan_amount" class="form-control" required="required">
+                                    </div>
+                                    <small class="form-text text-muted">Min: <span id="loan_requested_min_">1.00</span>(NGN) Max: <span id="loan_requested_max_">100,000,000.00</span>(NGN)</small>
+                                </div>
+                                <div class="col-sm-6 form-group">
+                                    <label for="loan_serviced" class="form-control-label">Number of Loan(s) Serviced<strong style="color:red"> *</strong></label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon"><i class="fa fa-money"></i></div>
+                                        <input type="number" id="loan_serviced" class="form-control" required="required">
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 form-group market_name-div" style="display: none;">
+                                    <label for="capital_source" class="form-control-label">Source of Capital<strong style="color:red"> *</strong></label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon"><i class="fa fa-list"></i></div>
+                                        <input type="text" id="capital_source" class="form-control" required="required">
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 form-group market_name-div" style="display: none;">
+                                    <label for="business_turnover" class="form-control-label">Business Turn Over<strong style="color:red"> *</strong></label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon"><i class="fa fa-money"></i></div>
+                                        <input type="number" id="business_turnover" class="form-control" required="required">
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 form-group market_name-div" style="display: none;"></div>
+                                <div class="col-sm-6 form-group">
+                                    <label for="tenor" class="form-control-label">Tenor<strong style="color:red"> *</strong></label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon"><i class="fa fa-refresh"></i></div>
+                                        <input type="number" id="tenor" class="form-control" required="required">
+                                        <select id="tenor_type" class="form-control" required="required">
+                                            <option value="monthly" selected="selected">Monthly</option>
+                                            <option value="weekly">Weekly</option>
+                                        </select>
+                                    </div>
+                                    <small class="form-text text-muted">Min: <span id="tenor_min_">1</span>  Max: <span id="tenor_max_">60</span> </small>
+                                </div>
+                                <div class="col-sm-6 form-group">
+                                    <label for="rate" class="form-control-label">Interest Rate<strong style="color:red"> *</strong></label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon"><i class="fa fa-money"></i></div>
+                                        <input type="number" id="rate" class="form-control" required="required">
+                                    </div>
+                                    <small class="form-text text-muted">Min: <span id="interest_rate_min_">1</span>%  Max: <span id="interest_rate_max_">1000</span>% </small>
+                                </div>
+                                <div class="col-sm-6 form-group market_name-div" style="display: none;">
+                                    <p>Do you have an active Ajo/Contribution?</p>
+                                    <label class="radio-inline">
+                                        <input type="radio" name="contribution_status" value="yes">Yes
+                                    </label>
+                                    <label class="radio-inline">
+                                        <input type="radio" name="contribution_status" value="no" checked>No
+                                    </label>
+                                    <div id="contribution-div" style="display: none;">
+                                        <label for="contribution" class="form-control-label">Ajo/Contribution<strong style="color:red"> *</strong></label>
+                                        <div class="input-group">
+                                            <div class="input-group-addon"><i class="fa fa-list"></i></div>
+                                            <input type="text" id="contribution" class="form-control" required="required">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 form-group market_name-div" style="display: none;">
+                                    <p>Is spouse aware of Loan?</p>
+                                    <label class="radio-inline">
+                                        <input type="radio" name="spouse_knowledge" value="yes">Yes
+                                    </label>
+                                    <label class="radio-inline">
+                                        <input type="radio" name="spouse_knowledge" value="no">No
+                                    </label>
+                                </div>
+                                <div class="col-sm-6 form-group market_name-div" style="display: none;">
+                                    <div class="form-control">
+                                        <label for="file-upload-2" class="custom-file-upload">
+                                            <i class="fa fa-photo"></i> Picture of Shop 1
+                                        </label>
+                                        <input id="file-upload-1" class="image-upload" type="file" tabindex="6">
+                                        <label id="path-1"></label><br>
+                                        <small><strong>Image must be JPG/JPEG or PNG format, maximum 8MB</strong></small>
+                                    </div>
+                                    <div class="form-control pull-right" style="border-color: transparent">
+                                        <button class="btn btn-primary pull-right write" onclick="upload(1)">Upload 1</button>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6 form-group market_name-div" style="display: none;">
+                                    <div class="form-control">
+                                        <label for="file-upload-2" class="custom-file-upload">
+                                            <i class="fa fa-photo"></i> Picture of Shop 2
+                                        </label>
+                                        <input id="file-upload-2" class="image-upload" type="file" tabindex="7">
+                                        <label id="path-2"></label><br>
+                                        <small><strong>Image must be JPG/JPEG or PNG format, maximum 8MB</strong></small>
+                                    </div>
+                                    <div class="form-control pull-right" style="border-color: transparent">
+                                        <button class="btn btn-primary pull-right write" onclick="upload(2)">Upload 2</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class = "form-group">
+                                <input id="saveApplication" type="submit" class="btn btn-success btn-flat m-b-30 m-t-30 write" value="Save Application"/>
+                                <input id="approveApplication" type="submit" class="btn btn-success btn-flat m-b-30 m-t-30 write" value="Approve Application" style="display: none;"/>
+                                <input id="rejectApplication" type="submit" class="btn btn-danger btn-flat m-b-30 m-t-30 write" value="Reject Application" style="display: none;"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="step2" class="col-xs-12 col-sm-12" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <strong>Add Application Data (Step 2)</strong> <small> Loan Information</small>
                         </div>
                         <div class="card-body card-block">
                             <p id="schedule-error-message" style="display: none;"></p>
