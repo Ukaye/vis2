@@ -215,55 +215,59 @@
                                 </div>
                                 <div class="col-sm-9">
                                     <div class="pull-right">
-                                        <div class="col-sm-4 col-md-4">
-                                            <button class="btn btn-primary" data-toggle="modal"
+                                        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                            <!-- <button class="btn btn-primary" data-toggle="modal"
                                                 data-target="#viewOperationModal"
                                                 onclick="onOpenMode('Transfer','2','0')">
-                                                Transfer</button>
-                                        </div>
-                                        <div class="col-sm-4 col-md-4">
+                                                Transfer</button> -->
                                             <button class="btn btn-danger" data-toggle="modal"
                                                 data-target="#viewOperationModal"
                                                 onclick="onOpenMode('Withdraw','3','0')">
                                                 Withdraw</button>
-                                        </div>
-                                        <div class="col-sm-4 col-md-4">
                                             <button class="btn btn-success" data-toggle="modal"
                                                 data-target="#viewOperationModal"
                                                 onclick="onOpenMode('Deposit','1','1')">
                                                 Deposit</button>
                                         </div>
                                     </div>
+                                    <div class="pull-left">
+                                        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                            <button class="btn btn-danger" onclick="onTerminateInvest()">Terminate</button>
+                                            <button class="btn btn-secondary">Statement</button>
+                                            <button class="btn btn-secondary">Computer Interest</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <div class="card-body">
-                                <table id="bootstrap-data-table2" class="table table-striped table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th>Status</th>
-                                            <th>Date</th>
-                                            <th>Ref. Number</th>
-                                            <th>Description</th>
-                                            <th>Credit</th>
-                                            <th>Debit</th>
-                                            <th>Balance</th>
-                                            <th> </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="investment_products">
-                                    </tbody>
-                                </table>
-                            </div>
+                        <div class="card-body">
+                            <table id="bootstrap-data-table2" class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Ref. Number</th>
+                                        <th>Description</th>
+                                        <th>Credit</th>
+                                        <th>Debit</th>
+                                        <th>Balance</th>
+                                        <th> </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="investment_products">
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                    <div>
-                    </div>
                 </div>
-            </div><!-- .animated -->
-            <div id="wait" style="width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;">
-                <img src='spinner.gif' width="100" height="100" style="background-color: transparent" /></div>
-        </div><!-- .content -->
+                <div>
+                </div>
+            </div>
+        </div><!-- .animated -->
+        <div id="wait" style="width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;">
+            <img src='spinner.gif' width="100" height="100" style="background-color: transparent" /></div>
+    </div><!-- .content -->
 
 
     </div><!-- /#right-panel -->

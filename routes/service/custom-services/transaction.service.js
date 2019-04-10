@@ -8,6 +8,7 @@ router.get('/get-txn-user-roles/:id', function (req, res, next) {
     let query = `SELECT t.ID,t.txn_date,t.description,t.amount,u.fullname,
     t.is_credit,t.ref_no,a.ID as approvalId,a.*,r.role_name,re.role_name as review_role_name,po.role_name as post_role_name,
     a.ID as txnApprovadId FROM investment_txns t
+    left join investments i on i.ID = t.investmentId
     left join investment_op_approvals a on a.txnId = t.ID
     left join user_roles r on a.roleId = r.id
     left join user_roles re on a.roleId = re.id
@@ -670,6 +671,7 @@ function setcharges(data, HOST, isReversal) {
                     description: (isReversal === false) ? 'Charge: ' + chargeForDeposit[0].description : 'Reverse: ' + chargeForDeposit[0].description,
                     amount: chargedCost,
                     is_credit: 0,
+                    isCharge: 1,
                     created_date: dt,
                     balance: (isReversal === false) ? (total - chargedCost) : (total + chargedCost),
                     is_capital: 0,
@@ -702,6 +704,7 @@ function setcharges(data, HOST, isReversal) {
                     created_date: dt,
                     balance: getInvestBalance.txnBalance - chargedCostMinBal,
                     is_capital: 0,
+                    isCharge: 1,
                     isApproved: 1,
                     postDone: 1,
                     reviewDone: 1,
@@ -722,5 +725,355 @@ function setcharges(data, HOST, isReversal) {
 
     }, err => {});
 }
+
+router.post('/terminate', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let data = req.body;
+    let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    let refId = moment().utcOffset('+0100').format('YYMMDDhmmss');
+    query = `SELECT t.*,p.*,v.description,v.amount as txnAmount, v.balance as txnBalance FROM investments t 
+    left join investment_products p on p.ID = t.productId
+    left join investment_txns v on v.investmentId = t.ID
+    WHERE t.ID = ${data.investmentId}`;
+    let endpoint = `/core-service/get`;
+    url = `${HOST}${endpoint}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response_product => {
+
+        //Charge for deposit
+        let chargeForDeposit = response_product.data.filter(x => x.interest_forfeit_charge !== '0' && x.interest_forfeit_charge !== '');
+        if (chargeForDeposit.length > 0) {
+            let total = parseFloat(chargeForDeposit[0].txnBalance.split(',').join(''));
+            let chargedCost = (chargeForDeposit[0].interest_forfeit_charge_opt === 'Fixed') ? parseFloat(chargeForDeposit[0].interest_forfeit_charge.split(',').join('')) : ((parseFloat(chargeForDeposit[0].interest_forfeit_charge.split(',').join('')) / 100) * total);
+            let inv_txn = {
+                txn_date: dt,
+                description: 'Charge: ' + 'Terminate investment',
+                amount: chargedCost,
+                is_credit: 0,
+                isCharge: 1,
+                created_date: dt,
+                balance: total - chargedCost,
+                is_capital: 0,
+                isApproved: 1,
+                postDone: 1,
+                reviewDone: 1,
+                approvalDone: 1,
+                ref_no: refId,
+                updated_date: dt,
+                investmentId: data.investmentId,
+                createdBy: data.createdBy
+            };
+
+            query = `INSERT INTO investment_txns SET ?`;
+            endpoint = `/core-service/post?query=${query}`;
+            let url = `${HOST}${endpoint}`;
+            axios.post(url, inv_txn)
+                .then(function (payload) {
+                    dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                    refId = moment().utcOffset('+0100').format('YYMMDDhmmss'); //date_modified
+                    query = `UPDATE investments SET status = ${data.status},isterminated=${data.isterminate}, 
+                date_modified ='${dt.toString()}' WHERE ID =${data.investmentId}`;
+                    let endpoint = "/core-service/get";
+                    let url = `${HOST}${endpoint}`;
+                    axios.get(url, {
+                        params: {
+                            query: query
+                        }
+                    }).then(function (_response_) {
+                        if (_response_.data.status === undefined) {
+                            query = `SELECT amount,is_credit FROM investment_txns WHERE investmentId = ${data.investmentId} AND isApproved = 1`;
+                            let endpoint = "/core-service/get";
+                            let url = `${HOST}${endpoint}`;
+                            axios.get(url, {
+                                    params: {
+                                        query: query
+                                    }
+                                })
+                                .then(function (response) {
+                                    if (response.data.length > 0) {
+                                        let total = 0;
+                                        response.data.map(x => {
+                                            let _x = x.amount.split(',').join('');
+                                            if (x.is_credit.toString() === '1') {
+                                                total += parseFloat(_x);
+                                            } else {
+                                                total -= parseFloat(_x);
+                                            }
+                                        });
+                                        let inv_txn = {
+                                            txn_date: dt,
+                                            description: data.description,
+                                            amount: total,
+                                            is_credit: data.is_credit,
+                                            created_date: dt,
+                                            balance: total,
+                                            is_capital: 0,
+                                            ref_no: refId,
+                                            investmentId: data.investmentId,
+                                            createdBy: data.createdBy
+                                        };
+                                        query = `INSERT INTO investment_txns SET ?`;
+                                        endpoint = `/core-service/post?query=${query}`;
+                                        url = `${HOST}${endpoint}`;
+                                        axios.post(url, inv_txn)
+                                            .then(function (_response) {
+                                                if (_response.data.status === undefined) {
+                                                    query = `SELECT * FROM investment_product_requirements
+                                    WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
+                                                    endpoint = "/core-service/get";
+                                                    url = `${HOST}${endpoint}`;
+                                                    axios.get(url, {
+                                                            params: {
+                                                                query: query
+                                                            }
+                                                        })
+                                                        .then(function (response2) {
+                                                            if (response2.data.length > 0) {
+                                                                let result = response2.data[0];
+                                                                let pasrsedData = JSON.parse(result.roleId);
+                                                                pasrsedData.map(role => {
+                                                                    let invOps = {
+                                                                        investmentId: data.investmentId,
+                                                                        operationId: data.operationId,
+                                                                        roleId: role,
+                                                                        isAllRoles: result.isAllRoles,
+                                                                        createdAt: dt,
+                                                                        updatedAt: dt,
+                                                                        createdBy: data.createdBy,
+                                                                        txnId: _response.data.insertId,
+                                                                        priority: result.priority,
+                                                                        method: 'APPROVAL'
+                                                                    };
+
+                                                                    query = `INSERT INTO investment_op_approvals SET ?`;
+                                                                    endpoint = `/core-service/post?query=${query}`;
+                                                                    url = `${HOST}${endpoint}`;
+                                                                    try {
+                                                                        axios.post(url, invOps);
+                                                                    } catch (error) {}
+
+                                                                });
+                                                            } else {
+                                                                let invOps = {
+                                                                    investmentId: data.investmentId,
+                                                                    operationId: data.operationId,
+                                                                    roleId: '',
+                                                                    createdAt: dt,
+                                                                    updatedAt: dt,
+                                                                    createdBy: data.createdBy,
+                                                                    txnId: _response.data.insertId,
+                                                                    method: 'APPROVAL'
+                                                                };
+
+                                                                query = `INSERT INTO investment_op_approvals SET ?`;
+                                                                endpoint = `/core-service/post?query=${query}`;
+                                                                url = `${HOST}${endpoint}`;
+                                                                try {
+                                                                    axios.post(url, invOps);
+                                                                } catch (error) {}
+                                                            }
+                                                        })
+                                                        .catch(function (error) {});
+
+
+                                                    query = `SELECT * FROM investment_product_reviews
+                                    WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
+                                                    endpoint = "/core-service/get";
+                                                    url = `${HOST}${endpoint}`;
+                                                    axios.get(url, {
+                                                            params: {
+                                                                query: query
+                                                            }
+                                                        })
+                                                        .then(function (response2) {
+                                                            if (response2.data.length > 0) {
+                                                                let result = response2.data[0];
+                                                                let pasrsedData = JSON.parse(result.roleId);
+                                                                pasrsedData.map((role) => {
+                                                                    let invOps = {
+                                                                        investmentId: data.investmentId,
+                                                                        operationId: data.operationId,
+                                                                        roleId: role,
+                                                                        isAllRoles: result.isAllRoles,
+                                                                        createdAt: dt,
+                                                                        updatedAt: dt,
+                                                                        createdBy: data.createdBy,
+                                                                        txnId: _response.data.insertId,
+                                                                        priority: result.priority,
+                                                                        method: 'REVIEW'
+                                                                    };
+
+                                                                    query = `INSERT INTO investment_op_approvals SET ?`;
+                                                                    endpoint = `/core-service/post?query=${query}`;
+                                                                    url = `${HOST}${endpoint}`;
+                                                                    try {
+                                                                        axios.post(url, invOps);
+                                                                    } catch (error) {}
+
+                                                                });
+                                                            } else {
+                                                                let invOps = {
+                                                                    investmentId: data.investmentId,
+                                                                    operationId: data.operationId,
+                                                                    roleId: '',
+                                                                    createdAt: dt,
+                                                                    updatedAt: dt,
+                                                                    createdBy: data.createdBy,
+                                                                    txnId: _response.data.insertId,
+                                                                    method: 'REVIEW'
+                                                                };
+
+                                                                query = `INSERT INTO investment_op_approvals SET ?`;
+                                                                endpoint = `/core-service/post?query=${query}`;
+                                                                url = `${HOST}${endpoint}`;
+                                                                try {
+                                                                    axios.post(url, invOps);
+                                                                } catch (error) {}
+                                                            }
+                                                        })
+                                                        .catch(function (error) {});
+
+                                                    query = `SELECT * FROM investment_product_posts
+                                    WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
+                                                    endpoint = "/core-service/get";
+                                                    url = `${HOST}${endpoint}`;
+                                                    axios.get(url, {
+                                                            params: {
+                                                                query: query
+                                                            }
+                                                        })
+                                                        .then(function (response2) {
+                                                            if (response2.data.length > 0) {
+                                                                let result = response2.data[0];
+                                                                let pasrsedData = JSON.parse(result.roleId);
+                                                                pasrsedData.map(role => {
+                                                                    let invOps = {
+                                                                        investmentId: data.investmentId,
+                                                                        operationId: data.operationId,
+                                                                        roleId: role,
+                                                                        isAllRoles: result.isAllRoles,
+                                                                        createdAt: dt,
+                                                                        updatedAt: dt,
+                                                                        createdBy: data.createdBy,
+                                                                        txnId: _response.data.insertId,
+                                                                        priority: result.priority,
+                                                                        method: 'POST'
+                                                                    };
+
+                                                                    query = `INSERT INTO investment_op_approvals SET ?`;
+                                                                    endpoint = `/core-service/post?query=${query}`;
+                                                                    url = `${HOST}${endpoint}`;
+                                                                    try {
+                                                                        axios.post(url, invOps);
+                                                                    } catch (error) {}
+
+                                                                });
+                                                            } else {
+                                                                let invOps = {
+                                                                    investmentId: data.investmentId,
+                                                                    operationId: data.operationId,
+                                                                    roleId: '',
+                                                                    createdAt: dt,
+                                                                    updatedAt: dt,
+                                                                    createdBy: data.createdBy,
+                                                                    txnId: _response.data.insertId,
+                                                                    method: 'POST'
+                                                                };
+
+                                                                query = `INSERT INTO investment_op_approvals SET ?`;
+                                                                endpoint = `/core-service/post?query=${query}`;
+                                                                url = `${HOST}${endpoint}`;
+                                                                try {
+                                                                    axios.post(url, invOps);
+                                                                } catch (error) {}
+                                                            }
+                                                        })
+                                                        .catch(function (error) {});
+                                                    res.send({});
+                                                } else {
+                                                    res.send({
+                                                        status: 500,
+                                                        error: '',
+                                                        response: null
+                                                    });
+                                                }
+                                            })
+                                            .catch(function (error) {
+                                                res.send({
+                                                    status: 500,
+                                                    error: error,
+                                                    response: null
+                                                });
+                                            });
+                                    } else {
+                                        res.send({
+                                            status: 500,
+                                            error: 'Investment has no initial transaction',
+                                            response: null
+                                        });
+                                    }
+                                })
+                                .catch(function (error) {
+                                    res.send({
+                                        status: 500,
+                                        error: error,
+                                        response: null
+                                    });
+                                });
+                        } else {
+                            res.send({
+                                status: 500,
+                                error: error,
+                                response: null
+                            });
+                        }
+                    });
+                }, err => {});
+        } else {
+            query = `SELECT amount,is_credit FROM investment_txns WHERE investmentId = ${data.investmentId} AND isApproved = 1`;
+            let endpoint = "/core-service/get";
+            let url = `${HOST}${endpoint}`;
+            axios.get(url, {
+                    params: {
+                        query: query
+                    }
+                })
+                .then(function (response) {
+                    if (response.data.length > 0) {
+                        let total = 0;
+                        response.data.map(x => {
+                            let _x = x.amount.split(',').join('');
+                            if (x.is_credit.toString() === '1') {
+                                total += parseFloat(_x);
+                            } else {
+                                total -= parseFloat(_x);
+                            }
+                        });
+                        let inv_txn = {
+                            txn_date: dt,
+                            description: data.description,
+                            amount: total,
+                            is_credit: data.is_credit,
+                            created_date: dt,
+                            balance: total,
+                            is_capital: 0,
+                            ref_no: refId,
+                            investmentId: data.investmentId,
+                            createdBy: data.createdBy
+                        };
+                        query = `INSERT INTO investment_txns SET ?`;
+                        endpoint = `/core-service/post?query=${query}`;
+                        url = `${HOST}${endpoint}`;
+                        axios.post(url, inv_txn)
+                            .then(function (_response) {})
+                    }
+                })
+        }
+    }, err => {});
+});
+
 
 module.exports = router;

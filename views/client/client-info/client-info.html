@@ -47,43 +47,44 @@
 
     <style>
         #regForm {
-        background-color: rgba(255, 255, 255, 0.44);
-        /*margin: 100px auto;*/
-        padding: 20px;
-        /*width: 70%;*/
-        /*!*min-width: 300px;*!*/
-    }
+            background-color: rgba(255, 255, 255, 0.44);
+            /*margin: 100px auto;*/
+            padding: 20px;
+            /*width: 70%;*/
+            /*!*min-width: 300px;*!*/
+        }
 
-    /* Hide all steps by default: */
-    .tab {
-        display: none;
-    }
+        /* Hide all steps by default: */
+        .tab {
+            display: none;
+        }
 
-    /* Make circles that indicate the steps of the form: */
-    .step {
-        height: 15px;
-        width: 15px;
-        margin: 0 2px;
-        background-color: #bbbbbb;
-        border: none;
-        border-radius: 50%;
-        display: inline-block;
-        opacity: 0.5;
-    }
+        /* Make circles that indicate the steps of the form: */
+        .step {
+            height: 15px;
+            width: 15px;
+            margin: 0 2px;
+            background-color: #bbbbbb;
+            border: none;
+            border-radius: 50%;
+            display: inline-block;
+            opacity: 0.5;
+        }
 
-    /* Mark the active step: */
-    .step.active {
-        opacity: 1;
-    }
+        /* Mark the active step: */
+        .step.active {
+            opacity: 1;
+        }
 
-    /* Mark the steps that are finished and valid: */
-    .step.finish {
-        background-color: #4CAF50;
-    }
-    td.numericCol{
-        float:right;
-    }
-</style>
+        /* Mark the steps that are finished and valid: */
+        .step.finish {
+            background-color: #4CAF50;
+        }
+
+        td.numericCol {
+            float: right;
+        }
+    </style>
 
     <aside id="left-panel" class="left-panel" include-html="/includes/sidebar.html">
     </aside><!-- /#left-panel -->
@@ -137,25 +138,30 @@
                                                 <div class="col-sm-6">
                                                     <strong id="fullname"></strong><br />
                                                     <strong>Client ID#: </strong><span id="client_id"></span><br />
-                                                    <i class="fa fa-phone"></i><span id="phone"></span>&nbsp;|&nbsp;<i class="fa fa-envelope"></i><span
-                                                        id="email"></span><br />
+                                                    <i class="fa fa-phone"></i><span id="phone"></span>&nbsp;|&nbsp;<i
+                                                        class="fa fa-envelope"></i><span id="email"></span><br />
                                                     <strong>Loan Officer: </strong><span id="loan_officer"></span><br />
                                                     <strong>Branch: </strong><span id="branch"></span><br />
                                                     <a href="#" style="text-decoration: underline;" data-toggle="modal"
-                                                        data-target="#escrowHistory" onclick="escrowHistory()">Escrow Balance:
+                                                        data-target="#escrowHistory" onclick="escrowHistory()">Escrow
+                                                        Balance:
                                                         ₦<span class="escrow-balance"></span></a>
                                                 </div>
                                                 <div class="col-sm-6">
-                                                    <br/>
-                                                    <strong>Total Loans Taken: </strong><span id="total_loans"></span><br/>
-                                                    <strong>Total Loan Balance: </strong><span id="total_balance"></span><br/>
-                                                    <strong>Total Interest Paid: </strong><span id="total_interest"></span>
-                                                    <strong></strong><br/>
+                                                    <br />
+                                                    <strong>Total Loans Taken: </strong><span
+                                                        id="total_loans"></span><br />
+                                                    <strong>Total Loan Balance: </strong><span
+                                                        id="total_balance"></span><br />
+                                                    <strong>Total Interest Paid: </strong><span
+                                                        id="total_interest"></span>
+                                                    <strong></strong><br />
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-sm-2" style="padding-top: 40px">
-                                            <button onclick="newApplication()" class="btn btn-success"><i class="fa fa-plus"></i>
+                                            <button onclick="newApplication()" class="btn btn-success"><i
+                                                    class="fa fa-plus"></i>
                                                 New Application</button><br /><br />
                                             <button onclick="editUser()" class="btn btn-primary"><i class="fa fa-pencil"
                                                     width="80"></i> Edit Client </button>
@@ -166,7 +172,8 @@
                             <div class="col-sm-12">
                                 <div class="card">
                                     <div class="card-header">
-                                        <h4 class="widget-title lighter smaller"><strong>Applications</strong> <span id="no_of_applications"></span></h4>
+                                        <h4 class="widget-title lighter smaller"><strong>Applications</strong> <span
+                                                id="no_of_applications"></span></h4>
                                     </div>
 
                                     <div class="card-body">
@@ -192,7 +199,7 @@
                             </div>
                             <div class="col-sm-12">
                                 <div class="card">
-                                    <div class="card-header">
+                                    <!-- <div class="card-header">
                                         <h4 class="widget-title lighter smaller"><strong>Investment</strong> <span id="no_of_investments"></span></h4>
                                     </div>
 
@@ -214,13 +221,14 @@
                                                 </table>
                                             </div>
                                         </div>
-                                    </div>
+                                    </div> -->
                                 </div>
                             </div>
                             <div class="col-sm-12">
                                 <div class="card">
                                     <div class="card-header">
-                                        <h4 class="widget-title lighter smaller"><strong>Activities</strong> <span id="no_of_activities"></span></h4>
+                                        <h4 class="widget-title lighter smaller"><strong>Activities</strong> <span
+                                                id="no_of_activities"></span></h4>
                                     </div>
 
                                     <div id="feed" class="card-body">
@@ -301,8 +309,8 @@
 
 
             </div><!-- .animated -->
-            <div id="wait" style=";width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;"><img
-                    src='spinner.gif' width="100" height="100" style="background-color: transparent" /></div>
+            <div id="wait" style=";width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;">
+                <img src='spinner.gif' width="100" height="100" style="background-color: transparent" /></div>
         </div><!-- .content -->
 
         <div class="modal fade" id="escrowHistory" tabindex="-1" role="dialog" aria-labelledby="escrowHistoryLabel">
@@ -310,7 +318,8 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h4 class="modal-title" id="escrowHistoryLabel">Escrow History</h4>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                aria-hidden="true">&times;</span></button>
                     </div>
                     <div class="modal-body">
                         <table id="escrow-history" class="table table-striped table-bordered">

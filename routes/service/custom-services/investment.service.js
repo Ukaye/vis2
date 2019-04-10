@@ -153,7 +153,7 @@ router.post('/create', function (req, res, next) {
                             .catch(function (error) {});
 
                         query = `SELECT * FROM investment_product_posts
-                            WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
+                            WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
                         endpoint = "/core-service/get";
                         url = `${HOST}${endpoint}`;
                         axios.get(url, {
@@ -343,7 +343,7 @@ router.get('/client-investments/:id', function (req, res, next) {
     let draw = req.query.draw;
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
-    let query = `SELECT v.ID,v.ref_no,c.fullname,v.description,v.amount,v.txn_date,p.ID as productId,u.fullname,v.approvalDone,v.reviewDone,v.postDone,
+    let query = `SELECT v.ID,v.ref_no,c.fullname,v.description,v.amount,v.txn_date,p.ID as productId,u.fullname as createdByName,v.approvalDone,v.reviewDone,v.postDone,
     p.code,p.name,v.ref_no, v.isApproved,v.is_credit,v.balance,v.is_capital,v.investmentId FROM investment_txns v 
     left join investments i on v.investmentId = i.ID
     left join clients c on i.clientId = c.ID

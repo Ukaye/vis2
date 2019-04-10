@@ -291,8 +291,8 @@ function bindDataTable() {
                     <div class="dropdown-menu" aria-labelledby="dropdownMenu2">
                     <a class="dropdown-item" href="./add-investment-products?id=${full.ID}">Edit</a> 
                     <button type="button" class="dropdown-item ${status_class}" onclick="updateStatus(${full.ID},${status_})">${status_label}</button>
+                    <button class="dropdown-item" type="button" data-toggle="modal" data-target="#viewReviewModal" onclick="onReview('${full.name}','${full.ID}')">Set Review</button>
                     <button class="dropdown-item" type="button" data-toggle="modal" data-target="#viewRequirementModal" onclick="onRequirement('${full.name}','${full.ID}')">Set Approval</button>
-                    <button class="dropdown-item" type="button" data-toggle="modal" data-target="#viewReviewModal" onclick="onReview('${full.name}','${full.ID}')">Set Reviewer</button>
                     <button class="dropdown-item" type="button" data-toggle="modal" data-target="#viewPostModal" onclick="onPost('${full.name}','${full.ID}')">Set Post</button>
                     </div>
                 </div>`;
@@ -522,9 +522,11 @@ function getProductRequirement(id) {
                 "mRender": function (data, type, full) {
                     if (full.operationId.toString() === "1") {
                         return "Deposit";
-                    } else if (full.operationId.toString() === "2") {
-                        return "Transfer";
-                    } else if (full.operationId.toString() === "3") {
+                    } 
+                    // else if (full.operationId.toString() === "2") {
+                    //     return "Transfer";
+                    // } 
+                    else if (full.operationId.toString() === "3") {
                         return "Withdrawal";
                     }
                 }
@@ -611,9 +613,11 @@ function getProductReview(id) {
                 "mRender": function (data, type, full) {
                     if (full.operationId.toString() === "1") {
                         return "Deposit";
-                    } else if (full.operationId.toString() === "2") {
-                        return "Transfer";
-                    } else if (full.operationId.toString() === "3") {
+                    } 
+                    // else if (full.operationId.toString() === "2") {
+                    //     return "Transfer";
+                    // } 
+                    else if (full.operationId.toString() === "3") {
                         return "Withdrawal";
                     }
                 }
@@ -700,9 +704,11 @@ function getProductPost(id) {
                 "mRender": function (data, type, full) {
                     if (full.operationId.toString() === "1") {
                         return "Deposit";
-                    } else if (full.operationId.toString() === "2") {
-                        return "Transfer";
-                    } else if (full.operationId.toString() === "3") {
+                    } 
+                    // else if (full.operationId.toString() === "2") {
+                    //     return "Transfer";
+                    // } 
+                    else if (full.operationId.toString() === "3") {
                         return "Withdrawal";
                     }
                 }
