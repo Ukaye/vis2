@@ -70,11 +70,9 @@ function bindDataTable(id) {
                     order: tableHeaders[aoData[2].value[0].column].query
                 },
                 success: function (data) {
-                    if (aoData[3].value === 0) {
-                        selectedInvestment = data.data[0];
-                        $("#client_name").html(data.data[0].fullname);
-                        $("#inv_name").html(`${data.data[0].name} (${data.data[0].code})`);
-                    }
+                    selectedInvestment = data.data[0];
+                    $("#client_name").html(data.data[0].fullname);
+                    $("#inv_name").html(`${data.data[0].name} (${data.data[0].code})`);
                     fnCallback(data)
                 }
             });
@@ -153,7 +151,68 @@ function bindDataTable(id) {
     });
 }
 
+function onTerminateInvest() {
+    swal({
+            title: "Are you sure?",
+            text: "Once terminated, you will not be able to reverse this transaction!",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        })
+        .then((willDelete) => {
+            if (willDelete) {
+                let _mRoleId = [];
+                let withdrawalOperation = 3;
+                let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === withdrawalOperation && status === 1);
+                if (mRoleId.length === 0) {
+                    _mRoleId.push({
+                        roles: "[]",
+                        operationId: withdrawalOperation
+                    });
+                } else {
+                    _mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === withdrawalOperation && status === 1);
+                }
+                let investmentOps = {
+                    description: 'Terminate Investment',
+                    is_credit: 0,
+                    investmentId: selectedInvestment.investmentId,
+                    operationId: withdrawalOperation,
+                    is_capital: 0,
+                    isApproved: 0,
+                    status: 0,
+                    isterminate: 1,
+                    approvedBy: '',
+                    createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
+                    roleIds: _mRoleId,
+                    productId: selectedInvestment.productId,
+                };
 
+                $.ajax({
+                    url: `investment-txns/terminate`,
+                    'type': 'post',
+                    'data': investmentOps,
+                    'success': function (data) {
+                        if (data.status === undefined) {
+                            $('#wait').hide();
+                            $("#input_amount").val('');
+                            $("#input_description").val('');
+                            swal('Investment terminate successful!', '', 'success');
+                            bindDataTable(selectedInvestment.investmentId, false);
+                        } else {
+                            $('#wait').hide();
+                            swal('Oops! An error occurred while executing terminating investment', '', 'error');
+                        }
+                    },
+                    'error': function (err) {
+                        $('#wait').hide();
+                        swal('Oops! An error occurred while executing terminating investment', '', 'error');
+                    }
+                });
+            } else {
+                swal("Investment remains active!");
+            }
+        });
+}
 
 $(document).ready(function () {});
 
@@ -246,7 +305,6 @@ function setReviewRequirements(value) {
         url: `investment-txns/get-txn-user-roles/${value.ID}`,
         'type': 'get',
         'success': function (data) {
-            console.log(data);
             if (data.length > 0) {
                 if (data.status === undefined) {
                     $('#viewReviewModalHeader').html(data[0].description);
@@ -272,7 +330,7 @@ function setReviewRequirements(value) {
                                         </div>
                                     </div>
                                     <div class="form-group col-6" style="vertical-align: middle">
-                                        <button type="button" ${(element.isReviewed===1)?'disabled':''} class="btn btn-success btn-sm" onclick="onReviewed(${1},${element.approvalId},${element.txnId})">Approve</button>
+                                        <button type="button" ${(element.isReviewed===1)?'disabled':''} class="btn btn-success btn-sm" onclick="onReviewed(${1},${element.approvalId},${element.txnId})">Review</button>
                                         <button type="button" ${(element.isReviewed===0)?'disabled':''} class="btn btn-danger btn-sm" onclick="onReviewed(${0},${element.approvalId},${element.txnId})">Deny</button>
                                     </div>
                                 </div>
@@ -288,7 +346,6 @@ function setReviewRequirements(value) {
             }
         },
         'error': function (err) {
-            console.log(err);
             $('#wait').hide();
         }
     });
@@ -498,7 +555,7 @@ function setPostRequirements(value) {
                                     </div>
                                 </div>
                                 <div class="form-group col-6" style="vertical-align: middle">
-                                    <button type="button" ${(element.isPosted===1)?'disabled':''} class="btn btn-success btn-sm" onclick="onPost(${1},${element.approvalId},${element.txnId})">Approve</button>
+                                    <button type="button" ${(element.isPosted===1)?'disabled':''} class="btn btn-success btn-sm" onclick="onPost(${1},${element.approvalId},${element.txnId})">Post</button>
                                     <button type="button" ${(element.isPosted===0)?'disabled':''} class="btn btn-danger btn-sm" onclick="onPost(${0},${element.approvalId},${element.txnId})">Deny</button>
                                 </div>
                             </div>
