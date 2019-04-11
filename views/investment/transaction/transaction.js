@@ -216,14 +216,6 @@ function onTerminateInvest() {
 
 $(document).ready(function () {});
 
-$(document).ajaxStart(function () {
-    $("#wait").css("display", "block");
-});
-
-$(document).ajaxComplete(function () {
-    $("#wait").css("display", "none");
-});
-
 function onOpenMode(name, operationId, is_credit) {
     selectedInvestment._operationId = operationId;
     selectedInvestment._is_credit = is_credit;

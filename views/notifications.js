@@ -280,7 +280,7 @@ function notifications(){
                         icon = '<img src="atb-logo.png">'
                 }
                 item = '<div class="feed-body-content">\n' +
-'                            <p class="feed-body-header">'+$.timeago(val.date_created)+'</time></p>\n' +
+'                            <p class="feed-body-header">'+jQuery.timeago(val.date_created)+'</time></p>\n' +
 '                            <div class="row">\n' +
 '                                <span class="col-md-3" style="padding-right: 0">'+icon+'</span>\n' +
 '                                <a href="'+link+'" class="col-md-9" style="padding-left: 10px;font-size: 14px">'+val.description+'\n' +

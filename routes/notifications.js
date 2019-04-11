@@ -213,8 +213,8 @@ route.get('/all-updates', function(req, res){
                             }
                             else {
                                 query2 = `select *, notification_id as ID, category, description, date_created, view_status, (select fullname from users where users.id = userid) user, \n`+
-                                    `(select GROUP_CONCAT(distinct(approverid)) as approvers from workflow_stages where workflowid = (select workflowid from applications where id = created_application)) approvers, `+
-                                    `created_application  `+
+                                    `(select GROUP_CONCAT(distinct(approverid)) as approvers from workflow_stages where workflowid = (select workflowid from applications where id = affected)) approvers, `+
+                                    `affected  `+
                                     `from pending_records inner join notifications on notification_id = notifications.id \n`+
                                     `where status = 1 and userid <> ${user} and category = ? and view_status in (1,2) order by notification_id desc`;
                             }

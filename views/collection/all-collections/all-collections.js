@@ -3,14 +3,6 @@ $(document).ready(function() {
     loadCollections();
 });
 
-$(document).ajaxStart(function(){
-    $("#wait").css("display", "block");
-});
-
-$(document).ajaxComplete(function(){
-    $("#wait").css("display", "none");
-});
-
 function loadCollections(){
     $.ajax({
         'url': '/user/collections/filter?type=overdue&&range=61',

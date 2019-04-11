@@ -4,14 +4,6 @@ $(document).ready(function () {
     getApplicationSettings();
 });
 
-$(document).ajaxStart(function () {
-    $("#wait").css("display", "block");
-});
-
-$(document).ajaxComplete(function () {
-    $("#wait").css("display", "none");
-});
-
 $("#loan_requested_min").on("keyup", function () {
     let val = $("#loan_requested_min").val();
     $("#loan_requested_min").val(numberToCurrencyformatter(val));

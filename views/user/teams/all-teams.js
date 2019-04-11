@@ -6,14 +6,6 @@ $(document).ready(function() {
     $('#bootstrap-data-table-export').DataTable();
 });
 
-$(document).ajaxStart(function(){
-    $("#wait").css("display", "block");
-});
-
-$(document).ajaxComplete(function(){
-    $("#wait").css("display", "none");
-});
-
 function check(){
     if (localStorage.getItem('role') !== 1){
         jQuery('#car-models').hide();

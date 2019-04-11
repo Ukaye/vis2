@@ -1,5 +1,5 @@
 $(document).ready(function() {
-//            getUsers();
+    loadUsers();
     getRoles();
     getTargets();
     getCommissions();
@@ -10,14 +10,6 @@ $(document).ready(function() {
 
 $("#cpassword").change(function(){
     confirmPassword();
-});
-
-$(document).ajaxStart(function(){
-    $("#wait").css("display", "block");
-});
-
-$(document).ajaxComplete(function(){
-    $("#wait").css("display", "none");
 });
 
 let results;
