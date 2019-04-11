@@ -1,5 +1,5 @@
 $(document).ready(function() {
-//            getUsers();
+    loadUsers();
     getRoles();
     getTargets();
     getCommissions();
