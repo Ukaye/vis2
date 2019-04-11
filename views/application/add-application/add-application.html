@@ -85,7 +85,7 @@
     <div class="content mt-3">
         <div class="animated fadeIn">
             <div class="row">
-                <div id="step1" class="col-xs-12 col-sm-12" style="display: none;">
+                <div id="step1" class="col-xs-12 col-sm-12">
                     <div class="card">
                         <div class="card-header">
                             <strong>Add Application Data (Step 1)</strong> <small> Loan Information</small>
@@ -175,7 +175,7 @@
                                     <label for="stock_value" class="form-control-label">Value of Stock<strong style="color:red"> *</strong></label>
                                     <div class="input-group">
                                         <div class="input-group-addon"><i class="fa fa-plus"></i></div>
-                                        <input type="number" id="stock_value" class="form-control" required="required">
+                                        <input type="text" id="stock_value" class="form-control" required="required">
                                     </div>
                                 </div>
                                 <div class="col-sm-6 form-group">
@@ -191,7 +191,7 @@
                                     <label for="loan_amount" class="form-control-label">Loan Amount<strong style="color:red"> *</strong></label>
                                     <div class="input-group">
                                         <div class="input-group-addon"><i class="fa fa-money"></i></div>
-                                        <input type="number" id="loan_amount" class="form-control" required="required">
+                                        <input type="text" id="loan_amount" class="form-control" required="required">
                                     </div>
                                     <small class="form-text text-muted">Min: <span id="loan_requested_min_">1.00</span>(NGN) Max: <span id="loan_requested_max_">100,000,000.00</span>(NGN)</small>
                                 </div>
@@ -199,7 +199,7 @@
                                     <label for="loan_serviced" class="form-control-label">Number of Loan(s) Serviced<strong style="color:red"> *</strong></label>
                                     <div class="input-group">
                                         <div class="input-group-addon"><i class="fa fa-money"></i></div>
-                                        <input type="number" id="loan_serviced" class="form-control" required="required">
+                                        <input type="text" id="loan_serviced" class="form-control" required="required">
                                     </div>
                                 </div>
                                 <div class="col-sm-6 form-group market_name-div" style="display: none;">
@@ -213,7 +213,7 @@
                                     <label for="business_turnover" class="form-control-label">Business Turn Over<strong style="color:red"> *</strong></label>
                                     <div class="input-group">
                                         <div class="input-group-addon"><i class="fa fa-money"></i></div>
-                                        <input type="number" id="business_turnover" class="form-control" required="required">
+                                        <input type="text" id="business_turnover" class="form-control" required="required">
                                     </div>
                                 </div>
                                 <div class="col-sm-6 form-group market_name-div" style="display: none;"></div>
@@ -221,7 +221,7 @@
                                     <label for="tenor" class="form-control-label">Tenor<strong style="color:red"> *</strong></label>
                                     <div class="input-group">
                                         <div class="input-group-addon"><i class="fa fa-refresh"></i></div>
-                                        <input type="number" id="tenor" class="form-control" required="required">
+                                        <input type="text" id="tenor" class="form-control" required="required">
                                         <select id="tenor_type" class="form-control" required="required">
                                             <option value="monthly" selected="selected">Monthly</option>
                                             <option value="weekly">Weekly</option>
@@ -233,7 +233,7 @@
                                     <label for="rate" class="form-control-label">Interest Rate<strong style="color:red"> *</strong></label>
                                     <div class="input-group">
                                         <div class="input-group-addon"><i class="fa fa-money"></i></div>
-                                        <input type="number" id="rate" class="form-control" required="required">
+                                        <input type="text" id="rate" class="form-control" required="required">
                                     </div>
                                     <small class="form-text text-muted">Min: <span id="interest_rate_min_">1</span>%  Max: <span id="interest_rate_max_">1000</span>% </small>
                                 </div>
@@ -297,7 +297,7 @@
                         </div>
                     </div>
                 </div>
-                <div id="step2" class="col-xs-12 col-sm-12">
+                <div id="step2" class="col-xs-12 col-sm-12" style="display: none;">
                     <div class="card">
                         <div class="card-header">
                             <strong>Add Application Data (Step 2)</strong> <small> Loan Information</small>

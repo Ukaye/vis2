@@ -134,22 +134,28 @@
     }
 
     $('#stock_value').keyup(function () {
-        triggerAmortization();
+        let val = $("#stock_value").val();
+        $("#stock_value").val(numberToCurrencyformatter(val));
     });
     $('#loan_amount').keyup(function () {
-        triggerAmortization();
+        let val = $("#loan_amount").val();
+        $("#loan_amount").val(numberToCurrencyformatter(val));
     });
     $('#loan_serviced').keyup(function () {
-        triggerAmortization();
+        let val = $("#loan_serviced").val();
+        $("#loan_serviced").val(numberToCurrencyformatter(val));
     });
     $('#business_turnover').keyup(function () {
-        triggerAmortization();
+        let val = $("#business_turnover").val();
+        $("#business_turnover").val(numberToCurrencyformatter(val));
     });
     $('#tenor').keyup(function () {
-        triggerAmortization();
+        let val = $("#tenor").val();
+        $("#tenor").val(numberToCurrencyformatter(val));
     });
     $('#rate').keyup(function () {
-        triggerAmortization();
+        let val = $("#rate").val();
+        $("#rate").val(numberToCurrencyformatter(val));
     });
     $('#term').keyup(function () {
         triggerAmortization();
@@ -514,6 +520,7 @@
                         and Maximum is ₦${numberToCurrencyformatter(settings.loan_requested_max)}`,'','warning');
 
             $('#wait').show();
+            return console.log(obj)
             $.ajax({
                 'url': '/preapplication/create',
                 'type': 'post',
@@ -524,7 +531,7 @@
                     $('#interest-rate').val("");
                     $('#term').val("");
                     $('#repayment-date').val("");
-                    window.location.href = '/add-application?id='+data.response.ID;
+                    // window.location.href = '/add-application?id='+data.response.ID;
                 },
                 'error': function (err) {
                     console.log(err);
