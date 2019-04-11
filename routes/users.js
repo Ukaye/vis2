@@ -190,7 +190,7 @@ users.post('/new-user', function(req, res, next) {
                                 payload.category = 'Users'
                                 payload.userid = req.cookies.timeout
                                 payload.description = 'New User Created'
-                                payload.created_user = re[0]['ID']
+                                payload.affected = re[0]['ID']
                                 notificationsService.log(req, payload)
                                 res.send(JSON.stringify({"status": 200, "error": null, "response": re}));
                             }
@@ -230,7 +230,7 @@ users.post('/new-client', function(req, res, next) {
                             payload.category = 'Clients'
                             payload.userid = req.cookies.timeout
                             payload.description = 'New Client Created'
-                            payload.created_client = re[0]['ID']
+                            payload.affected = re[0]['ID']
                             notificationsService.log(req, payload)
                             res.send(JSON.stringify({"status": 200, "error": null, "response": re}));
                         }
@@ -1329,7 +1329,7 @@ users.post('/edit-client/:id', function(req, res, next) {
             console.log('error'); console.log(error)
             res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
         } else {
-            console.log('here')
+            console.log(results)
             let payload = {}
             payload.category = 'Clients'
             payload.userid = req.cookies.timeout
@@ -2527,7 +2527,7 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                     payload.category = 'Application'
                     payload.userid = req.cookies.timeout
                     payload.description = 'Loan Application Payment Confirmed'
-                    payload.affected = req.params.id
+                    payload.affected = req.params.application_id
                     notificationsService.log(req, payload)
                     res.send({"status": 200, "message": "Invoice Payment confirmed successfully!"});
                 }
@@ -2635,21 +2635,30 @@ users.get('/application/invoice-history/:id', function(req, res, next) {
 });
 
 users.get('/application/payment-reversal/:id/:invoice_id', function(req, res, next) {
+    let id;
     db.query('UPDATE schedule_history SET status=0 WHERE ID=?', [req.params.id], function (error, history, fields) {
         if(error){
             res.send({"status": 500, "error": error, "response": null});
         } else {
-            db.query('UPDATE application_schedules SET payment_status=0 WHERE ID=?', [req.params.invoice_id], function (error, history, fields) {
-                if(error){
+            db.query('select applicationID from schedule_history where ID = ?', [req.params.id], function(error, result, fields){
+                if (error){
                     res.send({"status": 500, "error": error, "response": null});
-                } else {
-                    let payload = {}
-                    payload.category = 'Application'
-                    payload.userid = req.cookies.timeout
-                    payload.description = 'Payment Reversed for Loan'
-                    payload.affected = req.params.id
-                    notificationsService.log(req, payload)
-                    res.send({"status": 200, "message": "Payment reversed successfully!", "response":history});
+                }
+                else {
+                    id = result[0]['applicationID']
+                    db.query('UPDATE application_schedules SET payment_status=0 WHERE ID=?', [req.params.invoice_id], function (error, history, fields) {
+                        if(error){
+                            res.send({"status": 500, "error": error, "response": null});
+                        } else {
+                            let payload = {}
+                            payload.category = 'Application'
+                            payload.userid = req.cookies.timeout
+                            payload.description = 'Payment Reversed for Loan'
+                            payload.affected = id
+                            notificationsService.log(req, payload)
+                            res.send({"status": 200, "message": "Payment reversed successfully!", "response":history});
+                        }
+                    });
                 }
             });
         }

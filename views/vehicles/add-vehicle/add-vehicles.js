@@ -8,15 +8,6 @@ $(document).ready(function() {
     getMakes();
 });
 
-$(document).ajaxStart(function(){
-    $("#wait").css("display", "block");
-});
-
-$(document).ajaxComplete(function(){
-    $("#wait").css("display", "none");
-});
-
-
 $("#make").on('change', function () {
     var selectedID = $(this).find('option:selected').attr('id');
     getModels(selectedID);

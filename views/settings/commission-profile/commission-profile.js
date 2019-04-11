@@ -7,14 +7,6 @@ $(document).on("click", "#accelerator", function (e) {
     $('.accelerator').toggle();
 });
 
-$(document).ajaxStart(function(){
-    $("#wait").css("display", "block");
-});
-
-$(document).ajaxComplete(function(){
-    $("#wait").css("display", "none");
-});
-
 $("#submit-commission").click(function () {
     let commission = {};
     commission.title = $('#commission-title').val();

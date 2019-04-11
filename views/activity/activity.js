@@ -675,7 +675,7 @@ function upload(id, files, num){
         let formData = new FormData();
         formData.append('file', files); formData.append('folder', folder_name); formData.append('num', num);
         $.ajax({
-            url: "user/attach-files/"+folder_name,
+            url: "/user/attach-files/"+folder_name,
             type: "POST",
             data: formData,
             processData: false,
@@ -695,7 +695,7 @@ function loadAttachments(activity){
     let $carousel_inner = $('.carousel-inner');
     $('#attachment-list').children().remove();
     $.ajax({
-        'url': 'user/attached-images/activity'+activity,
+        'url': '/user/attached-images/activity'+activity,
         'type': 'get',
         'success': function (data) {
             let res = JSON.parse(data);

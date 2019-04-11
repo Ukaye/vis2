@@ -3,14 +3,6 @@
         getBanks();
     });
 
-    $(document).ajaxStart(function(){
-        $("#wait").css("display", "block");
-    });
-
-    $(document).ajaxComplete(function(){
-        $("#wait").css("display", "none");
-    });
-
     $("#otp").on("keyup", function () {
         let val = $("#otp").val();
         $("#otp").val(integerFormat(val));

@@ -3,14 +3,6 @@ $(document).ready(function() {
     loadComments();
 });
 
-$(document).ajaxStart(function(){
-    $("#wait").css("display", "block");
-});
-
-$(document).ajaxComplete(function(){
-    $("#wait").css("display", "none");
-});
-
 const urlParams = new URLSearchParams(window.location.search);
 const application_id = urlParams.get('id');
 
