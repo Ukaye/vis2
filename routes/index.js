@@ -1100,6 +1100,7 @@ router.post('/maintenance-upload/:number_plate/', function(req, res) {
 
 router.post('/workflows', function(req, res, next) {
     let count = 0,
+        created_workflow,
         stages = req.body.stages,
         workflow = req.body.workflow,
         date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -1114,6 +1115,7 @@ router.post('/workflows', function(req, res, next) {
             connection.query('SELECT * FROM workflows WHERE ID = LAST_INSERT_ID()', function (error, results, fields) {
                 async.forEach(stages, function (stage, callback) {
                     stage.workflowID = results[0]['ID'];
+                    created_workflow = results[0]['ID'];
                     stage.date_created = date_created;
                     delete stage.stage_name;
                     delete stage.type;
@@ -1130,6 +1132,12 @@ router.post('/workflows', function(req, res, next) {
                 }, function (data) {
                     connection.query('SELECT * FROM workflows AS w WHERE w.status <> 0 ORDER BY w.ID desc', function (error, results, fields) {
                         connection.release();
+                        let payload = {}
+                        payload.category = 'Workflow'
+                        payload.userid = req.cookies.timeout
+                        payload.description = 'New Workflow Created'
+                        payload.affected = created_workflow
+                        notificationsService.log(req, payload)
                         res.send({"status": 200, "error": null, "message": "Workflow with "+count+" stage(s) created successfully!", "response": results});
                     });
                 })
@@ -1140,6 +1148,7 @@ router.post('/workflows', function(req, res, next) {
 
 router.post('/workflows/:workflow_id', function(req, res, next) {
     let count = 0,
+        created_workflow,
         stages = req.body.stages,
         workflow = req.body.workflow,
         workflow_id = req.params.workflow_id,
@@ -1159,6 +1168,7 @@ router.post('/workflows/:workflow_id', function(req, res, next) {
                     connection.query('SELECT * FROM workflows WHERE ID = LAST_INSERT_ID()', function (error, results, fields) {
                         async.forEach(stages, function (stage, callback) {
                             stage.workflowID = results[0]['ID'];
+                            created_workflow = results[0]['ID'];
                             stage.date_created = date_created;
                             delete stage.ID;
                             delete stage.stage_name;
@@ -1176,6 +1186,12 @@ router.post('/workflows/:workflow_id', function(req, res, next) {
                         }, function (data) {
                             connection.query('SELECT * FROM workflows AS w WHERE w.status <> 0 ORDER BY w.ID desc', function (error, results, fields) {
                                 connection.release();
+                                let payload = {}
+                                payload.category = 'Workflow'
+                                payload.userid = req.cookies.timeout
+                                payload.description = 'New Workflow Created'
+                                payload.affected = created_workflow
+                                notificationsService.log(req, payload)
                                 res.send({"status": 200, "error": null, "message": "Workflow with "+count+" stage(s) created successfully!", "response": results});
                             });
                         })
@@ -1209,6 +1225,12 @@ router.post('/edit-workflows/:workflow_id', function(req, res, next) {
         }, function (data) {
             connection.query('SELECT * FROM workflows AS w WHERE w.status <> 0 ORDER BY w.ID desc', function (error, results, fields) {
                 connection.release();
+                let payload = {}
+                payload.category = 'Workflow'
+                payload.userid = req.cookies.timeout
+                payload.description = 'Workflow Edited'
+                payload.affected = req.params.workflow_id
+                notificationsService.log(req, payload)
                 res.send({"status": 200, "error": null, "message": "Workflow with "+count+" stage(s) updated successfully!", "response": results});
             });
         })
@@ -1390,7 +1412,15 @@ router.post('/document-upload/:id/:name', function(req, res) {
                                 sampleFile.mv('files/application-'+application_id+'/'+application_id+'_'+name+'.'+extension, function(err) {
                                     if (err)
                                         return res.status(500).send(err);
-                                    res.send({files:[sampleFile]});
+                                    else {
+                                        let payload = {}
+                                        payload.category = 'Application'
+                                        payload.userid = req.cookies.timeout
+                                        payload.description = 'New Document Upload'
+                                        payload.affected = application_id
+                                        notificationsService.log(req, payload)
+                                        res.send({files:[sampleFile]});
+                                    }
                                 });
                             }
                         });

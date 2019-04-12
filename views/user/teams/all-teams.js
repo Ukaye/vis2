@@ -1,4 +1,5 @@
 $(document).ready(function() {
+    loadTeams();
     getUsers();
     getTargets();
     $('#team_targets').DataTable();
