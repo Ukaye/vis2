@@ -1,5 +1,7 @@
 const
+    fs = require('fs'),
     axios = require('axios'),
+    async = require('async'),
     moment = require('moment'),
     express = require('express'),
     router = express.Router();
@@ -75,7 +77,8 @@ router.get('/get', function (req, res, next) {
 });
 
 router.get('/get/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
+    const HOST = `${req.protocol}://${req.get('host')}`,
+        path = `files/preapplication-${req.params.id}/`;
     let query = `SELECT p.*, c.fullname, c.email, c.phone FROM preapplications p 
                 INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.id} AND p.status = 1`,
         endpoint = '/core-service/get',
@@ -85,9 +88,24 @@ router.get('/get/:id', function (req, res, next) {
             query: query
         }
     }).then(response => {
-        res.send({
-            data: response.data
-        });
+        let obj = {},
+            result = (response.data === undefined) ? {} : response.data[0];
+        if (!fs.existsSync(path)) {
+            result.files = {};
+            res.send(result);
+        } else {
+            fs.readdir(path, function (err, files){
+                async.forEach(files, function (file, callback){
+                    let filename = file.split('.')[0].split('_');
+                    filename.shift();
+                    obj[filename.join('_')] = path+file;
+                    callback();
+                }, function(data){
+                    result.files = obj;
+                    res.send(result);
+                });
+            });
+        }
     });
 });
 
@@ -131,6 +149,61 @@ router.get('/reject/:id', function (req, res, next) {
         .catch(function (error) {
             res.send({status: 500, error: error, response: null});
         });
+});
+
+router.post('/upload/:id/:name', function(req, res) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let	name = req.params.name,
+        preapplication_id = req.params.id,
+        sampleFile = req.files.file,
+        extArray = sampleFile.name.split("."),
+        extension = extArray[extArray.length - 1],
+        query = `SELECT * FROM preapplications WHERE ID = ${preapplication_id}`,
+        endpoint = '/core-service/get',
+        url = `${HOST}${endpoint}`;
+
+    if (!name) return res.status(400).send('No files were uploaded.');
+    if (!req.files) return res.status(400).send('No files were uploaded.');
+    if (!req.params || !preapplication_id || !name) return res.status(400).send('No parameters specified!');
+
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        let preapplication = response.data;
+        if (!preapplication || !preapplication[0]) {
+            res.send({"status": 500, "error": "Preapplication does not exist", "response": null});
+        } else {
+            const file_folder = `files/preapplication-${preapplication_id}/`;
+            fs.stat(file_folder, function(err) {
+                if (err && (err.code === 'ENOENT'))
+                    fs.mkdirSync(file_folder);
+
+                const file_url = `${file_folder}${preapplication_id}_${name}.${extension}`;
+                fs.stat(file_url, function (err) {
+                    if (err) {
+                        sampleFile.mv(file_url, function(err) {
+                            if (err) return res.status(500).send(err);
+                            res.send({file:file_url, data: sampleFile});
+                        });
+                    } else {
+                        fs.unlink(file_url,function(err){
+                            if(err){
+                                return console.log(err);
+                            } else {
+                                sampleFile.mv(file_url, function(err) {
+                                    if (err)
+                                        return res.status(500).send(err);
+                                    res.send({file:file_url, data: sampleFile});
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+        }
+    });
 });
 
 module.exports = router;

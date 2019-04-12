@@ -13,6 +13,7 @@
     <link rel="shortcut icon" href="favicon.png">
     <link rel="stylesheet" href="assets/css/normalize.css">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <!--<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">-->
     <link rel="stylesheet" href="assets/css/font-awesome.min.css">
     <link rel="stylesheet" href="assets/css/themify-icons.css">
     <link rel="stylesheet" href="assets/css/flag-icon.min.css">
@@ -22,6 +23,7 @@
     <link rel="stylesheet" href="assets/css/lib/chosen/chosen.min.css">
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,800' rel='stylesheet' type='text/css'>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.3/jquery.fancybox.min.css">
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
     <script src="assets/js/vendor/jquery-2.1.4.min.js"></script>
     <style type="text/css">
@@ -47,6 +49,10 @@
         }
         .image-upload {
             margin-left: 15px;
+        }
+        .upload-div img{
+            width: 500px;
+            height: 250px;
         }
     </style>
 </head>
@@ -262,9 +268,10 @@
                                         <input type="radio" name="spouse_knowledge" value="no">No
                                     </label>
                                 </div>
-                                <div class="col-sm-6 form-group market_name-div" style="display: none;">
+                                <div class="col-sm-6 form-group upload-div" style="display: none;">
                                     <div class="form-control">
-                                        <label for="file-upload-2" class="custom-file-upload">
+                                        <p id="image-preview-1" style="display: none;"></p>
+                                        <label for="file-upload-1" class="custom-file-upload">
                                             <i class="fa fa-photo"></i> Picture of Shop 1
                                         </label>
                                         <input id="file-upload-1" class="image-upload" type="file" tabindex="6">
@@ -272,11 +279,12 @@
                                         <small><strong>Image must be JPG/JPEG or PNG format, maximum 8MB</strong></small>
                                     </div>
                                     <div class="form-control pull-right" style="border-color: transparent">
-                                        <button class="btn btn-primary pull-right write" onclick="upload(1)">Upload 1</button>
+                                        <button id="upload-1" class="btn btn-primary pull-right write">Upload 1</button>
                                     </div>
                                 </div>
-                                <div class="col-sm-6 form-group market_name-div" style="display: none;">
+                                <div class="col-sm-6 form-group upload-div" style="display: none;">
                                     <div class="form-control">
+                                        <p id="image-preview-2" style="display: none;"></p>
                                         <label for="file-upload-2" class="custom-file-upload">
                                             <i class="fa fa-photo"></i> Picture of Shop 2
                                         </label>
@@ -285,12 +293,13 @@
                                         <small><strong>Image must be JPG/JPEG or PNG format, maximum 8MB</strong></small>
                                     </div>
                                     <div class="form-control pull-right" style="border-color: transparent">
-                                        <button class="btn btn-primary pull-right write" onclick="upload(2)">Upload 2</button>
+                                        <button id="upload-2" class="btn btn-primary pull-right write">Upload 2</button>
                                     </div>
                                 </div>
                             </div>
-                            <div class = "form-group">
+                            <div>
                                 <input id="saveApplication" type="submit" class="btn btn-success btn-flat m-b-30 m-t-30 write" value="Save Application"/>
+                                <input id="proceed" type="submit" class="btn btn-success btn-flat m-b-30 m-t-30 write" value="Proceed" style="display: none;"/>
                                 <input id="approveApplication" type="submit" class="btn btn-success btn-flat m-b-30 m-t-30 write" value="Approve Application" style="display: none;"/>
                                 <input id="rejectApplication" type="submit" class="btn btn-danger btn-flat m-b-30 m-t-30 write" value="Reject Application" style="display: none;"/>
                             </div>
@@ -420,11 +429,13 @@
 <div id="panels" include-html="/includes/notifications.html"></div>
 
 <script src="assets/js/popper.min.js"></script>
+<script src="/assets/js/bootstrap.min.js"></script>
 <script src="assets/js/plugins.js"></script>
 <script src="assets/js/main.js"></script>
 <script src="assets/js/lib/chosen/chosen.jquery.min.js"></script>
 <script src="assets/js/lib/data-table/datatables.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.3/jquery.fancybox.min.js"></script>
 <script src="../../js/helper-functions.js"></script>
 <script src="../../menus/menu-items.js"></script>
 <script type="text/javascript" src="../../application/add-application/add-application.js"></script>

@@ -2,10 +2,97 @@
     jQuery(document).ready(function() {
         getUsers();
         getWorkflows();
-        getLoanPurposes();
-        getLoanBusinesses();
         getApplicationSettings();
     });
+
+    let preapplication;
+    const urlParams = new URLSearchParams(window.location.search);
+    const preapplication_id = urlParams.get('id');
+
+    function getPreapplication(id) {
+        $.ajax({
+            type: 'GET',
+            url: `/preapplication/get/${id}`,
+            success: function (response) {
+                preapplication = response;
+                if (response.product) {
+                    $('#product').val(response.product).trigger('change');
+                    if (response.product === 'market_loan') {
+                        $('.upload-div').show();
+                    }
+                }
+                if (response.name && response.email) {
+                    $('#name').val($("#name").find(`option[name='${response.email}']`).val());
+                    $("#name").select2("destroy");
+                    $("#name").select2();
+                }
+                if (response.business_turnover)
+                    $('#business_turnover').val(response.business_turnover);
+                if (response.businesses) {
+                    $('#businesses').val(response.businesses);
+                    $("#businesses").select2("destroy");
+                    $("#businesses").select2();
+                }
+                if (response.capital_source)
+                    $('#capital_source').val(response.capital_source);
+                if (response.contribution) {
+                    $(`input[name='contribution_status'][value='yes']`).prop('checked', true).trigger('change');
+                    $('#contribution').val(response.contribution);
+                }
+                if (response.guarantor_address)
+                    $('#guarantor_address').val(response.guarantor_address);
+                if (response.guarantor_name)
+                    $('#guarantor_name').val(response.guarantor_name);
+                if (response.guarantor_phone)
+                    $('#guarantor_phone').val(response.guarantor_phone);
+                if (response.guarantor_relationship)
+                    $('#guarantor_relationship').val(response.guarantor_relationship);
+                if (response.loan_amount)
+                    $('#loan_amount').val(response.loan_amount);
+                if (response.loan_purpose) {
+                    $('#loan_purposes').val(response.loan_purpose);
+                    $("#loan_purposes").select2("destroy");
+                    $("#loan_purposes").select2();
+                }
+                if (response.loan_serviced)
+                    $('#loan_serviced').val(response.loan_serviced);
+                if (response.market_leader_name)
+                    $('#market_leader_name').val(response.market_leader_name);
+                if (response.market_leader_phone)
+                    $('#market_leader_phone').val(response.market_leader_phone);
+                if (response.market_name)
+                    $('#market_name').val(response.market_name);
+                if (response.phone)
+                    $('#phone').val(response.phone);
+                if (response.rate)
+                    $('#rate').val(response.rate);
+                if (response.spouse_knowledge)
+                    $(`input[name='spouse_knowledge'][value='${response.spouse_knowledge}']`).prop('checked', true);
+                if (response.stock_value)
+                    $('#stock_value').val(response.stock_value);
+                if (response.tenor)
+                    $('#tenor').val(response.tenor);
+                if (response.tenor_type)
+                    $('#tenor_type').val(response.tenor_type);
+                if (response.files) {
+                    if (response.files.shop_picture_1) {
+                        $('#image-preview-1').show();
+                        $('#image-preview-1').html(`<a class="thumbnail grouped_elements" rel="grouped_elements" data-toggle="tooltip" 
+                            data-placement="top" title="Click to Expand!" href="/${response.files.shop_picture_1}">
+                                <img src="/${response.files.shop_picture_1}" alt="Shop Picture 1"></a>`);
+                    }
+                    if (response.files.shop_picture_2) {
+                        $('#image-preview-2').show();
+                        $('#image-preview-2').html(`<a class="thumbnail grouped_elements" rel="grouped_elements" data-toggle="tooltip" 
+                            data-placement="bottom" title="Click to Expand!" href="/${response.files.shop_picture_2}">
+                                <img src="/${response.files.shop_picture_2}" alt="Shop Picture 2"></a>`);
+                    }
+                    $("a.grouped_elements").fancybox();
+                    $('.thumbnail').tooltip();
+                }
+            }
+        });
+    }
 
     $('#product').change(function () {
        switch (this.value) {
@@ -29,8 +116,9 @@
             type: "GET",
             url: "/user/users-list-v2",
             success: function (response) {
+                getLoanPurposes();
                 $.each(JSON.parse(response), function (key, val) {
-                    $("#name").append('<option value = "' + encodeURIComponent(JSON.stringify(val)) + '">' + val.fullname + ' &nbsp; (' + val.username + ')</option>');
+                    $("#name").append('<option name="'+val.email+'" value = "' + encodeURIComponent(JSON.stringify(val)) + '">' + val.fullname + ' &nbsp; (' + val.username + ')</option>');
                     $("#user-list").append('<option value = "' + encodeURIComponent(JSON.stringify(val)) + '">' + val.fullname + ' &nbsp; (' + val.username + ')</option>');
                 });
                 $("#name").select2();
@@ -56,6 +144,7 @@
             type: "GET",
             url: "/settings/application/loan_purpose",
             success: function (response) {
+                getLoanBusinesses();
                 $.each(response.response, function (key, val) {
                     $("#purposes").append('<option value = "'+val.ID+'"">'+val.title+'</option>');
                     $("#loan_purposes").append('<option value = "'+val.ID+'"">'+val.title+'</option>');
@@ -75,6 +164,12 @@
                     $("#businesses").append('<option value = "'+val.ID+'"">'+val.name+'</option>');
                 });
                 $("#businesses").select2();
+                if (preapplication_id) {
+                    $('#saveApplication').hide();
+                    $('#approveApplication').show();
+                    $('#rejectApplication').show();
+                    getPreapplication(preapplication_id);
+                }
             }
         });
     }
@@ -466,41 +561,56 @@
 
         $("#saveApplication").click(function () {
             let obj = {},
+                contribution_status = $('input[name=contribution_status]:checked').val(),
                 user = ($('#name').val() !== '-- Choose Client --')? JSON.parse(decodeURIComponent($('#name').val())) : false;
             if (user)
                 obj.userID = user.ID;
                 obj.name = user.fullname;
             obj.product = $('#product').val();
-            obj.userID = $('#name').val();
             obj.loan_amount = currencyToNumberformatter($('#loan_amount').val());
-            obj.interest_rate = currencyToNumberformatter($('#rate').val());
+            obj.rate = currencyToNumberformatter($('#rate').val());
             obj.tenor = currencyToNumberformatter($('#tenor').val());
             obj.tenor_type = $('#tenor_type').val();
             obj.loan_purpose = $('#loan_purposes').val();
             obj.loan_serviced = currencyToNumberformatter($('#loan_serviced').val());
-            obj.market_name = $('#market_name').val();
-            obj.market_leader_name = $('#market_leader_name').val();
-            obj.market_leader_phone = $('#market_leader_phone').val();
-            obj.guarantor_name = $('#guarantor_name').val();
-            obj.guarantor_phone = $('#guarantor_phone').val();
-            obj.guarantor_relationship = $('#guarantor_relationship').val();
-            obj.guarantor_address = $('#guarantor_address').val();
-            obj.businesses = $('#businesses').val();
-            obj.stock_value = currencyToNumberformatter($('#stock_value').val());
-            obj.capital_source = $('#capital_source').val();
-            obj.business_turnover = currencyToNumberformatter($('#business_turnover').val());
-            obj.contribution = $('#contribution').val();
-            obj.spouse_knowledge = $( 'input[name=contribution_status]:checked' ).val();
+            if ($('#market_name').val())
+                obj.market_name = $('#market_name').val();
+            if ($('#market_leader_name').val())
+                obj.market_leader_name = $('#market_leader_name').val();
+            if ($('#market_leader_phone').val())
+                obj.market_leader_phone = $('#market_leader_phone').val();
+            if ($('#guarantor_name').val())
+                obj.guarantor_name = $('#guarantor_name').val();
+            if ($('#guarantor_phone').val())
+                obj.guarantor_phone = $('#guarantor_phone').val();
+            if ($('#guarantor_relationship').val())
+                obj.guarantor_relationship = $('#guarantor_relationship').val();
+            if ($('#guarantor_address').val())
+                obj.guarantor_address = $('#guarantor_address').val();
+            if ($('#businesses').val())
+                obj.businesses = $('#businesses').val();
+            if ($('#stock_value').val())
+                obj.stock_value = currencyToNumberformatter($('#stock_value').val());
+            if ($('#capital_source').val())
+                obj.capital_source = $('#capital_source').val();
+            if ($('#business_turnover').val())
+                obj.business_turnover = currencyToNumberformatter($('#business_turnover').val());
+            if ($('#contribution').val())
+                obj.contribution = $('#contribution').val();
+            if ($('input[name=spouse_knowledge]:checked').val())
+                obj.spouse_knowledge = $('input[name=spouse_knowledge]:checked').val();
             obj.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
-            if (!user || !obj.product || !obj.loan_amount || !obj.interest_rate || !obj.tenor || !obj.tenor_type
+            if (!user || !obj.product || !obj.loan_amount || !obj.rate || !obj.tenor || !obj.tenor_type
                 || obj.loan_purpose === '-- Choose Loan Purpose --' || !obj.loan_serviced) {
                 return notification('Kindly fill all required fields!','','warning');
             }
-            if (obj.product === 'market_loan' && (!obj.market_name || !obj.market_leader_name || !obj.market_leader_phone|| !obj.guarantor_name
-                || !obj.guarantor_phone || !obj.guarantor_relationship || !obj.product || !obj.guarantor_address || !obj.stock_value  || !obj.contribution
+            if (obj.product === 'market_loan' && (!obj.market_name || !obj.market_leader_name || !obj.market_leader_phone || !obj.guarantor_name
+                || !obj.guarantor_phone || !obj.guarantor_relationship || !obj.guarantor_address || !obj.stock_value
                 || obj.businesses === '-- Choose Business --' || !obj.capital_source|| !obj.business_turnover || !obj.spouse_knowledge)) {
                 return notification('Kindly fill all required fields!','','warning');
             }
+            if (contribution_status === 'yes' && !obj.contribution)
+                return notification('Kindly fill the name of the ajo/contribution!','','warning');
             if (parseFloat(obj.tenor) < settings.tenor_min || parseFloat(obj.tenor) > settings.tenor_max)
                 return notification(`Minimum tenor is ${numberToCurrencyformatter(settings.tenor_min)} (month) 
                         and Maximum is ${numberToCurrencyformatter(settings.tenor_max)} (months)`,'','warning');
@@ -512,18 +622,40 @@
                         and Maximum is ₦${numberToCurrencyformatter(settings.loan_requested_max)}`,'','warning');
 
             $('#wait').show();
-            return console.log(obj)
             $.ajax({
                 'url': '/preapplication/create',
                 'type': 'post',
                 'data': obj,
                 'success': function (data) {
-                    $('#workflows').val("");
-                    $('#amount').val("");
-                    $('#interest-rate').val("");
-                    $('#term').val("");
-                    $('#repayment-date').val("");
-                    // window.location.href = '/add-application?id='+data.response.ID;
+                    $('#name').val('');
+                    $('#market_name').val('');
+                    $('#market_leader_name').val('');
+                    $('#market_leader_phone').val('');
+                    $('#guarantor_name').val('');
+                    $('#guarantor_phone').val('');
+                    $('#guarantor_relationship').val('');
+                    $('#guarantor_address').val('');
+                    $('#businesses').val('');
+                    $('#stock_value').val('');
+                    $('#loan_purposes').val('');
+                    $('#loan_amount').val('');
+                    $('#loan_serviced').val('');
+                    $('#capital_source').val('');
+                    $('#business_turnover').val('');
+                    $('#tenor').val('');
+                    $('#tenor_type').val('');
+                    $('#rate').val('');
+                    $('#contribution').val('');
+                    preapplication = data;
+                    notification('Loan Application (Step 1) was successful!','','success');
+                    if (obj.product === 'market_loan') {
+                        $('#saveApplication').hide();
+                        $('.form-group').hide();
+                        $('.upload-div').show();
+                        $('#proceed').show();
+                    } else {
+                        window.location.href = `/add-application?id=${preapplication.ID}`;
+                    }
                 },
                 'error': function (err) {
                     console.log(err);
@@ -628,44 +760,37 @@
         }
     }
 
-    function upload(i){
-        var name = $('#first_name').val() + ' '+ $('#middle_name').val() + ' ' +$('#last_name').val(); var folder_name = " ";
-        if ($('#email').val() === "" || $('#email').val() === "null"){
-            swal('Please Enter Client Email!');
-        }
-        else {
-            folder_name = name + '_' + $('#email').val();
-        }
-        var file; var item;
-        if (i === 1){
-            file = $('#file-upload')[0].files[0];
-            item ="Image";
-        }else if (i === 2){
-            file = $('#file-upload-signature')[0].files[0]
-            item = "Signature";
-        }else if (i === 3){
-            file = $('#file-upload-idcard')[0].files[0]
-            item = "ID Card";
-        }
-        console.log(name);
-        if (file === "undefined") {
-            swal ("Choose file to upload");
-        }else{
-            var formData = new FormData();
-            formData.append('file', file); formData.append('type', i);
-            $.ajax({
-                url: "user/upload-file/"+folder_name+'/'+item,
-                type: "POST",
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                    swal("File Uploaded Successfully!");
-                },
-                error: function() {
-                    swal("Error! Please Try Again");
-                }
-            });
-        }
-    }
+    $('[id^=upload-]').click(function (e) {
+        let i = (e.target.id.split('-'))[1],
+            file = $(`#file-upload-${i}`)[0].files[0];
+        if (!preapplication || !preapplication.ID)
+            return notification('No application found for this file', '', 'warning');
+        if (file === undefined)
+            return notification('Kindly choose file to upload!', '', 'warning');
+        let formData = new FormData();
+        formData.append('file', file);
+        $.ajax({
+            url: `/preapplication/upload/${preapplication.ID}/shop_picture_${i}`,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                $(`#image-preview-${i}`).show();
+                $(`#image-preview-${i}`).html(`<a class="thumbnail grouped_elements" rel="grouped_elements" data-toggle="tooltip" 
+                            data-placement="bottom" title="Click to Expand!" href="/${response.file}">
+                                <img src="/${response.file}" alt="Shop Picture ${i}"></a>`);
+                $("a.grouped_elements").fancybox();
+                $('.thumbnail').tooltip();
+                return notification('File uploaded successfully!', '', 'success');
+            },
+            error: function () {
+                notification('Oops! An error occurred while uploading file', '', 'error');
+            }
+        });
+    });
+
+    $('#proceed').click(function () {
+        window.location.href = `/add-application?id=${preapplication.ID}`;
+    });
 })(jQuery);
