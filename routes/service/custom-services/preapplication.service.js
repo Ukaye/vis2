@@ -4,7 +4,8 @@ const
     async = require('async'),
     moment = require('moment'),
     express = require('express'),
-    router = express.Router();
+    router = express.Router(),
+    enums = require('../../../enums');
 
 router.post('/create', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
@@ -12,7 +13,7 @@ router.post('/create', function (req, res, next) {
         query =  'INSERT INTO preapplications Set ?',
         endpoint = `/core-service/post?query=${query}`,
         url = `${HOST}${endpoint}`;
-    postData.status = 1;
+    postData.status = enums.PREAPPLICATION.STATUS.ACTIVE;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     axios.post(url, postData)
         .then(response => {
@@ -46,9 +47,9 @@ router.get('/get', function (req, res, next) {
     let draw = req.query.draw;
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
-    let query = `SELECT * FROM preapplications p 
-                 WHERE p.status = 1 AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
-                 OR upper(p.ID) LIKE "${search_string}%" ${order}) LIMIT ${limit} OFFSET ${offset}`;
+    let query = `SELECT p.*, c.fullname, c.phone FROM preapplications p, clients c 
+                 WHERE p.userID = c.ID AND p.status in (1,2) AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
+                 OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -57,8 +58,8 @@ router.get('/get', function (req, res, next) {
         }
     }).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM preapplications p 
-                 WHERE p.status = 1 AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
-                 OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM preapproved_loans AND status = 1`;
+                 WHERE p.status in (1,2) AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
+                 OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM preapproved_loans WHERE status in (1,2)`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {
@@ -80,7 +81,7 @@ router.get('/get/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`,
         path = `files/preapplication-${req.params.id}/`;
     let query = `SELECT p.*, c.fullname, c.email, c.phone FROM preapplications p 
-                INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.id} AND p.status = 1`,
+                INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.id}`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -111,12 +112,12 @@ router.get('/get/:id', function (req, res, next) {
 
 router.post('/approve/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let payload = {},
+    let payload = req.body,
         id = req.params.id,
         query =  `UPDATE preapplications Set ? WHERE ID = ${id}`,
         endpoint = `/core-service/post?query=${query}`,
         url = `${HOST}${endpoint}`;
-    payload.status = 2;
+    payload.status = enums.PREAPPLICATION.STATUS.APPROVED;
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
     axios.post(url, payload)
@@ -130,6 +131,27 @@ router.post('/approve/:id', function (req, res, next) {
         });
 });
 
+router.get('/complete/:id', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let payload = {},
+        id = req.params.id,
+        query =  `UPDATE preapplications Set ? WHERE ID = ${id}`,
+        endpoint = `/core-service/post?query=${query}`,
+        url = `${HOST}${endpoint}`;
+    payload.status = enums.PREAPPLICATION.STATUS.COMPLETED;
+    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+
+    axios.post(url, payload)
+        .then(function (response) {
+            res.send(response.data);
+        }, err => {
+            res.send({status: 500, error: error, response: null});
+        })
+        .catch(function (error) {
+            res.send({status: 500, error: error, response: null});
+        });
+});
+
 router.get('/reject/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let payload = {},
@@ -137,7 +159,7 @@ router.get('/reject/:id', function (req, res, next) {
         query =  `UPDATE preapplications Set ? WHERE ID = ${id}`,
         endpoint = `/core-service/post?query=${query}`,
         url = `${HOST}${endpoint}`;
-    payload.status = 0;
+    payload.status = enums.PREAPPLICATION.STATUS.REJECTED;
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
     axios.post(url, payload)

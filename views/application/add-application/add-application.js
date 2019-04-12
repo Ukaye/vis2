@@ -2,6 +2,7 @@
     jQuery(document).ready(function() {
         getUsers();
         getWorkflows();
+        read_write_custom();
         getApplicationSettings();
     });
 
@@ -15,6 +16,20 @@
             url: `/preapplication/get/${id}`,
             success: function (response) {
                 preapplication = response;
+                $('#saveApplication').hide();
+                switch (preapplication.status) {
+                    case 1: {
+                        $('#approveApplication').show();
+                        $('#rejectApplication').show();
+                        break;
+                    }
+                    case 2:
+                    case 3: {
+                        $('#step1').hide();
+                        $('#step2').show();
+                        break;
+                    }
+                }
                 if (response.product) {
                     $('#product').val(response.product).trigger('change');
                     if (response.product === 'market_loan') {
@@ -22,16 +37,20 @@
                     }
                 }
                 if (response.name && response.email) {
-                    $('#name').val($("#name").find(`option[name='${response.email}']`).val());
-                    $("#name").select2("destroy");
-                    $("#name").select2();
+                    $('#name').val($('#name').find(`option[name='${response.email}']`).val());
+                    $('#name').select2('destroy');
+                    $('#name').select2();
+                    $('#user-list').val($('#user-list').find(`option[name='${response.email}']`).val());
+                    $('#user-list').prop('disabled', true);
+                    $('#user-list').select2('destroy');
+                    $('#user-list').select2();
                 }
                 if (response.business_turnover)
                     $('#business_turnover').val(response.business_turnover);
                 if (response.businesses) {
                     $('#businesses').val(response.businesses);
-                    $("#businesses").select2("destroy");
-                    $("#businesses").select2();
+                    $('#businesses').select2('destroy');
+                    $('#businesses').select2();
                 }
                 if (response.capital_source)
                     $('#capital_source').val(response.capital_source);
@@ -47,12 +66,19 @@
                     $('#guarantor_phone').val(response.guarantor_phone);
                 if (response.guarantor_relationship)
                     $('#guarantor_relationship').val(response.guarantor_relationship);
-                if (response.loan_amount)
+                if (response.loan_amount){
                     $('#loan_amount').val(response.loan_amount);
+                    $('#amount').val(response.loan_amount);
+                    $('#amount').prop('disabled', true);
+                }
                 if (response.loan_purpose) {
                     $('#loan_purposes').val(response.loan_purpose);
-                    $("#loan_purposes").select2("destroy");
-                    $("#loan_purposes").select2();
+                    $('#loan_purposes').select2('destroy');
+                    $('#loan_purposes').select2();
+                    $('#purposes').val(response.loan_purpose);
+                    $('#purposes').prop('disabled', true);
+                    $('#purposes').select2('destroy');
+                    $('#purposes').select2();
                 }
                 if (response.loan_serviced)
                     $('#loan_serviced').val(response.loan_serviced);
@@ -64,21 +90,27 @@
                     $('#market_name').val(response.market_name);
                 if (response.phone)
                     $('#phone').val(response.phone);
-                if (response.rate)
+                if (response.rate) {
                     $('#rate').val(response.rate);
+                    $('#interest-rate').val(response.rate);
+                    $('#interest-rate').prop('disabled', true);
+                }
                 if (response.spouse_knowledge)
                     $(`input[name='spouse_knowledge'][value='${response.spouse_knowledge}']`).prop('checked', true);
                 if (response.stock_value)
                     $('#stock_value').val(response.stock_value);
-                if (response.tenor)
+                if (response.tenor) {
                     $('#tenor').val(response.tenor);
+                    $('#term').val(response.tenor);
+                    $('#term').prop('disabled', true);
+                }
                 if (response.tenor_type)
                     $('#tenor_type').val(response.tenor_type);
                 if (response.files) {
                     if (response.files.shop_picture_1) {
                         $('#image-preview-1').show();
                         $('#image-preview-1').html(`<a class="thumbnail grouped_elements" rel="grouped_elements" data-toggle="tooltip" 
-                            data-placement="top" title="Click to Expand!" href="/${response.files.shop_picture_1}">
+                            data-placement="bottom" title="Click to Expand!" href="/${response.files.shop_picture_1}">
                                 <img src="/${response.files.shop_picture_1}" alt="Shop Picture 1"></a>`);
                     }
                     if (response.files.shop_picture_2) {
@@ -87,7 +119,7 @@
                             data-placement="bottom" title="Click to Expand!" href="/${response.files.shop_picture_2}">
                                 <img src="/${response.files.shop_picture_2}" alt="Shop Picture 2"></a>`);
                     }
-                    $("a.grouped_elements").fancybox();
+                    $('a.grouped_elements').fancybox();
                     $('.thumbnail').tooltip();
                 }
             }
@@ -119,7 +151,7 @@
                 getLoanPurposes();
                 $.each(JSON.parse(response), function (key, val) {
                     $("#name").append('<option name="'+val.email+'" value = "' + encodeURIComponent(JSON.stringify(val)) + '">' + val.fullname + ' &nbsp; (' + val.username + ')</option>');
-                    $("#user-list").append('<option value = "' + encodeURIComponent(JSON.stringify(val)) + '">' + val.fullname + ' &nbsp; (' + val.username + ')</option>');
+                    $("#user-list").append('<option name="'+val.email+'" value = "' + encodeURIComponent(JSON.stringify(val)) + '">' + val.fullname + ' &nbsp; (' + val.username + ')</option>');
                 });
                 $("#name").select2();
                 $("#user-list").select2();
@@ -165,9 +197,6 @@
                 });
                 $("#businesses").select2();
                 if (preapplication_id) {
-                    $('#saveApplication').hide();
-                    $('#approveApplication').show();
-                    $('#rejectApplication').show();
                     getPreapplication(preapplication_id);
                 }
             }
@@ -286,7 +315,11 @@
                     cells = date+","+date+","+schedule[i][1]+","+date+","+date+","+schedule[i][2]+","+schedule[i][3];
                     let date_array = date.split('-');
                     date = new Date(date_array[0], (parseInt(date_array[1])-1), date_array[2]);
-                    date.setMonth(date.getMonth()+1);
+                    if (preapplication.tenor_type && preapplication.tenor_type === 'weekly') {
+                        date.setDate(date.getDate()+7);
+                    } else {
+                        date.setMonth(date.getMonth()+1);
+                    }
                     date = formatDate(date);
                 } else {
                     cells = "0,0,"+schedule[i][1]+",0,0,"+schedule[i][2]+","+schedule[i][3];
@@ -518,6 +551,8 @@
                     obj.repayment_date = $('#repayment-date').val();
                     obj.loan_purpose = $purposes.val();
                     obj.agentID = (JSON.parse(localStorage.getItem("user_obj"))).ID;
+                    if (preapplication && preapplication.ID)
+                        obj.preapplication = preapplication.ID;
                     if (!user || isNaN(obj.workflowID) || !obj.loan_amount || !obj.interest_rate || !obj.duration || $purposes.val() === '-- Choose Loan Purpose --')
                         return notification('Kindly fill all required fields!','','warning');
                     if (parseFloat(obj.duration) < settings.tenor_min || parseFloat(obj.duration) > settings.tenor_max)
@@ -560,107 +595,90 @@
         });
 
         $("#saveApplication").click(function () {
-            let obj = {},
-                contribution_status = $('input[name=contribution_status]:checked').val(),
-                user = ($('#name').val() !== '-- Choose Client --')? JSON.parse(decodeURIComponent($('#name').val())) : false;
-            if (user)
-                obj.userID = user.ID;
-                obj.name = user.fullname;
-            obj.product = $('#product').val();
-            obj.loan_amount = currencyToNumberformatter($('#loan_amount').val());
-            obj.rate = currencyToNumberformatter($('#rate').val());
-            obj.tenor = currencyToNumberformatter($('#tenor').val());
-            obj.tenor_type = $('#tenor_type').val();
-            obj.loan_purpose = $('#loan_purposes').val();
-            obj.loan_serviced = currencyToNumberformatter($('#loan_serviced').val());
-            if ($('#market_name').val())
-                obj.market_name = $('#market_name').val();
-            if ($('#market_leader_name').val())
-                obj.market_leader_name = $('#market_leader_name').val();
-            if ($('#market_leader_phone').val())
-                obj.market_leader_phone = $('#market_leader_phone').val();
-            if ($('#guarantor_name').val())
-                obj.guarantor_name = $('#guarantor_name').val();
-            if ($('#guarantor_phone').val())
-                obj.guarantor_phone = $('#guarantor_phone').val();
-            if ($('#guarantor_relationship').val())
-                obj.guarantor_relationship = $('#guarantor_relationship').val();
-            if ($('#guarantor_address').val())
-                obj.guarantor_address = $('#guarantor_address').val();
-            if ($('#businesses').val())
-                obj.businesses = $('#businesses').val();
-            if ($('#stock_value').val())
-                obj.stock_value = currencyToNumberformatter($('#stock_value').val());
-            if ($('#capital_source').val())
-                obj.capital_source = $('#capital_source').val();
-            if ($('#business_turnover').val())
-                obj.business_turnover = currencyToNumberformatter($('#business_turnover').val());
-            if ($('#contribution').val())
-                obj.contribution = $('#contribution').val();
-            if ($('input[name=spouse_knowledge]:checked').val())
-                obj.spouse_knowledge = $('input[name=spouse_knowledge]:checked').val();
-            obj.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
-            if (!user || !obj.product || !obj.loan_amount || !obj.rate || !obj.tenor || !obj.tenor_type
-                || obj.loan_purpose === '-- Choose Loan Purpose --' || !obj.loan_serviced) {
-                return notification('Kindly fill all required fields!','','warning');
-            }
-            if (obj.product === 'market_loan' && (!obj.market_name || !obj.market_leader_name || !obj.market_leader_phone || !obj.guarantor_name
-                || !obj.guarantor_phone || !obj.guarantor_relationship || !obj.guarantor_address || !obj.stock_value
-                || obj.businesses === '-- Choose Business --' || !obj.capital_source|| !obj.business_turnover || !obj.spouse_knowledge)) {
-                return notification('Kindly fill all required fields!','','warning');
-            }
-            if (contribution_status === 'yes' && !obj.contribution)
-                return notification('Kindly fill the name of the ajo/contribution!','','warning');
-            if (parseFloat(obj.tenor) < settings.tenor_min || parseFloat(obj.tenor) > settings.tenor_max)
-                return notification(`Minimum tenor is ${numberToCurrencyformatter(settings.tenor_min)} (month) 
-                        and Maximum is ${numberToCurrencyformatter(settings.tenor_max)} (months)`,'','warning');
-            if (parseFloat(obj.interest_rate) < settings.interest_rate_min || parseFloat(obj.interest_rate) > settings.interest_rate_max)
-                return notification(`Minimum interest rate is ${numberToCurrencyformatter(settings.interest_rate_min)}% 
-                        and Maximum is ${numberToCurrencyformatter(settings.interest_rate_max)}%`,'','warning');
-            if (parseFloat(obj.loan_amount) < settings.loan_requested_min || parseFloat(obj.loan_amount) > settings.loan_requested_max)
-                return notification(`Minimum loan amount is ₦${numberToCurrencyformatter(settings.loan_requested_min)} 
-                        and Maximum is ₦${numberToCurrencyformatter(settings.loan_requested_max)}`,'','warning');
+            validateApplication(settings, function (obj) {
+                if (obj) {
+                    $('#wait').show();
+                    $.ajax({
+                        'url': '/preapplication/create',
+                        'type': 'post',
+                        'data': obj,
+                        'success': function (data) {
+                            $('#wait').hide();
+                            $('#name').val('');
+                            $('#market_name').val('');
+                            $('#market_leader_name').val('');
+                            $('#market_leader_phone').val('');
+                            $('#guarantor_name').val('');
+                            $('#guarantor_phone').val('');
+                            $('#guarantor_relationship').val('');
+                            $('#guarantor_address').val('');
+                            $('#businesses').val('');
+                            $('#stock_value').val('');
+                            $('#loan_purposes').val('');
+                            $('#loan_amount').val('');
+                            $('#loan_serviced').val('');
+                            $('#capital_source').val('');
+                            $('#business_turnover').val('');
+                            $('#tenor').val('');
+                            $('#tenor_type').val('');
+                            $('#rate').val('');
+                            $('#contribution').val('');
+                            preapplication = data;
+                            notification('Loan Application (Step 1) was successful!','','success');
+                            if (obj.product === 'market_loan') {
+                                $('#saveApplication').hide();
+                                $('.form-group').hide();
+                                $('.upload-div').show();
+                                $('#proceed').show();
+                            } else {
+                                window.location.href = `/add-application?id=${preapplication.ID}`;
+                            }
+                        },
+                        'error': function (err) {
+                            console.log(err);
+                            $('#wait').hide();
+                            notification('No internet connection','','error');
+                        }
+                    });
+                }
+            });
+        });
 
-            $('#wait').show();
-            $.ajax({
-                'url': '/preapplication/create',
-                'type': 'post',
-                'data': obj,
-                'success': function (data) {
-                    $('#name').val('');
-                    $('#market_name').val('');
-                    $('#market_leader_name').val('');
-                    $('#market_leader_phone').val('');
-                    $('#guarantor_name').val('');
-                    $('#guarantor_phone').val('');
-                    $('#guarantor_relationship').val('');
-                    $('#guarantor_address').val('');
-                    $('#businesses').val('');
-                    $('#stock_value').val('');
-                    $('#loan_purposes').val('');
-                    $('#loan_amount').val('');
-                    $('#loan_serviced').val('');
-                    $('#capital_source').val('');
-                    $('#business_turnover').val('');
-                    $('#tenor').val('');
-                    $('#tenor_type').val('');
-                    $('#rate').val('');
-                    $('#contribution').val('');
-                    preapplication = data;
-                    notification('Loan Application (Step 1) was successful!','','success');
-                    if (obj.product === 'market_loan') {
-                        $('#saveApplication').hide();
-                        $('.form-group').hide();
-                        $('.upload-div').show();
-                        $('#proceed').show();
-                    } else {
-                        window.location.href = `/add-application?id=${preapplication.ID}`;
-                    }
-                },
-                'error': function (err) {
-                    console.log(err);
-                    $('#wait').hide();
-                    notification('No internet connection','','error');
+        $('#approveApplication').click(function () {
+            validateApplication(settings, function (obj) {
+                if (obj) {
+                    swal({
+                        title: "Are you sure?",
+                        text: "Once approved, this process is not reversible!",
+                        icon: "warning",
+                        buttons: true,
+                        dangerMode: true,
+                    })
+                        .then((yes) => {
+                            if (yes) {
+                                $('#wait').show();
+                                $.ajax({
+                                    'url': `/preapplication/approve/${preapplication.ID}`,
+                                    'type': 'post',
+                                    'data': obj,
+                                    'success': function (data) {
+                                        $('#wait').hide();
+                                        if (data.status !== 500) {
+                                            notification('Loan Application approved successfully','','success');
+                                            window.location.href = '/all-preapplications';
+                                        } else {
+                                            console.log(data.error);
+                                            notification(data.error,'','error');
+                                        }
+                                    },
+                                    'error': function (err) {
+                                        console.log(err);
+                                        $('#wait').hide();
+                                        notification('No internet connection','','error');
+                                    }
+                                });
+                            }
+                        });
                 }
             });
         });
@@ -672,13 +690,33 @@
             'type': 'post',
             'data': {schedule:schedule},
             'success': function (data) {
-                $('#wait').hide();
-                notification('Loan Application created successfully!','','success');
-                window.location.href = '/application?id='+application_id;
+                updatePreapplicationStatus(application_id);
             },
             'error': function (err) {
                 $('#wait').hide();
                 notification('Oops! An error occurred while saving schedule','','error');
+            }
+        });
+    }
+
+    function updatePreapplicationStatus(application_id) {
+        $.ajax({
+            'url': `/preapplication/complete/${preapplication.ID}`,
+            'type': 'get',
+            'success': function (data) {
+                $('#wait').hide();
+                if (data.status !== 500) {
+                    notification('Loan Application created successfully!','','success');
+                    window.location.href = `/application?id=${application_id}`;
+                } else {
+                    console.log(data.error);
+                    notification(data.error,'','error');
+                }
+            },
+            'error': function (err) {
+                console.log(err);
+                $('#wait').hide();
+                notification('No internet connection','','error');
             }
         });
     }
@@ -793,4 +831,129 @@
     $('#proceed').click(function () {
         window.location.href = `/add-application?id=${preapplication.ID}`;
     });
+
+    $('#rejectApplication').click(function () {
+        swal({
+            title: "Are you sure?",
+            text: "Once rejected, this process is not reversible!",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        })
+            .then((yes) => {
+                if (yes) {
+                    $('#wait').show();
+                    $.ajax({
+                        'url': `/preapplication/reject/${preapplication.ID}`,
+                        'type': 'get',
+                        'success': function (data) {
+                            $('#wait').hide();
+                            if (data.status !== 500) {
+                                $('#saveApplication').hide();
+                                $('#rejectApplication').hide();
+                                $('#approveApplication').hide();
+                                notification('Loan Application rejected successfully','','success');
+                                window.location.href = '/all-preapplications';
+                            } else {
+                                console.log(data.error);
+                                notification(data.error,'','error');
+                            }
+                        },
+                        'error': function (err) {
+                            console.log(err);
+                            $('#wait').hide();
+                            notification('No internet connection','','error');
+                        }
+                    });
+                }
+            });
+    });
+
+    function validateApplication(settings, callback) {
+        let obj = {},
+            contribution_status = $('input[name=contribution_status]:checked').val(),
+            user = ($('#name').val() !== '-- Choose Client --')? JSON.parse(decodeURIComponent($('#name').val())) : false;
+        if (user)
+            obj.userID = user.ID;
+        obj.name = user.fullname;
+        obj.product = $('#product').val();
+        obj.loan_amount = currencyToNumberformatter($('#loan_amount').val());
+        obj.rate = currencyToNumberformatter($('#rate').val());
+        obj.tenor = currencyToNumberformatter($('#tenor').val());
+        obj.tenor_type = $('#tenor_type').val();
+        obj.loan_purpose = $('#loan_purposes').val();
+        obj.loan_serviced = currencyToNumberformatter($('#loan_serviced').val());
+        if ($('#market_name').val())
+            obj.market_name = $('#market_name').val();
+        if ($('#market_leader_name').val())
+            obj.market_leader_name = $('#market_leader_name').val();
+        if ($('#market_leader_phone').val())
+            obj.market_leader_phone = $('#market_leader_phone').val();
+        if ($('#guarantor_name').val())
+            obj.guarantor_name = $('#guarantor_name').val();
+        if ($('#guarantor_phone').val())
+            obj.guarantor_phone = $('#guarantor_phone').val();
+        if ($('#guarantor_relationship').val())
+            obj.guarantor_relationship = $('#guarantor_relationship').val();
+        if ($('#guarantor_address').val())
+            obj.guarantor_address = $('#guarantor_address').val();
+        if ($('#businesses').val())
+            obj.businesses = $('#businesses').val();
+        if ($('#stock_value').val())
+            obj.stock_value = currencyToNumberformatter($('#stock_value').val());
+        if ($('#capital_source').val())
+            obj.capital_source = $('#capital_source').val();
+        if ($('#business_turnover').val())
+            obj.business_turnover = currencyToNumberformatter($('#business_turnover').val());
+        if ($('#contribution').val())
+            obj.contribution = $('#contribution').val();
+        if ($('input[name=spouse_knowledge]:checked').val())
+            obj.spouse_knowledge = $('input[name=spouse_knowledge]:checked').val();
+        obj.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
+        if (!user || !obj.product || !obj.loan_amount || !obj.rate || !obj.tenor || !obj.tenor_type
+            || obj.loan_purpose === '-- Choose Loan Purpose --' || !obj.loan_serviced) {
+            notification('Kindly fill all required fields!','','warning');
+            return callback(false);
+        }
+        if (obj.product === 'market_loan' && (!obj.market_name || !obj.market_leader_name || !obj.market_leader_phone || !obj.guarantor_name
+                || !obj.guarantor_phone || !obj.guarantor_relationship || !obj.guarantor_address || !obj.stock_value
+                || obj.businesses === '-- Choose Business --' || !obj.capital_source|| !obj.business_turnover || !obj.spouse_knowledge)) {
+            notification('Kindly fill all required fields!','','warning');
+            return callback(false);
+        }
+        if (contribution_status === 'yes' && !obj.contribution) {
+            notification('Kindly fill the name of the ajo/contribution!','','warning');
+            return callback(false);
+        }
+        if (parseFloat(obj.tenor) < settings.tenor_min || parseFloat(obj.tenor) > settings.tenor_max) {
+            notification(`Minimum tenor is ${numberToCurrencyformatter(settings.tenor_min)} (month) 
+                        and Maximum is ${numberToCurrencyformatter(settings.tenor_max)} (months)`,'','warning');
+            return callback(false);
+        }
+        if (parseFloat(obj.interest_rate) < settings.interest_rate_min || parseFloat(obj.interest_rate) > settings.interest_rate_max) {
+            notification(`Minimum interest rate is ${numberToCurrencyformatter(settings.interest_rate_min)}% 
+                        and Maximum is ${numberToCurrencyformatter(settings.interest_rate_max)}%`,'','warning');
+            return callback(false);
+        }
+        if (parseFloat(obj.loan_amount) < settings.loan_requested_min || parseFloat(obj.loan_amount) > settings.loan_requested_max) {
+            notification(`Minimum loan amount is ₦${numberToCurrencyformatter(settings.loan_requested_min)} 
+                        and Maximum is ₦${numberToCurrencyformatter(settings.loan_requested_max)}`,'','warning');
+            return callback(false);
+        }
+        return callback(obj);
+    }
+
+    function read_write_custom() {
+        let perms = JSON.parse(localStorage.getItem("permissions")),
+            approveInitialApplication = ($.grep(perms, function(e){return e.module_name === 'approveInitialApplication';}))[0],
+            rejectInitialApplication = ($.grep(perms, function(e){return e.module_name === 'rejectInitialApplication';}))[0],
+            saveInitialApplication = ($.grep(perms, function(e){return e.module_name === 'saveInitialApplication';}))[0];
+
+        if (approveInitialApplication && approveInitialApplication['read_only'] === '0')
+            $('#approveApplication').hide();
+        if (rejectInitialApplication && rejectInitialApplication['read_only'] === '0')
+            $('#rejectApplication').hide();
+        if (saveInitialApplication && saveInitialApplication['read_only'] === '0')
+            $('#saveApplication').hide();
+    }
 })(jQuery);

@@ -13,7 +13,7 @@
     <link rel="shortcut icon" href="favicon.png">
     <link rel="stylesheet" href="assets/css/normalize.css">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
-    <!--<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">-->
+    <link rel="stylesheet" href="assets/css/tooltip.css">
     <link rel="stylesheet" href="assets/css/font-awesome.min.css">
     <link rel="stylesheet" href="assets/css/themify-icons.css">
     <link rel="stylesheet" href="assets/css/flag-icon.min.css">
@@ -349,7 +349,7 @@
                                     <small class="form-text text-muted">Min: <span id="interest_rate_min">1</span>%  Max: <span id="interest_rate_max">1000</span>% </small>
                                 </div>
                                 <div class="col-sm-6 form-group">
-                                    <label class="form-control-label">Tenor (monthly)</label><strong style="color:red"> *</strong><span id="term-error" style="padding-left:50px; text-align: center"></span>
+                                    <label class="form-control-label">Tenor</label><strong style="color:red"> *</strong><span id="term-error" style="padding-left:50px; text-align: center"></span>
                                     <div class="input-group">
                                         <div class="input-group-addon"><i class="fa fa-money"></i></div>
                                         <input type="number" id="term" class="form-control" required="required" value="12" min="1" max="60">
@@ -383,7 +383,7 @@
                                     </div>
                                 </div>
                                 <div id="payment-amount-div" class="col-sm-6 form-group" style="display: none;">
-                                    <label class="form-control-label">Payment Amount (Monthly)</label><strong style="color:red"> *</strong><span id="payment-amount-error" style="padding-left:50px; text-align: center"></span>
+                                    <label class="form-control-label">Payment Amount</label><strong style="color:red"> *</strong><span id="payment-amount-error" style="padding-left:50px; text-align: center"></span>
                                     <div class="input-group">
                                         <div class="input-group-addon"><i class="fa fa-money"></i></div>
                                         <input type="number" id="payment-amount" class="form-control" required="required" disabled="disabled">

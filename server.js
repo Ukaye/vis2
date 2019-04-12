@@ -506,6 +506,12 @@ app.get('/offer/:id?', function (req, res) {
     });
 });
 
+app.get('/all-preapplications', requireLogin, function (req, res) {
+    res.sendFile('application/all-preapplications/all-preapplications.html', {
+        root: __dirname + '/views'
+    });
+});
+
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
