@@ -1,7 +1,7 @@
 $(document).ready(function() {
     $('#bootstrap-data-table-export').DataTable();
     getRoles();
-    loadModules();
+    loadModules(function () {});
 });
 
 $("#submit-activity").click(function () {
@@ -158,10 +158,12 @@ function saveRolePermissions(r){
             if(test.status == 500){
                 swal("Failed!", "Error encountered. Please try again.", 'error');
             }
-            else
+            else {
                 selectedRole = 0;
-            swal("Success!", "Views and Read / Write Permissions set for Role.", 'success');
-            loadModules();
+                selectedName = '';
+                swal("Success!", "Views and Read / Write Permissions set for Role.", 'success');
+                loadModules(function () {});
+            }
         }
     });
 }
@@ -339,7 +341,7 @@ function enableRole(id){
     });
 }
 
-let selectedRole;
+let selectedRole, selectedName;
 function loadRolePermissions(id){
 //        localStorage.setItem("selectedRole", id);
     selectedRole = id;
@@ -350,42 +352,44 @@ function loadRolePermissions(id){
     });
     $('#selectedName').html('- '+name);
     let readCheck; let writeCheck; let reads = {}; let writes = {}; let r = 0; let w = 0;
-//        loadModules();
-    $.ajax({
-        type: "GET",
-        url: "/permissions/"+id+"/",
-        data: '{}',
-        success: function (response) {
-            if (!(JSON.parse(response).length === 0)){
-                $.each(JSON.parse(response), function(key, val){
-                    reads[r++] = [val.module_id, val.read_only];
-                    writes[w++] = [val.module_id, val.editable];
-                });
-                $.each(reads, function(key, val){
-                    let id = '#'+val[0]; //console.log(id);
-                    if (parseInt(val[1]) === 1){
-                        $(id).prop('checked', true);
-                    }
-                });
+   loadModules(function(){
+       $.ajax({
+           type: "GET",
+           url: "/permissions/"+id+"/",
+           data: '{}',
+           success: function (response) {
+               if (!(JSON.parse(response).length === 0)){
+                   $.each(JSON.parse(response), function(key, val){
+                       reads[r++] = [val.module_id, val.read_only];
+                       writes[w++] = [val.module_id, val.editable];
+                   });
+                   $.each(reads, function(key, val){
+                       let id = '#'+val[0]; //console.log(id);
+                       if (parseInt(val[1]) === 1){
+                           $(id).prop('checked', true);
+                       }
+                   });
 
-                $.each(writes, function(key, val){
-                    let id = '#'+val[0]+'-write'; //console.log(id);
-                    if (parseInt(val[1]) === 1){
-                        $(id).prop('checked', true);
-                    }
-                });
-            }else{
-                $("#module-table").dataTable().fnClearTable();
-                loadModules();
-            }
-        }
-    });
+                   $.each(writes, function(key, val){
+                       let id = '#'+val[0]+'-write'; //console.log(id);
+                       if (parseInt(val[1]) === 1){
+                           $(id).prop('checked', true);
+                       }
+                   });
+               }
+               else{
+                   // $("#module-table").dataTable().fnClearTable();
+                   selectedName = '- '+name;
+               }
+           }
+       });
+   });
 }
 
 let mods;
 
-function loadModules(){
-    $('#selectedName').html('');
+function loadModules(callback){
+    $('#selectedName').html(selectedName);
     $.ajax({
         type: "GET",
         url: "/modules/",
@@ -406,6 +410,7 @@ function loadModules(){
                     val.name, val.menu_name, action, write
                 ]);
             });
+            callback();
         }
     });
 }
