@@ -231,14 +231,14 @@
     document.createElement("time");
 }));
 
-let init = 0, all_count,
+let initial = 0, all_count,
     count = 0,
     ids = [];
 
 function load_notifications(){
     ids.length = 0;
     count = 0;
-    init = JSON.parse(localStorage.notifications).length;
+    initial = JSON.parse(localStorage.notifications).length;
     all_count = JSON.parse(localStorage.notifications).length;
     if (JSON.parse(localStorage.notifications).length === 0){
         $('#noti-count').hide();
@@ -319,7 +319,7 @@ function notifications(){
         success: function (response) {
             localStorage.setItem('notifications', response);
             status = true;
-            init = response.length;
+            initial = response.length;
             all_count = response.length;
             if (response.length === 0){
                 $('#noti-count').hide();
@@ -336,23 +336,44 @@ function notifications(){
                 count++;
                 switch (val.category){
                     case 'Activity':
-                        icon = '<i class="fa fa-tasks fa-4x"></i>'
+                        icon = '<i class="fa fa-tasks fa-4x"></i>';
                         link = '/activity'
                         break;
                     case 'Clients':
-                        icon = '<i class="fa fa-users fa-4x"></i>'
+                        icon = '<i class="fa fa-users fa-4x"></i>';
                         link = '/client-info?id='+val.affected;
                         break;
                     case 'Users':
-                        icon = '<i class="fa fa-user fa-4x"></i>'
+                        icon = '<i class="fa fa-user fa-4x"></i>';
                         link = `/all-users/`;
                         break;
                     case 'Application':
-                        icon = '<i class="fa fa-table fa-4x"></i>'
+                        icon = '<i class="fa fa-table fa-4x"></i>';
                         link = `/view-application?id=${val.affected}`;
                         break;
+                    case 'Workflow':
+                        icon = '<img src="../workflow.png">';
+                        link = `/edit-workflow?id=${val.affected}`;
+                        break;
+                    case 'Investment':
+                        icon = '<i class="fa fa-money fa-4x"></i>';
+                        link = `/view-application?id=${val.affected}`;
+                        break;
+                    case 'Target':
+                        icon = '<i class="fa fa-bullseye fa-4x"></i>';
+                        link = `/all-targets`;
+                        break;
+                    case 'Authentication':
+                        icon = '<i class="fa fa-power-off fa-4x"></i>';
+                        link = '#';
+                        break;
+                    case 'Permission':
+                        icon = '<img src="../permission.png">';
+                        link = '#';
+                        break;
                     default:
-                        icon = '<img src="../atb-logo.png">'
+                        icon = '<img src="../atb-logo.png">';
+                        link = '#';
                 }
                 item = '<div class="feed-body-content">\n' +
 '                            <p class="feed-body-header">'+jQuery.timeago(val.date_created)+'</time></p>\n' +
@@ -363,7 +384,7 @@ function notifications(){
 '                                        <img class="user-avatar rounded-circle" src="/images/admin.jpg" alt="User Avatar"\n' +
 '                                             style="">\n' +
 '                                            <p>'+val.user+'</p>\n' +
-                    '                         <small onclick="markAsViewed('+val.ID+')" class="feed-content-menu float-right" style="margin-top: 50px">Mark as Viewed</small>\n'+
+                    '                         <small onclick="markAsViewed('+val.ID+')" class="feed-content-menu float-right" style="margin-top: 50px">Remove</small>\n'+
 '                                    </div>\n' +
 '                                 </a>\n' +
 '                            </div>\n' +

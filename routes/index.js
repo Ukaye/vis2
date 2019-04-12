@@ -6,7 +6,7 @@ const fs = require('fs');
 const Moment = require('moment');
 const MomentRange = require('moment-range');
 const moment = MomentRange.extendMoment(Moment);
-
+let notificationsService = require('./notifications-service');
 //File Upload - Inspection
 router.post('/upload/:number_plate/:part', function(req, res) {
     if (!req.files) return res.status(400).send('No files were uploaded.');
@@ -581,7 +581,8 @@ router.get('/mains/', function(req, res, next) {
 
 /* GET permissions for each role*/
 router.get('/permissions/:id', function(req, res, next) {
-    let query = 'select *, (select module_name from modules m where m.id = permissions.module_id) as module, (select menu_name from modules ms where ms.module_name = module) as menu_name from permissions where role_id = ? and date = (select max(date) from permissions where role_id = ?);'
+    let query = 'select *, (select module_name from modules m where m.id = permissions.module_id) as module, (select menu_name from modules ms where ms.module_name = module) as menu_name \n' +
+        'from permissions where role_id = ? and date = (select max(date) from permissions where role_id = ?);'
     db.query(query, [req.params.id, req.params.id], function (error, results, fields) {
         if(error){
             res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
@@ -1342,7 +1343,15 @@ router.post('/submitPermission/:role', function(req, res, next) {
             connection.release();
             if(status === false)
                 return res.send(data);
-            res.send({"status": 200, "error": null, "message": "Permissions Set for Selected Role!"});
+            else {
+                let payload = {}
+                payload.category = 'Permission'
+                payload.userid = req.cookies.timeout
+                payload.description = 'New Permissions Set'
+                payload.affected = role_id
+                notificationsService.log(req, payload)
+                res.send({"status": 200, "error": null, "message": "Permissions Set for Selected Role!"});
+            }
         })
     });
 });
@@ -1467,6 +1476,12 @@ router.post('/targets', function(req, res, next) {
                 if(error){
                     res.send({"status": 500, "error": error, "response": null});
                 } else {
+                    let payload = {}
+                    payload.category = 'Target'
+                    payload.userid = req.cookies.timeout
+                    payload.description = 'New Target Added'
+                    payload.affected = results.insertId
+                    notificationsService.log(req, payload)
                     res.send({"status": 200, "message": "Target added successfully!"});
                 }
             });
@@ -1485,12 +1500,18 @@ router.get('/targets', function(req, res, next) {
     });
 });
 
-router.delete('/target/delete/:id', function(req, res, next) {
+router.delete('/target/delete/:id', function(req, res, next){
     let date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('UPDATE targets SET status=0,date_modified=? WHERE ID = ?', [date,req.params.id], function (error, results, fields) {
         if(error){
             res.send({"status": 500, "error": error, "response": null});
         } else {
+            let payload = {}
+            payload.category = 'Target'
+            payload.userid = req.cookies.timeout
+            payload.description = 'Target Deleted'
+            payload.affected = req.params.id
+            notificationsService.log(req, payload)
             res.send({"status": 200, "message": "Target deleted successfully!"});
         }
     });
