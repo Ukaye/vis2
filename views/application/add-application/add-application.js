@@ -552,7 +552,7 @@
                     obj.loan_purpose = $purposes.val();
                     obj.agentID = (JSON.parse(localStorage.getItem("user_obj"))).ID;
                     if (preapplication && preapplication.ID)
-                        obj.preapplication = preapplication.ID;
+                        obj.preapplicationID = preapplication.ID;
                     if (!user || isNaN(obj.workflowID) || !obj.loan_amount || !obj.interest_rate || !obj.duration || $purposes.val() === '-- Choose Loan Purpose --')
                         return notification('Kindly fill all required fields!','','warning');
                     if (parseFloat(obj.duration) < settings.tenor_min || parseFloat(obj.duration) > settings.tenor_max)
