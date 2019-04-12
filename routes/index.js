@@ -6,7 +6,7 @@ const fs = require('fs');
 const Moment = require('moment');
 const MomentRange = require('moment-range');
 const moment = MomentRange.extendMoment(Moment);
-
+let notificationsService = require('./notifications-service');
 //File Upload - Inspection
 router.post('/upload/:number_plate/:part', function(req, res) {
     if (!req.files) return res.status(400).send('No files were uploaded.');
@@ -581,7 +581,8 @@ router.get('/mains/', function(req, res, next) {
 
 /* GET permissions for each role*/
 router.get('/permissions/:id', function(req, res, next) {
-    let query = 'select *, (select module_name from modules m where m.id = permissions.module_id) as module, (select menu_name from modules ms where ms.module_name = module) as menu_name from permissions where role_id = ? and date = (select max(date) from permissions where role_id = ?);'
+    let query = 'select *, (select module_name from modules m where m.id = permissions.module_id) as module, (select menu_name from modules ms where ms.module_name = module) as menu_name \n' +
+        'from permissions where role_id = ? and date = (select max(date) from permissions where role_id = ?);'
     db.query(query, [req.params.id, req.params.id], function (error, results, fields) {
         if(error){
             res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
@@ -1100,6 +1101,7 @@ router.post('/maintenance-upload/:number_plate/', function(req, res) {
 
 router.post('/workflows', function(req, res, next) {
     let count = 0,
+        created_workflow,
         stages = req.body.stages,
         workflow = req.body.workflow,
         date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -1114,6 +1116,7 @@ router.post('/workflows', function(req, res, next) {
             connection.query('SELECT * FROM workflows WHERE ID = LAST_INSERT_ID()', function (error, results, fields) {
                 async.forEach(stages, function (stage, callback) {
                     stage.workflowID = results[0]['ID'];
+                    created_workflow = results[0]['ID'];
                     stage.date_created = date_created;
                     delete stage.stage_name;
                     delete stage.type;
@@ -1130,6 +1133,12 @@ router.post('/workflows', function(req, res, next) {
                 }, function (data) {
                     connection.query('SELECT * FROM workflows AS w WHERE w.status <> 0 ORDER BY w.ID desc', function (error, results, fields) {
                         connection.release();
+                        let payload = {}
+                        payload.category = 'Workflow'
+                        payload.userid = req.cookies.timeout
+                        payload.description = 'New Workflow Created'
+                        payload.affected = created_workflow
+                        notificationsService.log(req, payload)
                         res.send({"status": 200, "error": null, "message": "Workflow with "+count+" stage(s) created successfully!", "response": results});
                     });
                 })
@@ -1140,6 +1149,7 @@ router.post('/workflows', function(req, res, next) {
 
 router.post('/workflows/:workflow_id', function(req, res, next) {
     let count = 0,
+        created_workflow,
         stages = req.body.stages,
         workflow = req.body.workflow,
         workflow_id = req.params.workflow_id,
@@ -1159,6 +1169,7 @@ router.post('/workflows/:workflow_id', function(req, res, next) {
                     connection.query('SELECT * FROM workflows WHERE ID = LAST_INSERT_ID()', function (error, results, fields) {
                         async.forEach(stages, function (stage, callback) {
                             stage.workflowID = results[0]['ID'];
+                            created_workflow = results[0]['ID'];
                             stage.date_created = date_created;
                             delete stage.ID;
                             delete stage.stage_name;
@@ -1176,6 +1187,12 @@ router.post('/workflows/:workflow_id', function(req, res, next) {
                         }, function (data) {
                             connection.query('SELECT * FROM workflows AS w WHERE w.status <> 0 ORDER BY w.ID desc', function (error, results, fields) {
                                 connection.release();
+                                let payload = {}
+                                payload.category = 'Workflow'
+                                payload.userid = req.cookies.timeout
+                                payload.description = 'New Workflow Created'
+                                payload.affected = created_workflow
+                                notificationsService.log(req, payload)
                                 res.send({"status": 200, "error": null, "message": "Workflow with "+count+" stage(s) created successfully!", "response": results});
                             });
                         })
@@ -1209,6 +1226,12 @@ router.post('/edit-workflows/:workflow_id', function(req, res, next) {
         }, function (data) {
             connection.query('SELECT * FROM workflows AS w WHERE w.status <> 0 ORDER BY w.ID desc', function (error, results, fields) {
                 connection.release();
+                let payload = {}
+                payload.category = 'Workflow'
+                payload.userid = req.cookies.timeout
+                payload.description = 'Workflow Edited'
+                payload.affected = req.params.workflow_id
+                notificationsService.log(req, payload)
                 res.send({"status": 200, "error": null, "message": "Workflow with "+count+" stage(s) updated successfully!", "response": results});
             });
         })
@@ -1320,7 +1343,15 @@ router.post('/submitPermission/:role', function(req, res, next) {
             connection.release();
             if(status === false)
                 return res.send(data);
-            res.send({"status": 200, "error": null, "message": "Permissions Set for Selected Role!"});
+            else {
+                let payload = {}
+                payload.category = 'Permission'
+                payload.userid = req.cookies.timeout
+                payload.description = 'New Permissions Set'
+                payload.affected = role_id
+                notificationsService.log(req, payload)
+                res.send({"status": 200, "error": null, "message": "Permissions Set for Selected Role!"});
+            }
         })
     });
 });
@@ -1390,7 +1421,15 @@ router.post('/document-upload/:id/:name', function(req, res) {
                                 sampleFile.mv('files/application-'+application_id+'/'+application_id+'_'+name+'.'+extension, function(err) {
                                     if (err)
                                         return res.status(500).send(err);
-                                    res.send({files:[sampleFile]});
+                                    else {
+                                        let payload = {}
+                                        payload.category = 'Application'
+                                        payload.userid = req.cookies.timeout
+                                        payload.description = 'New Document Upload'
+                                        payload.affected = application_id
+                                        notificationsService.log(req, payload)
+                                        res.send({files:[sampleFile]});
+                                    }
                                 });
                             }
                         });
@@ -1437,6 +1476,12 @@ router.post('/targets', function(req, res, next) {
                 if(error){
                     res.send({"status": 500, "error": error, "response": null});
                 } else {
+                    let payload = {}
+                    payload.category = 'Target'
+                    payload.userid = req.cookies.timeout
+                    payload.description = 'New Target Added'
+                    payload.affected = results.insertId
+                    notificationsService.log(req, payload)
                     res.send({"status": 200, "message": "Target added successfully!"});
                 }
             });
@@ -1455,12 +1500,18 @@ router.get('/targets', function(req, res, next) {
     });
 });
 
-router.delete('/target/delete/:id', function(req, res, next) {
+router.delete('/target/delete/:id', function(req, res, next){
     let date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('UPDATE targets SET status=0,date_modified=? WHERE ID = ?', [date,req.params.id], function (error, results, fields) {
         if(error){
             res.send({"status": 500, "error": error, "response": null});
         } else {
+            let payload = {}
+            payload.category = 'Target'
+            payload.userid = req.cookies.timeout
+            payload.description = 'Target Deleted'
+            payload.affected = req.params.id
+            notificationsService.log(req, payload)
             res.send({"status": 200, "message": "Target deleted successfully!"});
         }
     });

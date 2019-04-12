@@ -291,7 +291,10 @@ function edit(){
             $('#email').val(data[0].email);
             $('#role').val(data[0].user_role);
             $('#branch').val(data[0].branch);
-            $('.select2-selection__rendered').html(data[0].Super);
+            // $('.select2-selection__rendered').html(data[0].Super);
+            $('#supervisor').val(data[0].supervisor)
+            $('#supervisor').select2('destroy');
+            $('#supervisor').select2();
             if (data[0].loan_officer_status === 1)
                 $('#loan_officer_status').prop('checked','checked');
         },

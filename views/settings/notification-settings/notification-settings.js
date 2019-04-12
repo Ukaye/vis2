@@ -175,7 +175,7 @@ function getCats(){
 //                        icon = '<span class="label label-success" style="background-color:green; color:white; padding: 5px; border-radius: 5px">Compulsory</span>';
                 }
                 else {
-                    set = '<a href="#" class="btn btn-info" onclick="loadRolesConfig('+val.id+')" title="Click to configure for roles"><i class="ace-icon fa fa-gear bigger-130"></i></a> &nbsp; &nbsp;';
+                    set = '<a href="#" class="btn btn-info" onclick="loadRolesConfig('+val.id+')" title="Click to configure for roles"><i class="ace-icon fa fa-gear bigger-130"></i> Configure Roles</a> &nbsp; &nbsp;';
                     icon = '<input type="checkbox" id="cat'+val.id+'">';
 //                        icon = '<span class="label label-success" style="background-color:grey; color:white; padding: 5px; border-radius: 5px">Non - Compulsory</span>';
                 }

@@ -231,9 +231,83 @@
     document.createElement("time");
 }));
 
-let init = 0, all_count,
+let initial = 0, all_count,
     count = 0,
     ids = [];
+
+function load_notifications(){
+    ids.length = 0;
+    count = 0;
+    initial = JSON.parse(localStorage.notifications).length;
+    all_count = JSON.parse(localStorage.notifications).length;
+    if (JSON.parse(localStorage.notifications).length === 0){
+        $('#noti-count').hide();
+        return notifications();
+    }
+    else{
+        $('#noti-count').show();
+        $('#noti-count').html(all_count);
+    }
+    let icon,
+        link,
+        item;
+    $('#n-dropdown').empty();
+    $.each(JSON.parse(localStorage.notifications), function (key, val) {
+        count++;
+        switch (val.category){
+            case 'Activity':
+                icon = '<i class="fa fa-tasks fa-4x"></i>'
+                link = '/activity'
+                break;
+            case 'Clients':
+                icon = '<i class="fa fa-users fa-4x"></i>'
+                link = '/client-info?id='+val.affected;
+                break;
+            case 'Users':
+                icon = '<i class="fa fa-user fa-4x"></i>'
+                link = `/all-users/`;
+                break;
+            case 'Application':
+                icon = '<i class="fa fa-table fa-4x"></i>'
+                link = `/view-application?id=${val.affected}`;
+                break;
+            default:
+                icon = '<img src="../atb-logo.png">'
+        }
+        item = '<div class="feed-body-content">\n' +
+            '                            <p class="feed-body-header">'+jQuery.timeago(val.date_created)+'</time></p>\n' +
+            '                            <div class="row">\n' +
+            '                                <span class="col-md-3" style="padding-right: 0">'+icon+'</span>\n' +
+            '                                <a href="'+link+'" class="col-md-9" style="padding-left: 10px;font-size: 14px">'+val.description+'\n' +
+            '                                    <div class="client-notification">\n' +
+            '                                        <img class="user-avatar rounded-circle" src="/images/admin.jpg" alt="User Avatar"\n' +
+            '                                             style="">\n' +
+            '                                            <p>'+val.user+'</p>\n' +
+            '                         <small onclick="markAsViewed('+val.ID+')" class="feed-content-menu float-right" style="margin-top: 50px">Mark as Viewed</small>\n'+
+            '                                    </div>\n' +
+            '                                 </a>\n' +
+            '                            </div>\n' +
+            '                        </div>'
+        $('#n-dropdown').append(item);
+
+        // let obj = {};
+        // obj.notification_id = val.notification_id;
+        // obj.val = 2;s
+        //    $.ajax({
+        //        type: "GET",
+        //        url: "/notifications/update-pr",
+        //        data:obj,
+        //        success: function (response) {
+        //            // console.log('Success');
+        //            count = 0;
+        //        }
+        //    });
+    });
+    if (count === 0)
+        $('#mark-all').attr("disabled", true);
+    $('#noti-info').html(count+ ' notification(s).');
+
+}
 
 function notifications(){
     ids.length = 0;
@@ -243,8 +317,9 @@ function notifications(){
         type: "GET",
         url: "/notifications/all-updates?bug="+JSON.parse(localStorage.user_obj).ID+'&&bugger='+JSON.parse(localStorage.user_obj).user_role,
         success: function (response) {
+            localStorage.setItem('notifications', response);
             status = true;
-            init = response.length;
+            initial = response.length;
             all_count = response.length;
             if (response.length === 0){
                 $('#noti-count').hide();
@@ -261,23 +336,44 @@ function notifications(){
                 count++;
                 switch (val.category){
                     case 'Activity':
-                        icon = '<i class="fa fa-tasks fa-4x"></i>'
+                        icon = '<i class="fa fa-tasks fa-4x"></i>';
                         link = '/activity'
                         break;
                     case 'Clients':
-                        icon = '<i class="fa fa-users fa-4x"></i>'
+                        icon = '<i class="fa fa-users fa-4x"></i>';
                         link = '/client-info?id='+val.affected;
                         break;
                     case 'Users':
-                        icon = '<i class="fa fa-user fa-4x"></i>'
+                        icon = '<i class="fa fa-user fa-4x"></i>';
                         link = `/all-users/`;
                         break;
                     case 'Application':
-                        icon = '<i class="fa fa-table fa-4x"></i>'
+                        icon = '<i class="fa fa-table fa-4x"></i>';
                         link = `/view-application?id=${val.affected}`;
                         break;
+                    case 'Workflow':
+                        icon = '<img src="../workflow.png">';
+                        link = `/edit-workflow?id=${val.affected}`;
+                        break;
+                    case 'Investment':
+                        icon = '<i class="fa fa-money fa-4x"></i>';
+                        link = `/view-application?id=${val.affected}`;
+                        break;
+                    case 'Target':
+                        icon = '<i class="fa fa-bullseye fa-4x"></i>';
+                        link = `/all-targets`;
+                        break;
+                    case 'Authentication':
+                        icon = '<i class="fa fa-power-off fa-4x"></i>';
+                        link = '#';
+                        break;
+                    case 'Permission':
+                        icon = '<img src="../permission.png">';
+                        link = '#';
+                        break;
                     default:
-                        icon = '<img src="atb-logo.png">'
+                        icon = '<img src="../atb-logo.png">';
+                        link = '#';
                 }
                 item = '<div class="feed-body-content">\n' +
 '                            <p class="feed-body-header">'+jQuery.timeago(val.date_created)+'</time></p>\n' +
@@ -288,7 +384,7 @@ function notifications(){
 '                                        <img class="user-avatar rounded-circle" src="/images/admin.jpg" alt="User Avatar"\n' +
 '                                             style="">\n' +
 '                                            <p>'+val.user+'</p>\n' +
-                    '                         <small onclick="markAsViewed('+val.ID+')" class="feed-content-menu float-right" style="margin-top: 50px">Mark as Viewed</small>\n'+
+                    '                         <small onclick="markAsViewed('+val.ID+')" class="feed-content-menu float-right" style="margin-top: 50px">Remove</small>\n'+
 '                                    </div>\n' +
 '                                 </a>\n' +
 '                            </div>\n' +
@@ -314,7 +410,7 @@ function notifications(){
         }
     });
 }
-setInterval(notifications, 30000);
+setInterval(notifications, 15000);
 
 function loan_notifications(){
     ids.length = 0;
@@ -474,7 +570,7 @@ function markAsViewed(id){
             status = true;
             setTimeout(function () {
                 notifications();
-            }, 30000);
+            }, 10000);
         }
     });
 }
