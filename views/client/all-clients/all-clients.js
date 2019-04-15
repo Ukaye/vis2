@@ -164,7 +164,6 @@ function read_write_custom(){
 
     if (!editLoanOfficer || editLoanOfficer['read_only'] !== '1')
         $('#loan_officer').prop('disabled', true);
-    console.log(clientsList)
     if (clientsList && clientsList['read_only'] === '1'){
         loadUsers();
     } else {
@@ -583,8 +582,6 @@ function submitDetails(){
     obj.industry = $('#industry').find('option:selected').text();
     obj.job = $("#job").val();
     obj.salary = $("#salary").val();
-    if (parseFloat(obj.salary) <= 0)
-        ret
     obj.job_country = $('#job_country').find('option:selected').attr('id');
     obj.off_address = $("#off_address").val();
     obj.off_state = $('#off_state').find('option:selected').attr('id');
