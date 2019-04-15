@@ -167,6 +167,8 @@ function createUser(){
                 $('#role').val(0);
                 $('#branch').val(0);
                 $('#supervisor').val(0);
+                $('#supervisor').select2('destroy');
+                $('#supervisor').select2();
 //                        window.location.href = "/all-users";
             }
         }

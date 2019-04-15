@@ -357,7 +357,6 @@ users.post('/upload-file/:id/:item', function(req, res) {
         extArray = sampleFile.name.split("."),
         extension = extArray[extArray.length - 1],
         fileName = name+'.'+extension;
-
     fs.stat('files/users/'+req.params.id+'/', function(err) {
         if (!err) {
             console.log('file or directory exists');
@@ -1329,7 +1328,6 @@ users.post('/edit-client/:id', function(req, res, next) {
             console.log('error'); console.log(error)
             res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
         } else {
-            console.log(results)
             let payload = {}
             payload.category = 'Clients'
             payload.userid = req.cookies.timeout
