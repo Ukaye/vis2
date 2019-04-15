@@ -1,5 +1,6 @@
 $(document).ready(function() {
     getOfficers();
+    read_write_custom();
 });
 
 let client_id;
@@ -148,7 +149,7 @@ function loadUsers(id){
 
 }
 
-function read_write(){
+function read_write_custom(){
     let w,
         perms = JSON.parse(localStorage.getItem("permissions")),
         page = (window.location.pathname.split('/')[1].split('.'))[0],
@@ -163,6 +164,7 @@ function read_write(){
 
     if (!editLoanOfficer || editLoanOfficer['read_only'] !== '1')
         $('#loan_officer').prop('disabled', true);
+    console.log(clientsList)
     if (clientsList && clientsList['read_only'] === '1'){
         loadUsers();
     } else {
