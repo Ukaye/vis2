@@ -27,13 +27,14 @@ router.post('/create', function (req, res, next) {
             }).then(response_ => {
                 return res.send(response_['data'][0]);
             }, err => {
-                res.send({status: 500, error: error, response: null});
+                res.send({status: 500, error: err, response: null});
             })
             .catch(error => {
                 res.send({status: 500, error: error, response: null});
             });
         }, err => {
-            res.send({status: 500, error: error, response: null});
+            console.log(err)
+            res.send({status: 500, error: err, response: null});
         })
         .catch(error => {
             res.send({status: 500, error: error, response: null});
@@ -124,7 +125,7 @@ router.post('/approve/:id', function (req, res, next) {
         .then(response => {
             res.send(response.data);
         }, err => {
-            res.send({status: 500, error: error, response: null});
+            res.send({status: 500, error: err, response: null});
         })
         .catch(error => {
             res.send({status: 500, error: error, response: null});
@@ -145,7 +146,7 @@ router.get('/complete/:id', function (req, res, next) {
         .then(function (response) {
             res.send(response.data);
         }, err => {
-            res.send({status: 500, error: error, response: null});
+            res.send({status: 500, error: err, response: null});
         })
         .catch(function (error) {
             res.send({status: 500, error: error, response: null});
@@ -166,7 +167,7 @@ router.get('/reject/:id', function (req, res, next) {
         .then(function (response) {
             res.send(response.data);
         }, err => {
-            res.send({status: 500, error: error, response: null});
+            res.send({status: 500, error: err, response: null});
         })
         .catch(function (error) {
             res.send({status: 500, error: error, response: null});

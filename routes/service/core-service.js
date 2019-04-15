@@ -5,8 +5,6 @@ const router = express.Router();
 
 router.get('/get', function (req, res, next) {
     let query = req.query.query;
-    console.log(query)
-    console.log('=============================')
     db.query(query, function (error, results, fields) {
         if (error && error !== null) {
             res.send({
