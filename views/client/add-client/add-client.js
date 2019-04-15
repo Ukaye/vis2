@@ -199,7 +199,7 @@ function confirmPassword(){
 function getOfficers(){
     $.ajax({
         type: "GET",
-        url: "/user/users-list/",
+        url: "/user/loan-officers/",
         data: '{}',
         success: function (response) {
             var role = $("[id=loan_officer]");

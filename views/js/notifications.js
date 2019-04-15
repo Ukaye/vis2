@@ -235,44 +235,74 @@ let initial = 0, all_count,
     count = 0,
     ids = [];
 
-function load_notifications(){
-    ids.length = 0;
+let noti_ids = [];
+$( "#noti-bell" ).click(function() {
+});
+
+function open_notifications(){
+    $('#noti-count').hide();
+    load_notifications(JSON.parse(localStorage.getItem('notifications')));
+}
+
+let noti_count = 0;
+function load_notifications(object){
+    // ids.length = 0;
     count = 0;
-    initial = JSON.parse(localStorage.notifications).length;
-    all_count = JSON.parse(localStorage.notifications).length;
-    if (JSON.parse(localStorage.notifications).length === 0){
-        $('#noti-count').hide();
-        return notifications();
-    }
-    else{
-        $('#noti-count').show();
-        $('#noti-count').html(all_count);
-    }
+    // initial = object.length;
+    // if (JSON.parse(localStorage.getItem('notifications')).length === 0){
+    //     $('#noti-count').hide();
+    //     return notifications();
+    // }
+    // else{
+    //     $('#noti-count').show();
+    //     $('#noti-count').html(noti_count - all_count);
+    // }
     let icon,
         link,
         item;
     $('#n-dropdown').empty();
-    $.each(JSON.parse(localStorage.notifications), function (key, val) {
+    $.each(object, function (key, val) {
         count++;
         switch (val.category){
             case 'Activity':
-                icon = '<i class="fa fa-tasks fa-4x"></i>'
+                icon = '<i class="fa fa-tasks fa-4x"></i>';
                 link = '/activity'
                 break;
             case 'Clients':
-                icon = '<i class="fa fa-users fa-4x"></i>'
+                icon = '<i class="fa fa-users fa-4x"></i>';
                 link = '/client-info?id='+val.affected;
                 break;
             case 'Users':
-                icon = '<i class="fa fa-user fa-4x"></i>'
+                icon = '<i class="fa fa-user fa-4x"></i>';
                 link = `/all-users/`;
                 break;
             case 'Application':
-                icon = '<i class="fa fa-table fa-4x"></i>'
+                icon = '<i class="fa fa-table fa-4x"></i>';
                 link = `/view-application?id=${val.affected}`;
                 break;
+            case 'Workflow':
+                icon = '<img src="../workflow.png">';
+                link = `/edit-workflow?id=${val.affected}`;
+                break;
+            case 'Investment':
+                icon = '<i class="fa fa-money fa-4x"></i>';
+                link = `/view-application?id=${val.affected}`;
+                break;
+            case 'Target':
+                icon = '<i class="fa fa-bullseye fa-4x"></i>';
+                link = `/all-targets`;
+                break;
+            case 'Authentication':
+                icon = '<i class="fa fa-power-off fa-4x"></i>';
+                link = '#';
+                break;
+            case 'Permission':
+                icon = '<img src="../permission.png">';
+                link = '#';
+                break;
             default:
-                icon = '<img src="../atb-logo.png">'
+                icon = '<img src="../atb-logo.png">';
+                link = '#';
         }
         item = '<div class="feed-body-content">\n' +
             '                            <p class="feed-body-header">'+jQuery.timeago(val.date_created)+'</time></p>\n' +
@@ -283,30 +313,43 @@ function load_notifications(){
             '                                        <img class="user-avatar rounded-circle" src="/images/admin.jpg" alt="User Avatar"\n' +
             '                                             style="">\n' +
             '                                            <p>'+val.user+'</p>\n' +
-            '                         <small onclick="markAsViewed('+val.ID+')" class="feed-content-menu float-right" style="margin-top: 50px">Mark as Viewed</small>\n'+
+            '                         <small onclick="markAsViewed('+val.ID+')" class="feed-content-menu float-right" style="margin-top: 50px">Remove</small>\n'+
             '                                    </div>\n' +
             '                                 </a>\n' +
             '                            </div>\n' +
-            '                        </div>'
+            '                        </div>';
         $('#n-dropdown').append(item);
-
-        // let obj = {};
-        // obj.notification_id = val.notification_id;
-        // obj.val = 2;s
-        //    $.ajax({
-        //        type: "GET",
-        //        url: "/notifications/update-pr",
-        //        data:obj,
-        //        success: function (response) {
-        //            // console.log('Success');
-        //            count = 0;
-        //        }
-        //    });
     });
     if (count === 0)
         $('#mark-all').attr("disabled", true);
     $('#noti-info').html(count+ ' notification(s).');
+}
 
+let old_count = parseInt(JSON.parse(localStorage.getItem('noti_count')));
+function getNotifications(){
+    ids.length = 0;
+    count = 0;
+    status = false;
+    $.ajax({
+        type: "GET",
+        url: "/notifications/all-updates?bug="+JSON.parse(localStorage.user_obj).ID+'&&bugger='+JSON.parse(localStorage.user_obj).user_role,
+        success: function (response) {
+            noti_count = response.length;
+            let new_count = Math.abs(old_count - noti_count);
+            if (noti_count === old_count){
+                $('#noti-count').hide();
+                localStorage.setItem('noti_count', response.length);
+            }
+            else{
+                $('#noti-count').html(new_count);
+                $('#noti-count').show();
+                $('#noti-info').html(new_count+ ' new notification(s).');
+                localStorage.setItem('noti_count', response.length);
+            }
+            localStorage.setItem('notifications', JSON.stringify(response));
+            // load_notifications(JSON.parse(localStorage.getItem('notifications')));
+        }
+    });
 }
 
 function notifications(){
@@ -410,7 +453,7 @@ function notifications(){
         }
     });
 }
-setInterval(notifications, 15000);
+setInterval(getNotifications, 15000);
 
 function loan_notifications(){
     ids.length = 0;
@@ -595,6 +638,9 @@ function markAll(){
 
 jQuery(document).ready(function() {
     // setTimeout(function () {
-    //     notifications();
+    //     getNotifications();
     // }, 10000);
+    getNotifications();
+    let obj = (localStorage.getItem('notifications'));
+    load_notifications(JSON.parse(localStorage.getItem('notifications')));
 });
