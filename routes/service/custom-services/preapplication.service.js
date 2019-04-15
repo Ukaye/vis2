@@ -19,7 +19,8 @@ router.post('/create', function (req, res, next) {
     request.post(
         {
             url: url,
-            body: postData
+            body: postData,
+            json: true
         },
         (error, res, body) => {
             console.log(error);
