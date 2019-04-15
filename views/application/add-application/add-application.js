@@ -917,8 +917,8 @@
             return callback(false);
         }
         if (obj.product === 'market_loan' && (!obj.market_name || !obj.market_leader_name || !obj.market_leader_phone || !obj.guarantor_name
-                || !obj.guarantor_phone || !obj.guarantor_relationship || !obj.guarantor_address || !obj.stock_value
-                || obj.businesses === '-- Choose Business --' || !obj.capital_source|| !obj.business_turnover || !obj.spouse_knowledge)) {
+                || !obj.guarantor_phone || !obj.guarantor_relationship || !obj.guarantor_address || (!obj.stock_value && obj.stock_value !== 0)
+                || obj.businesses === '-- Choose Business --' || !obj.capital_source|| (!obj.business_turnover && obj.business_turnover !== 0) || !obj.spouse_knowledge)) {
             notification('Kindly fill all required fields!','','warning');
             return callback(false);
         }
@@ -931,7 +931,7 @@
                         and Maximum is ${numberToCurrencyformatter(settings.tenor_max)} (months)`,'','warning');
             return callback(false);
         }
-        if (parseFloat(obj.interest_rate) < settings.interest_rate_min || parseFloat(obj.interest_rate) > settings.interest_rate_max) {
+        if (parseFloat(obj.rate) < settings.interest_rate_min || parseFloat(obj.rate) > settings.interest_rate_max) {
             notification(`Minimum interest rate is ${numberToCurrencyformatter(settings.interest_rate_min)}% 
                         and Maximum is ${numberToCurrencyformatter(settings.interest_rate_max)}%`,'','warning');
             return callback(false);
@@ -939,6 +939,14 @@
         if (parseFloat(obj.loan_amount) < settings.loan_requested_min || parseFloat(obj.loan_amount) > settings.loan_requested_max) {
             notification(`Minimum loan amount is ₦${numberToCurrencyformatter(settings.loan_requested_min)} 
                         and Maximum is ₦${numberToCurrencyformatter(settings.loan_requested_max)}`,'','warning');
+            return callback(false);
+        }
+        if (!(parseFloat(obj.stock_value) > 0)) {
+            notification(`Minimum stock value is ₦0`,'','warning');
+            return callback(false);
+        }
+        if (!(parseFloat(obj.business_turnover) > 0)) {
+            notification(`Minimum business turnover is ₦0`,'','warning');
             return callback(false);
         }
         return callback(obj);
