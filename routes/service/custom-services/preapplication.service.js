@@ -3,6 +3,7 @@ const
     axios = require('axios'),
     async = require('async'),
     moment = require('moment'),
+    db = require('../../../db'),
     express = require('express'),
     router = express.Router(),
     enums = require('../../../enums');
@@ -15,30 +16,25 @@ router.post('/create', function (req, res, next) {
         url = `${HOST}${endpoint}`;
     postData.status = enums.PREAPPLICATION.STATUS.ACTIVE;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    axios.post(url, postData)
-        .then(response => {
-            query = `SELECT * from preapplications WHERE ID = (SELECT MAX(ID) from preapplications)`;
-            endpoint = `/core-service/get`;
-            url = `${HOST}${endpoint}`;
-            axios.get(url, {
-                params: {
-                    query: query
-                }
-            }).then(response_ => {
-                return res.send(response_['data'][0]);
-            }, err => {
-                res.send({status: 500, error: err, response: null});
-            })
+    db.query(query, postData, function (error, results) {
+        console.log(error)
+        console.log(results)
+        query = `SELECT * from preapplications WHERE ID = (SELECT MAX(ID) from preapplications)`;
+        endpoint = `/core-service/get`;
+        url = `${HOST}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(response_ => {
+            return res.send(response_['data'][0]);
+        }, err => {
+            res.send({status: 500, error: err, response: null});
+        })
             .catch(error => {
                 res.send({status: 500, error: error, response: null});
             });
-        }, err => {
-            console.log(err)
-            res.send({status: 500, error: err, response: null});
-        })
-        .catch(error => {
-            res.send({status: 500, error: error, response: null});
-        });
+    });
 });
 
 router.get('/get', function (req, res, next) {
