@@ -631,7 +631,7 @@
                                 $('.upload-div').show();
                                 $('#proceed').show();
                             } else {
-                                // window.location.href = `/add-application?id=${preapplication.ID}`;
+                                window.location.href = `/add-application?id=${preapplication.ID}`;
                             }
                         },
                         'error': function (err) {
