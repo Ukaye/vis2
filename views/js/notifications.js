@@ -641,6 +641,5 @@ jQuery(document).ready(function() {
     //     getNotifications();
     // }, 10000);
     getNotifications();
-    let obj = (localStorage.getItem('notifications'));
-    load_notifications(JSON.parse(localStorage.getItem('notifications')));
+    load_notifications(JSON.parse(localStorage.notifications));
 });
