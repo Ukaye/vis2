@@ -897,7 +897,7 @@
             obj.guarantor_relationship = $('#guarantor_relationship').val();
         if ($('#guarantor_address').val())
             obj.guarantor_address = $('#guarantor_address').val();
-        if ($('#businesses').val())
+        if ($('#businesses').val() !== '-- Choose Business --')
             obj.businesses = $('#businesses').val();
         if ($('#stock_value').val())
             obj.stock_value = currencyToNumberformatter($('#stock_value').val());
@@ -918,7 +918,7 @@
         }
         if (obj.product === 'market_loan' && (!obj.market_name || !obj.market_leader_name || !obj.market_leader_phone || !obj.guarantor_name
                 || !obj.guarantor_phone || !obj.guarantor_relationship || !obj.guarantor_address || (!obj.stock_value && obj.stock_value !== 0)
-                || obj.businesses === '-- Choose Business --' || !obj.capital_source|| (!obj.business_turnover && obj.business_turnover !== 0) || !obj.spouse_knowledge)) {
+                || !obj.businesses || !obj.capital_source|| (!obj.business_turnover && obj.business_turnover !== 0) || !obj.spouse_knowledge)) {
             notification('Kindly fill all required fields!','','warning');
             return callback(false);
         }
