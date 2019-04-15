@@ -146,6 +146,7 @@
                                     <th>Fullname</th>
                                     <th>Phone</th>
                                     <th>Amount(NGN)</th>
+                                    <th>Product</th>
                                     <th>Status</th>
                                     <th>Date</th>
                                     <th>Action</th>
@@ -167,61 +168,6 @@
 
 
 </div><!-- /#right-panel -->
-
-<!-- Modal -->
-<div class="modal fade" id="disburseModal" tabindex="-1" role="dialog" aria-labelledby="disburseModalLabel">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="disburseModalLabel">Disburse Loan</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            </div>
-            <div class="modal-body">
-                <form>
-                    <div class="form-group">
-                        <label class="form-control-label">Actual Disbursement Amount</label>
-                        <div class="input-group">
-                            <div class="input-group-addon">₦</div>
-                            <input id="disbursement-amount" type="text" class="form-control" placeholder="0" disabled="disabled">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-control-label">Choose a Funding Source</label><strong style="color:red"> *</strong><span id="funding-error" style="padding-left:50px; text-align: center"></span>
-                        <div class="input-group">
-                            <select id="funding" class="form-control" required="required">
-                                <option selected="selected">-- Select a Funding Source --</option>
-                                <option value="Default">Default</option>
-                                <option value="Secondary">Secondary</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-control-label">Choose a Disbursement Channel</label><strong style="color:red"> *</strong><span id="channel-error" style="padding-left:50px; text-align: center"></span>
-                        <div class="input-group">
-                            <select id="channel" class="form-control" required="required">
-                                <option selected="selected">-- Select a Channel --</option>
-                                <option value="Cash">Cash</option>
-                                <option value="Cheque">Cheque</option>
-                                <option value="Bank Transfer">Bank Transfer</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-control-label">Disbursement Date</label><strong style="color:red"> *</strong><span id="disbursement-date-error" style="padding-left:50px; text-align: center"></span>
-                        <div class="input-group">
-                            <div class="input-group-addon"><i class="fa fa-calendar"></i></div>
-                            <input type="date" id="disbursement-date" class="form-control" required="required">
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="disburse()">Disburse</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <script src="assets/js/popper.min.js"></script>
 <script src="assets/js/plugins.js"></script>

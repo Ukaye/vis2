@@ -910,8 +910,9 @@
         if ($('input[name=spouse_knowledge]:checked').val())
             obj.spouse_knowledge = $('input[name=spouse_knowledge]:checked').val();
         obj.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
-        if (!user || !obj.product || !obj.loan_amount || !obj.rate || !obj.tenor || !obj.tenor_type
-            || obj.loan_purpose === '-- Choose Loan Purpose --' || !obj.loan_serviced) {
+        if (!user || !obj.product || (!obj.loan_amount && obj.loan_amount !== 0) || (!obj.rate && obj.rate !== 0)
+                || (!obj.tenor && obj.tenor !== 0) || !obj.tenor_type  || obj.loan_purpose === '-- Choose Loan Purpose --' ||
+                (!obj.loan_serviced && obj.loan_serviced !== 0)) {
             notification('Kindly fill all required fields!','','warning');
             return callback(false);
         }
