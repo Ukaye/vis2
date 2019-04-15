@@ -1,7 +1,6 @@
 const
     fs = require('fs'),
     axios = require('axios'),
-    request = require('request'),
     async = require('async'),
     moment = require('moment'),
     express = require('express'),
@@ -16,8 +15,6 @@ router.post('/create', function (req, res, next) {
         url = `${HOST}${endpoint}`;
     postData.status = enums.PREAPPLICATION.STATUS.ACTIVE;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    console.log(postData)
-    console.log(url)
     axios.post(url, postData)
         .then(response => {
             query = `SELECT * from preapplications WHERE ID = (SELECT MAX(ID) from preapplications)`;
