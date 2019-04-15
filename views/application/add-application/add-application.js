@@ -941,11 +941,11 @@
                         and Maximum is ₦${numberToCurrencyformatter(settings.loan_requested_max)}`,'','warning');
             return callback(false);
         }
-        if (!(parseFloat(obj.stock_value) > 0)) {
+        if (obj.product === 'market_loan' && !(parseFloat(obj.stock_value) > 0)) {
             notification(`Minimum stock value is ₦0`,'','warning');
             return callback(false);
         }
-        if (!(parseFloat(obj.business_turnover) > 0)) {
+        if (obj.product === 'market_loan' && !(parseFloat(obj.business_turnover) > 0)) {
             notification(`Minimum business turnover is ₦0`,'','warning');
             return callback(false);
         }
