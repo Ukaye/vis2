@@ -641,5 +641,5 @@ jQuery(document).ready(function() {
     //     getNotifications();
     // }, 10000);
     getNotifications();
-    load_notifications(JSON.parse(localStorage.notifications));
+    // load_notifications(JSON.parse(localStorage.notifications));
 });
