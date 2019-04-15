@@ -3,6 +3,7 @@ const
     axios = require('axios'),
     async = require('async'),
     moment = require('moment'),
+    db = require('../../../db'),
     express = require('express'),
     router = express.Router(),
     enums = require('../../../enums');
@@ -15,29 +16,23 @@ router.post('/create', function (req, res, next) {
         url = `${HOST}${endpoint}`;
     postData.status = enums.PREAPPLICATION.STATUS.ACTIVE;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    axios.post(url, postData)
-        .then(response => {
-            query = `SELECT * from preapplications WHERE ID = (SELECT MAX(ID) from preapplications)`;
-            endpoint = `/core-service/get`;
-            url = `${HOST}${endpoint}`;
-            axios.get(url, {
-                params: {
-                    query: query
-                }
-            }).then(response_ => {
-                return res.send(response_['data'][0]);
-            }, err => {
-                res.send({status: 500, error: error, response: null});
-            })
+    db.query(query, postData, function (error, results) {
+        query = `SELECT * from preapplications WHERE ID = (SELECT MAX(ID) from preapplications)`;
+        endpoint = `/core-service/get`;
+        url = `${HOST}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(response_ => {
+            return res.send(response_['data'][0]);
+        }, err => {
+            res.send({status: 500, error: err, response: null});
+        })
             .catch(error => {
                 res.send({status: 500, error: error, response: null});
             });
-        }, err => {
-            res.send({status: 500, error: error, response: null});
-        })
-        .catch(error => {
-            res.send({status: 500, error: error, response: null});
-        });
+    });
 });
 
 router.get('/get', function (req, res, next) {
@@ -120,15 +115,11 @@ router.post('/approve/:id', function (req, res, next) {
     payload.status = enums.PREAPPLICATION.STATUS.APPROVED;
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
-    axios.post(url, payload)
-        .then(response => {
-            res.send(response.data);
-        }, err => {
-            res.send({status: 500, error: error, response: null});
-        })
-        .catch(error => {
-            res.send({status: 500, error: error, response: null});
-        });
+    db.query(query, payload, function (error, response) {
+        if (error)
+            return res.send({status: 500, error: error, response: null});
+        return res.send({status: 200, error: null, response: response});
+    });
 });
 
 router.get('/complete/:id', function (req, res, next) {
@@ -141,15 +132,11 @@ router.get('/complete/:id', function (req, res, next) {
     payload.status = enums.PREAPPLICATION.STATUS.COMPLETED;
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
-    axios.post(url, payload)
-        .then(function (response) {
-            res.send(response.data);
-        }, err => {
-            res.send({status: 500, error: error, response: null});
-        })
-        .catch(function (error) {
-            res.send({status: 500, error: error, response: null});
-        });
+    db.query(query, payload, function (error, response) {
+        if (error)
+            return res.send({status: 500, error: error, response: null});
+        return res.send({status: 200, error: null, response: response});
+    });
 });
 
 router.get('/reject/:id', function (req, res, next) {
@@ -162,15 +149,11 @@ router.get('/reject/:id', function (req, res, next) {
     payload.status = enums.PREAPPLICATION.STATUS.REJECTED;
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
-    axios.post(url, payload)
-        .then(function (response) {
-            res.send(response.data);
-        }, err => {
-            res.send({status: 500, error: error, response: null});
-        })
-        .catch(function (error) {
-            res.send({status: 500, error: error, response: null});
-        });
+    db.query(query, payload, function (error, response) {
+        if (error)
+            return res.send({status: 500, error: error, response: null});
+        return res.send({status: 200, error: null, response: response});
+    });
 });
 
 router.post('/upload/:id/:name', function(req, res) {

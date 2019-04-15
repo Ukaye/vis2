@@ -31,6 +31,10 @@ function bindDataTable() {
                     query: `ORDER BY loan_amount ${aoData[2].value[0].dir}`
                 },
                 {
+                    name: 'product',
+                    query: `ORDER BY product ${aoData[2].value[0].dir}`
+                },
+                {
                     name: 'status',
                     query: `ORDER BY status ${aoData[2].value[0].dir}`
                 },
@@ -92,6 +96,10 @@ function bindDataTable() {
                 }
             },
             {
+                data: "product",
+                width: "10%"
+            },
+            {
                 width: "10%",
                 className: "text-right",
                 mRender: function (data, type, full) {
@@ -107,10 +115,10 @@ function bindDataTable() {
             },
             {
                 data: "date_created",
-                width: "25%"
+                width: "20%"
             },
             {
-                width: "15%",
+                width: "10%",
                 mRender: function (data, type, full) {
                      return `<a class="btn btn-info btn-sm" href="/add-application?id=${full.ID}">View <i class="fa fa-eye"></i></a>`;
                 }
