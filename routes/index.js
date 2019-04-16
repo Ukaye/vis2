@@ -1030,6 +1030,15 @@ router.post('/inspection-approval/:id/:status/:reason', function(req, res, next)
         if(error){
             res.send({"status": 500, "error": error, "response": null});
         } else {
+            let payload = {}
+            payload.category = 'Inspection'
+            payload.userid = req.cookies.timeout
+            if (req.params.status == 1)
+                payload.description = 'Vehicle Inspection Approved.'
+            else
+                payload.description = 'Vehicle Inspection Rejected.'
+            payload.affected = id
+            notificationsService.log(req, payload)
             res.send({"status": 200, "error": null, "response": "Inspection Approved!"});
         }
     });
@@ -1340,17 +1349,24 @@ router.post('/submitPermission/:role', function(req, res, next) {
                 callback();
             });
         }, function (data) {
-            connection.release();
+            // connection.release();
             if(status === false)
                 return res.send(data);
             else {
-                let payload = {}
-                payload.category = 'Permission'
-                payload.userid = req.cookies.timeout
-                payload.description = 'New Permissions Set'
-                payload.affected = role_id
-                notificationsService.log(req, payload)
-                res.send({"status": 200, "error": null, "message": "Permissions Set for Selected Role!"});
+                connection.query(`select u.role_name from user_roles u where u.ID = ${role_id}`, function (error, results, fields) {
+                    if (error){
+                        res.send({'status': 500, 'error': error})
+                    }
+                    else {
+                        let payload = {}
+                        payload.category = 'Permission'
+                        payload.userid = req.cookies.timeout
+                        payload.description = 'New Permissions Set for '+results[0]['role_name']
+                        payload.affected = role_id
+                        notificationsService.log(req, payload)
+                        res.send({"status": 200, "error": null, "message": "Permissions Set for Selected Role!"});
+                    }
+                });
             }
         })
     });

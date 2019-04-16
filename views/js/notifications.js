@@ -279,7 +279,7 @@ function load_notifications(object){
                 break;
             case 'Application':
                 icon = '<i class="fa fa-table fa-4x"></i>';
-                link = `/view-application?id=${val.affected}`;
+                link = `/application?id=${val.affected}`;
                 break;
             case 'Workflow':
                 icon = '<img src="../workflow.png">';
@@ -287,7 +287,7 @@ function load_notifications(object){
                 break;
             case 'Investment':
                 icon = '<i class="fa fa-money fa-4x"></i>';
-                link = `/view-application?id=${val.affected}`;
+                // link = `/view-application?id=${val.affected}`;
                 break;
             case 'Target':
                 icon = '<i class="fa fa-bullseye fa-4x"></i>';
@@ -311,7 +311,7 @@ function load_notifications(object){
             '                                <span class="col-md-3" style="padding-right: 0">'+icon+'</span>\n' +
             '                                <a href="'+link+'" class="col-md-9" style="padding-left: 10px;font-size: 14px">'+val.description+'\n' +
             '                                    <div class="client-notification">\n' +
-            '                                        <img class="user-avatar rounded-circle" src="/images/admin.jpg" alt="User Avatar"\n' +
+            '                                        <img class="user-avatar rounded-circle" src="/images/admin.jpg" alt="Img"\n' +
             '                                             style="">\n' +
             '                                            <p>'+val.user+'</p>\n' +
             '                         <small onclick="markAsViewed('+val.ID+')" class="feed-content-menu float-right" style="margin-top: 50px">Remove</small>\n'+
