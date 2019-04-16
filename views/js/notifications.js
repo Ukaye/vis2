@@ -260,6 +260,7 @@ function load_notifications(object){
     let icon,
         link,
         item;
+    status = false;
     $('#n-dropdown').empty();
     $.each(object, function (key, val) {
         count++;
@@ -325,17 +326,19 @@ function load_notifications(object){
     $('#noti-info').html(count+ ' notification(s).');
 }
 
-let old_count = parseInt(JSON.parse(localStorage.getItem('noti_count')));
+let old_count = parseInt(localStorage.noti_count);
 function getNotifications(){
     ids.length = 0;
     count = 0;
     status = false;
+    // $('#wait').hide();
     $.ajax({
         type: "GET",
         url: "/notifications/all-updates?bug="+JSON.parse(localStorage.user_obj).ID+'&&bugger='+JSON.parse(localStorage.user_obj).user_role,
         success: function (response) {
+            status = true;
             noti_count = response.length;
-            let new_count = Math.abs(old_count - noti_count);
+            let new_count = Math.abs(parseInt(old_count) - noti_count);
             if (noti_count === old_count){
                 $('#noti-count').hide();
                 localStorage.setItem('noti_count', response.length);
