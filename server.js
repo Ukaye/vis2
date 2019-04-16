@@ -13,6 +13,7 @@ let fs = require('fs'),
     bodyParser = require('body-parser'),
     session = require('client-sessions'),
     cookieParser = require('cookie-parser'),
+    notificationsService = require('./routes/notifications-service'),
     fileUpload = require('express-fileupload');
 
 //check and create uploads directory
@@ -121,6 +122,12 @@ app.post('/login', function (req, res) {
                             db.query(query3, [user.user_role, user.user_role], function (er, mods, fields) {
                                 modules = modules.concat(mods);
                                 user.modules = modules;
+                                let payload = {}
+                                payload.category = 'Authentication'
+                                payload.userid = user.ID
+                                payload.description = 'New User Login'
+                                payload.affected = user.ID
+                                notificationsService.log(req, payload)
                                 res.send({
                                     "status": 200,
                                     "response": user
@@ -502,6 +509,12 @@ app.get('/view-preapproved-loan/:id?', requireLogin, function (req, res) {
 
 app.get('/offer/:id?', function (req, res) {
     res.sendFile('preapproved-loan/offer/offer.html', {
+        root: __dirname + '/views'
+    });
+});
+
+app.get('/all-preapplications', requireLogin, function (req, res) {
+    res.sendFile('application/all-preapplications/all-preapplications.html', {
         root: __dirname + '/views'
     });
 });

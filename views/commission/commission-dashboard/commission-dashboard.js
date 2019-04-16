@@ -7,14 +7,6 @@ $(document).ready(function() {
     read_write_custom();
 });
 
-$(document).ajaxStart(function(){
-    $("#wait").css("display", "block");
-});
-
-$(document).ajaxComplete(function(){
-    $("#wait").css("display", "none");
-});
-
 let commissionsList;
 function read_write_custom(){
     let w,

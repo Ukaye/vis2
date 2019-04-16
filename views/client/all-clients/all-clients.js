@@ -1,5 +1,6 @@
 $(document).ready(function() {
     getOfficers();
+    read_write_custom();
 });
 
 let client_id;
@@ -148,7 +149,7 @@ function loadUsers(id){
 
 }
 
-function read_write(){
+function read_write_custom(){
     let w,
         perms = JSON.parse(localStorage.getItem("permissions")),
         page = (window.location.pathname.split('/')[1].split('.'))[0],
@@ -364,7 +365,7 @@ function openDetailsModal(id) {
 function getOfficers(){
     $.ajax({
         type: "GET",
-        url: "/user/users-list/",
+        url: "/user/loan-officers/",
         success: function (response) {
             let role = $("[id=loan_officer]");
             role.empty().append('<option selected="selected" id="0">-- Choose Loan Officer --</option>');
@@ -581,8 +582,6 @@ function submitDetails(){
     obj.industry = $('#industry').find('option:selected').text();
     obj.job = $("#job").val();
     obj.salary = $("#salary").val();
-    if (parseFloat(obj.salary) <= 0)
-        ret
     obj.job_country = $('#job_country').find('option:selected').attr('id');
     obj.off_address = $("#off_address").val();
     obj.off_state = $('#off_state').find('option:selected').attr('id');

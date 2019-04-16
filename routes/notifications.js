@@ -171,10 +171,15 @@ route.get('/all-updates', function(req, res){
                     'from user_notification_rel unr inner join notifications nt on notificationid = nt.id \n' +
                     'where status = 1 and view_status = 1 and unr.userid = '+user+'\n' +
                     'and nt.userid <> '+user+' \n'+
-                    'and (category in \n' +
-                    '(select category_name from notification_categories nc where nc.id in \n' +
-                    '(select np.category from notification_preferences np where status = 1 and np.userid = '+user+'))\n' +
-                    'or category in (select category_name from notification_categories where compulsory = 1))\n' +
+                    'and ' +
+                    // '(category in \n' +
+                    // '(select category_name from notification_categories nc where nc.id in \n' +
+                    // '(select np.category from notification_preferences np where status = 1 and np.userid = '+user+'))\n' +
+                    // 'or category in (select category_name from notification_categories where compulsory = 1))\n' +
+                    '(select np.status from notification_preferences np where np.category = \n' +
+                    '\t(select nc.id from notification_categories nc where nc.category_name = category) \n' +
+                    'and np.userid = '+user+' and timestamp(np.date_created) = ' +
+                    '(select max(timestamp(npf.date_created)) from notification_preferences npf where npf.userid = '+user+')) = 1 \n' +
                     'and category <> ?\n'+
                     'order by notificationid desc'
             }
@@ -198,8 +203,7 @@ route.get('/all-updates', function(req, res){
                             let query2;
                             if (response.data.length > 0){
                                 query2 = 'select *, notificationid as ID, category, \n' +
-                                    'created_application, \n' +
-                                    '(select GROUP_CONCAT(distinct(approverid)) as approvers from workflow_stages where workflowid = (select workflowid from applications where id = created_application) group by workflowid) approvers,\n' +
+                                    '(select GROUP_CONCAT(distinct(approverid)) from workflow_stages where workflowid = (select workflowid from applications where applications.id = affected)) approvers,\n' +
                                     'description, unr.date_created, nt.userid, (select fullname from users where users.id = nt.userid) user \n' +
                                     'from user_notification_rel unr inner join notifications nt on notificationid = nt.id \n' +
                                     'where status = 1 and view_status = 1 and unr.userid = '+user+'\n' +
@@ -207,14 +211,15 @@ route.get('/all-updates', function(req, res){
                                     'and nt.category = ? and \n' +
                                     '(select np.status from notification_preferences np where np.category = \n' +
                                     '\t(select nc.id from notification_categories nc where nc.category_name = ?) \n' +
-                                    'and np.userid = '+user+' and np.date_created = (select max(npf.date_created) from notification_preferences npf where npf.userid = '+user+')) = 1 \n' +
+                                    'and np.userid = '+user+' and timestamp(np.date_created) = ' +
+                                    '(select max(timestamp(npf.date_created)) from notification_preferences npf where npf.userid = '+user+')) = 1 \n' +
                                     // 'and (select compulsory from notification_categories where category_name = ?) = 1\n' +
                                     'order by notificationid desc'
                             }
                             else {
                                 query2 = `select *, notification_id as ID, category, description, date_created, view_status, (select fullname from users where users.id = userid) user, \n`+
-                                    `(select GROUP_CONCAT(distinct(approverid)) as approvers from workflow_stages where workflowid = (select workflowid from applications where id = created_application)) approvers, `+
-                                    `created_application  `+
+                                    `(select GROUP_CONCAT(distinct(approverid)) as approvers from workflow_stages where workflowid = (select workflowid from applications where applications.id = affected)) approvers, `+
+                                    `affected  `+
                                     `from pending_records inner join notifications on notification_id = notifications.id \n`+
                                     `where status = 1 and userid <> ${user} and category = ? and view_status in (1,2) order by notification_id desc`;
                             }

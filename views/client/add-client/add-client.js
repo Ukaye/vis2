@@ -199,7 +199,7 @@ function confirmPassword(){
 function getOfficers(){
     $.ajax({
         type: "GET",
-        url: "/user/users-list/",
+        url: "/user/loan-officers/",
         data: '{}',
         success: function (response) {
             var role = $("[id=loan_officer]");
@@ -341,11 +341,12 @@ function createClient(){
 
 function upload(i){
     var name = $('#first_name').val() + ' '+ $('#middle_name').val() + ' ' +$('#last_name').val(); var folder_name = " ";
-    if ($('#email').val() === "" || $('#email').val() === "null"){
-        swal('Please Enter Client Email!');
+    if ($('#email').val() === "" || $('#email').val() === null){
+        return swal('Incomplete Information', 'Please Enter Client Email!', 'warning');
     }
     else {
         folder_name = name + '_' + $('#email').val();
+        // return console.log(folder_name)
     }
     var file; var item;
     if (i === 1){
@@ -358,23 +359,22 @@ function upload(i){
         file = $('#file-upload-idcard')[0].files[0]
         item = "ID Card";
     }
-    console.log(name);
     if (file === "undefined") {
         swal ("Choose file to upload");
     }else{
         var formData = new FormData();
         formData.append('file', file); formData.append('type', i);
         $.ajax({
-            url: "user/upload-file/"+folder_name+'/'+item,
+            url: "/user/upload-file/"+folder_name+'/'+item,
             type: "POST",
             data: formData,
             processData: false,
             contentType: false,
             success: function(response) {
-                swal("File Uploaded Successfully!");
+                swal('Success', "File Uploaded Successfully!", 'success');
             },
             error: function() {
-                swal("Error! Please Try Again");
+                swal('Failed', "Error! Please Try Again", 'error');
             }
         });
     }

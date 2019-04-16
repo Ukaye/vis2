@@ -29,8 +29,9 @@
 <body class="open">
 <!-- Left Panel -->
 <script src="assets/js/vendor/jquery-2.1.4.min.js"></script>
+<script src="../../menus/menu-items.js"></script>
 <script type="text/javascript">
-    jQuery(document).ready(function($){ check(); loadMenus(); read_write();});
+//    jQuery(document).ready(function($){ check(); loadMenus(); read_write();});
 </script>
 
 <style>
@@ -992,10 +993,7 @@
 <script src="assets/js/plugins.js"></script>
 <script src="assets/js/main.js"></script>
 <script src="assets/js/lib/chosen/chosen.jquery.min.js"></script>
-<script src="../../menus/menu-items.js"></script>
-<script src="loader.js"></script>
-<script src="notifications.js"></script>
-<script src="js/jquery.timeago.js" type="text/javascript"></script>
+<!--<script src="js/jquery.timeago.js" type="text/javascript"></script>-->
 
 
 <script src="assets/js/lib/data-table/datatables.min.js"></script>
@@ -1031,6 +1029,9 @@
 <script type="text/javascript" src="fscharts/js/themes/fusioncharts.theme.ocean.js"></script>
 <script type="text/javascript" src="fscharts/js/themes/fusioncharts.theme.fint.js"></script>
 <script type="text/javascript" src="fscharts/js/themes/fusioncharts.theme.zune.js"></script>
+<script src="js/loader.js"></script>
+
+<script src="js/notifications.js"></script>
 <script>
     jQuery(document).ready(function() {
         loadYears('disburse-year');
@@ -1221,14 +1222,6 @@
             },
             "paging": true
         });
-
-    $(document).ajaxStart(function(){
-        $("#wait").css("display", "block");
-    });
-
-    $(document).ajaxComplete(function(){
-        $("#wait").css("display", "none");
-    });
 
     $(document).on("click", "#payments", function (e){
         loadPayments();
@@ -2405,7 +2398,7 @@
     function getOfficers(){
         $.ajax({
             type: "GET",
-            url: "/user/users-list/",
+            url: "/user/loan-officers/",
             data: '{}',
             success: function (response) {
                 var role = $("[id=filter-officers]");

@@ -73,22 +73,7 @@
     }   
 </style>
 
-    <aside id="left-panel" class="left-panel">
-        <nav class="navbar navbar-expand-sm navbar-default">
-
-            <div class="navbar-header">
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#main-menu"
-                    aria-controls="main-menu" aria-expanded="false" aria-label="Toggle navigation">
-                    <i class="fa fa-bars"></i>
-                </button>
-                <a class="navbar-brand" href="/dashboard">Loanratus</a>
-                <a class="navbar-brand hidden" href="/dashboard">LR</a>
-            </div>
-
-            <div id="main-menu" class="main-menu collapse navbar-collapse">
-                <ul id="sidebar" class="nav navbar-nav"></ul>
-            </div>
-        </nav>
+    <aside id="left-panel" class="left-panel" include-html="/includes/sidebar.html">
     </aside><!-- /#left-panel -->
 
     <!-- Left Panel -->
@@ -98,38 +83,8 @@
     <div id="right-panel" class="right-panel">
 
         <!-- Header-->
-        <header id="header" class="header">
-
-            <div class="header-menu">
-
-                <div class="col-sm-7">
-                    <a id="menuToggle" class="menutoggle pull-left"><i class="fa fa fa-tasks"></i></a>
-                    <div class="header-left">
-                    </div>
-                </div>
-
-                <div class="col-sm-5">
-                    <div class="user-area dropdown float-right">
-                        <strong id="user" style="margin-right:10px; vertical-align: sub"></strong>
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <img class="user-avatar rounded-circle" src="images/admin.jpg" alt="User Avatar">
-                        </a>
-
-                        <div class="user-menu dropdown-menu">
-                            <a class="nav-link pull-right" href="#" onclick="logout()"><i class="fa fa-power-off"></i>
-                                Logout</a>
-                            <script type="text/javascript">
-                                function logout() {
-                                    localStorage.login = "0";
-                                    window.location.href = "/logout";
-                                }
-                            </script>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </header><!-- /header -->
+        <header id="header" class="header" include-html="/includes/header.html">
+        </header>
         <!-- Header-->
 
         <div class="breadcrumbs">
@@ -281,6 +236,7 @@
 
 
     </div><!-- /#right-panel -->
+    <div id="panels" include-html="/includes/notifications.html"></div>
 
     <!-- Right Panel -->
     <script src="assets/js/vendor/jquery-2.1.4.min.js"></script>
@@ -291,19 +247,9 @@
     <script type="text/javascript" src="../global-params.js"></script>
     <script src="../../js/money-formater.js"></script>
     <script type="text/javascript" src="../../investment/add-investment/add-investment.js"></script>
+    <script src="../../js/loader.js"></script>
+    <script src="../../js/notifications.js"></script>
     <script>
-        var product_obj = {};
-        jQuery(document).ready(function () {
-
-        });
-
-        $(document).ajaxStart(function () {
-            $("#wait").css("display", "block");
-        });
-
-        $(document).ajaxComplete(function () {
-            $("#wait").css("display", "none");
-        });
     </script>
 
 </body>

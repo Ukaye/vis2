@@ -73,17 +73,8 @@ $("#cpassword").change(function(){
 });
 
 function confirmPassword(){
-    if ($('#cpassword').val() == "" || $('#cpassword').val() != $('#password').val()){
-        $('#cpassword').css('border-color', 'red');
-        $('#cpassword-error').html("Passwords don't match");
-        $('#cpassword-error').css("color", 'red');
-        $('#addUser').attr('disabled', true);
-    }
-    else{
-        $('#cpassword').css('border-color', 'green');
-        $('#cpassword-error').html("Passwords are a match!");
-        $('#cpassword-error').css("color", 'green');
-        $('#addUser').attr('disabled', false);
+    if ($('#cpassword').val() === "" || $('#cpassword').val() != $('#password').val()){
+        return swal('Password Mismatch', 'Passwords Must Match', 'error');
     }
 }
 
@@ -170,11 +161,14 @@ function createUser(){
                 swal("User Registered!","","success");
                 $('#email').val('');
                 $('#password').val('');
+                $('#cpassword').val('');
                 $('#fullname').val('');
                 $('#email').val('');
                 $('#role').val(0);
                 $('#branch').val(0);
                 $('#supervisor').val(0);
+                $('#supervisor').select2('destroy');
+                $('#supervisor').select2();
 //                        window.location.href = "/all-users";
             }
         }

@@ -3,14 +3,6 @@ $(document).ready(function() {
     getRoles();
 });
 
-$(document).ajaxStart(function(){
-    $("#wait").css("display", "block");
-});
-
-$(document).ajaxComplete(function(){
-    $("#wait").css("display", "none");
-});
-
 function resetMultiselect() {
     $('#process-rights').multiselect("clearSelection");
 }

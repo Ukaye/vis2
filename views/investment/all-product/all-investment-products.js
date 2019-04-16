@@ -6,13 +6,6 @@ let selectedRow = {};
 $(document).ready(function () {
     bindDataTable();
 });
-$(document).ajaxStart(function () {
-    $("#wait").css("display", "block");
-});
-
-$(document).ajaxComplete(function () {
-    $("#wait").css("display", "none");
-});
 
 let _table = $('#bootstrap-data-table-export').DataTable();
 

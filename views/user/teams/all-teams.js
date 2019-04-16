@@ -1,17 +1,10 @@
 $(document).ready(function() {
+    loadTeams();
     getUsers();
     getTargets();
     $('#team_targets').DataTable();
     $('#members').DataTable();
     $('#bootstrap-data-table-export').DataTable();
-});
-
-$(document).ajaxStart(function(){
-    $("#wait").css("display", "block");
-});
-
-$(document).ajaxComplete(function(){
-    $("#wait").css("display", "none");
 });
 
 function check(){

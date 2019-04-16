@@ -3,14 +3,6 @@ $(document).ready(function() {
     read_write_custom();
 });
 
-$(document).ajaxStart(function(){
-    $("#wait").css("display", "block");
-});
-
-$(document).ajaxComplete(function(){
-    $("#wait").css("display", "none");
-});
-
 let applicationsList;
 function read_write_custom(){
     let w,
@@ -62,56 +54,57 @@ function populateDataTable(data) {
             v.fullname,
             v.phone,
             v.loan_amount,
+            v.product || 'N/A',
             v.date_created,
             v.current_stage,
-            '<button type="button" class="btn btn-info" data-toggle="modal" data-target="#myModal" onclick="openModal('+v.ID+')"><i class="fa fa-eye"></i> View Client</button>'
+            '<button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#myModal" onclick="openModal('+v.ID+')"><i class="fa fa-eye"></i> View Client</button>'
         ];
         if (v.close_status === 0) {
             if (v.status === 1){
                 switch (v.current_stage){
                     case 2: {
-                        table[6] = '<span class="badge badge-info">Pending Approval</span>';
+                        table[table.length-2] = '<span class="badge badge-info">Pending Approval</span>';
                         break;
                     }
                     case 3: {
-                        table[6] = '<span class="badge badge-info">Pending Disbursal</span>';
+                        table[table.length-2] = '<span class="badge badge-info">Pending Disbursal</span>';
                         break;
                     }
                     default: {
-                        table[6] = '<span class="badge badge-primary">Started</span>';
+                        table[table.length-2] = '<span class="badge badge-primary">Started</span>';
                     }
                 }
             } else if (v.status === 2){
-                table[6] = '<span class="badge badge-success">Active</span>';
+                table[table.length-2] = '<span class="badge badge-success">Active</span>';
             } else {
-                table[6] = '<span class="badge badge-danger">Not Active</span>';
+                table[table.length-2] = '<span class="badge badge-danger">Not Active</span>';
             }
         } else{
-            table[6] = '<span class="badge badge-warning">Closed</span>';
+            table[table.length-2] = '<span class="badge badge-warning">Closed</span>';
         }
         if (v.reschedule_amount){
-            table[6] = table[6].concat('<span class="badge badge-pill badge-secondary">Rescheduled</span>');
+            table[table.length-2] = table[table.length-2].concat('<span class="badge badge-pill badge-secondary">Rescheduled</span>');
         } else {
             if (v.reschedule_status === 1)
-                table[6] = table[6].concat('<span class="badge badge-pill badge-secondary">Pending Reschedule</span>');
+                table[table.length-2] = table[table.length-2].concat('<span class="badge badge-pill badge-secondary">Pending Reschedule</span>');
         }
         if (v.comment){
-            let view_comment_button = ' <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#viewCommentModal" onclick="openViewCommentModal('+v.ID+')"><i class="fa fa-eye"></i> View Comment</button>';
+            let view_comment_button = ' <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#viewCommentModal" onclick="openViewCommentModal('+v.ID+')"><i class="fa fa-eye"></i> View Comment</button>';
             table[table.length-1] = table[table.length-1].concat(view_comment_button);
         } else {
-            let add_comment_button = ' <button type="button" class="btn btn-success write" data-toggle="modal" data-target="#addCommentModal" onclick="openAddCommentModal('+v.ID+')"><i class="fa fa-plus"></i> Add Comment</button>';
+            let add_comment_button = ' <button type="button" class="btn btn-success btn-sm write" data-toggle="modal" data-target="#addCommentModal" onclick="openAddCommentModal('+v.ID+')"><i class="fa fa-plus"></i> Add Comment</button>';
             table[table.length-1] = table[table.length-1].concat(add_comment_button);
         }
         if (v.workflowID){
             let view_workflow_button;
             if (v.status === 2){
-                view_workflow_button = ' <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#viewWorkflowModal" onclick="openViewWorkflowModal('+v.ID+')"><i class="fa fa-eye"></i> View Loan</button>';
+                view_workflow_button = ' <button type="button" class="btn btn-outline-primary btn-sm" data-toggle="modal" data-target="#viewWorkflowModal" onclick="openViewWorkflowModal('+v.ID+')"><i class="fa fa-eye"></i> View Loan</button>';
             } else {
-                view_workflow_button = ' <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#viewWorkflowModal" onclick="openViewWorkflowModal('+v.ID+')"><i class="fa fa-eye"></i> View Application</button>';
+                view_workflow_button = ' <button type="button" class="btn btn-outline-primary btn-sm" data-toggle="modal" data-target="#viewWorkflowModal" onclick="openViewWorkflowModal('+v.ID+')"><i class="fa fa-eye"></i> View Application</button>';
             }
             table[table.length-1] = table[table.length-1].concat(view_workflow_button);
         } else {
-            let add_workflow_button = ' <button type="button" class="btn btn-outline-success" data-toggle="modal" data-target="#addWorkflowModal" onclick="openAddWorkflowModal('+v.ID+')"><i class="fa fa-plus"></i> Assign Loan Process</button>';
+            let add_workflow_button = ' <button type="button" class="btn btn-outline-success btn-sm" data-toggle="modal" data-target="#addWorkflowModal" onclick="openAddWorkflowModal('+v.ID+')"><i class="fa fa-plus"></i> Assign Loan Process</button>';
             table[table.length-1] = table[table.length-1].concat(add_workflow_button);
         }
         $('#bootstrap-data-table').dataTable().fnAddData(table);

@@ -190,7 +190,7 @@ users.post('/new-user', function(req, res, next) {
                                 payload.category = 'Users'
                                 payload.userid = req.cookies.timeout
                                 payload.description = 'New User Created'
-                                payload.created_user = re[0]['ID']
+                                payload.affected = re[0]['ID']
                                 notificationsService.log(req, payload)
                                 res.send(JSON.stringify({"status": 200, "error": null, "response": re}));
                             }
@@ -230,7 +230,7 @@ users.post('/new-client', function(req, res, next) {
                             payload.category = 'Clients'
                             payload.userid = req.cookies.timeout
                             payload.description = 'New Client Created'
-                            payload.created_client = re[0]['ID']
+                            payload.affected = re[0]['ID']
                             notificationsService.log(req, payload)
                             res.send(JSON.stringify({"status": 200, "error": null, "response": re}));
                         }
@@ -357,7 +357,6 @@ users.post('/upload-file/:id/:item', function(req, res) {
         extArray = sampleFile.name.split("."),
         extension = extArray[extArray.length - 1],
         fileName = name+'.'+extension;
-
     fs.stat('files/users/'+req.params.id+'/', function(err) {
         if (!err) {
             console.log('file or directory exists');
@@ -433,6 +432,18 @@ users.get('/users-list', function(req, res, next) {
   			res.send(JSON.stringify(results));
 	  	}
   	});
+});
+
+/* Loan Officers Only */
+users.get('/loan-officers', function(req, res, next) {
+    let query = 'SELECT *, (select u.role_name from user_roles u where u.ID = user_role) as Role from users where loan_officer_status = 1 and status = 1 order by ID desc';
+    db.query(query, function (error, results, fields) {
+        if(error){
+            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        } else {
+            res.send(JSON.stringify(results));
+        }
+    });
 });
 
 users.get('/teams-list', function(req, res, next) {
@@ -1329,7 +1340,6 @@ users.post('/edit-client/:id', function(req, res, next) {
             console.log('error'); console.log(error)
             res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
         } else {
-            console.log('here')
             let payload = {}
             payload.category = 'Clients'
             payload.userid = req.cookies.timeout
@@ -1617,7 +1627,9 @@ users.get('/applications', function(req, res, next) {
 
     let query = 'SELECT u.fullname, u.phone, u.email, u.address, a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, ' +
         'a.workflowID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.loanCirrusID, a.reschedule_amount, w.current_stage,' +
-        '(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status FROM clients AS u, applications AS a, workflow_processes AS w WHERE u.ID=a.userID AND a.status <> 0 ' +
+        '(SELECT product FROM preapplications WHERE ID = a.preapplicationID) AS product,' +
+        '(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status ' +
+        'FROM clients AS u, applications AS a, workflow_processes AS w WHERE u.ID=a.userID AND a.status <> 0 ' +
         'AND w.ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=a.ID AND status=1) ';
     if (type){
         switch (type){
@@ -1770,7 +1782,9 @@ users.get('/applications/:officerID', function(req, res, next) {
 
 	let query = "SELECT u.fullname, u.phone, u.email, u.address, a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, " +
         "a.loan_amount, a.date_modified, a.comment, a.close_status, a.workflowID, a.loanCirrusID, a.reschedule_amount, w.current_stage," +
-        "(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status FROM clients AS u, applications AS a, workflow_processes AS w " +
+        '(SELECT product FROM preapplications WHERE ID = a.preapplicationID) AS product,' +
+        "(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status " +
+        "FROM clients AS u, applications AS a, workflow_processes AS w " +
         "WHERE u.ID=a.userID AND a.status <> 0 AND w.ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=a.ID AND status=1) ",
         query2 = query.concat('AND loan_officer = '+id+' '),
         query3 = query.concat('AND (select supervisor from users where users.id = u.loan_officer) =  '+id+' ');
@@ -2527,7 +2541,7 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                     payload.category = 'Application'
                     payload.userid = req.cookies.timeout
                     payload.description = 'Loan Application Payment Confirmed'
-                    payload.affected = req.params.id
+                    payload.affected = req.params.application_id
                     notificationsService.log(req, payload)
                     res.send({"status": 200, "message": "Invoice Payment confirmed successfully!"});
                 }
@@ -2635,21 +2649,30 @@ users.get('/application/invoice-history/:id', function(req, res, next) {
 });
 
 users.get('/application/payment-reversal/:id/:invoice_id', function(req, res, next) {
+    let id;
     db.query('UPDATE schedule_history SET status=0 WHERE ID=?', [req.params.id], function (error, history, fields) {
         if(error){
             res.send({"status": 500, "error": error, "response": null});
         } else {
-            db.query('UPDATE application_schedules SET payment_status=0 WHERE ID=?', [req.params.invoice_id], function (error, history, fields) {
-                if(error){
+            db.query('select applicationID from schedule_history where ID = ?', [req.params.id], function(error, result, fields){
+                if (error){
                     res.send({"status": 500, "error": error, "response": null});
-                } else {
-                    let payload = {}
-                    payload.category = 'Application'
-                    payload.userid = req.cookies.timeout
-                    payload.description = 'Payment Reversed for Loan'
-                    payload.affected = req.params.id
-                    notificationsService.log(req, payload)
-                    res.send({"status": 200, "message": "Payment reversed successfully!", "response":history});
+                }
+                else {
+                    id = result[0]['applicationID']
+                    db.query('UPDATE application_schedules SET payment_status=0 WHERE ID=?', [req.params.invoice_id], function (error, history, fields) {
+                        if(error){
+                            res.send({"status": 500, "error": error, "response": null});
+                        } else {
+                            let payload = {}
+                            payload.category = 'Application'
+                            payload.userid = req.cookies.timeout
+                            payload.description = 'Payment Reversed for Loan'
+                            payload.affected = id
+                            notificationsService.log(req, payload)
+                            res.send({"status": 200, "message": "Payment reversed successfully!", "response":history});
+                        }
+                    });
                 }
             });
         }

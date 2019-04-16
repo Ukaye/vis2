@@ -25,7 +25,6 @@
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,800' rel='stylesheet' type='text/css'>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
     <script src="assets/js/vendor/jquery-2.1.4.min.js"></script>
-
     <style>
         /* Hide all steps by default: */
         .tab {
@@ -71,6 +70,25 @@
         td.numericCol{
             float:right;
         }
+        .badge {
+            color: #ffffff;
+            font-size: 15px;
+        }
+        .badge-success {
+            background-color: #28a745;
+        }
+        .badge-danger {
+            background-color: #dc3545;
+        }
+        .badge-warning {
+            background-color: #f0ad4e;
+        }
+        .badge-info {
+            background-color: #17a2b8;
+        }
+        .badge-primary {
+            background-color: #007bff;
+        }
     </style>
 </head>
 
@@ -89,7 +107,7 @@
         <div class="col-sm-4">
             <div class="page-header float-left">
                 <div class="page-title">
-                    <h1>All Recommendations</h1>
+                    <h1>All Initial Applications</h1>
                 </div>
             </div>
         </div>
@@ -98,7 +116,8 @@
                 <div class="page-title">
                     <ol class="breadcrumb text-right">
                         <li><a href="#">Dashboard</a></li>
-                        <li class="active">All Recommendations</li>
+                        <li><a href="#">Applications</a></li>
+                        <li class="active">All Initial Applications</li>
                     </ol>
                 </div>
             </div>
@@ -108,22 +127,28 @@
     <div class="content mt-3">
         <div class="animated fadeIn">
             <div class="row">
-
                 <div id="user-table" class="col-md-12">
                     <div class="card">
                         <div class="card-header">
                             <div class="col-sm-9">
-                                <strong class="card-title">SUGGESTED LOANS</strong>
+                                <strong class="card-title">Initial Applications</strong>
+                            </div>
+                            <div class="col-sm-3">
+                                <a class="btn btn-info pull-right" href="/add-application">Add Application <i class="fa fa-plus"></i></a>
                             </div>
                         </div>
 
                         <div class="card-body">
-                            <table id="preapproved-loans" class="table table-striped table-bordered">
+                            <table id="preapplications" class="table table-striped table-bordered">
                                 <thead>
                                 <tr>
-                                    <th>Client</th>
-                                    <th>Credit Score(%)</th>
-                                    <th>Loan Amount(NGN)</th>
+                                    <th>ID</th>
+                                    <th>Fullname</th>
+                                    <th>Phone</th>
+                                    <th>Amount(NGN)</th>
+                                    <th>Product</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
                                     <th>Action</th>
                                 </tr>
                                 </thead>
@@ -143,7 +168,6 @@
 
 
 </div><!-- /#right-panel -->
-<div id="panels" include-html="/includes/notifications.html"></div>
 
 <script src="assets/js/popper.min.js"></script>
 <script src="assets/js/plugins.js"></script>
@@ -161,9 +185,9 @@
 <script src="assets/js/lib/data-table/datatables-init.js"></script>
 <script src="../../js/helper-functions.js"></script>
 <script src="../../menus/menu-items.js"></script>
-<script src="../../js/notifications.js"></script>
-<script type="text/javascript" src="../../preapproved-loan/all-suggested-loans/all-suggested-loans.js"></script>
+<script type="text/javascript" src="../../application/all-preapplications/all-preapplications.js"></script>
 <script src="../../js/loader.js"></script>
+<script src="../../js/notifications.js"></script>
 </body>
 
 </html>

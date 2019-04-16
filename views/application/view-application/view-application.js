@@ -3,14 +3,6 @@ $(document).ready(function() {
     read_write_1();
 });
 
-$(document).ajaxStart(function(){
-    $("#wait").css("display", "block");
-});
-
-$(document).ajaxComplete(function(){
-    $("#wait").css("display", "none");
-});
-
 const urlParams = new URLSearchParams(window.location.search);
 const application_id = urlParams.get('id');
 
@@ -943,11 +935,8 @@ function initLoanSummary(total_prinicipal) {
         let payments = $.grep(application.payment_history,function(e){return e.invoiceID===invoices[i]['ID']});
         payment_history = payment_history.concat(payments);
     }
-    console.log('here')
-    console.log(payment_history)
     if (!payment_history || !payment_history[0]){
         total_due_amount = total_prinicipal;
-        console.log(total_principal)
         $('#total-due-text').text('₦'+total_principal.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
         $('#last-payment-text').text('N/A');
     } else {

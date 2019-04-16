@@ -4,14 +4,6 @@ $(document).ready(function () {
     $("li_sub_dir").html("New Product");
 });
 
-$(document).ajaxStart(function () {
-    $("#wait").css("display", "block");
-});
-
-$(document).ajaxComplete(function () {
-    $("#wait").css("display", "none");
-});
-
 $("#saving_fees").on("keyup", function (event) {
     let val = $("#saving_fees").val();
     $("#saving_fees").val(formater(val));
