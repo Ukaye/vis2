@@ -211,6 +211,7 @@
         interest_rate_min: 1,
         interest_rate_max: 1000
     };
+    $('#amortization').prop('disabled', true);
     function getApplicationSettings() {
         $('#wait').show();
         $.ajax({
@@ -361,9 +362,11 @@
             $dvCSV = $("#dvCSV2"),
             $csvUpload = $("#csvUpload2"),
             $uploadCSV = $("#uploadCSV2"),
+            $amortization = $('#amortization'),
             $message = $("#schedule-error-message");
 
-        $('#amortization').change(function () {
+        $amortization.prop('disabled', false);
+        $amortization.change(function () {
             $dvCSV.html('');
             schedule = [];
             loan_amount = 0;
