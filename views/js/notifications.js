@@ -331,15 +331,14 @@ function getNotifications(){
     ids.length = 0;
     count = 0;
     status = false;
-    // $('#wait').hide();
     $.ajax({
         type: "GET",
         url: "/notifications/all-updates?bug="+JSON.parse(localStorage.user_obj).ID+'&&bugger='+JSON.parse(localStorage.user_obj).user_role,
         success: function (response) {
             status = true;
             noti_count = response.length;
-            let new_count = Math.abs(parseInt(old_count) - noti_count);
-            if (noti_count === old_count){
+            let new_count = Math.abs(parseInt(localStorage.noti_count) - noti_count);
+            if (noti_count === parseInt(localStorage.noti_count)){
                 $('#noti-count').hide();
                 localStorage.setItem('noti_count', response.length);
             }
