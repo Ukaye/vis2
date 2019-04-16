@@ -568,7 +568,7 @@ function savePreferences(){
         let rt = ($('#category'+cats[a]["category"]).prop('checked')) ? 1 : 0;
         arr[a]=[cats[a]["category"], rt];
     }
-
+    status = false;
     obj.userid = JSON.parse(localStorage.user_obj).ID;
     obj.cats = arr;
     var test = [];
@@ -577,6 +577,7 @@ function savePreferences(){
         'type': 'post',
         'data': obj,
         'success': function (data) {
+            status = true;
             $.each(data, function (key, val) {
                 test[key] = val;
             });
