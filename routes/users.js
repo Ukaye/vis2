@@ -434,6 +434,18 @@ users.get('/users-list', function(req, res, next) {
   	});
 });
 
+/* Loan Officers Only */
+users.get('/loan-officers', function(req, res, next) {
+    let query = 'SELECT *, (select u.role_name from user_roles u where u.ID = user_role) as Role from users where loan_officer_status = 1 and status = 1 order by ID desc';
+    db.query(query, function (error, results, fields) {
+        if(error){
+            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        } else {
+            res.send(JSON.stringify(results));
+        }
+    });
+});
+
 users.get('/teams-list', function(req, res, next) {
     let query = 'SELECT *, (select u.fullname from users u where u.ID = t.supervisor) as supervisor, (select count(*) from team_members m where m.teamID = t.ID and m.status = 1) as members, ' +
         '(select count(*) from user_targets m where m.userID = t.ID and m.status = 1) as targets from teams t where t.status = 1 order by t.ID desc';

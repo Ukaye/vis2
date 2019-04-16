@@ -199,7 +199,7 @@ function confirmPassword(){
 function getOfficers(){
     $.ajax({
         type: "GET",
-        url: "/user/users-list/",
+        url: "/user/loan-officers/",
         data: '{}',
         success: function (response) {
             var role = $("[id=loan_officer]");
@@ -346,7 +346,7 @@ function upload(i){
     }
     else {
         folder_name = name + '_' + $('#email').val();
-        return console.log(folder_name)
+        // return console.log(folder_name)
     }
     var file; var item;
     if (i === 1){

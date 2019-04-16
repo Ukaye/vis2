@@ -353,6 +353,7 @@ function loadRolePermissions(id){
     $('#selectedName').html('- '+name);
     let readCheck; let writeCheck; let reads = {}; let writes = {}; let r = 0; let w = 0;
    loadModules(function(){
+       $('#selectedName').html('- '+name);
        $.ajax({
            type: "GET",
            url: "/permissions/"+id+"/",
@@ -379,7 +380,7 @@ function loadRolePermissions(id){
                }
                else{
                    // $("#module-table").dataTable().fnClearTable();
-                   selectedName = '- '+name;
+                   $('#selectedName').html('- '+name);
                }
            }
        });
@@ -389,7 +390,7 @@ function loadRolePermissions(id){
 let mods;
 
 function loadModules(callback){
-    $('#selectedName').html(selectedName);
+    $('#selectedName').html(name);
     $.ajax({
         type: "GET",
         url: "/modules/",

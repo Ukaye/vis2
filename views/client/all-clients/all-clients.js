@@ -365,7 +365,7 @@ function openDetailsModal(id) {
 function getOfficers(){
     $.ajax({
         type: "GET",
-        url: "/user/users-list/",
+        url: "/user/loan-officers/",
         success: function (response) {
             let role = $("[id=loan_officer]");
             role.empty().append('<option selected="selected" id="0">-- Choose Loan Officer --</option>');
