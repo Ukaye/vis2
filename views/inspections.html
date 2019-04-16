@@ -79,7 +79,7 @@
         <!-- Left Panel -->
         <script src="assets/js/vendor/jquery-2.1.4.min.js"></script>
         <script type="text/javascript">
-            $(document).ready(function($){ check(); loadMenus(); read_write();});
+//            $(document).ready(function($){ check(); loadMenus(); read_write();});
         </script>
         <aside id="left-panel" class="left-panel" include-html="/includes/sidebar.html">
         </aside><!-- /#left-panel -->
@@ -525,14 +525,6 @@
 //				interval: 5000
 //		    });
         } );
-
-        $(document).ajaxStart(function(){
-            $("#wait").css("display", "block");
-        });
-
-        $(document).ajaxComplete(function(){
-            $("#wait").css("display", "none");
-        });
 
         function check(){
             if (localStorage.getItem('role') !== 1){
