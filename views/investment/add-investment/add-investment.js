@@ -188,6 +188,7 @@ $("#btn_save_product").on("click", function (event) {
         investment_start_date: $('#investment_date_start').val(),
         investment_mature_date: $('#investment_mature_date').val(),
         code: selectedValue.code,
+        selectedProduct: selectedValue,
         createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID
     };
     $.ajax({
@@ -195,6 +196,7 @@ $("#btn_save_product").on("click", function (event) {
         'type': 'post',
         'data': data,
         'success': function (data) {
+            console.log(data);
             if (data.error) {
                 $('#wait').hide();
                 swal('Oops! An error occurred while creating Investment; Required field(s) missing',
@@ -209,6 +211,7 @@ $("#btn_save_product").on("click", function (event) {
             }
         },
         'error': function (err) {
+            console.log(err);
             $('#wait').hide();
             swal('Oops! An error occurred while creating Investment; ', '', 'error');
         }
