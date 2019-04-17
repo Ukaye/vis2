@@ -221,7 +221,9 @@ router.get('/profile-images/:folder/', function(req, res, next) {
         fs.readdir(path, function (err, files){
             let obj = {};
             async.forEach(files, function (file, callback){
-                let insP = file.split('.')[0].split('_')[1];
+                let name_without_ext = file.substring(0, file.lastIndexOf("."))
+                let insP = name_without_ext.substring(name_without_ext.lastIndexOf("_") + 1, name_without_ext.length)
+                // let insP = file.split('.')[0].split('_')[1];
                 obj[insP] = path+file;
                 callback();
             }, function(data){

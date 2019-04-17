@@ -617,14 +617,15 @@ function submitDetails(){
 }
 
 function upload(i){
-    let name = $('#first_name').val() + ' '+ $('#middle_name').val() + ' ' +$('#last_name').val(); let folder_name = " ";
-    if ($('#email').val() === "" || $('#email').val() === "null"){
-        swal('Please Enter Client Email!');
+    var name = $('#first_name').val() + ' '+ $('#middle_name').val() + ' ' +$('#last_name').val(); var folder_name = " ";
+    if ($('#email').val() === "" || $('#email').val() === null){
+        return swal('Incomplete Information', 'Please Enter Client Email!', 'warning');
     }
     else {
-        folder_name = $('#phone').val();
+        folder_name = name + '_' + $('#email').val();
+        // return console.log(folder_name)
     }
-    let file; let item;
+    var file; var item;
     if (i === 1){
         file = $('#file-upload')[0].files[0];
         item ="Image";
@@ -638,28 +639,28 @@ function upload(i){
     if (file === "undefined") {
         swal ("Choose file to upload");
     }else{
-        let formData = new FormData();
+        var formData = new FormData();
         formData.append('file', file); formData.append('type', i);
         $.ajax({
-            url: "user/upload-file/"+folder_name+'/'+item,
+            url: "/user/upload-file/"+folder_name+'/'+item,
             type: "POST",
             data: formData,
             processData: false,
             contentType: false,
             success: function(response) {
-                swal("File Uploaded Successfully!");
+                swal('Success', "File Uploaded Successfully!", 'success');
             },
             error: function() {
-                swal("Error! Please Try Again");
+                swal('Failed', "Error! Please Try Again", 'error');
             }
         });
     }
 }
 
-function loadImages(phone){
+function loadImages(folder){
     let $carousel_inner = $('.carousel-inner');
     $.ajax({
-        'url': '/profile-images/'+phone,
+        'url': '/profile-images/'+folder,
         'type': 'get',
         'success': function (data) {
             let res = JSON.parse(data);
