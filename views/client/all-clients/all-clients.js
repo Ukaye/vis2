@@ -485,7 +485,8 @@ function edit(){
             $('#gua_country').val(data[0].gua_country);
             $("#email").prop("readonly", true);
             $("#phone").prop("readonly", true);
-            loadImages(data[0].phone);
+            let folder = data[0].fullname + '_' + data[0].email;
+            loadImages(folder);
         },
         'error': function (err) {
             $('#wait').hide();
@@ -545,7 +546,8 @@ function checkForEdit(){
                 $('#gua_country').val(data[0].gua_country);
                 $("#email").prop("readonly", true);
                 $("#phone").prop("readonly", true);
-                loadImages(data[0].phone);
+                let folder = data[0].fullname + '_' + data[0].email;
+                loadImages(folder);
             },
             'error': function (err) {
                 swal('Oops! An error occurred while retrieving details.');
