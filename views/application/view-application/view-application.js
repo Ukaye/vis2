@@ -700,7 +700,7 @@ function initCSVUpload(application) {
                         for (let j = 0; j < cells.length; j++) {
                             let cell = $("<td />");
                             if (i === 0){
-                                if ((cells[j] === "PRINCIPAL") || cells[j] === "INTEREST")
+                                if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
                                     cell = $("<td colspan='3' />");
                             }
                             if (cells[j]){
@@ -825,7 +825,7 @@ function initCSVUpload(application) {
             for (let j = 0; j < cells.length; j++) {
                 let cell = $("<td />");
                 if (i === 0){
-                    if ((cells[j] === "PRINCIPAL") || cells[j] === "INTEREST")
+                    if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
                         cell = $("<td colspan='3' />");
                     if (cells[j] === "COLLECTION")
                         cell = $("<td colspan='2' />");
@@ -1137,7 +1137,7 @@ function initCSVUpload2(application, settings) {
                     for (let j = 0; j < cells.length; j++) {
                         let cell = $("<td />");
                         if (i === 0){
-                            if ((cells[j] === "PRINCIPAL") || cells[j] === "INTEREST")
+                            if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
                                 cell = $("<td colspan='3' />");
                         }
                         if (cells[j]){
@@ -1205,7 +1205,7 @@ function initCSVUpload2(application, settings) {
                         for (let j = 0; j < cells.length; j++) {
                             let cell = $("<td />");
                             if (i === 0){
-                                if ((cells[j] === "PRINCIPAL") || cells[j] === "INTEREST")
+                                if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
                                     cell = $("<td colspan='3' />");
                             }
                             if (cells[j]){
@@ -1312,7 +1312,7 @@ function initCSVUpload2(application, settings) {
             for (let j = 0; j < cells.length; j++) {
                 let cell = $("<td />");
                 if (i === 0){
-                    if ((cells[j] === "PRINCIPAL") || cells[j] === "INTEREST")
+                    if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
                         cell = $("<td colspan='3' />");
                 }
                 if (cells[j]){
