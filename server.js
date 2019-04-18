@@ -106,21 +106,21 @@ app.post('/login', function (req, res) {
             req.session.user = rows[0]['user_role'];
             user = rows[0];
             db.query('SELECT id,module_id, (select module_name from modules m where m.id = module_id) as module_name, (select menu_name from modules m where m.id = module_id) as menu_name, read_only, editable ' +
-                'FROM permissions where role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?)) group by module_id', [parseInt(user.user_role), parseInt(user.user_role)], function (error, perm, fields) {
+                'FROM permissions where role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?)) group by module_id', [parseInt(user.user_role), parseInt(user.user_role), parseInt(user.user_role)], function (error, perm, fields) {
                 if (!error) {
                     user.permissions = perm;
                     let modules = [],
                         query1 = 'select * from modules m where m.id in (select p.module_id from permissions p where read_only = 1 ' +
-                        'and p.role_id = ? and date in (select max(date) from permissions where role_id = ?) group by module_id) and menu_name = "Main Menu" order by id asc',
+                            'and p.role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?)) group by module_id) and menu_name = "Main Menu" order by id asc',
                         query2 = 'select * from modules m where m.id in (select p.module_id from permissions p where read_only = 1 ' +
-                        'and p.role_id = ? and date in (select max(date) from permissions where role_id = ?) group by module_id) and menu_name = "Sub Menu" order by id asc',
+                            'and p.role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?)) group by module_id) and menu_name = "Sub Menu" order by id asc',
                         query3 = 'select * from modules m where m.id in (select p.module_id from permissions p where read_only = 1 ' +
-                        'and p.role_id = ? and date in (select max(date) from permissions where role_id = ?) group by module_id) and menu_name = "Others" order by id asc';
-                    db.query(query1, [user.user_role, user.user_role], function (er, mods, fields) {
+                            'and p.role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?)) group by module_id) and menu_name = "Others" order by id asc';
+                    db.query(query1, [user.user_role, user.user_role, user.user_role], function (er, mods, fields) {
                         modules = modules.concat(mods);
-                        db.query(query2, [user.user_role, user.user_role], function (er, mods, fields) {
+                        db.query(query2, [user.user_role, user.user_role, user.user_role], function (er, mods, fields) {
                             modules = modules.concat(mods);
-                            db.query(query3, [user.user_role, user.user_role], function (er, mods, fields) {
+                            db.query(query3, [user.user_role, user.user_role, user.user_role], function (er, mods, fields) {
                                 modules = modules.concat(mods);
                                 user.modules = modules;
                                 let payload = {}
