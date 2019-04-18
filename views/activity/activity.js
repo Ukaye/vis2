@@ -654,6 +654,11 @@ function createActivity(){
             }
             else{
                 for (var i = 0; i < $('#activity-files')[0].files.length; i++){
+                    let file = $('#activity-files')[0].files[i];
+                    let ext = file["name"].split('.').pop().toLowerCase();
+                    if($.inArray(ext, ['gif','png','jpg','jpeg']) == -1) {
+                        return swal('Upload Failed!', 'Invalid file extension', 'warning');
+                    }
                     upload(test.result, $('#activity-files')[0].files[i], i+1);
                 }
                 swal("Activity Submitted!","","success");
