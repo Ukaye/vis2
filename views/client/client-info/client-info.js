@@ -275,7 +275,7 @@ function loadImages(foldername, name) {
             } else {
                 let image =
                     '<a href="#">' +
-                    '<img src="' + res['response']['Image'] + '" alt="Profile Pic ' + name + '" style="max-width:100%;" height = 150 width = 150>' +
+                    '<img src="/' + res['response']['Image'] + '" alt="Profile Pic ' + name + '" style="max-width:100%;" height = 150 width = 150>' +
                     '</a>';
                 $('#pic').append(image);
             }
