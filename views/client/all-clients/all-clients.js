@@ -308,7 +308,7 @@ function disableClient(id){
             }
             else{
                 swal("Client Disabled Successfully!");
-                loadUsers();
+                read_write_custom();
             }
         },
         'error': function(e){
@@ -330,7 +330,7 @@ function enableClient(id){
             }
             else{
                 swal("Client Enabled Successfully!");
-                loadUsers();
+                read_write_custom();
             }
         },
         'error': function(e){
