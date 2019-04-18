@@ -2889,12 +2889,12 @@ users.get('/report-cards', function(req, res, next) {
         db.query(query1, function (error, results, fields) {
             items.loan_officers = results;
             db.query(query2, function (error, results, fields) {
-                items.active_loans = results;
+                items.active_loans = results
+                den = parseInt(items.loan_officers[0]["loan_officers"]);
+                num = parseInt(results[0]["all_applications"])
+                avg_loan_per_officers = parseInt(num/den)
+                items.avg_loan_per_officers = avg_loan_per_officers;
                 db.query(query3, function (error, results, fields) {
-                    den = parseInt(items.loan_officers[0]["loan_officers"]);
-                    num = parseInt(results[0]["apps"])
-                    avg_loan_per_officers = parseInt(num/den)
-                    items.avg_loan_per_officers = avg_loan_per_officers;
                     res.send({"status": 200, "response": items})
                 });
             });
