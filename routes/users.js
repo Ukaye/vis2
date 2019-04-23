@@ -4882,7 +4882,7 @@ users.post('/save-comment', function(req, res, next) {
                 payload.category = 'Activity'
                 payload.userid = req.cookies.timeout
                 payload.description = 'New Activity Comment'
-                payload.created_activity = postData.activityID
+                payload.affected = postData.activityID
                 notificationsService.log(req, payload)
                 res.send(JSON.stringify({"status": 200, "error": null, "response": "Comment Posted"}));
             }
