@@ -129,7 +129,7 @@ function addProcess() {
             $('#process-name').val("");
             $('#wait').hide();
             notification(data.message);
-//                window.location.href = "/all-workflow";
+            window.location.href = "/all-workflow";
         },
         'error': function (err) {
             console.log(err);
