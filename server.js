@@ -523,9 +523,17 @@ app.get('/all-preapplications', requireLogin, function (req, res) {
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-    let err = new Error('Not Found');
-    err.status = 404;
-    next(err);
+    res.status(404);
+
+    if (req.accepts('html')) {
+        return res.render('404', { url: req.url });
+    }
+
+    if (req.accepts('json')) {
+        return res.send({ error: 'Not found' });
+    }
+
+    res.type('txt').send('Not found');
 });
 
 module.exports = app;
