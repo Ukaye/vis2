@@ -857,7 +857,11 @@ function initCSVUpload(application) {
                     }
                 } else {
                     if (cells[j]){
-                        cell.html(cells[j]);
+                        if (i > 1 && (j === 2 || j === 5 || j === 6 || j === 9)) {
+                            cell.html(numberToCurrencyformatter(cells[j]));
+                        } else {
+                            cell.html(cells[j]);
+                        }
                     } else {
                         cell.html('--');
                     }
@@ -947,7 +951,6 @@ function initLoanSummary(total_prinicipal) {
             amount = (amount - parseFloat(payment.payment_amount)).round(2);
             if (count === payment_history.length){
                 total_due_amount = amount;
-                console.log(amount)
                 $('#total-due-text').text('₦'+amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
             }
         });
@@ -1316,7 +1319,11 @@ function initCSVUpload2(application, settings) {
                         cell = $("<td colspan='3' />");
                 }
                 if (cells[j]){
-                    cell.html(cells[j]);
+                    if (i > 1 && (j === 2 || j === 5 || j === 6)) {
+                        cell.html(numberToCurrencyformatter(cells[j]));
+                    } else {
+                        cell.html(cells[j]);
+                    }
                 } else {
                     cell.html('--');
                 }
