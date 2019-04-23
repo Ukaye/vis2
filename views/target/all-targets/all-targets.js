@@ -201,7 +201,9 @@ function openDetailsModal(owner) {
         url: "/user/target/details/"+id,
         success: function (response) {
             let series = [],
-                data = response.response;
+                data = response.response,
+                $allocationPiechart = $('#allocationPiechart'),
+                $allocationPlaceholder = $('#allocationPlaceholder');
             $('#allocation-count').text(data.count);
             data.total = data.total || 0;
             $('#allocation-total').text('₦'+(parseFloat(data.total)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
@@ -215,15 +217,12 @@ function openDetailsModal(owner) {
                 series.push(plot);
             }
             if (series[0]){
+                $allocationPiechart.show();
+                $allocationPlaceholder.hide();
                 initAllocationPiechart(series);
             } else {
-                let message = '<div class="text-muted" style="text-align: center" >\n' +
-                    '    <div width="100px" height="100px" class="img-thumbnail" style="text-align: center; border: transparent">' +
-                    '       <i class="fa fa-exclamation-circle fa-lg" style="font-size: 10em; margin: 90px 0 30px 0;"></i>'+
-                    '    <h2>No Targets Assigned!</h2>\n' +
-                    '    <p><br/>Kindly proceed to the list of users (loan officers) to assign target.</p><br/>\n' +
-                    '</div>';
-                $('#allocationPiechart').html(message);
+                $allocationPiechart.hide();
+                $allocationPlaceholder.show();
             }
         }
     });
