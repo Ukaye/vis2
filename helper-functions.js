@@ -132,10 +132,8 @@ functions.remitaTimeStampFormat = function (date) {
 
 functions.authorizeMandate = function (payload, callback) {
     let headers = {},
-        date = new Date(),
-        datetime = date.getTime();
-    console.log(datetime)
-    headers.REQUEST_ID = 1556104246124;
+        date = new Date();
+    headers.REQUEST_ID = date.getTime() - 1000;
     headers.API_KEY = process.env.REMITA_API_KEY;
     headers.MERCHANT_ID = process.env.REMITA_MERCHANT_ID;
     headers.API_DETAILS_HASH = SHA512(headers.API_KEY + headers.REQUEST_ID + process.env.REMITA_API_TOKEN);
