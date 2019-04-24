@@ -137,38 +137,11 @@ functions.authorizeMandate = function (payload, callback) {
     headers.API_KEY = process.env.REMITA_API_KEY;
     headers.MERCHANT_ID = process.env.REMITA_MERCHANT_ID;
     headers.API_DETAILS_HASH = SHA512(headers.API_KEY + headers.REQUEST_ID + process.env.REMITA_API_TOKEN);
-    // headers.REQUEST_TS = functions.remitaTimeStampFormat(date);
-    headers.REQUEST_TS = '2019-04-05T16:35:15+000000';
-    // request.post(
-    //     {
-    //         url: `${process.env.REMITA_BASE_URL}/requestAuthorization`,
-    //         headers: headers,
-    //         body: payload,
-    //         json: true
-    //     },
-    //     (error, res, body) => {
-    //         console.log(error)
-    //         console.log('===========================================')
-    //         console.log(body)
-    //         console.log('===========================================')
-    //         console.log(payload)
-    //         console.log('===========================================')
-    //         console.log(headers)
-    //         if (error) {
-    //             return callback(error);
-    //         }
-    //         return callback(functions.formatJSONP(body));
-    //     })
+    headers.REQUEST_TS = functions.remitaTimeStampFormat(date);
     request.post(
         {
             url: `${process.env.REMITA_BASE_URL}/requestAuthorization`,
-            headers: {
-                REQUEST_ID: 1556099670847,
-                API_KEY: 'Q1dHREVNTzEyMzR8Q1dHREVNTw==',
-                MERCHANT_ID: '27768931',
-                API_DETAILS_HASH: '0b1717ae7dcba8679b9e482e7e38b3daac6dc0139497427e7fd6f8e353230fde0e37eef8f186c251e4de981d2a0950663c17dbe5c9eaa391c3b69d57a881c52c',
-                REQUEST_TS: '2019-04-05T16:35:15+000000'
-            },
+            headers: headers,
             body: { mandateId: '300007742097', requestId: '1556099670284' },
             json: true
         },
@@ -185,6 +158,32 @@ functions.authorizeMandate = function (payload, callback) {
             }
             return callback(functions.formatJSONP(body));
         })
+    // request.post(
+    //     {
+    //         url: `${process.env.REMITA_BASE_URL}/requestAuthorization`,
+    //         headers: {
+    //             REQUEST_ID: 1556099670847,
+    //             API_KEY: 'Q1dHREVNTzEyMzR8Q1dHREVNTw==',
+    //             MERCHANT_ID: '27768931',
+    //             API_DETAILS_HASH: '0b1717ae7dcba8679b9e482e7e38b3daac6dc0139497427e7fd6f8e353230fde0e37eef8f186c251e4de981d2a0950663c17dbe5c9eaa391c3b69d57a881c52c',
+    //             REQUEST_TS: '2019-04-05T16:35:15+000000'
+    //         },
+    //         body: { mandateId: '300007742097', requestId: '1556099670284' },
+    //         json: true
+    //     },
+    //     (error, res, body) => {
+    //         console.log(error)
+    //         console.log('===========================================')
+    //         console.log(body)
+    //         console.log('===========================================')
+    //         console.log(payload)
+    //         console.log('===========================================')
+    //         console.log(headers)
+    //         if (error) {
+    //             return callback(error);
+    //         }
+    //         return callback(functions.formatJSONP(body));
+    //     })
 };
 
 functions.validateMandate = function (payload, type, callback) {
