@@ -199,6 +199,12 @@
         })
             .then((yes) => {
                 if (yes) {
+                    let start = preapproved_loan.schedule[0]['payment_collect_date'],
+                        end = preapproved_loan.schedule[preapproved_loan.schedule.length-1]['payment_collect_date'];
+                    if (start === end) {
+                        let start_ = new Date(start);
+                        end = formatDate(start_.setDate(start_.getDate() + 1));
+                    }
                     $.ajax({
                         'url': `/client/mandate/setup`,
                         'type': 'post',
@@ -211,8 +217,8 @@
                             amount: preapproved_loan.loan_amount,
                             created_by: preapproved_loan.created_by,
                             application_id: preapproved_loan.applicationID,
-                            start: remitaDateFormat(preapproved_loan.schedule[0]['payment_collect_date']),
-                            end: remitaDateFormat(preapproved_loan.schedule[preapproved_loan.schedule.length-1]['payment_collect_date'])
+                            start: remitaDateFormat(start),
+                            end: remitaDateFormat(end)
                         },
                         'success': function (data) {
                             if (data.status !== 500){
