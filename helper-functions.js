@@ -92,6 +92,7 @@ functions.setUpMandate = function (payload, callback) {
             if (error) {
                 return callback(payload, error);
             }
+            console.log(body)
             callback(payload, functions.formatJSONP(body));
         })
 };
