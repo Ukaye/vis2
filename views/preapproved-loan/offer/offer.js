@@ -83,7 +83,7 @@
     }
 
     function generateMandateForm(data) {
-        let form_url = `${getBaseUrl()}/form/${data.merchantId}/${data.hash}/${data.mandateId}/${data.requestId}/rest.reg`;
+        let form_url = `${getBaseUrl()}/form/${data.merchantId}/${data.remita_hash}/${data.mandateId}/${data.requestId}/rest.reg`;
         $('#remitaDirectDebit').find('.setup-content').html(`
             <div class="col-sm-12">
                 <iframe src="${form_url}" id="mandate_form" name="mandate_form"></iframe>
@@ -228,9 +228,7 @@
                                 $('#acceptApplication').show();
                                 localStorage.remitaTransRef = data.remitaTransRef;
                                 preapproved_loan.remitaTransRef = data.remitaTransRef;
-                                if (bank.authorization === 'FORM') {
-                                    generateMandateForm(preapproved_loan);
-                                }
+                                window.location.reload();
                             } else {
                                 const error = data.error.status || 'No internet connection';
                                 notification(error,'','error');

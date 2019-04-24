@@ -391,7 +391,8 @@ router.get('/get/:id', function (req, res, next) {
                     preapproved_loan.schedule = (response_.data === undefined) ? [] : response_.data;
                     preapproved_loan.remita = remita_mandate_status;
                     preapproved_loan.merchantId = process.env.REMITA_MERCHANT_ID;
-                    preapproved_loan.hash = SHA512(preapproved_loan.merchantId + process.env.REMITA_API_KEY + response['data'][0]['requestId']);
+                    if (response['data'][0]['requestId'])
+                        preapproved_loan.remita_hash = SHA512(preapproved_loan.merchantId + process.env.REMITA_API_KEY + response['data'][0]['requestId']);
                     res.send({
                         data: preapproved_loan
                     });
