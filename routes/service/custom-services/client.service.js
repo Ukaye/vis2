@@ -54,7 +54,6 @@ router.post('/mandate/setup', function (req, res, next) {
         mandateType: 'DD',
         maxNoOfDebits: '100'
     }, function (payload, setup_response) {
-        return;
         if (setup_response && setup_response.mandateId) {
             let authorize_payload = {
                 mandateId: setup_response.mandateId,

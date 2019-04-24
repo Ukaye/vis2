@@ -88,11 +88,6 @@ functions.setUpMandate = function (payload, callback) {
             json: true
         },
         (error, res, body) => {
-            console.log(error)
-            console.log('===========================================')
-            console.log(body)
-            console.log('===========================================')
-            console.log(payload)
             if (error) {
                 return callback(payload, error);
             }
@@ -153,8 +148,13 @@ functions.authorizeMandate = function (payload, callback) {
             json: true
         },
         (error, res, body) => {
-            console.log(error);
-            console.log(body);
+            console.log(error)
+            console.log('===========================================')
+            console.log(body)
+            console.log('===========================================')
+            console.log(payload)
+            console.log('===========================================')
+            console.log(headers)
             if (error) {
                 return callback(error);
             }
