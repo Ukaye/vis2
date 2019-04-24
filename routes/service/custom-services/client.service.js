@@ -38,6 +38,7 @@ router.post('/mandate/setup', function (req, res, next) {
         amount = req.body.amount,
         account = req.body.account,
         fullname = req.body.fullname,
+        authorization = req.body.authorization,
         application_id = req.body.application_id,
         date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
         query =  `INSERT INTO remita_mandates Set ?`;
@@ -46,8 +47,7 @@ router.post('/mandate/setup', function (req, res, next) {
         payerName: fullname,
         payerEmail: email,
         payerPhone: phone,
-        // payerBankCode: bank,
-        payerBankCode: '044',
+        payerBankCode: bank,
         payerAccount: account,
         amount: amount,
         startDate: start,
@@ -55,14 +55,13 @@ router.post('/mandate/setup', function (req, res, next) {
         mandateType: 'DD',
         maxNoOfDebits: '100'
     }, function (payload, setup_response) {
-        return console.log(setup_response);
         if (setup_response && setup_response.mandateId) {
             let authorize_payload = {
                 mandateId: setup_response.mandateId,
                 requestId: setup_response.requestId
             };
-            helperFunctions.authorizeMandate(authorize_payload, function (authorization_response) {
-                if (authorization_response && authorization_response.remitaTransRef){
+            helperFunctions.authorizeMandate(authorize_payload, authorization, function (authorization_response) {
+                if (authorization_response && authorization_response.remitaTransRef) {
                     payload.remitaTransRef = authorization_response.remitaTransRef;
                     payload.mandateId = setup_response.mandateId;
                     payload.applicationID = application_id;

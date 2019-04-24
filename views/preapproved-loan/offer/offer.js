@@ -212,6 +212,7 @@
                             bank: preapproved_loan.bank,
                             email: preapproved_loan.email,
                             phone: preapproved_loan.phone,
+                            authorization: bank.authorization,
                             account: preapproved_loan.account,
                             fullname: preapproved_loan.client,
                             amount: preapproved_loan.loan_amount,
