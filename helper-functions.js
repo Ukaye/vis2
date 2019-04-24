@@ -1,5 +1,6 @@
 let functions = {},
     db = require('./db'),
+    moment = require('moment'),
     request = require('request'),
     SHA512 = require('js-sha512');
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -76,7 +77,7 @@ functions.formatJSONP = function (body) {
 };
 
 functions.setUpMandate = function (payload, callback) {
-    let date = new Date();
+    let date = new Date(moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'));
     payload.merchantId = process.env.REMITA_MERCHANT_ID;
     payload.serviceTypeId = process.env.REMITA_SERVICE_TYPE_ID;
     payload.requestId = date.getTime();
@@ -132,10 +133,8 @@ functions.remitaTimeStampFormat = function (date) {
 
 functions.authorizeMandate = function (payload, callback) {
     let headers = {},
-        date = new Date(),
-        datetime = date.getTime() - 1000;
-    console.log(datetime)
-    headers.REQUEST_ID = 1556104930328;
+        date = new Date(moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'));
+    headers.REQUEST_ID = date.getTime();
     headers.API_KEY = process.env.REMITA_API_KEY;
     headers.MERCHANT_ID = process.env.REMITA_MERCHANT_ID;
     headers.API_DETAILS_HASH = SHA512(headers.API_KEY + headers.REQUEST_ID + process.env.REMITA_API_TOKEN);
@@ -164,7 +163,7 @@ functions.authorizeMandate = function (payload, callback) {
 
 functions.validateMandate = function (payload, type, callback) {
     let headers = {},
-        date = new Date();
+        date = new Date(moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'));
     headers.REQUEST_ID = date.getTime();
     headers.API_KEY = process.env.REMITA_API_KEY;
     headers.MERCHANT_ID = process.env.REMITA_MERCHANT_ID;
