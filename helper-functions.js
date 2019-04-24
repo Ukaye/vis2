@@ -88,8 +88,6 @@ functions.setUpMandate = function (payload, callback) {
             json: true
         },
         (error, res, body) => {
-            console.log(res)
-            console.log('===========================================')
             console.log(error)
             console.log('===========================================')
             console.log(body)
