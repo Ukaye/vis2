@@ -43,24 +43,15 @@ router.post('/mandate/setup', function (req, res, next) {
         query =  `INSERT INTO remita_mandates Set ?`;
 
     helperFunctions.setUpMandate({
-        // payerName: fullname,
-        // payerEmail: email,
-        // payerPhone: phone,
+        payerName: fullname,
+        payerEmail: email,
+        payerPhone: phone,
         // payerBankCode: bank,
-        // payerAccount: account,
-        // amount: amount,
-        // startDate: start,
-        // endDate: end,
-        // mandateType: 'DD',
-        // maxNoOfDebits: '100'
-        payerName: 'Ukemeabasi dfgh fghjk',
-        payerEmail: 'itaukemeabasi@gmail.com',
-        payerPhone: '8165967191',
         payerBankCode: '044',
-        payerAccount: '1236547895',
-        amount: '49992.28',
-        startDate: '24/05/2019',
-        endDate: '25/05/2019',
+        payerAccount: account,
+        amount: amount,
+        startDate: start,
+        endDate: end,
         mandateType: 'DD',
         maxNoOfDebits: '100'
     }, function (payload, setup_response) {
