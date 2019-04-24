@@ -93,6 +93,8 @@ functions.setUpMandate = function (payload, callback) {
             console.log(error)
             console.log('===========================================')
             console.log(body)
+            console.log('===========================================')
+            console.log(payload)
             if (error) {
                 return callback(payload, error);
             }
