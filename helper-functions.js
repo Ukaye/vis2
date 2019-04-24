@@ -136,8 +136,8 @@ functions.authorizeMandate = function (payload, callback) {
     headers.REQUEST_ID = 1556099670847;
     headers.API_KEY = process.env.REMITA_API_KEY;
     headers.MERCHANT_ID = process.env.REMITA_MERCHANT_ID;
-    // headers.API_DETAILS_HASH = SHA512(headers.API_KEY + headers.REQUEST_ID + process.env.REMITA_API_TOKEN);
-    headers.API_DETAILS_HASH = '0b1717ae7dcba8679b9e482e7e38b3daac6dc0139497427e7fd6f8e353230fde0e37eef8f186c251e4de981d2a0950663c17dbe5c9eaa391c3b69d57a881c52c';
+    headers.API_DETAILS_HASH = SHA512(headers.API_KEY + headers.REQUEST_ID + process.env.REMITA_API_TOKEN);
+    // headers.API_DETAILS_HASH = '0b1717ae7dcba8679b9e482e7e38b3daac6dc0139497427e7fd6f8e353230fde0e37eef8f186c251e4de981d2a0950663c17dbe5c9eaa391c3b69d57a881c52c';
     headers.REQUEST_TS = functions.remitaTimeStampFormat(date);
     request.post(
         {
