@@ -88,11 +88,16 @@ functions.setUpMandate = function (payload, callback) {
             json: true
         },
         (error, res, body) => {
+            console.log(res)
+            console.log('===========================================')
+            console.log(error)
+            console.log('===========================================')
+            console.log(body)
             if (error) {
                 return callback(payload, error);
             }
             callback(payload, functions.formatJSONP(body));
-    })
+        })
 };
 
 functions.mandateStatus = function (payload, callback) {
