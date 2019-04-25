@@ -994,6 +994,7 @@
                                                                 <tr>
                                                                     <th>Branch ID</th>
                                                                     <th>Branch Name</th>
+                                                                    <th>Interest Expected</th>
                                                                     <th>Interest Collected</th>
                                                                 </tr>
                                                                 </thead>
@@ -1029,6 +1030,7 @@
                                                                 <tr>
                                                                     <th>Branch ID</th>
                                                                     <th>Branch Name</th>
+                                                                    <th>Payments Expected (Principal)</th>
                                                                     <th>Payments Received</th>
                                                                 </tr>
                                                                 </thead>
@@ -1965,9 +1967,9 @@
             let num = dets.length;
             for (let i = 0; i < num; i++){
                 let v = dets[i];
-                total += (v.disbursed) ? v.disbursed : 0;
+                total += (v.interest_expected) ? v.interest_expected : 0;
                 v.id = padWithZeroes(v.branchID, 6);
-                v.amount = formatter.format(v.disbursed);
+                v.amount = formatter.format(v.interest_expected);
                 v.paid = formatter.format(v.collected);
                 v.glp = formatter.format(v.disbursed - v.collected);
                 deta.push(v);
@@ -1983,7 +1985,8 @@
                         columns: [
                             { data: "id" },
                             { data: "branch" },
-                            { data: "amount" }
+                            { data: "amount" },
+                            { data: "paid" }
                         ]
                     });
                 }
@@ -2038,7 +2041,8 @@
                         columns: [
                             { data: "id" },
                             { data: "branch" },
-                            { data: "amount" }
+                            { data: "amount" },
+                            { data: "paid" }
                         ]
                     });
                 }
@@ -4013,11 +4017,13 @@
             $('#div-disbursement').hide();
             $('#div-interest').show();
             $('#div-payment').hide();
+            loadInterestsByBranch();
         }
         if (type.value == '3'){//Payments
             $('#div-disbursement').hide();
             $('#div-interest').hide();
             $('#div-payment').show();
+            loadPaymentsByBranch();
         }
         return branches(type.value);
     }

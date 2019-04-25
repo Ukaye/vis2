@@ -3261,8 +3261,10 @@ users.get('/interests-by-branches', function(req, res, next) {
         group
     queryPart = 'select (select branch from clients where ID = userID) as branchID, \n' +
         '(select branch_name from branches br where br.id = branchID) as branch,\n' +
-        'loan_amount, sum(loan_amount) as disbursed,\n' +
-        '(select sum(payment_amount) from schedule_history sh\n' +
+        'loan_amount, ' +
+        '(select sum(interest_amount) from application_schedules ash where (select branch from clients where clients.ID = (select userID from applications where applications.ID = ash.applicationID)) = branchID and ash.status = 1) ' +
+        'as interest_expected,\n' +
+        '(select sum(interest_amount) from schedule_history sh\n' +
         'where sh.status = 1 and \n' +
         '(select branch from clients c where c.ID = (select userID from applications b where b.ID = sh.applicationID)) = branchID ' +
         'and sh.applicationID in (select ap.ID from applications ap where ap.status = 2)) as collected\n' +
@@ -3278,8 +3280,10 @@ users.get('/interests-by-branches', function(req, res, next) {
         // query = (queryPart.concat('AND (TIMESTAMP(disbursement_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
         query = 'select (select branch from clients where ID = userID) as branchID, \n' +
             '(select branch_name from branches br where br.id = branchID) as branch,\n' +
-            'loan_amount, sum(loan_amount) as disbursed,\n' +
-            '(select sum(payment_amount) from schedule_history sh\n' +
+            'loan_amount, ' +
+            '(select sum(interest_amount) from application_schedules ash where (select branch from clients where clients.ID = (select userID from applications where applications.ID = ash.applicationID)) = branchID and ash.status = 1) ' +
+            'as interest_expected,\n' +
+            '(select sum(interest_amount) from schedule_history sh\n' +
             'where sh.status = 1 and \n' +
             '(select branch from clients c where c.ID = (select userID from applications b where b.ID = sh.applicationID)) = branchID ' +
             'and sh.applicationID in (select ap.ID from applications ap where ap.status = 2)\n' +
@@ -3293,7 +3297,7 @@ users.get('/interests-by-branches', function(req, res, next) {
         if(error){
             res.send({"status": 500, "error": error, "response": null});
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "All Payments pulled!"});
+            res.send({"status": 200, "error": null, "response": results, "message": "Report pulled!"});
         }
     });
 });
@@ -3308,7 +3312,7 @@ users.get('/payments-by-branches', function(req, res, next) {
         group
     queryPart = 'select (select branch from clients where ID = userID) as branchID, \n' +
         '(select branch_name from branches br where br.id = branchID) as branch,\n' +
-        'loan_amount, sum(loan_amount) as disbursed,\n' +
+        'loan_amount,sum(loan_amount) as disbursed,\n' +
         '(select sum(payment_amount) from schedule_history sh\n' +
         'where sh.status = 1 and \n' +
         '(select branch from clients c where c.ID = (select userID from applications b where b.ID = sh.applicationID)) = branchID ' +
@@ -3325,7 +3329,7 @@ users.get('/payments-by-branches', function(req, res, next) {
         // query = (queryPart.concat('AND (TIMESTAMP(disbursement_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
         query = 'select (select branch from clients where ID = userID) as branchID, \n' +
             '(select branch_name from branches br where br.id = branchID) as branch,\n' +
-            'loan_amount, sum(loan_amount) as disbursed,\n' +
+            'loan_amount,sum(loan_amount) as disbursed,\n' +
             '(select sum(payment_amount) from schedule_history sh\n' +
             'where sh.status = 1 and \n' +
             '(select branch from clients c where c.ID = (select userID from applications b where b.ID = sh.applicationID)) = branchID ' +
@@ -3340,7 +3344,7 @@ users.get('/payments-by-branches', function(req, res, next) {
         if(error){
             res.send({"status": 500, "error": error, "response": null});
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "All Payments pulled!"});
+            res.send({"status": 200, "error": null, "response": results, "message": "Report pulled!"});
         }
     });
 });
