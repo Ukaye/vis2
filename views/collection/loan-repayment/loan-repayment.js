@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    loadUsers();
+    getApplication();
     loadComments();
 });
 
@@ -10,8 +10,13 @@ function goToLoanOverview() {
     window.location.href = '/application?id='+application_id;
 }
 
+$("#remita-amount").on("keyup", function () {
+    let val = $("#remita-amount").val();
+    $("#remita-amount").val(numberToCurrencyformatter(val));
+});
+
 let application;
-function loadUsers(){
+function getApplication(){
     $.ajax({
         'url': '/user/application-id/'+application_id,
         'type': 'get',
@@ -25,6 +30,10 @@ function loadUsers(){
                 $('.escrow-balance').text(parseFloat(application.escrow).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
             initRepaymentSchedule(application);
             $("#workflow-div-title").text(fullname.toUpperCase());
+            if (application.mandateId){
+                $('#remitaPaymentButton').show();
+                getRemitaPayments();
+            }
         },
         'error': function (err) {
             console.log(err);
@@ -726,6 +735,54 @@ function addPayment() {
         },
         'error': function (err) {
             notification('No internet connection','','error');
+        }
+    });
+}
+
+function makeRemitaPayment() {
+    swal({
+        title: "Are you sure?",
+        text: "Once started, this process is not reversible!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+    })
+        .then((yes) => {
+            if (yes) {
+                $('#wait').show();
+                let payment = {};
+                payment.mandateId = application.mandateId;
+                payment.fundingAccount = application.payerAccount;
+                payment.fundingBankCode = application.payerBankCode;
+                payment.totalAmount = currencyToNumberformatter($('#remita-amount').val());
+                if (!payment.totalAmount)
+                    return notification('Kindly fill payment amount!','','warning');
+                if (!payment.mandateId)
+                    return notification('Oops! remita mandate has not been setup for this application!','','warning');
+                $.ajax({
+                    'url': `/remita/payment/create`,
+                    'type': 'post',
+                    'data': payment,
+                    'success': function (data) {
+                        console.log(data)
+                        $('#wait').hide();
+                        notification(data.status,'','info');
+                        // window.location.reload();
+                    },
+                    'error': function (err) {
+                        notification('No internet connection','','error');
+                    }
+                });
+            }
+        });
+}
+
+function getRemitaPayments() {
+    $.ajax({
+        type: 'get',
+        url: `/remita/payments/get/${application_id}`,
+        success: function (response) {
+            console.log(response)
         }
     });
 }

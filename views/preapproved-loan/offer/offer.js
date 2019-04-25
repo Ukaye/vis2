@@ -83,7 +83,7 @@
     }
 
     function generateMandateForm(data) {
-        let form_url = `${getBaseUrl()}/form/${data.merchantId}/${data.hash}/${data.mandateId}/${data.requestId}/rest.reg`;
+        let form_url = `${getBaseUrl()}/form/${data.merchantId}/${data.remita_hash}/${data.mandateId}/${data.requestId}/rest.reg`;
         $('#remitaDirectDebit').find('.setup-content').html(`
             <div class="col-sm-12">
                 <iframe src="${form_url}" id="mandate_form" name="mandate_form"></iframe>
@@ -199,6 +199,12 @@
         })
             .then((yes) => {
                 if (yes) {
+                    let start = preapproved_loan.schedule[0]['payment_collect_date'],
+                        end = preapproved_loan.schedule[preapproved_loan.schedule.length-1]['payment_collect_date'];
+                    if (start === end) {
+                        let start_ = new Date(start);
+                        end = formatDate(start_.setDate(start_.getDate() + 1));
+                    }
                     $.ajax({
                         'url': `/client/mandate/setup`,
                         'type': 'post',
@@ -206,13 +212,14 @@
                             bank: preapproved_loan.bank,
                             email: preapproved_loan.email,
                             phone: preapproved_loan.phone,
+                            authorization: bank.authorization,
                             account: preapproved_loan.account,
                             fullname: preapproved_loan.client,
                             amount: preapproved_loan.loan_amount,
                             created_by: preapproved_loan.created_by,
                             application_id: preapproved_loan.applicationID,
-                            start: remitaDateFormat(preapproved_loan.schedule[0]['payment_collect_date']),
-                            end: remitaDateFormat(preapproved_loan.schedule[preapproved_loan.schedule.length-1]['payment_collect_date'])
+                            start: remitaDateFormat(start),
+                            end: remitaDateFormat(end)
                         },
                         'success': function (data) {
                             if (data.status !== 500){
@@ -221,9 +228,7 @@
                                 $('#acceptApplication').show();
                                 localStorage.remitaTransRef = data.remitaTransRef;
                                 preapproved_loan.remitaTransRef = data.remitaTransRef;
-                                if (bank.authorization === 'FORM') {
-                                    generateMandateForm(preapproved_loan);
-                                }
+                                window.location.reload();
                             } else {
                                 const error = data.error.status || 'No internet connection';
                                 notification(error,'','error');

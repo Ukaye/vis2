@@ -108,7 +108,7 @@ function populateDataTable(data) {
             table[table.length-1] = table[table.length-1].concat(add_workflow_button);
         }
         $('#bootstrap-data-table').dataTable().fnAddData(table);
-        $('#bootstrap-data-table').dataTable().fnSort([[5,'desc']]);
+        $('#bootstrap-data-table').dataTable().fnSort([[6,'desc']]);
     });
 }
 

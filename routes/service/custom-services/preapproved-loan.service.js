@@ -275,9 +275,9 @@ router.post('/create', function (req, res, next) {
                         data.date = postData.date_created;
                         data.offer_url = `${HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}`;
                         let mailOptions = {
-                            from: 'no-reply Loanratus <applications@loan35.com>',
+                            from: 'no-reply Finratus <applications@loan35.com>',
                             to: req.body.email,
-                            subject: 'Loanratus Loan Application Offer',
+                            subject: 'Finratus Loan Application Offer',
                             template: 'offer',
                             context: data
                         };
@@ -391,7 +391,8 @@ router.get('/get/:id', function (req, res, next) {
                     preapproved_loan.schedule = (response_.data === undefined) ? [] : response_.data;
                     preapproved_loan.remita = remita_mandate_status;
                     preapproved_loan.merchantId = process.env.REMITA_MERCHANT_ID;
-                    preapproved_loan.hash = SHA512(preapproved_loan.merchantId + process.env.REMITA_API_KEY + response['data'][0]['requestId']);
+                    if (response['data'][0]['requestId'])
+                        preapproved_loan.remita_hash = SHA512(preapproved_loan.merchantId + process.env.REMITA_API_KEY + response['data'][0]['requestId']);
                     res.send({
                         data: preapproved_loan
                     });
@@ -455,7 +456,7 @@ router.post('/offer/accept/:id', function (req, res, next) {
         };
 
     helperFunctions.validateMandate(validate_payload, authorization, function (validation_response) {
-        if (validation_response.statuscode === '00') {
+        if (validation_response.statuscode === '00' || validation_response.statuscode === '02') {
             if (authorization === 'FORM' && !validation_response.isActive)
                 return res.send({status: 500, error: {status: 'Your direct debit mandate is still pending activation.'}, response: null});
             offer.status = 2;
@@ -471,9 +472,9 @@ router.post('/offer/accept/:id', function (req, res, next) {
                     axios.post(url, application)
                         .then(function (application_response) {
                             let mailOptions = {
-                                from: 'no-reply Loanratus <applications@loan35.com>',
+                                from: 'no-reply Finratus <applications@loan35.com>',
                                 to: email,
-                                subject: 'Loanratus Application Successful',
+                                subject: 'Finratus Application Successful',
                                 template: 'main',
                                 context: {
                                     name: fullname,

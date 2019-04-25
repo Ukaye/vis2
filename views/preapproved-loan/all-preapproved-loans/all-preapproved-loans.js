@@ -166,19 +166,9 @@ function disburse() {
                     'type': 'post',
                     'data': disbursal,
                     'success': function (data) {
-                        $.ajax({
-                            'url': `/preapproved-loan/delete/${preapproved_loan.ID}`,
-                            'type': 'get',
-                            'success': function (data) {
-                                $('#wait').hide();
-                                notification('Loan disbursed successfully','','success');
-                                window.location.reload();
-                            },
-                            'error': function (err) {
-                                console.log(err);
-                                notification('No internet connection','','error');
-                            }
-                        });
+                        $('#wait').hide();
+                        notification('Loan disbursed successfully','','success');
+                        window.location.reload();
                     },
                     'error': function (err) {
                         $('#wait').hide();

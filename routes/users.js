@@ -1540,9 +1540,9 @@ users.post('/apply', function(req, res) {
             data.name = req.body.username;
             data.date = postData.date_created;
             let mailOptions = {
-                from: 'no-reply Loanratus <applications@loan35.com>',
+                from: 'no-reply Finratus <applications@loan35.com>',
                 to: req.body.email,
-                subject: 'Loanratus Application Successful',
+                subject: 'Finratus Application Successful',
                 template: 'main',
                 context: data
             };
@@ -1711,8 +1711,13 @@ users.get('/application-id/:id', function(req, res, next) {
     let obj = {},
         application_id = req.params.id,
         path = 'files/application-'+application_id+'/',
-        query = 'SELECT u.ID AS userID, u.fullname, u.phone, u.email, u.address, cast(u.loan_officer as unsigned) loan_officer, a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, ' +
-            '(SELECT l.supervisor FROM users l WHERE l.ID = u.loan_officer) AS supervisor, (SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow FROM clients AS u, applications AS a WHERE u.ID=a.userID AND a.ID = ?';
+        query = 'SELECT u.ID AS userID, u.fullname, u.phone, u.email, u.address, cast(u.loan_officer as unsigned) loan_officer, ' +
+            'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, ' +
+            'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, ' +
+            '(SELECT l.supervisor FROM users l WHERE l.ID = u.loan_officer) AS supervisor, ' +
+            '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
+            'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
+            'FROM clients AS u INNER JOIN applications AS a ON u.ID=a.userID LEFT JOIN remita_mandates r ON r.applicationID = a.ID WHERE a.ID = ?';
     db.getConnection(function(err, connection) {
         if (err) throw err;
 
@@ -2818,7 +2823,7 @@ users.get('/forgot-password/:username', function(req, res) {
         let mailOptions = {
             from: 'no-reply@loan35.com',
             to: user.email,
-            subject: 'Loanratus: Forgot Password Request',
+            subject: 'Finratus: Forgot Password Request',
             template: 'forgot',
             context: user
         };
@@ -5385,7 +5390,7 @@ users.get('/target-mail', function(req, res) {
     //     return res.send("Required Parameters not sent!");
     // data.date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let mailOptions = {
-        from: 'Loanratus Target <applications@loan35.com>',
+        from: 'Finratus Target <applications@loan35.com>',
         to: 'itaukemeabasi@gmail.com',
         subject: 'Target',
         template: 'target'

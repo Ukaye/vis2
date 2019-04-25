@@ -1,5 +1,5 @@
 function getBaseUrl() {
-    return 'https://www.remitademo.net/remita/ecomm/mandate';
+    return 'http://www.remitademo.net/remita/ecomm/mandate';
 }
 
 function numberToCurrencyformatter(value) {

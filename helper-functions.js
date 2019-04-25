@@ -1,5 +1,6 @@
 let functions = {},
     db = require('./db'),
+    moment = require('moment'),
     request = require('request'),
     SHA512 = require('js-sha512');
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -61,22 +62,23 @@ functions.getNextWorkflowProcess = function(application_id, workflow_id, stage, 
 functions.formatJSONP = function (body) {
     const jsonpData = body;
     let json;
-    try
-    {
+    try {
         json = JSON.parse(jsonpData);
-    }
-    catch(e)
-    {
+    } catch(e) {
         const startPos = jsonpData.indexOf('({'),
             endPos = jsonpData.indexOf('})'),
             jsonString = jsonpData.substring(startPos+1, endPos+1);
-        json = JSON.parse(jsonString);
+        try {
+            json = JSON.parse(jsonString);
+        } catch(e) {
+            json = {};
+        }
     }
     return json;
 };
 
 functions.setUpMandate = function (payload, callback) {
-    let date = new Date();
+    let date = new Date(moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'));
     payload.merchantId = process.env.REMITA_MERCHANT_ID;
     payload.serviceTypeId = process.env.REMITA_SERVICE_TYPE_ID;
     payload.requestId = date.getTime();
@@ -92,7 +94,7 @@ functions.setUpMandate = function (payload, callback) {
                 return callback(payload, error);
             }
             callback(payload, functions.formatJSONP(body));
-    })
+        })
 };
 
 functions.mandateStatus = function (payload, callback) {
@@ -130,16 +132,23 @@ functions.remitaTimeStampFormat = function (date) {
     return yyyy+'-'+mm+'-'+dd+'T'+hours+':'+minutes+':'+seconds+'+000000';
 };
 
-functions.authorizeMandate = function (payload, callback) {
+functions.authorizeMandate = function (payload, type, callback) {
+    if (type === 'FORM') {
+        return callback({
+            statuscode: "00",
+            status: "SUCCESS",
+            requestId: payload.requestId,
+            mandateId: payload.mandateId,
+            remitaTransRef: "0000000000000"
+        });
+    }
     let headers = {},
-        date = new Date();
+        date = new Date(moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'));
     headers.REQUEST_ID = date.getTime();
     headers.API_KEY = process.env.REMITA_API_KEY;
     headers.MERCHANT_ID = process.env.REMITA_MERCHANT_ID;
     headers.API_DETAILS_HASH = SHA512(headers.API_KEY + headers.REQUEST_ID + process.env.REMITA_API_TOKEN);
-    // headers.REQUEST_TS = functions.remitaTimeStampFormat(date);
-    headers.REQUEST_TS = '2019-04-05T16:35:15+000000';
-    console.log(headers)
+    headers.REQUEST_TS = functions.remitaTimeStampFormat(date);
     request.post(
         {
             url: `${process.env.REMITA_BASE_URL}/requestAuthorization`,
@@ -148,8 +157,6 @@ functions.authorizeMandate = function (payload, callback) {
             json: true
         },
         (error, res, body) => {
-            console.log(error);
-            console.log(body);
             if (error) {
                 return callback(error);
             }
@@ -159,7 +166,7 @@ functions.authorizeMandate = function (payload, callback) {
 
 functions.validateMandate = function (payload, type, callback) {
     let headers = {},
-        date = new Date();
+        date = new Date(moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'));
     headers.REQUEST_ID = date.getTime();
     headers.API_KEY = process.env.REMITA_API_KEY;
     headers.MERCHANT_ID = process.env.REMITA_MERCHANT_ID;
@@ -198,6 +205,43 @@ functions.validateMandate = function (payload, type, callback) {
             break;
         }
     }
+};
+
+functions.sendDebitInstruction = function (payload, callback) {
+    let date = new Date(moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'));
+    payload.merchantId = process.env.REMITA_MERCHANT_ID;
+    payload.serviceTypeId = process.env.REMITA_SERVICE_TYPE_ID;
+    payload.requestId = date.getTime();
+    payload.hash = SHA512(payload.merchantId + payload.serviceTypeId + payload.requestId + payload.totalAmount + process.env.REMITA_API_KEY);
+    request.post(
+        {
+            url: `${process.env.REMITA_BASE_URL}/payment/send`,
+            body: payload,
+            json: true
+        },
+        (error, res, body) => {
+            if (error) {
+                return callback(error);
+            }
+            callback(functions.formatJSONP(body));
+        })
+};
+
+functions.mandatePaymentHistory = function (payload, callback) {
+    payload.merchantId = process.env.REMITA_MERCHANT_ID;
+    payload.hash = SHA512(payload.mandateId + payload.merchantId + payload.requestId + process.env.REMITA_API_KEY);
+    request.post(
+        {
+            url: `${process.env.REMITA_BASE_URL}/payment/send`,
+            body: payload,
+            json: true
+        },
+        (error, res, body) => {
+            if (error) {
+                return callback(error);
+            }
+            callback(functions.formatJSONP(body));
+        })
 };
 
 module.exports = functions;

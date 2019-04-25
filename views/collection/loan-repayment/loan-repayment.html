@@ -6,8 +6,8 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Loanratus Admin</title>
-    <meta name="description" content="Loanratus Admin">
+    <title>Finratus Admin</title>
+    <meta name="description" content="Finratus Admin">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="apple-touch-icon" href="apple-icon.png">
     <link rel="shortcut icon" href="favicon.png">
@@ -145,6 +145,7 @@
                                 <p>Client ID#: <a onclick="goToClientProfile()" style="text-decoration: underline; cursor: pointer;"><span id="client-id"></span></a> | LOAN ID#: <span id="application-id"></span></p>
                             </div>
                             <button class="btn btn-primary" onclick="goToLoanOverview()" style="float: right;">Loan Overview <i class="fa fa-forward"></i></button>
+                            <button id="remitaPaymentButton" class="btn btn-warning" data-toggle="modal" data-target="#remitaPaymentModal" style="float: right; display: none;">Remita Payment</button>
                             <button class="btn btn-success" data-toggle="modal" data-target="#addPaymentModal" style="float: right;">Add Additional Interest</button>
                             <a href="#" style="float: right; margin: 8px; text-decoration: underline;" data-toggle="modal" data-target="#escrowHistory" onclick="escrowHistory()">Escrow Balance: ₦<span class="escrow-balance">0</span></a>
                         </div>
@@ -500,6 +501,49 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-primary" onclick="addPayment()">Add Payment</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="remitaPaymentModal" role="dialog" aria-labelledby="remitaPaymentModalLabel">
+    <div class="modal-dialog modal-lg" role="document" style="min-width: 50%;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="remitaPaymentModalLabel">Remita Payment</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="row setup-content">
+                    <div class="col-sm-12">
+                        <div class="form-group">
+                            <strong><label class=" form-control-label">Amount</label></strong><strong style="color:red"> *</strong>
+                            <div class="input-group">
+                                <div class="input-group-addon">₦</div>
+                                <input id="remita-amount" type="text" placeholder="0" class="form-control" required="required">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-12">
+                        <div class="form-group">
+                            <button type="button" class="btn btn-block btn-success" onclick="makeRemitaPayment()">Make Payment</button>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <table id="payment-history" class="table table-striped table-bordered">
+                    <thead>
+                    <tr>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

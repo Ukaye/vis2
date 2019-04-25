@@ -5,11 +5,7 @@ let express = require('express');
 let fs = require('fs'),
     db = require('./db'),
     http = require('http'),
-    path = require('path'),
-    mysql = require('mysql'),
-    morgan = require('morgan'),
     bcrypt = require('bcryptjs'),
-    cookie = require('cookie'),
     bodyParser = require('body-parser'),
     session = require('client-sessions'),
     cookieParser = require('cookie-parser'),
@@ -54,8 +50,8 @@ let app = express(),
     inv_transaction_service = require('./routes/service/custom-services/transaction.service'),
     preapproved_loan_service = require('./routes/service/custom-services/preapproved-loan.service'),
     preapplication_service = require('./routes/service/custom-services/preapplication.service'),
+    remita_service = require('./routes/service/custom-services/remita.service'),
     notification = require('./routes/notifications'),
-    notification_service = require('./routes/notifications-service'),
     index = require('./routes/index');
 
 app.engine('html', require('ejs').renderFile);
@@ -212,7 +208,7 @@ app.use('/investment-products', investment_product_service);
 app.use('/investment-txns', inv_transaction_service);
 app.use('/preapproved-loan', preapproved_loan_service);
 app.use('/preapplication', preapplication_service);
-// app.use('/notification-service', notification_service);
+app.use('/remita', remita_service);
 app.use('/notifications', notification);
 app.use('/files', express.static(__dirname + '/files'));
 
