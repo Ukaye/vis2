@@ -1540,9 +1540,9 @@ users.post('/apply', function(req, res) {
             data.name = req.body.username;
             data.date = postData.date_created;
             let mailOptions = {
-                from: 'no-reply Loanratus <applications@loan35.com>',
+                from: 'no-reply Finratus <applications@loan35.com>',
                 to: req.body.email,
-                subject: 'Loanratus Application Successful',
+                subject: 'Finratus Application Successful',
                 template: 'main',
                 context: data
             };
@@ -2818,7 +2818,7 @@ users.get('/forgot-password/:username', function(req, res) {
         let mailOptions = {
             from: 'no-reply@loan35.com',
             to: user.email,
-            subject: 'Loanratus: Forgot Password Request',
+            subject: 'Finratus: Forgot Password Request',
             template: 'forgot',
             context: user
         };
@@ -5275,7 +5275,7 @@ users.get('/target-mail', function(req, res) {
     //     return res.send("Required Parameters not sent!");
     // data.date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let mailOptions = {
-        from: 'Loanratus Target <applications@loan35.com>',
+        from: 'Finratus Target <applications@loan35.com>',
         to: 'itaukemeabasi@gmail.com',
         subject: 'Target',
         template: 'target'

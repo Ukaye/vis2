@@ -275,9 +275,9 @@ router.post('/create', function (req, res, next) {
                         data.date = postData.date_created;
                         data.offer_url = `${HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}`;
                         let mailOptions = {
-                            from: 'no-reply Loanratus <applications@loan35.com>',
+                            from: 'no-reply Finratus <applications@loan35.com>',
                             to: req.body.email,
-                            subject: 'Loanratus Loan Application Offer',
+                            subject: 'Finratus Loan Application Offer',
                             template: 'offer',
                             context: data
                         };
@@ -472,9 +472,9 @@ router.post('/offer/accept/:id', function (req, res, next) {
                     axios.post(url, application)
                         .then(function (application_response) {
                             let mailOptions = {
-                                from: 'no-reply Loanratus <applications@loan35.com>',
+                                from: 'no-reply Finratus <applications@loan35.com>',
                                 to: email,
-                                subject: 'Loanratus Application Successful',
+                                subject: 'Finratus Application Successful',
                                 template: 'main',
                                 context: {
                                     name: fullname,
