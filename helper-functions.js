@@ -62,16 +62,17 @@ functions.getNextWorkflowProcess = function(application_id, workflow_id, stage, 
 functions.formatJSONP = function (body) {
     const jsonpData = body;
     let json;
-    try
-    {
+    try {
         json = JSON.parse(jsonpData);
-    }
-    catch(e)
-    {
+    } catch(e) {
         const startPos = jsonpData.indexOf('({'),
             endPos = jsonpData.indexOf('})'),
             jsonString = jsonpData.substring(startPos+1, endPos+1);
-        json = JSON.parse(jsonString);
+        try {
+            json = JSON.parse(jsonString);
+        } catch(e) {
+            json = {};
+        }
     }
     return json;
 };
@@ -204,6 +205,43 @@ functions.validateMandate = function (payload, type, callback) {
             break;
         }
     }
+};
+
+functions.sendDebitInstruction = function (payload, callback) {
+    let date = new Date(moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'));
+    payload.merchantId = process.env.REMITA_MERCHANT_ID;
+    payload.serviceTypeId = process.env.REMITA_SERVICE_TYPE_ID;
+    payload.requestId = date.getTime();
+    payload.hash = SHA512(payload.merchantId + payload.serviceTypeId + payload.requestId + payload.totalAmount + process.env.REMITA_API_KEY);
+    request.post(
+        {
+            url: `${process.env.REMITA_BASE_URL}/payment/send`,
+            body: payload,
+            json: true
+        },
+        (error, res, body) => {
+            if (error) {
+                return callback(error);
+            }
+            callback(functions.formatJSONP(body));
+        })
+};
+
+functions.mandatePaymentHistory = function (payload, callback) {
+    payload.merchantId = process.env.REMITA_MERCHANT_ID;
+    payload.hash = SHA512(payload.mandateId + payload.merchantId + payload.requestId + process.env.REMITA_API_KEY);
+    request.post(
+        {
+            url: `${process.env.REMITA_BASE_URL}/payment/send`,
+            body: payload,
+            json: true
+        },
+        (error, res, body) => {
+            if (error) {
+                return callback(error);
+            }
+            callback(functions.formatJSONP(body));
+        })
 };
 
 module.exports = functions;

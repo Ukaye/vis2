@@ -456,7 +456,7 @@ router.post('/offer/accept/:id', function (req, res, next) {
         };
 
     helperFunctions.validateMandate(validate_payload, authorization, function (validation_response) {
-        if (validation_response.statuscode === '00') {
+        if (validation_response.statuscode === '00' || validation_response.statuscode === '02') {
             if (authorization === 'FORM' && !validation_response.isActive)
                 return res.send({status: 500, error: {status: 'Your direct debit mandate is still pending activation.'}, response: null});
             offer.status = 2;
