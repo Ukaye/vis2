@@ -34,7 +34,7 @@ config.production = {
     host: '13.94.142.82',
     port: '3306',
     user: 'loan35admin',
-    password: 'Pass@word1',
+    password: 'Loan35Pass@word2018',
     database: 'loan35',
     charset: 'utf8mb4',
     insecureAuth: true
