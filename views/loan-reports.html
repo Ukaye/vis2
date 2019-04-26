@@ -929,7 +929,7 @@
                                                         </div>
                                                     </div>
                                                     <div id="branch-chart" style="text-align: center">FusionCharts XT will load here!</div><hr/>
-                                                    <div class="card">
+                                                    <div id="div-disbursement" class="card">
                                                         <div class="card-header">
                                                             <div class="col-sm-5">
                                                                 <strong>Disbursements by Branch</strong>&nbsp;&nbsp;&nbsp;
@@ -960,6 +960,78 @@
                                                                     <th>Disbursed</th>
                                                                     <th>Collected</th>
                                                                     <th>GLP</th>
+                                                                </tr>
+                                                                </thead>
+                                                                <tbody></tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                    <div id="div-interest" class="card" style="display: none">
+                                                        <div class="card-header">
+                                                            <div class="col-sm-5">
+                                                                <strong>Interests by Branch</strong>&nbsp;&nbsp;&nbsp;
+                                                                <span>Total: <span id="total-interest-by-branch"></span></span>
+                                                            </div>
+                                                            <div class="col-sm-7">
+                                                                <form id="filterinterestbybranch" class="form-inline" style="float: right;">
+                                                                    <div class="form-group">
+                                                                        <label class="" for="startDate">Start date</label>
+                                                                        <input type="date" class="form-control" id="filterinterestbranchstart" placeholder="Start date">
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label class="" for="endDate">End date</label>
+                                                                        <input type="date" class="form-control" id="filterinterestbranchend" placeholder="End date">
+                                                                    </div>
+                                                                    <button type="submit" class="btn btn-success">Filter</button>
+                                                                </form>
+                                                            </div>
+                                                            <!--<select id="branch-filter" onchange="filterBranch(this)" style="width: 200px">-->
+                                                            <!--</select>-->
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <table id="interest-by-branch-table" class="table table-striped table-bordered">
+                                                                <thead>
+                                                                <tr>
+                                                                    <th>Branch ID</th>
+                                                                    <th>Branch Name</th>
+                                                                    <th>Interest Expected</th>
+                                                                    <th>Interest Collected</th>
+                                                                </tr>
+                                                                </thead>
+                                                                <tbody></tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                    <div id="div-payment" class="card" style="display: none">
+                                                        <div class="card-header">
+                                                            <div class="col-sm-5">
+                                                                <strong>Payments by Branch</strong>&nbsp;&nbsp;&nbsp;
+                                                                <span>Total: <span id="total-payments-by-branch"></span></span>
+                                                            </div>
+                                                            <div class="col-sm-7">
+                                                                <form id="filterpaymentsbybranch" class="form-inline" style="float: right;">
+                                                                    <div class="form-group">
+                                                                        <label class="" for="startDate">Start date</label>
+                                                                        <input type="date" class="form-control" id="filterpaymentsbranchstart" placeholder="Start date">
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label class="" for="endDate">End date</label>
+                                                                        <input type="date" class="form-control" id="filterpaymentsbranchend" placeholder="End date">
+                                                                    </div>
+                                                                    <button type="submit" class="btn btn-success">Filter</button>
+                                                                </form>
+                                                            </div>
+                                                            <!--<select id="branch-filter" onchange="filterBranch(this)" style="width: 200px">-->
+                                                            <!--</select>-->
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <table id="payments-by-branch-table" class="table table-striped table-bordered">
+                                                                <thead>
+                                                                <tr>
+                                                                    <th>Branch ID</th>
+                                                                    <th>Branch Name</th>
+                                                                    <th>Payments Expected (Principal)</th>
+                                                                    <th>Payments Received</th>
                                                                 </tr>
                                                                 </thead>
                                                                 <tbody></tbody>
@@ -1867,6 +1939,118 @@
         }
     }
 
+    function loadInterestsByBranch(){
+        let start = $("#filterinterestbranchstart").val(),
+            end = $("#filterinterestbranchend").val(),
+            url;
+        url = (start === "" || start === null || end === "" || end === null ) ? 'user/interests-by-branches/' : 'user/interests-by-branches?start='+formatDate(start)+'&&end='+formatDate(end)
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                (data.status === 200) ? populateInterestsByBranch(data.response) : swal({"icon": "error", "text": 'Database Error'})
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
+    }
+
+    function populateInterestsByBranch(dets){
+        $("#interest-by-branch-table").dataTable().fnClearTable();
+        if (dets.length === 0){
+            $("#interest-by-branch-table").dataTable().fnClearTable();
+            $('#total-interest-by-branch').html(formatter.format(0));
+        }else{
+            let deta = [];
+            var total = 0; var collected = 0;
+            let num = dets.length;
+            for (let i = 0; i < num; i++){
+                let v = dets[i];
+                total += (v.interest_expected) ? v.interest_expected : 0;
+                v.id = padWithZeroes(v.branchID, 6);
+                v.amount = formatter.format(v.interest_expected);
+                v.paid = formatter.format(v.collected);
+                v.glp = formatter.format(v.disbursed - v.collected);
+                deta.push(v);
+                if (i === num - 1){
+                    $('#interest-by-branch-table').DataTable({
+                        dom: 'Blfrtip',
+                        bDestroy: true,
+                        data: deta,
+                        search: {search: ' '},
+                        buttons: [
+                            'copy', 'csv', 'excel', 'pdf', 'print'
+                        ],
+                        columns: [
+                            { data: "id" },
+                            { data: "branch" },
+                            { data: "amount" },
+                            { data: "paid" }
+                        ]
+                    });
+                }
+            }
+            $('#total-interest-by-branch').html(formatter.format(total));
+        }
+    }
+
+    function loadPaymentsByBranch(){
+        let start = $("#filterpaymentsbranchstart").val(),
+            end = $("#filterpaymentsbranchend").val(),
+            url;
+        url = (start === "" || start === null || end === "" || end === null ) ? 'user/payments-by-branches/' : 'user/payments-by-branches?start='+formatDate(start)+'&&end='+formatDate(end)
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                (data.status === 200) ? populatePaymentsByBranch(data.response) : swal({"icon": "error", "text": 'Database Error'})
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
+    }
+
+    function populatePaymentsByBranch(dets){
+        $("#payments-by-branch-table").dataTable().fnClearTable();
+        if (dets.length === 0){
+            $("#payments-by-branch-table").dataTable().fnClearTable();
+            $('#total-payments-by-branch').html(formatter.format(0));
+        }else{
+            let deta = [];
+            var total = 0; var collected = 0;
+            let num = dets.length;
+            for (let i = 0; i < num; i++){
+                let v = dets[i];
+                total += (v.disbursed) ? v.disbursed : 0;
+                v.id = padWithZeroes(v.branchID, 6);
+                v.amount = formatter.format(v.disbursed);
+                v.paid = formatter.format(v.collected);
+                v.glp = formatter.format(v.disbursed - v.collected);
+                deta.push(v);
+                if (i === num - 1){
+                    $('#payments-by-branch-table').DataTable({
+                        dom: 'Blfrtip',
+                        bDestroy: true,
+                        data: deta,
+                        search: {search: ' '},
+                        buttons: [
+                            'copy', 'csv', 'excel', 'pdf', 'print'
+                        ],
+                        columns: [
+                            { data: "id" },
+                            { data: "branch" },
+                            { data: "amount" },
+                            { data: "paid" }
+                        ]
+                    });
+                }
+            }
+            $('#total-payments-by-branch').html(formatter.format(total));
+        }
+    }
+
     $("#filterbybranch").submit(function (e) {
         e.preventDefault();
 
@@ -1883,6 +2067,52 @@
                 let applications = data.response;
                 results = applications;
                 populateLoanByBranch(applications);
+            },
+            'error': function (err) {
+                console.log(err);
+            }
+        });
+    });
+
+    $("#filterinterestbybranch").submit(function (e) {
+        e.preventDefault();
+
+        let start = $("#filterinterestbranchstart").val(),
+            end = $("#filterinterestbranchend").val(),
+            url = '/user/interests-by-branches?start='+formatDate(start)+'&&end='+formatDate(end);
+        if (!start || !end)
+            return loadInterestsByBranch();
+
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                let applications = data.response;
+                results = applications;
+                populateInterestsByBranch(applications);
+            },
+            'error': function (err) {
+                return swal(err);
+            }
+        });
+    });
+
+    $("#filterpaymentsbybranch").submit(function (e) {
+        e.preventDefault();
+
+        let start = $("#filterpaymentsbranchstart").val(),
+            end = $("#filterpaymentsbranchend").val(),
+            url = '/user/payments-by-branches?start='+formatDate(start)+'&&end='+formatDate(end);
+        if (!start || !end)
+            return loadPaymentsByBranch();
+
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                let applications = data.response;
+                results = applications;
+                populatePaymentsByBranch(applications);
             },
             'error': function (err) {
                 console.log(err);
@@ -3778,6 +4008,23 @@
         $('#branch-frequency').val(-1);
         $('#branch-year').val(0);
         $('#brn-year').hide();
+        if (type.value === '1'){//Disbursements
+            $('#div-disbursement').show();
+            $('#div-interest').hide();
+            $('#div-payment').hide();
+        }
+        if (type.value == '2'){//Interest
+            $('#div-disbursement').hide();
+            $('#div-interest').show();
+            $('#div-payment').hide();
+            loadInterestsByBranch();
+        }
+        if (type.value == '3'){//Payments
+            $('#div-disbursement').hide();
+            $('#div-interest').hide();
+            $('#div-payment').show();
+            loadPaymentsByBranch();
+        }
         return branches(type.value);
     }
 
@@ -4107,32 +4354,6 @@
 
     function interestreceived(){
         let d = [];
-        let data = [
-            {
-                "label": "Venezuela",
-                "value": "290"
-            }, {
-                "label": "Saudi",
-                "value": "260"
-            }, {
-                "label": "Canada",
-                "value": "180"
-            }, {
-                "label": "Iran",
-                "value": "140"
-            }, {
-                "label": "Russia",
-                "value": "115"
-            }, {
-                "label": "UAE",
-                "value": "100"
-            }, {
-                "label": "US",
-                "value": "30"
-            }, {
-                "label": "China",
-                "value": "30"
-            }];
         let start = $("#startDate").val(),
             end = $("#endDate").val(),
             url;
@@ -4602,7 +4823,7 @@
         else {
             $('#ir-rec-year').hide();
             $('#i-r-rec-year').val(0);
-            url = url.concat('officer='+officer+'&&freq='+frequency.value+'&&year='+$('#i-r-year').val());
+            url = url.concat('officer='+officer+'&&freq='+frequency.value+'&&year='+$('#i-r-rec-year').val());
         }
         let d = [], agent = '', xaxis;
 
@@ -4761,7 +4982,7 @@
                         "data": d
                     }
                 };
-                $("#interest-received-chart").insertFusionCharts(chartConfigs);
+                $("#interest-receivable-chart").insertFusionCharts(chartConfigs);
             },
             'error': function (err) {
                 swal('Error in Connection!','','error')
