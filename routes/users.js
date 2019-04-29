@@ -224,15 +224,23 @@ users.post('/new-client', function(req, res, next) {
                     res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
                 } else {
                     connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function(err, re, fields) {
-                        connection.release();
                         if (!err){
-                            let payload = {}
-                            payload.category = 'Clients'
-                            payload.userid = req.cookies.timeout
-                            payload.description = 'New Client Created'
-                            payload.affected = re[0]['ID']
-                            notificationsService.log(req, payload)
-                            res.send(JSON.stringify({"status": 200, "error": null, "response": re}));
+                            let id = re[0]['ID'];
+                            connection.query('INSERT into wallets Set ?', {client_id: id}, function(er, r, fields) {
+                                connection.release();
+                                if (!er){
+                                    let payload = {}
+                                    payload.category = 'Clients'
+                                    payload.userid = req.cookies.timeout
+                                    payload.description = 'New Client Created'
+                                    payload.affected = id
+                                    notificationsService.log(req, payload)
+                                    res.send(JSON.stringify({"status": 200, "error": null, "response": re}));
+                                }
+                                else{
+                                    res.send(JSON.stringify({"response": "Error creating client wallet!"}));
+                                }
+                            });
                         }
                         else{
                             res.send(JSON.stringify({"response": "Error retrieving client details. Please try a new username!"}));
