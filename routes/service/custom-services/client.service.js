@@ -70,7 +70,7 @@ router.post('/mandate/setup', function (req, res, next) {
                     delete payload.serviceTypeId;
                     axios.get(`${HOST}/core-service/get`, {
                         params: {
-                            query: `SELECT * FROM remita_mandates WHERE applicationID = ${application_id}`
+                            query: `SELECT * FROM remita_mandates WHERE applicationID = ${application_id} AND status = 1`
                         }
                     }).then(remita_mandate => {
                         if (remita_mandate.data[0]){
@@ -82,7 +82,7 @@ router.post('/mandate/setup', function (req, res, next) {
                             .then(function (remita_response) {
                                 res.send(authorization_response);
                             }, err => {
-                                res.send({status: 500, error: error, response: null});
+                                res.send({status: 500, error: err, response: null});
                             })
                             .catch(function (error) {
                                 res.send({status: 500, error: error, response: null});
@@ -98,10 +98,9 @@ router.post('/mandate/setup', function (req, res, next) {
     });
 });
 
-router.get('/mandate/get/:id', function (req, res, next) {
+router.get('/mandate/stop/:applicationID', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query = `SELECT r.mandateId, r.requestId FROM preapproved_loans p LEFT JOIN remita_mandates r ON r.applicationID = p.applicationID 
-                WHERE (p.ID = '${decodeURIComponent(req.params.id)}' OR p.hash = '${decodeURIComponent(req.params.id)}')`,
+    let query =  `SELECT mandateId, requestId FROM remita_mandates WHERE applicationID = ${req.params.applicationID} AND status = 1`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -109,24 +108,31 @@ router.get('/mandate/get/:id', function (req, res, next) {
             query: query
         }
     }).then(response => {
-        if (response['data'][0]) {
-            const status_payload = {
-                mandateId: response['data'][0]['mandateId'],
-                requestId: response['data'][0]['requestId']
-            };
-            helperFunctions.mandateStatus(status_payload, function (remita_mandate_status) {
-                res.send({
-                    data: remita_mandate_status
+        let remita_mandate = response.data[0];
+        if (remita_mandate) {
+            query =  `UPDATE remita_mandates Set ? WHERE applicationID = ${req.params.applicationID} AND status = 1`;
+            endpoint = `/core-service/post?query=${query}`;
+            url = `${HOST}${endpoint}`;
+            axios.post(url, {status : 0})
+                .then(function (response_) {
+                    helperFunctions.stopMandate({
+                        mandateId: remita_mandate.mandateId,
+                        requestId: remita_mandate.requestId
+                    }, function (mandate_response) {
+                        if (mandate_response && mandate_response.statuscode === '00') {
+                            res.send({status: 200, error: null, response: mandate_response});
+                        } else {
+                            res.send({status: 500, error: mandate_response, response: null});
+                        }
+                    })
+                }, err => {
+                    res.send({status: 500, error: err, response: null});
+                })
+                .catch(function (error) {
+                    res.send({status: 500, error: error, response: null});
                 });
-            });
         } else {
-            res.send({
-                status: 500,
-                error: 'Oops! Your direct debit mandate cannot be verified at the moment',
-                data: {
-                    statuscode: '022',
-                    status: 'Oops! Your direct debit mandate cannot be verified at the moment'}
-            });
+            res.send({status: 500, error: 'There is no remita mandate setup for this application', response: null});
         }
     });
 });

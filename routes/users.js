@@ -1726,7 +1726,8 @@ users.get('/application-id/:id', function(req, res, next) {
             '(SELECT l.supervisor FROM users l WHERE l.ID = u.loan_officer) AS supervisor, ' +
             '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
             'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
-            'FROM clients AS u INNER JOIN applications AS a ON u.ID=a.userID LEFT JOIN remita_mandates r ON r.applicationID = a.ID WHERE a.ID = ?';
+            'FROM clients AS u INNER JOIN applications AS a ON u.ID = a.userID LEFT JOIN remita_mandates r ' +
+            'ON (r.applicationID = a.ID AND r.status = 1) WHERE a.ID = ?';
     db.getConnection(function(err, connection) {
         if (err) throw err;
 

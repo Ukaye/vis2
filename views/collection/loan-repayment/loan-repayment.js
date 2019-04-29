@@ -1,6 +1,6 @@
 $(document).ready(function() {
     getApplication();
-    loadComments();
+    getComments();
 });
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -30,9 +30,29 @@ function getApplication(){
                 $('.escrow-balance').text(parseFloat(application.escrow).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
             initRepaymentSchedule(application);
             $("#workflow-div-title").text(fullname.toUpperCase());
-            if (application.mandateId){
+            if (application.mandateId) {
                 $('#remitaPaymentButton').show();
                 getRemitaPayments();
+                getMandateStatus();
+            }
+        },
+        'error': function (err) {
+            console.log(err);
+        }
+    });
+}
+
+function getMandateStatus(){
+    $.ajax({
+        'url': `/remita/mandate/get/${application_id}`,
+        'type': 'get',
+        'success': function (data) {
+            if (!data.data.isActive) {
+                $('#stopMandateBtn').text('MANDATE STOPPED');
+                $('#stopMandateBtn').prop('disabled', true);
+                $('#makeRemitaPayment').prop('disabled', true);
+                $('.cancelRemitaPaymentBtn').removeClass('reversePayment');
+                $('.cancelRemitaPaymentBtn').prop('disabled', true);
             }
         },
         'error': function (err) {
@@ -45,7 +65,7 @@ function goToClientProfile() {
     window.location.href = '/client-info?id='+application.userID;
 }
 
-function loadComments(comments) {
+function getComments(comments) {
     if (comments && comments[0]){
         let $comments = $('#comments');
         $comments.html('');
@@ -109,7 +129,7 @@ function comment(){
             $('#wait').hide();
             let comments = data.response;
             results = comments;
-            loadComments(comments);
+            getComments(comments);
             $comment.val("");
             notification('Comment saved successfully','','success');
         },
@@ -352,7 +372,7 @@ function confirmPaymentModal(id) {
     $('#source').val(0);
     $('#message').text('');
     $('#overpayment-message').text('');
-//            $('#repayment-date').val(new Date().toDateInputValue());
+    // $('#repayment-date').val(new Date().toDateInputValue());
     $('#principal').attr({max:invoice.payment_amount});
     $('#interest').attr({max:invoice.interest_amount});
     $('#principal-payable').text('₦'+(parseFloat(invoice.payment_amount)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
@@ -536,10 +556,10 @@ function editScheduleModal(id) {
     $('#edit-interest').val(invoice.interest_amount);
     $('#edit-fees').val(invoice.fees_amount);
     $('#edit-penalty').val(invoice.penalty_amount);
-    $('#edit-principal-payment-date').val(processPaymentDate(invoice.payment_collect_date,2));
-    $('#edit-principal-invoice-date').val(processPaymentDate(invoice.payment_create_date,2));
-    $('#edit-interest-payment-date').val(processPaymentDate(invoice.interest_collect_date,2));
-    $('#edit-interest-invoice-date').val(processPaymentDate(invoice.interest_create_date,2));
+    $('#edit-principal-payment-date').val(invoice.payment_collect_date);
+    $('#edit-principal-invoice-date').val(invoice.payment_create_date);
+    $('#edit-interest-payment-date').val(invoice.interest_collect_date);
+    $('#edit-interest-invoice-date').val(invoice.interest_create_date);
 }
 
 function editSchedule() {
@@ -554,10 +574,10 @@ function editSchedule() {
     invoice.interest_amount = $('#edit-interest').val();
     invoice.fees_amount = $('#edit-fees').val();
     invoice.penalty_amount = $('#edit-penalty').val();
-    invoice.payment_collect_date = processPaymentDate($('#edit-principal-payment-date').val(),1);
-    invoice.payment_create_date = processPaymentDate($('#edit-principal-invoice-date').val(),1);
-    invoice.interest_collect_date = processPaymentDate($('#edit-interest-payment-date').val(),1);
-    invoice.interest_create_date = processPaymentDate($('#edit-interest-invoice-date').val(),1);
+    invoice.payment_collect_date = $('#edit-principal-payment-date').val();
+    invoice.payment_create_date = $('#edit-principal-invoice-date').val();
+    invoice.interest_collect_date = $('#edit-interest-payment-date').val();
+    invoice.interest_create_date = $('#edit-interest-invoice-date').val();
     $('#wait').show();
     $('#editSchedule').modal('hide');
     $.ajax({
@@ -719,12 +739,11 @@ function reverseEscrowPayment(payment_id) {
 function addPayment() {
     let payment = {};
     payment.interest_amount = $('#payment-interest').val();
-//            payment.actual_interest_amount = $('#payment-interest').val();
+    // payment.actual_interest_amount = $('#payment-interest').val();
     payment.interest_collect_date = $('#payment-date').val();
     payment.comment = $('#payment-notes').val();
     if (!payment.interest_amount || !payment.interest_collect_date)
         return notification('Kindly fill all required fields!','','warning');
-    payment.interest_collect_date = processPaymentDate(payment.interest_collect_date,1);
     $.ajax({
         'url': '/user/application/add-payment/'+application_id+'/'+(JSON.parse(localStorage.getItem('user_obj')))['ID'],
         'type': 'post',
@@ -742,7 +761,7 @@ function addPayment() {
 function makeRemitaPayment() {
     swal({
         title: "Are you sure?",
-        text: "Once started, this process is not reversible!",
+        text: "Once started, this process may not reversible!",
         icon: "warning",
         buttons: true,
         dangerMode: true,
@@ -755,6 +774,7 @@ function makeRemitaPayment() {
                 payment.fundingAccount = application.payerAccount;
                 payment.fundingBankCode = application.payerBankCode;
                 payment.totalAmount = currencyToNumberformatter($('#remita-amount').val());
+                payment.created_by = (JSON.parse(localStorage.getItem('user_obj')))['ID'];
                 if (!payment.totalAmount)
                     return notification('Kindly fill payment amount!','','warning');
                 if (!payment.mandateId)
@@ -764,10 +784,14 @@ function makeRemitaPayment() {
                     'type': 'post',
                     'data': payment,
                     'success': function (data) {
-                        console.log(data)
                         $('#wait').hide();
-                        notification(data.status,'','info');
-                        // window.location.reload();
+                        if (data.status !== 500) {
+                            notification('Remita payment request was successful','','info');
+                            window.location.reload();
+                        } else {
+                            console.log(data.error);
+                            notification(data.error.status,'','error');
+                        }
                     },
                     'error': function (err) {
                         notification('No internet connection','','error');
@@ -781,24 +805,100 @@ function getRemitaPayments() {
     $.ajax({
         type: 'get',
         url: `/remita/payments/get/${application_id}`,
-        success: function (response) {
-            console.log(response)
+        success: function (data) {
+            if (data.status !== 500){
+                $('#remita-total-amount').text(`₦${numberToCurrencyformatter(data.response.totalAmount || 0)}`);
+                $('#remita-transaction-count').text(`${numberToCurrencyformatter(data.response.totalTransactionCount || 0)}`);
+                $('#remita-payments').dataTable().fnClearTable();
+                $.each(data.response.paymentDetails, function(k, v){
+                    let table = [
+                        `₦${numberToCurrencyformatter(v.amount)}`,
+                        v.RRR,
+                        v.transactionRef,
+                        v.status,
+                        v.lastStatusUpdateTime
+                    ];
+                    if (v.statuscode === '072'){
+                        table.push('<button class="btn btn-danger reversePayment cancelRemitaPaymentBtn" ' +
+                            'onclick="cancelRemitaPayment('+v.transactionRef+')"><i class="fa fa-remove"></i> Cancel</button>');
+                    } else {
+                        table.push('Payment Cancelled');
+                    }
+                    $('#remita-payments').dataTable().fnAddData(table);
+                    $('#remita-payments').dataTable().fnSort([[4,'desc']]);
+                });
+            } else {
+                console.log(data.error);
+            }
         }
     });
 }
 
-function processPaymentDate(date,type) {
-    return date;
-//            let date_array = date.split('-');
-//            switch (type){
-//                case 1: {
-//                    return date_array[2]+'-'+date_array[1]+'-'+date_array[0].substr(2,2);
-//                }
-//                case 2: {
-//                    date_array[1] = (date_array[1].length === 1)? '0'+date_array[1] : date_array[1];
-//                    return '20'+date_array[2]+'-'+date_array[1]+'-'+date_array[0];
-//                }
-//            }
+function cancelRemitaPayment(transactionRef) {
+    swal({
+        title: "Are you sure?",
+        text: "Once cancelled, this process is not reversible!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+    })
+        .then((yes) => {
+            if (yes) {
+                $('#wait').show();
+                let payment = {};
+                payment.transactionRef = transactionRef;
+                $.ajax({
+                    'url': `/remita/payment/cancel`,
+                    'type': 'post',
+                    'data': payment,
+                    'success': function (data) {
+                        $('#wait').hide();
+                        if (data.status !== 500) {
+                            notification(data.response.status,'','success');
+                            window.location.reload();
+                        } else {
+                            console.log(data.error);
+                            notification(data.error.status,'','error');
+                        }
+                    },
+                    'error': function (err) {
+                        notification('No internet connection','','error');
+                    }
+                });
+            }
+        });
+}
+
+function stopMandate() {
+    swal({
+        title: "Are you sure?",
+        text: "Once stopped, this process is not reversible!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+    })
+        .then((yes) => {
+            if (yes) {
+                $('#wait').show();
+                $.ajax({
+                    'url': `/client/mandate/stop/${application_id}`,
+                    'type': 'get',
+                    'success': function (data) {
+                        $('#wait').hide();
+                        if (data.status !== 500) {
+                            notification(data.response.status,'','info');
+                            window.location.reload();
+                        } else {
+                            console.log(data.error);
+                            notification(data.error.status,'','error');
+                        }
+                    },
+                    'error': function (err) {
+                        notification('No internet connection','','error');
+                    }
+                });
+            }
+        });
 }
 
 function read_write_custom(){
