@@ -267,17 +267,20 @@ $("#input_amount").on("keyup", function (event) {
 });
 
 $("#input_amount").on("focusout", function (event) {
-    let min = parseFloat(product_config.investment_min.split(',').join(''));
-    let max = parseFloat(product_config.investment_max.split(',').join(''));
-    let val = "";
-    if (parseFloat($("#input_amount").val().split(',').join('')) < min) {
-        val = "";
-    } else if (parseFloat($("#input_amount").val().split(',').join('')) > max) {
-        val = "";
-    } else {
-        val = $("#input_amount").val();
+    console.log(selectedInvestment._is_credit);
+    if (selectedInvestment._is_credit === 1) {
+        let min = parseFloat(product_config.investment_min.split(',').join(''));
+        let max = parseFloat(product_config.investment_max.split(',').join(''));
+        let val = "";
+        if (parseFloat($("#input_amount").val().split(',').join('')) < min) {
+            val = "";
+        } else if (parseFloat($("#input_amount").val().split(',').join('')) > max) {
+            val = "";
+        } else {
+            val = $("#input_amount").val();
+        }
+        $("#input_amount").val(val);
     }
-    $("#input_amount").val(val);
 });
 
 
@@ -427,6 +430,7 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
                     is_credit: _iscredit,
                     investmentId: selectedInvestment.investmentId,
                     operationId: _operationId,
+                    isCharge: 1,
                     is_capital: 0,
                     isApproved: 0,
                     approvedBy: '',

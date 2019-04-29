@@ -5,7 +5,7 @@ var interest_conditions = [{
         value: 'Up-Front'
     },
     {
-        value: 'End of Tenure'
+        value: 'End-of-Tenure'
     }
 ];
 

@@ -1,6 +1,7 @@
 // Loads the environment variables from the .env file
 require('dotenv').config();
 
+
 let express = require('express');
 let fs = require('fs'),
     db = require('./db'),
@@ -51,6 +52,7 @@ let app = express(),
     client_service = require('./routes/service/custom-services/client.service'),
     investment_product_service = require('./routes/service/custom-services/investment-product.service'),
     investment_service = require('./routes/service/custom-services/investment.service'),
+    investment_interest_service = require('./routes/service/custom-services/investment-interest.service'),
     inv_transaction_service = require('./routes/service/custom-services/transaction.service'),
     preapproved_loan_service = require('./routes/service/custom-services/preapproved-loan.service'),
     preapplication_service = require('./routes/service/custom-services/preapplication.service'),
@@ -209,6 +211,7 @@ app.use('/investment-products', investment_product_service);
 app.use('/investment-txns', inv_transaction_service);
 app.use('/preapproved-loan', preapproved_loan_service);
 app.use('/preapplication', preapplication_service);
+app.use('/investment-interests', investment_interest_service);
 // app.use('/notification-service', notification_service);
 app.use('/notifications', notification);
 app.use('/files', express.static(__dirname + '/files'));
@@ -529,8 +532,13 @@ app.use(function (req, res, next) {
 
 module.exports = app;
 let server = http.createServer(app);
+var cron = require('node-cron');
 
 server.listen(process.env.port || process.env.PORT || 4000, function () {
     console.log('server running on %s [%s]', process.env.PORT, process.env.STATUS);
 });
 server.timeout = 0; //Server timeout set to never
+var computeInterest = require('../vis2/compute-interest');
+cron.schedule('*/1440 * * * *', () => {
+    computeInterest.computeInvestmentInterest();
+});

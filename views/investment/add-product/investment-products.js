@@ -25,6 +25,11 @@ function get_global_items() {
         $('<option/>').val(freq_withdrawal[i].value).html(freq_withdrawal[i].value).appendTo(
             '#withdrawal_charge_duration');
     }
+
+    for (var i = 0; i < freq_withdrawal.length; i++) {
+        $('<option/>').val(freq_withdrawal[i].value).html(freq_withdrawal[i].value).appendTo(
+            '#compute_interest_time');
+    }
 }
 
 $("#product_investment_amount_min").on("keyup", function (event) {
@@ -130,6 +135,7 @@ function getInvestmentProducts(id) {
                 $('#product_code').val(product_obj.code);
                 $('#interest_rate').val(product_obj.interest_rate);
                 $('#condition_for_interest').val(product_obj.interest_disbursement_time);
+                $('#compute_interest_time').val(product_obj.interest_compute_time);
                 $('#forfeit_interest_on_withdrawal').attr('checked', true);
                 $('#minimum_bal_penalty_amount').val(product_obj.minimum_bal_charges);
                 $('#opt_on_minimum_bal_penalty_amount').val((product_obj.minimum_bal_charges_opt ===
@@ -199,6 +205,7 @@ $("#chk_interest_rate").on('change',
         if (!status) {
             $('#interest_rate').val('');
             $('#condition_for_interest').val('');
+            $('#compute_interest_time').val('');
             $('#charge_interest_on_withdrawal').val('');
             $('#opt_on_charge_interest_on_withdrawal').val('');
             $('#premature_interest_rate').val('');
@@ -259,6 +266,7 @@ function activate_interest_controls(status) {
     $('#premature_interest_rate').attr('disabled', status);
     $('#interest_rate').attr('disabled', status);
     $('#condition_for_interest').attr('disabled', status);
+    $('#compute_interest_time').attr('disabled', status);
     $('#forfeit_interest_on_withdrawal').attr('disabled', status);
 }
 
@@ -410,6 +418,7 @@ function set_investment_product() {
     product_obj.code = $('#product_code').val();
     product_obj.interest_rate = $('#interest_rate').val();
     product_obj.interest_disbursement_time = $('#condition_for_interest').val();
+    product_obj.interest_compute_time = $('#compute_interest_time').val();
     product_obj.is_forfeit = $('#forfeit_interest_on_withdrawal').is(':checked') ? 1 : 0;
     product_obj.interest_forfeit_charge = $('#charge_interest_on_withdrawal').val();
     product_obj.interest_forfeit_charge_opt = $('#opt_on_charge_interest_on_withdrawal').val();

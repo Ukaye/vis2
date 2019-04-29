@@ -3,7 +3,7 @@ const axios = require('axios');
 const moment = require('moment');
 const router = express.Router();
 var isAfter = require('date-fns/is_after');
-var differenceInMonths = require('date-fns/difference_in_months');
+var differenceInCalendarDays = require('date-fns/difference_in_calendar_days');
 
 
 
@@ -108,7 +108,7 @@ router.post('/create', function (req, res, next) {
                                 }
                             })
                             .catch(function (error) {});
-                            query = `SELECT * FROM investment_product_reviews
+                        query = `SELECT * FROM investment_product_reviews
                             WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
                         endpoint = "/core-service/get";
                         url = `${HOST}${endpoint}`;
@@ -233,17 +233,21 @@ router.post('/create', function (req, res, next) {
                                 //Charge for deposit
                                 if (response_product.data.length > 0) {
                                     let computeInterest = response_product.data[0];
-                                    let monthCount = differenceInMonths(
+                                    let T = differenceInCalendarDays(
                                         new Date(computeInterest.investment_mature_date.toString()),
                                         new Date(computeInterest.investment_start_date.toString())
                                     );
-                                    let SI = (parseFloat(computeInterest.txnAmount.split(',').join('')) * parseFloat(computeInterest.interest_rate.split(',').join('')) * (monthCount / 12)) / 100;
-                                    let totalInterestAmount = SI * monthCount;
+
+                                    let interestInDays = T / 365;
+
+
+                                    let SI = (parseFloat(computeInterest.txnAmount.split(',').join('')) * parseFloat(computeInterest.interest_rate.split(',').join('')) * interestInDays) / 100;
+
                                     let total = parseFloat(computeInterest.txnBalance.split(',').join(''))
                                     let _inv_txn = {
                                         txn_date: dt,
                                         description: 'Total Up-Front interest',
-                                        amount: totalInterestAmount,
+                                        amount: SI,
                                         is_credit: 1,
                                         isInterestCharge: 1,
                                         created_date: dt,
