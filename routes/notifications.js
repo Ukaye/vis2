@@ -181,12 +181,12 @@ route.get('/all-updates', function(req, res){
                     'and np.userid = '+user+' and timestamp(np.date_created) = ' +
                     '(select max(timestamp(npf.date_created)) from notification_preferences npf where npf.userid = '+user+')) = 1 \n' +
                     'and category <> ?\n'+
-                    'order by notificationid desc'
+                    'order by nt.id desc'
             }
             else {
                 query = 'select *, notification_id as ID, category, description, date_created, view_status, (select fullname from users where users.id = userid) user \n'+
                     'from pending_records inner join notifications on notification_id = notifications.id \n'+
-                    'where status = 1 and userid <> '+user+' and category <> ? and view_status in (1,2) order by notification_id desc';
+                    'where status = 1 and userid <> '+user+' and category <> ? and view_status in (1,2) order by notifications.id desc';
             }
             // console.log(query)
             const api = `/core-service/post?query=${query}`;
@@ -214,14 +214,14 @@ route.get('/all-updates', function(req, res){
                                     'and np.userid = '+user+' and timestamp(np.date_created) = ' +
                                     '(select max(timestamp(npf.date_created)) from notification_preferences npf where npf.userid = '+user+')) = 1 \n' +
                                     // 'and (select compulsory from notification_categories where category_name = ?) = 1\n' +
-                                    'order by notificationid desc'
+                                    'order by nt.id desc'
                             }
                             else {
                                 query2 = `select *, notification_id as ID, category, description, date_created, view_status, (select fullname from users where users.id = userid) user, \n`+
                                     `(select GROUP_CONCAT(distinct(approverid)) as approvers from workflow_stages where workflowid = (select workflowid from applications where applications.id = affected)) approvers, `+
                                     `affected  `+
                                     `from pending_records inner join notifications on notification_id = notifications.id \n`+
-                                    `where status = 1 and userid <> ${user} and category = ? and view_status in (1,2) order by notification_id desc`;
+                                    `where status = 1 and userid <> ${user} and category = ? and view_status in (1,2) order by notifications.id desc`;
                             }
                             const api2 = `/core-service/post?query=${query2}`;
                             const uri2 = `${HOST}${api2}`;
@@ -235,7 +235,7 @@ route.get('/all-updates', function(req, res){
                                             }
                                         }
                                     }
-                                    let results = _.orderBy(load.all.concat(data), ['ID'], ['desc']);
+                                    let results = _.orderBy(load.all.concat(data), ['id'], ['desc']);
                                     res.send(results);
                                 }, err => {
                                     res.send({

@@ -227,7 +227,9 @@ router.get('/profile-images/:folder/', function(req, res, next) {
         fs.readdir(path, function (err, files){
             let obj = {};
             async.forEach(files, function (file, callback){
-                let insP = file.split('.')[0].split('_')[1];
+                let name_without_ext = file.substring(0, file.lastIndexOf("."))
+                let insP = name_without_ext.substring(name_without_ext.lastIndexOf("_") + 1, name_without_ext.length)
+                // let insP = file.split('.')[0].split('_')[1];
                 obj[insP] = path+file;
                 callback();
             }, function(data){
@@ -587,8 +589,8 @@ router.get('/mains/', function(req, res, next) {
 
 /* GET permissions for each role*/
 router.get('/permissions/:id', function(req, res, next) {
-    let query = 'select *, (select module_name from modules m where m.id = permissions.module_id) as module, (select menu_name from modules ms where ms.module_name = module) as menu_name \n' +
-        'from permissions where role_id = ? and date = (select max(date) from permissions where role_id = ?);'
+    let query = 'select *, (select module_name from modules m where m.id = permissions.module_id) as module, (select menu_name from modules ms where ms.module_name = module) as menu_name ' +
+        'from permissions where role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?))';
     db.query(query, [req.params.id, req.params.id], function (error, results, fields) {
         if(error){
             res.send(JSON.stringify({"status": 500, "error": error, "response": null}));

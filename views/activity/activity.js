@@ -654,6 +654,11 @@ function createActivity(){
             }
             else{
                 for (var i = 0; i < $('#activity-files')[0].files.length; i++){
+                    let file = $('#activity-files')[0].files[i];
+                    let ext = file["name"].split('.').pop().toLowerCase();
+                    if($.inArray(ext, ['gif','png','jpg','jpeg']) == -1) {
+                        return swal('Upload Failed!', 'Invalid file extension', 'warning');
+                    }
                     upload(test.result, $('#activity-files')[0].files[i], i+1);
                 }
                 swal("Activity Submitted!","","success");
@@ -694,6 +699,7 @@ function upload(id, files, num){
 function loadAttachments(activity){
     let $carousel_inner = $('.carousel-inner');
     $('#attachment-list').children().remove();
+    $('#attachment-list').empty();
     $.ajax({
         'url': '/user/attached-images/activity'+activity,
         'type': 'get',
@@ -707,7 +713,7 @@ function loadAttachments(activity){
                 $.each(res['response'], function (key, value){
                     let image = '<div class="col-sm-4">'+
                         '<a >'+
-                        '<img src="'+value+'" alt="Image" style="max-width:100%;" height="100" width="300">'+
+                        '<img src="/'+value+'" alt="Image" style="max-width:100%;" height="100" width="300">'+
                         '</a>'
                     $('#attachment-list').append(image);
                 });

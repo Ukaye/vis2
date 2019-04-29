@@ -6,11 +6,7 @@ let express = require('express');
 let fs = require('fs'),
     db = require('./db'),
     http = require('http'),
-    path = require('path'),
-    mysql = require('mysql'),
-    morgan = require('morgan'),
     bcrypt = require('bcryptjs'),
-    cookie = require('cookie'),
     bodyParser = require('body-parser'),
     session = require('client-sessions'),
     cookieParser = require('cookie-parser'),
@@ -56,10 +52,12 @@ let app = express(),
     inv_transaction_service = require('./routes/service/custom-services/transaction.service'),
     preapproved_loan_service = require('./routes/service/custom-services/preapproved-loan.service'),
     preapplication_service = require('./routes/service/custom-services/preapplication.service'),
+    remita_service = require('./routes/service/custom-services/remita.service'),
     notification = require('./routes/notifications'),
-    notification_service = require('./routes/notifications-service'),
     index = require('./routes/index');
 
+app.engine('html', require('ejs').renderFile);
+app.set('view engine', 'html');
 app.use(bodyParser.urlencoded({
     extended: true
 }));
@@ -107,21 +105,22 @@ app.post('/login', function (req, res) {
         if (bcrypt.compareSync(password, rows[0].password)) {
             req.session.user = rows[0]['user_role'];
             user = rows[0];
-            db.query('SELECT id,module_id, (select module_name from modules m where m.id = module_id) as module_name, (select menu_name from modules m where m.id = module_id) as menu_name, read_only, editable FROM permissions where role_id = ? and date in (select max(date) from permissions where role_id = ?) group by module_id', [parseInt(user.user_role), parseInt(user.user_role)], function (error, perm, fields) {
+            db.query('SELECT id,module_id, (select module_name from modules m where m.id = module_id) as module_name, (select menu_name from modules m where m.id = module_id) as menu_name, read_only, editable ' +
+                'FROM permissions where role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?)) group by module_id', [parseInt(user.user_role), parseInt(user.user_role), parseInt(user.user_role)], function (error, perm, fields) {
                 if (!error) {
                     user.permissions = perm;
                     let modules = [],
                         query1 = 'select * from modules m where m.id in (select p.module_id from permissions p where read_only = 1 ' +
-                        'and p.role_id = ? and date in (select max(date) from permissions where role_id = ?) group by module_id) and menu_name = "Main Menu" order by id asc',
+                            'and p.role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?)) group by module_id) and menu_name = "Main Menu" order by id asc',
                         query2 = 'select * from modules m where m.id in (select p.module_id from permissions p where read_only = 1 ' +
-                        'and p.role_id = ? and date in (select max(date) from permissions where role_id = ?) group by module_id) and menu_name = "Sub Menu" order by id asc',
+                            'and p.role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?)) group by module_id) and menu_name = "Sub Menu" order by id asc',
                         query3 = 'select * from modules m where m.id in (select p.module_id from permissions p where read_only = 1 ' +
-                        'and p.role_id = ? and date in (select max(date) from permissions where role_id = ?) group by module_id) and menu_name = "Others" order by id asc';
-                    db.query(query1, [user.user_role, user.user_role], function (er, mods, fields) {
+                            'and p.role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?)) group by module_id) and menu_name = "Others" order by id asc';
+                    db.query(query1, [user.user_role, user.user_role, user.user_role], function (er, mods, fields) {
                         modules = modules.concat(mods);
-                        db.query(query2, [user.user_role, user.user_role], function (er, mods, fields) {
+                        db.query(query2, [user.user_role, user.user_role, user.user_role], function (er, mods, fields) {
                             modules = modules.concat(mods);
-                            db.query(query3, [user.user_role, user.user_role], function (er, mods, fields) {
+                            db.query(query3, [user.user_role, user.user_role, user.user_role], function (er, mods, fields) {
                                 modules = modules.concat(mods);
                                 user.modules = modules;
                                 let payload = {}
@@ -213,6 +212,7 @@ app.use('/preapproved-loan', preapproved_loan_service);
 app.use('/preapplication', preapplication_service);
 app.use('/investment-interests', investment_interest_service);
 // app.use('/notification-service', notification_service);
+app.use('/remita', remita_service);
 app.use('/notifications', notification);
 app.use('/files', express.static(__dirname + '/files'));
 
@@ -525,9 +525,17 @@ app.get('/all-preapplications', requireLogin, function (req, res) {
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-    let err = new Error('Not Found');
-    err.status = 404;
-    next(err);
+    res.status(404);
+
+    if (req.accepts('html')) {
+        return res.render('404', { url: req.url });
+    }
+
+    if (req.accepts('json')) {
+        return res.send({ error: 'Not found' });
+    }
+
+    res.type('txt').send('Not found');
 });
 
 module.exports = app;

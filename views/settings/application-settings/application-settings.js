@@ -63,17 +63,17 @@ function saveApplicationSettings() {
     settings_obj.interest_rate_min = currencyToNumberformatter($('#interest_rate_min').val());
     settings_obj.interest_rate_max = currencyToNumberformatter($('#interest_rate_max').val());
     settings_obj.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
-    if (settings_obj.loan_requested_min <= 0)
+    if (!settings_obj.loan_requested_min || settings_obj.loan_requested_min <= 0)
         return notification('Invalid loan requested min','','warning');
-    if (settings_obj.loan_requested_max <= 0)
+    if (!settings_obj.loan_requested_max || settings_obj.loan_requested_max <= 0)
         return notification('Invalid loan requested max','','warning');
-    if (settings_obj.tenor_min <= 0)
+    if (!settings_obj.tenor_min || settings_obj.tenor_min <= 0)
         return notification('Invalid tenor min','','warning');
-    if (settings_obj.tenor_max <= 0)
+    if (!settings_obj.tenor_max || settings_obj.tenor_max <= 0)
         return notification('Invalid tenor max','','warning');
-    if (settings_obj.interest_rate_min <= 0)
+    if (!settings_obj.interest_rate_min || settings_obj.interest_rate_min <= 0)
         return notification('Invalid interest rate min','','warning');
-    if (settings_obj.interest_rate_max <= 0)
+    if (!settings_obj.interest_rate_max || settings_obj.interest_rate_max <= 0)
         return notification('Invalid interest rate max','','warning');
     $('#wait').show();
     $.ajax({

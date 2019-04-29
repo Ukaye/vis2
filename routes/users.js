@@ -1540,9 +1540,9 @@ users.post('/apply', function(req, res) {
             data.name = req.body.username;
             data.date = postData.date_created;
             let mailOptions = {
-                from: 'no-reply Loanratus <applications@loan35.com>',
+                from: 'no-reply Finratus <applications@loan35.com>',
                 to: req.body.email,
-                subject: 'Loanratus Application Successful',
+                subject: 'Finratus Application Successful',
                 template: 'main',
                 context: data
             };
@@ -1711,8 +1711,13 @@ users.get('/application-id/:id', function(req, res, next) {
     let obj = {},
         application_id = req.params.id,
         path = 'files/application-'+application_id+'/',
-        query = 'SELECT u.ID AS userID, u.fullname, u.phone, u.email, u.address, cast(u.loan_officer as unsigned) loan_officer, a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, ' +
-            '(SELECT l.supervisor FROM users l WHERE l.ID = u.loan_officer) AS supervisor, (SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow FROM clients AS u, applications AS a WHERE u.ID=a.userID AND a.ID = ?';
+        query = 'SELECT u.ID AS userID, u.fullname, u.phone, u.email, u.address, cast(u.loan_officer as unsigned) loan_officer, ' +
+            'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, ' +
+            'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, ' +
+            '(SELECT l.supervisor FROM users l WHERE l.ID = u.loan_officer) AS supervisor, ' +
+            '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
+            'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
+            'FROM clients AS u INNER JOIN applications AS a ON u.ID=a.userID LEFT JOIN remita_mandates r ON r.applicationID = a.ID WHERE a.ID = ?';
     db.getConnection(function(err, connection) {
         if (err) throw err;
 
@@ -2818,7 +2823,7 @@ users.get('/forgot-password/:username', function(req, res) {
         let mailOptions = {
             from: 'no-reply@loan35.com',
             to: user.email,
-            subject: 'Loanratus: Forgot Password Request',
+            subject: 'Finratus: Forgot Password Request',
             template: 'forgot',
             context: user
         };
@@ -2889,12 +2894,12 @@ users.get('/report-cards', function(req, res, next) {
         db.query(query1, function (error, results, fields) {
             items.loan_officers = results;
             db.query(query2, function (error, results, fields) {
-                items.active_loans = results;
+                items.active_loans = results
+                den = parseInt(items.loan_officers[0]["loan_officers"]);
+                num = parseInt(results[0]["all_applications"])
+                avg_loan_per_officers = parseInt(num/den)
+                items.avg_loan_per_officers = avg_loan_per_officers;
                 db.query(query3, function (error, results, fields) {
-                    den = parseInt(items.loan_officers[0]["loan_officers"]);
-                    num = parseInt(results[0]["apps"])
-                    avg_loan_per_officers = parseInt(num/den)
-                    items.avg_loan_per_officers = avg_loan_per_officers;
                     res.send({"status": 200, "response": items})
                 });
             });
@@ -3228,13 +3233,123 @@ users.get('/loans-by-branches', function(req, res, next) {
     if (start  && end){
         start = "'"+start+"'"
         end = "'"+end+"'"
-        query = (queryPart.concat('AND (TIMESTAMP(disbursement_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
+        // query = (queryPart.concat('AND (TIMESTAMP(disbursement_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
+        query = 'select (select branch from clients where ID = userID) as branchID, \n' +
+            '(select branch_name from branches br where br.id = branchID) as branch,\n' +
+            'loan_amount, sum(loan_amount) as disbursed,\n' +
+            '(select sum(payment_amount) from schedule_history sh\n' +
+            'where sh.status = 1 and \n' +
+            '(select branch from clients c where c.ID = (select userID from applications b where b.ID = sh.applicationID)) = branchID ' +
+            'and sh.applicationID in (select ap.ID from applications ap where ap.status = 2)\n' +
+            'and TIMESTAMP(payment_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+') ) as collected\n' +
+            'from applications a\n' +
+            'where status = 2\n '+
+            'AND TIMESTAMP(disbursement_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')\n '+
+            'group by branchID'
     }
     db.query(query, function (error, results, fields) {
         if(error){
             res.send({"status": 500, "error": error, "response": null});
         } else {
             res.send({"status": 200, "error": null, "response": results, "message": "All Payments pulled!"});
+        }
+    });
+});
+
+/* Interests by Branches */
+users.get('/interests-by-branches', function(req, res, next) {
+    let start = req.query.start,
+        end = req.query.end
+    // end = moment(end).add(1, 'days').format("YYYY-MM-DD");
+    let queryPart,
+        query,
+        group
+    queryPart = 'select (select branch from clients where ID = userID) as branchID, \n' +
+        '(select branch_name from branches br where br.id = branchID) as branch,\n' +
+        'loan_amount, ' +
+        '(select sum(interest_amount) from application_schedules ash where (select branch from clients where clients.ID = (select userID from applications where applications.ID = ash.applicationID)) = branchID and ash.status = 1) ' +
+        'as interest_expected,\n' +
+        '(select sum(interest_amount) from schedule_history sh\n' +
+        'where sh.status = 1 and \n' +
+        '(select branch from clients c where c.ID = (select userID from applications b where b.ID = sh.applicationID)) = branchID ' +
+        'and sh.applicationID in (select ap.ID from applications ap where ap.status = 2)) as collected\n' +
+        '\n' +
+        'from applications a\n' +
+        'where status = 2\n ';
+    group = 'group by branchID';
+    query = queryPart.concat(group);
+    var items = {};
+    if (start  && end){
+        start = "'"+start+"'"
+        end = "'"+end+"'"
+        // query = (queryPart.concat('AND (TIMESTAMP(disbursement_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
+        query = 'select (select branch from clients where ID = userID) as branchID, \n' +
+            '(select branch_name from branches br where br.id = branchID) as branch,\n' +
+            'loan_amount, ' +
+            '(select sum(interest_amount) from application_schedules ash where (select branch from clients where clients.ID = (select userID from applications where applications.ID = ash.applicationID)) = branchID and ash.status = 1) ' +
+            'as interest_expected,\n' +
+            '(select sum(interest_amount) from schedule_history sh\n' +
+            'where sh.status = 1 and \n' +
+            '(select branch from clients c where c.ID = (select userID from applications b where b.ID = sh.applicationID)) = branchID ' +
+            'and sh.applicationID in (select ap.ID from applications ap where ap.status = 2)\n' +
+            'and TIMESTAMP(payment_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+') ) as collected\n' +
+            'from applications a\n' +
+            'where status = 2\n '+
+            'AND TIMESTAMP(disbursement_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')\n '+
+            'group by branchID'
+    }
+    db.query(query, function (error, results, fields) {
+        if(error){
+            res.send({"status": 500, "error": error, "response": null});
+        } else {
+            res.send({"status": 200, "error": null, "response": results, "message": "Report pulled!"});
+        }
+    });
+});
+
+/* Payments by Branches */
+users.get('/payments-by-branches', function(req, res, next) {
+    let start = req.query.start,
+        end = req.query.end
+    // end = moment(end).add(1, 'days').format("YYYY-MM-DD");
+    let queryPart,
+        query,
+        group
+    queryPart = 'select (select branch from clients where ID = userID) as branchID, \n' +
+        '(select branch_name from branches br where br.id = branchID) as branch,\n' +
+        'loan_amount,sum(loan_amount) as disbursed,\n' +
+        '(select sum(payment_amount) from schedule_history sh\n' +
+        'where sh.status = 1 and \n' +
+        '(select branch from clients c where c.ID = (select userID from applications b where b.ID = sh.applicationID)) = branchID ' +
+        'and sh.applicationID in (select ap.ID from applications ap where ap.status = 2)) as collected\n' +
+        '\n' +
+        'from applications a\n' +
+        'where status = 2\n ';
+    group = 'group by branchID';
+    query = queryPart.concat(group);
+    var items = {};
+    if (start  && end){
+        start = "'"+start+"'"
+        end = "'"+end+"'"
+        // query = (queryPart.concat('AND (TIMESTAMP(disbursement_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
+        query = 'select (select branch from clients where ID = userID) as branchID, \n' +
+            '(select branch_name from branches br where br.id = branchID) as branch,\n' +
+            'loan_amount,sum(loan_amount) as disbursed,\n' +
+            '(select sum(payment_amount) from schedule_history sh\n' +
+            'where sh.status = 1 and \n' +
+            '(select branch from clients c where c.ID = (select userID from applications b where b.ID = sh.applicationID)) = branchID ' +
+            'and sh.applicationID in (select ap.ID from applications ap where ap.status = 2)\n' +
+            'and TIMESTAMP(payment_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+') ) as collected\n' +
+            'from applications a\n' +
+            'where status = 2\n '+
+            'AND TIMESTAMP(disbursement_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')\n '+
+            'group by branchID'
+    }
+    db.query(query, function (error, results, fields) {
+        if(error){
+            res.send({"status": 500, "error": error, "response": null});
+        } else {
+            res.send({"status": 200, "error": null, "response": results, "message": "Report pulled!"});
         }
     });
 });
@@ -4882,7 +4997,7 @@ users.post('/save-comment', function(req, res, next) {
                 payload.category = 'Activity'
                 payload.userid = req.cookies.timeout
                 payload.description = 'New Activity Comment'
-                payload.created_activity = postData.activityID
+                payload.affected = postData.activityID
                 notificationsService.log(req, payload)
                 res.send(JSON.stringify({"status": 200, "error": null, "response": "Comment Posted"}));
             }
@@ -5275,7 +5390,7 @@ users.get('/target-mail', function(req, res) {
     //     return res.send("Required Parameters not sent!");
     // data.date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let mailOptions = {
-        from: 'Loanratus Target <applications@loan35.com>',
+        from: 'Finratus Target <applications@loan35.com>',
         to: 'itaukemeabasi@gmail.com',
         subject: 'Target',
         template: 'target'

@@ -700,7 +700,7 @@ function initCSVUpload(application) {
                         for (let j = 0; j < cells.length; j++) {
                             let cell = $("<td />");
                             if (i === 0){
-                                if ((cells[j] === "PRINCIPAL") || cells[j] === "INTEREST")
+                                if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
                                     cell = $("<td colspan='3' />");
                             }
                             if (cells[j]){
@@ -825,7 +825,7 @@ function initCSVUpload(application) {
             for (let j = 0; j < cells.length; j++) {
                 let cell = $("<td />");
                 if (i === 0){
-                    if ((cells[j] === "PRINCIPAL") || cells[j] === "INTEREST")
+                    if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
                         cell = $("<td colspan='3' />");
                     if (cells[j] === "COLLECTION")
                         cell = $("<td colspan='2' />");
@@ -857,7 +857,11 @@ function initCSVUpload(application) {
                     }
                 } else {
                     if (cells[j]){
-                        cell.html(cells[j]);
+                        if (i > 1 && (j === 2 || j === 5 || j === 6 || j === 9)) {
+                            cell.html(numberToCurrencyformatter(cells[j]));
+                        } else {
+                            cell.html(cells[j]);
+                        }
                     } else {
                         cell.html('--');
                     }
@@ -947,7 +951,6 @@ function initLoanSummary(total_prinicipal) {
             amount = (amount - parseFloat(payment.payment_amount)).round(2);
             if (count === payment_history.length){
                 total_due_amount = amount;
-                console.log(amount)
                 $('#total-due-text').text('₦'+amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
             }
         });
@@ -1137,7 +1140,7 @@ function initCSVUpload2(application, settings) {
                     for (let j = 0; j < cells.length; j++) {
                         let cell = $("<td />");
                         if (i === 0){
-                            if ((cells[j] === "PRINCIPAL") || cells[j] === "INTEREST")
+                            if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
                                 cell = $("<td colspan='3' />");
                         }
                         if (cells[j]){
@@ -1205,7 +1208,7 @@ function initCSVUpload2(application, settings) {
                         for (let j = 0; j < cells.length; j++) {
                             let cell = $("<td />");
                             if (i === 0){
-                                if ((cells[j] === "PRINCIPAL") || cells[j] === "INTEREST")
+                                if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
                                     cell = $("<td colspan='3' />");
                             }
                             if (cells[j]){
@@ -1312,11 +1315,15 @@ function initCSVUpload2(application, settings) {
             for (let j = 0; j < cells.length; j++) {
                 let cell = $("<td />");
                 if (i === 0){
-                    if ((cells[j] === "PRINCIPAL") || cells[j] === "INTEREST")
+                    if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
                         cell = $("<td colspan='3' />");
                 }
                 if (cells[j]){
-                    cell.html(cells[j]);
+                    if (i > 1 && (j === 2 || j === 5 || j === 6)) {
+                        cell.html(numberToCurrencyformatter(cells[j]));
+                    } else {
+                        cell.html(cells[j]);
+                    }
                 } else {
                     cell.html('--');
                 }

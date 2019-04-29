@@ -615,7 +615,7 @@ function markAsViewed(id){
         success: function (response) {
             status = true;
             setTimeout(function () {
-                notifications();
+                getNotifications();
             }, 10000);
         }
     });
@@ -633,7 +633,7 @@ function markAll(){
         success: function (response) {
             status = true;
             setTimeout(function () {
-                notifications();
+                getNotifications();
             }, 10000);
             $('#noti-count').hide();}
     });

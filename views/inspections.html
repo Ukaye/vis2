@@ -6,8 +6,8 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Loanratus Inspection Report</title>
-    <meta name="description" content="Loanratus Admin">
+    <title>Finratus Inspection Report</title>
+    <meta name="description" content="Finratus Admin">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link rel="apple-touch-icon" href="apple-icon.png">
@@ -79,7 +79,7 @@
         <!-- Left Panel -->
         <script src="assets/js/vendor/jquery-2.1.4.min.js"></script>
         <script type="text/javascript">
-            $(document).ready(function($){ check(); loadMenus(); read_write();});
+//            $(document).ready(function($){ check(); loadMenus(); read_write();});
         </script>
         <aside id="left-panel" class="left-panel" include-html="/includes/sidebar.html">
         </aside><!-- /#left-panel -->
@@ -525,14 +525,6 @@
 //				interval: 5000
 //		    });
         } );
-
-        $(document).ajaxStart(function(){
-            $("#wait").css("display", "block");
-        });
-
-        $(document).ajaxComplete(function(){
-            $("#wait").css("display", "none");
-        });
 
         function check(){
             if (localStorage.getItem('role') !== 1){
@@ -1466,7 +1458,7 @@
                             '<tr><td><strong>Inspection Status</strong> </td><td>'+localStorage.getItem("status")+'</td></tr>'+
                         '</table>';
             $("#print-panel").append('<div style="background: url("logo.png") no-repeat center center;"></div>');
-            $("#print-panel").append('<h1 style="text-align:center; padding-top: 30px">Loanratus Vehicle Inspection Report</h1><br/>');
+            $("#print-panel").append('<h1 style="text-align:center; padding-top: 30px">Finratus Vehicle Inspection Report</h1><br/>');
             $("#print-panel").append(info);
             // $('#summary-row').css("padding-top", "0px");
             $('#mkt').hide(); $('#frc').hide();
