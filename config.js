@@ -1,7 +1,7 @@
 let config = {};
 
 config.test = {
-    host: '13.73.183.125',
+    host: '140.86.3.6',
     port: '3306',
     user: 'loan35admin',
     password: 'Loan35Pass@word2018',
@@ -11,7 +11,7 @@ config.test = {
 };
 
 config.staging = {
-    host: '13.73.183.125',
+    host: '140.86.3.6',
     port: '3306',
     user: 'loan35admin',
     password: 'Loan35Pass@word2018',
@@ -20,8 +20,18 @@ config.staging = {
     insecureAuth: true
 };
 
+config.demo = {
+    host: '140.86.3.236',
+    port: '3306',
+    user: 'loan35admin',
+    password: 'Loan35Pass@word2018',
+    database: 'loanratus',
+    charset: 'utf8mb4',
+    insecureAuth: true
+};
+
 config.live = {
-    host: '13.73.183.125',
+    host: '140.86.3.6',
     port: '3306',
     user: 'loan35admin',
     password: 'Loan35Pass@word2018',
@@ -31,7 +41,7 @@ config.live = {
 };
 
 config.production = {
-    host: '13.94.142.82',
+    host: '140.86.3.244',
     port: '3306',
     user: 'loan35admin',
     password: 'Pass@word1',
