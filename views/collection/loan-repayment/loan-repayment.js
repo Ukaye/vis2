@@ -818,11 +818,11 @@ function getRemitaPayments() {
                         v.status,
                         v.lastStatusUpdateTime
                     ];
-                    if (v.statuscode === '072'){
+                    if (v.statuscode === '072') {
                         table.push('<button class="btn btn-danger reversePayment cancelRemitaPaymentBtn" ' +
                             'onclick="cancelRemitaPayment('+v.transactionRef+')"><i class="fa fa-remove"></i> Cancel</button>');
                     } else {
-                        table.push('Payment Cancelled');
+                        table.push('--');
                     }
                     $('#remita-payments').dataTable().fnAddData(table);
                     $('#remita-payments').dataTable().fnSort([[4,'desc']]);
