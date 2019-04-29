@@ -194,7 +194,7 @@ functions.validateMandate = function (payload, type, callback) {
         case 'FORM': {
             request.get(
                 {
-                    url: `${payload.host}/client/mandate/get/${payload.id}`
+                    url: `${payload.host}/preapproved-loan/mandate/get/${payload.id}`
                 },
                 (error, res, body) => {
                     if (error) {
@@ -232,7 +232,41 @@ functions.mandatePaymentHistory = function (payload, callback) {
     payload.hash = SHA512(payload.mandateId + payload.merchantId + payload.requestId + process.env.REMITA_API_KEY);
     request.post(
         {
-            url: `${process.env.REMITA_BASE_URL}/payment/send`,
+            url: `${process.env.REMITA_BASE_URL}/payment/history`,
+            body: payload,
+            json: true
+        },
+        (error, res, body) => {
+            if (error) {
+                return callback(error);
+            }
+            callback(functions.formatJSONP(body));
+        })
+};
+
+functions.cancelDebitInstruction = function (payload, callback) {
+    payload.merchantId = process.env.REMITA_MERCHANT_ID;
+    payload.hash = SHA512(payload.transactionRef + payload.merchantId + payload.requestId + process.env.REMITA_API_KEY);
+    request.post(
+        {
+            url: `${process.env.REMITA_BASE_URL}/payment/stop`,
+            body: payload,
+            json: true
+        },
+        (error, res, body) => {
+            if (error) {
+                return callback(error);
+            }
+            callback(functions.formatJSONP(body));
+        })
+};
+
+functions.stopMandate = function (payload, callback) {
+    payload.merchantId = process.env.REMITA_MERCHANT_ID;
+    payload.hash = SHA512(payload.mandateId + payload.merchantId + payload.requestId + process.env.REMITA_API_KEY);
+    request.post(
+        {
+            url: `${process.env.REMITA_BASE_URL}/stop`,
             body: payload,
             json: true
         },

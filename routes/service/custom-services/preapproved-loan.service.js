@@ -287,19 +287,19 @@ router.post('/create', function (req, res, next) {
                             return res.send(response_['data'][0]);
                         });
                 }, err => {
-                    res.send({status: 500, error: error, response: null});
+                    res.send({status: 500, error: err, response: null});
                 })
                 .catch(function (error) {
                     res.send({status: 500, error: error, response: null});
                 });
             }, err => {
-                res.send({status: 500, error: error, response: null});
+                res.send({status: 500, error: err, response: null});
             })
             .catch(function (error) {
                 res.send({status: 500, error: error, response: null});
             });
         }, err => {
-            res.send({status: 500, error: error, response: null});
+            res.send({status: 500, error: err, response: null});
         })
         .catch(function (error) {
             res.send({status: 500, error: error, response: null});
@@ -318,7 +318,7 @@ router.post('/reject', function (req, res, next) {
         .then(function (response) {
             res.send(response.data);
         }, err => {
-            res.send({status: 500, error: error, response: null});
+            res.send({status: 500, error: err, response: null});
         })
         .catch(function (error) {
             res.send({status: 500, error: error, response: null});
@@ -365,7 +365,7 @@ router.get('/get', function (req, res, next) {
 router.get('/get/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, r.requestId, r.remitaTransRef FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
-                LEFT JOIN remita_mandates r ON r.applicationID = p.applicationID WHERE (p.ID = '${decodeURIComponent(req.params.id)}' OR p.hash = '${decodeURIComponent(req.params.id)}')`,
+                LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) WHERE (p.ID = '${decodeURIComponent(req.params.id)}' OR p.hash = '${decodeURIComponent(req.params.id)}')`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -496,7 +496,7 @@ router.post('/offer/accept/:id', function (req, res, next) {
                                         .then(function (process_response) {
                                             res.send(process_response.data);
                                         }, err => {
-                                            res.send({status: 500, error: error, response: null});
+                                            res.send({status: 500, error: err, response: null});
                                         })
                                         .catch(function (error) {
                                             res.send({status: 500, error: error, response: null});
@@ -504,13 +504,13 @@ router.post('/offer/accept/:id', function (req, res, next) {
                                 });
                             });
                         }, err => {
-                            res.send({status: 500, error: error, response: null});
+                            res.send({status: 500, error: err, response: null});
                         })
                         .catch(function (error) {
                             res.send({status: 500, error: error, response: null});
                         });
                 }, err => {
-                    res.send({status: 500, error: error, response: null});
+                    res.send({status: 500, error: err, response: null});
                 })
                 .catch(function (error) {
                     res.send({status: 500, error: error, response: null});
@@ -533,11 +533,44 @@ router.get('/offer/decline/:id', function (req, res, next) {
         .then(function (response) {
             res.send(response.data);
         }, err => {
-            res.send({status: 500, error: error, response: null});
+            res.send({status: 500, error: err, response: null});
         })
         .catch(function (error) {
             res.send({status: 500, error: error, response: null});
         });
+});
+
+router.get('/mandate/get/:id', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let query = `SELECT r.mandateId, r.requestId FROM preapproved_loans p LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) 
+                WHERE (p.ID = '${decodeURIComponent(req.params.id)}' OR p.hash = '${decodeURIComponent(req.params.id)}')`,
+        endpoint = '/core-service/get',
+        url = `${HOST}${endpoint}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        if (response['data'][0]) {
+            const status_payload = {
+                mandateId: response['data'][0]['mandateId'],
+                requestId: response['data'][0]['requestId']
+            };
+            helperFunctions.mandateStatus(status_payload, function (remita_mandate_status) {
+                res.send({
+                    data: remita_mandate_status
+                });
+            });
+        } else {
+            res.send({
+                status: 500,
+                error: 'Oops! Your direct debit mandate cannot be verified at the moment',
+                data: {
+                    statuscode: '022',
+                    status: 'Oops! Your direct debit mandate cannot be verified at the moment'}
+            });
+        }
+    });
 });
 
 module.exports = router;
