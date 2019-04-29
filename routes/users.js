@@ -207,6 +207,7 @@ users.post('/new-user', function(req, res, next) {
 
 /* Add New Client */
 users.post('/new-client', function(req, res, next) {
+    let id;
     let postData = req.body,
         query =  'INSERT INTO clients Set ?',
         query2 = 'select * from clients where username = ? or email = ? or phone = ?';
@@ -225,7 +226,7 @@ users.post('/new-client', function(req, res, next) {
                 } else {
                     connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function(err, re, fields) {
                         if (!err){
-                            let id = re[0]['ID'];
+                            id = re[0]['ID'];
                             connection.query('INSERT into wallets Set ?', {client_id: id}, function(er, r, fields) {
                                 connection.release();
                                 if (!er){
