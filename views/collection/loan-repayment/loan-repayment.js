@@ -809,7 +809,7 @@ function getRemitaPayments() {
             if (data.status !== 500){
                 $('#remita-total-amount').text(`₦${numberToCurrencyformatter(data.response.totalAmount || 0)}`);
                 $('#remita-transaction-count').text(`${numberToCurrencyformatter(data.response.totalTransactionCount || 0)}`);
-                $("#remita-payments").dataTable().fnClearTable();
+                $('#remita-payments').dataTable().fnClearTable();
                 $.each(data.response.paymentDetails, function(k, v){
                     let table = [
                         `₦${numberToCurrencyformatter(v.amount)}`,
