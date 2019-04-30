@@ -337,15 +337,17 @@ function getNotifications(){
         success: function (response) {
             status = true;
             noti_count = response.length;
-            let new_count = Math.abs(parseInt(localStorage.noti_count) - noti_count);
-            if (!localStorage.noti_count){
+            let new_count;
+            if (localStorage.noti_count === "NaN"){
                 $('#noti-count').hide();
+                localStorage.setItem('noti_count', response.length);
             }
-            if (noti_count === parseInt(localStorage.noti_count)){
+            else if (noti_count === parseInt(localStorage.noti_count)){
                 $('#noti-count').hide();
                 localStorage.setItem('noti_count', response.length);
             }
             else{
+                new_count = Math.abs(parseInt(localStorage.noti_count) - noti_count);
                 $('#noti-count').html(new_count);
                 $('#noti-count').show();
                 $('#noti-info').html(new_count+ ' new notification(s).');

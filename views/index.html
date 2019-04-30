@@ -151,7 +151,8 @@
                 date = new Date();
             date.setTime(date.getTime() + (minutes * 60 * 1000));
             localStorage.login = '1';
-            localStorage.removeItem("noti_count");
+//            localStorage.removeItem("noti_count");
+            localStorage.setItem("noti_count", 'NaN');
             $.cookie('timeout', user["ID"], { expires: date });
             if (user["fullname"])
                 localStorage.setItem("name", user["fullname"]);
