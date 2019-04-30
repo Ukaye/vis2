@@ -338,6 +338,9 @@ function getNotifications(){
             status = true;
             noti_count = response.length;
             let new_count = Math.abs(parseInt(localStorage.noti_count) - noti_count);
+            if (!localStorage.noti_count){
+                $('#noti-count').hide();
+            }
             if (noti_count === parseInt(localStorage.noti_count)){
                 $('#noti-count').hide();
                 localStorage.setItem('noti_count', response.length);
@@ -643,6 +646,7 @@ jQuery(document).ready(function() {
     // setTimeout(function () {
     //     getNotifications();
     // }, 10000);
+    $('#noti-count').hide();
     getNotifications();
     // load_notifications(JSON.parse(localStorage.notifications));
 });

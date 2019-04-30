@@ -220,6 +220,7 @@ route.get('/all-updates', function(req, res){
                                         `where status = 1 and userid <> ${user} and category = ? and view_status in (1,2) order by notifications.id desc`;
                                 }
                                 connection.query(query2, [word, word, word], function(e, r, f){
+                                    connection.release();
                                     if (e)
                                         return res.send({"status": 500, "error": e, "response": null});
                                     else {
