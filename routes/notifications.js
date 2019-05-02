@@ -197,7 +197,6 @@ route.get('/all-updates', function(req, res){
                         '(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = category)))) = 1\n'+
                         'order by notifications.id desc';
                 }
-                console.log(query)
                 connection.query(query, ['Application'], function(er, response, field){
                     if (er)
                         return res.send({"status": 500, "error": er, "response": null});
@@ -236,7 +235,7 @@ route.get('/all-updates', function(req, res){
                                             `and nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = `+
                                         `(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = ${word})))) = 1 `+
                                         `order by notifications.id desc`;
-                                }console.log(query2)
+                                }
                                 connection.query(query2, [word, word, word, word, word], function(e, r, f){
                                     connection.release();
                                     if (e)
