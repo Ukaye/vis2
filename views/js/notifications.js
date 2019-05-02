@@ -306,19 +306,19 @@ function load_notifications(object){
                 link = '#';
         }
         item = '<div class="feed-body-content">\n' +
-            '                            <p class="feed-body-header">'+jQuery.timeago(val.date_created)+'</time></p>\n' +
-            '                            <div class="row">\n' +
-            '                                <span class="col-md-3" style="padding-right: 0">'+icon+'</span>\n' +
-            '                                <a href="'+link+'" class="col-md-9" style="padding-left: 10px;font-size: 14px">'+val.description+'\n' +
-            '                                    <div class="client-notification">\n' +
-            '                                        <img class="user-avatar rounded-circle" src="/images/admin.jpg" alt="Img"\n' +
-            '                                             style="">\n' +
-            '                                            <p>'+val.user+'</p>\n' +
-            '                         <small onclick="markAsViewed('+val.ID+')" class="feed-content-menu float-right" style="margin-top: 50px">Remove</small>\n'+
-            '                                    </div>\n' +
-            '                                 </a>\n' +
-            '                            </div>\n' +
-            '                        </div>';
+'                            <p class="feed-body-header">'+jQuery.timeago(val.date_created)+'</time></p>\n' +
+'                            <div class="row">\n' +
+'                                <span class="col-md-3" style="padding-right: 0">'+icon+'</span>\n' +
+'                                <a href="'+link+'" class="col-md-9" style="padding-left: 10px;font-size: 14px">'+val.description+'\n' +
+'                                    <div class="client-notification">\n' +
+'                                        <img class="user-avatar rounded-circle" src="/images/admin.jpg" alt="Img"\n' +
+'                                             style="">\n' +
+'                                            <p>'+val.user+'</p>\n' +
+'                         <small onclick="markAsViewed('+val.ID+')" class="feed-content-menu float-right" style="margin-top: 50px">Remove</small>\n'+
+'                                    </div>\n' +
+'                                 </a>\n' +
+'                            </div>\n' +
+'                        </div>';
         $('#n-dropdown').append(item);
     });
     if (count === 0)
