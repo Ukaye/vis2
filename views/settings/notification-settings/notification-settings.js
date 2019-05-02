@@ -282,7 +282,6 @@ function loadRolesConfig(id){
     $.each($.grep(glob, function(e){return e.id === id;}), function(k, v){
         name = v.category_name;
     });
-    console.log(name);
     if (cat !== 0)
         $('#selectedName').html(': '+name);
     $.ajax({
