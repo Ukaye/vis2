@@ -178,16 +178,26 @@ route.get('/all-updates', function(req, res){
                         'and ' +
                         '(select np.status from notification_preferences np where np.category = \n' +
                         '\t(select nc.id from notification_categories nc where nc.category_name = category) \n' +
-                        'and np.userid = '+user+' and timestamp(np.date_created) = ' +
-                        '(select max(timestamp(npf.date_created)) from notification_preferences npf where npf.userid = '+user+')) = 1 \n' +
+                        'and np.userid = '+user+' and np.date_created = (select date_created from notification_preferences npf where npf.id = '+
+                        '(select max(id) from notification_preferences nop where nop.userid = '+user+' ))) = 1 \n' +
                         'and category <> ?\n'+
+                        'and (select visible from notification_roles_rel nr where role_id = '+role+' and nr.category = \n' +
+                        '(select nc.id from notification_categories nc where nc.category_name = category) \n' +
+                        '\tand nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = \n' +
+                        '(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = category)))) = 1\n'
                         'order by nt.id desc'
                 }
                 else {
                     query = 'select *, notification_id as ID, category, description, date_created, view_status, (select fullname from users where users.id = userid) user \n'+
                         'from pending_records inner join notifications on notification_id = notifications.id \n'+
-                        'where status = 1 and userid <> '+user+' and category <> ? and view_status in (1,2) order by notifications.id desc';
+                        'where status = 1 and userid <> '+user+' and category <> ? and view_status in (1,2) ' +
+                        '(select visible from notification_roles_rel nr where role_id = '+role+' and nr.category = \n' +
+                        '(select nc.id from notification_categories nc where nc.category_name = category) \n' +
+                        '\tand nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = \n' +
+                        '(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = category)))) = 1\n'+
+                        'order by notifications.id desc';
                 }
+                console.log(query)
                 connection.query(query, ['Application'], function(er, response, field){
                     if (er)
                         return res.send({"status": 500, "error": er, "response": null});
@@ -208,8 +218,11 @@ route.get('/all-updates', function(req, res){
                                         'and nt.category = ? and \n' +
                                         '(select np.status from notification_preferences np where np.category = \n' +
                                         '\t(select nc.id from notification_categories nc where nc.category_name = ?) \n' +
-                                        'and np.userid = '+user+' and timestamp(np.date_created) = ' +
-                                        '(select max(timestamp(npf.date_created)) from notification_preferences npf where npf.userid = '+user+')) = 1 \n' +
+                                        'and np.userid = '+user+' and np.date_created = (select date_created from notification_preferences npf where npf.id = '+
+                                        '(select max(id) from notification_preferences nop where nop.userid = '+user+' ))) = 1 \n' +
+                                        'and (select visible from notification_roles_rel nr where role_id = '+role+' and nr.category = (select nc.id from notification_categories nc where nc.category_name = ?) '+
+                                            'and nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = '+
+                                        '(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = ?)))) = 1\n'+
                                         'order by nt.id desc'
                                 }
                                 else {
@@ -217,9 +230,14 @@ route.get('/all-updates', function(req, res){
                                         `(select GROUP_CONCAT(distinct(approverid)) as approvers from workflow_stages where workflowid = (select workflowid from applications where applications.id = affected)) approvers, `+
                                         `affected  `+
                                         `from pending_records inner join notifications on notification_id = notifications.id \n`+
-                                        `where status = 1 and userid <> ${user} and category = ? and view_status in (1,2) order by notifications.id desc`;
-                                }
-                                connection.query(query2, [word, word, word], function(e, r, f){
+                                        `where status = 1 and userid <> ${user} and category = ? and view_status in (1,2) `+
+                                        `and `+
+                                        `(select visible from notification_roles_rel nr where role_id = 1 and nr.category = (select nc.id from notification_categories nc where nc.category_name = ${word}) `+
+                                            `and nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = `+
+                                        `(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = ${word})))) = 1 `+
+                                        `order by notifications.id desc`;
+                                }console.log(query2)
+                                connection.query(query2, [word, word, word, word, word], function(e, r, f){
                                     connection.release();
                                     if (e)
                                         return res.send({"status": 500, "error": e, "response": null});
@@ -431,7 +449,13 @@ route.get('/categories', function(req, res, next) {
                     '(select np.status from notification_preferences np \n' +
                     'where nc.id = np.category and np.userid = '+id+' and np.date_created = \n' +
                     '(select date_created from notification_preferences npf where npf.id = (select max(id) from notification_preferences npp where npp.category = nc.id))) \n' +
-                    'ENd) as state\n' +
+                    'ENd) as state,\n' +
+                    '(select visible from notification_roles_rel nr where nr.role_id = 1 and nr.category = nc.id \n' +
+                    'and nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = \n' +
+                    '(select max(id) from notification_roles_rel ntr where ntr.category = nc.id))) as visible,\n' +
+                    '(select mandatory from notification_roles_rel nr where nr.role_id = 1 and nr.category = nc.id \n' +
+                    'and nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = \n' +
+                    '(select max(id) from notification_roles_rel ntr where ntr.category = nc.id))) as mandatory\n' +
                     'from notification_categories nc'
             } else {
                 query1 = 'SELECT id as category, category_name, compulsory from notification_categories';
@@ -502,14 +526,16 @@ route.get('/categories-list', function(req, res, next) {
 route.get('/notification-roles-config', function(req, res, next) {
     let category = req.query.bugger;
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query = 'select * from notification_roles_rel where category = '+category+''; console.log(query)
+    let query = 'select * from notification_roles_rel where category = '+category+'';
     const endpoint = `/core-service/get?query=${query}`;
     const url = `${HOST}${endpoint}`;
     axios.get(url)
         .then(function (response) {
             let query1;
             if (response.data.length > 0){
-                query1 = 'select *, (select role_name from user_roles ur where ur.id = role_id) role_name from notification_roles_rel where category = '+category+' and date_created = (select max(date_created) from notification_roles_rel where category = '+category+')'
+                query1 = 'select *, (select role_name from user_roles ur where ur.id = role_id) role_name ' +
+                    'from notification_roles_rel where category = '+category+' ' +
+                    'and date_created = (select nrr.date_created from notification_roles_rel nrr where nrr.id = (select max(id) from notification_roles_rel nr where nr.category = '+category+'))'
             } else {
                 query1 = 'select id as role_id, role_name from user_roles where status = 1';
             }
@@ -635,14 +661,38 @@ route.post('/saveConfig/:user', function(req, res, next) {
         category = ids.category,
         count = 0,
         status = true;
+    // db.getConnection(function(err, connection) {
+    //     if (err) throw err;
+    //
+    //     async.forEach(ids.cats, function (id, callback) {
+    //         let role_id = id[0],
+    //             state = id[1],
+    //             query = 'INSERT INTO notification_roles_rel SET ?';
+    //         connection.query(query, {role_id:role_id, category:category, state:state, date_created:moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')}, function (error, results, fields) {
+    //             if(error){
+    //                 status = false;
+    //                 callback({"status": 500, "error": error, "response": null});
+    //             } else {
+    //                 count++;
+    //             }
+    //             callback();
+    //         });
+    //     }, function (data) {
+    //         connection.release();
+    //         if(status === false)
+    //             return res.send(data);
+    //         res.send({"status": 200, "error": null, "message": "Category Configuration Set!"});
+    //     })
+    // });
     db.getConnection(function(err, connection) {
         if (err) throw err;
 
         async.forEach(ids.cats, function (id, callback) {
             let role_id = id[0],
-                state = id[1],
+                visible = id[1],
+                state = id[2],
                 query = 'INSERT INTO notification_roles_rel SET ?';
-            connection.query(query, {role_id:role_id, category:category, state:state, date_created:moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')}, function (error, results, fields) {
+            connection.query(query, {role_id:role_id, category:category, mandatory:state, visible:visible, date_created:moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')}, function (error, results, fields) {
                 if(error){
                     status = false;
                     callback({"status": 500, "error": error, "response": null});

@@ -524,20 +524,34 @@ function list_categories(){
             $('#n-settings-panel').append('<h6>Manage Notifications</h6><br/>');
             for (let i = 0; i < count; i++){
                 let v = response[i];
-                if (v.compulsory === '1'){
-                    item = '<input type="checkbox" id="category'+v.category+'" disabled="disabled" checked/>&nbsp;&nbsp;<label for = "'+v.category_name+'">'+v.category_name+'</label><hr style="padding-top: 0px"/>'
-                }
-                else{
-                    if (v.state){
-                        if (v.state === '1'){
+                if (v.visible === '1'){
+                    if (v.mandatory === '1'){
+                        item = '<input type="checkbox" id="category'+v.category+'" disabled="disabled" checked/>&nbsp;&nbsp;<label for = "'+v.category_name+'">'+v.category_name+'</label><hr style="padding-top: 0px"/>'
+                    }
+                    else {
+                        if (v.state === '1')
                             item = '<input type="checkbox" id="category'+v.category+'" checked/>&nbsp;&nbsp;<label for = "'+v.category_name+'">'+v.category_name+'</label><hr style="padding-top: 0px"/>'
-                        } else {
+                        else
                             item = '<input type="checkbox" id="category'+v.category+'"/>&nbsp;&nbsp;<label for = "'+v.category_name+'">'+v.category_name+'</label><hr style="padding-top: 0px"/>'
-                        }
-                    } else {
-                        item = '<input type="checkbox" id="category'+v.category+'"/>&nbsp;&nbsp;<label for = "'+v.category_name+'">'+v.category_name+'</label><hr style="padding-top: 0px"/>'
                     }
                 }
+                else {
+                    item = '<input type="checkbox" id="category'+v.category+'" disabled="disabled"/>&nbsp;&nbsp;<label for = "'+v.category_name+'">'+v.category_name+'</label><hr style="padding-top: 0px"/>'
+                }
+                // if (v.compulsory === '1'){
+                //     item = '<input type="checkbox" id="category'+v.category+'" disabled="disabled" checked/>&nbsp;&nbsp;<label for = "'+v.category_name+'">'+v.category_name+'</label><hr style="padding-top: 0px"/>'
+                // }
+                // else{
+                //     if (v.state){
+                //         if (v.state === '1'){
+                //             item = '<input type="checkbox" id="category'+v.category+'" checked/>&nbsp;&nbsp;<label for = "'+v.category_name+'">'+v.category_name+'</label><hr style="padding-top: 0px"/>'
+                //         } else {
+                //             item = '<input type="checkbox" id="category'+v.category+'"/>&nbsp;&nbsp;<label for = "'+v.category_name+'">'+v.category_name+'</label><hr style="padding-top: 0px"/>'
+                //         }
+                //     } else {
+                //         item = '<input type="checkbox" id="category'+v.category+'"/>&nbsp;&nbsp;<label for = "'+v.category_name+'">'+v.category_name+'</label><hr style="padding-top: 0px"/>'
+                //     }
+                // }
                 $('#n-settings-panel').append(item);
             }
             let button = '<button id="submit-settings" onclick="savePreferences()" class="btn btn-info fa-pull-right">Save <i class="fa fa-save"></i></button><br/>';
