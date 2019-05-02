@@ -419,8 +419,20 @@ route.get('/categories', function(req, res, next) {
     axios.get(url)
         .then(function (response) {
             if (response.data.length > 0){
-                query1 = 'select category, category_name, compulsory, np.status as state from notification_categories nc inner join notification_preferences np on \n'+
-                'nc.id = np.category where np.userid = '+id+' and timestamp(np.date_created) = (select max(timestamp(date_created)) from notification_preferences where userid = '+id+')'
+                // query1 = 'select category, category_name, compulsory, np.status as state from notification_categories nc inner join notification_preferences np on \n'+
+                // 'nc.id = np.category where np.userid = '+id+' and timestamp(np.date_created) = (select max(timestamp(date_created)) from notification_preferences where userid = '+id+')'
+                query1 = 'select id as category, category_name, compulsory, \n' +
+                    '(select case when \n' +
+                    '((select np.status from notification_preferences np \n' +
+                    'where nc.id = np.category and np.userid = '+id+' and np.date_created = \n' +
+                    '(select date_created from notification_preferences npf where npf.id = (select max(id) from notification_preferences npp where npp.category = nc.id)))) \n' +
+                    'is null then 0\n' +
+                    'else \n' +
+                    '(select np.status from notification_preferences np \n' +
+                    'where nc.id = np.category and np.userid = '+id+' and np.date_created = \n' +
+                    '(select date_created from notification_preferences npf where npf.id = (select max(id) from notification_preferences npp where npp.category = nc.id))) \n' +
+                    'ENd) as state\n' +
+                    'from notification_categories nc'
             } else {
                 query1 = 'SELECT id as category, category_name, compulsory from notification_categories';
             }
