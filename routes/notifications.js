@@ -428,7 +428,9 @@ route.get('/update-pr', function(req, res) {
 });
 
 route.get('/categories', function(req, res, next) {
-    let id = req.query.bug; let query1;
+    let id = req.query.bug,
+        query1,
+        role = req.query.role;
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = 'select id from notification_preferences where userid = '+id+''
     const endpoint = `/core-service/get?query=${query}`;
@@ -449,10 +451,10 @@ route.get('/categories', function(req, res, next) {
                     'where nc.id = np.category and np.userid = '+id+' and np.date_created = \n' +
                     '(select date_created from notification_preferences npf where npf.id = (select max(id) from notification_preferences npp where npp.category = nc.id))) \n' +
                     'ENd) as state,\n' +
-                    '(select visible from notification_roles_rel nr where nr.role_id = 1 and nr.category = nc.id \n' +
+                    '(select visible from notification_roles_rel nr where nr.role_id = '+role+' and nr.category = nc.id \n' +
                     'and nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = \n' +
                     '(select max(id) from notification_roles_rel ntr where ntr.category = nc.id))) as visible,\n' +
-                    '(select mandatory from notification_roles_rel nr where nr.role_id = 1 and nr.category = nc.id \n' +
+                    '(select mandatory from notification_roles_rel nr where nr.role_id = '+role+' and nr.category = nc.id \n' +
                     'and nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = \n' +
                     '(select max(id) from notification_roles_rel ntr where ntr.category = nc.id))) as mandatory\n' +
                     'from notification_categories nc'

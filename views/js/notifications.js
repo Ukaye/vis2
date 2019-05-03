@@ -514,7 +514,7 @@ function list_categories(){
     status = false;
     $.ajax({
         type: "GET",
-        url: "/notifications/categories?bug="+JSON.parse(localStorage.user_obj).ID,
+        url: "/notifications/categories?bug="+JSON.parse(localStorage.user_obj).ID+'&&role='+JSON.parse(localStorage.role),
         success: function (response) {
             status = true
             cats = response;
