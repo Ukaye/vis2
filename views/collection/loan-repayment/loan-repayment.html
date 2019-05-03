@@ -507,13 +507,34 @@
 </div>
 
 <div class="modal fade" id="remitaPaymentModal" role="dialog" aria-labelledby="remitaPaymentModalLabel">
-    <div class="modal-dialog modal-lg" role="document" style="min-width: 50%;">
+    <div class="modal-dialog modal-lg" role="document" style="min-width: 55%;">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title" id="remitaPaymentModalLabel">Remita Payment</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="remitaPaymentModalLabel">Remita Payment
+                </h4>
+                <button id="stopMandateBtn" class="btn btn-danger reversePayment" onclick="stopMandate()" style="float: right;">
+                    Stop Mandate <i class="fa fa-trash"></i></button>
             </div>
             <div class="modal-body">
+                <div class="row setup-content">
+                    <div class="col-sm-6">
+                        <div class="card text-white bg-flat-color-1">
+                            <div class="card-body pb-0">
+                                <h3 id="remita-transaction-count" class="mb-0"></h3>
+                                <p class="text-light">Transaction Count</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="card text-white bg-flat-color-1">
+                            <div class="card-body pb-0">
+                                <h3 id="remita-total-amount" class="mb-0"></h3>
+                                <p class="text-light">Total Amount</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
                 <div class="row setup-content">
                     <div class="col-sm-12">
                         <div class="form-group">
@@ -526,16 +547,20 @@
                     </div>
                     <div class="col-sm-12">
                         <div class="form-group">
-                            <button type="button" class="btn btn-block btn-success" onclick="makeRemitaPayment()">Make Payment</button>
+                            <button type="button" id="makeRemitaPayment" class="btn btn-block btn-success" onclick="makeRemitaPayment()">
+                                Make Payment</button>
                         </div>
                     </div>
                 </div>
                 <hr>
-                <table id="payment-history" class="table table-striped table-bordered">
+                <table id="remita-payments" class="table table-striped table-bordered">
                     <thead>
                     <tr>
                         <th>Amount</th>
-                        <th>Date</th>
+                        <th>RRR</th>
+                        <th>Trans. Ref</th>
+                        <th>Status</th>
+                        <th>Last Update</th>
                         <th>Action</th>
                     </tr>
                     </thead>

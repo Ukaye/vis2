@@ -38,7 +38,6 @@ router.post('/mandate/setup', function (req, res, next) {
         amount = req.body.amount,
         account = req.body.account,
         fullname = req.body.fullname,
-        authorization = req.body.authorization,
         application_id = req.body.application_id,
         date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
         query =  `INSERT INTO remita_mandates Set ?`;
@@ -60,8 +59,8 @@ router.post('/mandate/setup', function (req, res, next) {
                 mandateId: setup_response.mandateId,
                 requestId: setup_response.requestId
             };
-            helperFunctions.authorizeMandate(authorize_payload, authorization, function (authorization_response) {
-                if (authorization_response && authorization_response.remitaTransRef) {
+            helperFunctions.authorizeMandate(authorize_payload, function (authorization_response) {
+                if (authorization_response && authorization_response.remitaTransRef){
                     payload.remitaTransRef = authorization_response.remitaTransRef;
                     payload.mandateId = setup_response.mandateId;
                     payload.applicationID = application_id;
@@ -82,7 +81,7 @@ router.post('/mandate/setup', function (req, res, next) {
                             .then(function (remita_response) {
                                 res.send(authorization_response);
                             }, err => {
-                                res.send({status: 500, error: error, response: null});
+                                res.send({status: 500, error: err, response: null});
                             })
                             .catch(function (error) {
                                 res.send({status: 500, error: error, response: null});
@@ -128,6 +127,96 @@ router.get('/mandate/get/:id', function (req, res, next) {
                     status: 'Oops! Your direct debit mandate cannot be verified at the moment'}
             });
         }
+    });
+});
+
+router.post('/corporate/create', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let postData = req.body,
+        query =  `SELECT * FROM corporates WHERE name = '${req.body.name}'`,
+        endpoint = `/core-service/get`,
+        url = `${HOST}${endpoint}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(function (response) {
+            if (response['data'][0]) {
+                res.send({status: 500, error: 'Corporate already exists!', response: response['data']});
+            } else {
+                query =  'INSERT INTO corporates Set ?';
+                endpoint = `/core-service/post?query=${query}`;
+                url = `${HOST}${endpoint}`;
+                postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+
+                axios.post(url, postData)
+                    .then(function (response_) {
+                        return res.send(response_['data']);
+                    }, err => {
+                        res.send({status: 500, error: err, response: null});
+                    })
+                    .catch(function (error) {
+                        res.send({status: 500, error: error, response: null});
+                    });
+            }
+        }, err => {
+            res.send({status: 500, error: err, response: null});
+        })
+        .catch(function (error) {
+            res.send({status: 500, error: error, response: null});
+        });
+});
+
+router.get('/corporates/get', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let limit = req.query.limit;
+    let offset = req.query.offset;
+    let draw = req.query.draw;
+    let order = req.query.order;
+    let search_string = req.query.search_string.toUpperCase();
+    let query = `SELECT *, (SELECT fullname FROM clients WHERE ID = p.clientID) client FROM corporates p 
+                 WHERE upper(p.name) LIKE "${search_string}%" OR upper(p.email) LIKE "${search_string}%" 
+                 OR upper(p.phone) LIKE "${search_string}%" ${order} LIMIT ${limit} OFFSET ${offset}`;
+    let endpoint = '/core-service/get';
+    let url = `${HOST}${endpoint}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM corporates p 
+                 WHERE upper(p.name) LIKE "${search_string}%" OR upper(p.email) LIKE "${search_string}%" 
+                 OR upper(p.phone) LIKE "${search_string}%") as recordsFiltered FROM corporates`;
+        endpoint = '/core-service/get';
+        url = `${HOST}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(payload => {
+            res.send({
+                draw: draw,
+                recordsTotal: payload.data[0].recordsTotal,
+                recordsFiltered: payload.data[0].recordsFiltered,
+                data: (response.data === undefined) ? [] : response.data
+            });
+        });
+    });
+});
+
+router.get('/corporate/get/:id', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let query = `SELECT *, (SELECT fullname FROM clients WHERE ID = p.clientID) client FROM corporates p WHERE ID = ${req.params.id}`,
+        endpoint = '/core-service/get',
+        url = `${HOST}${endpoint}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        res.send({
+            data: response['data'][0] || {}
+        });
     });
 });
 
