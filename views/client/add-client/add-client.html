@@ -22,7 +22,7 @@
     <link rel="stylesheet" href="../../assets/css/lib/chosen/chosen.min.css">
 
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,800' rel='stylesheet' type='text/css'>
-    <!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>-->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
     <script src="../../assets/js/vendor/jquery-2.1.4.min.js"></script>
     <script src="../../js/notifications.js"></script>
@@ -43,12 +43,16 @@
 </head>
 <body>
 <!-- Left Panel -->
-<script src="../../assets/js/vendor/jquery-2.1.4.min.js"></script>
-<script type="text/javascript">
-    jQuery(document).ready(function($){ check(); loadMenus(); read_write();});
-</script>
-
 <style>
+    .select2-container{
+        width: 92% !important;
+    }
+    .select2-selection{
+        height: 100% !important;
+        border: 1px solid #ced4da !important;
+        border-radius: .25rem !important;
+        color: #495057 !important;
+    }
     #regForm {
         background-color: rgba(255, 255, 255, 0.44);
         /*margin: 100px auto;*/
@@ -136,8 +140,270 @@
                             <select class="form-control" id="client_type" title="client_type">
                                 <option value="individual" selected="selected">Individual</option>
                                 <option value="business_individual">Business Individual</option>
+                                <option value="corporate">Corporate</option>
                             </select>
                             <br>
+                        </div>
+                    </div>
+                </div>
+                <div id="user-form3" class="col-xs-12 col-sm-12" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <strong>Add Client Data (Corporate)</strong> <small> Client Information</small>
+                        </div>
+                        <div class="card-body card-block">
+                            <div style="padding: 20px;">
+                                <div class="panel push-down">
+                                    <div class="panel-body">
+                                        <div class="example-box-wrapper">
+                                            <h3>General Information</h3> <span class="text-danger"> Required (*)</span><hr>
+                                            <div class="row">
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label" for="name">Organization Name<span class="text-danger">*</span></label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="name" class="form-control imp" placeholder="Enter organization name" tabindex="1" required="" >
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="col-form-label" for="contact_person">Contact Person<span class="text-danger">*</span></label>
+                                                    <div class="input-group">
+                                                        <select id="contact_person" class="form-control" required="required">
+                                                            <option selected="selected">-- Choose Client --</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label" for="phone3">Phone Number</label>
+                                                    <div class="input-group">
+                                                        <input type="number" id="phone3" class="form-control imp" placeholder="555-555-5555" >
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label" for="email3">Email Address</label>
+                                                    <div class="input-group">
+                                                        <input type="email" id="email3" class="form-control imp" placeholder="Enter email" >
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label" for="web_address">Web Address</label>
+                                                    <div class="input-group">
+                                                        <input type="url" id="web_address" class="form-control imp" placeholder="Enter web address" >
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label" for="address3">Address</label>
+                                                    <div class="input-group">
+                                                        <textarea type="text" id="address3" class="form-control"  placeholder="Address" maxlength="250"></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label" for="postcode3">Postal Code</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="postcode3" class="form-control" placeholder="" >
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label" for="client_state3">State</label>
+                                                    <div class="input-group">
+                                                        <select class="form-control" id="client_state3"></select>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label" for="client_country3">Country</label>
+                                                    <div class="input-group">
+                                                        <select id="client_country3" class="form-control"></select>
+                                                    </div>
+                                                </div>
+                                                <hr/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="panel push-down">
+                                    <div class="panel-body">
+                                        <div class="example-box-wrapper">
+                                            <h3>Business Information</h3><hr><br>
+                                            <div class="row">
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label" for="business_name">Business Name</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="business_name" class="form-control imp" placeholder="Enter business name" >
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label" for="business_phone">Business Phone Number</label>
+                                                    <div class="input-group">
+                                                        <input type="number" id="business_phone" class="form-control imp" placeholder="555-555-5555" >
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label" for="business_type">Business Type</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="business_type" class="form-control imp" placeholder="Enter business type" >
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label" for="tax_id">Tax ID Number</label>
+                                                    <div class="input-group">
+                                                        <input type="number" id="tax_id" class="form-control imp" placeholder="555-555-5555" >
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label" for="industry2">Industry</label>
+                                                    <div class="input-group">
+                                                        <select class="form-control" id="industry2" name="industry" >
+                                                            <option selected="selected">-- Select Industry --</option>
+                                                            <option value="accounts-banking-finance">Accounts, Banking &amp; Finance</option>
+                                                            <option value="administration">Administration</option>
+                                                            <option value="agriculture">Agriculture</option>
+                                                            <option value="automotive">Automotive</option>
+                                                            <option value="beauty">Beauty</option>
+                                                            <option value="construction">Construction</option>
+                                                            <option value="creative-arts">Creative Arts</option>
+                                                            <option value="customer-service">Customer Service</option>
+                                                            <option value="energy">Energy</option>
+                                                            <option value="engineering-utilities">Engineering &amp; Utilities</option>
+                                                            <option value="environmental">Environmental</option>
+                                                            <option value="general-management">General Management</option>
+                                                            <option value="hospitality-tourism">Hospitality &amp; Tourism</option>
+                                                            <option value="human-resources">Human Resources</option>
+                                                            <option value="insurance">Insurance</option>
+                                                            <option value="information-technology">Information Technology</option>
+                                                            <option value="legal">Legal</option>
+                                                            <option value="marine">Marine</option>
+                                                            <option value="marketing">Marketing</option>
+                                                            <option value="medical-professionals">Medical Professionals</option>
+                                                            <option value="mining">Mining</option>
+                                                            <option value="production-manufacturing">Production &amp; Manufacturing</option>
+                                                            <option value="project-management">Project Management</option>
+                                                            <option value="public-sector">Public Sector</option>
+                                                            <option value="media">Media</option>
+                                                            <option value="retailing">Retailing</option>
+                                                            <option value="sales">Sales</option>
+                                                            <option value="pharmaceutical">Pharmaceutical</option>
+                                                            <option value="security">Security</option>
+                                                            <option value="social-work">Social Work</option>
+                                                            <option value="sports">Sports</option>
+                                                            <option value="telecommunication">Telecommunication</option>
+                                                            <option value="transport">Transport</option>
+                                                            <option value="waste-management">Waste Management</option>
+                                                            <option value="bearer">Bearer</option>
+                                                            <option value="chicken-farmer">Chicken Farmer</option>
+                                                            <option value="adv-consultant">Adv Consultant</option>
+                                                            <option value="merchandizer">Merchandizer</option>
+                                                            <option value="security-guard">security guard</option>
+                                                            <option value="custom-framer">Custom Framer</option>
+                                                            <option value="registered-nurse">Registered Nurse</option>
+                                                            <option value="sales-and-distribution">Sales and Distribution</option>
+                                                            <option value="teacher">Teacher</option>
+                                                            <option value="financial-institution">Financial Institution</option>
+                                                            <option value="law-firm">Law Firm</option>
+                                                            <option value="merchandiser">Merchandiser</option>
+                                                            <option value="banker">Banker</option>
+                                                            <option value="banking">Banking</option>
+                                                            <option value="retail">Retail</option>
+                                                            <option value="cooking-gas-provider">cooking Gas provider</option>
+                                                            <option value="internal-security">Internal Security</option>
+                                                            <option value="market-department">Market Department</option>
+                                                            <option value="radio-station">Radio Station</option>
+                                                            <option value="distribution">Distribution</option>
+                                                            <option value="store">Store</option>
+                                                            <option value="meat-shop">meat shop</option>
+                                                            <option value="stationary-solutions-more">Stationary Solutions &amp; More</option>
+                                                            <option value="accounts-receivablebilling-clerk">Accounts receivable/billing clerk</option>
+                                                            <option value="auto-body">AUTO BODY</option>
+                                                            <option value="customer-service-rep">Customer Service Rep</option>
+                                                            <option value="embroidery">Embroidery</option>
+                                                            <option value="industrial">Industrial</option>
+                                                            <option value="office-attendant">Office Attendant</option>
+                                                            <option value="domestic-work">Domestic Work</option>
+                                                            <option value="operations-manager">Operations Manager</option>
+                                                            <option value="executive-assistant">Executive Assistant</option>
+                                                            <option value="juicy-patty">Juicy Patty</option>
+                                                            <option value="investments">Investments</option>
+                                                            <option value="monitoring-agent">Monitoring Agent</option>
+                                                            <option value="dress-making">Dress Making</option>
+                                                            <option value="fast-food-restaurant">Fast Food Restaurant</option>
+                                                            <option value="high-school">High School</option>
+                                                            <option value="marketing-assistant">marketing assistant</option>
+                                                            <option value="basic-school">Basic School</option>
+                                                            <option value="vice-president">Vice President</option>
+                                                            <option value="postman-for-the-mona-branch">Postman for the Mona branch</option>
+                                                            <option value="advertising-consultant">Advertising Consultant</option>
+                                                            <option value="social-media-executive-merchant-loyalty-programme-marketing-officer">Social Media Executive/ Merchant Loyalty Programme Marketing Officer</option>
+                                                            <option value="supervisor">Supervisor</option>
+                                                            <option value="early-childhood-practitioner">Early childhood practitioner</option>
+                                                            <option value="bank">Bank</option><option value="ramp-attendant">Ramp Attendant</option>
+                                                            <option value="soldier">Soldier</option><option value="bar">Bar</option>
+                                                            <option value="mobile-wallet">Mobile Wallet</option>
+                                                            <option value="janitor">Janitor</option>
+                                                            <option value="policy-advocacy-officer">Policy &amp; Advocacy Officer</option>
+                                                            <option value="hoteljnr-ue-chef">hotel/jnr Ue chef</option>
+                                                            <option value="consultant">Consultant</option>
+                                                            <option value="bank-teller">Bank Teller</option>
+                                                            <option value="insurancefinancial-adviser">Insurance/Financial Adviser</option>
+                                                            <option value="accounting-clerck">Accounting Clerck</option>
+                                                            <option value="admin-assistant">Admin Assistant</option>
+                                                            <option value="cashier-sales-rep">Cashier/ Sales rep</option>
+                                                            <option value="primary-school">Primary school</option>
+                                                            <option value="registration-clerk">Registration Clerk</option>
+                                                            <option value="record-officer">Record Officer</option>
+                                                            <option value="receptionist">Receptionist</option>
+                                                            <option value="relief-tennis-pro">RELIEF TENNIS PRO</option>
+                                                            <option value="senior-sales-executive">Senior Sales Executive</option>
+                                                            <option value="call-center">Call Center</option>
+                                                            <option value="bag-juice">Bag Juice</option>
+                                                            <option value="garage">Garage</option>
+                                                            <option value="pharmacy">Pharmacy</option>
+                                                            <option value="printing">Printing</option>
+                                                            <option value="water-delivery">Water Delivery</option>
+                                                            <option value="interior-design">Interior Design</option>
+                                                            <option value="events-planningmarketing-and-project-management">Events Planning/Marketing and Project management.</option>
+                                                            <option value="accounts-banking-finance">Accounts, Banking &amp; Finance</option>
+                                                            <option value="education">Education</option>
+                                                            <option value="engineering-utilities">Engineering &amp; Utilities</option>
+                                                            <option value="hospitality-tourism">Hospitality &amp; Tourism</option>
+                                                            <option value="production-manufacturing">Production &amp; Manufacturing</option>
+                                                            <option value="real-estate">Real Estate</option><option value="travel">Travel</option>
+                                                            <option value="other">Other</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label" for="registration_date">Registration Date</label>
+                                                    <div class="input-group">
+                                                        <input type="date" id="registration_date" class="form-control imp" >
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label" for="incorporation_date">Incorporation Date</label>
+                                                    <div class="input-group">
+                                                        <input type="date" id="incorporation_date" class="form-control imp" >
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label" for="commencement_date">Commencement Date</label>
+                                                    <div class="input-group">
+                                                        <input type="date" id="commencement_date" class="form-control imp" >
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label" for="tax_id">Registration Number</label>
+                                                    <div class="input-group">
+                                                        <input type="number" id="registration_number" class="form-control imp" placeholder="5555555555" >
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="overflow:auto;">
+                                    <div style="float:right;">
+                                        <button class="btn btn-success write" type="button" onclick="createCorporate()">Submit</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -626,7 +892,7 @@
                                                         <div class="input-group">
                                                             <select class="form-control" id="industry" name="industry" >
                                                                 <option selected="selected" disabled="disabled" hidden="hidden" value="">Please select an industry</option>
-                                                                <option value="accounts-banking--finance">Accounts, Banking &amp; Finance</option>
+                                                                <option value="accounts-banking-finance">Accounts, Banking &amp; Finance</option>
                                                                 <option value="administration">Administration</option>
                                                                 <option value="agriculture">Agriculture</option>
                                                                 <option value="automotive">Automotive</option
@@ -635,10 +901,10 @@
                                                                 <option value="creative-arts">Creative Arts</option>
                                                                 <option value="customer-service">Customer Service</option>
                                                                 <option value="energy">Energy</option>
-                                                                <option value="engineering--utilities">Engineering &amp; Utilities</option>
+                                                                <option value="engineering-utilities">Engineering &amp; Utilities</option>
                                                                 <option value="environmental">Environmental</option>
                                                                 <option value="general-management">General Management</option>
-                                                                <option value="hospitality--tourism">Hospitality &amp; Tourism</option>
+                                                                <option value="hospitality-tourism">Hospitality &amp; Tourism</option>
                                                                 <option value="human-resources">Human Resources</option>
                                                                 <option value="insurance">Insurance</option>
                                                                 <option value="information-technology">Information Technology</option>
@@ -647,7 +913,7 @@
                                                                 <option value="marketing">Marketing</option>
                                                                 <option value="medical-professionals">Medical Professionals</option>
                                                                 <option value="mining">Mining</option>
-                                                                <option value="production--manufacturing">Production &amp; Manufacturing</option>
+                                                                <option value="production-manufacturing">Production &amp; Manufacturing</option>
                                                                 <option value="project-management">Project Management</option>
                                                                 <option value="public-sector">Public Sector</option>
                                                                 <option value="media">Media</option>
@@ -681,7 +947,7 @@
                                                                 <option value="radio-station">Radio Station</option>
                                                                 <option value="distribution">Distribution</option>
                                                                 <option value="store">Store</option>
-                                                                <option value="meat-shop">meat shop</option><option value="stationary-solutions--more">Stationary Solutions &amp; More</option><option value="accounts-receivablebilling-clerk">Accounts receivable/billing clerk</option><option value="auto-body">AUTO BODY</option><option value="customer-service-rep">Customer Service Rep</option><option value="embroidery">Embroidery</option><option value="industrial">Industrial</option><option value="office-attendant">Office Attendant</option><option value="domestic-work">Domestic Work</option><option value="operations-manager">Operations Manager</option><option value="executive-assistant">Executive Assistant</option><option value="juicy-patty">Juicy Patty</option><option value="investments">Investments</option><option value="monitoring-agent">Monitoring Agent</option><option value="dress-making">Dress Making</option><option value="fast-food-restaurant">Fast Food Restaurant</option><option value="high-school">High School</option><option value="marketing-assistant">marketing assistant</option><option value="basic-school">Basic School</option><option value="vice-president">Vice President</option><option value="postman-for-the-mona-branch">Postman for the Mona branch</option><option value="advertising-consultant">Advertising Consultant</option><option value="social-media-executive-merchant-loyalty-programme-marketing-officer">Social Media Executive/ Merchant Loyalty Programme Marketing Officer</option><option value="supervisor">Supervisor</option><option value="early-childhood-practitioner">Early childhood practitioner</option><option value="bank">Bank</option><option value="ramp-attendant">Ramp Attendant</option><option value="soldier">Soldier</option><option value="bar">Bar</option><option value="mobile-wallet">Mobile Wallet</option><option value="janitor">Janitor</option><option value="policy--advocacy-officer">Policy &amp; Advocacy Officer</option><option value="hoteljnr-ue-chef">hotel/jnr Ue chef</option><option value="consultant">Consultant</option><option value="bank-teller">Bank Teller</option><option value="insurancefinancial-adviser">Insurance/Financial Adviser</option><option value="accounting-clerck">Accounting Clerck</option><option value="admin-assistant">Admin Assistant</option><option value="cashier-sales-rep">Cashier/ Sales rep</option><option value="primary-school">Primary school</option><option value="registration-clerk">Registration Clerk</option><option value="record-officer">Record Officer</option><option value="receptionist">Receptionist</option><option value="relief-tennis-pro">RELIEF TENNIS PRO</option><option value="senior-sales-executive">Senior Sales Executive</option><option value="call-center">Call Center</option><option value="bag-juice">Bag Juice</option><option value="garage">Garage</option><option value="pharmacy">Pharmacy</option><option value="printing">Printing</option><option value="water-delivery">Water Delivery</option><option value="interior-design">Interior Design</option><option value="events-planningmarketing-and-project-management">Events Planning/Marketing and Project management.</option><option value="accounts-banking-finance">Accounts, Banking &amp; Finance</option><option value="education">Education</option><option value="engineering-utilities">Engineering &amp; Utilities</option><option value="hospitality-tourism">Hospitality &amp; Tourism</option><option value="production-manufacturing">Production &amp; Manufacturing</option><option value="real-estate">Real Estate</option><option value="travel">Travel</option><option value="other">Other</option></select>
+                                                                <option value="meat-shop">meat shop</option><option value="stationary-solutions-more">Stationary Solutions &amp; More</option><option value="accounts-receivablebilling-clerk">Accounts receivable/billing clerk</option><option value="auto-body">AUTO BODY</option><option value="customer-service-rep">Customer Service Rep</option><option value="embroidery">Embroidery</option><option value="industrial">Industrial</option><option value="office-attendant">Office Attendant</option><option value="domestic-work">Domestic Work</option><option value="operations-manager">Operations Manager</option><option value="executive-assistant">Executive Assistant</option><option value="juicy-patty">Juicy Patty</option><option value="investments">Investments</option><option value="monitoring-agent">Monitoring Agent</option><option value="dress-making">Dress Making</option><option value="fast-food-restaurant">Fast Food Restaurant</option><option value="high-school">High School</option><option value="marketing-assistant">marketing assistant</option><option value="basic-school">Basic School</option><option value="vice-president">Vice President</option><option value="postman-for-the-mona-branch">Postman for the Mona branch</option><option value="advertising-consultant">Advertising Consultant</option><option value="social-media-executive-merchant-loyalty-programme-marketing-officer">Social Media Executive/ Merchant Loyalty Programme Marketing Officer</option><option value="supervisor">Supervisor</option><option value="early-childhood-practitioner">Early childhood practitioner</option><option value="bank">Bank</option><option value="ramp-attendant">Ramp Attendant</option><option value="soldier">Soldier</option><option value="bar">Bar</option><option value="mobile-wallet">Mobile Wallet</option><option value="janitor">Janitor</option><option value="policy-advocacy-officer">Policy &amp; Advocacy Officer</option><option value="hoteljnr-ue-chef">hotel/jnr Ue chef</option><option value="consultant">Consultant</option><option value="bank-teller">Bank Teller</option><option value="insurancefinancial-adviser">Insurance/Financial Adviser</option><option value="accounting-clerck">Accounting Clerck</option><option value="admin-assistant">Admin Assistant</option><option value="cashier-sales-rep">Cashier/ Sales rep</option><option value="primary-school">Primary school</option><option value="registration-clerk">Registration Clerk</option><option value="record-officer">Record Officer</option><option value="receptionist">Receptionist</option><option value="relief-tennis-pro">RELIEF TENNIS PRO</option><option value="senior-sales-executive">Senior Sales Executive</option><option value="call-center">Call Center</option><option value="bag-juice">Bag Juice</option><option value="garage">Garage</option><option value="pharmacy">Pharmacy</option><option value="printing">Printing</option><option value="water-delivery">Water Delivery</option><option value="interior-design">Interior Design</option><option value="events-planningmarketing-and-project-management">Events Planning/Marketing and Project management.</option><option value="accounts-banking-finance">Accounts, Banking &amp; Finance</option><option value="education">Education</option><option value="engineering-utilities">Engineering &amp; Utilities</option><option value="hospitality-tourism">Hospitality &amp; Tourism</option><option value="production-manufacturing">Production &amp; Manufacturing</option><option value="real-estate">Real Estate</option><option value="travel">Travel</option><option value="other">Other</option></select>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -857,21 +1123,16 @@
 <div id="panels" include-html="/includes/notifications.html"></div>
 
 <!-- Right Panel -->
-
-<!--<script src="assets/js/vendor/jquery-2.1.4.min.js"></script>-->
-<script src=../../client/add-client/add-client.js></script>
 <script src="../../assets/js/popper.min.js"></script>
 <script src="../../assets/js/plugins.js"></script>
 <script src="../../assets/js/main.js"></script>
 <script src="../../assets/js/lib/chosen/chosen.jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
 <script src="../../js/helper-functions.js"></script>
 <script src="../../menus/menu-items.js"></script>
+<script src=../../client/add-client/add-client.js></script>
 <script src="../../js/loader.js"></script>
 <script src="../../js/jquery.timeago.js" type="text/javascript"></script>
-
-<script>
-
-</script>
 
 </body>
 </html>

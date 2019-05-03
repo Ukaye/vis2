@@ -5,8 +5,8 @@ jQuery(document).ready(function() {
     getBanks();
     getCountries();
     getStates();
+    getClients();
 });
-
 //    console.log($.timeago(new Date()))
 var currentTab = 0; // Current tab is set to be the first tab (0)
 showTab(currentTab); // Display the current tab
@@ -139,15 +139,6 @@ function loadMenus(){
             $('#'+$(k.module_tag).attr('id')).append('<ul class="sub-menu children dropdown-menu"></ul>');
         }else{
             $('#'+k.module_name).show();
-        }
-    });
-    $.ajax({
-        type: "GET",
-        url: "/user/all-requests",
-        success: function (response) {
-            $.each(response, function(k,v){
-                $('#requests-badge').html(v.requests);
-            });
         }
     });
     $.ajax({
@@ -392,17 +383,25 @@ function upload(i){
 
 
 /**
-Business Individual Updates*/
+Business Individual Client Updates*/
 $('#client_type').change(function (e) {
     switch (e.target.value) {
         case 'individual': {
             $('#user-form').show();
             $('#user-form2').hide();
+            $('#user-form3').hide();
             break;
         }
         case 'business_individual': {
             $('#user-form').hide();
             $('#user-form2').show();
+            $('#user-form3').hide();
+            break;
+        }
+        case 'corporate': {
+            $('#user-form').hide();
+            $('#user-form2').hide();
+            $('#user-form3').show();
             break;
         }
     }
@@ -463,6 +462,69 @@ function createBusinessIndividual() {
             }
             else if(test.status === 500){
                 notification('Failed!', 'Unable to Create Client.', 'error');
+            }
+            else{
+                notification('Success!', 'Client Information Registered!', 'success');
+                window.location.href = "./add-client";
+            }
+        }
+    });
+}
+
+
+
+/**
+ Corporate Client Updates*/
+$("#industry2").select2();
+function getClients() {
+    $.ajax({
+        type: 'GET',
+        url: '/user/users-list-v2',
+        success: function (response) {
+            $.each(JSON.parse(response), function (key, val) {
+                $("#contact_person").append(`<option value = "${val.ID}">${val.fullname} &nbsp; (${val.username})</option>`);
+            });
+            $("#contact_person").select2();
+        }
+    });
+}
+
+function createCorporate() {
+    let obj = {};
+    obj.name = $('#name').val();
+    obj.clientID = $('#contact_person').val();
+    obj.phone = $('#phone3').val();
+    obj.email = $('#email3').val();
+    obj.web_address = $('#web_address').val();
+    obj.address = $('#address3').val();
+    if ($('#client_state3').val() !== '-- Select State --')
+        obj.state = $('#client_state3').val();
+    if ($('#client_country3').val() !== '-- Select Country --')
+        obj.country = $('#client_country3').val();
+    obj.postcode = $('#postcode3').val();
+    obj.business_name = $('#business_name').val();
+    obj.business_phone = $('#business_phone').val();
+    obj.business_type = $('#business_type').val();
+    obj.tax_id = $('#tax_id').val();
+    if ($('#industry2').val() !== '-- Select Industry --')
+        obj.industry = $('#industry2').val();
+    obj.registration_date = $('#registration_date').val();
+    obj.incorporation_date = $('#incorporation_date').val();
+    obj.commencement_date = $('#commencement_date').val();
+    obj.registration_number = $('#registration_number').val();
+    obj.created_by = (JSON.parse(localStorage.user_obj)).ID;
+
+    if (!obj.name ||  (obj.clientID === '-- Choose Client --')) {
+        return notification('Kindly fill all required fields!', '', 'warning');
+    }
+
+    $.ajax({
+        'url': '/client/corporate/create',
+        'type': 'post',
+        'data': obj,
+        'success': function (response) {
+            if(response.status === 500){
+                notification(response.error, '', 'error');
             }
             else{
                 notification('Success!', 'Client Information Registered!', 'success');
