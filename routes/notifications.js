@@ -191,7 +191,7 @@ route.get('/all-updates', function(req, res){
                     query = 'select *, notification_id as ID, category, description, date_created, view_status, (select fullname from users where users.id = userid) user \n'+
                         'from pending_records inner join notifications on notification_id = notifications.id \n'+
                         'where status = 1 and userid <> '+user+' and category <> ? and view_status in (1,2) ' +
-                        '(select visible from notification_roles_rel nr where role_id = '+role+' and nr.category = \n' +
+                        'and (select visible from notification_roles_rel nr where role_id = '+role+' and nr.category = \n' +
                         '(select nc.id from notification_categories nc where nc.category_name = category) \n' +
                         '\tand nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = \n' +
                         '(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = category)))) = 1\n'+
@@ -231,9 +231,9 @@ route.get('/all-updates', function(req, res){
                                         `from pending_records inner join notifications on notification_id = notifications.id \n`+
                                         `where status = 1 and userid <> ${user} and category = ? and view_status in (1,2) `+
                                         `and `+
-                                        `(select visible from notification_roles_rel nr where role_id = 1 and nr.category = (select nc.id from notification_categories nc where nc.category_name = ${word}) `+
+                                        `(select visible from notification_roles_rel nr where role_id = 1 and nr.category = (select nc.id from notification_categories nc where nc.category_name = ?) `+
                                             `and nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = `+
-                                        `(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = ${word})))) = 1 `+
+                                        `(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = ?)))) = 1 `+
                                         `order by notifications.id desc`;
                                 }
                                 connection.query(query2, [word, word, word, word, word], function(e, r, f){
