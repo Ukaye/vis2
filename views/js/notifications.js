@@ -347,11 +347,16 @@ function getNotifications(){
                 localStorage.setItem('noti_count', response.length);
             }
             else{
-                new_count = Math.abs(parseInt(localStorage.noti_count) - noti_count);
-                $('#noti-count').html(new_count);
-                $('#noti-count').show();
-                $('#noti-info').html(new_count+ ' new notification(s).');
-                localStorage.setItem('noti_count', response.length);
+                if ((parseInt(localStorage.noti_count) - noti_count) < 0){
+                    new_count = Math.abs(parseInt(localStorage.noti_count) - noti_count);
+                    $('#noti-count').html(new_count);
+                    $('#noti-count').show();
+                    $('#noti-info').html(new_count+ ' new notification(s).');
+                    localStorage.setItem('noti_count', response.length);
+                }
+                else {
+                    $('#noti-info').html(noti_count+ ' notification(s).');
+                }
             }
             localStorage.setItem('notifications', JSON.stringify(response));
             // load_notifications(JSON.parse(localStorage.getItem('notifications')));
@@ -633,9 +638,8 @@ function markAsViewed(id){
         data:obj,
         success: function (response) {
             status = true;
-            setTimeout(function () {
-                getNotifications();
-            }, 10000);
+            getNotifications();
+            return swal('Success', 'Notification Removed.', 'success');
         }
     });
 }
@@ -651,10 +655,10 @@ function markAll(){
         data:obj,
         success: function (response) {
             status = true;
-            setTimeout(function () {
-                getNotifications();
-            }, 10000);
-            $('#noti-count').hide();}
+            getNotifications();
+            $('#noti-count').hide();
+            return swal('Success', 'Notifications Cleared.', 'success');
+        }
     });
 }
 
