@@ -203,9 +203,12 @@ function getOfficers(){
         data: '{}',
         success: function (response) {
             var role = $("[id=loan_officer]");
+            var role2 = $("[id=loan_officer2]");
             role.empty().append('<option selected="selected" id="0">-- Choose Loan Officer --</option>');
+            role2.empty().append('<option selected="selected">-- Choose Loan Officer --</option>');
             $.each(JSON.parse(response), function (key, val) {
                 $("#loan_officer").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                $("#loan_officer2").append('<option value = "' + val.ID + '">' + val.fullname + '</option>');
             });
         }
     });
@@ -218,9 +221,12 @@ function getBranches(){
         data: '{}',
         success: function (response) {
             var branch = $("[id=branch]");
+            var branch2 = $("[id=branch2]");
             branch.empty().append('<option id="0">-- Select a Branch --</option>');
+            branch2.empty().append('<option>-- Select a Branch --</option>');
             $.each(JSON.parse(response), function (key, val) {
                 $("#branch").append('<option value = "' + val.id + '" id="' + val.id + '">' + val.branch_name + '</option>');
+                $("#branch2").append('<option value = "' + val.id + '">' + val.branch_name + '</option>');
             });
         }
     });
@@ -232,9 +238,12 @@ function getBanks(){
         url: "/user/banks/",
         success: function (response) {
             let bank = $("[id=bank]");
+            let bank2 = $("[id=bank2]");
             bank.empty().append('<option id="0" value ="0">-- Select a Bank --</option>');
+            bank2.empty().append('<option id="0" value ="0">-- Select a Bank --</option>');
             $.each(response, function (key, val) {
                 $("#bank").append(`<option value = "${val.code}" id="${val.code}">${val.name} (${val.authorization})</option>`);
+                $("#bank2").append(`<option value = "${val.code}" id="${val.code}">${val.name} (${val.authorization})</option>`);
             });
         }
     });
@@ -378,4 +387,87 @@ function upload(i){
             }
         });
     }
+}
+
+
+
+/**
+Business Individual Updates*/
+$('#client_type').change(function (e) {
+    switch (e.target.value) {
+        case 'individual': {
+            $('#user-form').show();
+            $('#user-form2').hide();
+            break;
+        }
+        case 'business_individual': {
+            $('#user-form').hide();
+            $('#user-form2').show();
+            break;
+        }
+    }
+});
+
+$("#capital_invested").on("keyup", function () {
+    let val = $("#capital_invested").val();
+    $("#capital_invested").val(numberToCurrencyformatter(val));
+});
+
+$("#market_years").on("keyup", function () {
+    let val = $("#market_years").val();
+    $("#market_years").val(numberToCurrencyformatter(val));
+});
+
+function createBusinessIndividual() {
+    let obj = {},
+        test = {};
+    obj.fullname = $('#first_name2').val() + ' '+ $('#middle_name2').val() + ' ' +$('#last_name2').val();
+    obj.loan_officer = $('#loan_officer2').val();
+    obj.branch = $('#branch2').val();
+    obj.bvn = $('#bvn2').val();
+    obj.bank = $('#bank2').val();
+    obj.account = $('#account2').val();
+    obj.email = $('#email2').val();
+    obj.phone = $('#phone2').val();
+    obj.address = $('#address2').val();
+    obj.product_sold = $('#product_sold').val();
+    obj.capital_invested = currencyToNumberformatter($('#capital_invested').val());
+    obj.market_name = $('#market_name').val();
+    obj.market_years = currencyToNumberformatter($('#market_years').val());
+    obj.market_address = $('#market_address').val();
+    obj.kin_fullname = $('#kin_fullname').val();
+    obj.kin_phone = $('#kin_phone').val();
+    obj.kin_relationship = $('#kin_relationship').val();
+
+    if (!$('#first_name2').val() || !$('#last_name2').val() || (obj.loan_officer === '-- Choose Loan Officer --') || (obj.branch === '-- Select a Branch --')
+        || !obj.email || !obj.phone) {
+        return notification('Kindly fill all required fields!', '', 'warning');
+    }
+    obj.username = obj.email;
+    obj.client_type = $('#client_type').val();
+
+    $.ajax({
+        'url': '/user/new-client',
+        'type': 'post',
+        'data': obj,
+        'success': function (data) {
+            $.each(JSON.parse(data), function (key, val) {
+                test[key] = val;
+            });
+            if(test.message){
+                let clients = [];
+                for (let i = 0; i < (test.response).length; i++){
+                    clients += ', '+test.response[i]["fullname"];
+                }
+                notification(`Information already exists for client(s) ${clients}`, '', 'info');
+            }
+            else if(test.status === 500){
+                notification('Failed!', 'Unable to Create Client.', 'error');
+            }
+            else{
+                notification('Success!', 'Client Information Registered!', 'success');
+                window.location.href = "./add-client";
+            }
+        }
+    });
 }
