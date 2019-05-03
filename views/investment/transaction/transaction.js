@@ -297,14 +297,16 @@ function setReviewRequirements(value) {
     $("#review_list_group").html('');
 
     $.ajax({
-        url: `investment-txns/get-txn-user-roles/${value.ID}`,
+        url: `investment-txns/get-txn-user-roles/${value.ID}?method='REVIEW'&userId=${(JSON.parse(localStorage.getItem("user_obj"))).ID}`,
         'type': 'get',
         'success': function (data) {
+            console.log(data);
             if (data.length > 0) {
                 if (data.status === undefined) {
                     $('#viewReviewModalHeader').html(data[0].description);
                     $('#viewReviewModalHeader2').html(data[0].ref_no);
                     $('#wait').hide();
+                    console.log(data);
                     if (data.length > 0) {
                         data.forEach((element, index) => {
                             if (element.method === 'REVIEW') {
@@ -312,7 +314,7 @@ function setReviewRequirements(value) {
                                 <div class="row">
                                     <div class="form-group col-6">
                                         <div class="form-group">
-                                            <label class="form-control-label"><strong>${(element.review_role_name===null)?'Role Not Required':element.review_role_name}</strong></label>
+                                            <label class="form-control-label"><strong>${(element.role_name===null)?'Role Not Required':element.role_name}</strong></label>
                                             <div class="form-control-label">
                                                 <small>Amount: </small><small class="text-muted">${element.amount}</small>
                                             </div>
@@ -325,8 +327,8 @@ function setReviewRequirements(value) {
                                         </div>
                                     </div>
                                     <div class="form-group col-6" style="vertical-align: middle">
-                                        <button type="button" ${(element.isReviewed===1)?'disabled':''} class="btn btn-success btn-sm" onclick="onReviewed(${1},${element.approvalId},${element.txnId})">Review</button>
-                                        <button type="button" ${(element.isReviewed===0)?'disabled':''} class="btn btn-danger btn-sm" onclick="onReviewed(${0},${element.approvalId},${element.txnId})">Deny</button>
+                                        <button type="button" ${(element.isReviewed===1)?'disabled':''} ${(parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onReviewed(${1},${element.approvalId},${element.txnId})">Review</button>
+                                        <button type="button" ${(element.isReviewed===0)?'disabled':''} ${(parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onReviewed(${0},${element.approvalId},${element.txnId})">Deny</button>
                                     </div>
                                 </div>
                             </li>`).trigger('change');
@@ -487,9 +489,10 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemPost', function () {
 function setApprovalRequirements(value) {
     $("#role_list_group").html('');
     $.ajax({
-        url: `investment-txns/get-txn-user-roles/${value.ID}`,
+        url: `investment-txns/get-txn-user-roles/${value.ID}?method='APPROVAL'&userId=${(JSON.parse(localStorage.getItem("user_obj"))).ID}`,
         'type': 'get',
         'success': function (data) {
+            console.log(data);
             if (data.length > 0) {
                 if (data.status === undefined) {
                     $('#viewListApprovalModalHeader').html(data[0].description);
@@ -515,8 +518,8 @@ function setApprovalRequirements(value) {
                                         </div>
                                     </div>
                                     <div class="form-group col-6" style="vertical-align: middle">
-                                        <button type="button" ${(element.isApproved===1)?'disabled':''} class="btn btn-success btn-sm" onclick="onApproved(${1},${element.approvalId},${element.txnId})">Approve</button>
-                                        <button type="button" ${(element.isApproved===0)?'disabled':''} class="btn btn-danger btn-sm" onclick="onApproved(${0},${element.approvalId},${element.txnId})">Deny</button>
+                                        <button type="button" ${(element.isApproved===1)?'disabled':''} ${(parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onApproved(${1},${element.approvalId},${element.txnId})">Approve</button>
+                                        <button type="button" ${(element.isApproved===0)?'disabled':''} ${(parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onApproved(${0},${element.approvalId},${element.txnId})">Deny</button>
                                     </div>
                                 </div>
                             </li>`).trigger('change');
@@ -539,7 +542,7 @@ function setApprovalRequirements(value) {
 function setPostRequirements(value) {
     $("#post_list_group").html('');
     $.ajax({
-        url: `investment-txns/get-txn-user-roles/${value.ID}`,
+        url: `investment-txns/get-txn-user-roles/${value.ID}?method='POST'&userId=${(JSON.parse(localStorage.getItem("user_obj"))).ID}`,
         'type': 'get',
         'success': function (data) {
             if (data.status === undefined) {
@@ -553,7 +556,7 @@ function setPostRequirements(value) {
                             <div class="row">
                                 <div class="form-group col-6">
                                     <div class="form-group">
-                                        <label class="form-control-label"><strong>${(element.post_role_name===null)?'Role Not Required':element.post_role_name}</strong></label>
+                                        <label class="form-control-label"><strong>${(element.role_name===null)?'Role Not Required':element.role_name}</strong></label>
                                         <div class="form-control-label">
                                             <small>Amount: </small><small class="text-muted">${element.amount}</small>
                                         </div>
@@ -566,8 +569,8 @@ function setPostRequirements(value) {
                                     </div>
                                 </div>
                                 <div class="form-group col-6" style="vertical-align: middle">
-                                    <button type="button" ${(element.isPosted===1)?'disabled':''} class="btn btn-success btn-sm" onclick="onPost(${1},${element.approvalId},${element.txnId})">Post</button>
-                                    <button type="button" ${(element.isPosted===0)?'disabled':''} class="btn btn-danger btn-sm" onclick="onPost(${0},${element.approvalId},${element.txnId})">Deny</button>
+                                    <button type="button" ${(element.isPosted===1)?'disabled':''} ${(parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onPost(${1},${element.approvalId},${element.txnId})">Post</button>
+                                    <button type="button" ${(element.isPosted===0)?'disabled':''} ${(parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onPost(${0},${element.approvalId},${element.txnId})">Deny</button>
                                 </div>
                             </div>
                         </li>`).trigger('change');
@@ -688,6 +691,34 @@ function onPost(value, approvedId, txnId) {
         'error': function (err) {
             $('#wait').hide();
             swal('Oops! An error occurred while  executing action', '', 'error');
+        }
+    });
+}
+
+function onComputeInterest() {
+    let _data = {
+        investmentId: selectedInvestment.investmentId,
+        createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
+        productId: selectedInvestment.productId
+    }
+    $.ajax({
+        url: `investment-txns/compute-interest`,
+        'type': 'post',
+        'data': _data,
+        'success': function (data) {
+            console.log(data);
+            if (data.status === undefined) {
+                $('#wait').hide();
+                swal('Interest computed successfully', '', 'success');
+                table.ajax.reload(null, true);
+            } else {
+                $('#wait').hide();
+                swal('Oops! An error occurred while computing interest', '', 'error');
+            }
+        },
+        'error': function (err) {
+            $('#wait').hide();
+            swal('Oops! An error occurred while computing interest', '', 'error');
         }
     });
 }

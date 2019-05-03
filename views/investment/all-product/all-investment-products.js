@@ -329,6 +329,7 @@ function ceateRequirement() {
             'type': 'post',
             'data': reqObject,
             'success': function (data) {
+                $("#btn_requirement").html('Set Approval Requirement');
                 if (data.status === undefined) {
                     $('#wait').hide();
                     $("#list_user_roles").val(null).trigger('change');
@@ -383,6 +384,7 @@ function ceateReview() {
             'type': 'post',
             'data': reqObject,
             'success': function (data) {
+                $("#btn_review").html('Set Post Requirement');
                 if (data.status === undefined) {
                     $('#wait').hide();
                     $("#list_review_roles").val(null).trigger('change');
@@ -437,6 +439,7 @@ function ceatePost() {
             'type': 'post',
             'data': reqObject,
             'success': function (data) {
+                $("#btn_post").html('Set Post Requirement');
                 if (data.status === undefined) {
                     $('#wait').hide();
                     $("#list_post_roles").val(null).trigger('change');
@@ -515,7 +518,7 @@ function getProductRequirement(id) {
                 "mRender": function (data, type, full) {
                     if (full.operationId.toString() === "1") {
                         return "Deposit";
-                    } 
+                    }
                     // else if (full.operationId.toString() === "2") {
                     //     return "Transfer";
                     // } 
@@ -606,7 +609,7 @@ function getProductReview(id) {
                 "mRender": function (data, type, full) {
                     if (full.operationId.toString() === "1") {
                         return "Deposit";
-                    } 
+                    }
                     // else if (full.operationId.toString() === "2") {
                     //     return "Transfer";
                     // } 
@@ -697,7 +700,7 @@ function getProductPost(id) {
                 "mRender": function (data, type, full) {
                     if (full.operationId.toString() === "1") {
                         return "Deposit";
-                    } 
+                    }
                     // else if (full.operationId.toString() === "2") {
                     //     return "Transfer";
                     // } 
@@ -737,14 +740,63 @@ $("#list_operations").on('change',
             url: `investment-products/required-roles?productId=${reqObject.productId}&operationId=${$("#list_operations").val()}`,
             'type': 'get',
             'success': function (data) {
-                if (data.status === undefined) {
+                if (data.status === undefined && data.length > 0) {
                     $('#wait').hide();
                     $("#list_user_roles").val(null).trigger('change');
                     data.forEach(element => {
                         $("#list_user_roles").append(new Option(element.text, element.id, true, true)).trigger('change');
                     });
                     reqObject.ID = data[0].reqId;
-                    $("#btn_requirement").html('Update Approval');
+                    $("#btn_requirement").html('Update Approval Requirement');
+                } else {
+                    $('#wait').hide();
+                }
+            },
+            'error': function (err) {
+                $('#wait').hide();
+            }
+        });
+    });
+
+$("#list_operations_review").on('change',
+    function () {
+        $.ajax({
+            url: `investment-products/required-review-roles?productId=${reqObject.productId}&operationId=${$("#list_operations_review").val()}`,
+            'type': 'get',
+            'success': function (data) {
+                console.log(data);
+                if (data.status === undefined && data.length > 0) {
+                    $('#wait').hide();
+                    $("#list_review_roles").val(null).trigger('change');
+                    data.forEach(element => {
+                        $("#list_review_roles").append(new Option(element.text, element.id, true, true)).trigger('change');
+                    });
+                    reqObject.ID = data[0].reqId;
+                    $("#btn_review").html('Update Reviewer Requirement');
+                } else {
+                    $('#wait').hide();
+                }
+            },
+            'error': function (err) {
+                $('#wait').hide();
+            }
+        });
+    });
+//list_post_roles
+$("#list_operations_post").on('change',
+    function () {
+        $.ajax({
+            url: `investment-products/required-post-roles?productId=${reqObject.productId}&operationId=${$("#list_operations_post").val()}`,
+            'type': 'get',
+            'success': function (data) {
+                if (data.status === undefined && data.length > 0) {
+                    $('#wait').hide();
+                    $("#list_post_roles").val(null).trigger('change');
+                    data.forEach(element => {
+                        $("#list_post_roles").append(new Option(element.text, element.id, true, true)).trigger('change');
+                    });
+                    reqObject.ID = data[0].reqId;
+                    $("#btn_post").html('Update Post Requirement');
                 } else {
                     $('#wait').hide();
                 }

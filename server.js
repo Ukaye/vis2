@@ -546,7 +546,7 @@ server.listen(process.env.port || process.env.PORT || 4000, function () {
     console.log('server running on %s [%s]', process.env.PORT, process.env.STATUS);
 });
 server.timeout = 0; //Server timeout set to never
-var computeInterest = require('../vis2/compute-interest');
-cron.schedule('*/1440 * * * *', () => {
-    computeInterest.computeInvestmentInterest();
-});
+// var computeInterest = require('../vis2/compute-interest');
+// cron.schedule('*/1440 * * * *', () => {
+//     computeInterest.computeInvestmentInterest();
+// });

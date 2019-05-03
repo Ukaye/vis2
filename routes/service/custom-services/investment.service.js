@@ -121,6 +121,9 @@ router.post('/create', function (req, res, next) {
                                 if (response2.data.length > 0) {
                                     let result = response2.data[0];
                                     let pasrsedData = JSON.parse(result.roleId);
+                                    console.log('*********************************************Review Data**************************************');
+                                    console.log(pasrsedData);
+                                    console.log('*********************************************Review Data**************************************');
                                     pasrsedData.map((role) => {
                                         let invOps = {
                                             investmentId: response.data.insertId,
