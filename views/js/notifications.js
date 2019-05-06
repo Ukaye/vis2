@@ -306,19 +306,19 @@ function load_notifications(object){
                 link = '#';
         }
         item = '<div class="feed-body-content">\n' +
-            '                            <p class="feed-body-header">'+jQuery.timeago(val.date_created)+'</time></p>\n' +
-            '                            <div class="row">\n' +
-            '                                <span class="col-md-3" style="padding-right: 0">'+icon+'</span>\n' +
-            '                                <a href="'+link+'" class="col-md-9" style="padding-left: 10px;font-size: 14px">'+val.description+'\n' +
-            '                                    <div class="client-notification">\n' +
-            '                                        <img class="user-avatar rounded-circle" src="/images/admin.jpg" alt="Img"\n' +
-            '                                             style="">\n' +
-            '                                            <p>'+val.user+'</p>\n' +
-            '                         <small onclick="markAsViewed('+val.ID+')" class="feed-content-menu float-right" style="margin-top: 50px">Remove</small>\n'+
-            '                                    </div>\n' +
-            '                                 </a>\n' +
-            '                            </div>\n' +
-            '                        </div>';
+'                            <p class="feed-body-header">'+jQuery.timeago(val.date_created)+'</time></p>\n' +
+'                            <div class="row">\n' +
+'                                <span class="col-md-3" style="padding-right: 0">'+icon+'</span>\n' +
+'                                <a href="'+link+'" class="col-md-9" style="padding-left: 10px;font-size: 14px">'+val.description+'\n' +
+'                                    <div class="client-notification">\n' +
+'                                        <img class="user-avatar rounded-circle" src="/images/admin.jpg" alt="Img"\n' +
+'                                             style="">\n' +
+'                                            <p>'+val.user+'</p>\n' +
+'                         <small onclick="markAsViewed('+val.ID+')" class="feed-content-menu float-right" style="margin-top: 50px">Remove</small>\n'+
+'                                    </div>\n' +
+'                                 </a>\n' +
+'                            </div>\n' +
+'                        </div>';
         $('#n-dropdown').append(item);
     });
     if (count === 0)
@@ -337,16 +337,26 @@ function getNotifications(){
         success: function (response) {
             status = true;
             noti_count = response.length;
-            let new_count = Math.abs(parseInt(localStorage.noti_count) - noti_count);
-            if (noti_count === parseInt(localStorage.noti_count)){
+            let new_count;
+            if (localStorage.noti_count === "NaN"){
+                $('#noti-count').hide();
+                localStorage.setItem('noti_count', response.length);
+            }
+            else if (noti_count === parseInt(localStorage.noti_count)){
                 $('#noti-count').hide();
                 localStorage.setItem('noti_count', response.length);
             }
             else{
-                $('#noti-count').html(new_count);
-                $('#noti-count').show();
-                $('#noti-info').html(new_count+ ' new notification(s).');
-                localStorage.setItem('noti_count', response.length);
+                if ((parseInt(localStorage.noti_count) - noti_count) < 0){
+                    new_count = Math.abs(parseInt(localStorage.noti_count) - noti_count);
+                    $('#noti-count').html(new_count);
+                    $('#noti-count').show();
+                    $('#noti-info').html(new_count+ ' new notification(s).');
+                    localStorage.setItem('noti_count', response.length);
+                }
+                else {
+                    $('#noti-info').html(noti_count+ ' notification(s).');
+                }
             }
             localStorage.setItem('notifications', JSON.stringify(response));
             // load_notifications(JSON.parse(localStorage.getItem('notifications')));
@@ -509,7 +519,7 @@ function list_categories(){
     status = false;
     $.ajax({
         type: "GET",
-        url: "/notifications/categories?bug="+JSON.parse(localStorage.user_obj).ID,
+        url: "/notifications/categories?bug="+JSON.parse(localStorage.user_obj).ID+'&&role='+JSON.parse(localStorage.role),
         success: function (response) {
             status = true
             cats = response;
@@ -519,20 +529,34 @@ function list_categories(){
             $('#n-settings-panel').append('<h6>Manage Notifications</h6><br/>');
             for (let i = 0; i < count; i++){
                 let v = response[i];
-                if (v.compulsory === '1'){
-                    item = '<input type="checkbox" id="category'+v.category+'" disabled="disabled" checked/>&nbsp;&nbsp;<label for = "'+v.category_name+'">'+v.category_name+'</label><hr style="padding-top: 0px"/>'
-                }
-                else{
-                    if (v.state){
-                        if (v.state === '1'){
+                if (v.visible === '1'){
+                    if (v.mandatory === '1'){
+                        item = '<input type="checkbox" id="category'+v.category+'" disabled="disabled" checked/>&nbsp;&nbsp;<label for = "'+v.category_name+'">'+v.category_name+'</label><hr style="padding-top: 0px"/>'
+                    }
+                    else {
+                        if (v.state === '1')
                             item = '<input type="checkbox" id="category'+v.category+'" checked/>&nbsp;&nbsp;<label for = "'+v.category_name+'">'+v.category_name+'</label><hr style="padding-top: 0px"/>'
-                        } else {
+                        else
                             item = '<input type="checkbox" id="category'+v.category+'"/>&nbsp;&nbsp;<label for = "'+v.category_name+'">'+v.category_name+'</label><hr style="padding-top: 0px"/>'
-                        }
-                    } else {
-                        item = '<input type="checkbox" id="category'+v.category+'"/>&nbsp;&nbsp;<label for = "'+v.category_name+'">'+v.category_name+'</label><hr style="padding-top: 0px"/>'
                     }
                 }
+                else {
+                    item = '<input type="checkbox" id="category'+v.category+'" disabled="disabled"/>&nbsp;&nbsp;<label for = "'+v.category_name+'">'+v.category_name+'</label><hr style="padding-top: 0px"/>'
+                }
+                // if (v.compulsory === '1'){
+                //     item = '<input type="checkbox" id="category'+v.category+'" disabled="disabled" checked/>&nbsp;&nbsp;<label for = "'+v.category_name+'">'+v.category_name+'</label><hr style="padding-top: 0px"/>'
+                // }
+                // else{
+                //     if (v.state){
+                //         if (v.state === '1'){
+                //             item = '<input type="checkbox" id="category'+v.category+'" checked/>&nbsp;&nbsp;<label for = "'+v.category_name+'">'+v.category_name+'</label><hr style="padding-top: 0px"/>'
+                //         } else {
+                //             item = '<input type="checkbox" id="category'+v.category+'"/>&nbsp;&nbsp;<label for = "'+v.category_name+'">'+v.category_name+'</label><hr style="padding-top: 0px"/>'
+                //         }
+                //     } else {
+                //         item = '<input type="checkbox" id="category'+v.category+'"/>&nbsp;&nbsp;<label for = "'+v.category_name+'">'+v.category_name+'</label><hr style="padding-top: 0px"/>'
+                //     }
+                // }
                 $('#n-settings-panel').append(item);
             }
             let button = '<button id="submit-settings" onclick="savePreferences()" class="btn btn-info fa-pull-right">Save <i class="fa fa-save"></i></button><br/>';
@@ -614,9 +638,8 @@ function markAsViewed(id){
         data:obj,
         success: function (response) {
             status = true;
-            setTimeout(function () {
-                getNotifications();
-            }, 10000);
+            getNotifications();
+            return swal('Success', 'Notification Removed.', 'success');
         }
     });
 }
@@ -632,10 +655,10 @@ function markAll(){
         data:obj,
         success: function (response) {
             status = true;
-            setTimeout(function () {
-                getNotifications();
-            }, 10000);
-            $('#noti-count').hide();}
+            getNotifications();
+            $('#noti-count').hide();
+            return swal('Success', 'Notifications Cleared.', 'success');
+        }
     });
 }
 
@@ -643,6 +666,7 @@ jQuery(document).ready(function() {
     // setTimeout(function () {
     //     getNotifications();
     // }, 10000);
+    $('#noti-count').hide();
     getNotifications();
     // load_notifications(JSON.parse(localStorage.notifications));
 });

@@ -47,11 +47,29 @@ function saveNewCategoryType(){
     });
 }
 
+// var myTable = $('#cat-table')
+//     .DataTable({
+//         bAutoWidth: false,
+//         "aoColumns": [
+//             { "bSortable": true },
+//             { "bSortable": false },
+//             null
+//             //null, null, null, { "bSortable": false },
+//         ],
+//         "aaSorting": [],
+//         "bSearchable": true,
+//         select: {
+//             style: 'multi'
+//         }
+//     });
+
 var myTable = $('#cat-table')
     .DataTable({
         bAutoWidth: false,
         "aoColumns": [
-            { "bSortable": true }, { "bSortable": false }, null
+            { "bSortable": true },
+            { "bSortable": false },
+            // null
             //null, null, null, { "bSortable": false },
         ],
         "aaSorting": [],
@@ -61,12 +79,31 @@ var myTable = $('#cat-table')
         }
     });
 
+// var myTable2 = $('#role-table')
+//     .DataTable({
+//         bAutoWidth: false,
+//         "aoColumns": [
+//             { "bSortable": true },
+//             null
+// //                , { "bSortable": false },{ "bSortable": false }
+//             // , null, { "bSortable": false },
+//         ],
+//         "aaSorting": [],
+//         "bSearchable": false,
+//         "bFilter": false,
+//         // "bInfo" : false,
+//         select: {
+//             style: 'multi'
+//         },
+//         "paging": false
+//     });
+
 var myTable2 = $('#role-table')
     .DataTable({
         bAutoWidth: false,
         "aoColumns": [
             { "bSortable": true },
-            null
+            null, null
 //                , { "bSortable": false },{ "bSortable": false }
             // , null, { "bSortable": false },
         ],
@@ -158,7 +195,35 @@ function edit(category){
     });
 }
 
-let glob={};
+let glob;
+// function getCats(){
+//     $.ajax({
+//         type: "GET",
+//         url: "/notifications/categories-list/",
+//         data: '{}',
+//         success: function (response) {
+//             glob = response;
+//             $("#cat-table").dataTable().fnClearTable();
+//             $.each(response, function (key, val) {
+//                 let action, icon, set = '';
+//                 action = '<a class="btn btn-info" onclick="edit('+val.id+')" title="Click to edit"><i class="ace-icon fa fa-pencil bigger-130"></i></a> &nbsp; &nbsp;'
+//                 if (val.compulsory === "1"){
+//                     icon = '<input type="checkbox" id="cat'+val.id+'" checked>';
+// //                        icon = '<span class="label label-success" style="background-color:green; color:white; padding: 5px; border-radius: 5px">Compulsory</span>';
+//                 }
+//                 else {
+//                     set = '<a href="#" class="btn btn-info" onclick="loadRolesConfig('+val.id+')" title="Click to configure for roles"><i class="ace-icon fa fa-gear bigger-130"></i> Configure Roles</a> &nbsp; &nbsp;';
+//                     icon = '<input type="checkbox" id="cat'+val.id+'">';
+// //                        icon = '<span class="label label-success" style="background-color:grey; color:white; padding: 5px; border-radius: 5px">Non - Compulsory</span>';
+//                 }
+//                 $('#cat-table').dataTable().fnAddData( [
+//                     val.category_name, icon, set
+//                 ]);
+//             });
+//         }
+//     });
+// }
+
 function getCats(){
     $.ajax({
         type: "GET",
@@ -169,51 +234,84 @@ function getCats(){
             $("#cat-table").dataTable().fnClearTable();
             $.each(response, function (key, val) {
                 let action, icon, set = '';
-                action = '<a class="btn btn-info" onclick="edit('+val.id+')" title="Click to edit"><i class="ace-icon fa fa-pencil bigger-130"></i></a> &nbsp; &nbsp;'
-                if (val.compulsory === "1"){
-                    icon = '<input type="checkbox" id="cat'+val.id+'" checked>';
-//                        icon = '<span class="label label-success" style="background-color:green; color:white; padding: 5px; border-radius: 5px">Compulsory</span>';
-                }
-                else {
-                    set = '<a href="#" class="btn btn-info" onclick="loadRolesConfig('+val.id+')" title="Click to configure for roles"><i class="ace-icon fa fa-gear bigger-130"></i> Configure Roles</a> &nbsp; &nbsp;';
-                    icon = '<input type="checkbox" id="cat'+val.id+'">';
-//                        icon = '<span class="label label-success" style="background-color:grey; color:white; padding: 5px; border-radius: 5px">Non - Compulsory</span>';
-                }
+                set = '<a href="#" class="btn btn-info" onclick="loadRolesConfig('+val.id+')" title="Click to configure for roles"><i class="ace-icon fa fa-gear bigger-130"></i> Configure Roles</a> &nbsp; &nbsp;';
                 $('#cat-table').dataTable().fnAddData( [
-                    val.category_name, icon, set
+                    val.category_name,
+                    set
                 ]);
             });
         }
     });
 }
 
-let cat, roles;
+let cat = 0, roles;
+// function loadRolesConfig(id){
+//     cat = id;
+//     $.each($.grep(glob, function(e){return e.id === id;}), function(k, v){
+//         let name = v.category_name;
+//     });
+//     if (cat !== 0)
+//         $('#selectedName').html('- '+name);
+//     $.ajax({
+//         type: "GET",
+//         url: "/notifications/notification-roles-config?bugger="+id,
+//         success: function (response) {
+//             roles = response;
+//             $('#role-table').dataTable().fnClearTable();
+//             let action;
+//             $.each(response, function (key, val) {
+//                 if (val.state){
+//                     if (val.state === '1'){
+//                         action = '<input type="checkbox" id="con'+val.role_id+'" checked>';
+//                     } else {
+//                         action = '<input type="checkbox" id="con'+val.role_id+'" >';
+//                     }
+//                 } else {
+//                     action = '<input type="checkbox" id="con'+val.role_id+'" >';
+//                 }
+//                 $('#role-table').dataTable().fnAddData( [
+//                     val.role_name, action
+//                 ]);
+//             });
+//         }
+//     });
+// }
+
 function loadRolesConfig(id){
-    cat = id;
+    cat = id; let name;
     $.each($.grep(glob, function(e){return e.id === id;}), function(k, v){
-        let name = v.category_name;
+        name = v.category_name;
     });
     if (cat !== 0)
-        $('#selectedName').html('- '+name);
+        $('#selectedName').html(': '+name);
     $.ajax({
         type: "GET",
         url: "/notifications/notification-roles-config?bugger="+id,
         success: function (response) {
             roles = response;
             $('#role-table').dataTable().fnClearTable();
-            let action;
+            let mandatory, visible = ' ';
             $.each(response, function (key, val) {
-                if (val.state){
-                    if (val.state === '1'){
-                        action = '<input type="checkbox" id="con'+val.role_id+'" checked>';
+                if (val.mandatory){
+                    if (val.mandatory === '1'){
+                        mandatory = '<input type="checkbox" id="con'+val.role_id+'" checked>';
                     } else {
-                        action = '<input type="checkbox" id="con'+val.role_id+'" >';
+                        mandatory = '<input type="checkbox" id="con'+val.role_id+'" >';
                     }
                 } else {
-                    action = '<input type="checkbox" id="con'+val.role_id+'" >';
+                    mandatory = '<input type="checkbox" id="con'+val.role_id+'" >';
+                }
+                if (val.visible){
+                    if (val.visible === '1'){
+                        visible = '<input type="checkbox" id="vis'+val.role_id+'" checked>';
+                    } else {
+                        visible = '<input type="checkbox" id="vis'+val.role_id+'" >';
+                    }
+                } else {
+                    visible = '<input type="checkbox" id="vis'+val.role_id+'" >';
                 }
                 $('#role-table').dataTable().fnAddData( [
-                    val.role_name, action
+                    val.role_name, visible, mandatory
                 ]);
             });
         }
@@ -235,7 +333,8 @@ function saveConfig(cat){
     for (let a = 0; a < roles.length; a++){
         let rd; let wt;
         let st = ($('#con'+roles[a]["role_id"]).prop('checked')) ? 1 : 0;
-        arr[a]=[roles[a]["role_id"], st];
+        let vs = ($('#vis'+roles[a]["role_id"]).prop('checked')) ? 1 : 0;
+        arr[a]=[roles[a]["role_id"], vs, st];
     }
 
     obj.category = cat;
@@ -249,7 +348,6 @@ function saveConfig(cat){
             $.each(data, function (key, val) {
                 test[key] = val;
             });
-//                console.log(test);
             if(test.status == 500){
                 swal("Failed!", "Error encountered. Please try again.", "error");
             }

@@ -207,6 +207,7 @@ users.post('/new-user', function(req, res, next) {
 
 /* Add New Client */
 users.post('/new-client', function(req, res, next) {
+    let id;
     let postData = req.body,
         query =  'INSERT INTO clients Set ?',
         query2 = 'select * from clients where username = ? or email = ? or phone = ?';
@@ -224,15 +225,23 @@ users.post('/new-client', function(req, res, next) {
                     res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
                 } else {
                     connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function(err, re, fields) {
-                        connection.release();
                         if (!err){
-                            let payload = {}
-                            payload.category = 'Clients'
-                            payload.userid = req.cookies.timeout
-                            payload.description = 'New Client Created'
-                            payload.affected = re[0]['ID']
-                            notificationsService.log(req, payload)
-                            res.send(JSON.stringify({"status": 200, "error": null, "response": re}));
+                            id = re[0]['ID'];
+                            connection.query('INSERT into wallets Set ?', {client_id: id}, function(er, r, fields) {
+                                connection.release();
+                                if (!er){
+                                    let payload = {}
+                                    payload.category = 'Clients'
+                                    payload.userid = req.cookies.timeout
+                                    payload.description = 'New Client Created'
+                                    payload.affected = id
+                                    notificationsService.log(req, payload)
+                                    res.send(JSON.stringify({"status": 200, "error": null, "response": re}));
+                                }
+                                else{
+                                    res.send(JSON.stringify({"response": "Error creating client wallet!"}));
+                                }
+                            });
                         }
                         else{
                             res.send(JSON.stringify({"response": "Error retrieving client details. Please try a new username!"}));
@@ -1717,7 +1726,8 @@ users.get('/application-id/:id', function(req, res, next) {
             '(SELECT l.supervisor FROM users l WHERE l.ID = u.loan_officer) AS supervisor, ' +
             '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
             'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
-            'FROM clients AS u INNER JOIN applications AS a ON u.ID=a.userID LEFT JOIN remita_mandates r ON r.applicationID = a.ID WHERE a.ID = ?';
+            'FROM clients AS u INNER JOIN applications AS a ON u.ID = a.userID LEFT JOIN remita_mandates r ' +
+            'ON (r.applicationID = a.ID AND r.status = 1) WHERE a.ID = ?';
     db.getConnection(function(err, connection) {
         if (err) throw err;
 
