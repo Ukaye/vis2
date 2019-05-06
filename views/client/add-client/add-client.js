@@ -7,6 +7,7 @@ jQuery(document).ready(function() {
     getStates();
     getClients();
 });
+let $ = jQuery.noConflict();
 //    console.log($.timeago(new Date()))
 var currentTab = 0; // Current tab is set to be the first tab (0)
 showTab(currentTab); // Display the current tab
@@ -106,14 +107,6 @@ function fixStepIndicator(n) {
     //... and adds the "active" class to the current step:
     x[n].className += " active";
 }
-
-$(document).ajaxStart(function(){
-    $("#wait").css("display", "block");
-});
-
-$(document).ajaxComplete(function(){
-    $("#wait").css("display", "none");
-});
 
 function check(){
     if (localStorage.getItem('role') !== 1){
