@@ -575,7 +575,7 @@ router.get('/client-investments/:id', function (req, res, next) {
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
     let query = `SELECT v.ID,v.ref_no,c.fullname,v.description,v.amount,v.txn_date,p.ID as productId,u.fullname as createdByName,v.approvalDone,v.reviewDone,v.postDone,
-    p.code,p.name,v.ref_no, v.isApproved,v.is_credit,v.balance,v.is_capital,v.investmentId FROM investment_txns v 
+    p.code,p.name,v.ref_no, v.isApproved,v.is_credit,v.balance,v.is_capital,v.investmentId,i.isTerminated, i.isMatured FROM investment_txns v 
     left join investments i on v.investmentId = i.ID
     left join clients c on i.clientId = c.ID
     left join users u on u.ID = v.createdBy

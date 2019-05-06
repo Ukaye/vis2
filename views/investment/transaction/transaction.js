@@ -71,6 +71,13 @@ function bindDataTable(id) {
                 },
                 success: function (data) {
                     selectedInvestment = data.data[0];
+                    if (selectedInvestment.isMatured === 1 || selectedInvestment.isTerminated === 1) {
+                        $('#btnWithdrawal').attr('disabled', true);
+                        $('#btnDeposit').attr('disabled', true);
+                        $('#btnCompInterestInvestment').attr('disabled', true);
+                        $('#btnTerminateInvestment').attr('disabled', true);
+                        $('#btnInvestmentStatement').attr('disabled', true);
+                    }
                     $("#client_name").html(data.data[0].fullname);
                     $("#inv_name").html(`${data.data[0].name} (${data.data[0].code})`);
                     fnCallback(data)
