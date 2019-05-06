@@ -1,15 +1,23 @@
 $(document).ready(function () {
     includeHTML();
     const $body = $('body');
-    $body.delegate('#menuToggle','click', function(event) {
+    $body.delegate('.locked', 'click', function(event) {
+        return swal({
+            title: 'You do not have licence for this module!',
+            text: 'Please contact your admin to purchase the necessary licence.',
+            icon: 'warning',
+            timer: 1000
+        });
+    });
+    $body.delegate('#menuToggle', 'click', function(event) {
         $('body').toggleClass('open');
     });
-    $body.delegate('.search-trigger','click', function(event) {
+    $body.delegate('.search-trigger', 'click', function(event) {
         event.preventDefault();
         event.stopPropagation();
         $('.search-trigger').parent('.header-left').addClass('open');
     });
-    $body.delegate('.search-close','click', function(event) {
+    $body.delegate('.search-close', 'click', function(event) {
         event.preventDefault();
         event.stopPropagation();
         $('.search-trigger').parent('.header-left').removeClass('open');
@@ -22,8 +30,10 @@ function check() {
         jQuery('#new-user').hide();
         jQuery('#models-card').hide();
         jQuery('#user').html(localStorage.getItem("name"));
+        jQuery('#message').html("Welcome, "+localStorage.getItem("name"));
     } else {
         jQuery('#user').html(localStorage.getItem("name"));
+        jQuery('#message').html("Welcome, "+localStorage.getItem("name"));
     }
 }
 
@@ -58,15 +68,6 @@ function loadMenus() {
                 '<ul class="sub-menu children dropdown-menu"></ul>');
         } else {
             $('#' + k.module_name).show();
-        }
-    });
-    $.ajax({
-        type: "GET",
-        url: "/user/all-requests",
-        success: function (response) {
-            $.each(response, function (k, v) {
-                $('#requests-badge').html(v.requests);
-            });
         }
     });
     $.ajax({
