@@ -476,6 +476,13 @@ function createBusinessIndividual() {
 /**
  Corporate Client Updates*/
 $("#industry2").select2();
+$('#industry2').change(function (e) {
+    if (e.target.value === 'other') {
+        $('#industry2_div').show();
+    } else {
+        $('#industry2_div').hide();
+    }
+});
 function getClients() {
     $.ajax({
         type: 'GET',
@@ -507,13 +514,13 @@ function createCorporate() {
     obj.business_type = $('#business_type').val();
     obj.tax_id = $('#tax_id').val();
     if ($('#industry2').val() !== '-- Select Industry --')
-        obj.industry = $('#industry2').val();
+        obj.industry = ($('#industry2').val() === 'other')? $('#industry2_').val() : $('#industry2').val();
     obj.registration_date = $('#registration_date').val();
     obj.incorporation_date = $('#incorporation_date').val();
     obj.commencement_date = $('#commencement_date').val();
     obj.registration_number = $('#registration_number').val();
     obj.created_by = (JSON.parse(localStorage.user_obj)).ID;
-
+console.log(obj.industry)
     if (!obj.name ||  (obj.clientID === '-- Choose Client --')) {
         return notification('Kindly fill all required fields!', '', 'warning');
     }
