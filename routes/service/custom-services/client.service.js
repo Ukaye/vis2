@@ -175,8 +175,8 @@ router.get('/corporates/get', function (req, res, next) {
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
     let query = `SELECT *, (SELECT fullname FROM clients WHERE ID = p.clientID) client FROM corporates p 
-                 WHERE upper(p.name) LIKE "${search_string}%" OR upper(p.email) LIKE "${search_string}%" 
-                 OR upper(p.phone) LIKE "${search_string}%" ${order} LIMIT ${limit} OFFSET ${offset}`;
+                 WHERE upper(p.name) LIKE "${search_string}%" OR upper(p.business_name) LIKE "${search_string}%" 
+                 OR upper(p.ID) LIKE "${search_string}%" ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -185,8 +185,8 @@ router.get('/corporates/get', function (req, res, next) {
         }
     }).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM corporates p 
-                 WHERE upper(p.name) LIKE "${search_string}%" OR upper(p.email) LIKE "${search_string}%" 
-                 OR upper(p.phone) LIKE "${search_string}%") as recordsFiltered FROM corporates`;
+                 WHERE upper(p.name) LIKE "${search_string}%" OR upper(p.business_name) LIKE "${search_string}%" 
+                 OR upper(p.ID) LIKE "${search_string}%") as recordsFiltered FROM corporates`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {
@@ -218,6 +218,48 @@ router.get('/corporate/get/:id', function (req, res, next) {
             data: response['data'][0] || {}
         });
     });
+});
+
+router.post('/corporate/disable/:id', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let query =  `UPDATE corporates Set ? WHERE ID = ${req.params.id}`;
+    let endpoint = `/core-service/post?query=${query}`;
+    let url = `${HOST}${endpoint}`;
+    let payload = {
+        status: 0,
+        date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
+    };
+
+    axios.post(url, payload)
+        .then(function (response_) {
+            return res.send(response_['data']);
+        }, err => {
+            res.send(JSON.stringify({status: 500, error: err, response: null}));
+        })
+        .catch(function (error) {
+            res.send(JSON.stringify({status: 500, error: error, response: null}));
+        });
+});
+
+router.post('/corporate/enable/:id', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let query =  `UPDATE corporates Set ? WHERE ID = ${req.params.id}`;
+    let endpoint = `/core-service/post?query=${query}`;
+    let url = `${HOST}${endpoint}`;
+    let payload = {
+        status: 1,
+        date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
+    };
+
+    axios.post(url, payload)
+        .then(function (response_) {
+            return res.send(response_['data']);
+        }, err => {
+            res.send(JSON.stringify({status: 500, error: err, response: null}));
+        })
+        .catch(function (error) {
+            res.send(JSON.stringify({status: 500, error: error, response: null}));
+        });
 });
 
 module.exports = router;

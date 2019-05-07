@@ -38,6 +38,9 @@
 </script>
 <!-- Left Panel -->
 
+<script type="text/javascript">
+</script>
+
 <style>
     #regForm {
         background-color: rgba(255, 255, 255, 0.44);
@@ -130,12 +133,57 @@
     <div class="content mt-3">
         <div class="animated fadeIn">
             <div class="row">
-
+                <div class="col-xs-12 col-sm-12">
+                    <div class="row">
+                        <div class="col-lg-2">
+                            <label class="form-control-label">
+                                Client Type <span class="text-danger">*</span>
+                            </label>
+                        </div>
+                        <div class="col-lg-10">
+                            <select class="form-control" id="client_type" title="client_type">
+                                <option value="non_corporate" selected="selected">Individual & Business Individual</option>
+                                <option value="corporate">Corporate</option>
+                            </select>
+                            <br>
+                        </div>
+                    </div>
+                </div>
+                <div id="user-table2" class="col-md-12" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="col-sm-9">
+                                <strong class="card-title">All Clients (Corporates)</strong>
+                            </div>
+                            <div class="col-sm-3">
+                                <div class="pull-right">
+                                    <a href="/add-client" class="btn btn-primary"><i class="fa fa-plus"></i> New Client</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <table id="corporates" class="table table-striped table-bordered">
+                                <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Business Name</th>
+                                    <th>Contact Name</th>
+                                    <th>Date Created</th>
+                                    <th>Action</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
                 <div id="user-table" class="col-md-12">
                     <div class="card">
                         <div class="card-header">
                             <div class="col-sm-9">
-                            <strong class="card-title">All Clients</strong>
+                            <strong class="card-title">All Clients (Individuals & Business Individuals)</strong>
                             <form id="filterclients" class="form-inline" style="float: right;">
                                 <div class="form-group">
                                     <label class="" for="startDate">Start date</label>
@@ -171,8 +219,6 @@
                             </table>
                         </div>
                     </div>
-                </div>
-                <div>
                 </div>
                 <div id="user-form" class="col-xs-12 col-sm-12" style="display:none">
                     <div class="card">
@@ -376,6 +422,34 @@
                                                                 <option id="3" value="owner">Owner</option>
                                                                 <option id="4" value="rent">Rent</option>
                                                             </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <hr/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="panel push-down">
+                                        <div class="panel-body">
+                                            <div class="example-box-wrapper">
+                                                <h3>Next of Kin Information</h3><hr><br>
+                                                <div class="row">
+                                                    <div class="form-group col-sm-4 col-md-4">
+                                                        <label class="form-control-label">Full Name</label>
+                                                        <div class="input-group">
+                                                            <input type="text" id="ind_kin_fullname" class="form-control imp" placeholder="Enter name">
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group col-sm-4 col-md-4">
+                                                        <label class="form-control-label">Phone Number</label>
+                                                        <div class="input-group">
+                                                            <input type="number" id="ind_kin_phone" class="form-control imp" placeholder="555-555-5555" >
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group col-sm-4 col-md-4">
+                                                        <label class="form-control-label">Relationship</label>
+                                                        <div class="input-group">
+                                                            <input type="text" id="ind_kin_relationship" class="form-control imp" placeholder="Enter relationship">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -687,7 +761,186 @@
                         </div>
                     </div>
                 </div>
+                <div id="user-form2" class="col-xs-12 col-sm-12" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <strong id="new_edit2">Edit Client</strong> <small id="client_name"> Client Information</small>
+                        </div>
+                        <div class="card-body card-block">
+                            <div style="padding: 20px;">
+                                <div class="panel push-down">
+                                    <div class="panel-body">
+                                        <div class="example-box-wrapper">
+                                            <h3>Personal Information</h3> <span class="text-danger"> Required (*)</span><hr>
+                                            <div class="row">
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label">First Name<span class="text-danger">*</span></label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="first_name2" class="form-control imp" placeholder="Enter first name" tabindex="1" required="" >
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label">Middle Name</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="middle_name2" class="form-control" placeholder="Enter middle name">
+                                                    </div>
+                                                </div>
 
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label">Last Name<span class="text-danger">*</span></label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="last_name2" class="form-control imp" placeholder="Enter last name" required="">
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label">Loan Officer<span class="text-danger">*</span></label>
+                                                    <div class="input-group">
+                                                        <select id="loan_officer2" class="form-control" tabindex="5.2" >
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label">Branch<span class="text-danger">*</span></label>
+                                                    <div class="input-group">
+                                                        <select id="branch2" class="form-control" tabindex="5.2" >
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label">BVN</label>
+                                                    <div class="input-group">
+                                                        <input id="bvn2" class="form-control" type="number" tabindex="5.2" />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label">Bank</label>
+                                                    <div class="input-group">
+                                                        <select id="bank2" class="form-control" tabindex="5.2" >
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label">Account</label>
+                                                    <div class="input-group">
+                                                        <input type="number" id="account2" class="form-control" >
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="panel push-down">
+                                    <div class="panel-body">
+                                        <div class="example-box-wrapper">
+                                            <h3>Contact Information</h3><hr><br>
+                                            <div class="row">
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label">Email Address <span class="text-danger">*</span></label>
+                                                    <div class="input-group">
+                                                        <input type="email" id="email2" class="form-control imp" placeholder="Enter email" required="">
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label">Phone Number <span class="text-danger">*</span></label>
+                                                    <div class="input-group">
+                                                        <input type="number" id="phone2" class="form-control imp" placeholder="555-555-5555" >
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label">Address</label>
+                                                    <div class="input-group">
+                                                        <textarea type="text" id="address2" class="form-control"  placeholder="Home Address" maxlength="250"></textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="panel push-down">
+                                    <div class="panel-body">
+                                        <div class="example-box-wrapper">
+                                            <h3>Business Information</h3><hr><br>
+                                            <div class="row">
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label">Product Sold</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="product_sold" class="form-control imp" placeholder="Enter product">
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label">Capital Invested</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="capital_invested" class="form-control imp" placeholder="1,000,000" >
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label">Name of Market</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="market_name" class="form-control imp" placeholder="Enter market">
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label">Year(s) in Market</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="market_years" class="form-control imp" placeholder="10" >
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label">Market Address</label>
+                                                    <div class="input-group">
+                                                        <textarea type="text" id="market_address" class="form-control"  placeholder="Market Address" maxlength="250"></textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="panel push-down">
+                                    <div class="panel-body">
+                                        <div class="example-box-wrapper">
+                                            <h3>Next of Kin Information</h3><hr><br>
+                                            <div class="row">
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label">Full Name</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="kin_fullname" class="form-control" placeholder="Enter name">
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label">Phone Number</label>
+                                                    <div class="input-group">
+                                                        <input type="number" id="kin_phone" class="form-control" placeholder="555-555-5555" >
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-sm-4 col-md-4">
+                                                    <label class="form-control-label">Relationship</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="kin_relationship" class="form-control" placeholder="Enter relationship">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="overflow:auto;">
+                                    <div style="float:right;">
+                                        <button class="btn btn-success write" type="button" onclick="submitDetails()">Submit</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div><!-- .animated -->
         <div id="wait" style=";width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;"><img src='../../spinner.gif' width="100" height="100" style="background-color: transparent"/></div>
@@ -760,7 +1013,6 @@
 </div>
 
 
-<script src=../../client/all-clients/all-clients.js></script>
 <script src="../../assets/js/popper.min.js"></script>
 <script src="../../assets/js/plugins.js"></script>
 <script src="../../assets/js/main.js"></script>
@@ -778,14 +1030,9 @@
 <script src="../../assets/js/lib/data-table/buttons.colVis.min.js"></script>
 <script src="../../assets/js/lib/data-table/datatables-init.js"></script>
 <script src="../../menus/menu-items.js"></script>
+<script src="../../js/helper-functions.js"></script>
+<script src=../../client/all-clients/all-clients.js></script>
 <script src="../../js/loader.js"></script>
 <script src="../../js/notifications.js"></script>
-
-
-<script type="text/javascript">
-
-</script>
-
-
 </body>
 </html>
