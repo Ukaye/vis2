@@ -1,4 +1,4 @@
-var table = {},
+let table = {},
     $wait = $('#wait');
 $(document).ready(function () {
     bindDataTable();
@@ -65,6 +65,9 @@ function bindDataTable() {
                 }
             });
         },
+        aaSorting: [
+            [0, 'desc']
+        ],
         aoColumnDefs: [
             {
                 sClass: "numericCol",
