@@ -323,7 +323,8 @@ function load_notifications(object){
     });
     if (count === 0)
         $('#mark-all').attr("disabled", true);
-    $('#noti-info').html(count+ ' notification(s).');
+    // $('#noti-info').html(count+ ' notification(s).');
+    $('#noti-info').hide();
 }
 
 let old_count = parseInt(localStorage.noti_count);
@@ -351,11 +352,13 @@ function getNotifications(){
                     new_count = Math.abs(parseInt(localStorage.noti_count) - noti_count);
                     $('#noti-count').html(new_count);
                     $('#noti-count').show();
+                    $('#noti-info').show();
                     $('#noti-info').html(new_count+ ' new notification(s).');
                     localStorage.setItem('noti_count', response.length);
                 }
                 else {
-                    $('#noti-info').html(noti_count+ ' notification(s).');
+                    // $('#noti-info').html(noti_count+ ' notification(s).');
+                    $('#noti-info').hide()
                 }
             }
             localStorage.setItem('notifications', JSON.stringify(response));
