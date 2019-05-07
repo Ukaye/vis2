@@ -434,3 +434,7 @@ function bindInvestmentDataTable(id) {
         ]
     });
 }
+
+
+/**
+ Business Individual & Corporate Client Updates*/

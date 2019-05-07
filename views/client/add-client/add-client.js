@@ -299,6 +299,9 @@ function createClient(){
     obj.guarantor_email = $("#guarantor_email").val();
     obj.guarantor_address = $("#guarantor_address").val();
     obj.gua_country = $('#gua_country').find('option:selected').attr('id');
+    obj.kin_fullname = $('#ind_kin_fullname').val();
+    obj.kin_phone = $('#ind_kin_phone').val();
+    obj.kin_relationship = $('#ind_kin_relationship').val();
 
 
     var test={};
@@ -323,7 +326,6 @@ function createClient(){
                 // window.location.href = "./add-client";
             }
             else{
-                console.log('Done');
                 swal('Success!', "Client Information Registered!", 'success');
                 window.location.href = "./add-client";
             }
@@ -396,6 +398,11 @@ $('#client_type').change(function (e) {
             $('#user-form2').hide();
             $('#user-form3').show();
             break;
+        }
+        default: {
+            $('#user-form').hide();
+            $('#user-form2').hide();
+            $('#user-form3').hide();
         }
     }
 });

@@ -1,4 +1,4 @@
-var table = {},
+let table = {},
     $wait = $('#wait');
 $(document).ready(function () {
     bindDataTable();
@@ -166,9 +166,19 @@ function disburse() {
                     'type': 'post',
                     'data': disbursal,
                     'success': function (data) {
-                        $('#wait').hide();
-                        notification('Loan disbursed successfully','','success');
-                        window.location.reload();
+                        $.ajax({
+                            'url': `/preapproved-loan/delete/${preapproved_loan.ID}`,
+                            'type': 'get',
+                            'success': function (data) {
+                                $('#wait').hide();
+                                notification('Loan disbursed successfully','','success');
+                                window.location.reload();
+                            },
+                            'error': function (err) {
+                                console.log(err);
+                                notification('No internet connection','','error');
+                            }
+                        });
                     },
                     'error': function (err) {
                         $('#wait').hide();
