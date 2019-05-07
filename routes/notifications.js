@@ -178,24 +178,24 @@ route.get('/all-updates', function(req, res){
                             'and nt.userid <> '+user+' \n'+
                             'and ' +
                             '(select np.status from notification_preferences np where np.category = \n' +
-                            '\t(select nc.id from notification_categories nc where nc.category_name = category) \n' +
+                            '\t(select nc.id from notification_categories nc where nc.category_name = nt.category) \n' +
                             'and np.userid = '+user+' and np.date_created = (select date_created from notification_preferences npf where npf.id = '+
                             '(select max(id) from notification_preferences nop where nop.userid = '+user+' ))) = 1 \n' +
                             'and category <> ?\n'+
                             'and (select visible from notification_roles_rel nr where role_id = '+role+' and nr.category = \n' +
-                            '(select nc.id from notification_categories nc where nc.category_name = category) \n' +
+                            '(select nc.id from notification_categories nc where nc.category_name = nt.category) \n' +
                             '\tand nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = \n' +
-                            '(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = category)))) = 1\n'
+                            '(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = nt.category)))) = 1\n'+
                             'order by nt.id desc'
                 }
                 else {
                     query = 'select *, notification_id as ID, category, description, date_created, view_status, (select fullname from users where users.id = userid) user \n'+
-                        'from pending_records inner join notifications on notification_id = notifications.id \n'+
+                        'from pending_records inner join notifications nt on notification_id = notifications.id \n'+
                         'where status = 1 and userid <> '+user+' and category <> ? and view_status in (1,2) ' +
                         'and (select visible from notification_roles_rel nr where role_id = '+role+' and nr.category = \n' +
-                        '(select nc.id from notification_categories nc where nc.category_name = category) \n' +
+                        '(select nc.id from notification_categories nc where nc.category_name = nt.category) \n' +
                         '\tand nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = \n' +
-                        '(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = category)))) = 1\n'+
+                        '(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = nt.category)))) = 1\n'+
                         'order by notifications.id desc';
                 }
                 connection.query(query, ['Application'], function(er, response, field){

@@ -580,7 +580,7 @@ function manage(){
 function back(){
     $('#noti-settings').show();
     $('#noti-back').hide();
-    notifications();
+    // notifications();
     $('#n-dropdown').slideUp('slow');
     $('#n-dropdown').show();
     $('#n-settings-panel').hide();
@@ -617,7 +617,7 @@ function savePreferences(){
                 $('#n-dropdown').slideUp('slow');
                 $('#n-settings-panel').hide();
                 setTimeout(function () {
-                    notifications();
+                    getNotifications();
                 }, 5000);
                 $('#noti-count').hide();
             }
