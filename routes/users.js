@@ -322,8 +322,8 @@ users.post('/upload/:id', function(req, res) {
 	let sampleFile = req.files.file,
         name = sampleFile.name,
         extArray = sampleFile.name.split("."),
-        extension = extArray[extArray.length - 1],
-        fileName = name+'.'+extension;
+        extension = extArray[extArray.length - 1];
+    if (extension) extension = extension.toLowerCase();
 
 	fs.stat('files/users/'+req.params.id+'/', function(err) {
 		if (!err) {
@@ -364,8 +364,8 @@ users.post('/upload-file/:id/:item', function(req, res) {
     let sampleFile = req.files.file,
         name = sampleFile.name,
         extArray = sampleFile.name.split("."),
-        extension = extArray[extArray.length - 1],
-        fileName = name+'.'+extension;
+        extension = extArray[extArray.length - 1];
+    if (extension) extension = extension.toLowerCase();
     fs.stat('files/users/'+req.params.id+'/', function(err) {
         if (!err) {
             console.log('file or directory exists');
@@ -5139,8 +5139,8 @@ users.post('/attach-files/:id', function(req, res) {
             let sampleFile = req.files.file,
                 name = sampleFile.name,
                 extArray = sampleFile.name.split("."),
-                extension = extArray[extArray.length - 1],
-                fileName = name+'.'+extension;
+                extension = extArray[extArray.length - 1];
+            if (extension) extension = extension.toLowerCase();
 
             fs.stat('files/activities/'+req.params.id+'/'+name, function (err) {
                 if (err) {
