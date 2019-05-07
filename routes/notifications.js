@@ -164,7 +164,8 @@ route.get('/all-updates', function(req, res){
     const endpoint = `/core-service/get?query=${query_}`;
     const url = `${HOST}${endpoint}`;
     db.getConnection(function(error, connection){
-        if (error) return console.log(error);
+        if (error)
+            res.send({"status": 500, "error": error, "response": null});
         connection.query(query_, function(err, results, fields){
             if (err)
                 return res.send({"status": 500, "error": err, "response": null});
@@ -231,7 +232,7 @@ route.get('/all-updates', function(req, res){
                                         `from pending_records inner join notifications on notification_id = notifications.id \n`+
                                         `where status = 1 and userid <> ${user} and category = ? and view_status in (1,2) `+
                                         `and `+
-                                        `(select visible from notification_roles_rel nr where role_id = 1 and nr.category = (select nc.id from notification_categories nc where nc.category_name = ?) `+
+                                        `(select visible from notification_roles_rel nr where role_id = ${role} and nr.category = (select nc.id from notification_categories nc where nc.category_name = ?) `+
                                             `and nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = `+
                                         `(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = ?)))) = 1 `+
                                         `order by notifications.id desc`;
