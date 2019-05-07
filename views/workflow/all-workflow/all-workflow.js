@@ -68,8 +68,8 @@ function populateDataTable(data) {
             v.ID,
             v.name,
             v.date_created,
-            '<button type="button" class="btn btn-info" data-toggle="modal" data-target="#viewProcess" onclick="openModal('+v.ID+')"><i class="fa fa-eye"></i> View Stages</button> ' +
-            '<button type="button" class="btn btn-primary" onclick="goToEditWorkflow('+v.ID+')"><i class="fa fa-edit"></i> Edit Workflow</button>'
+            // '<button type="button" class="btn btn-info" data-toggle="modal" data-target="#viewProcess" onclick="openModal('+v.ID+')"><i class="fa fa-eye"></i> View Stages</button> ' +
+            '<button type="button" class="btn btn-primary" onclick="goToEditWorkflow('+v.ID+')"><i class="fa fa-edit"></i> Edit</button>'
         ];
         $('#bootstrap-data-table').dataTable().fnAddData(table);
     });
