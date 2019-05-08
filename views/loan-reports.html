@@ -186,9 +186,9 @@
                                 <li class="nav-item">
                                     <a class="nav-link active" href="#intelliboard" role="tab" data-toggle="tab">Disbursed Loans Report</a>
                                 </li>
-                                <!--<li class="nav-item">-->
-                                    <!--<a class="nav-link" href="#principal-reports" role="tab" data-toggle="tab">Principal Reports</a>-->
-                                <!--</li>-->
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#principal-reports" role="tab" data-toggle="tab">Principal Reports</a>
+                                </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="#org-reports" role="tab" data-toggle="tab">Interest Reports</a>
                                 </li>
@@ -399,176 +399,176 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!--<div role="tabpanel" class="tab-pane fade" id="principal-reports">-->
-                                    <!--<div class="card">-->
-                                        <!--<div class="card-body">-->
-                                            <!--<div class="col-sm-12" style="padding: 20px">-->
-                                                <!--<div class="row" style="padding-bottom: 10px">-->
-                                                    <!--<div class="col-sm-6">-->
-                                                        <!--<button id="principal-received-button" class="btn btn-block col-sm-12">Principal Received</button>-->
-                                                    <!--</div>-->
-                                                    <!--<div class="col-sm-6">-->
-                                                        <!--<button id="principal-receivable-button" class="btn col-sm-12">Principal Receivable</button>-->
-                                                    <!--</div>-->
-                                                <!--</div>-->
-                                            <!--</div>-->
-                                            <!--<div class="col-sm-12">-->
-                                                <!--<div id="principal-received-div" style="display: none" class="col-sm-12">-->
-                                                    <!--<div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">-->
-                                                        <!--<div class="col-sm-4 card" style="background-color: transparent; border-color: transparent">-->
-                                                            <!--<div class="form-group">-->
-                                                                <!--<div class="input-group">-->
-                                                                    <!--<select id="prchartfilterofficers" onchange="prFilterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">-->
-                                                                    <!--</select>-->
-                                                                <!--</div>-->
-                                                            <!--</div>-->
-                                                        <!--</div>-->
-                                                        <!--<div class="col-sm-4 card" id="pr-freq" style="background-color: transparent; border-color: transparent">-->
-                                                            <!--<div class="form-group">-->
-                                                                <!--<div class="input-group">-->
-                                                                    <!--<select id="pr-frequency" onchange="prFrequencyChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">-->
-                                                                        <!--<option value="-1"> &#45;&#45; Select Period &#45;&#45;</option>-->
-                                                                        <!--<option value="2">Monthly</option>-->
-                                                                        <!--<option value="4">Quarterly</option>-->
-                                                                        <!--<option value="3">Yearly</option>-->
-                                                                    <!--</select>-->
-                                                                <!--</div>-->
-                                                            <!--</div>-->
-                                                        <!--</div>-->
-                                                        <!--<div class="col-sm-4 card" id="pr-year" style="display: none; background-color: transparent; border-color: transparent; ">-->
-                                                            <!--<div class="form-group">-->
-                                                                <!--<div class="input-group">-->
-                                                                    <!--<select id="p-r-year" onchange="prFilterYear(this)" class="year form-control" style="width:200px; margin: 0 5px; margin-left: 50px">-->
-                                                                        <!--<option value="0">Select Year</option>-->
-                                                                    <!--</select>-->
-                                                                <!--</div>-->
-                                                            <!--</div>-->
-                                                        <!--</div>-->
-                                                    <!--</div>-->
-                                                    <!--<div id="principal-received-chart" style="text-align: center">FusionCharts XT will load here!</div><hr/>-->
-                                                    <!--<div class="card">-->
-                                                        <!--<div class="card-header">-->
-                                                            <!--<div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">-->
-                                                                <!--<strong>Interests Received</strong>-->
-                                                                <!--<span>Total: <span id="total-principal-earned"></span></span>-->
-                                                            <!--</div>-->
-                                                            <!--<div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">-->
-                                                                <!--<div class="form-group">-->
-                                                                    <!--<div class="input-group">-->
-                                                                        <!--<select id="principal-officers" onchange="principalFilterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">-->
-                                                                        <!--</select>-->
-                                                                    <!--</div>-->
-                                                                <!--</div>-->
-                                                            <!--</div>-->
-                                                            <!--<div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">-->
-                                                                <!--<form id="filterprincipal" class="form-inline" style="float: right;">-->
-                                                                    <!--<div class="form-group">-->
-                                                                        <!--<label class="" for="startDate">Start date</label>-->
-                                                                        <!--<input type="date" class="form-control" id="filterprincipalstart" placeholder="Start date">-->
-                                                                    <!--</div>-->
-                                                                    <!--<div class="form-group">-->
-                                                                        <!--<label class="" for="endDate">End date</label>-->
-                                                                        <!--<input type="date" class="form-control" id="filterprincipalend" placeholder="End date">-->
-                                                                    <!--</div>-->
-                                                                    <!--<button type="submit" class="btn btn-success">Filter</button>-->
-                                                                <!--</form>-->
-                                                            <!--</div>-->
-                                                        <!--</div>-->
-                                                        <!--<div class="card-body">-->
-                                                            <!--<table id="principal-table" class="table table-striped table-bordered">-->
-                                                                <!--<thead>-->
-                                                                <!--<tr>-->
-                                                                    <!--<th>Loan ID</th>-->
-                                                                    <!--<th>Client Name</th>-->
-                                                                    <!--<th>Principal Received</th>-->
-                                                                    <!--<th>Loan Officer</th>-->
-                                                                <!--</tr>-->
-                                                                <!--</thead>-->
-                                                                <!--<tbody></tbody>-->
-                                                            <!--</table>-->
-                                                        <!--</div>-->
-                                                    <!--</div>-->
-                                                <!--</div>-->
-                                                <!--<div id="principal-receivable-div" style="display: none" class="col-sm-12">-->
-                                                    <!--<div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">-->
-                                                        <!--<div class="col-sm-4 card" style="background-color: transparent; border-color: transparent">-->
-                                                            <!--<div class="form-group">-->
-                                                                <!--<div class="input-group">-->
-                                                                    <!--<select id="prrecchartfilterofficers" onchange="prRecFilterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">-->
-                                                                    <!--</select>-->
-                                                                <!--</div>-->
-                                                            <!--</div>-->
-                                                        <!--</div>-->
-                                                        <!--<div class="col-sm-4 card" id="pr-rec-freq" style="background-color: transparent; border-color: transparent">-->
-                                                            <!--<div class="form-group">-->
-                                                                <!--<div class="input-group">-->
-                                                                    <!--<select id="pr-rec-frequency" onchange="prRecFrequencyChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">-->
-                                                                        <!--<option value="-1"> &#45;&#45; Select Period &#45;&#45;</option>-->
-                                                                        <!--<option value="2">Monthly</option>-->
-                                                                        <!--<option value="4">Quarterly</option>-->
-                                                                        <!--<option value="3">Yearly</option>-->
-                                                                    <!--</select>-->
-                                                                <!--</div>-->
-                                                            <!--</div>-->
-                                                        <!--</div>-->
-                                                        <!--<div class="col-sm-4 card" id="pr-rec-year" style="display: none; background-color: transparent; border-color: transparent; ">-->
-                                                            <!--<div class="form-group">-->
-                                                                <!--<div class="input-group">-->
-                                                                    <!--<select id="p-r-rec-year" onchange="prRecFilterYear(this)" class="year form-control" style="width:200px; margin: 0 5px; margin-left: 50px">-->
-                                                                        <!--<option value="0">Select Year</option>-->
-                                                                    <!--</select>-->
-                                                                <!--</div>-->
-                                                            <!--</div>-->
-                                                        <!--</div>-->
-                                                    <!--</div>-->
-                                                    <!--<div id="principal-receivable-chart" style="text-align: center">FusionCharts XT will load here!</div><hr/>-->
-                                                    <!--<div class="card">-->
-                                                        <!--<div class="card-header">-->
-                                                            <!--<div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">-->
-                                                                <!--<strong>Principal Receivable</strong>-->
-                                                                <!--<span>Total: <span id="total-principal-rec"></span></span>-->
-                                                            <!--</div>-->
-                                                            <!--<div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">-->
-                                                                <!--<div class="form-group">-->
-                                                                    <!--<div class="input-group">-->
-                                                                        <!--<select id="principal-rec-officers" onchange="principalRecFilterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">-->
-                                                                        <!--</select>-->
-                                                                    <!--</div>-->
-                                                                <!--</div>-->
-                                                            <!--</div>-->
-                                                            <!--<div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">-->
-                                                                <!--<form id="filterprincipalrec" class="form-inline" style="float: right;">-->
-                                                                    <!--<div class="form-group">-->
-                                                                        <!--<label class="" for="startDate">Start date</label>-->
-                                                                        <!--<input type="date" class="form-control" id="filterprincipalrecstart" placeholder="Start date">-->
-                                                                    <!--</div>-->
-                                                                    <!--<div class="form-group">-->
-                                                                        <!--<label class="" for="endDate">End date</label>-->
-                                                                        <!--<input type="date" class="form-control" id="filterprincipalrecend" placeholder="End date">-->
-                                                                    <!--</div>-->
-                                                                    <!--<button type="submit" class="btn btn-success">Filter</button>-->
-                                                                <!--</form>-->
-                                                            <!--</div>-->
-                                                        <!--</div>-->
-                                                        <!--<div class="card-body">-->
-                                                            <!--<table id="principal-rec-table" class="table table-striped table-bordered">-->
-                                                                <!--<thead>-->
-                                                                <!--<tr>-->
-                                                                    <!--<th>Loan ID</th>-->
-                                                                    <!--<th>Client Name</th>-->
-                                                                    <!--<th>Principal Receivable</th>-->
-                                                                    <!--<th>Loan Officer</th>-->
-                                                                <!--</tr>-->
-                                                                <!--</thead>-->
-                                                                <!--<tbody></tbody>-->
-                                                            <!--</table>-->
-                                                        <!--</div>-->
-                                                    <!--</div>-->
-                                                <!--</div>-->
-                                            <!--</div>-->
-                                        <!--</div>-->
-                                    <!--</div>-->
-                                <!--</div>-->
+                                <div role="tabpanel" class="tab-pane fade" id="principal-reports">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="col-sm-12" style="padding: 20px">
+                                                <div class="row" style="padding-bottom: 10px">
+                                                    <div class="col-sm-6">
+                                                        <button id="principal-received-button" class="btn btn-block col-sm-12">Principal Received</button>
+                                                    </div>
+                                                    <div class="col-sm-6">
+                                                        <button id="principal-receivable-button" class="btn col-sm-12">Principal Receivable</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-12">
+                                                <div id="principal-received-div" style="display: none" class="col-sm-12">
+                                                    <div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">
+                                                        <div class="col-sm-4 card" style="background-color: transparent; border-color: transparent">
+                                                            <div class="form-group">
+                                                                <div class="input-group">
+                                                                    <select id="prchartfilterofficers" onchange="prFilterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-4 card" id="pr-freq" style="background-color: transparent; border-color: transparent">
+                                                            <div class="form-group">
+                                                                <div class="input-group">
+                                                                    <select id="pr-frequency" onchange="prFrequencyChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                        <option value="-1"> -- Select Period --</option>
+                                                                        <option value="2">Monthly</option>
+                                                                        <option value="4">Quarterly</option>
+                                                                        <option value="3">Yearly</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-4 card" id="pr-year" style="display: none; background-color: transparent; border-color: transparent; ">
+                                                            <div class="form-group">
+                                                                <div class="input-group">
+                                                                    <select id="p-r-year" onchange="prFilterYear(this)" class="year form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                        <option value="0">Select Year</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="principal-received-chart" style="text-align: center">FusionCharts XT will load here!</div><hr/>
+                                                    <div class="card">
+                                                        <div class="card-header">
+                                                            <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
+                                                                <strong>Interests Received</strong>
+                                                                <span>Total: <span id="total-principal-earned"></span></span>
+                                                            </div>
+                                                            <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
+                                                                <div class="form-group">
+                                                                    <div class="input-group">
+                                                                        <select id="principal-officers" onchange="principalFilterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">
+                                                                <form id="filterprincipal" class="form-inline" style="float: right;">
+                                                                    <div class="form-group">
+                                                                        <label class="" for="startDate">Start date</label>
+                                                                        <input type="date" class="form-control" id="filterprincipalstart" placeholder="Start date">
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label class="" for="endDate">End date</label>
+                                                                        <input type="date" class="form-control" id="filterprincipalend" placeholder="End date">
+                                                                    </div>
+                                                                    <button type="submit" class="btn btn-success">Filter</button>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <table id="principal-table" class="table table-striped table-bordered">
+                                                                <thead>
+                                                                <tr>
+                                                                    <th>Loan ID</th>
+                                                                    <th>Client Name</th>
+                                                                    <th>Principal Received</th>
+                                                                    <th>Loan Officer</th>
+                                                                </tr>
+                                                                </thead>
+                                                                <tbody></tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div id="principal-receivable-div" style="display: none" class="col-sm-12">
+                                                    <div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">
+                                                        <div class="col-sm-4 card" style="background-color: transparent; border-color: transparent">
+                                                            <div class="form-group">
+                                                                <div class="input-group">
+                                                                    <select id="prrecchartfilterofficers" onchange="prRecFilterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-4 card" id="pr-rec-freq" style="background-color: transparent; border-color: transparent">
+                                                            <div class="form-group">
+                                                                <div class="input-group">
+                                                                    <select id="pr-rec-frequency" onchange="prRecFrequencyChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                        <option value="-1"> -- Select Period --</option>
+                                                                        <option value="2">Monthly</option>
+                                                                        <option value="4">Quarterly</option>
+                                                                        <option value="3">Yearly</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-4 card" id="pr-rec-year" style="display: none; background-color: transparent; border-color: transparent; ">
+                                                            <div class="form-group">
+                                                                <div class="input-group">
+                                                                    <select id="p-r-rec-year" onchange="prRecFilterYear(this)" class="year form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                        <option value="0">Select Year</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="principal-receivable-chart" style="text-align: center">FusionCharts XT will load here!</div><hr/>
+                                                    <div class="card">
+                                                        <div class="card-header">
+                                                            <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
+                                                                <strong>Principal Receivable</strong>
+                                                                <span>Total: <span id="total-principal-rec"></span></span>
+                                                            </div>
+                                                            <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
+                                                                <div class="form-group">
+                                                                    <div class="input-group">
+                                                                        <select id="principal-rec-officers" onchange="principalRecFilterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">
+                                                                <form id="filterprincipalrec" class="form-inline" style="float: right;">
+                                                                    <div class="form-group">
+                                                                        <label class="" for="startDate">Start date</label>
+                                                                        <input type="date" class="form-control" id="filterprincipalrecstart" placeholder="Start date">
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label class="" for="endDate">End date</label>
+                                                                        <input type="date" class="form-control" id="filterprincipalrecend" placeholder="End date">
+                                                                    </div>
+                                                                    <button type="submit" class="btn btn-success">Filter</button>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <table id="principal-rec-table" class="table table-striped table-bordered">
+                                                                <thead>
+                                                                <tr>
+                                                                    <th>Loan ID</th>
+                                                                    <th>Client Name</th>
+                                                                    <th>Principal Receivable</th>
+                                                                    <th>Loan Officer</th>
+                                                                </tr>
+                                                                </thead>
+                                                                <tbody></tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div role="tabpanel" class="tab-pane fade" id="org-reports">
                                     <div class="card">
                                         <div class="card-body">
@@ -1284,6 +1284,8 @@
         loadYears('payment-year');
         loadYears('i-r-year');
         loadYears('i-r-rec-year');
+        loadYears('p-r-year');
+        loadYears('p-r-rec-year');
         getOfficers();
         getBranches();
         loadInfo();
@@ -1518,6 +1520,26 @@
         $("#interests-received-button").attr('class', 'btn btn-primary col-sm-12');
         $("#interests-receivable-button").attr('class', 'btn col-sm-12');
         $("#gross-projected-interest-button").attr('class', 'btn col-sm-12');
+    });
+
+    $(document).on("click", "#principal-receivable-button", function (e) {
+        loadPrincipalReceivable();
+        principalreceivable();
+        $("#principal-receivable-div").show();
+        $("#principal-receivable-div").attr('class', 'col-sm-12');
+        $("#principal-received-div").hide();
+        $("#principal-receivable-button").attr('class', 'btn btn-primary col-sm-12');
+        $("#principal-received-button").attr('class', 'btn col-sm-12');
+    });
+
+    $(document).on("click", "#principal-received-button", function (e) {
+        loadPrincipalReceived();
+        principalreceived();
+        $("#principal-received-div").show();
+        $("#principal-received-div").attr('class', 'col-sm-12');
+        $("#principal-receivable-div").hide();
+        $("#principal-received-button").attr('class', 'btn btn-primary col-sm-12');
+        $("#principal-receivable-button").attr('class', 'btn col-sm-12');
     });
 
     $(document).on("click", "#gross-projected-interest-button", function (e) {
@@ -2513,6 +2535,112 @@
         }
     }
 
+    function loadPrincipalReceived(){
+        let start = $("#filterprincipalstart").val(),
+            end = $("#filterprincipalend").val(),
+            url;
+        url = (start === "" || start === null || end === "" || end === null ) ? 'user/principal' : 'user/principal?start='+formatDate(start)+'&&end='+formatDate(end)
+
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                (data.status === 200) ? populatePrincipalReceived(data.response) : swal({"icon": "error", "text": 'Database Error'})
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
+    }
+
+    function loadPrincipalReceivable(){
+        let start = $("#filterprincipalrecstart").val(),
+            end = $("#filterprincipalrecend").val(),
+            url;
+        url = (start === "" || start === null || end === "" || end === null ) ? 'user/principal-receivable' : 'user/principal-receivable?start='+formatDate(start)+'&&end='+formatDate(end)
+
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                (data.status === 200) ? populatePrincipalReceivable(data.response) : swal({"icon": "error", "text": 'Database Error'})
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
+    }
+
+    function populatePrincipalReceived(dets){
+        $("#principal-table").dataTable().fnClearTable();
+        if (dets.length === 0){
+            $("#principal-table").dataTable().fnClearTable();
+            $('#total-principal-earned').html(formatter.format(0));
+        }else{
+            var total = 0; let deta = []; let num = dets.length;
+            for (let i = 0; i < num; i ++){
+                let v = dets[i];
+                total+= parseFloat(v.paid);
+                v.id = padWithZeroes(parseInt(v.applicationID),6);
+                v.amount = formatter.format(parseFloat(v.paid));
+                deta.push(v);
+                if (i === num - 1){
+                    $('#principal-table').DataTable({
+                        dom: 'Blfrtip',
+                        bDestroy: true,
+                        data: deta,
+                        search: {search: ' '},
+                        buttons: [
+                            'copy', 'csv', 'excel', 'pdf', 'print'
+                        ],
+                        columns: [
+                            { data: "id" },
+                            { data: "fullname" },
+                            { data: "amount" },
+                            { data: "loan_officer" }
+                        ]
+                    });
+                }
+            }
+            $('#total-principal-earned').html(formatter.format(total));
+        }
+    }
+
+    function populatePrincipalReceivable(dets){
+        $("#principal-rec-table").dataTable().fnClearTable();
+        if (dets.length === 0){
+            $("#principal-rec-table").dataTable().fnClearTable();
+            $('#total-principal-rec').html(formatter.format(0));
+        }else{
+            var total = 0; let deta = [];let num = dets.length;
+            for (let i = 0; i < num; i ++) {
+                let v = dets[i];
+                v.id = padWithZeroes(parseInt(v.applicationID), 6);
+                v.amount = formatter.format(parseFloat(v.due));
+                deta.push(v);
+                total += parseFloat(v.due);
+                if (i === num - 1) {
+                    $('#principal-rec-table').DataTable({
+                        dom: 'Blfrtip',
+                        bDestroy: true,
+                        data: deta,
+                        search: {search: ' '},
+                        buttons: [
+                            'copy', 'csv', 'excel', 'pdf', 'print'
+                        ],
+                        columns: [
+                            {data: "id"},
+                            {data: "fullname"},
+                            {data: "amount"},
+                            {data: "loan_officer"}
+                        ]
+                    });
+                }
+            }
+            $('#total-principal-rec').html(formatter.format(total));
+        }
+    }
+
     $("#filterinterests").submit(function (e) {
         e.preventDefault();
 
@@ -2568,6 +2696,68 @@
                 let applications = data.response;
                 results = applications;
                 populateInterestReceivable(applications);
+            },
+            'error': function (err) {
+                console.log(err);
+            }
+        });
+    });
+
+    $("#filterprincipal").submit(function (e) {
+        e.preventDefault();
+
+        let start = $("#filterprincipalstart").val(),
+            end = $("#filterprincipal").val(),
+            officer = $('#principal-officers').find('option:selected').attr('id')
+        url = '/user/principal?start='+formatDate(start)+'&&end='+formatDate(end);
+        if (start && end && officer==0){
+            url = '/user/principal?start='+formatDate(start)+'&&end='+formatDate(end);
+        }
+        if ((!start || !end) && officer==0 ) {
+            return loadPrincipalReceived();
+        }
+        if (officer != 0){
+            url = url.concat('&&officer='+officer);
+        }
+
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                let applications = data.response;
+                results = applications;
+                populatePrincipalReceived(applications);
+            },
+            'error': function (err) {
+                console.log(err);
+            }
+        });
+    });
+
+    $("#filterprincipalrec").submit(function (e) {
+        e.preventDefault();
+
+        let start = $("#filterprincipalrecstart").val(),
+            end = $("#filterprincipalrecend").val(),
+            officer = $('#principal-rec-officers').find('option:selected').attr('id')
+        url = '/user/principal-receivable?start='+formatDate(start)+'&&end='+formatDate(end);
+        if (start && end && officer==0){
+            url = '/user/principal-receivable?start='+formatDate(start)+'&&end='+formatDate(end);
+        }
+        if ((!start || !end) && officer==0 ) {
+            return loadPrincipalReceivable();
+        }
+        if (officer != 0){
+            url = url.concat('&&officer='+officer);
+        }
+
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                let applications = data.response;
+                results = applications;
+                populatePrincipalReceivable(applications);
             },
             'error': function (err) {
                 console.log(err);
@@ -2814,6 +3004,8 @@
                 $("#irrecchartfilterofficers").empty().append('<option value="0" id="0">All Loan Officers</option>');
                 $("#interest-officers").empty().append('<option value="0" id="0">All Loan Officers</option>');
                 $("#interest-rec-officers").empty().append('<option value="0" id="0">All Loan Officers</option>');
+                $("#principal-officers").empty().append('<option value="0" id="0">All Loan Officers</option>');
+                $("#principal-rec-officers").empty().append('<option value="0" id="0">All Loan Officers</option>');
                 $.each(JSON.parse(response), function (key, val) {
                     $("#filter-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#overdue-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
@@ -2824,6 +3016,8 @@
                     $("#irrecchartfilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#interest-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#interest-rec-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                    $("#principal-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                    $("#principal-rec-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                 });
             }
         });
@@ -2906,6 +3100,60 @@
                 let applications = data.response;
                 results = applications;
                 populateInterestReceivable(applications);
+            },
+            'error': function (err) {
+                console.log(err);
+            }
+        });
+    }
+
+    function principalFilterOfficer(officer) {
+        let start = $("#filterprincipalstart").val(),
+            end = $("#filterprincipalend").val(),
+            url = '/user/principal?',
+            d=[], agent;
+        if (start && end){
+            url = url.concat('start='+formatDate(start)+'&&end='+formatDate(end)+'&&');
+        }
+        if (officer.value == 0){
+            return loadPrincipalReceived();
+        }
+        url = url.concat('officer='+officer.value);
+
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                let applications = data.response;
+                results = applications;
+                populatePrincipalReceived(applications);
+            },
+            'error': function (err) {
+                console.log(err);
+            }
+        });
+    }
+
+    function principalRecFilterOfficer(officer) {
+        let start = $("#filterprincipalrecstart").val(),
+            end = $("#filterprincipalrecend").val(),
+            url = '/user/principal-receivable?',
+            d=[], agent;
+        if (start && end){
+            url = url.concat('start='+formatDate(start)+'&&end='+formatDate(end)+'&&');
+        }
+        if (officer.value == 0){
+            return loadPrincipalReceived();
+        }
+        url = url.concat('officer='+officer.value);
+
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                let applications = data.response;
+                results = applications;
+                populatePrincipalReceivable(applications);
             },
             'error': function (err) {
                 console.log(err);
@@ -5156,6 +5404,646 @@
                     }
                 };
                 $("#interest-receivable-chart").insertFusionCharts(chartConfigs);
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
+    }
+
+    // Principal Received
+
+    function principalreceived(){
+        let d = [];
+        let start = $("#startDate").val(),
+            end = $("#endDate").val(),
+            url;
+        url = (start === "" || start === null || end === "" || end === null ) ? 'user/disbursements/filter' : 'user/disbursements/filter?start='+formatDate(start)+'&&end='+formatDate(end)
+
+        $.ajax({
+            'url': 'user/analytics?t=principal-received',
+            'type': 'get',
+            'success': function (data) {
+//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
+                jQuery.each(data.response, function(k, v){
+                    d.push({label: v.officer , value: v.amount_received}, );
+                });
+                var chartConfigs = {
+                    type: 'column2d', // The chart type
+                    width: '100%', // Width of the chart
+                    height: '400', // Height of the chart
+                    dataFormat: 'json', // Data type
+                    dataSource: {
+                        // Chart Configuration
+                        "chart": {
+                            "caption": "Principal Received",
+//                            "subCaption": "In MMbbl = One Million barrels",
+                            "xAxisName": "Loan Officers",
+                            "yAxisName": "Amount (In Naira)",
+                            "numberSuffix": "",
+                            "theme": "fusion",
+                        },
+                        // Chart Data
+                        "data": d
+                    }
+                };
+                $("#principal-received-chart").insertFusionCharts(chartConfigs);
+//                loadInterestReceived();
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
+
+    }
+
+    function prFilterOfficer(officer){
+        let url = '/user/analytics?t=principal-received&&',
+            freq = $('#pr-frequency').val(),
+            year = $('#p-r-year').val();
+        if (officer.value == 0 && freq == "-1"){
+            return principalreceived();
+        }
+        url = url.concat('officer='+officer.value+'&&year='+year);
+        if (freq != "2" || freq != '4'){
+            $('#pr-year').hide();
+            $('#p-r-year').val(0);
+            url = url.concat('&&freq='+freq);
+        }
+        else{
+            url = url.concat('&&freq='+freq);
+        }
+        let d = [], agent = '', xaxis;
+
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
+                jQuery.each(data.response, function(k, v){
+                    if (v.officer){
+                        agent = ': '+v.officer;
+                        d.push({label: v.officer , value: v.amount_received}, );
+                    }
+                    if (v.year){
+                        agent = ': '+v.agent;
+                        xaxis = 'Years'
+                        d.push({label: v.year , value: v.amount_received}, );
+                    }
+                    if (v.month){
+                        agent = ': '+v.agent;
+                        xaxis = 'Months';
+                        d.push({label: v.PaymentMonth , value: v.amount_received}, )
+                    }
+                    if (v.paymonth){
+                        agent = ': '+v.agent;
+                        xaxis = 'Months';
+                        d.push({label: v.paymonth , value: v.amount_received}, )
+                    }
+                    if (v.Monthyear){
+                        agent = ' ';
+                        xaxis = 'Months';
+                        d.push({label: v.Monthyear , value: v.amount_received}, )
+                    }
+                    if (v.OfficerQuarter){
+                        agent = ': '+v.agent;
+                        xaxis = 'Period';
+                        d.push({label: v.OfficerQuarter , value: v.amount_received}, )
+                    }
+                    if (v.Quarter){
+                        agent = '';
+                        xaxis = 'Quarters';
+                        d.push({label: v.Quarter , value: v.amount_received}, )
+                    }
+                    if (v.PaymentYear){
+                        agent = '';
+                        xaxis = 'Years';
+                        d.push({label: v.PaymentYear, value: v.amount_received}, );
+                    }
+                    if (v.OfficerYear){
+                        agent = '';
+                        xaxis = 'Years';
+                        d.push({label: v.OfficerYear, value: v.amount_received}, );
+                    }
+                });
+                var chartConfigs = {
+                    type: 'column2d', // The chart type
+                    width: '100%', // Width of the chart
+                    height: '400', // Height of the chart
+                    dataFormat: 'json', // Data type
+                    dataSource: {
+                        // Chart Configuration
+                        "chart": {
+                            "caption": "Principal Received"+agent,
+//                            "subCaption": "In MMbbl = One Million barrels",
+                            "xAxisName": xaxis,
+                            "yAxisName": "Amount (In Naira)",
+                            "numberSuffix": "",
+                            "theme": "fusion",
+                        },
+                        // Chart Data
+                        "data": d
+                    }
+                };
+                $("#principal-received-chart").insertFusionCharts(chartConfigs);
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
+    }
+
+    function prFrequencyChange(frequency){
+        let url ='user/analytics?t=principal-received&&',
+            year = $('#p-r-year').val(),
+            officer = $('#prchartfilterofficers').val();
+        if (frequency.value == 2 || frequency.value == 4){
+            $('#pr-year').show();
+            if (officer && year){
+                url = url.concat('officer='+officer+'&&year='+year+'&&freq='+frequency.value);
+            }
+        }
+        else {
+            $('#pr-year').hide();
+            $('#p-r-year').val(0);
+            url = url.concat('officer='+officer+'&&freq='+frequency.value+'&&year='+$('#p-r-year').val());
+        }
+        let d = [], agent = '', xaxis;
+
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
+                jQuery.each(data.response, function(k, v){
+                    if (v.officer){
+                        agent = ': '+v.officer;
+                        d.push({label: v.officer , value: v.amount_received}, );
+                    }
+                    if (v.year){
+                        agent = ': '+v.agent;
+                        xaxis = 'Years'
+                        d.push({label: v.year , value: v.amount_received}, );
+                    }
+                    if (v.month){
+                        agent = ': '+v.agent;
+                        xaxis = 'Months';
+                        d.push({label: v.PaymentMonth , value: v.amount_received}, )
+                    }
+                    if (v.paymonth){
+                        agent = ': '+v.agent;
+                        xaxis = 'Months';
+                        d.push({label: v.paymonth , value: v.amount_received}, )
+                    }
+                    if (v.Monthyear){
+                        agent = ' ';
+                        xaxis = 'Months';
+                        d.push({label: v.Monthyear , value: v.amount_received}, )
+                    }
+                    if (v.OfficerQuarter){
+                        agent = ': '+v.agent;
+                        xaxis = 'Quarters';
+                        d.push({label: v.OfficerQuarter , value: v.amount_received}, )
+                    }
+                    if (v.Quarter){
+                        agent = '';
+                        xaxis = 'Quarters';
+                        d.push({label: v.Quarter , value: v.amount_received}, )
+                    }
+                    if (v.PaymentYear){
+                        agent = '';
+                        xaxis = 'Years';
+                        d.push({label: v.PaymentYear, value: v.amount_received}, );
+                    }
+                    if (v.OfficerYear){
+                        agent = '';
+                        xaxis = 'Years';
+                        d.push({label: v.OfficerYear, value: v.amount_received}, );
+                    }
+                });
+                var chartConfigs = {
+                    type: 'column2d', // The chart type
+                    width: '100%', // Width of the chart
+                    height: '400', // Height of the chart
+                    dataFormat: 'json', // Data type
+                    dataSource: {
+                        // Chart Configuration
+                        "chart": {
+                            "caption": "Interest Received"+agent,
+//                            "subCaption": "In MMbbl = One Million barrels",
+                            "xAxisName": xaxis,
+                            "yAxisName": "Amount (In Naira)",
+                            "numberSuffix": "",
+                            "theme": "fusion",
+                        },
+                        // Chart Data
+                        "data": d
+                    }
+                };
+                $("#interest-received-chart").insertFusionCharts(chartConfigs);
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
+    }
+
+    function prFilterYear(year) {
+        let urlAn = '/user/analytics?t=principal-received&&';
+        let officer = $('#prchartfilterofficers').val(),
+            freq = $("#pr-frequency").val(),
+            d=[], agent, xaxis;
+        urlAn = urlAn.concat('freq='+freq+'&&officer='+officer+'&&year='+year.value);
+
+        $.ajax({
+            'url': urlAn,
+            'type': 'get',
+            'success': function (data) {
+//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
+                jQuery.each(data.response, function(k, v){
+                    if (v.officer){
+                        agent = ': '+v.officer;
+                        d.push({label: v.officer , value: v.amount_received}, );
+                    }
+                    if (v.year){
+                        agent = ': '+v.agent;
+                        xaxis = 'Years'
+                        d.push({label: v.year , value: v.amount_received}, );
+                    }
+                    if (v.month){
+                        agent = ': '+v.agent;
+                        xaxis = 'Months';
+                        d.push({label: v.PaymentMonth , value: v.amount_received}, );
+                    }
+                    if (v.paymonth){
+                        agent = ': '+v.agent;
+                        xaxis = 'Months';
+                        d.push({label: v.paymonth , value: v.amount_received}, );
+                    }
+                    if (v.Monthyear){
+                        agent = ' ';
+                        xaxis = 'Months';
+                        d.push({label: v.Monthyear , value: v.amount_received}, );
+                    }
+                    if (v.OfficerQuarter){
+                        agent = ': '+v.agent;
+                        xaxis = 'Quarters';
+                        d.push({label: v.OfficerQuarter , value: v.amount_received}, );
+                    }
+                    if (v.Quarter){
+                        agent = '';
+                        xaxis = 'Quarters';
+                        d.push({label: v.Quarter , value: v.amount_received}, );
+                    }
+                    if (v.PaymentYear){
+                        agent = '';
+                        xaxis = 'Years';
+                        d.push({label: v.PaymentYear, value: v.amount_received}, );
+                    }
+                    if (v.OfficerYear){
+                        agent = '';
+                        xaxis = 'Years';
+                        d.push({label: v.OfficerYear, value: v.amount_received}, );
+                    }
+                });
+                var chartConfigs = {
+                    type: 'column2d', // The chart type
+                    width: '100%', // Width of the chart
+                    height: '400', // Height of the chart
+                    dataFormat: 'json', // Data type
+                    dataSource: {
+                        // Chart Configuration
+                        "chart": {
+                            "caption": "Principal Received"+agent,
+//                            "subCaption": "In MMbbl = One Million barrels",
+                            "xAxisName": xaxis,
+                            "yAxisName": "Amount (In Naira)",
+                            "numberSuffix": "",
+                            "theme": "fusion",
+                        },
+                        // Chart Data
+                        "data": d
+                    }
+                };
+                $("#principal-received-chart").insertFusionCharts(chartConfigs);
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
+    }
+
+    // Principal Receivable
+
+    function principalreceivable(){
+        let d = [];
+
+        $.ajax({
+            'url': 'user/analytics?t=principal-receivable',
+            'type': 'get',
+            'success': function (data) {
+//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
+                jQuery.each(data.response, function(k, v){
+                    d.push({label: v.officer , value: v.amount_due}, );
+                });
+                var chartConfigs = {
+                    type: 'column2d', // The chart type
+                    width: '100%', // Width of the chart
+                    height: '400', // Height of the chart
+                    dataFormat: 'json', // Data type
+                    dataSource: {
+                        // Chart Configuration
+                        "chart": {
+                            "caption": "Principal Receivable",
+//                            "subCaption": "In MMbbl = One Million barrels",
+                            "xAxisName": "Loan Officers",
+                            "yAxisName": "Amount (In Naira)",
+                            "numberSuffix": "",
+                            "theme": "fusion",
+                        },
+                        // Chart Data
+                        "data": d
+                    }
+                };
+                $("#principal-receivable-chart").insertFusionCharts(chartConfigs);
+//                loadInterestReceivable();
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
+
+    }
+
+    function prRecFilterOfficer(officer){
+        let url = '/user/analytics?t=principal-receivable&&',
+            freq = $('#pr-rec-frequency').val(),
+            year = $('#p-r-rec-year').val();
+        if (officer.value == 0 && freq == "-1"){
+            return principalreceivable();
+        }
+        url = url.concat('officer='+officer.value+'&&year='+year);
+        if (freq != "2" || freq != '4'){
+            $('#pr-rec-year').hide();
+            $('#p-r-rec-year').val(0);
+            url = url.concat('&&freq='+freq);
+        }
+        else{
+            url = url.concat('&&freq='+freq);
+        }
+        let d = [], agent = '', xaxis;
+
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
+                jQuery.each(data.response, function(k, v){
+                    if (v.officer){
+                        agent = ': '+v.officer;
+                        d.push({label: v.officer , value: v.amount_due}, );
+                    }
+                    if (v.year){
+                        agent = ': '+v.agent;
+                        xaxis = 'Years'
+                        d.push({label: v.year , value: v.amount_due}, );
+                    }
+                    if (v.month){
+                        agent = ': '+v.agent;
+                        xaxis = 'Months';
+                        d.push({label: v.PaymentMonth , value: v.amount_due}, )
+                    }
+                    if (v.paymonth){
+                        agent = ': '+v.agent;
+                        xaxis = 'Months';
+                        d.push({label: v.paymonth , value: v.amount_due}, )
+                    }
+                    if (v.Monthyear){
+                        agent = ' ';
+                        xaxis = 'Months';
+                        d.push({label: v.Monthyear , value: v.amount_due}, )
+                    }
+                    if (v.OfficerQuarter){
+                        agent = ': '+v.agent;
+                        xaxis = 'Period';
+                        d.push({label: v.OfficerQuarter , value: v.amount_due}, )
+                    }
+                    if (v.Quarter){
+                        agent = '';
+                        xaxis = 'Quarters';
+                        d.push({label: v.Quarter , value: v.amount_due}, )
+                    }
+                    if (v.PaymentYear){
+                        agent = '';
+                        xaxis = 'Years';
+                        d.push({label: v.PaymentYear, value: v.amount_due}, );
+                    }
+                    if (v.OfficerYear){
+                        agent = '';
+                        xaxis = 'Years';
+                        d.push({label: v.OfficerYear, value: v.amount_due}, );
+                    }
+                });
+                var chartConfigs = {
+                    type: 'column2d', // The chart type
+                    width: '100%', // Width of the chart
+                    height: '400', // Height of the chart
+                    dataFormat: 'json', // Data type
+                    dataSource: {
+                        // Chart Configuration
+                        "chart": {
+                            "caption": "Principal Receivable"+agent,
+//                            "subCaption": "In MMbbl = One Million barrels",
+                            "xAxisName": xaxis,
+                            "yAxisName": "Amount (In Naira)",
+                            "numberSuffix": "",
+                            "theme": "fusion",
+                        },
+                        // Chart Data
+                        "data": d
+                    }
+                };
+                $("#principal-receivable-chart").insertFusionCharts(chartConfigs);
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
+    }
+
+    function prRecFrequencyChange(frequency){
+        let url ='user/analytics?t=principal-receivable&&',
+            year = $('#p-r-rec-year').val(),
+            officer = $('#prrecchartfilterofficers').val();
+        if (frequency.value == 2 || frequency.value == 4){
+            $('#payment-frequency').show();
+            if (officer && year){
+                url = url.concat('officer='+officer+'&&year='+year+'&&freq='+frequency.value);
+            }
+        }
+        else {
+            $('#pr-rec-year').hide();
+            $('#p-r-rec-year').val(0);
+            url = url.concat('officer='+officer+'&&freq='+frequency.value+'&&year='+$('#p-r-rec-year').val());
+        }
+        let d = [], agent = '', xaxis;
+
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
+                jQuery.each(data.response, function(k, v){
+                    if (v.officer){
+                        agent = ': '+v.officer;
+                        d.push({label: v.officer , value: v.amount_due}, );
+                    }
+                    if (v.year){
+                        agent = ': '+v.agent;
+                        xaxis = 'Years'
+                        d.push({label: v.year , value: v.amount_due}, );
+                    }
+                    if (v.month){
+                        agent = ': '+v.agent;
+                        xaxis = 'Months';
+                        d.push({label: v.PaymentMonth , value: v.amount_due}, )
+                    }
+                    if (v.paymonth){
+                        agent = ': '+v.agent;
+                        xaxis = 'Months';
+                        d.push({label: v.paymonth , value: v.amount_due}, )
+                    }
+                    if (v.Monthyear){
+                        agent = ' ';
+                        xaxis = 'Months';
+                        d.push({label: v.Monthyear , value: v.amount_due}, )
+                    }
+                    if (v.OfficerQuarter){
+                        agent = ': '+v.agent;
+                        xaxis = 'Quarters';
+                        d.push({label: v.OfficerQuarter , value: v.amount_due}, )
+                    }
+                    if (v.Quarter){
+                        agent = '';
+                        xaxis = 'Quarters';
+                        d.push({label: v.Quarter , value: v.amount_due}, )
+                    }
+                    if (v.PaymentYear){
+                        agent = '';
+                        xaxis = 'Years';
+                        d.push({label: v.PaymentYear, value: v.amount_due}, );
+                    }
+                    if (v.OfficerYear){
+                        agent = '';
+                        xaxis = 'Years';
+                        d.push({label: v.OfficerYear, value: v.amount_due}, );
+                    }
+                });
+                var chartConfigs = {
+                    type: 'column2d', // The chart type
+                    width: '100%', // Width of the chart
+                    height: '400', // Height of the chart
+                    dataFormat: 'json', // Data type
+                    dataSource: {
+                        // Chart Configuration
+                        "chart": {
+                            "caption": "Principal Receivable"+agent,
+//                            "subCaption": "In MMbbl = One Million barrels",
+                            "xAxisName": xaxis,
+                            "yAxisName": "Amount (In Naira)",
+                            "numberSuffix": "",
+                            "theme": "fusion",
+                        },
+                        // Chart Data
+                        "data": d
+                    }
+                };
+                $("#principal-receivable-chart").insertFusionCharts(chartConfigs);
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
+    }
+
+    function prRecFilterYear(year) {
+        let urlAn = '/user/analytics?t=principal-receivable&&';
+        let officer = $('#prrecchartfilterofficers').val(),
+            freq = $("#pr-rec-frequency").val(),
+            d=[], agent, xaxis;
+        urlAn = urlAn.concat('freq='+freq+'&&officer='+officer+'&&year='+year.value);
+
+        $.ajax({
+            'url': urlAn,
+            'type': 'get',
+            'success': function (data) {
+//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
+                jQuery.each(data.response, function(k, v){
+                    if (v.officer){
+                        agent = ': '+v.officer;
+                        d.push({label: v.officer , value: v.amount_due}, );
+                    }
+                    if (v.year){
+                        agent = ': '+v.agent;
+                        xaxis = 'Years'
+                        d.push({label: v.year , value: v.amount_due}, );
+                    }
+                    if (v.month){
+                        agent = ': '+v.agent;
+                        xaxis = 'Months';
+                        d.push({label: v.PaymentMonth , value: v.amount_due}, );
+                    }
+                    if (v.paymonth){
+                        agent = ': '+v.agent;
+                        xaxis = 'Months';
+                        d.push({label: v.paymonth , value: v.amount_due}, );
+                    }
+                    if (v.Monthyear){
+                        agent = ' ';
+                        xaxis = 'Months';
+                        d.push({label: v.Monthyear , value: v.amount_due}, );
+                    }
+                    if (v.OfficerQuarter){
+                        agent = ': '+v.agent;
+                        xaxis = 'Quarters';
+                        d.push({label: v.OfficerQuarter , value: v.amount_due}, );
+                    }
+                    if (v.Quarter){
+                        agent = '';
+                        xaxis = 'Quarters';
+                        d.push({label: v.Quarter , value: v.amount_due}, );
+                    }
+                    if (v.PaymentYear){
+                        agent = '';
+                        xaxis = 'Years';
+                        d.push({label: v.PaymentYear, value: v.amount_due}, );
+                    }
+                    if (v.OfficerYear){
+                        agent = '';
+                        xaxis = 'Years';
+                        d.push({label: v.OfficerYear, value: v.amount_due}, );
+                    }
+                });
+                var chartConfigs = {
+                    type: 'column2d', // The chart type
+                    width: '100%', // Width of the chart
+                    height: '400', // Height of the chart
+                    dataFormat: 'json', // Data type
+                    dataSource: {
+                        // Chart Configuration
+                        "chart": {
+                            "caption": "Principal Receivable"+agent,
+//                            "subCaption": "In MMbbl = One Million barrels",
+                            "xAxisName": xaxis,
+                            "yAxisName": "Amount (In Naira)",
+                            "numberSuffix": "",
+                            "theme": "fusion",
+                        },
+                        // Chart Data
+                        "data": d
+                    }
+                };
+                $("#principal-receivable-chart").insertFusionCharts(chartConfigs);
             },
             'error': function (err) {
                 swal('Error in Connection!','','error')
