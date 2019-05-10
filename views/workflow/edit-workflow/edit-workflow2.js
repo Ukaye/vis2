@@ -3,6 +3,14 @@ $(document).ready(function() {
     getRoles();
 });
 
+$(document).ajaxStart(function(){
+    $("#wait").css("display", "block");
+});
+
+$(document).ajaxComplete(function(){
+    $("#wait").css("display", "none");
+});
+
 function resetMultiselect() {
     $('#process-rights').multiselect("clearSelection");
 }
@@ -155,9 +163,8 @@ function init(stages){
         'url': '/workflow-stages/'+workflow_id,
         'type': 'get',
         'success': function (data) {
-            let transitions = [];
             initDefaultStages(stages, data.response);
-            data.response.forEach(function (stagex) {
+            $.each(data.response, function (key, stagex) {
                 let stage = {
                     action_names: [],
                     actions: stagex.actions,
@@ -166,19 +173,21 @@ function init(stages){
                     document: stagex.document,
                     name: stagex.name,
                     stageID: stagex.stageID,
-                    stage_name: stagex.stage_name
+                    stage_name: stagex.stage_name,
+                    onLoad: true
                 };
-                if (stage.stage_name !== 'Application Start' && stage.stage_name !== 'Final Approval' && stage.stage_name !== 'Disbursal'){
-                    if (stage.actions){
-                        let actions_array = stage.actions.split(',');
-                        actions_array.forEach(function (action_id) {
-                            let action = ($.grep(stages, function(e){return e.ID === parseInt(action_id);}))[0];
-                            stage.action_names.push(action.name);
-                        });
-                    }
-                    transitions.push(stage);
-                    createTodo(stage);
+                if (stagex.stage_name === 'Application Start' || stagex.stage_name === 'Final Approval' || stagex.stage_name === 'Disbursal')
+                    stage.disabled = true;
+                if (stage.actions){
+                    let actions_array = stage.actions.split(',');
+                    actions_array.forEach(function (action_id) {
+                        let action = ($.grep(stages, function(e){return e.ID === parseInt(action_id);}))[0];
+                        stage.action_names.push(action.name);
+                    });
                 }
+                createTodo(stage);
+                if (key === data.response.length-1)
+                    return getLocalStages();
             });
         },
         'error': function (err) {
@@ -206,32 +215,8 @@ function initDefaultStages(response,workflow_stages) {
         } else {
             $("#stage-template").append('<option value = "'+encodeURIComponent(JSON.stringify(val))+'">'+val.name+'</option>');
         }
-        if (key === response.length-1){
-            let local_stages_sorted = local_stages.sort(function(a, b) { return a.stageID - b.stageID; });
-            localStorage.setItem('local_stages', JSON.stringify(local_stages_sorted));
-            $.each(local_stages_sorted, function (key, val) {
-                let stage_name, action_names;
-                switch (val.name){
-                    case 'Application Start':{
-                        stage_name = "Application Start";
-                        action_names = ['Final Approval']; break;
-                    }
-                    case 'Final Approval':{
-                        stage_name = "Final Approval";
-                        action_names = ['Disbursal']; break;
-                    }
-                    case 'Disbursal':{
-                        stage_name = "Disbursal";
-                        action_names = ['Disbursed']; break;
-                    }
-                }
-                val.action_names = action_names;
-                let markup = '<li class="ui-state-default disabled"><span>'+val.name+' <small> '+stage_name+' → '+action_names.join(" → ")+'</small></span><input class="stage-items" value="' + encodeURIComponent(JSON.stringify(val)) + '" style="display: none;"/>' +
-                    '<button class="edit-item edit-item-disabled btn btn-outline-info btn-xs pull-right" id="'+encodeURIComponent(JSON.stringify(val))+'" data-toggle="modal" data-target="#addStage"><span class="fa fa-edit"></span></button></li>';
-                $('#sortable').append(markup);
-                if (key === local_stages_sorted.length-1)
-                    return getLocalStages();
-            });
-        }
     });
+
+    let local_stages_sorted = local_stages.sort(function(a, b) { return a.stageID - b.stageID; });
+    localStorage.setItem('local_stages', JSON.stringify(local_stages_sorted));
 }

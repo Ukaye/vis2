@@ -322,8 +322,8 @@ users.post('/upload/:id', function(req, res) {
 	let sampleFile = req.files.file,
         name = sampleFile.name,
         extArray = sampleFile.name.split("."),
-        extension = extArray[extArray.length - 1],
-        fileName = name+'.'+extension;
+        extension = extArray[extArray.length - 1];
+    if (extension) extension = extension.toLowerCase();
 
 	fs.stat('files/users/'+req.params.id+'/', function(err) {
 		if (!err) {
@@ -364,8 +364,8 @@ users.post('/upload-file/:id/:item', function(req, res) {
     let sampleFile = req.files.file,
         name = sampleFile.name,
         extArray = sampleFile.name.split("."),
-        extension = extArray[extArray.length - 1],
-        fileName = name+'.'+extension;
+        extension = extArray[extArray.length - 1];
+    if (extension) extension = extension.toLowerCase();
     fs.stat('files/users/'+req.params.id+'/', function(err) {
         if (!err) {
             console.log('file or directory exists');
@@ -1176,7 +1176,7 @@ users.get('/clients-list-full/:officerID', function(req, res, next) {
 });
 
 users.get('/users-list-v2', function(req, res, next) {
-    let query = 'SELECT * from clients where status = 1 order by fullname asc';
+    let query = 'SELECT ID, username, fullname, email, status, date_created from clients where status = 1 order by fullname asc';
     db.query(query, function (error, results, fields) {
         if(error){
             res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
@@ -5601,8 +5601,8 @@ users.post('/attach-files/:id', function(req, res) {
             let sampleFile = req.files.file,
                 name = sampleFile.name,
                 extArray = sampleFile.name.split("."),
-                extension = extArray[extArray.length - 1],
-                fileName = name+'.'+extension;
+                extension = extArray[extArray.length - 1];
+            if (extension) extension = extension.toLowerCase();
 
             fs.stat('files/activities/'+req.params.id+'/'+name, function (err) {
                 if (err) {

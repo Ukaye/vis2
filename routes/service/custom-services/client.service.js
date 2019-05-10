@@ -232,12 +232,12 @@ router.post('/corporate/disable/:id', function (req, res, next) {
 
     axios.post(url, payload)
         .then(function (response_) {
-            return res.send(response_['data']);
+            res.send({status: 200, error: null, response: response_['data']});
         }, err => {
-            res.send(JSON.stringify({status: 500, error: err, response: null}));
+            res.send({status: 500, error: err, response: null});
         })
         .catch(function (error) {
-            res.send(JSON.stringify({status: 500, error: error, response: null}));
+            res.send({status: 500, error: error, response: null});
         });
 });
 
@@ -253,12 +253,12 @@ router.post('/corporate/enable/:id', function (req, res, next) {
 
     axios.post(url, payload)
         .then(function (response_) {
-            return res.send(response_['data']);
+            res.send({status: 200, error: null, response: response_['data']});
         }, err => {
-            res.send(JSON.stringify({status: 500, error: err, response: null}));
+            res.send({status: 500, error: err, response: null});
         })
         .catch(function (error) {
-            res.send(JSON.stringify({status: 500, error: error, response: null}));
+            res.send({status: 500, error: error, response: null});
         });
 });
 
