@@ -290,13 +290,18 @@ function disableClient(id, type){
                     'type': 'post',
                     'data': {},
                     'success': function (data) {
-                        test = JSON.parse(data);
+                        if (type !== 'corporate')
+                            test = JSON.parse(data);
                         if(test.status === 500){
                             swal("Please Retry Action!");
                         }
                         else{
                             swal("Client Disabled Successfully!");
-                            read_write_custom();
+                            if (type === 'corporate') {
+                                window.location.reload();
+                            } else {
+                                read_write_custom();
+                            }
                         }
                     },
                     'error': function(e){
@@ -307,7 +312,7 @@ function disableClient(id, type){
         });
 }
 
-function enableClient(id){
+function enableClient(id, type){
     swal({
         title: "Reactivate this client?",
         text: "Click OK to continue",
@@ -323,13 +328,18 @@ function enableClient(id){
                     'type': 'post',
                     'data': {},
                     'success': function (data) {
-                        test = JSON.parse(data);
+                        if (type !== 'corporate')
+                            test = JSON.parse(data);
                         if(test.status === 500){
                             swal("Please Retry Action!");
                         }
                         else{
                             swal("Client Enabled Successfully!");
-                            read_write_custom();
+                            if (type === 'corporate') {
+                                window.location.reload();
+                            } else {
+                                read_write_custom();
+                            }
                         }
                     },
                     'error': function(e){
