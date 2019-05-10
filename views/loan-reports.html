@@ -193,6 +193,9 @@
                                     <a class="nav-link" href="#org-reports" role="tab" data-toggle="tab">Interest Reports</a>
                                 </li>
                                 <li class="nav-item">
+                                    <a class="nav-link" id="pvi-received" href="#vrs-reports" role="tab" data-toggle="tab">Principal Received Vs. Interest Received</a>
+                                </li>
+                                <li class="nav-item">
                                     <a class="nav-link" href="#risk-reports" role="tab" data-toggle="tab">Risk Reports</a>
                                 </li>
                                 <li class="nav-item">
@@ -200,6 +203,9 @@
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" id="branches" href="#branch-reports" role="tab" data-toggle="tab">Branch Reports</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="trends" href="#trend-reports" role="tab" data-toggle="tab">Trends</a>
                                 </li>
                             </ul>
 
@@ -411,6 +417,11 @@
                                                         <button id="principal-receivable-button" class="btn col-sm-12">Principal Receivable</button>
                                                     </div>
                                                 </div>
+                                                <!--<div class="row" style="padding-bottom: 10px">-->
+                                                    <!--<div class="col-sm-12">-->
+                                                        <!--<button id="compare-principals-button" class="btn btn-block col-sm-12">Principal Received&nbsp;&nbsp; &nbsp;Vs. &nbsp;&nbsp;Principal Receivable</button>-->
+                                                    <!--</div>-->
+                                                <!--</div>-->
                                             </div>
                                             <div class="col-sm-12">
                                                 <div id="principal-received-div" style="display: none" class="col-sm-12">
@@ -449,7 +460,7 @@
                                                     <div class="card">
                                                         <div class="card-header">
                                                             <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
-                                                                <strong>Interests Received</strong>
+                                                                <strong>Principal Received</strong>
                                                                 <span>Total: <span id="total-principal-earned"></span></span>
                                                             </div>
                                                             <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
@@ -815,6 +826,56 @@
                                                     <!--</div>-->
                                                 <!--</div>-->
                                             <!--</div>--></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div role="tabpanel" class="tab-pane fade" id="vrs-reports">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <!--<div class="col-sm-12" style="padding: 20px">-->
+                                                <!--<div class="row" style="padding-bottom: 10px">-->
+                                                    <!--<div class="col-sm-6">-->
+                                                        <!--<button id="pvi-received" class="btn btn-block col-sm-12">Received</button>-->
+                                                    <!--</div>-->
+                                                    <!--<div class="col-sm-6">-->
+                                                        <!--<button id="pvi-receivable" class="btn col-sm-12">Receivable</button>-->
+                                                    <!--</div>-->
+                                                <!--</div>-->
+                                            <!--</div>-->
+                                            <div id="" class="col-sm-12">
+                                                <div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">
+                                                    <div class="col-sm-4 card" style="background-color: transparent; border-color: transparent">
+                                                        <div class="form-group">
+                                                            <div class="input-group">
+                                                                <select id="pvifilterofficers" onchange="pviFilterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-4 card" id="pvi-freq" style="background-color: transparent; border-color: transparent">
+                                                        <div class="form-group">
+                                                            <div class="input-group">
+                                                                <select id="pvi-frequency" onchange="pviFrequencyChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                    <option value="-1"> -- Select Period --</option>
+                                                                    <option value="2">Monthly</option>
+                                                                    <option value="4">Quarterly</option>
+                                                                    <option value="3">Yearly</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-4 card" id="pvi-yr" style="background-color: transparent; border-color: transparent; display: none">
+                                                        <div class="form-group">
+                                                            <div class="input-group">
+                                                                <select id="pvi-year" onchange="pviFilterYear(this)" class="year form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                    <option value="0">Select Year</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div id="vrs-chart" style="text-align: center">Charts will load here!</div><hr/>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1216,6 +1277,181 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div role="tabpanel" class="tab-pane fade" id="trend-reports">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="col-sm-12" style="padding: 20px">
+                                                <div class="row" style="padding-bottom: 10px">
+                                                    <div class="col-sm-6">
+                                                        <button id="principal-received-button" class="btn btn-block col-sm-12">Principal Received</button>
+                                                    </div>
+                                                    <div class="col-sm-6">
+                                                        <button id="principal-receivable-button" class="btn col-sm-12">Principal Receivable</button>
+                                                    </div>
+                                                </div>
+                                                <!--<div class="row" style="padding-bottom: 10px">-->
+                                                <!--<div class="col-sm-12">-->
+                                                <!--<button id="compare-principals-button" class="btn btn-block col-sm-12">Principal Received&nbsp;&nbsp; &nbsp;Vs. &nbsp;&nbsp;Principal Receivable</button>-->
+                                                <!--</div>-->
+                                                <!--</div>-->
+                                            </div>
+                                            <div class="col-sm-12">
+                                                <div id="principal-received-div" style="display: none" class="col-sm-12">
+                                                    <div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">
+                                                        <div class="col-sm-4 card" style="background-color: transparent; border-color: transparent">
+                                                            <div class="form-group">
+                                                                <div class="input-group">
+                                                                    <select id="prchartfilterofficers" onchange="prFilterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-4 card" id="pr-freq" style="background-color: transparent; border-color: transparent">
+                                                            <div class="form-group">
+                                                                <div class="input-group">
+                                                                    <select id="pr-frequency" onchange="prFrequencyChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                        <option value="-1"> -- Select Period --</option>
+                                                                        <option value="2">Monthly</option>
+                                                                        <option value="4">Quarterly</option>
+                                                                        <option value="3">Yearly</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-4 card" id="pr-year" style="display: none; background-color: transparent; border-color: transparent; ">
+                                                            <div class="form-group">
+                                                                <div class="input-group">
+                                                                    <select id="p-r-year" onchange="prFilterYear(this)" class="year form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                        <option value="0">Select Year</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="principal-received-chart" style="text-align: center">FusionCharts XT will load here!</div><hr/>
+                                                    <div class="card">
+                                                        <div class="card-header">
+                                                            <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
+                                                                <strong>Principal Received</strong>
+                                                                <span>Total: <span id="total-principal-earned"></span></span>
+                                                            </div>
+                                                            <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
+                                                                <div class="form-group">
+                                                                    <div class="input-group">
+                                                                        <select id="principal-officers" onchange="principalFilterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">
+                                                                <form id="filterprincipal" class="form-inline" style="float: right;">
+                                                                    <div class="form-group">
+                                                                        <label class="" for="startDate">Start date</label>
+                                                                        <input type="date" class="form-control" id="filterprincipalstart" placeholder="Start date">
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label class="" for="endDate">End date</label>
+                                                                        <input type="date" class="form-control" id="filterprincipalend" placeholder="End date">
+                                                                    </div>
+                                                                    <button type="submit" class="btn btn-success">Filter</button>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <table id="principal-table" class="table table-striped table-bordered">
+                                                                <thead>
+                                                                <tr>
+                                                                    <th>Loan ID</th>
+                                                                    <th>Client Name</th>
+                                                                    <th>Principal Received</th>
+                                                                    <th>Loan Officer</th>
+                                                                </tr>
+                                                                </thead>
+                                                                <tbody></tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div id="principal-receivable-div" style="display: none" class="col-sm-12">
+                                                    <div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">
+                                                        <div class="col-sm-4 card" style="background-color: transparent; border-color: transparent">
+                                                            <div class="form-group">
+                                                                <div class="input-group">
+                                                                    <select id="prrecchartfilterofficers" onchange="prRecFilterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-4 card" id="pr-rec-freq" style="background-color: transparent; border-color: transparent">
+                                                            <div class="form-group">
+                                                                <div class="input-group">
+                                                                    <select id="pr-rec-frequency" onchange="prRecFrequencyChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                        <option value="-1"> -- Select Period --</option>
+                                                                        <option value="2">Monthly</option>
+                                                                        <option value="4">Quarterly</option>
+                                                                        <option value="3">Yearly</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-sm-4 card" id="pr-rec-year" style="display: none; background-color: transparent; border-color: transparent; ">
+                                                            <div class="form-group">
+                                                                <div class="input-group">
+                                                                    <select id="p-r-rec-year" onchange="prRecFilterYear(this)" class="year form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                        <option value="0">Select Year</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="principal-receivable-chart" style="text-align: center">FusionCharts XT will load here!</div><hr/>
+                                                    <div class="card">
+                                                        <div class="card-header">
+                                                            <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
+                                                                <strong>Principal Receivable</strong>
+                                                                <span>Total: <span id="total-principal-rec"></span></span>
+                                                            </div>
+                                                            <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
+                                                                <div class="form-group">
+                                                                    <div class="input-group">
+                                                                        <select id="principal-rec-officers" onchange="principalRecFilterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">
+                                                                <form id="filterprincipalrec" class="form-inline" style="float: right;">
+                                                                    <div class="form-group">
+                                                                        <label class="" for="startDate">Start date</label>
+                                                                        <input type="date" class="form-control" id="filterprincipalrecstart" placeholder="Start date">
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label class="" for="endDate">End date</label>
+                                                                        <input type="date" class="form-control" id="filterprincipalrecend" placeholder="End date">
+                                                                    </div>
+                                                                    <button type="submit" class="btn btn-success">Filter</button>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <table id="principal-rec-table" class="table table-striped table-bordered">
+                                                                <thead>
+                                                                <tr>
+                                                                    <th>Loan ID</th>
+                                                                    <th>Client Name</th>
+                                                                    <th>Principal Receivable</th>
+                                                                    <th>Loan Officer</th>
+                                                                </tr>
+                                                                </thead>
+                                                                <tbody></tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1286,6 +1522,7 @@
         loadYears('i-r-rec-year');
         loadYears('p-r-year');
         loadYears('p-r-rec-year');
+        loadYears('pvi-year');
         getOfficers();
         getBranches();
         loadInfo();
@@ -1297,6 +1534,7 @@
     });
 
     let amount_paid = {};
+    let pvi_report = -1;
 
     function loadYears(id){
         var max = new Date().getFullYear(),
@@ -1528,8 +1766,10 @@
         $("#principal-receivable-div").show();
         $("#principal-receivable-div").attr('class', 'col-sm-12');
         $("#principal-received-div").hide();
+        $("#compare-principals-div").hide();
         $("#principal-receivable-button").attr('class', 'btn btn-primary col-sm-12');
         $("#principal-received-button").attr('class', 'btn col-sm-12');
+        $("#compare-principals-button").attr('class', 'btn col-sm-12');
     });
 
     $(document).on("click", "#principal-received-button", function (e) {
@@ -1538,8 +1778,24 @@
         $("#principal-received-div").show();
         $("#principal-received-div").attr('class', 'col-sm-12');
         $("#principal-receivable-div").hide();
+        $("#compare-principals-div").hide();
         $("#principal-received-button").attr('class', 'btn btn-primary col-sm-12');
         $("#principal-receivable-button").attr('class', 'btn col-sm-12');
+        $("#compare-principals-button").attr('class', 'btn col-sm-12');
+    });
+
+    $(document).on("click", "#pvi-received", function (e) {
+        pvi_report = 'received';
+        loadPVIReceived();
+//        $("#pvi-received").attr('class', 'btn btn-primary col-sm-12');
+        $("#pvi-receivable").attr('class', 'btn col-sm-12');
+    });
+
+    $(document).on("click", "#pvi-receivable", function (e) {
+        pvi_report = 'receivable';
+        loadPVIReceivable();
+        $("#pvi-receivable").attr('class', 'btn btn-primary col-sm-12');
+        $("#pvi-received").attr('class', 'btn col-sm-12');
     });
 
     $(document).on("click", "#gross-projected-interest-button", function (e) {
@@ -3004,8 +3260,11 @@
                 $("#irrecchartfilterofficers").empty().append('<option value="0" id="0">All Loan Officers</option>');
                 $("#interest-officers").empty().append('<option value="0" id="0">All Loan Officers</option>');
                 $("#interest-rec-officers").empty().append('<option value="0" id="0">All Loan Officers</option>');
+                $("#prchartfilterofficers").empty().append('<option value="0" id="0">All Loan Officers</option>');
+                $("#prrecchartfilterofficers").empty().append('<option value="0" id="0">All Loan Officers</option>');
                 $("#principal-officers").empty().append('<option value="0" id="0">All Loan Officers</option>');
                 $("#principal-rec-officers").empty().append('<option value="0" id="0">All Loan Officers</option>');
+                $("#pvifilterofficers").empty().append('<option value="0" id="0">Select a Loan Officer</option>');
                 $.each(JSON.parse(response), function (key, val) {
                     $("#filter-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#overdue-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
@@ -3016,8 +3275,11 @@
                     $("#irrecchartfilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#interest-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#interest-rec-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                    $("#prchartfilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                    $("#prrecchartfilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#principal-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#principal-rec-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                    $("#pvifilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                 });
             }
         });
@@ -4087,6 +4349,7 @@
                             xaxis = 'Period';
                             categories.push({label: k});
                             chartTemp = $.grep(v, function(e){return e.period === k.toString();});
+                            console.log(chartTemp);
                             values.push(chartTemp);
                             diffSeries.push(chartTemp.length);
                             jQuery.each(v, function (key, val) {
@@ -6051,6 +6314,470 @@
         });
     }
 
+    /// Principal Vs Interest Charts
+
+    function loadPVIReceived(){
+        let d = [], series = '', agent = '', xaxis, yaxis, caption, categories = [], dataset = [], datar = [], chartTemp, values = [], diffSeries = [], countSeries, seriesNames = [], nondupSeriesNames = [];
+        $.ajax({
+            'url': `user/multi-analytics?pvi=${pvi_report}`,
+            'type': 'get',
+            'success': function (data) {
+                // All Branches
+                if (pvi_report === 'received') {
+
+                    jQuery.each(data.response, function (k, v) {
+                        yaxis = "Amount Received (Naira)";
+                        caption = 'Principal Received Vs Interest Received - All Loan Officers';
+                        xaxis = 'Period';
+                        categories.push({label: k});
+                        chartTemp = $.grep(v, function(e){return e.period === k.toString();});
+                        values.push(chartTemp);
+                        diffSeries.push(chartTemp.length);
+                        jQuery.each(v, function (key, val) {
+                            seriesNames.push(val.branch);
+                        });
+                    });
+                    countSeries = Math.max.apply(Math, diffSeries);
+                    nondupSeriesNames = seriesNames.filter(function(elem, index, self) {
+                        return index === self.indexOf(elem);
+                    }).sort();
+                    let datum = [], datas = [];
+                    for (let i = 0; i < values.length; i++) {
+                        if (values[i][0]){
+                            datum.push({value: values[i][0].interest_received});
+                        } else {
+                            datum.push({value: 0});
+                        }
+                    }
+                    for (let i = 0; i < values.length; i++) {
+                        if (values[i][0]){
+                            datas.push({value: values[i][0].principal_received});
+                        } else {
+                            datas.push({value: 0});
+                        }
+                    }
+                    dataset.push({seriesname: 'Interest Received', data: datum});
+                    dataset.push({seriesname: 'Principal Received', data: datas});
+                }
+                if (pvi_report === 'receivable') {
+                    jQuery.each(data.response, function (k, v) {
+                        yaxis = 'Interest Earned (Naira)';
+                        caption = 'Interest Earned by Branches';
+                        xaxis = 'Period';
+                        categories.push({label: k});
+                        chartTemp = $.grep(v, function(e){return e.period === k.toString();});
+                        values.push(chartTemp);
+                        diffSeries.push(chartTemp.length);
+                        jQuery.each(v, function (key, val) {
+                            seriesNames.push(val.office);
+                        });
+                    });
+                    countSeries = Math.max.apply(Math, diffSeries);
+                    nondupSeriesNames = seriesNames.filter(function(elem, index, self) {
+                        return index === self.indexOf(elem);
+                    }).sort();
+                    for (let j = 0; j < nondupSeriesNames.length; j++) {
+                        let datum = [];
+                        for (let i = 0; i < values.length; i++) {
+                            let branch_series_value = ($.grep(values[i], function(e){return e.office === nondupSeriesNames[j];}))[0];
+                            if (branch_series_value){
+                                datum.push({value: branch_series_value.amount_received});
+                            } else {
+                                datum.push({value: 0});
+                            }
+                        }
+                        dataset.push({seriesname: nondupSeriesNames[j], data: datum});
+                    }
+                }
+                var dConfigs = {
+                    type: 'mscolumn2d',
+                    renderAt: 'chart-container',
+                    width: '100%',
+                    height: '400',
+                    dataFormat: 'json',
+                    dataSource: {
+                        "chart": {
+                            "theme": "fusion",
+                            "caption": caption,
+                            "xAxisname": 'Period',
+                            "yAxisName": "Amount (In Naira)",
+                            "plotFillAlpha": "80",
+                            "divLineIsDashed": "1",
+                            "divLineDashLen": "1",
+                            "divLineGapLen": "1"
+                        },
+                        "categories": [{'category': categories}],
+                        "dataset": dataset
+                    }
+                };
+                $("#vrs-chart").insertFusionCharts(dConfigs);
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
+    }
+
+    function loadPVIReceivable(){
+
+    }
+
+    function pviFilterOfficer(office){
+        let url;
+        let year = $('#pvi-year').val();
+        let officer = office.value,
+            freq = $('#pvi-frequency').val();
+        url = `user/multi-analytics?pvi=${pvi_report}&&officer=${officer}&&`;
+
+        if (pvi_report === -1){
+            return loadPVIReceived();
+        }
+        if (freq == 2 || freq == 4){
+            $('#pvi-yr').show();
+            if (officer && year){
+                url = url.concat(`year=${year}&&freq=${freq}`);
+            }
+        }
+        else {
+            $('#pvi-yr').hide();
+            $('#pvi-year').val(0);
+            url = url.concat(`freq=${freq}&&year=0`);
+        }
+        let d = [], series = '', agent = '', xaxis, yaxis, l_off, caption, categories = [], dataset = [], datar = [], chartTemp, values = [], diffSeries = [], countSeries, seriesNames = [], nondupSeriesNames = [];
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                // All Branches
+                if (pvi_report === 'received') {
+
+                    jQuery.each(data.response, function (k, v) {
+                        yaxis = "Amount Received (Naira)";
+                        caption = 'Principal Received Vs Interest Received';
+                        xaxis = 'Period';
+                        categories.push({label: k});
+                        chartTemp = $.grep(v, function(e){return e.period === k.toString();});
+                        values.push(chartTemp);
+                        diffSeries.push(chartTemp.length);
+                        jQuery.each(v, function (key, val) {
+                            seriesNames.push(val.branch);
+                        });
+                    });
+                    countSeries = Math.max.apply(Math, diffSeries);
+                    nondupSeriesNames = seriesNames.filter(function(elem, index, self) {
+                        return index === self.indexOf(elem);
+                    }).sort();
+                    let datum = [], datas = [];
+                    for (let i = 0; i < values.length; i++) {
+                        if (values[i][0]){
+                            l_off = values[i][0].officer;
+                            datum.push({value: values[i][0].interest_received});
+                        } else {
+                            l_off = '??';
+                            datum.push({value: 0});
+                        }
+                    }
+                    for (let i = 0; i < values.length; i++) {
+                        if (values[i][0]){
+                            datas.push({value: values[i][0].principal_received});
+                        } else {
+                            datas.push({value: 0});
+                        }
+                    }
+                    dataset.push({seriesname: 'Interest Received', data: datum});
+                    dataset.push({seriesname: 'Principal Received', data: datas});
+                }
+                if (pvi_report === 'receivable') {
+                    jQuery.each(data.response, function (k, v) {
+                        yaxis = 'Interest Earned (Naira)';
+                        caption = 'Interest Earned by Branches';
+                        xaxis = 'Period';
+                        categories.push({label: k});
+                        chartTemp = $.grep(v, function(e){return e.period === k.toString();});
+                        values.push(chartTemp);
+                        diffSeries.push(chartTemp.length);
+                        jQuery.each(v, function (key, val) {
+                            seriesNames.push(val.office);
+                        });
+                    });
+                    countSeries = Math.max.apply(Math, diffSeries);
+                    nondupSeriesNames = seriesNames.filter(function(elem, index, self) {
+                        return index === self.indexOf(elem);
+                    }).sort();
+                    for (let j = 0; j < nondupSeriesNames.length; j++) {
+                        let datum = [];
+                        for (let i = 0; i < values.length; i++) {
+                            let branch_series_value = ($.grep(values[i], function(e){return e.office === nondupSeriesNames[j];}))[0];
+                            if (branch_series_value){
+                                datum.push({value: branch_series_value.amount_received});
+                            } else {
+                                datum.push({value: 0});
+                            }
+                        }
+                        dataset.push({seriesname: nondupSeriesNames[j], data: datum});
+                    }
+                }
+                var dConfigs = {
+                    type: 'mscolumn2d',
+                    renderAt: 'chart-container',
+                    width: '100%',
+                    height: '400',
+                    dataFormat: 'json',
+                    dataSource: {
+                        "chart": {
+                            "theme": "fusion",
+                            "caption": caption+ ' - '+l_off,
+                            "xAxisname": 'Period',
+                            "yAxisName": "Amount (In Naira)",
+                            "plotFillAlpha": "80",
+                            "divLineIsDashed": "1",
+                            "divLineDashLen": "1",
+                            "divLineGapLen": "1"
+                        },
+                        "categories": [{'category': categories}],
+                        "dataset": dataset
+                    }
+                };
+                $("#vrs-chart").insertFusionCharts(dConfigs);
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
+    }
+
+    function pviFrequencyChange(frequency){
+        let url;
+        let year = $('#pvi-year').val();
+        let officer = $('#pvifilterofficers').val();
+        url = `user/multi-analytics?pvi=${pvi_report}&&officer=${officer}&&`;
+
+        if (pvi_report === -1){
+//            return swal('Please choose a report to compare!', '','warning');
+            return loadPVIReceived();
+        }
+        if (frequency.value == 2 || frequency.value == 4){
+            $('#pvi-yr').show();
+            if (officer && year){
+                url = url.concat(`year=${year}&&freq=${frequency.value}`);
+            }
+        }
+        else {
+            $('#pvi-yr').hide();
+            $('#pvi-year').val(0);
+            url = url.concat(`freq=${frequency.value}&&year=0`);
+        }
+        let d = [], series = '', agent = '', xaxis, yaxis, l_off, caption, categories = [], dataset = [], datar = [], chartTemp, values = [], diffSeries = [], countSeries, seriesNames = [], nondupSeriesNames = [];
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                // All Branches
+                if (pvi_report === 'received') {
+
+                    jQuery.each(data.response, function (k, v) {
+                        yaxis = "Amount Received (Naira)";
+                        caption = 'Principal Received Vs Interest Received';
+                        xaxis = 'Period';
+                        categories.push({label: k});
+                        chartTemp = $.grep(v, function(e){return e.period === k.toString();});
+                        values.push(chartTemp);
+                        diffSeries.push(chartTemp.length);
+                        jQuery.each(v, function (key, val) {
+                            seriesNames.push(val.branch);
+                        });
+                    });
+                    countSeries = Math.max.apply(Math, diffSeries);
+                    nondupSeriesNames = seriesNames.filter(function(elem, index, self) {
+                        return index === self.indexOf(elem);
+                    }).sort();
+                    let datum = [], datas = [];
+                    for (let i = 0; i < values.length; i++) {
+                        if (values[i][0]){
+                            l_off = values[i][0].officer;
+                            datum.push({value: values[i][0].interest_received});
+                        } else {
+                            datum.push({value: 0});
+                        }
+                    }
+                    for (let i = 0; i < values.length; i++) {
+                        if (values[i][0]){
+                            datas.push({value: values[i][0].principal_received});
+                        } else {
+                            datas.push({value: 0});
+                        }
+                    }
+                    dataset.push({seriesname: 'Interest Received', data: datum});
+                    dataset.push({seriesname: 'Principal Received', data: datas});
+                }
+                if (pvi_report === 'receivable') {
+                    jQuery.each(data.response, function (k, v) {
+                        yaxis = 'Interest Earned (Naira)';
+                        caption = 'Interest Earned by Branches';
+                        xaxis = 'Period';
+                        categories.push({label: k});
+                        chartTemp = $.grep(v, function(e){return e.period === k.toString();});
+                        values.push(chartTemp);
+                        diffSeries.push(chartTemp.length);
+                        jQuery.each(v, function (key, val) {
+                            seriesNames.push(val.office);
+                        });
+                    });
+                    countSeries = Math.max.apply(Math, diffSeries);
+                    nondupSeriesNames = seriesNames.filter(function(elem, index, self) {
+                        return index === self.indexOf(elem);
+                    }).sort();
+                    for (let j = 0; j < nondupSeriesNames.length; j++) {
+                        let datum = [];
+                        for (let i = 0; i < values.length; i++) {
+                            let branch_series_value = ($.grep(values[i], function(e){return e.office === nondupSeriesNames[j];}))[0];
+                            if (branch_series_value){
+                                datum.push({value: branch_series_value.amount_received});
+                            } else {
+                                datum.push({value: 0});
+                            }
+                        }
+                        dataset.push({seriesname: nondupSeriesNames[j], data: datum});
+                    }
+                }
+                var dConfigs = {
+                    type: 'mscolumn2d',
+                    renderAt: 'chart-container',
+                    width: '100%',
+                    height: '400',
+                    dataFormat: 'json',
+                    dataSource: {
+                        "chart": {
+                            "theme": "fusion",
+                            "caption": caption+ ' - '+l_off,
+                            "xAxisname": 'Period',
+                            "yAxisName": "Amount (In Naira)",
+                            "plotFillAlpha": "80",
+                            "divLineIsDashed": "1",
+                            "divLineDashLen": "1",
+                            "divLineGapLen": "1"
+                        },
+                        "categories": [{'category': categories}],
+                        "dataset": dataset
+                    }
+                };
+                $("#vrs-chart").insertFusionCharts(dConfigs);
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
+    }
+
+    function pviFilterYear(year) {
+        let officer = $('#pvifilterofficers').val(),
+            freq = $('#pvi-frequency').val(),
+            url = `user/multi-analytics?pvi=${pvi_report}&&officer=${officer}&&`,
+            d=[], agent, xaxis, yaxis, l_off, caption, categories = [], dataset = [], datar = [], chartTemp, values = [], diffSeries = [], countSeries, seriesNames = [], nondupSeriesNames = [];
+        if (pvi_report === -1){
+//            return swal('Please choose a report to compare!', '','warning');
+            return loadPVIReceived();
+        }
+        url = url.concat(`freq=${freq}&&year=${year.value}`);
+
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                if (pvi_report === 'received') {
+                    jQuery.each(data.response, function (k, v) {
+                        yaxis = "Amount Received (Naira)";
+                        caption = 'Principal Received Vs Interest Received';
+                        xaxis = 'Period';
+                        categories.push({label: k});
+                        chartTemp = $.grep(v, function(e){return e.period === k.toString();});
+                        values.push(chartTemp);
+                        diffSeries.push(chartTemp.length);
+                        jQuery.each(v, function (key, val) {
+                            seriesNames.push(val.branch);
+                        });
+                    });
+                    countSeries = Math.max.apply(Math, diffSeries);
+                    nondupSeriesNames = seriesNames.filter(function(elem, index, self) {
+                        return index === self.indexOf(elem);
+                    }).sort();
+                    let datum = [], datas = [];
+                    for (let i = 0; i < values.length; i++) {
+                        if (values[i][0]){
+                            l_off = values[i][0].officer;
+                            datum.push({value: values[i][0].interest_received});
+                        } else {
+                            datum.push({value: 0});
+                        }
+                    }
+                    for (let i = 0; i < values.length; i++) {
+                        if (values[i][0]){
+                            datas.push({value: values[i][0].principal_received});
+                        } else {
+                            datas.push({value: 0});
+                        }
+                    }
+                    dataset.push({seriesname: 'Interest Received', data: datum});
+                    dataset.push({seriesname: 'Principal Received', data: datas});
+                }
+                if (pvi_report === 'receivable') {
+                    jQuery.each(data.response, function (k, v) {
+                        yaxis = 'Interest Earned (Naira)';
+                        caption = 'Interest Earned by Branches';
+                        xaxis = 'Period';
+                        categories.push({label: k});
+                        chartTemp = $.grep(v, function(e){return e.period === k.toString();});
+                        values.push(chartTemp);
+                        diffSeries.push(chartTemp.length);
+                        jQuery.each(v, function (key, val) {
+                            seriesNames.push(val.office);
+                        });
+                    });
+                    countSeries = Math.max.apply(Math, diffSeries);
+                    nondupSeriesNames = seriesNames.filter(function(elem, index, self) {
+                        return index === self.indexOf(elem);
+                    }).sort();
+                    for (let j = 0; j < nondupSeriesNames.length; j++) {
+                        let datum = [];
+                        for (let i = 0; i < values.length; i++) {
+                            let branch_series_value = ($.grep(values[i], function(e){return e.office === nondupSeriesNames[j];}))[0];
+                            if (branch_series_value){
+                                datum.push({value: branch_series_value.amount_received});
+                            } else {
+                                datum.push({value: 0});
+                            }
+                        }
+                        dataset.push({seriesname: nondupSeriesNames[j], data: datum});
+                    }
+                }
+                var dConfigs = {
+                    type: 'mscolumn2d',
+                    renderAt: 'chart-container',
+                    width: '100%',
+                    height: '400',
+                    dataFormat: 'json',
+                    dataSource: {
+                        "chart": {
+                            "theme": "fusion",
+                            "caption": caption+ ' - '+l_off,
+                            "xAxisname": 'Period',
+                            "yAxisName": "Amount (In Naira)",
+                            "plotFillAlpha": "80",
+                            "divLineIsDashed": "1",
+                            "divLineDashLen": "1",
+                            "divLineGapLen": "1"
+                        },
+                        "categories": [{'category': categories}],
+                        "dataset": dataset
+                    }
+                };
+                $("#vrs-chart").insertFusionCharts(dConfigs);
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
+    }
 
 
 </script>

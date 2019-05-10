@@ -807,9 +807,6 @@ function loadImages(folder){
     });
 }
 
-
-
-
 /**
  Business Individual & Corporate Client Updates*/
 let table = {};
