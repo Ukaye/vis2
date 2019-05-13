@@ -5903,7 +5903,7 @@
                         "data": d
                     }
                 };
-                $("#interest-received-chart").insertFusionCharts(chartConfigs);
+                $("#principal-received-chart").insertFusionCharts(chartConfigs);
             },
             'error': function (err) {
                 swal('Error in Connection!','','error')
@@ -6048,11 +6048,11 @@
         if (freq != "2" || freq != '4'){
             $('#pr-rec-year').hide();
             $('#p-r-rec-year').val(0);
-            url = url.concat('&&freq='+freq);
+            url = url.concat('freq='+freq+'&&');
         }
         else{
             $('#pr-rec-year').show();
-            url = url.concat('&&freq='+freq);
+            url = url.concat('freq='+freq+'&&');
         }
         let d = [], agent = '', xaxis;
         url = url.concat('officer='+officer.value+'&&year='+year);
@@ -6142,13 +6142,13 @@
         if (frequency.value == 2 || frequency.value == 4){
             $('#pr-rec-year').show();
             if (officer && year){
-                url = url.concat('officer='+officer+'&&year='+year+'&&freq='+frequency.value);
+                url = url.concat('officer='+officer+'&&year='+year+'&&freq='+frequency.value+'&&');
             }
         }
         else {
             $('#pr-rec-year').hide();
             $('#p-r-rec-year').val(0);
-            url = url.concat('officer='+officer+'&&freq='+frequency.value+'&&year='+$('#p-r-rec-year').val());
+            url = url.concat('officer='+officer+'&&freq='+frequency.value+'&&year='+$('#p-r-rec-year').val()+'&&');
         }
         let d = [], agent = '', xaxis;
 
@@ -6235,7 +6235,7 @@
         let officer = $('#prrecchartfilterofficers').val(),
             freq = $("#pr-rec-frequency").val(),
             d=[], agent, xaxis;
-        urlAn = urlAn.concat('freq='+freq+'&&officer='+officer+'&&year='+year.value);
+        urlAn = urlAn.concat('freq='+freq+'&&officer='+officer+'&&year='+year.value+'&&');
 
         $.ajax({
             'url': urlAn,

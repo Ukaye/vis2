@@ -4377,7 +4377,7 @@ users.get('/analytics', function(req, res, next) {
             }
             //One Officer, Yearly
             if (officer !== '0' && freq == '3'){
-                query = 'select sum(interest_amount) amount_received, DATE_FORMAT(interest_collect_date, \'%Y\') OfficerYear, \n' +
+                query = 'select sum(interest_amount) amount_due, DATE_FORMAT(interest_collect_date, \'%Y\') OfficerYear, \n' +
                     '(select fullname from users where users.id = \n' +
                     '(select loan_officer from clients where clients.id = \n' +
                     '(select userid from applications where applications.id = applicationid))) agent\n' +
@@ -4633,7 +4633,7 @@ users.get('/analytics', function(req, res, next) {
             }
             //One Officer, Yearly
             if (officer !== '0' && freq == '3'){
-                query = 'select sum(payment_amount) amount_received, DATE_FORMAT(payment_collect_date, \'%Y\') OfficerYear, \n' +
+                query = 'select sum(payment_amount) amount_due, DATE_FORMAT(payment_collect_date, \'%Y\') OfficerYear, \n' +
                     '(select fullname from users where users.id = \n' +
                     '(select loan_officer from clients where clients.id = \n' +
                     '(select userid from applications where applications.id = applicationid))) agent\n' +
