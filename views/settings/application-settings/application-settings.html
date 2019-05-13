@@ -26,6 +26,16 @@
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,800' rel='stylesheet' type='text/css'>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
     <script src="assets/js/vendor/jquery-2.1.4.min.js"></script>
+    <style type="text/css">
+        table.fees_grades input, table.fees_grades select {
+            width: 140px !important;
+            height: 30px !important;
+            padding: 5px !important;
+        }
+        input.invalid {
+            border: 2px dashed red;
+        }
+    </style>
 </head>
 
 <body class="open">
@@ -63,29 +73,171 @@
     <div class="content mt-3">
         <div class="animated fadeIn">
             <div class="row">
+                <div class="col-xs-12 col-sm-12">
+                    <div class="card">
+                        <div class="card-body card-block">
+                            <div class="tab">
+                                <div class="panel push-down">
+                                    <div class="panel-body">
+                                        <div class="example-box-wrapper">
+                                            <h6>Fees Settings</h6>
+                                            <hr>
+                                            <div class="row">
+                                                <div class="col-sm-6 col-md-6">
+                                                    <div class="form-group col-sm-12">
+                                                        <label class="form-control-label" for="fees_type">Fees Type <span
+                                                                class="text-danger">*</span></label>
+                                                        <div class="input-group">
+                                                            <select id="fees_type" class="form-control">
+                                                                <option selected="selected">-- Select Fees Type --</option>
+                                                                <option value="manual">Manual</option>
+                                                                <option value="automatic">Automatic</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div id="fees_grades_div" class="col-sm-6 col-md-6" style="display: none;">
+                                                    <table class="fees_grades">
+                                                        <thead>
+                                                            <tr>
+                                                                <td>Lower Limit</td>
+                                                                <td>Upper Limit</td>
+                                                                <td>Fee Type</td>
+                                                                <td>Fee Amount</td>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td><input type="text" name="lower-1" title="lower-1" placeholder="0" /></td>
+                                                                <td><input type="text" name="upper-1" title="upper-1" placeholder="0" /></td>
+                                                                <td>
+                                                                    <select name="type-1" title="type-1">
+                                                                        <option value="fixed" selected="selected">Fixed</option>
+                                                                        <option value="percentage">Percentage</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td><input type="text" name="amount-1" title="amount-1" placeholder="0" /></td>
+                                                                <td><a class="deleteFeeGrade btn btn-sm btn-danger"><span class="fa fa-remove"></span></a></td>
+                                                            </tr>
+                                                        </tbody>
+                                                        <tfoot>
+                                                            <tr>
+                                                                <td colspan="5" style="text-align: center;">
+                                                                    <button id="addFeeGrade" class="btn btn-sm btn-info" type="button">Add Fee Grade</button>
+                                                                </td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div id="fees_automatic_div" class="col-sm-6 col-md-6" style="display: none;">
+                                                    <div class="form-group col-sm-12">
+                                                        <label class="form-control-label" for="fees_automatic_type">Automatic Type <span
+                                                                class="text-danger">*</span></label>
+                                                        <div class="input-group">
+                                                            <select id="fees_automatic_type" class="form-control">
+                                                                <option value="flat">Flat</option>
+                                                                <option value="graded">Graded</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group col-sm-12">
+                                                        <div id="fees_flat_div">
+                                                            <div class="input-group">
+                                                                <input type="text" id="fee_amount" class="form-control" placeholder="Fee Amount">
+                                                                <select id="fee_type" class="form-control" title="fee_type">
+                                                                    <option value="fixed" selected="selected">Fixed Amount</option>
+                                                                    <option value="percentage">Percentage of Principal</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="panel push-down">
+                                    <div class="panel-body">
+                                        <div class="row">
+                                            <div class="col-lg-6">
+                                                <div class="example-box-wrapper">
+                                                    <h6>VAT Settings</h6>
+                                                    <hr>
+                                                    <div class="row">
+                                                        <div class="col-sm-12">
+                                                            <div class="form-group col-sm-12">
+                                                                <label class="form-control-label"> VAT Rate <span
+                                                                        class="text-danger">*</span></label>
+                                                                <div class="input-group">
+                                                                    <input type="text" id="vat" class="form-control" placeholder="Rate">
+                                                                </div>
+                                                                <small class="text-muted">VAT is in percentage (%) of the fee amount</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <hr />
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <div class="example-box-wrapper">
+                                                    <h6>WHT Settings</h6>
+                                                    <hr>
+                                                    <div class="row">
+                                                        <div class="col-sm-12">
+                                                            <div class="form-group col-sm-12">
+                                                                <label class="form-control-label"> WHT Rate <span
+                                                                        class="text-danger">*</span></label>
+                                                                <div class="input-group">
+                                                                    <input type="text" id="wht" class="form-control" placeholder="Rate">
+                                                                </div>
+                                                                <small class="text-muted">Withholding Tax on Investment Interest</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <hr />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="overflow:auto;">
+                                <div style="float:right;">
+                                    <button class="btn btn-success" type="button" onclick="saveFeesSettings()">Save</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
                 <div class="col-xs-12 col-sm-4">
                     <div class="card">
                         <div class="card-body card-block">
                             <div class="tab">
                                 <div class="panel push-down">
                                     <div class="panel-body">
-
                                         <div class="example-box-wrapper">
                                             <h6>Loan Requested</h6>
                                             <hr>
                                             <div class="row">
                                                 <div class="form-group col-sm-6 col-md-6">
-                                                    <label class="form-control-label">Min. Amount <span class="text-danger">*</span></label>
+                                                    <label class="form-control-label">Min. Amount <span
+                                                            class="text-danger">*</span></label>
                                                     <div class="input-group">
                                                         <input type="text" id="loan_requested_min"
-                                                               class="form-control imp" placeholder="Minimum Amount" min="0">
+                                                               class="form-control" placeholder="Minimum Amount">
                                                     </div>
                                                 </div>
                                                 <div class="form-group col-sm-6 col-md-6">
-                                                    <label class="form-control-label">Max. Amount <span class="text-danger">*</span></label>
+                                                    <label class="form-control-label">Max. Amount <span
+                                                            class="text-danger">*</span></label>
                                                     <div class="input-group">
                                                         <input type="text" id="loan_requested_max"
-                                                               class="form-control" placeholder="Maximum Amount" min="0">
+                                                               class="form-control" placeholder="Maximum Amount">
                                                     </div>
                                                 </div>
                                             </div>
@@ -100,17 +252,19 @@
                                             <hr>
                                             <div class="row">
                                                 <div class="form-group col-sm-6 col-md-6">
-                                                    <label class="form-control-label"> Min. Tenor <span class="text-danger">*</span></label>
+                                                    <label class="form-control-label"> Min. Tenor <span
+                                                            class="text-danger">*</span></label>
                                                     <div class="input-group">
-                                                        <input type="number" id="tenor_min" class="form-control"
-                                                               placeholder="Minimum Tenor" min="0">
+                                                        <input type="text" id="tenor_min" class="form-control"
+                                                               placeholder="Minimum Tenor">
                                                     </div>
                                                 </div>
                                                 <div class="form-group col-sm-6 col-md-6">
-                                                    <label class="form-control-label"> Max. Tenor <span class="text-danger">*</span></label>
+                                                    <label class="form-control-label"> Max. Tenor <span
+                                                            class="text-danger">*</span></label>
                                                     <div class="input-group">
-                                                        <input type="number" id="tenor_max" class="form-control"
-                                                               placeholder="Minimum Tenor" min="0">
+                                                        <input type="text" id="tenor_max" class="form-control"
+                                                               placeholder="Minimum Tenor">
                                                     </div>
                                                 </div>
                                             </div>
@@ -128,16 +282,16 @@
                                                     <label class="form-control-label"> Min. Rate <span
                                                             class="text-danger">*</span></label>
                                                     <div class="input-group">
-                                                        <input type="number" id="interest_rate_min" class="form-control"
-                                                               placeholder="Minimum Rate" min="0">
+                                                        <input type="text" id="interest_rate_min" class="form-control"
+                                                               placeholder="Minimum Rate">
                                                     </div>
                                                 </div>
                                                 <div class="form-group col-sm-6 col-md-6">
                                                     <label class="form-control-label"> Max. Rate <span
                                                             class="text-danger">*</span></label>
                                                     <div class="input-group">
-                                                        <input type="number" id="interest_rate_max" class="form-control"
-                                                               placeholder="Minimum Rate" min="0">
+                                                        <input type="text" id="interest_rate_max" class="form-control"
+                                                               placeholder="Minimum Rate">
                                                     </div>
                                                 </div>
                                             </div>
@@ -148,7 +302,7 @@
                             </div>
                             <div style="overflow:auto;">
                                 <div style="float:right;">
-                                    <button class="btn btn-success" type="button" onclick="saveApplicationSettings()">Save Settings</button>
+                                    <button class="btn btn-success" type="button" onclick="saveApplicationSettings()">Save</button>
                                 </div>
                             </div>
                         </div>

@@ -1,6 +1,7 @@
-const express = require('express');
+const async = require('async');
 const moment = require('moment');
-const db = require('../db');
+const db = require('../../../db');
+const express = require('express');
 const router = express.Router();
 
 router.post('/application', function (req, res, next) {
@@ -217,5 +218,83 @@ router.delete('/application/business/:id', function (req, res, next) {
     });
 });
 
+router.post('/fees', function (req, res, next) {
+    let data = req.body,
+        grades = Object.assign({}, req.body.grades);
+    delete data.grades;
+    data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    db.query('INSERT INTO fee_settings SET ?', data, function (error, result, fields) {
+        if (error) {
+            res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+        } else {
+            let query = "SELECT * FROM fee_settings WHERE ID = (SELECT MAX(ID) FROM fee_settings)";
+            db.query(query, function (error, results, fields) {
+                if (error) {
+                    res.send({
+                        "status": 500,
+                        "error": error,
+                        "response": null
+                    });
+                } else {
+                    db.getConnection(function(err, connection) {
+                        if (err) throw err;
+
+                        async.forEach(grades, function (grade, callback) {
+                            grade.feeSettingsID = results[0]['ID'];
+                            connection.query('INSERT INTO fee_grades SET ?', grade, function (error, result, fields) {
+                                if (error) {
+                                    console.log(error);
+                                }
+                                callback();
+                            });
+                        }, function (data) {
+                            connection.release();
+                            res.send({
+                                "status": 200,
+                                "message": "Fee settings saved successfully!"
+                            });
+                        });
+                    });
+                }
+            });
+        }
+    });
+});
+
+router.get('/fees', function (req, res, next) {
+    let query = "SELECT * FROM fee_settings WHERE ID = (SELECT MAX(ID) FROM fee_settings)";
+    db.query(query, function (error, results, fields) {
+        if (error) {
+            res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+        } else {
+            query = `SELECT * FROM fee_grades WHERE feeSettingsID = ${results[0]['ID']}`;
+            db.query(query, function (error, results_, fields) {
+                if (error) {
+                    res.send({
+                        "status": 500,
+                        "error": error,
+                        "response": null
+                    });
+                } else {
+                    let result = results[0];
+                    result.grades = results_;
+                    res.send({
+                        "status": 200,
+                        "message": "Fee settings fetched successfully!",
+                        "response": result
+                    });
+                }
+            });
+        }
+    });
+});
 
 module.exports = router;
