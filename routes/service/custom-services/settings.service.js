@@ -233,13 +233,7 @@ router.post('/fees', function (req, res, next) {
         } else {
             let query = "SELECT * FROM fee_settings WHERE ID = (SELECT MAX(ID) FROM fee_settings)";
             db.query(query, function (error, results, fields) {
-                if (error) {
-                    res.send({
-                        "status": 500,
-                        "error": error,
-                        "response": null
-                    });
-                } else {
+                if (results && results[0]) {
                     db.getConnection(function(err, connection) {
                         if (err) throw err;
 
@@ -259,6 +253,12 @@ router.post('/fees', function (req, res, next) {
                             });
                         });
                     });
+                } else {
+                    res.send({
+                        "status": 500,
+                        "error": error,
+                        "response": null
+                    });
                 }
             });
         }
@@ -268,13 +268,7 @@ router.post('/fees', function (req, res, next) {
 router.get('/fees', function (req, res, next) {
     let query = "SELECT * FROM fee_settings WHERE ID = (SELECT MAX(ID) FROM fee_settings)";
     db.query(query, function (error, results, fields) {
-        if (error) {
-            res.send({
-                "status": 500,
-                "error": error,
-                "response": null
-            });
-        } else {
+        if (results && results[0]) {
             query = `SELECT * FROM fee_grades WHERE feeSettingsID = ${results[0]['ID']}`;
             db.query(query, function (error, results_, fields) {
                 if (error) {
@@ -292,6 +286,12 @@ router.get('/fees', function (req, res, next) {
                         "response": result
                     });
                 }
+            });
+        } else {
+            res.send({
+                "status": 500,
+                "error": error,
+                "response": null
             });
         }
     });
