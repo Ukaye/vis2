@@ -6045,16 +6045,17 @@
         if (officer.value == 0 && freq == "-1"){
             return principalreceivable();
         }
-        url = url.concat('officer='+officer.value+'&&year='+year);
         if (freq != "2" || freq != '4'){
             $('#pr-rec-year').hide();
             $('#p-r-rec-year').val(0);
             url = url.concat('&&freq='+freq);
         }
         else{
+            $('#pr-rec-year').show();
             url = url.concat('&&freq='+freq);
         }
         let d = [], agent = '', xaxis;
+        url = url.concat('officer='+officer.value+'&&year='+year);
 
         $.ajax({
             'url': url,
@@ -6139,7 +6140,7 @@
             year = $('#p-r-rec-year').val(),
             officer = $('#prrecchartfilterofficers').val();
         if (frequency.value == 2 || frequency.value == 4){
-            $('#payment-frequency').show();
+            $('#pr-rec-year').show();
             if (officer && year){
                 url = url.concat('officer='+officer+'&&year='+year+'&&freq='+frequency.value);
             }
@@ -6597,6 +6598,7 @@
                             l_off = values[i][0].officer;
                             datum.push({value: values[i][0].interest_received});
                         } else {
+                            l_off = $("#pvifilterofficers option:selected").text();
                             datum.push({value: 0});
                         }
                     }
@@ -6610,6 +6612,8 @@
                     dataset.push({seriesname: 'Interest Received', data: datum});
                     dataset.push({seriesname: 'Principal Received', data: datas});
                 }
+                if (officer == '0')
+                    l_off = 'All Loan Officers';
                 if (pvi_report === 'receivable') {
                     jQuery.each(data.response, function (k, v) {
                         yaxis = 'Interest Earned (Naira)';
@@ -6707,6 +6711,7 @@
                             l_off = values[i][0].officer;
                             datum.push({value: values[i][0].interest_received});
                         } else {
+                            l_off = $("#pvifilterofficers option:selected").text();
                             datum.push({value: 0});
                         }
                     }
@@ -6720,6 +6725,8 @@
                     dataset.push({seriesname: 'Interest Received', data: datum});
                     dataset.push({seriesname: 'Principal Received', data: datas});
                 }
+                if (officer == '0')
+                    l_off = 'All Loan Officers';
                 if (pvi_report === 'receivable') {
                     jQuery.each(data.response, function (k, v) {
                         yaxis = 'Interest Earned (Naira)';
