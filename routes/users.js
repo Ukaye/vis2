@@ -3242,10 +3242,10 @@ users.get('/badloans/', function(req, res, next) {
         'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) \n'+
         'and datediff(curdate(), payment_collect_date) > 90 ';
     group = 'group by applicationID';
-    query = queryPart.concat(group)
+    query = queryPart.concat(group);
     if (start  && end){
-        start = "'"+start+"'"
-        end = "'"+end+"'"
+        start = "'"+start+"'";
+        end = "'"+end+"'";
         query = (queryPart.concat('AND (TIMESTAMP(payment_collect_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
     }
     if (officer){
@@ -5350,6 +5350,99 @@ users.get('/multi-analytics', function (req, res, next){
                 res.send({"status": 200, "error": null, "response": load, "message": "Success!"});
             });
         });
+    });
+});
+
+users.get('/trends', function(req, res, next){
+   let report = req.query.trend,
+       filter = req.query.filter,
+       query;
+   if (filter === 'gender'){
+       if (report === 'interest'){
+           query = `select sum(interest_amount) interest_received, 
+                    (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender 
+                    from schedule_history
+                    where status = 1 and 
+                    applicationid in (select id from applications where status <> 0) 
+                    group by gender`;
+       }
+       if (report === 'bad-loans'){
+           query = `select
+                    (payment_collect_date) as duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client, 
+                    (select loan_amount from applications where applications.ID = applicationID) as principal, payment_amount 
+                    from application_schedules 
+                    where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) 
+                    and datediff(curdate(), payment_collect_date) > 90 group by extract()  `;
+       }
+       if (report === 'overdue-loans'){
+
+       }
+   }
+   if (filter === 'age'){
+       if (report === 'interest'){
+           query = `select (interest_amount) interest_received,
+                    (select dob from clients where clients.id = (select userid from applications where applications.id = applicationid)) dob, 
+                    (select TIMESTAMPDIFF(MONTH, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) age 
+                    from schedule_history
+                    where status = 1 and 
+                    applicationid in (select id from applications where status <> 0) `
+                    // group by age`;
+       }
+       if (report === 'bad-loans'){
+
+       }
+       if (report === 'overdue-loans'){
+
+       }
+   }
+   db.query(query, function (error, result, fields){
+      if (error){
+          res.send({'status': 500, 'error': error, 'response': null});
+      }
+      else {
+          res.send(result);
+      }
+   });
+});
+
+users.get('/growth-trends', function(req, res, next){
+    let query, query1, query2, payload;
+    query = 'select sum(loan_amount) amount, DATE_FORMAT(disbursement_date, \'%M, %Y\') period ' +
+            'from applications ' +
+            'where status = 2 group by extract(year_month from disbursement_date)';
+    query1 = 'select sum(interest_amount) amount, DATE_FORMAT(payment_date, \'%M, %Y\') period ' +
+            'from schedule_history ' +
+            'where status = 1 and applicationid in (select id from applications where status = 2) group by extract(year_month from payment_date)';
+    query2 = 'select sum(interest_amount) amount, DATE_FORMAT(interest_collect_date, \'%M, %Y\') period ' +
+            'from application_schedules ' +
+            'where status = 1 ' +
+            'and applicationid in (select id from applications where status = 2)' +
+            'group by extract(year_month from interest_collect_date)';
+    payload = {};
+    db.query(query, function(error, results, fields){
+        if (error){
+            res.send({"status": 500, "error": error, "response": null, 'message': payload});
+        }
+        else {
+            payload.disbursements = results;
+            db.query(query1, function(error, results, fields) {
+                if (error){
+                    res.send({"status": 500, "error": error, "response": null, 'message': payload});
+                }
+                else {
+                    payload.interest_received = results;
+                    db.query(query2, function(error, results, fields) {
+                        if (error){
+                            res.send({"status": 500, "error": error, "response": null, 'message': payload});
+                        }
+                        else {
+                            payload.interest_receivable = results;
+                            res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
+                        }
+                    });
+                }
+            });
+        }
     });
 });
 
