@@ -165,4 +165,21 @@ router.get('/mandate/get/:applicationID', function (req, res, next) {
     });
 });
 
+router.post('/notification/push', function (req, res, next) {
+    let payload = req.body;
+    if (payload && payload.constructor === Object && Object.keys(payload).length !== 0) {
+        res.send({
+            status: 200,
+            response: 'Success! Notification received successfully',
+            data: payload
+        });
+    } else {
+        res.send({
+            status: 500,
+            response: 'Error! No payload found',
+            data: payload
+        });
+    }
+});
+
 module.exports = router;
