@@ -205,8 +205,11 @@
                                     <a class="nav-link" id="branches" href="#branch-reports" role="tab" data-toggle="tab">Branch Reports</a>
                                 </li>
                                 <!--<li class="nav-item">-->
-                                    <!--<a class="nav-link" id="trends" href="#trend-reports" role="tab" data-toggle="tab">Trends</a>-->
+                                    <!--<a class="nav-link" id="demographies" href="#demo-reports" role="tab" data-toggle="tab">Demographic Reports</a>-->
                                 <!--</li>-->
+                                <li class="nav-item">
+                                    <a class="nav-link" id="trends" href="#trend-reports" role="tab" data-toggle="tab">Trends</a>
+                                </li>
                             </ul>
 
                             <!-- Tab panes -->
@@ -1277,177 +1280,67 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div role="tabpanel" class="tab-pane fade" id="demo-reports">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="col-sm-12">
+                                                <div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">
+                                                    <div class="col-sm-4 card" style="background-color: transparent; border-color: transparent">
+                                                        <div class="form-group">
+                                                            <div class="input-group">
+                                                                <select id="demo-report" onchange="demoReportChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                    <option id="">Choose a report</option>
+                                                                    <option id="interest">Interest</option>
+                                                                    <option id="badloan">Bad Loans</option>
+                                                                    <option id="overdue">Overdue Loans</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-4">
+                                                        <div class="form-group">
+                                                            <div class="input-group">
+                                                                <select id="demo-filter" onchange="demoFilterChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                    <option id="">Select Filter</option>
+                                                                    <option id="age">Age</option>
+                                                                    <option id="gender">Gender</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div id="interest-demo-chart" style="text-align: center; display: none">Charts will load here!</div><hr/>
+                                                <div id="badloan-demo-chart" style="text-align: center; display: none">Charts will load here!</div><hr/>
+                                                <div id="overdue-demo-chart" style="text-align: center; display: none">Charts will load here!</div><hr/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div role="tabpanel" class="tab-pane fade" id="trend-reports">
                                     <div class="card">
                                         <div class="card-body">
-                                            <div class="col-sm-12" style="padding: 20px">
-                                                <div class="row" style="padding-bottom: 10px">
-                                                    <div class="col-sm-6">
-                                                        <button id="principal-received-button" class="btn btn-block col-sm-12">Principal Received</button>
-                                                    </div>
-                                                    <div class="col-sm-6">
-                                                        <button id="principal-receivable-button" class="btn col-sm-12">Principal Receivable</button>
-                                                    </div>
-                                                </div>
-                                                <!--<div class="row" style="padding-bottom: 10px">-->
-                                                <!--<div class="col-sm-12">-->
-                                                <!--<button id="compare-principals-button" class="btn btn-block col-sm-12">Principal Received&nbsp;&nbsp; &nbsp;Vs. &nbsp;&nbsp;Principal Receivable</button>-->
-                                                <!--</div>-->
-                                                <!--</div>-->
-                                            </div>
                                             <div class="col-sm-12">
-                                                <div id="principal-received-div" style="display: none" class="col-sm-12">
-                                                    <div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">
-                                                        <div class="col-sm-4 card" style="background-color: transparent; border-color: transparent">
-                                                            <div class="form-group">
-                                                                <div class="input-group">
-                                                                    <select id="prchartfilterofficers" onchange="prFilterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-sm-4 card" id="pr-freq" style="background-color: transparent; border-color: transparent">
-                                                            <div class="form-group">
-                                                                <div class="input-group">
-                                                                    <select id="pr-frequency" onchange="prFrequencyChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
-                                                                        <option value="-1"> -- Select Period --</option>
-                                                                        <option value="2">Monthly</option>
-                                                                        <option value="4">Quarterly</option>
-                                                                        <option value="3">Yearly</option>
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-sm-4 card" id="pr-year" style="display: none; background-color: transparent; border-color: transparent; ">
-                                                            <div class="form-group">
-                                                                <div class="input-group">
-                                                                    <select id="p-r-year" onchange="prFilterYear(this)" class="year form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
-                                                                        <option value="0">Select Year</option>
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                                                <div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">
+                                                    <div id="agr" style="display:none;" class="col-sm-4">
+                                                        <strong>Average Growth Rate: </strong><span id="growth-rate"></span>
                                                     </div>
-                                                    <div id="principal-received-chart" style="text-align: center">FusionCharts XT will load here!</div><hr/>
-                                                    <div class="card">
-                                                        <div class="card-header">
-                                                            <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
-                                                                <strong>Principal Received</strong>
-                                                                <span>Total: <span id="total-principal-earned"></span></span>
+                                                    <div class="col-sm-4"></div>
+                                                    <div class="col-sm-4 card" style="background-color: transparent; border-color: transparent">
+                                                        <div class="form-group">
+                                                            <div class="input-group">
+                                                                <select id="trend-report" onchange="changeTrend(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                    <option id="disbursement">Choose a report</option>
+                                                                    <option id="disbursement">Disbursements</option>
+                                                                    <option id="interest-received">Interest Received</option>
+                                                                    <option id="interest-receivable">Interest Receivable</option>
+                                                                </select>
                                                             </div>
-                                                            <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
-                                                                <div class="form-group">
-                                                                    <div class="input-group">
-                                                                        <select id="principal-officers" onchange="principalFilterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
-                                                                        </select>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">
-                                                                <form id="filterprincipal" class="form-inline" style="float: right;">
-                                                                    <div class="form-group">
-                                                                        <label class="" for="startDate">Start date</label>
-                                                                        <input type="date" class="form-control" id="filterprincipalstart" placeholder="Start date">
-                                                                    </div>
-                                                                    <div class="form-group">
-                                                                        <label class="" for="endDate">End date</label>
-                                                                        <input type="date" class="form-control" id="filterprincipalend" placeholder="End date">
-                                                                    </div>
-                                                                    <button type="submit" class="btn btn-success">Filter</button>
-                                                                </form>
-                                                            </div>
-                                                        </div>
-                                                        <div class="card-body">
-                                                            <table id="principal-table" class="table table-striped table-bordered">
-                                                                <thead>
-                                                                <tr>
-                                                                    <th>Loan ID</th>
-                                                                    <th>Client Name</th>
-                                                                    <th>Principal Received</th>
-                                                                    <th>Loan Officer</th>
-                                                                </tr>
-                                                                </thead>
-                                                                <tbody></tbody>
-                                                            </table>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div id="principal-receivable-div" style="display: none" class="col-sm-12">
-                                                    <div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">
-                                                        <div class="col-sm-4 card" style="background-color: transparent; border-color: transparent">
-                                                            <div class="form-group">
-                                                                <div class="input-group">
-                                                                    <select id="prrecchartfilterofficers" onchange="prRecFilterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-sm-4 card" id="pr-rec-freq" style="background-color: transparent; border-color: transparent">
-                                                            <div class="form-group">
-                                                                <div class="input-group">
-                                                                    <select id="pr-rec-frequency" onchange="prRecFrequencyChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
-                                                                        <option value="-1"> -- Select Period --</option>
-                                                                        <option value="2">Monthly</option>
-                                                                        <option value="4">Quarterly</option>
-                                                                        <option value="3">Yearly</option>
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-sm-4 card" id="pr-rec-year" style="display: none; background-color: transparent; border-color: transparent; ">
-                                                            <div class="form-group">
-                                                                <div class="input-group">
-                                                                    <select id="p-r-rec-year" onchange="prRecFilterYear(this)" class="year form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
-                                                                        <option value="0">Select Year</option>
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div id="principal-receivable-chart" style="text-align: center">FusionCharts XT will load here!</div><hr/>
-                                                    <div class="card">
-                                                        <div class="card-header">
-                                                            <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
-                                                                <strong>Principal Receivable</strong>
-                                                                <span>Total: <span id="total-principal-rec"></span></span>
-                                                            </div>
-                                                            <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
-                                                                <div class="form-group">
-                                                                    <div class="input-group">
-                                                                        <select id="principal-rec-officers" onchange="principalRecFilterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
-                                                                        </select>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">
-                                                                <form id="filterprincipalrec" class="form-inline" style="float: right;">
-                                                                    <div class="form-group">
-                                                                        <label class="" for="startDate">Start date</label>
-                                                                        <input type="date" class="form-control" id="filterprincipalrecstart" placeholder="Start date">
-                                                                    </div>
-                                                                    <div class="form-group">
-                                                                        <label class="" for="endDate">End date</label>
-                                                                        <input type="date" class="form-control" id="filterprincipalrecend" placeholder="End date">
-                                                                    </div>
-                                                                    <button type="submit" class="btn btn-success">Filter</button>
-                                                                </form>
-                                                            </div>
-                                                        </div>
-                                                        <div class="card-body">
-                                                            <table id="principal-rec-table" class="table table-striped table-bordered">
-                                                                <thead>
-                                                                <tr>
-                                                                    <th>Loan ID</th>
-                                                                    <th>Client Name</th>
-                                                                    <th>Principal Receivable</th>
-                                                                    <th>Loan Officer</th>
-                                                                </tr>
-                                                                </thead>
-                                                                <tbody></tbody>
-                                                            </table>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                <div id="disburse-trend-chart" style="text-align: center; display: none">Charts will load here!</div><hr/>
+                                                <div id="interest-received-trend-chart" style="text-align: center; display: none">Charts will load here!</div><hr/>
+                                                <div id="interest-receivable-trend-chart" style="text-align: center; display: none">Charts will load here!</div><hr/>
                                             </div>
                                         </div>
                                     </div>
@@ -1515,6 +1408,7 @@
 <script src="js/notifications.js"></script>
 <script>
     jQuery(document).ready(function() {
+        trends();
         loadYears('disburse-year');
         loadYears('branch-year');
         loadYears('payment-year');
@@ -3060,7 +2954,7 @@
                 let v = dets[i];
                 var duedate = new Date(v.duedate);
 //                if ((Math.round((now.getTime() - duedate.getTime())/(oneDay))) > 90){
-                let validpayment = amount_paid[v.applicationID];
+                let validpayment = amount_paid[v.applicationID]; console.log(amount_paid);
                 total += parseFloat(v.principal - validpayment);
                 v.id = padWithZeroes(parseInt(v.applicationID), 6);
                 v.amount = formatter.format(parseFloat(v.principal));
@@ -3264,7 +3158,7 @@
                 $("#prrecchartfilterofficers").empty().append('<option value="0" id="0">All Loan Officers</option>');
                 $("#principal-officers").empty().append('<option value="0" id="0">All Loan Officers</option>');
                 $("#principal-rec-officers").empty().append('<option value="0" id="0">All Loan Officers</option>');
-                $("#pvifilterofficers").empty().append('<option value="0" id="0">Select a Loan Officer</option>');
+                $("#pvifilterofficers").empty().append('<option value="0" id="0">All Loan Officers</option>');
                 $.each(JSON.parse(response), function (key, val) {
                     $("#filter-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#overdue-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
@@ -6786,6 +6680,137 @@
         });
     }
 
+    // Growth Trends
+
+    let dr, ir, irec;
+    function trends(){
+        let d = [], interest = [], interest_rec = [];
+        $.ajax({
+            'url': 'user/growth-trends',
+            'type': 'get',
+            'success': function (data) {
+                dr = data.message.disbursements;
+                ir = data.message.interest_received;
+                irec = data.message.interest_receivable;
+                jQuery.each(dr, function(k, v){
+                    d.push({label: v.period , value: v.amount}, );
+                });
+                jQuery.each(ir, function(k, v){
+                    interest.push({label: v.period , value: v.amount}, );
+                });
+                jQuery.each(irec, function(k, v){
+                    interest_rec.push({label: v.period , value: v.amount}, );
+                });
+                var disburseConfigs = {
+                    type: 'line', // The chart type
+                    width: '100%', // Width of the chart
+                    height: '400', // Height of the chart
+                    dataFormat: 'json', // Data type
+                    dataSource: {
+                        "chart": {
+                            "caption": "Monthly Disbursements",
+//                            "subCaption": "In MMbbl = One Million barrels",
+                            "xAxisName": "Period",
+                            "yAxisName": "Amount Disbursed (In Naira)",
+                            "numberSuffix": "",
+                            "theme": "fusion",
+                        },
+                        "data": d
+                    }
+                };
+                var interestConfigs = {
+                    type: 'line', // The chart type
+                    width: '100%', // Width of the chart
+                    height: '400', // Height of the chart
+                    dataFormat: 'json', // Data type
+                    dataSource: {
+                        "chart": {
+                            "caption": "Monthly Interest Received",
+//                            "subCaption": "In MMbbl = One Million barrels",
+                            "xAxisName": "Period",
+                            "yAxisName": "Interest Received (In Naira)",
+                            "numberSuffix": "",
+                            "theme": "fusion",
+                        },
+                        "data": interest
+                    }
+                };
+                var intRecConfigs = {
+                    type: 'line', // The chart type
+                    width: '100%', // Width of the chart
+                    height: '400', // Height of the chart
+                    dataFormat: 'json', // Data type
+                    dataSource: {
+                        "chart": {
+                            "caption": "Monthly Interest Receivable",
+//                            "subCaption": "In MMbbl = One Million barrels",
+                            "xAxisName": "Period",
+                            "yAxisName": "Interest Receivable (In Naira)",
+                            "numberSuffix": "",
+                            "theme": "fusion",
+                        },
+                        "data": interest_rec
+                    }
+                };
+                $("#disburse-trend-chart").insertFusionCharts(disburseConfigs);
+                $("#interest-received-trend-chart").insertFusionCharts(interestConfigs);
+                $("#interest-receivable-trend-chart").insertFusionCharts(intRecConfigs);
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
+    }
+
+    function agr(values){
+        let new_values = values.filter(value => value.period !== null).filter(value => value.amount !== 0);
+        let amounts = new_values.map(value => value.amount);
+        let ind_avgs = [];
+        for (let i = 0; i < amounts.length; i++){
+            if (i !== amounts.length - 1)
+                ind_avgs.push(parseFloat((amounts[i+1]/amounts[i]) - 1)*100)
+        }
+        let sum_avg = ind_avgs.reduce((acc, avrg) => acc + avrg, 0);
+        let avg_rate = sum_avg/ind_avgs.length;
+//        let start = new_values[0].amount;
+//        let end = new_values[new_values.length - 1].amount;
+//        let avg = parseFloat(Math.pow((end/start), 1/new_values.length) - 1);
+//        let avg_rate = avg * 100;
+        $('#growth-rate').html(avg_rate.toFixed(2)+'%');
+    }
+
+    function changeTrend(type){
+        $('#agr').hide();
+        if (type.value === 'Disbursements'){
+            agr(dr);
+            $('#agr').show();
+            $('#disburse-trend-chart').show();
+            $('#interest-received-trend-chart').hide();
+            $('#interest-receivable-trend-chart').hide();
+        }
+        else if (type.value == 'Interest Received'){
+            agr(ir);
+            $('#agr').show();
+            $('#interest-received-trend-chart').show();
+            $('#disburse-trend-chart').hide();
+            $('#interest-receivable-trend-chart').hide();
+        }
+        else if (type.value == 'Interest Receivable'){
+            agr(irec);
+            $('#agr').show();
+            $('#interest-receivable-trend-chart').show();
+            $('#disburse-trend-chart').hide();
+            $('#interest-received-trend-chart').hide();
+        }
+        else {
+            $('#agr').hide();
+            $('#interest-receivable-trend-chart').hide();
+            $('#disburse-trend-chart').hide();
+            $('#interest-received-trend-chart').hide();
+        }
+    }
+
+    // Demographics Reports
 
 </script>
 
