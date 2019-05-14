@@ -41,7 +41,7 @@ if (fs.existsSync('./files')) {
 let app = express(),
     cors = require('cors'),
     user = require('./routes/users'),
-    settings = require('./routes/settings'),
+    settings = require('./routes/service/custom-services/settings.service'),
     investment = require('./routes/investment'),
     core_service = require('./routes/service/core-service'),
     client_service = require('./routes/service/custom-services/client.service'),
