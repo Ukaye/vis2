@@ -6,18 +6,31 @@ $(document).ready(function() {
 const urlParams = new URLSearchParams(window.location.search);
 const application_id = urlParams.get('id');
 
+let workflow,
+    application,
+    settings_obj = {
+        loan_requested_min: 1,
+        loan_requested_max: 100000000,
+        tenor_min: 1,
+        tenor_max: 60,
+        interest_rate_min: 1,
+        interest_rate_max: 1000
+    };
+
+$("#disbursement-fees").on("keyup", function () {
+    let val = $("#disbursement-fees").val();
+    $("#disbursement-fees").val(numberToCurrencyformatter(val));
+});
+
+$("#disbursement-vat").on("keyup", function () {
+    let val = $("#disbursement-vat").val();
+    $("#disbursement-vat").val(numberToCurrencyformatter(val));
+});
+
 function goToLoanRepayment() {
     window.location.href = '/loan-repayment?id='+application_id;
 }
 
-let settings_obj = {
-    loan_requested_min: 1,
-    loan_requested_max: 100000000,
-    tenor_min: 1,
-    tenor_max: 60,
-    interest_rate_min: 1,
-    interest_rate_max: 1000
-};
 function getApplicationSettings(application) {
     $('#wait').show();
     $.ajax({
@@ -39,14 +52,82 @@ function getApplicationSettings(application) {
                 if (settings_obj.interest_rate_max)
                     $('#interest_rate_max').text(numberToCurrencyformatter(settings_obj.interest_rate_max));
             }
+            getFeeSettings();
             initCSVUpload(application);
             initCSVUpload2(application, settings_obj);
         }
     });
 }
 
-let workflow,
-    application;
+function getFeeSettings() {
+    $.ajax({
+        type: "GET",
+        url: "/settings/fees",
+        success: function (data) {
+            let settings_obj = data.response,
+                $vat = $('#disbursement-vat'),
+                $fees = $('#disbursement-fees');
+            if (settings_obj) {
+                if (settings_obj.fees_type === 'automatic') {
+                    let fees = calculateFee(parseFloat(application.loan_amount), settings_obj.grades),
+                        vat = calculateVAT(fees, settings_obj.vat);
+                    $vat.val(numberToCurrencyformatter(vat));
+                    $fees.val(numberToCurrencyformatter(fees));
+                    $fees.prop('disabled', true);
+                } else {
+                    $fees.keyup(function (e) {
+                        let fees = currencyToNumberformatter(e.target.value),
+                            vat = calculateVAT(fees, settings_obj.vat);
+                        $vat.val(numberToCurrencyformatter(vat));
+                    });
+                }
+            }
+        }
+    });
+}
+
+function calculateVAT(fees, rate) {
+    return (fees * (parseFloat(rate) / 100)).round(2);
+}
+
+function calculateFee(amount, grades) {
+    let fee = 0,
+        grade = getFeeGrade(amount, grades);
+    if (grade) {
+        grade.amount = parseFloat(grade.amount);
+        switch (grade.type) {
+            case 'fixed': {
+                fee = grade.amount;
+                break;
+            }
+            case 'percentage': {
+                fee = (amount * (grade.amount / 100)).round(2);
+                break;
+            }
+        }
+    }
+    return fee;
+}
+
+function getFeeGrade(amount, grades) {
+    let result;
+    for (let i=0; i<grades.length; i++) {
+        let grade = grades[i];
+        if (amount >= parseFloat(grade.lower_limit) && amount <= parseFloat(grade.upper_limit)) {
+            result = grade;
+            break;
+        }
+    }
+    return result;
+}
+
+$('#fees-check').click(function () {
+    if ($('#fees-check').is(':checked')) {
+        $('#fees-div').show();
+    } else {
+        $('#fees-div').hide();
+    }
+});
 
 function loadApplication(user_id){
     $.ajax({
@@ -1008,6 +1089,14 @@ function disburse() {
     disbursal.disbursement_date = $('#disbursement-date').val();
     if (disbursal.funding_source === "-- Select a Funding Source --" || disbursal.disbursement_channel === "-- Select a Channel --" || !disbursal.disbursement_date)
         return notification('Kindly fill all required fields!','','warning');
+    if ($('#fees-check').is(':checked')) {
+        let $fees = $('#disbursement-fees');
+        if (!$fees.val())
+            return notification('The fees amount is not valid!','','warning');
+        disbursal.fees = currencyToNumberformatter($fees.val());
+        disbursal.vat = currencyToNumberformatter($('#disbursement-vat').val());
+        disbursal.fees_payment = $('#fees-payment').val();
+    }
     $('#wait').show();
     $('#disburseModal').modal('hide');
     $.ajax({

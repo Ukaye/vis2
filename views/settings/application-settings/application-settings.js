@@ -12,6 +12,10 @@ $(document).ready(function () {
         let val = $(`input[name="${e.target.name}"]`).val();
         $(`input[name="${e.target.name}"]`).val(numberToCurrencyformatter(val));
     });
+    $body.delegate('select[name^="type-"]', 'change', function(e) {
+        let i = (e.target.name.split('-'))[1];
+        $(`input[name="amount-${i}"]`).val('');
+    });
     $body.delegate('input[name^="amount-"]', 'keyup', function(e) {
         let val = $(`input[name="${e.target.name}"]`).val();
         $(`input[name="${e.target.name}"]`).val(numberToCurrencyformatter(val));
@@ -24,15 +28,15 @@ $("#addFeeGrade").on("click", function () {
     counter++;
     let newRow = $("<tr>");
     let cols = "";
-    cols += `<td><input type="text" name="lower-${counter}" title="lower-${counter}" placeholder="0" /></td>`;
-    cols += `<td><input type="text" name="upper-${counter}" title="upper-${counter}" placeholder="0" /></td>`;
+    cols += `<td><input type="text" name="lower-${counter}" title="lower limit" placeholder="0" /></td>`;
+    cols += `<td><input type="text" name="upper-${counter}" title="upper limit" placeholder="0" /></td>`;
     cols += `<td>
-                <select name="type-${counter}" title="type-${counter}">
+                <select name="type-${counter}" title="fee type">
                     <option value="fixed" selected="selected">Fixed</option>
                     <option value="percentage">Percentage</option>
                 </select>   
              </td>`;
-    cols += `<td><input type="text" name="amount-${counter}" title="amount-${counter}" placeholder="0" /></td>`;
+    cols += `<td><input type="text" name="amount-${counter}" title="fee amount" placeholder="0" /></td>`;
     cols += `<td><a class="deleteFeeGrade btn btn-sm btn-danger"><span class="fa fa-remove"></span></a></td>`;
     newRow.append(cols);
     $("table.fees_grades").append(newRow);
@@ -120,6 +124,10 @@ $('#fees_automatic_type').change(function (e) {
     }
 });
 
+$('#fee_type').change(function (e) {
+    $('#fee_amount').val('');
+});
+
 $("#vat").on("keyup", function () {
     let val = $("#vat").val();
     $("#vat").val(numberToCurrencyformatter(val));
@@ -177,34 +185,36 @@ function getFeeSettings() {
                 $('#vat').val(numberToCurrencyformatter(settings_obj.vat));
                 $('#wht').val(numberToCurrencyformatter(settings_obj.wht));
                 $('#fees_type').val(settings_obj.fees_type).trigger('change');
-                $('#fees_automatic_type').val(settings_obj.fees_automatic_type).trigger('change');
-                if (settings_obj.fees_automatic_type === 'flat') {
-                    $('#fee_type').val(settings_obj['grades'][0]['type']);
-                    $('#fee_amount').val(numberToCurrencyformatter(settings_obj['grades'][0]['amount']));
-                } else {
-                    counter = 0;
-                    $("table.fees_grades > tbody").html("");
-                    for (let i=0; i<settings_obj['grades'].length; i++){
-                        let grade = settings_obj['grades'][i];
-                        let newRow = $("<tr>");
-                        let cols = "";
-                        counter++;
-                        cols += `<td><input type="text" name="lower-${counter}" title="lower-${counter}" placeholder="0" /></td>`;
-                        cols += `<td><input type="text" name="upper-${counter}" title="upper-${counter}" placeholder="0" /></td>`;
-                        cols += `<td>
-                            <select name="type-${counter}" title="type-${counter}">
+                if (settings_obj.fees_automatic_type) {
+                    $('#fees_automatic_type').val(settings_obj.fees_automatic_type).trigger('change');
+                    if (settings_obj.fees_automatic_type === 'flat') {
+                        $('#fee_type').val(settings_obj['grades'][0]['type']);
+                        $('#fee_amount').val(numberToCurrencyformatter(settings_obj['grades'][0]['amount']));
+                    } else {
+                        counter = 0;
+                        $("table.fees_grades > tbody").html("");
+                        for (let i=0; i<settings_obj['grades'].length; i++){
+                            let grade = settings_obj['grades'][i];
+                            let newRow = $("<tr>");
+                            let cols = "";
+                            counter++;
+                            cols += `<td><input type="text" name="lower-${counter}" title="lower limit" placeholder="0" /></td>`;
+                            cols += `<td><input type="text" name="upper-${counter}" title="upper limit" placeholder="0" /></td>`;
+                            cols += `<td>
+                            <select name="type-${counter}" title="fee type">
                                 <option value="fixed" selected="selected">Fixed</option>
                                 <option value="percentage">Percentage</option>
                             </select>   
                          </td>`;
-                        cols += `<td><input type="text" name="amount-${counter}" title="amount-${counter}" placeholder="0" /></td>`;
-                        cols += `<td><a class="deleteFeeGrade btn btn-sm btn-danger"><span class="fa fa-remove"></span></a></td>`;
-                        newRow.append(cols);
-                        $("table.fees_grades").append(newRow);
-                        $(`input[name="lower-${counter}"]`).val(grade.lower_limit);
-                        $(`input[name="upper-${counter}"]`).val(grade.upper_limit);
-                        $(`select[name="type-${counter}"]`).val(grade.type);
-                        $(`input[name="amount-${counter}"]`).val(grade.amount);
+                            cols += `<td><input type="text" name="amount-${counter}" title="fee amount" placeholder="0" /></td>`;
+                            cols += `<td><a class="deleteFeeGrade btn btn-sm btn-danger"><span class="fa fa-remove"></span></a></td>`;
+                            newRow.append(cols);
+                            $("table.fees_grades").append(newRow);
+                            $(`input[name="lower-${counter}"]`).val(grade.lower_limit);
+                            $(`input[name="upper-${counter}"]`).val(grade.upper_limit);
+                            $(`select[name="type-${counter}"]`).val(grade.type);
+                            $(`input[name="amount-${counter}"]`).val(grade.amount);
+                        }
                     }
                 }
             }

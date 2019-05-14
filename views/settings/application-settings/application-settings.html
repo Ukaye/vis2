@@ -108,15 +108,15 @@
                                                         </thead>
                                                         <tbody>
                                                             <tr>
-                                                                <td><input type="text" name="lower-1" title="lower-1" placeholder="0" /></td>
-                                                                <td><input type="text" name="upper-1" title="upper-1" placeholder="0" /></td>
+                                                                <td><input type="text" name="lower-1" title="lower limit" placeholder="0" /></td>
+                                                                <td><input type="text" name="upper-1" title="upper limit" placeholder="0" /></td>
                                                                 <td>
-                                                                    <select name="type-1" title="type-1">
+                                                                    <select name="type-1" title="fee type">
                                                                         <option value="fixed" selected="selected">Fixed</option>
                                                                         <option value="percentage">Percentage</option>
                                                                     </select>
                                                                 </td>
-                                                                <td><input type="text" name="amount-1" title="amount-1" placeholder="0" /></td>
+                                                                <td><input type="text" name="amount-1" title="fee amount" placeholder="0" /></td>
                                                                 <td><a class="deleteFeeGrade btn btn-sm btn-danger"><span class="fa fa-remove"></span></a></td>
                                                             </tr>
                                                         </tbody>
@@ -145,11 +145,11 @@
                                                     <div class="form-group col-sm-12">
                                                         <div id="fees_flat_div">
                                                             <div class="input-group">
-                                                                <input type="text" id="fee_amount" class="form-control" placeholder="Fee Amount">
-                                                                <select id="fee_type" class="form-control" title="fee_type">
+                                                                <select id="fee_type" class="form-control" title="fee type">
                                                                     <option value="fixed" selected="selected">Fixed Amount</option>
                                                                     <option value="percentage">Percentage of Principal</option>
                                                                 </select>
+                                                                <input type="text" id="fee_amount" class="form-control" placeholder="Fee Amount">
                                                             </div>
                                                         </div>
                                                     </div>
