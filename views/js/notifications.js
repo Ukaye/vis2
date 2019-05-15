@@ -334,7 +334,7 @@ function getNotifications(){
     status = false;
     $.ajax({
         type: "GET",
-        url: "/notifications/all-updates?bug="+JSON.parse(localStorage.user_obj).ID+'&&bugger='+JSON.parse(localStorage.user_obj).user_role,
+        url: "/user/all-updates?bug="+JSON.parse(localStorage.user_obj).ID+'&&bugger='+JSON.parse(localStorage.user_obj).user_role,
         success: function (response) {
             status = true;
             noti_count = response.length;
