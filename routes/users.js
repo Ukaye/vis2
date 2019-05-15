@@ -3202,7 +3202,7 @@ users.get('/all-updates', function(req, res){
     try {
         db.getConnection(function(error, connection){
             if (error || !connection)
-                res.send({"status": 500, "error": error, "response": null});
+                return res.send({"status": 500, "error": error, "response": null});
             connection.query(query_, function(err, results, fields){
                 if (err)
                     return res.send({"status": 500, "error": err, "response": null});
