@@ -164,7 +164,7 @@ route.get('/all-updates', function(req, res){
     const endpoint = `/core-service/get?query=${query_}`;
     const url = `${HOST}${endpoint}`;
     db.getConnection(function(error, connection){
-        if (error)
+        if (error || !connection)
             res.send({"status": 500, "error": error, "response": null});
         connection.query(query_, function(err, results, fields){
             if (err)
