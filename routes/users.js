@@ -3189,6 +3189,120 @@ users.get('/bad-loans/', function(req, res, next) {
     });
 });
 
+users.get('/all-updates', function(req, res){
+    let load = {}
+    let data = []
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let user = req.query.bug, word = 'Application'
+    let role = req.query.bugger
+    let query_ = 'select id from notification_preferences where userid = '+user+''
+    // let query = `select notification_id, category, description, date_created, (select fullname from users where users.id = userid) user from pending_records inner join notifications on notification_id = notifications.id where status = 1 and view_status in (1,2) order by notification_id desc`;
+    const endpoint = `/core-service/get?query=${query_}`;
+    const url = `${HOST}${endpoint}`;
+    try {
+        db.getConnection(function(error, connection){
+            if (error || !connection)
+                return res.send({"status": 500, "error": error, "response": null});
+            connection.query(query_, function(err, results, fields){
+                if (err)
+                    return res.send({"status": 500, "error": err, "response": null});
+                else{
+                    let query;
+                    if (results.length > 0){
+                        query = 'select *, notificationid as ID, category, description, unr.date_created, nt.userid, (select fullname from users where users.id = nt.userid) user \n' +
+                            'from user_notification_rel unr inner join notifications nt on notificationid = nt.id \n' +
+                            'where status = 1 and view_status = 1 and unr.userid = '+user+'\n' +
+                            'and nt.userid <> '+user+' \n'+
+                            'and ' +
+                            '(select np.status from notification_preferences np where np.category = \n' +
+                            '\t(select nc.id from notification_categories nc where nc.category_name = nt.category) \n' +
+                            'and np.userid = '+user+' and np.date_created = (select date_created from notification_preferences npf where npf.id = '+
+                            '(select max(id) from notification_preferences nop where nop.userid = '+user+' ))) = 1 \n' +
+                            'and category <> ?\n'+
+                            'and (select visible from notification_roles_rel nr where role_id = '+role+' and nr.category = \n' +
+                            '(select nc.id from notification_categories nc where nc.category_name = nt.category) \n' +
+                            '\tand nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = \n' +
+                            '(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = nt.category)))) = 1\n'+
+                            'order by nt.id desc'
+                    }
+                    else {
+                        query = 'select *, notification_id as ID, category, description, date_created, view_status, (select fullname from users where users.id = userid) user \n'+
+                            'from pending_records inner join notifications nt on notification_id = notifications.id \n'+
+                            'where status = 1 and userid <> '+user+' and category <> ? and view_status in (1,2) ' +
+                            'and (select visible from notification_roles_rel nr where role_id = '+role+' and nr.category = \n' +
+                            '(select nc.id from notification_categories nc where nc.category_name = nt.category) \n' +
+                            '\tand nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = \n' +
+                            '(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = nt.category)))) = 1\n'+
+                            'order by notifications.id desc';
+                    }
+                    connection.query(query, ['Application'], function(er, response, field){
+                        if (er)
+                            return res.send({"status": 500, "error": er, "response": null});
+                        else{
+                            load.all = response;
+                            connection.query(query_, function(rrr, resp, fld){
+                                if (rrr)
+                                    return res.send({"status": 500, "error": rrr, "response": null});
+                                else{
+                                    let query2;
+                                    if (resp.length > 0){
+                                        query2 = 'select *, notificationid as ID, category, \n' +
+                                            '(select GROUP_CONCAT(distinct(approverid)) from workflow_stages where workflowid = (select workflowid from applications where applications.id = affected)) approvers,\n' +
+                                            'description, unr.date_created, nt.userid, (select fullname from users where users.id = nt.userid) user \n' +
+                                            'from user_notification_rel unr inner join notifications nt on notificationid = nt.id \n' +
+                                            'where status = 1 and view_status = 1 and unr.userid = '+user+'\n' +
+                                            'and nt.userid <> '+user+' \n'+
+                                            'and nt.category = ? and \n' +
+                                            '(select np.status from notification_preferences np where np.category = \n' +
+                                            '\t(select nc.id from notification_categories nc where nc.category_name = ?) \n' +
+                                            'and np.userid = '+user+' and np.date_created = (select date_created from notification_preferences npf where npf.id = '+
+                                            '(select max(id) from notification_preferences nop where nop.userid = '+user+' ))) = 1 \n' +
+                                            'and (select visible from notification_roles_rel nr where role_id = '+role+' and nr.category = (select nc.id from notification_categories nc where nc.category_name = ?) '+
+                                            'and nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = '+
+                                            '(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = ?)))) = 1\n'+
+                                            'order by nt.id desc'
+                                    }
+                                    else {
+                                        query2 = `select *, notification_id as ID, category, description, date_created, view_status, (select fullname from users where users.id = userid) user, \n`+
+                                            `(select GROUP_CONCAT(distinct(approverid)) as approvers from workflow_stages where workflowid = (select workflowid from applications where applications.id = affected)) approvers, `+
+                                            `affected  `+
+                                            `from pending_records inner join notifications on notification_id = notifications.id \n`+
+                                            `where status = 1 and userid <> ${user} and category = ? and view_status in (1,2) `+
+                                            `and `+
+                                            `(select visible from notification_roles_rel nr where role_id = ${role} and nr.category = (select nc.id from notification_categories nc where nc.category_name = ?) `+
+                                            `and nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = `+
+                                            `(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = ?)))) = 1 `+
+                                            `order by notifications.id desc`;
+                                    }
+                                    connection.query(query2, [word, word, word, word, word], function(e, r, f){
+                                        connection.release();
+                                        if (e)
+                                            return res.send({"status": 500, "error": e, "response": null});
+                                        else {
+                                            for (let i = 0; i < r.length; i++){
+                                                let dets = r[i]
+                                                if (dets.approvers !== null){
+                                                    if (Array.from(new Set(dets.approvers.split(','))).includes(role)){
+                                                        data.push(dets)
+                                                    }
+                                                }
+                                            }
+                                            let result = _.orderBy(load.all.concat(data), ['id'], ['desc']);
+                                            res.send(result);
+                                        }
+                                    })
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        })
+    } catch (e) {
+        throw e;
+    }
+});
+
 /* Overdue Loans  */
 users.get('/overdues/', function(req, res, next) {
     let start = req.query.start,
@@ -5442,6 +5556,91 @@ users.get('/growth-trends', function(req, res, next){
                     });
                 }
             });
+        }
+    });
+});
+
+users.get('/disbursement-trends', function(req, res, next){
+    let query,
+        year = req.query.year,
+        frequency = req.query.frequency;
+        payload = {};
+    query = 'select sum(loan_amount) amount, DATE_FORMAT(disbursement_date, \'%M, %Y\') period ' +
+            'from applications ' +
+            'where status = 2 group by extract(year_month from disbursement_date)';
+    if (!frequency || frequency === '-1' || frequency === '2' && year === '0'){
+        query = 'select sum(loan_amount) amount, DATE_FORMAT(disbursement_date, \'%M, %Y\') period ' +
+                'from applications ' +
+                'where status = 2 group by extract(year_month from disbursement_date)';
+    }
+    if (frequency && frequency === '2' && year !== '0'){
+        query = 'select sum(loan_amount) amount, DATE_FORMAT(disbursement_date, \'%M, %Y\') period ' +
+                'from applications ' +
+                'where status = 2 ' +
+                'and DATE_FORMAT(disbursement_date, \'%Y\') = '+year+' ' +
+                'group by extract(year_month from disbursement_date)';
+    }
+    if (frequency && frequency === '3'){
+        query = 'select sum(loan_amount) amount, DATE_FORMAT(disbursement_date, \'%Y\') period ' +
+                'from applications ' +
+                'where status = 2 ' +
+                'group by period';
+    }
+    if (frequency && frequency === '4' && year !== '0'){
+        query = 'select sum(loan_amount) amount, concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) period ' +
+                'from applications ' +
+                'where status = 2 ' +
+                'and DATE_FORMAT(disbursement_date, \'%Y\') = '+year+' ' +
+                'group by period';
+    }
+    if (frequency && frequency === '4' && year === '0'){
+        query = 'select sum(loan_amount) amount, concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) period ' +
+            'from applications ' +
+            'where status = 2 ' +
+            'group by period order by extract(year_month from disbursement_date)';
+    }
+
+    db.query(query, function(error, results, fields){
+        if (error){
+            res.send({"status": 500, "error": error, "response": null, 'message': payload});
+        }
+        else {
+            payload.disbursements = results;
+            res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
+        }
+    });
+});
+
+users.get('/interest-received-trends', function(req, res, next){
+    let query, payload = {};
+    query = 'select sum(interest_amount) amount, DATE_FORMAT(payment_date, \'%M, %Y\') period ' +
+            'from schedule_history ' +
+            'where status = 1 and applicationid in (select id from applications where status = 2) group by extract(year_month from payment_date)';
+    db.query(query, function(error, results, fields){
+        if (error){
+            res.send({"status": 500, "error": error, "response": null, 'message': payload});
+        }
+        else {
+            payload.interest_received = results;
+            res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
+        }
+    });
+});
+
+users.get('/interest-receivable-trends', function(req, res, next){
+    let query, payload = {};
+    query = 'select sum(interest_amount) amount, DATE_FORMAT(interest_collect_date, \'%M, %Y\') period ' +
+            'from application_schedules ' +
+            'where status = 1 ' +
+            'and applicationid in (select id from applications where status = 2)' +
+            'group by extract(year_month from interest_collect_date)';
+    db.query(query, function(error, results, fields){
+        if (error){
+            res.send({"status": 500, "error": error, "response": null, 'message': payload});
+        }
+        else {
+            payload.interest_receivable = results;
+            res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
         }
     });
 });

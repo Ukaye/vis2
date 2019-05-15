@@ -207,9 +207,9 @@
                                 <!--<li class="nav-item">-->
                                     <!--<a class="nav-link" id="demographies" href="#demo-reports" role="tab" data-toggle="tab">Demographic Reports</a>-->
                                 <!--</li>-->
-                                <li class="nav-item">
-                                    <a class="nav-link" id="trends" href="#trend-reports" role="tab" data-toggle="tab">Trends</a>
-                                </li>
+                                <!--<li class="nav-item">-->
+                                    <!--<a class="nav-link" id="trends" href="#trend-reports" role="tab" data-toggle="tab">Trends</a>-->
+                                <!--</li>-->
                             </ul>
 
                             <!-- Tab panes -->
@@ -1289,10 +1289,10 @@
                                                         <div class="form-group">
                                                             <div class="input-group">
                                                                 <select id="demo-report" onchange="demoReportChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
-                                                                    <option id="">Choose a report</option>
-                                                                    <option id="interest">Interest</option>
-                                                                    <option id="badloan">Bad Loans</option>
-                                                                    <option id="overdue">Overdue Loans</option>
+                                                                    <option id="-1">Choose a report</option>
+                                                                    <option id="1">Interest</option>
+                                                                    <option id="2">Bad Loans</option>
+                                                                    <option id="3">Overdue Loans</option>
                                                                 </select>
                                                             </div>
                                                         </div>
@@ -1301,7 +1301,7 @@
                                                         <div class="form-group">
                                                             <div class="input-group">
                                                                 <select id="demo-filter" onchange="demoFilterChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
-                                                                    <option id="">Select Filter</option>
+                                                                    <option id="-1">Select Filter</option>
                                                                     <option id="age">Age</option>
                                                                     <option id="gender">Gender</option>
                                                                 </select>
@@ -1321,18 +1321,38 @@
                                         <div class="card-body">
                                             <div class="col-sm-12">
                                                 <div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">
-                                                    <div id="agr" style="display:none;" class="col-sm-4">
+                                                    <div id="agr" style="display:none;" class="col-sm-3">
                                                         <strong>Average Growth Rate: </strong><span id="growth-rate"></span>
                                                     </div>
-                                                    <div class="col-sm-4"></div>
-                                                    <div class="col-sm-4 card" style="background-color: transparent; border-color: transparent">
+                                                    <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
                                                         <div class="form-group">
                                                             <div class="input-group">
                                                                 <select id="trend-report" onchange="changeTrend(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
-                                                                    <option id="disbursement">Choose a report</option>
+                                                                    <option id="-1">Choose a report</option>
                                                                     <option id="disbursement">Disbursements</option>
                                                                     <option id="interest-received">Interest Received</option>
                                                                     <option id="interest-receivable">Interest Receivable</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-3">
+                                                        <div class="form-group">
+                                                            <div class="input-group">
+                                                                <select id="trend-frequency" onchange="trendFrequencyChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                    <option value="-1">All Time</option>
+                                                                    <option value="2">Monthly</option>
+                                                                    <option value="4">Quarterly</option>
+                                                                    <option value="3">Yearly</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-3">
+                                                        <div class="form-group">
+                                                            <div class="input-group">
+                                                                <select id="trend-year" onchange="trendFilterYear(this)" class="year form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                    <option value="0">Select Year</option>
                                                                 </select>
                                                             </div>
                                                         </div>
@@ -1408,7 +1428,7 @@
 <script src="js/notifications.js"></script>
 <script>
     jQuery(document).ready(function() {
-        trends();
+//        trends();
         loadYears('disburse-year');
         loadYears('branch-year');
         loadYears('payment-year');
@@ -1417,6 +1437,7 @@
         loadYears('p-r-year');
         loadYears('p-r-rec-year');
         loadYears('pvi-year');
+        loadYears('trend-year')
         getOfficers();
         getBranches();
         loadInfo();
@@ -6810,7 +6831,102 @@
         }
     }
 
+    function trendFrequencyChange(){
+
+    }
+
+    function trendYearChange(){}
+
     // Demographics Reports
+
+    function demoFilterChange(filter){
+        let url,
+            report = $('#demo-report option:selected').attr('id'); console.log(report);
+        if (report === "-1"){
+            return swal('', 'Please Choose a Report!', 'warning');
+        }
+        url = '/user/trends?report='
+//        $.ajax({
+//            'url': url,
+//            'type': 'get',
+//            'success': function (data) {
+////                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
+//                jQuery.each(data.response, function(k, v){
+//                    if (v.officer){
+//                        agent = ': '+v.officer;
+//                        d.push({label: v.officer , value: v.amount_received}, );
+//                    }
+//                    if (v.year){
+//                        agent = ': '+v.agent;
+//                        xaxis = 'Years'
+//                        d.push({label: v.year , value: v.amount_received}, );
+//                    }
+//                    if (v.month){
+//                        agent = ': '+v.agent;
+//                        xaxis = 'Months';
+//                        d.push({label: v.PaymentMonth , value: v.amount_received}, )
+//                    }
+//                    if (v.paymonth){
+//                        agent = ': '+v.agent;
+//                        xaxis = 'Months';
+//                        d.push({label: v.paymonth , value: v.amount_received}, )
+//                    }
+//                    if (v.Monthyear){
+//                        agent = ' ';
+//                        xaxis = 'Months';
+//                        d.push({label: v.Monthyear , value: v.amount_received}, )
+//                    }
+//                    if (v.OfficerQuarter){
+//                        agent = ': '+v.agent;
+//                        xaxis = 'Period';
+//                        d.push({label: v.OfficerQuarter , value: v.amount_received}, )
+//                    }
+//                    if (v.Quarter){
+//                        agent = '';
+//                        xaxis = 'Quarters';
+//                        d.push({label: v.Quarter , value: v.amount_received}, )
+//                    }
+//                    if (v.PaymentYear){
+//                        agent = '';
+//                        xaxis = 'Years';
+//                        d.push({label: v.PaymentYear, value: v.amount_received}, );
+//                    }
+//                    if (v.OfficerYear){
+//                        agent = '';
+//                        xaxis = 'Years';
+//                        d.push({label: v.OfficerYear, value: v.amount_received}, );
+//                    }
+//                });
+//                var chartConfigs = {
+//                    type: 'column2d', // The chart type
+//                    width: '100%', // Width of the chart
+//                    height: '400', // Height of the chart
+//                    dataFormat: 'json', // Data type
+//                    dataSource: {
+//                        // Chart Configuration
+//                        "chart": {
+//                            "caption": "Principal Received"+agent,
+////                            "subCaption": "In MMbbl = One Million barrels",
+//                            "xAxisName": xaxis,
+//                            "yAxisName": "Amount (In Naira)",
+//                            "numberSuffix": "",
+//                            "theme": "fusion",
+//                        },
+//                        // Chart Data
+//                        "data": d
+//                    }
+//                };
+//                $("#principal-received-chart").insertFusionCharts(chartConfigs);
+//            },
+//            'error': function (err) {
+//                swal('Error in Connection!','','error')
+//            }
+//        });
+    }
+
+    function demoReportChange(){
+
+    }
 
 </script>
 

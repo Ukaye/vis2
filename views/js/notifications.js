@@ -334,7 +334,7 @@ function getNotifications(){
     status = false;
     $.ajax({
         type: "GET",
-        url: "/notifications/all-updates?bug="+JSON.parse(localStorage.user_obj).ID+'&&bugger='+JSON.parse(localStorage.user_obj).user_role,
+        url: "/user/all-updates?bug="+JSON.parse(localStorage.user_obj).ID+'&&bugger='+JSON.parse(localStorage.user_obj).user_role,
         success: function (response) {
             status = true;
             noti_count = response.length;
@@ -373,7 +373,7 @@ function notifications(){
     status = false;
     $.ajax({
         type: "GET",
-        url: "/notifications/all-updates?bug="+JSON.parse(localStorage.user_obj).ID+'&&bugger='+JSON.parse(localStorage.user_obj).user_role,
+        url: "/user/all-updates?bug="+JSON.parse(localStorage.user_obj).ID+'&&bugger='+JSON.parse(localStorage.user_obj).user_role,
         success: function (response) {
             localStorage.setItem('notifications', response);
             status = true;
@@ -468,7 +468,7 @@ function notifications(){
         }
     });
 }
-setInterval(getNotifications, 15000);
+ setInterval(getNotifications, 1800000);
 
 function loan_notifications(){
     ids.length = 0;
