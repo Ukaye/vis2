@@ -5446,6 +5446,91 @@ users.get('/growth-trends', function(req, res, next){
     });
 });
 
+users.get('/disbursement-trends', function(req, res, next){
+    let query,
+        year = req.query.year,
+        frequency = req.query.frequency;
+        payload = {};
+    query = 'select sum(loan_amount) amount, DATE_FORMAT(disbursement_date, \'%M, %Y\') period ' +
+            'from applications ' +
+            'where status = 2 group by extract(year_month from disbursement_date)';
+    if (!frequency || frequency === '-1' || frequency === '2' && year === '0'){
+        query = 'select sum(loan_amount) amount, DATE_FORMAT(disbursement_date, \'%M, %Y\') period ' +
+                'from applications ' +
+                'where status = 2 group by extract(year_month from disbursement_date)';
+    }
+    if (frequency && frequency === '2' && year !== '0'){
+        query = 'select sum(loan_amount) amount, DATE_FORMAT(disbursement_date, \'%M, %Y\') period ' +
+                'from applications ' +
+                'where status = 2 ' +
+                'and DATE_FORMAT(disbursement_date, \'%Y\') = '+year+' ' +
+                'group by extract(year_month from disbursement_date)';
+    }
+    if (frequency && frequency === '3'){
+        query = 'select sum(loan_amount) amount, DATE_FORMAT(disbursement_date, \'%Y\') period ' +
+                'from applications ' +
+                'where status = 2 ' +
+                'group by period';
+    }
+    if (frequency && frequency === '4' && year !== '0'){
+        query = 'select sum(loan_amount) amount, concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) period ' +
+                'from applications ' +
+                'where status = 2 ' +
+                'and DATE_FORMAT(disbursement_date, \'%Y\') = '+year+' ' +
+                'group by period';
+    }
+    if (frequency && frequency === '4' && year === '0'){
+        query = 'select sum(loan_amount) amount, concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) period ' +
+            'from applications ' +
+            'where status = 2 ' +
+            'group by period order by extract(year_month from disbursement_date)';
+    }
+
+    db.query(query, function(error, results, fields){
+        if (error){
+            res.send({"status": 500, "error": error, "response": null, 'message': payload});
+        }
+        else {
+            payload.disbursements = results;
+            res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
+        }
+    });
+});
+
+users.get('/interest-received-trends', function(req, res, next){
+    let query, payload = {};
+    query = 'select sum(interest_amount) amount, DATE_FORMAT(payment_date, \'%M, %Y\') period ' +
+            'from schedule_history ' +
+            'where status = 1 and applicationid in (select id from applications where status = 2) group by extract(year_month from payment_date)';
+    db.query(query, function(error, results, fields){
+        if (error){
+            res.send({"status": 500, "error": error, "response": null, 'message': payload});
+        }
+        else {
+            payload.interest_received = results;
+            res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
+        }
+    });
+});
+
+users.get('/interest-receivable-trends', function(req, res, next){
+    let query, payload = {};
+    query = 'select sum(interest_amount) amount, DATE_FORMAT(interest_collect_date, \'%M, %Y\') period ' +
+            'from application_schedules ' +
+            'where status = 1 ' +
+            'and applicationid in (select id from applications where status = 2)' +
+            'group by extract(year_month from interest_collect_date)';
+    db.query(query, function(error, results, fields){
+        if (error){
+            res.send({"status": 500, "error": error, "response": null, 'message': payload});
+        }
+        else {
+            payload.interest_receivable = results;
+            res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
+        }
+    });
+});
+
 /////// Activity
 /*Create New Activity Type*/
 users.post('/new-activity-type', function(req, res, next) {
