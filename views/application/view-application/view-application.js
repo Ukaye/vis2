@@ -772,7 +772,7 @@ function initCSVUpload(application) {
                     for (let i = 0; i < rows.length; i++) {
                         let invoice = {},
                             row = $("<tr />"),
-                            cells = rows[i].split(",");
+                            cells = (rows[i].split(",").length > 7)? rows[i].split(",").slice(0, 7) : rows[i].split(",");
                         if (i === 0) {
                             cells = ["PRINCIPAL","INTEREST","BALANCE"];
                         } else if (i === 1) {
@@ -1219,7 +1219,7 @@ function initCSVUpload2(application, settings) {
             for (let i = 0; i < rows.length; i++) {
                 let invoice = {},
                     row = $("<tr />"),
-                    cells = rows[i].split(",");
+                    cells = (rows[i].split(",").length > 7)? rows[i].split(",").slice(0, 7) : rows[i].split(",");
                 if (i === 0) {
                     cells = ["PRINCIPAL","INTEREST","BALANCE"];
                 } else if (i === 1) {
@@ -1288,7 +1288,7 @@ function initCSVUpload2(application, settings) {
                     for (let i = 0; i < rows.length; i++) {
                         let invoice = {},
                             row = $("<tr />"),
-                            cells = rows[i].split(",");
+                            cells = (rows[i].split(",").length > 7)? rows[i].split(",").slice(0, 7) : rows[i].split(",");
                         if (i === 0) {
                             cells = ["PRINCIPAL","INTEREST","BALANCE"];
                         } else if (i === 1) {
