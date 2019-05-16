@@ -281,14 +281,12 @@ router.post('/create', function (req, res, next) {
                         data.offer_url = `${HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}`;
                         let mailOptions = {
                             from: 'no-reply Finratus <applications@loan35.com>',
-                            // to: req.body.email,
-                            to: 'itaukemeabasi@gmail.com',
+                            to: req.body.email,
                             subject: 'Finratus Loan Application Offer',
                             template: 'offer',
                             context: data
                         };
                         transporter.sendMail(mailOptions, function(error, info){
-                            console.log(info)
                             if(error)
                                 return res.send({status: 500, error: error, response: null});
                             return res.send(response_['data'][0]);
