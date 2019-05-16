@@ -98,7 +98,7 @@ function bindDataTable() {
                             return `<span class="badge badge-danger">Rejected</span>`
                         }
                         case 1: {
-                            return '<span class="badge badge-primary">Approved</span>'
+                            return '<span class="badge badge-primary">Awaiting Acceptance</span>'
                         }
                         case 2: {
                             return '<span class="badge badge-success">Accepted</span>'

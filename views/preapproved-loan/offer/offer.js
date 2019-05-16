@@ -191,8 +191,8 @@
             || !preapproved_loan.client || !preapproved_loan.loan_amount)
             return notification('Contact your loan officer to verify your profile!', '', 'warning');
         swal({
-            title: "Setup Remita Mandate?",
-            text: "You would receive an OTP from your bank to proceed with this loan offer!",
+            title: "Setup Direct Debit Mandate?",
+            text: "Setting up a direct debit mandate enables us to debit your account when your loan payment is due.",
             icon: "warning",
             buttons: true,
             dangerMode: true,
@@ -228,6 +228,7 @@
                                 $('#acceptApplication').show();
                                 localStorage.remitaTransRef = data.remitaTransRef;
                                 preapproved_loan.remitaTransRef = data.remitaTransRef;
+                                notification('You would receive an OTP from your bank to proceed with this loan offer!', '', 'warning');
                                 window.location.reload();
                             } else {
                                 const error = data.error.status || 'No internet connection';
@@ -247,7 +248,7 @@
         let $otp = $('#otp'),
             $card = $('#card');
         if (!localStorage.remitaTransRef)
-            return notification('Kindly setup remita direct debit to proceed!', '', 'warning');
+            return notification('Kindly setup direct debit mandate to proceed!', '', 'warning');
         if (bank.authorization === 'OTP' && (!$otp.val() || $otp.val().length < 4 || !$card.val() || $card.val().length < 12))
             return notification('Kindly fill both the card and bank otp correctly!', '', 'warning');
         if (!preapproved_loan.bank || !preapproved_loan.email || !preapproved_loan.phone || !preapproved_loan.account

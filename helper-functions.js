@@ -278,4 +278,12 @@ functions.stopMandate = function (payload, callback) {
         })
 };
 
+functions.numberToCurrencyFormatter = function (value) {
+    if (!value)
+        return value;
+    if (value.constructor === 'String'.constructor)
+        value = parseFloat(value);
+    return value.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+};
+
 module.exports = functions;
