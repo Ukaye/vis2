@@ -426,7 +426,7 @@
                             $('#interest-rate').val("");
                             $('#term').val("");
                             $('#repayment-date').val("");
-                            uploadSchedule(schedule, data.ID);
+                            uploadSchedule(schedule, data.ID, user.email);
                         },
                         'error': function (err) {
                             console.log(err);
@@ -483,7 +483,7 @@
                     $('#term').val("");
                     $('#repayment-date').val("");
                     $('#wait').hide();
-                    notification('Loan Application rejected successfully!','','success');
+                    notification('Offer rejected successfully!','','success');
                     window.location.href = '/all-suggested-loans';
                 },
                 'error': function (err) {
@@ -495,14 +495,14 @@
         });
     }
 
-    function uploadSchedule(schedule, application_id) {
+    function uploadSchedule(schedule, application_id, email) {
         $.ajax({
             'url': '/user/application/schedule/'+application_id,
             'type': 'post',
             'data': {schedule:schedule},
             'success': function (data) {
                 $('#wait').hide();
-                notification('Loan Application approved successfully!','','success');
+                notification(`Offer successfully sent to ${email}`,'','success');
                 window.location.href = '/all-suggested-loans';
             },
             'error': function (err) {

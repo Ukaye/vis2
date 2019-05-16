@@ -256,7 +256,8 @@ router.post('/create', function (req, res, next) {
         if(error){
             res.send({status: 500, error: error, response: null});
         } else {
-            query = `SELECT * from applications WHERE ID = (SELECT MAX(ID) from applications)`;
+            query = `SELECT a.*, (SELECT u.phone FROM users u WHERE u.ID = (SELECT c.loan_officer FROM clients c WHERE c.ID = a.userID)) AS contact 
+                    FROM applications a WHERE a.ID = (SELECT MAX(ID) from applications)`;
             endpoint = `/core-service/get`;
             url = `${HOST}${endpoint}`;
             axios.get(url, {
@@ -278,11 +279,14 @@ router.post('/create', function (req, res, next) {
                     } else {
                         data.name = req.body.fullname;
                         data.date = postData.date_created;
+                        data.expiry = preapproved_loan.expiry_date;
+                        data.contact = response_['data'][0]['contact'];
+                        data.amount = helperFunctions.numberToCurrencyFormatter(postData.loan_amount);
                         data.offer_url = `${HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}`;
                         let mailOptions = {
-                            from: 'no-reply Finratus <applications@loan35.com>',
-                            to: [req.body.email, 'itaukemeabasi@gmail.com'],
-                            subject: 'Finratus Loan Application Offer',
+                            from: 'no-reply '+process.env.TENANT+' <applications@loan35.com>',
+                            to: req.body.email,
+                            subject: process.env.TENANT+' Loan Application Offer',
                             template: 'offer',
                             context: data
                         };
@@ -471,9 +475,9 @@ router.post('/offer/accept/:id', function (req, res, next) {
                             res.send({status: 500, error: error, response: null});
                         } else {
                             let mailOptions = {
-                                from: 'no-reply Finratus <applications@loan35.com>',
+                                from: 'no-reply '+process.env.TENANT+' <applications@loan35.com>',
                                 to: email,
-                                subject: 'Finratus Application Successful',
+                                subject: process.env.TENANT+' Application Successful',
                                 template: 'main',
                                 context: {
                                     name: fullname,
