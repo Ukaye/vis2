@@ -6888,7 +6888,7 @@
                 'success': function (data) {
                     ir = data.message.interest_received;
                     jQuery.each(ir, function(k, v){
-                        d.push({label: v.period , value: v.amount}, );
+                        interest.push({label: v.period , value: v.amount}, );
                     });
                     var interestConfigs = {
                         type: 'line', // The chart type
@@ -6924,7 +6924,7 @@
                 'success': function (data) {
                     irec = data.message.interest_receivable;
                     jQuery.each(irec, function(k, v){
-                        d.push({label: v.period , value: v.amount}, );
+                        interest_rec.push({label: v.period , value: v.amount}, );
                     });
                     var intRecConfigs = {
                         type: 'line', // The chart type
@@ -7007,7 +7007,7 @@
                 'success': function (data) {
                     ir = data.message.interest_received;
                     jQuery.each(ir, function(k, v){
-                        d.push({label: v.period , value: v.amount}, );
+                        interest.push({label: v.period , value: v.amount}, );
                     });
                     var interestConfigs = {
                         type: 'line', // The chart type
@@ -7043,7 +7043,7 @@
                 'success': function (data) {
                     irec = data.message.interest_receivable;
                     jQuery.each(irec, function(k, v){
-                        d.push({label: v.period , value: v.amount}, );
+                        interest_rec.push({label: v.period , value: v.amount}, );
                     });
                     var intRecConfigs = {
                         type: 'line', // The chart type
