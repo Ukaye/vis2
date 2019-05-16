@@ -524,7 +524,7 @@
             'success': function (data) {
                 $('#wait').hide();
                 notification('Loan Application approved successfully!','','success');
-                // window.location.href = '/all-suggested-loans';
+                window.location.href = '/all-suggested-loans';
             },
             'error': function (err) {
                 $('#wait').hide();

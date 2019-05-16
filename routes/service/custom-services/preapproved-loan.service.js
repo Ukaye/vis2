@@ -279,7 +279,6 @@ router.post('/create', function (req, res, next) {
                         data.name = req.body.fullname;
                         data.date = postData.date_created;
                         data.offer_url = `${HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}`;
-                        return res.send(response_['data'][0]);
                         let mailOptions = {
                             from: 'no-reply Finratus <applications@loan35.com>',
                             to: req.body.email,
