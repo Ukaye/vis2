@@ -374,6 +374,12 @@ app.get('/client-info', requireLogin, function (req, res) {
     });
 });
 
+app.get('/incomplete-records', requireLogin, function (req, res) {
+    res.sendFile('client/client-info/incomplete-records.html', {
+        root: __dirname + '/views'
+    });
+});
+
 app.get('/loan-reports', requireLogin, function (req, res) {
     res.sendFile('loan-reports.html', {
         root: __dirname + '/views'
