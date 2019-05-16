@@ -1,5 +1,6 @@
 const axios = require('axios'),
     moment = require('moment'),
+    db = require('../../../db'),
     express = require('express'),
     router = express.Router(),
     helperFunctions = require('../../../helper-functions');
@@ -78,15 +79,13 @@ router.post('/mandate/setup', function (req, res, next) {
                         }
                         const endpoint = `/core-service/post?query=${query}`,
                             url = `${HOST}${endpoint}`;
-                        axios.post(url, payload)
-                            .then(function (remita_response) {
-                                res.send(authorization_response);
-                            }, err => {
-                                res.send({status: 500, error: err, response: null});
-                            })
-                            .catch(function (error) {
+                        db.query(query, payload, function (error, remita_response) {
+                            if(error) {
                                 res.send({status: 500, error: error, response: null});
-                            });
+                            } else {
+                                res.send(authorization_response);
+                            }
+                        });
                     });
                 } else {
                     res.send({status: 500, error: authorization_response, response: null});
@@ -149,16 +148,13 @@ router.post('/corporate/create', function (req, res, next) {
                 endpoint = `/core-service/post?query=${query}`;
                 url = `${HOST}${endpoint}`;
                 postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-
-                axios.post(url, postData)
-                    .then(function (response_) {
-                        return res.send(response_['data']);
-                    }, err => {
-                        res.send({status: 500, error: err, response: null});
-                    })
-                    .catch(function (error) {
+                db.query(query, postData, function (error, response_) {
+                    if(error) {
                         res.send({status: 500, error: error, response: null});
-                    });
+                    } else {
+                        return res.send(response_);
+                    }
+                });
             }
         }, err => {
             res.send({status: 500, error: err, response: null});
@@ -230,16 +226,13 @@ router.post('/corporate/disable/:id', function (req, res, next) {
         status: 0,
         date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
     };
-
-    axios.post(url, payload)
-        .then(function (response_) {
-            res.send({status: 200, error: null, response: response_['data']});
-        }, err => {
-            res.send({status: 500, error: err, response: null});
-        })
-        .catch(function (error) {
+    db.query(query, payload, function (error, response_) {
+        if(error) {
             res.send({status: 500, error: error, response: null});
-        });
+        } else {
+            res.send({status: 200, error: null, response: response_});
+        }
+    });
 });
 
 router.post('/corporate/enable/:id', function (req, res, next) {
@@ -251,16 +244,13 @@ router.post('/corporate/enable/:id', function (req, res, next) {
         status: 1,
         date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
     };
-
-    axios.post(url, payload)
-        .then(function (response_) {
-            res.send({status: 200, error: null, response: response_['data']});
-        }, err => {
-            res.send({status: 500, error: err, response: null});
-        })
-        .catch(function (error) {
+    db.query(query, payload, function (error, response_) {
+        if(error) {
             res.send({status: 500, error: error, response: null});
-        });
+        } else {
+            res.send({status: 200, error: null, response: response_});
+        }
+    });
 });
 
 module.exports = router;
