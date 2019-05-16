@@ -142,7 +142,9 @@ function populateCards(data) {
     let obj = data[0];
     if (obj.escrow)
         $('.escrow-balance').text(parseFloat(obj.escrow).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
-    loadImages(obj.phone, obj.fullname);
+    let folder = obj.fullname + '_' + obj.email;
+    loadImages(folder);
+    // loadImages(obj.phone, obj.fullname);
     $('#fullname').html(obj.fullname);
     $('#phone').html(' ' + obj.phone);
     $('#email').html(' ' + obj.email);
@@ -258,10 +260,10 @@ function displayActivities(data) {
     });
 }
 
-function loadImages(foldername, name) {
+function loadImages(folder) {
     var test = {};
     $.ajax({
-        'url': '/profile-images/' + foldername + '/',
+        'url': '/profile-images/' + folder + '/',
         'type': 'get',
         'data': {},
         'success': function (data) {

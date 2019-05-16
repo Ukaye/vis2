@@ -156,7 +156,8 @@ function loadUserActivities(data) {
         for_ = (v.team == 0) ? '' : ' for '+v.team_name;
         comment_count = (v.comment_count === null) ? 'No' : v.comment_count;
         attachment_count = (v.attachments === null) ? 'None' : v.attachments;
-        $('#title-text').html(v.user+': '+v.team_name);
+        // $('#title-text').html(v.user+': '+v.team_name);
+        $('#title-text').html(v.user);
         $feed.append('<div id="feed'+v.ID+'" class="row" style="background: #e9ecef; padding: 5px">\n' +
             '    <div class="col-sm-1">\n' +
             '        <div class="thumbnail" style="border-radius: 50%; width: 100px; height: 100px; background: #9fcdff; text-align: center">' +
