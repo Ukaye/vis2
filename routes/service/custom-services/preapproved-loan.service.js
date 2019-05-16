@@ -253,6 +253,9 @@ router.post('/create', function (req, res, next) {
     postData.status = 0;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query(query, postData, function (error, response) {
+
+        console.log('here')
+        console.log(postData)
         if(error){
             res.send({status: 500, error: error, response: null});
         } else {
@@ -265,6 +268,8 @@ router.post('/create', function (req, res, next) {
                 }
             }).
             then(function (response_) {
+                console.log('here1')
+                console.log(response_)
                 query =  'INSERT INTO preapproved_loans Set ?';
                 endpoint = `/core-service/post?query=${query}`;
                 url = `${HOST}${endpoint}`;
@@ -276,6 +281,8 @@ router.post('/create', function (req, res, next) {
                     if(error){
                         res.send({status: 500, error: error, response: null});
                     } else {
+                        console.log('here2')
+                        console.log(postData)
                         data.name = req.body.fullname;
                         data.date = postData.date_created;
                         data.offer_url = `${HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}`;
@@ -287,6 +294,9 @@ router.post('/create', function (req, res, next) {
                             context: data
                         };
                         transporter.sendMail(mailOptions, function(error, info){
+                            console.log(error)
+                            console.log('========================')
+                            console.log(info)
                             if(error)
                                 return res.send({status: 500, error: error, response: null});
                             return res.send(response_['data'][0]);
