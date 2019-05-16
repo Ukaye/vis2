@@ -1,7 +1,6 @@
 (function( $ ) {
     jQuery(document).ready(function() {
         getWorkflows();
-        getLoanPurposes();
         getApplicationSettings();
     });
 
@@ -67,19 +66,6 @@
                 $.each(response.response, function (key, val) {
                     $("#workflows").append('<option value = "'+val.ID+'"">'+val.name+'</option>');
                 });
-            }
-        });
-    }
-
-    function getLoanPurposes(){
-        $.ajax({
-            type: "GET",
-            url: "/settings/application/loan_purpose",
-            success: function (response) {
-                $.each(response.response, function (key, val) {
-                    $("#purposes").append('<option value = "'+val.ID+'"">'+val.title+'</option>');
-                });
-                $("#purposes").select2();
             }
         });
     }
@@ -385,7 +371,6 @@
                 if (validation.status){
                     let obj = {},
                         schedule = validation.data,
-                        $purposes = $('#purposes'),
                         $user_list = $('#user-list'),
                         user = ($user_list.val() !== '-- Choose Client --')? JSON.parse(decodeURIComponent($user_list.val())) : false;
                     obj.userID = user.ID;
@@ -394,9 +379,8 @@
                     obj.interest_rate = currencyToNumberformatter($('#interest-rate').val());
                     obj.duration = currencyToNumberformatter($('#term').val());
                     obj.repayment_date = $('#repayment-date').val();
-                    obj.loan_purpose = $purposes.val();
                     obj.agentID = (JSON.parse(localStorage.getItem("user_obj"))).ID;
-                    if (!user || isNaN(obj.workflowID) || !obj.loan_amount || !obj.interest_rate || !obj.duration || $purposes.val() === '-- Choose Loan Purpose --')
+                    if (!user || isNaN(obj.workflowID) || !obj.loan_amount || !obj.interest_rate || !obj.duration)
                         return notification('Kindly fill all required fields!','','warning');
                     if (parseFloat(obj.duration) < settings.tenor_min || parseFloat(obj.duration) > settings.tenor_max)
                         return notification(`Minimum tenor is ${numberToCurrencyformatter(settings.tenor_min)} (month) 
@@ -436,7 +420,6 @@
                             preapproved_loan: preapproved_loan
                         },
                         'success': function (data) {
-                            $purposes.val("");
                             $user_list.val("");
                             $('#workflows').val("");
                             $('#amount').val("");
@@ -459,7 +442,6 @@
 
         $("#rejectApplication").click(function () {
             let obj = {},
-                $purposes = $('#purposes'),
                 $user_list = $('#user-list'),
                 $workflow = $('#workflows'),
                 user = ($user_list.val() !== '-- Choose Client --')? JSON.parse(decodeURIComponent($user_list.val())) : false,
@@ -471,8 +453,6 @@
             obj.interest_rate = currencyToNumberformatter($('#interest-rate').val());
             obj.duration = currencyToNumberformatter($('#term').val());
             obj.repayment_date = $('#repayment-date').val();
-            if ($purposes.val() !== '-- Choose Loan Purpose --')
-                obj.loan_purpose = $purposes.val();
 
             let preapproved_loan = Object.assign({}, obj);
             preapproved_loan.client = recommendation.client;
@@ -496,7 +476,6 @@
                     preapproved_loan: preapproved_loan
                 },
                 'success': function (data) {
-                    $purposes.val("");
                     $user_list.val("");
                     $workflow.val("");
                     $('#amount').val("");
