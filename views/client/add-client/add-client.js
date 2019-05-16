@@ -262,7 +262,10 @@ function getStates(){
 function createClient(){
     var obj = {};
     obj.username = $('#email').val();
-    obj.fullname = $('#first_name').val() + ' '+ $('#middle_name').val() + ' ' +$('#last_name').val();
+    obj.first_name = $.trim($('#first_name').val());
+    obj.middle_name = $.trim($('#middle_name').val());
+    obj.last_name = $.trim($('#last_name').val());
+    obj.fullname = $.trim($('#first_name').val()) + ' '+ $.trim($('#middle_name').val()) + ' ' +$.trim($('#last_name').val());
     obj.phone = $('#phone').val();
     obj.address = $('#address').val();
     obj.email = $('#email').val();

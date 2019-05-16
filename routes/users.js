@@ -1223,6 +1223,62 @@ users.get('/client-dets/:id', function(req, res, next) {
     });
 });
 
+users.get('/incomplete-records', function(req, res, next){
+    let query = `select * from clients where 
+                (fullname = ' ' or fullname is null) or 
+                (username = ' ' or username is null) or 
+                (password = ' ' or password is null) or 
+                (status = ' ' or status is null) or 
+                (phone = ' ' or phone is null) or 
+                (address = ' ' or address is null) or 
+                (email = ' ' or email is null) or 
+                (dob = ' ' or dob is null) or 
+                (marital_status = ' ' or marital_status is null) or 
+                (loan_officer = ' ' or loan_officer is null) or 
+                (client_state = ' ' or client_state is null) or 
+                (client_country = ' ' or client_country is null) or 
+                (postcode = ' ' or postcode is null) or 
+                (years_add = ' ' or years_add is null) or 
+                (ownership = ' ' or ownership is null) or 
+                (employer_name = ' ' or employer_name is null) or
+                (industry = ' ' or industry is null) or 
+                (job = ' ' or job is null) or 
+                (salary = ' ' or salary is null) or 
+                (job_country = ' ' or job_country is null) or 
+                (off_address = ' ' or off_address is null) or 
+                (off_state = ' ' or off_state is null) or 
+                (doe = ' ' or doe is null) or 
+                (guarantor_name = ' ' or guarantor_name is null) or 
+                (guarantor_occupation = ' ' or guarantor_occupation is null) or 
+                (relationship = ' ' or relationship is null) or 
+                (years_known = ' ' or years_known is null) or 
+                (guarantor_phone = ' ' or guarantor_phone is null) or 
+                (guarantor_email = ' ' or guarantor_email is null) or 
+                (guarantor_address = ' ' or guarantor_address is null) or 
+                (gua_country = ' ' or gua_country is null) or
+                (gender = ' ' or gender is null) or 
+                (branch = ' ' or branch is null) or 
+                (bank = ' ' or bank is null) or 
+                (account = ' ' or account is null) or 
+                (bvn = ' ' or bvn is null) or 
+                (client_type = ' ' or client_type is null) or 
+                (product_sold = ' ' or product_sold is null) or 
+                (capital_invested = ' ' or capital_invested is null) or 
+                (market_name = ' ' or market_name is null) or 
+                (market_years = ' ' or market_years is null) or 
+                (market_address = ' ' or market_address is null) or 
+                (kin_fullname = ' ' or kin_fullname is null) or 
+                (kin_phone = ' ' or kin_phone is null) or 
+                (kin_relationship = ' ' or kin_relationship is null)`
+    db.query(query, req.params.id, function (error, results, fields) {
+        if(error){
+            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        } else {
+            res.send(results);
+        }
+    });
+});
+
 users.get('/user-roles', function(req, res, next) {
     let query = 'SELECT * from user_roles where status = 1 and id not in (1, 3, 4)';
 	db.query(query, function (error, results, fields) {

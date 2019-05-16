@@ -44,7 +44,7 @@ function nextPrev(n) {
                 return false;
             }
         }else{
-            swal('', 'Please Enter a Valid Email', '', 'warning');
+            swal('', 'Please Enter a Valid Email', 'warning');
             return false;
         }
 
@@ -480,9 +480,9 @@ function edit(){
             $('#user-table').slideToggle();
             $('#user-table2').hide();
             let fullname = data[0].fullname;
-            $('#first_name').val(fullname.split(' ')[0]);
-            $('#middle_name').val(fullname.split(' ')[1]);
-            $('#last_name').val(fullname.split(' ')[2]);
+            $('#first_name').val(data[0].first_name);
+            $('#middle_name').val(data[0].middle_name);
+            $('#last_name').val(data[0].last_name);
             $('#phone').val(data[0].phone);
             $('#address').val(data[0].address);
             $('#email').val(data[0].email);
@@ -495,6 +495,7 @@ function edit(){
             $('#client_country').val(data[0].client_country);
             $('#marital_status').val(data[0].marital_status);
             $('#loan_officer').val(data[0].loan_officer);
+            $('#bvn').val(data[0].bvn);
             $('#client_state').val(data[0].client_state);
             $('#years_add').val(data[0].years_add);
             $('#ownership').val(data[0].ownership);
@@ -591,9 +592,9 @@ function checkForEdit(){
                 $('#user-table').slideToggle();
                 $('#user-table2').hide();
                 let fullname = data[0].fullname;
-                $('#first_name').val(fullname.split(' ')[0]);
-                $('#middle_name').val(fullname.split(' ')[1]);
-                $('#last_name').val(fullname.split(' ')[2]);
+                $('#first_name').val(data[0].first_name);
+                $('#middle_name').val(data[0].middle_name);
+                $('#last_name').val(data[0].last_name);
                 $('#phone').val(data[0].phone);
                 $('#address').val(data[0].address);
                 $('#email').val(data[0].email);
@@ -606,6 +607,7 @@ function checkForEdit(){
                 $('#client_country').val(data[0].client_country);
                 $('#marital_status').val(data[0].marital_status);
                 $('#loan_officer').val(data[0].loan_officer);
+                $('#bvn').val(data[0].bvn);
                 $('#client_state').val(data[0].client_state);
                 $('#years_add').val(data[0].years_add);
                 $('#ownership').val(data[0].ownership);
@@ -671,6 +673,9 @@ function submitDetails(){
     ed = (user_id) ? user_id : localStorage.getItem("user_id");
     let obj = {};
     obj.username = $('#email').val();
+    obj.first_name = $.trim($('#first_name').val());
+    obj.middle_name = $.trim($('#middle_name').val());
+    obj.last_name = $.trim($('#last_name').val());
     obj.fullname = $('#first_name').val() + ' '+ $('#middle_name').val() + ' ' +$('#last_name').val();
     obj.phone = $('#phone').val();
     obj.address = $('#address').val();
