@@ -26,8 +26,16 @@ function populateRecordsTable(data) {
             missing += 'Username' +'</br>';
             total++;
         }
-        if (k.fullname === "" || k.fullname === null){
-            missing += 'Name' +'</br>';
+        if (k.first_name === "" || k.first_name === null){
+            missing += 'First Name' +'</br>';
+            total++;
+        }
+        if (k.middle_name === "" || k.middle_name === null){
+            missing += 'Middle Name' +'</br>';
+            total++;
+        }
+        if (k.last_name === "" || k.last_name === null){
+            missing += 'Last Name' +'</br>';
             total++;
         }
         if (k.phone === "" || k.phone === null){
