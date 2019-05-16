@@ -288,6 +288,7 @@ router.post('/create', function (req, res, next) {
                             context: data
                         };
                         transporter.sendMail(mailOptions, function(error, info){
+                            console.log(info)
                             if(error)
                                 return res.send({status: 500, error: error, response: null});
                             return res.send(response_['data'][0]);
