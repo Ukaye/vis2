@@ -220,34 +220,39 @@ users.post('/new-client', function(req, res, next) {
             if (results && results[0]){
                 return res.send(JSON.stringify({"status": 200, "error": null, "response": results, "message": "Information in use by existing client!"}));
             }
-            connection.query(query,postData, function (error, re, fields) {
-                if(error){
-                    res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
-                } else {
-                    connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function(err, re, fields) {
-                        if (!err){
-                            id = re[0]['ID'];
-                            connection.query('INSERT into wallets Set ?', {client_id: id}, function(er, r, fields) {
-                                connection.release();
-                                if (!er){
-                                    let payload = {}
-                                    payload.category = 'Clients'
-                                    payload.userid = req.cookies.timeout
-                                    payload.description = 'New Client Created'
-                                    payload.affected = id
-                                    notificationsService.log(req, payload)
-                                    res.send(JSON.stringify({"status": 200, "error": null, "response": re}));
-                                }
-                                else{
-                                    res.send(JSON.stringify({"response": "Error creating client wallet!"}));
-                                }
-                            });
-                        }
-                        else{
-                            res.send(JSON.stringify({"response": "Error retrieving client details. Please try a new username!"}));
-                        }
-                    });
+            connection.query('select * from clients where bvn = ? and status = 1 limit 1', [req.body.bvn], function (error, rest, foelds){
+                if (rest && rest[0]){
+                    return res.send(JSON.stringify({"status": 200, "error": null, "response": rest, "bvn_exists": "Yes"}));
                 }
+                connection.query(query,postData, function (error, re, fields) {
+                    if(error){
+                        res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+                    } else {
+                        connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function(err, re, fields) {
+                            if (!err){
+                                id = re[0]['ID'];
+                                connection.query('INSERT into wallets Set ?', {client_id: id}, function(er, r, fields) {
+                                    connection.release();
+                                    if (!er){
+                                        let payload = {}
+                                        payload.category = 'Clients'
+                                        payload.userid = req.cookies.timeout
+                                        payload.description = 'New Client Created'
+                                        payload.affected = id
+                                        notificationsService.log(req, payload)
+                                        res.send(JSON.stringify({"status": 200, "error": null, "response": re}));
+                                    }
+                                    else{
+                                        res.send(JSON.stringify({"response": "Error creating client wallet!"}));
+                                    }
+                                });
+                            }
+                            else{
+                                res.send(JSON.stringify({"response": "Error retrieving client details. Please try a new username!"}));
+                            }
+                        });
+                    }
+                });
             });
         });
     });
@@ -1430,12 +1435,12 @@ users.post('/edit-client/:id', function(req, res, next) {
         postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let payload = [postData.username, postData.fullname, postData.phone, postData.address, postData.email,
-        postData.gender, postData.dob, postData.marital_status, postData.loan_officer, postData.branch, postData.bank, postData.account , postData.client_state, postData.postcode, postData.client_country,
+        postData.gender, postData.dob, postData.marital_status, postData.loan_officer, postData.branch, postData.bank, postData.bvn, postData.account , postData.client_state, postData.postcode, postData.client_country,
         postData.years_add, postData.ownership , postData.employer_name ,postData.industry ,postData.job, postData.salary, postData.job_country , postData.off_address, postData.off_state,
         postData.doe, postData.guarantor_name, postData.guarantor_occupation, postData.relationship, postData.years_known, postData.guarantor_phone, postData.guarantor_email,
         postData.guarantor_address, postData.gua_country, postData.product_sold, postData.capital_invested, postData.market_name, postData.market_years,
         postData.market_address, postData.kin_fullname, postData.kin_phone, postData.kin_relationship, postData.date_modified, req.params.id];
-    let query = 'Update clients SET username = ?, fullname=?, phone=?, address = ?, email=?, gender=?, dob = ?, marital_status=?, loan_officer=?, branch=?, bank=?, account=?, ' +
+    let query = 'Update clients SET username = ?, fullname=?, phone=?, address = ?, email=?, gender=?, dob = ?, marital_status=?, loan_officer=?, branch=?, bank=?, account=?, bvn = ?, ' +
         'client_state=?, postcode=?, client_country=?, years_add=?, ownership=?, employer_name=?, industry=?, job=?, salary=?, job_country=?, off_address=?, off_state=?, ' +
         'doe=?, guarantor_name=?, guarantor_occupation=?, relationship=?, years_known=?, guarantor_phone=?, guarantor_email=?, guarantor_address=?, gua_country=?, ' +
         'product_sold =? , capital_invested = ?, market_name =? , market_years = ?, market_address =? , kin_fullname = ?, kin_phone =? , kin_relationship = ?, date_modified = ? where ID=?';

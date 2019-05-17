@@ -694,7 +694,7 @@ function submitDetails(){
     obj.years_add = $("#years_add").val();
     obj.ownership = $('#ownership').find('option:selected').attr('id');
     obj.employer_name = $("#employer_name").val();
-    obj.industry = $('#industry').find('option:selected').text();
+    obj.industry = $('#industry').find('option:selected').val();
     obj.job = $("#job").val();
     obj.salary = $("#salary").val();
     obj.job_country = $('#job_country').find('option:selected').attr('id');
