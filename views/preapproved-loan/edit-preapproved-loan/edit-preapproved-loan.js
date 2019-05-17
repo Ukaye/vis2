@@ -15,14 +15,19 @@
             success: function (response) {
                 recommendation = response.data;
                 if (recommendation){
-                    $('#user-list').val($("#user-list option:contains('"+recommendation.client+"')").val());
-                    $('#user-list').prop('disabled', true);
+                    let $user_list = $('#user-list');
+                    $user_list.val($user_list.find("option:contains('"+recommendation.client+"')").val());
+                    $user_list.prop('disabled', true);
+                    let client = ($user_list.val() !== '-- Choose Client --')? JSON.parse(decodeURIComponent($user_list.val())) : false;
+                    if (client) {
+                        $('#client-text').html(`<a href="/client-info?id=${client.ID}">
+                            <strong>${client.fullname}</strong> (${client.email})</a>`);
+                    }
                     $('#term').val(numberToCurrencyformatter(recommendation.tenor));
                     $('#amount').val(numberToCurrencyformatter(recommendation.loan_amount));
                     $('#interest-rate').val(numberToCurrencyformatter(recommendation.interest_rate));
                     $('#repayment-date').val(recommendation.first_repayment_date);
                     $('#amortization').val('standard').trigger('change');
-                    $('#client-text').text(recommendation.client);
                     $('#loan-amount-text').text(`₦${numberToCurrencyformatter(recommendation.loan_amount)}`);
                     $('#credit-score-text').text(`${recommendation.credit_score}%`);
                     $('#default-frequency-text').text(numberToCurrencyformatter(recommendation.defaults));

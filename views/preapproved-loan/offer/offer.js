@@ -199,6 +199,7 @@
         })
             .then((yes) => {
                 if (yes) {
+                    notification('You would receive an OTP from your bank to proceed with this loan offer!', '', 'warning');
                     let start = preapproved_loan.schedule[0]['payment_collect_date'],
                         end = preapproved_loan.schedule[preapproved_loan.schedule.length-1]['payment_collect_date'];
                     if (start === end) {
@@ -228,16 +229,15 @@
                                 $('#acceptApplication').show();
                                 localStorage.remitaTransRef = data.remitaTransRef;
                                 preapproved_loan.remitaTransRef = data.remitaTransRef;
-                                notification('You would receive an OTP from your bank to proceed with this loan offer!', '', 'warning');
                                 window.location.reload();
                             } else {
-                                const error = data.error.status || 'No internet connection';
-                                notification(error,'','error');
+                                const error = data.error.status || 'Sorry, Our services are not available at the moment.';
+                                notification(error,'Please try again later!','error');
                             }
                         },
                         'error': function (err) {
                             console.log(err);
-                            notification('No internet connection','','error');
+                            notification('Sorry, Our services are not available at the moment.','Please try again later!','error');
                         }
                     });
                 }
@@ -291,7 +291,7 @@
                         },
                         'error': function (err) {
                             console.log(err);
-                            notification('No internet connection','','error');
+                            notification('Sorry, Our services are not available at the moment.','Please try again later!','error');
                         }
                     });
                 }
@@ -317,7 +317,7 @@
                         },
                         'error': function (err) {
                             console.log(err);
-                            notification('No internet connection','','error');
+                            notification('Sorry, Our services are not available at the moment.','Please try again later!','error');
                         }
                     });
                 }
