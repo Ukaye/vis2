@@ -231,13 +231,13 @@
                                 preapproved_loan.remitaTransRef = data.remitaTransRef;
                                 window.location.reload();
                             } else {
-                                const error = data.error.status || 'No internet connection';
-                                notification(error,'','error');
+                                const error = data.error.status || 'Sorry, Our services are not available at the moment.';
+                                notification(error,'Please try again later!','error');
                             }
                         },
                         'error': function (err) {
                             console.log(err);
-                            notification('No internet connection','','error');
+                            notification('Sorry, Our services are not available at the moment.','Please try again later!','error');
                         }
                     });
                 }
@@ -291,7 +291,7 @@
                         },
                         'error': function (err) {
                             console.log(err);
-                            notification('No internet connection','','error');
+                            notification('Sorry, Our services are not available at the moment.','Please try again later!','error');
                         }
                     });
                 }
@@ -317,7 +317,7 @@
                         },
                         'error': function (err) {
                             console.log(err);
-                            notification('No internet connection','','error');
+                            notification('Sorry, Our services are not available at the moment.','Please try again later!','error');
                         }
                     });
                 }

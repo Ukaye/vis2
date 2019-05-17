@@ -37,9 +37,21 @@
         .pb-0{
             text-align: center;
         }
-        .alert-success, .alert-success p {color: #155724;}
-        table{width: 100%;}
-        table th{text-align: center;}
+        .alert-success, .alert-success p {
+            color: #155724;
+        }
+        table{
+            width: 100%;
+        }
+        table th{
+            text-align: center;
+        }
+        #client-text a {
+            color: #212529;
+        }
+        #client-text:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -76,13 +88,11 @@
 
     <div class="content mt-3">
         <div class="animated fadeIn">
-
             <div class="row">
-
                 <div id="user-form" class="col-xs-12 col-sm-12">
                     <div class="card">
                         <div class="card-header">
-                            <strong id="client-text"></strong> <small> Loan Information</small>
+                            <span id="client-text"></span> <small> Loan Information</small>
                             <button id="disbursePreapprovedLoan" class="btn btn-sm btn-success write" style="float: right; display: none;"
                                     data-toggle="modal" data-target="#disburseModal">Disburse
                                 <i class="fa fa-check"></i></button>
