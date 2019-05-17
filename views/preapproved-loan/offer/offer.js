@@ -199,6 +199,7 @@
         })
             .then((yes) => {
                 if (yes) {
+                    notification('You would receive an OTP from your bank to proceed with this loan offer!', '', 'warning');
                     let start = preapproved_loan.schedule[0]['payment_collect_date'],
                         end = preapproved_loan.schedule[preapproved_loan.schedule.length-1]['payment_collect_date'];
                     if (start === end) {
@@ -228,7 +229,6 @@
                                 $('#acceptApplication').show();
                                 localStorage.remitaTransRef = data.remitaTransRef;
                                 preapproved_loan.remitaTransRef = data.remitaTransRef;
-                                notification('You would receive an OTP from your bank to proceed with this loan offer!', '', 'warning');
                                 window.location.reload();
                             } else {
                                 const error = data.error.status || 'No internet connection';
