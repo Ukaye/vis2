@@ -207,9 +207,9 @@
                                 <!--<li class="nav-item">-->
                                     <!--<a class="nav-link" id="demographies" href="#demo-reports" role="tab" data-toggle="tab">Demographic Reports</a>-->
                                 <!--</li>-->
-                                <!--<li class="nav-item">-->
-                                    <!--<a class="nav-link" id="trends" href="#trend-reports" role="tab" data-toggle="tab">Trends</a>-->
-                                <!--</li>-->
+                                <li class="nav-item">
+                                    <a class="nav-link" id="trends" href="#trend-reports" role="tab" data-toggle="tab">Trends</a>
+                                </li>
                             </ul>
 
                             <!-- Tab panes -->
@@ -1321,8 +1321,8 @@
                                         <div class="card-body">
                                             <div class="col-sm-12">
                                                 <div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">
-                                                    <div id="agr" style="display:none;" class="col-sm-3">
-                                                        <strong>Average Growth Rate: </strong><span id="growth-rate"></span>
+                                                    <div class="col-sm-3">
+                                                        <div id="agr" style="display:none;" ><strong>Average Growth Rate: </strong><span id="growth-rate"></span></div>
                                                     </div>
                                                     <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
                                                         <div class="form-group">
@@ -1351,7 +1351,7 @@
                                                     <div class="col-sm-3">
                                                         <div class="form-group">
                                                             <div class="input-group">
-                                                                <select id="trend-year" onchange="trendFilterYear(this)" class="year form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                <select id="trend-year" onchange="trendYearChange(this)" class="year form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
                                                                     <option value="0">Select Year</option>
                                                                 </select>
                                                             </div>
@@ -1428,7 +1428,7 @@
 <script src="js/notifications.js"></script>
 <script>
     jQuery(document).ready(function() {
-//        trends();
+        trends();
         loadYears('disburse-year');
         loadYears('branch-year');
         loadYears('payment-year');
@@ -6802,6 +6802,9 @@
 
     function changeTrend(type){
         $('#agr').hide();
+
+        $('#trend-year').val(0);
+        $('#trend-frequency').val(-1);
         if (type.value === 'Disbursements'){
             agr(dr);
             $('#agr').show();
@@ -6831,11 +6834,243 @@
         }
     }
 
-    function trendFrequencyChange(){
-
+    function trendFrequencyChange(frequency){
+        let url = 'user/growth-trends';
+        let report = $('#trend-report').val();
+        let freq = frequency.value;
+        let year = $('#trend-year').val();
+        if (freq === '3')
+            $('#trend-year').hide();
+        else
+            $('#trend-year').show();
+        if (report === 'Disbursements'){
+            let d = [];
+            url = `user/disbursement-trends?year=${year}&&frequency=${freq}`
+            $.ajax({
+                'url': url,
+                'type': 'get',
+                'success': function (data) {
+                    dr = data.message.disbursements;
+                    jQuery.each(dr, function(k, v){
+                        d.push({label: v.period , value: v.amount}, );
+                    });
+                    var disburseConfigs = {
+                        type: 'line', // The chart type
+                        width: '100%', // Width of the chart
+                        height: '400', // Height of the chart
+                        dataFormat: 'json', // Data type
+                        dataSource: {
+                            "chart": {
+                                "caption": "Monthly Disbursements",
+//                            "subCaption": "In MMbbl = One Million barrels",
+                                "xAxisName": "Period",
+                                "yAxisName": "Amount Disbursed (In Naira)",
+                                "numberSuffix": "",
+                                "theme": "fusion",
+                            },
+                            "data": d
+                        }
+                    };
+                    $("#disburse-trend-chart").insertFusionCharts(disburseConfigs);
+                    agr(dr);
+                },
+                'error': function (err) {
+                    return swal('Error in Connection!','','error')
+                }
+            });
+        }
+        if (report === 'Interest Received'){
+            let interest = [];
+            url = `user/interest-received-trends?year=${year}&&frequency=${freq}`
+            $.ajax({
+                'url': url,
+                'type': 'get',
+                'success': function (data) {
+                    ir = data.message.interest_received;
+                    jQuery.each(ir, function(k, v){
+                        interest.push({label: v.period , value: v.amount}, );
+                    });
+                    var interestConfigs = {
+                        type: 'line', // The chart type
+                        width: '100%', // Width of the chart
+                        height: '400', // Height of the chart
+                        dataFormat: 'json', // Data type
+                        dataSource: {
+                            "chart": {
+                                "caption": "Monthly Interest Received",
+//                            "subCaption": "In MMbbl = One Million barrels",
+                                "xAxisName": "Period",
+                                "yAxisName": "Interest Received (In Naira)",
+                                "numberSuffix": "",
+                                "theme": "fusion",
+                            },
+                            "data": interest
+                        }
+                    };
+                    $("#interest-received-trend-chart").insertFusionCharts(interestConfigs);
+                    agr(ir);
+                },
+                'error': function (err) {
+                    return swal('Error in Connection!','','error')
+                }
+            });
+        }
+        if (report === 'Interest Receivable'){
+            let interest = [];
+            url = `user/interest-receivable-trends?year=${year}&&frequency=${freq}`
+            $.ajax({
+                'url': url,
+                'type': 'get',
+                'success': function (data) {
+                    irec = data.message.interest_receivable;
+                    jQuery.each(irec, function(k, v){
+                        interest_rec.push({label: v.period , value: v.amount}, );
+                    });
+                    var intRecConfigs = {
+                        type: 'line', // The chart type
+                        width: '100%', // Width of the chart
+                        height: '400', // Height of the chart
+                        dataFormat: 'json', // Data type
+                        dataSource: {
+                            "chart": {
+                                "caption": "Monthly Interest Receivable",
+//                            "subCaption": "In MMbbl = One Million barrels",
+                                "xAxisName": "Period",
+                                "yAxisName": "Interest Receivable (In Naira)",
+                                "numberSuffix": "",
+                                "theme": "fusion",
+                            },
+                            "data": interest_rec
+                        }
+                    };
+                    $("#interest-receivable-trend-chart").insertFusionCharts(intRecConfigs);
+                    agr(irec);
+                },
+                'error': function (err) {
+                    return swal('Error in Connection!','','error')
+                }
+            });
+        }
     }
 
-    function trendYearChange(){}
+    function trendYearChange(yr){
+        let url = 'user/growth-trends';
+        let report = $('#trend-report').val();
+        let freq = $('#trend-frequency').val();
+        let year = yr.value;
+        if (freq === '3')
+            $('#trend-year').hide();
+        else
+            $('#trend-year').show();
+        if (report === 'Disbursements'){
+            let d = [];
+            url = `user/disbursement-trends?year=${year}&&frequency=${freq}`
+            $.ajax({
+                'url': url,
+                'type': 'get',
+                'success': function (data) {
+                    dr = data.message.disbursements;
+                    jQuery.each(dr, function(k, v){
+                        d.push({label: v.period , value: v.amount}, );
+                    });
+                    var disburseConfigs = {
+                        type: 'line', // The chart type
+                        width: '100%', // Width of the chart
+                        height: '400', // Height of the chart
+                        dataFormat: 'json', // Data type
+                        dataSource: {
+                            "chart": {
+                                "caption": "Monthly Disbursements",
+//                            "subCaption": "In MMbbl = One Million barrels",
+                                "xAxisName": "Period",
+                                "yAxisName": "Amount Disbursed (In Naira)",
+                                "numberSuffix": "",
+                                "theme": "fusion",
+                            },
+                            "data": d
+                        }
+                    };
+                    $("#disburse-trend-chart").insertFusionCharts(disburseConfigs);
+                    agr(dr);
+                },
+                'error': function (err) {
+                    return swal('Error in Connection!','','error')
+                }
+            });
+        }
+        if (report === 'Interest Received'){
+            let interest = [];
+            url = `user/interest-received-trends?year=${year}&&frequency=${freq}`
+            $.ajax({
+                'url': url,
+                'type': 'get',
+                'success': function (data) {
+                    ir = data.message.interest_received;
+                    jQuery.each(ir, function(k, v){
+                        interest.push({label: v.period , value: v.amount}, );
+                    });
+                    var interestConfigs = {
+                        type: 'line', // The chart type
+                        width: '100%', // Width of the chart
+                        height: '400', // Height of the chart
+                        dataFormat: 'json', // Data type
+                        dataSource: {
+                            "chart": {
+                                "caption": "Monthly Interest Received",
+//                            "subCaption": "In MMbbl = One Million barrels",
+                                "xAxisName": "Period",
+                                "yAxisName": "Interest Received (In Naira)",
+                                "numberSuffix": "",
+                                "theme": "fusion",
+                            },
+                            "data": interest
+                        }
+                    };
+                    $("#interest-received-trend-chart").insertFusionCharts(interestConfigs);
+                    agr(ir);
+                },
+                'error': function (err) {
+                    return swal('Error in Connection!','','error')
+                }
+            });
+        }
+        if (report === 'Interest Receivable'){
+            let interest = [];
+            url = `user/interest-receivable-trends?year=${year}&&frequency=${freq}`
+            $.ajax({
+                'url': url,
+                'type': 'get',
+                'success': function (data) {
+                    irec = data.message.interest_receivable;
+                    jQuery.each(irec, function(k, v){
+                        interest_rec.push({label: v.period , value: v.amount}, );
+                    });
+                    var intRecConfigs = {
+                        type: 'line', // The chart type
+                        width: '100%', // Width of the chart
+                        height: '400', // Height of the chart
+                        dataFormat: 'json', // Data type
+                        dataSource: {
+                            "chart": {
+                                "caption": "Monthly Interest Receivable",
+//                            "subCaption": "In MMbbl = One Million barrels",
+                                "xAxisName": "Period",
+                                "yAxisName": "Interest Receivable (In Naira)",
+                                "numberSuffix": "",
+                                "theme": "fusion",
+                            },
+                            "data": interest_rec
+                        }
+                    };
+                    $("#interest-receivable-trend-chart").insertFusionCharts(intRecConfigs);
+                    agr(irec);
+                },
+                'error': function (err) {
+                    return swal('Error in Connection!','','error')
+                }
+            });
+        }
+    }
 
     // Demographics Reports
 

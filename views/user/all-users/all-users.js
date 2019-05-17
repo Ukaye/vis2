@@ -265,6 +265,21 @@ function getRoles(){
     });
 }
 
+function refreshRoles(){
+    $.ajax({
+        type: "GET",
+        url: "/user/user-roles/",
+        data: '{}',
+        success: function (response) {
+            var role = $("[id=role]");
+            // role.empty().append('<option selected="selected" id="0">-- Choose User Role --</option>');
+            $.each(JSON.parse(response), function (key, val) {
+                $("#role").append('<option class="deptSp" value = "' + val.id + '" id="' + val.id + '">' + val.role_name + '</option>');
+            });
+        }
+    });
+}
+
 function setSelectedIndex(s, valsearch){
     // Loop through all the items in drop down list
     for (i = 0; i< s.options.length; i++){
@@ -458,7 +473,7 @@ function saveNewRole(){
                 swal("Please recheck entered values!","","error");
             }
             else
-            {$('#new-role').val(""); swal("New Role Registered!","","success"); getRoles();}
+            {$('#new-role').val(""); swal("New Role Registered!","","success"); refreshRoles();}
         }
     });
 }
