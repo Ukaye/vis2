@@ -200,6 +200,8 @@
                         <div class="card-header">
                             <div style="float: left; margin: 0 15px;">
                                 <strong id="workflow-div-title" class="card-title">Workflow</strong>
+                                <button id="setupDirectDebit" class ="btn btn-primary btn-xs" style="float: right;">Setup Direct Debit</button>
+                                <button id="viewMandate" class ="btn btn-primary btn-xs" style="float: right; display: none;" data-toggle="modal" data-target="#viewMandateModal">View Mandate</button>
                                 <p>Client ID#: <a onclick="goToClientProfile()" style="text-decoration: underline; cursor: pointer;"><span id="client-id"></span></a> | LOAN ID#: <span id="application-id"></span> | L-CIRRUS ID#: <span id="loancirrus-id"></span></p>
                             </div>
                             <button id="loan_closed" class ="btn btn-warning btn-lg" style="float: right; margin-top: 5px; display: none;" disabled="disabled"></button>
@@ -890,6 +892,61 @@
     </div>
 </div>
 
+<div class="modal fade" id="viewMandateModal" tabindex="-1" role="dialog" aria-labelledby="viewMandateModalLabel">
+    <div class="modal-dialog modal-lg" role="document" style="width: 1005%;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="viewMandateModalLabel">Direct Debit Status</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div>
+                    Mandate Link:
+                    <input type="text" id="mandateLink" style="width: 500px;" readonly="readonly">
+                    <button class="btn btn-success btn-sm" onclick="copyLink()">Copy Link</button>
+                </div>
+                <br>
+                <table class="table table-bordered">
+                    <tbody>
+                    <tr>
+                        <td>
+                            <strong>Activated</strong>
+                        </td>
+                        <td><span id="isActive"></span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>Mandate ID</strong>
+                        </td>
+                        <td><span id="mandateId"></span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>Request ID</strong>
+                        </td>
+                        <td><span id="requestId"></span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>Transaction Reference</strong>
+                        </td>
+                        <td><span id="remitaTransRef"></span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <strong>Registration Date</strong>
+                        </td>
+                        <td><span id="registrationDate"></span></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="/assets/js/popper.min.js"></script>
 <script src="/assets/js/bootstrap.min.js"></script>

@@ -198,6 +198,7 @@ function loadApplication(user_id){
             }
 
             getApplicationSettings(application);
+            checkForExistingMandate(application.userID);
         },
         'error': function (err) {
             console.log(err);
@@ -1619,6 +1620,101 @@ function payOffLoan() {
         }
     });
 }
+
+function checkForExistingMandate(user_id) {
+    $.ajax({
+        type: 'GET',
+        url: `/preapproved-loan/get/${user_id}?key=userID`,
+        success: function (response) {
+            let mandate = response.data;
+            const HOST = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
+            if (mandate && mandate.ID) {
+                $('#viewMandate').show();
+                $('#setupDirectDebit').hide();
+                $('#mandateId').text(mandate.mandateId || 'N/A');
+                $('#requestId').text(mandate.requestId || 'N/A');
+                $('#isActive').text(mandate.remita.isActive || 'N/A');
+                $('#remitaTransRef').text(mandate.remitaTransRef || 'N/A');
+                $('#registrationDate').text(mandate.remita.registrationDate || 'N/A');
+                $('#mandateLink').val(`${HOST}/offer?t=${encodeURIComponent(mandate.hash)}`);
+            } else {
+                $('#viewMandate').hide();
+                $('#setupDirectDebit').show();
+            }
+        }
+    });
+}
+
+function copyLink() {
+    let text = document.getElementById("mandateLink");
+    text.select();
+    document.execCommand("copy");
+    notification('Link copied!', text.value, 'success');
+}
+
+$("#setupDirectDebit").click(function () {
+    swal({
+        title: "Are you sure?",
+        text: "Once initiated, this process is not reversible!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+    })
+        .then((yes) => {
+            if (yes) {
+                let obj = {};
+                obj.userID = application.userID;
+                obj.workflowID = application.workflowID;
+                obj.loan_amount = application.loan_amount;
+                obj.interest_rate = application.interest_rate;
+                obj.duration = application.duration;
+                obj.repayment_date = application.repayment_date;
+                obj.agentID = (JSON.parse(localStorage.getItem("user_obj"))).ID;
+
+                let preapproved_loan = Object.assign({}, obj);
+                delete preapproved_loan.agentID;
+                preapproved_loan.client = application.fullname;
+                preapproved_loan.average_loan = '';
+                preapproved_loan.credit_score = '';
+                preapproved_loan.defaults = '';
+                preapproved_loan.invoices_due = '';
+                preapproved_loan.offer_duration = application.duration;
+                preapproved_loan.offer_loan_amount = application.loan_amount;
+                preapproved_loan.offer_first_repayment_date = application.repayment_date;
+                preapproved_loan.offer_interest_rate = application.interest_rate;
+                preapproved_loan.months_left = '';
+                preapproved_loan.salary_loan = '';
+                preapproved_loan.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
+
+                $('#wait').show();
+                $.ajax({
+                    'url': '/preapproved-loan/create',
+                    'type': 'post',
+                    'data': {
+                        application: obj,
+                        email: application.email,
+                        applicationID: application.ID,
+                        fullname: application.fullname,
+                        preapproved_loan: preapproved_loan
+                    },
+                    'success': function (response) {
+                        $('#wait').hide();
+                        if(response.status === 500) {
+                            notification('No internet connection', '', 'error');
+                        } else {
+                            notification(`Offer successfully sent to ${application.email}`,'','success');
+                            window.location.reload();
+                        }
+                    },
+                    'error': function (err) {
+                        console.log(err);
+                        $('#wait').hide();
+                        notification('No internet connection','','error');
+                    }
+                });
+            }
+        });
+});
 
 function read_write_1(){
     let perms = JSON.parse(localStorage.getItem("permissions")),
