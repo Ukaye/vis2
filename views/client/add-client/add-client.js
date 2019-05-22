@@ -49,7 +49,7 @@ function nextPrev(n) {
                 return false;
             }
         }else{
-            swal('', 'Please Enter a Valid Email', 'warning');
+            swal('', 'Please Enter a Valid Client Email', 'warning');
             return false;
         }
 
@@ -57,10 +57,21 @@ function nextPrev(n) {
         swal ({"icon": "warning", "text": "Choose a valid Loan Officer & Branch" });
         return false;
     }
+    if (currentTab === 2){
+        if ($.trim($('#guarantor_email').val()) !== ''){
+            if (!(validateEmail($('#guarantor_email').val()))){
+                // obj.guarantor_email = $("#guarantor_email").val();
+                swal('', 'Please Enter a Valid Email for the Reference', 'warning');
+                return false;
+            }
+        }
+    }
+
     //return false;
 //        if (n == 1) return false;
     // Hide the current tab:
-    x[currentTab].style.display = "none";
+    if (currentTab !== x.length)
+        x[currentTab].style.display = "none";
     // Increase or decrease the current tab by 1:
     currentTab = currentTab + n;
     // if you have reached the end of the form... :
@@ -283,7 +294,7 @@ function createClient(){
     obj.years_add = $("#years_add").val();
     obj.ownership = $('#ownership').find('option:selected').attr('id');
     obj.employer_name = $("#employer_name").val();
-    obj.industry = $('#industry').find('option:selected').text();
+    obj.industry = $('#industry').find('option:selected').val();
     obj.job = $("#job").val();
     obj.salary = $("#salary").val();
     obj.job_country = $('#job_country').find('option:selected').attr('id');
@@ -296,6 +307,14 @@ function createClient(){
     obj.years_known = $("#years_known").val();
     obj.guarantor_phone = $("#guarantor_phone").val();
     obj.guarantor_email = $("#guarantor_email").val();
+    // if ($.trim($('#guarantor_email').val()) !== ' ' || $.trim($('#guarantor_email').val()) !== 'null'){
+    //     if (validateEmail($('#guarantor_email').val())){
+    //         obj.guarantor_email = $("#guarantor_email").val();
+    //     }
+    //     else {
+    //         return swal('', 'Please Enter a Valid Email for the Reference', 'warning');
+    //     }
+    // }
     obj.guarantor_address = $("#guarantor_address").val();
     obj.gua_country = $('#gua_country').find('option:selected').attr('id');
     obj.kin_fullname = $('#ind_kin_fullname').val();
@@ -317,11 +336,16 @@ function createClient(){
                 for (var i = 0; i < (test.response).length; i++){
                     clients += ', '+test.response[i]["fullname"];
                 }
-                swal({icon: 'info', text: "Information already exists for client(s)"+clients});
-                window.location.href = "./add-client";
+                return swal({icon: 'info', text: "Information already exists for client(s)"+clients});
+                // window.location.href = "./add-client";
+            }
+            if(test.bvn_exists){
+                let client = test.response[0]['fullname'];
+                return swal({icon: 'info', text: "BVN already exists for client, "+client});
+                // window.location.href = "./add-client";
             }
             else if(test.status == 500){
-                swal('Failed!', "Unable to Create Client.", 'error');
+                return swal('Failed!', "Unable to Create Client.", 'error');
                 // window.location.href = "./add-client";
             }
             else{
@@ -457,6 +481,10 @@ function createBusinessIndividual() {
                     clients += ', '+test.response[i]["fullname"];
                 }
                 notification(`Information already exists for client(s) ${clients}`, '', 'info');
+            }
+            if(test.bvn_exists){
+                let client = test.response[0]['fullname'];
+                return swal({icon: 'info', text: "BVN already exists for client, "+client});
             }
             else if(test.status === 500){
                 notification('Failed!', 'Unable to Create Client.', 'error');
