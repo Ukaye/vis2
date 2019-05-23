@@ -57,6 +57,10 @@ function nextPrev(n) {
         swal ({"icon": "warning", "text": "Choose a valid Loan Officer & Branch" });
         return false;
     }
+    if (($('#bank').find('option:selected').attr('id') === '0') || ($('#bvn').val() === '') || ($('#account').val() === '')){
+        swal ({"icon": "warning", "text": "Complete Client's Bank Information" });
+        return false;
+    }
     if (currentTab === 2){
         if ($.trim($('#guarantor_email').val()) !== ''){
             if (!(validateEmail($('#guarantor_email').val()))){
