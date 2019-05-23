@@ -249,7 +249,7 @@
             $card = $('#card');
         if (!localStorage.remitaTransRef)
             return notification('Kindly setup direct debit mandate to proceed!', '', 'warning');
-        if (bank.authorization === 'OTP' && (!$otp.val() || $otp.val().length < 4 || !$card.val() || $card.val().length < 12))
+        if (bank.authorization === 'OTP' && (!$otp.val() || $otp.val().length < 4 || !$card.val() || $card.val().length < 3))
             return notification('Kindly fill both the card and bank otp correctly!', '', 'warning');
         if (!preapproved_loan.bank || !preapproved_loan.email || !preapproved_loan.phone || !preapproved_loan.account
                 || !preapproved_loan.client || !preapproved_loan.loan_amount)
