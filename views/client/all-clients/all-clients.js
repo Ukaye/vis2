@@ -763,7 +763,10 @@ function upload(i){
         return swal('Incomplete Information', 'Please Enter Client Email!', 'warning');
     }
     else {
-        folder_name = name + '_' + $('#email').val();
+        if (validateEmail($('#email').val()))
+            folder_name = name + '_' + $('#email').val();
+        else
+            return swal('', 'Please Enter a Valid Email', 'warning');
     }
     var file; var item;
     if (i === 1){
@@ -776,8 +779,8 @@ function upload(i){
         file = $('#file-upload-idcard')[0].files[0]
         item = "ID Card";
     }
-    if (file === "undefined") {
-        swal ("Choose file to upload");
+    if (!file) {
+        return swal ('No File Chosen!', "Choose file to upload", 'warning');
     }else{
         var formData = new FormData();
         formData.append('file', file); formData.append('type', i);

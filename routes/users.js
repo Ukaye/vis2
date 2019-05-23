@@ -220,10 +220,44 @@ users.post('/new-client', function(req, res, next) {
             if (results && results[0]){
                 return res.send(JSON.stringify({"status": 200, "error": null, "response": results, "message": "Information in use by existing client!"}));
             }
-            connection.query('select * from clients where bvn = ? and status = 1 limit 1', [req.body.bvn], function (error, rest, foelds){
-                if (rest && rest[0]){
-                    return res.send(JSON.stringify({"status": 200, "error": null, "response": rest, "bvn_exists": "Yes"}));
-                }
+            let bvn = req.body.bvn;
+            if (bvn.trim() !== ''){
+                connection.query('select * from clients where bvn = ? and status = 1 limit 1', [req.body.bvn], function (error, rest, foelds){
+                    if (rest && rest[0]){
+                        return res.send(JSON.stringify({"status": 200, "error": null, "response": rest, "bvn_exists": "Yes"}));
+                    }
+                    connection.query(query,postData, function (error, re, fields) {
+                        if(error){
+                            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+                        } else {
+                            connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function(err, re, fields) {
+                                if (!err){
+                                    id = re[0]['ID'];
+                                    connection.query('INSERT into wallets Set ?', {client_id: id}, function(er, r, fields) {
+                                        connection.release();
+                                        if (!er){
+                                            let payload = {}
+                                            payload.category = 'Clients'
+                                            payload.userid = req.cookies.timeout
+                                            payload.description = 'New Client Created'
+                                            payload.affected = id
+                                            notificationsService.log(req, payload)
+                                            res.send(JSON.stringify({"status": 200, "error": null, "response": re}));
+                                        }
+                                        else{
+                                            res.send(JSON.stringify({"response": "Error creating client wallet!"}));
+                                        }
+                                    });
+                                }
+                                else{
+                                    res.send(JSON.stringify({"response": "Error retrieving client details. Please try a new username!"}));
+                                }
+                            });
+                        }
+                    });
+                });
+            }
+            else {
                 connection.query(query,postData, function (error, re, fields) {
                     if(error){
                         res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
@@ -253,7 +287,7 @@ users.post('/new-client', function(req, res, next) {
                         });
                     }
                 });
-            });
+            }
         });
     });
 });
@@ -5570,42 +5604,59 @@ users.get('/trends', function(req, res, next){
    let report = req.query.trend,
        filter = req.query.filter,
        query;
-   if (filter === 'gender'){
-       if (report === 'interest'){
-           query = `select sum(interest_amount) interest_received, 
+   if (filter === 'Gender'){
+       if (report === 'Interest'){
+           query = `select sum(interest_amount) amount, 
                     (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender 
                     from schedule_history
                     where status = 1 and 
                     applicationid in (select id from applications where status <> 0) 
                     group by gender`;
        }
-       if (report === 'bad-loans'){
+       if (report === 'Bad Loans'){
            query = `select
-                    (payment_collect_date) as duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client, 
-                    (select loan_amount from applications where applications.ID = applicationID) as principal, payment_amount 
+                    sum(payment_amount) amount, 
+                    (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender
                     from application_schedules 
                     where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) 
-                    and datediff(curdate(), payment_collect_date) > 90 group by extract()  `;
+                    and datediff(curdate(), payment_collect_date) > 90 group by gender  `;
        }
-       if (report === 'overdue-loans'){
-
+       if (report === 'Overdue Loans'){
+           query = `select
+                    sum(payment_amount) amount, 
+                    (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender
+                    from application_schedules 
+                    where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) 
+                    and payment_collect_date < (select curdate()) group by gender  `;
        }
    }
-   if (filter === 'age'){
-       if (report === 'interest'){
-           query = `select (interest_amount) interest_received,
+   if (filter === 'Age'){
+       if (report === 'Interest'){
+           query = `select (interest_amount) amount,
                     (select dob from clients where clients.id = (select userid from applications where applications.id = applicationid)) dob, 
-                    (select TIMESTAMPDIFF(MONTH, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) age 
+                    ((select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid))) age 
                     from schedule_history
                     where status = 1 and 
-                    applicationid in (select id from applications where status <> 0) `
+                    applicationid in (select id from applications where status <> 0) group by age`;
                     // group by age`;
        }
-       if (report === 'bad-loans'){
-
+       if (report === 'Bad Loans'){
+           query = `select
+                    sum(payment_amount) amount, 
+                    (select dob from clients where clients.id = (select userid from applications where applications.id = applicationid)) dob,
+                    ((select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid))) age
+                    from application_schedules 
+                    where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) 
+                    and datediff(curdate(), payment_collect_date) > 90 group by age  `;
        }
-       if (report === 'overdue-loans'){
-
+       if (report === 'Overdue Loans'){
+           query = `select
+                    sum(payment_amount) amount, 
+                    (select dob from clients where clients.id = (select userid from applications where applications.id = applicationid)) dob,
+                    ((select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid))) age
+                    from application_schedules 
+                    where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) 
+                    and payment_collect_date < (select curdate()) group by age  `;
        }
    }
    db.query(query, function (error, result, fields){
@@ -5613,9 +5664,237 @@ users.get('/trends', function(req, res, next){
           res.send({'status': 500, 'error': error, 'response': null});
       }
       else {
-          res.send(result);
+          res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
       }
    });
+});
+
+users.get('/demographic-interest-report', function(req, res, next){
+    let report = req.query.trend,
+        filter = req.query.filter,
+        period = req.query.period,
+        query,
+        year = req.query.year,
+        frequency = req.query.frequency;
+    payload = {}; console.log(year)
+    if (filter === 'Gender'){
+        query = `select sum(interest_amount) amount, 
+                    (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender 
+                    from schedule_history
+                    where status = 1 and 
+                    applicationid in (select id from applications where status <> 0) 
+                    group by gender`;
+        if (period !== '-1' && year !== '0'){
+            query = `select sum(interest_amount) amount, 
+                    (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender 
+                    from schedule_history
+                    where status = 1 and 
+                    applicationid in (select id from applications where status <> 0) and 
+                    quarter(payment_date) = ${period} and year(payment_date) = ${year}
+                    group by gender`;
+        }
+    }
+    if (filter === 'Age'){
+        query = `select (interest_amount) amount,
+                (select dob from clients where clients.id = (select userid from applications where applications.id = applicationid)) dob, 
+                CASE
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) < 20 THEN 'Under 20'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 20 and 29 THEN '20 - 29'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 30 and 39 THEN '30 - 39'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 40 and 49 THEN '40 - 49'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 50 and 59 THEN '50 - 59'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 60 and 69 THEN '60 - 69'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 70 and 79 THEN '70 - 79'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) >= 80 THEN 'Over 80'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) IS NULL THEN 'Not Filled In (NULL)'
+                END as age_range 
+                from schedule_history
+                where status = 1 and 
+                applicationid in (select id from applications where status <> 0) group by age_range`;
+        if (period !== '-1' && year !== '0'){
+            query = `select (interest_amount) amount,
+                    (select dob from clients where clients.id = (select userid from applications where applications.id = applicationid)) dob, 
+                    CASE
+                        WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) < 20 THEN 'Under 20'
+                        WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 20 and 29 THEN '20 - 29'
+                        WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 30 and 39 THEN '30 - 39'
+                        WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 40 and 49 THEN '40 - 49'
+                        WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 50 and 59 THEN '50 - 59'
+                        WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 60 and 69 THEN '60 - 69'
+                        WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 70 and 79 THEN '70 - 79'
+                        WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) >= 80 THEN 'Over 80'
+                        WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) IS NULL THEN 'Not Filled In (NULL)'
+                    END as age_range 
+                    from schedule_history
+                    where status = 1 and 
+                    quarter(payment_date) = ${period} and year(payment_date) = ${year} and 
+                    applicationid in (select id from applications where status <> 0) group by age_range 
+                    `;
+        }
+    }
+    db.query(query, function(error, results, fields){
+        if (error){
+            res.send({"status": 500, "error": error, "response": null, 'message': payload});
+        }
+        else {
+            payload.interest = results;
+            res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
+        }
+    });
+});
+
+users.get('/demographic-badloans-report', function(req, res, next){
+    let report = req.query.trend,
+        filter = req.query.filter,
+        period = req.query.period,
+        query,
+        year = req.query.year,
+        frequency = req.query.frequency;
+    payload = {};
+    if (filter === 'Gender'){
+        query = `select
+                sum(payment_amount) amount, 
+                (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender
+                from application_schedules 
+                where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) 
+                and datediff(curdate(), payment_collect_date) > 90 group by gender  `;
+        if (period !== '-1' && year !== '0'){
+            query = `select
+                sum(payment_amount) amount, 
+                (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender
+                from application_schedules 
+                where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) 
+                and quarter(payment_collect_date) = ${period} and year(payment_collect_date) = ${year} 
+                and datediff(curdate(), payment_collect_date) > 90 group by gender  `;
+        }
+    }
+    if (filter === 'Age'){
+        query = `
+                select sum(payment_amount) amount, 
+                (select dob from clients where clients.id = (select userid from applications where applications.id = applicationid)) dob,
+                CASE
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) < 20 THEN 'Under 20'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 20 and 29 THEN '20 - 29'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 30 and 39 THEN '30 - 39'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 40 and 49 THEN '40 - 49'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 50 and 59 THEN '50 - 59'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 60 and 69 THEN '60 - 69'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 70 and 79 THEN '70 - 79'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) >= 80 THEN 'Over 80'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) IS NULL THEN 'Not Filled In (NULL)'
+                END as age_range
+                from application_schedules
+                where payment_status = 0 and status = 1 and 
+                applicationid in (select id from applications where status = 2)
+                group by age_range
+                `;
+        if (period !== '-1' && year !== '0'){
+            query = `
+                select sum(payment_amount) amount, 
+                (select dob from clients where clients.id = (select userid from applications where applications.id = applicationid)) dob,
+                CASE
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) < 20 THEN 'Under 20'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 20 and 29 THEN '20 - 29'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 30 and 39 THEN '30 - 39'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 40 and 49 THEN '40 - 49'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 50 and 59 THEN '50 - 59'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 60 and 69 THEN '60 - 69'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 70 and 79 THEN '70 - 79'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) >= 80 THEN 'Over 80'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) IS NULL THEN 'Not Filled In (NULL)'
+                END as age_range
+                from application_schedules
+                where payment_status = 0 and status = 1 and 
+                applicationid in (select id from applications where status = 2)
+                and quarter(payment_collect_date) = ${period} and year(payment_collect_date) = ${year} 
+                group by age_range
+                `;
+        }
+    }
+    db.query(query, function(error, results, fields){
+        if (error){
+            res.send({"status": 500, "error": error, "response": null, 'message': payload});
+        }
+        else {
+            payload.badloans = results;
+            res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
+        }
+    });
+});
+
+users.get('/demographic-overdues-report', function(req, res, next){
+    let report = req.query.trend,
+        filter = req.query.filter,
+        period = req.query.period,
+        query,
+        year = req.query.year,
+        frequency = req.query.frequency,
+        payload = {};
+    if (filter === 'Gender'){
+        query = `select
+                sum(payment_amount) amount, 
+                (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender
+                from application_schedules 
+                where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) 
+                and payment_collect_date < (select curdate()) group by gender  `;
+        if (period !== '-1' && year !== '0'){
+            query = `select
+                sum(payment_amount) amount, 
+                (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender
+                from application_schedules 
+                where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) 
+                and quarter(payment_collect_date) = ${period} and year(payment_collect_date) = ${year} 
+                and payment_collect_date < (select curdate()) group by gender  `;
+        }
+    }
+    if (filter === 'Age'){
+        query = `select
+                sum(payment_amount) amount, 
+                (select dob from clients where clients.id = (select userid from applications where applications.id = applicationid)) dob,
+                CASE
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) < 20 THEN 'Under 20'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 20 and 29 THEN '20 - 29'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 30 and 39 THEN '30 - 39'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 40 and 49 THEN '40 - 49'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 50 and 59 THEN '50 - 59'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 60 and 69 THEN '60 - 69'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 70 and 79 THEN '70 - 79'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) >= 80 THEN 'Over 80'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) IS NULL THEN 'Not Filled In (NULL)'
+                END as age_range
+                from application_schedules 
+                where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) 
+                and payment_collect_date < (select curdate()) group by age_range  `;
+        if (period !== '-1' && year !== '0'){
+            query = `select
+                sum(payment_amount) amount, 
+                (select dob from clients where clients.id = (select userid from applications where applications.id = applicationid)) dob,
+                CASE
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) < 20 THEN 'Under 20'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 20 and 29 THEN '20 - 29'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 30 and 39 THEN '30 - 39'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 40 and 49 THEN '40 - 49'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 50 and 59 THEN '50 - 59'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 60 and 69 THEN '60 - 69'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) BETWEEN 70 and 79 THEN '70 - 79'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) >= 80 THEN 'Over 80'
+                    WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) IS NULL THEN 'Not Filled In (NULL)'
+                END as age_range
+                from application_schedules 
+                where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) 
+                and quarter(payment_collect_date) = ${period} and year(payment_collect_date) = ${year} 
+                and payment_collect_date < (select curdate()) group by age_range  `;
+        }
+    }
+    db.query(query, function(error, results, fields){
+        if (error){
+            res.send({"status": 500, "error": error, "response": null, 'message': payload});
+        }
+        else {
+            payload.overdues = results;
+            res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
+        }
+    });
 });
 
 /*Unfortunately won't be called anymore*/
