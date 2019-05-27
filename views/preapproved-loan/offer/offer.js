@@ -1,22 +1,17 @@
 (function( $ ) {
     jQuery(document).ready(function() {
         getBanks();
-    });
-
-    $("#otp").on("keyup", function () {
-        let val = $("#otp").val();
-        $("#otp").val(integerFormat(val));
-    });
-
-    $("#card").on("keyup", function () {
-        let val = $("#card").val();
-        $("#card").val(creditCardFormat(val));
+        $('body').delegate('input[name^="param"]', 'keyup', function(e) {
+            let val = $(`input[name="${e.target.name}"]`).val();
+            $(`input[name="${e.target.name}"]`).val(integerFormat(val));
+        });
     });
 
     const urlParams = new URLSearchParams(window.location.search);
     const user_id = urlParams.get('t');
     let bank,
         banks,
+        payment_amount,
         preapproved_loan = {};
 
     function getPreapprovedLoan() {
@@ -49,6 +44,7 @@
                         $('#setupMandate').hide();
                         $('#remitaDirectDebit').show();
                         $('#acceptApplication').show();
+                        displayAuthParams(JSON.parse(preapproved_loan.authParams));
                         localStorage.remitaTransRef = preapproved_loan.remitaTransRef;
                         if (bank.authorization === 'FORM') {
                             generateMandateForm(preapproved_loan);
@@ -163,6 +159,7 @@
                 cells[5] = schedule[i - 2]['interest_amount'];
                 cells[6] = schedule[i - 2]['balance'];
                 cells[7] = (parseFloat(cells[2]) + parseFloat(cells[5])).round(2);
+                payment_amount = cells[7];
                 $('#payment-amount-text').text(numberToCurrencyformatter(cells[7]));
             }
             for (let j = 0; j < cells.length; j++) {
@@ -186,9 +183,25 @@
         $loanSchedule.append(table);
     }
 
+    function displayAuthParams(params) {
+        $('#remitaDirectDebit').find('.setup-content').html('');
+        for (let i=1; i<=params.length; i++) {
+            let param = params[i-1];
+            $('#remitaDirectDebit').find('.setup-content').append(`
+                <div class="col-sm-6 form-group">
+                    <label class="form-control-label" role="${param[`param${i}`]}">${param[`label${i}`]}</label>
+                        <strong style="color:red"> *</strong>
+                    <input type="text" id="${param[`param${i}`]}" name="param${i}" class="form-control" required="required">
+                    <small class="form-text text-muted">${param[`description${i}`]}</small>
+                </div>
+            `);
+        }
+    }
+
+
     $("#setupMandate").click(function () {
         if (!preapproved_loan.bank || !preapproved_loan.email || !preapproved_loan.phone || !preapproved_loan.account
-            || !preapproved_loan.client || !preapproved_loan.loan_amount)
+            || !preapproved_loan.client || !preapproved_loan.loan_amount || !payment_amount)
             return notification('Contact your loan officer to verify your profile!', '', 'warning');
         swal({
             title: "Setup Direct Debit Mandate?",
@@ -216,7 +229,7 @@
                             authorization: bank.authorization,
                             account: preapproved_loan.account,
                             fullname: preapproved_loan.client,
-                            amount: preapproved_loan.loan_amount,
+                            amount: payment_amount,
                             created_by: preapproved_loan.created_by,
                             application_id: preapproved_loan.applicationID,
                             start: remitaDateFormat(start),
@@ -244,15 +257,34 @@
             });
     });
 
+    function getAuthValues() {
+        let i,
+            result = [],
+            status = true,
+            params = JSON.parse(preapproved_loan.authParams);
+        for (i = 1; i <= params.length; i++) {
+            let obj = {},
+                param = params[i - 1],
+                $auth_input = $(`#${param[`param${i}`]}`);
+            if ($auth_input.val()) {
+                obj[`param${i}`] = param[`param${i}`];
+                obj['value'] = $auth_input.val();
+                result.push(obj);
+            } else {
+                status = false;
+                break;
+            }
+        }
+        return {status: status, data: result};
+    }
+
     $("#acceptApplication").click(function () {
-        let $otp = $('#otp'),
-            $card = $('#card');
         if (!localStorage.remitaTransRef)
             return notification('Kindly setup direct debit mandate to proceed!', '', 'warning');
-        if (bank.authorization === 'OTP' && (!$otp.val() || $otp.val().length < 4 || !$card.val() || $card.val().length < 3))
-            return notification('Kindly fill both the card and bank otp correctly!', '', 'warning');
+        if (!getAuthValues().status)
+            return notification('Kindly fill all required field(s)!', '', 'warning');
         if (!preapproved_loan.bank || !preapproved_loan.email || !preapproved_loan.phone || !preapproved_loan.account
-                || !preapproved_loan.client || !preapproved_loan.loan_amount)
+                || !preapproved_loan.client || !preapproved_loan.loan_amount || !payment_amount)
             return notification('Contact your loan officer to verify your profile!', '', 'warning');
         swal({
             title: "Are you sure?",
@@ -267,8 +299,7 @@
                         'url': `/preapproved-loan/offer/accept/${preapproved_loan.ID}`,
                         'type': 'post',
                         'data': {
-                            otp: $otp.val(),
-                            card: integerFormat($card.val()),
+                            authParams: getAuthValues().data,
                             email: preapproved_loan.email,
                             fullname: preapproved_loan.client,
                             authorization: bank.authorization,

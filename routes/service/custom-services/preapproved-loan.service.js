@@ -377,12 +377,12 @@ router.get('/get', function (req, res, next) {
 
 router.get('/get/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, r.requestId, r.remitaTransRef FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
+    let query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, r.requestId, r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
                 LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) WHERE (p.ID = '${decodeURIComponent(req.params.id)}' OR p.hash = '${decodeURIComponent(req.params.id)}')`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
     if (req.query.key === 'userID') {
-        query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, r.requestId, r.remitaTransRef FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
+        query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, r.requestId, r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
                 LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) WHERE p.userID = '${req.params.id}'`;
     }
     axios.get(url, {
@@ -442,11 +442,10 @@ router.get('/delete/:id', function (req, res, next) {
 router.post('/offer/accept/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let offer = {},
-        otp = req.body.otp,
         id = req.params.id,
-        card = req.body.card,
         email = req.body.email,
         fullname = req.body.fullname,
+        authParams = req.body.authParams,
         created_by = req.body.created_by,
         workflow_id = req.body.workflow_id,
         authorization = req.body.authorization,
@@ -459,17 +458,8 @@ router.post('/offer/accept/:id', function (req, res, next) {
         validate_payload = {
             id: id,
             host: HOST,
-            remitaTransRef: remitaTransRef,
-            authParams: [
-                {
-                    param1: 'OTP',
-                    value: otp
-                },
-                {
-                    param2: 'CARD',
-                    value: card
-                }
-            ]
+            authParams: authParams,
+            remitaTransRef: remitaTransRef
         };
 
     helperFunctions.validateMandate(validate_payload, authorization, function (validation_response) {

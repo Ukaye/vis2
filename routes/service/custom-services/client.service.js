@@ -63,6 +63,7 @@ router.post('/mandate/setup', function (req, res, next) {
             };
             helperFunctions.authorizeMandate(authorize_payload, authorization, function (authorization_response) {
                 if (authorization_response && authorization_response.remitaTransRef){
+                    payload.authParams = JSON.stringify(authorization_response.authParams);
                     payload.remitaTransRef = authorization_response.remitaTransRef;
                     payload.mandateId = setup_response.mandateId;
                     payload.applicationID = application_id;
