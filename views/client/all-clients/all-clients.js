@@ -642,9 +642,9 @@ function checkForEdit(){
 
 
 
-                $('#first_name2').val(fullname.split(' ')[0]);
-                $('#middle_name2').val(fullname.split(' ')[1]);
-                $('#last_name2').val(fullname.split(' ')[2]);
+                $('#first_name2').val(data[0].first_name);
+                $('#middle_name2').val(data[0].middle_name);
+                $('#last_name2').val(data[0].last_name);
                 $('#phone2').val(data[0].phone);
                 $('#address2').val(data[0].address);
                 $('#email2').val(data[0].email);
@@ -722,6 +722,9 @@ function submitDetails(){
 
     if (edit_client.client_type === 'business_individual') {
         obj.username = $('#email2').val();
+        obj.first_name = $.trim($('#first_name2').val());
+        obj.middle_name = $.trim($('#middle_name2').val());
+        obj.last_name = $.trim($('#last_name2').val());
         obj.fullname = $('#first_name2').val() + ' '+ $('#middle_name2').val() + ' ' +$('#last_name2').val();
         obj.phone = $('#phone2').val();
         obj.address = $('#address2').val();

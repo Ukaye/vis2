@@ -1320,10 +1320,10 @@ users.get('/incomplete-records', function(req, res, next){
 
 /* Custom API to update all clients' first_name, middle_name and last_name*/
 users.get('/update-records', function(req, res, next){
-    let query = `select ID, fullname from clients where 
-                (first_name = ' ' or first_name is null) or 
-                (middle_name = ' ' or middle_name is null) or 
-                (last_name = ' ' or last_name is null)`
+    let query = `select ID, fullname from clients `
+                // where (first_name = ' ' or first_name is null) or
+                // (middle_name = ' ' or middle_name is null) or
+                // (last_name = ' ' or last_name is null)`
     db.query(query, function (error, results, fields) {
         if(error){
             res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
@@ -1333,9 +1333,11 @@ users.get('/update-records', function(req, res, next){
                 for (let i = 0; i < results.length; i++){
                     let id = results[i]['ID'];
                     let fullname = (results[i]['fullname'] === null) ? ' ' : results[i]['fullname'];
-                    let first_name = fullname.split(' ')[0];
-                    let middle_name = fullname.split(' ')[1];
-                    let last_name = fullname.split(' ')[2];
+                    let first_name = fullname.split(' ')[0].trim();
+                    let middle_name = fullname.split(' ')[1].trim();
+                    let last_name = fullname.split(' ')[2].trim();
+                    console.log(fullname + ': ')
+                    console.log(first_name + middle_name + last_name + '\n')
                     let dets = {};
                     let query = 'update clients set first_name = ?, middle_name = ?, last_name = ? where ID = ?  ';
                     connect.query(query, [first_name, middle_name, last_name, id], function (error, results, fields) {
@@ -1343,7 +1345,48 @@ users.get('/update-records', function(req, res, next){
                             console.log(error)
                             // res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
                         } else {
-                            console.log(results.InsertId);
+                            console.log(id);
+                            console.log(results);
+                            // res.send(JSON.stringify({"status": 200, "error": null, "response": "Category Disabled!"}));
+                        }
+                        if (i === results.length-1)
+                            return connect.release();
+                    });
+                }
+            });
+            // res.send(results);
+        }
+    });
+});
+
+users.get('/update-folders', function(req, res, next){
+    let query = `select ID, fullname, email from clients `
+    // where (first_name = ' ' or first_name is null) or
+    // (middle_name = ' ' or middle_name is null) or
+    // (last_name = ' ' or last_name is null)`
+    db.query(query, function (error, results, fields) {
+        if(error){
+            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        } else {
+            db.getConnection(function(err, connect) {
+                if (err) throw err;
+                for (let i = 0; i < results.length; i++){
+                    let id = results[i]['ID'];
+                    let fullname = (results[i]['fullname'] === null) ? ' ' : results[i]['fullname'];
+                    let first_name = fullname.split(' ')[0].trim();
+                    let middle_name = fullname.split(' ')[1].trim();
+                    let last_name = fullname.split(' ')[2].trim();
+                    console.log(fullname + ': ')
+                    console.log(first_name + middle_name + last_name + '\n')
+                    let dets = {};
+                    let query = 'update clients set first_name = ?, middle_name = ?, last_name = ? where ID = ?  ';
+                    connect.query(query, [first_name, middle_name, last_name, id], function (error, results, fields) {
+                        if (error) {
+                            console.log(error)
+                            // res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+                        } else {
+                            console.log(id);
+                            console.log(results);
                             // res.send(JSON.stringify({"status": 200, "error": null, "response": "Category Disabled!"}));
                         }
                         if (i === results.length-1)
@@ -1468,13 +1511,13 @@ users.post('/edit-client/:id', function(req, res, next) {
     let date = Date.now(),
         postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    let payload = [postData.username, postData.fullname, postData.phone, postData.address, postData.email,
+    let payload = [postData.username, postData.fullname, postData.first_name, postData.middle_name, postData.last_name, postData.phone, postData.address, postData.email,
         postData.gender, postData.dob, postData.marital_status, postData.loan_officer, postData.branch, postData.bank, postData.bvn, postData.account , postData.client_state, postData.postcode, postData.client_country,
         postData.years_add, postData.ownership , postData.employer_name ,postData.industry ,postData.job, postData.salary, postData.job_country , postData.off_address, postData.off_state,
         postData.doe, postData.guarantor_name, postData.guarantor_occupation, postData.relationship, postData.years_known, postData.guarantor_phone, postData.guarantor_email,
         postData.guarantor_address, postData.gua_country, postData.product_sold, postData.capital_invested, postData.market_name, postData.market_years,
         postData.market_address, postData.kin_fullname, postData.kin_phone, postData.kin_relationship, postData.date_modified, req.params.id];
-    let query = 'Update clients SET username = ?, fullname=?, phone=?, address = ?, email=?, gender=?, dob = ?, marital_status=?, loan_officer=?, branch=?, bank=?, account=?, bvn = ?, ' +
+    let query = 'Update clients SET username = ?, fullname=?, first_name=?, middle_name=?, last_name=?,  phone=?, address = ?, email=?, gender=?, dob = ?, marital_status=?, loan_officer=?, branch=?, bank=?, account=?, bvn = ?, ' +
         'client_state=?, postcode=?, client_country=?, years_add=?, ownership=?, employer_name=?, industry=?, job=?, salary=?, job_country=?, off_address=?, off_state=?, ' +
         'doe=?, guarantor_name=?, guarantor_occupation=?, relationship=?, years_known=?, guarantor_phone=?, guarantor_email=?, guarantor_address=?, gua_country=?, ' +
         'product_sold =? , capital_invested = ?, market_name =? , market_years = ?, market_address =? , kin_fullname = ?, kin_phone =? , kin_relationship = ?, date_modified = ? where ID=?';
@@ -5946,29 +5989,33 @@ users.get('/disbursement-trends', function(req, res, next){
         payload = {};
     query = 'select sum(loan_amount) amount, DATE_FORMAT(disbursement_date, \'%M, %Y\') period ' +
             'from applications ' +
-            'where status = 2 group by extract(year_month from disbursement_date)';
+            'where status = 2 and extract(year_month from disbursement_date) <> (select extract(year_month from curdate())) ' +
+            'group by extract(year_month from disbursement_date)';
     if (!frequency || frequency === '-1' || frequency === '2' && year === '0'){
         query = 'select sum(loan_amount) amount, DATE_FORMAT(disbursement_date, \'%M, %Y\') period ' +
                 'from applications ' +
-                'where status = 2 group by extract(year_month from disbursement_date)';
+                'where status = 2 and extract(year_month from disbursement_date) <> (select extract(year_month from curdate())) ' +
+                'group by extract(year_month from disbursement_date)';
     }
     if (frequency && frequency === '2' && year !== '0'){
         query = 'select sum(loan_amount) amount, DATE_FORMAT(disbursement_date, \'%M, %Y\') period ' +
                 'from applications ' +
                 'where status = 2 ' +
                 'and DATE_FORMAT(disbursement_date, \'%Y\') = '+year+' ' +
+                'and extract(year_month from disbursement_date) <> (select extract(year_month from curdate())) ' +
                 'group by extract(year_month from disbursement_date)';
     }
     if (frequency && frequency === '3'){
         query = 'select sum(loan_amount) amount, DATE_FORMAT(disbursement_date, \'%Y\') period ' +
                 'from applications ' +
-                'where status = 2 ' +
+                'where status = 2 and extract(year_month from disbursement_date) <> (select extract(year_month from curdate())) ' +
                 'group by period';
     }
     if (frequency && frequency === '4' && year !== '0'){
         query = 'select sum(loan_amount) amount, concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) period ' +
                 'from applications ' +
                 'where status = 2 ' +
+                'and concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) <> (select concat(\'Q\', extract(quarter from curdate()),\'-\' , extract(year from curdate()))) ' +
                 'and DATE_FORMAT(disbursement_date, \'%Y\') = '+year+' ' +
                 'group by period';
     }
@@ -5976,6 +6023,7 @@ users.get('/disbursement-trends', function(req, res, next){
         query = 'select sum(loan_amount) amount, concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) period ' +
             'from applications ' +
             'where status = 2 ' +
+            'and concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) <> (select concat(\'Q\', extract(quarter from curdate()),\'-\' , extract(year from curdate()))) ' +
             'group by period order by extract(year_month from disbursement_date)';
     }
     db.query(query, function(error, results, fields){
@@ -5996,33 +6044,39 @@ users.get('/interest-received-trends', function(req, res, next){
     payload = {};
     query = 'select sum(interest_amount) amount, DATE_FORMAT(payment_date, \'%M, %Y\') period ' +
             'from schedule_history ' +
-            'where status = 1 and applicationid in (select id from applications where status = 2) group by extract(year_month from payment_date)';
+            'where status = 1 and extract(year_month from payment_date) <> (select extract(year_month from curdate())) ' +
+            'and applicationid in (select id from applications where status = 2) group by extract(year_month from payment_date)';
     if (!frequency || frequency === '-1' || frequency === '2' && year === '0'){
         query = 'select sum(interest_amount) amount, DATE_FORMAT(payment_date, \'%M, %Y\') period ' +
                 'from schedule_history ' +
-                'where status = 1 and applicationid in (select id from applications where status = 2) group by extract(year_month from payment_date)';
+                'where status = 1 and extract(year_month from payment_date) <> (select extract(year_month from curdate())) ' +
+                'and applicationid in (select id from applications where status = 2) group by extract(year_month from payment_date)';
     }
     if (frequency && frequency === '2' && year !== '0'){
         query = 'select sum(interest_amount) amount, DATE_FORMAT(payment_date, \'%M, %Y\') period ' +
                 'from schedule_history ' +
-                'where status = 1 and and DATE_FORMAT(disbursement_date, \'%Y\') = '+year+' and applicationid in (select id from applications where status = 2) group by extract(year_month from payment_date)';
+                'where status = 1  and extract(year_month from payment_date) <> (select extract(year_month from curdate())) ' +
+                'and DATE_FORMAT(payment_date, \'%Y\') = '+year+' and applicationid in (select id from applications where status = 2) group by extract(year_month from payment_date)';
     }
     if (frequency && frequency === '3'){
         query = 'select sum(interest_amount) amount, DATE_FORMAT(payment_date, \'%Y\') period ' +
                 'from schedule_history ' +
-                'where status = 1 and applicationid in (select id from applications where status = 2) group by period'
+                'where status = 1  and extract(year from payment_date) <> (select extract(year from curdate())) ' +
+                'and applicationid in (select id from applications where status = 2) group by period'
     }
     if (frequency && frequency === '4' && year !== '0'){
         query = 'select sum(interest_amount) amount, concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period ' +
                 'from schedule_history ' +
                 'where status = 1 and applicationid in (select id from applications where status = 2) ' +
+                'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) <> (select concat(\'Q\', extract(quarter from curdate()),\'-\' , extract(year from curdate()))) '+
                 'and DATE_FORMAT(payment_date, \'%Y\') = '+year+' ' +
-                'group by period order by extract(year_month from interest_collect_date)';
+                'group by period order by extract(year_month from payment_date)';
     }
     if (frequency && frequency === '4' && year === '0'){
         query = 'select sum(interest_amount) amount, concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period ' +
                 'from schedule_history ' +
                 'where status = 1 and applicationid in (select id from applications where status = 2) ' +
+                'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) <> (select concat(\'Q\', extract(quarter from curdate()),\'-\' , extract(year from curdate()))) '+
                 'group by period order by extract(year_month from payment_date)';
     }
     db.query(query, function(error, results, fields){
@@ -6043,30 +6097,33 @@ users.get('/interest-receivable-trends', function(req, res, next){
         payload = {};
     query = 'select sum(interest_amount) amount, DATE_FORMAT(interest_collect_date, \'%M, %Y\') period ' +
             'from application_schedules ' +
-            'where status = 1 ' +
+            'where status = 1 and extract(year_month from interest_collect_date) <> (select extract(year_month from curdate())) ' +
             'and applicationid in (select id from applications where status = 2)' +
             'group by extract(year_month from interest_collect_date)';
     if (!frequency || frequency === '-1' || frequency === '2' && year === '0'){
         query = 'select sum(interest_amount) amount, DATE_FORMAT(interest_collect_date, \'%M, %Y\') period ' +
                 'from application_schedules ' +
-                'where status = 1 ' +
+                'where status = 1  and extract(year_month from interest_collect_date) <> (select extract(year_month from curdate())) ' +
                 'and applicationid in (select id from applications where status = 2)' +
                 'group by extract(year_month from interest_collect_date)';
     }
     if (frequency && frequency === '2' && year !== '0'){
         query = 'select sum(interest_amount) amount, DATE_FORMAT(interest_collect_date, \'%M, %Y\') period ' +
                 'from application_schedules ' +
-                'where status = 1 and and DATE_FORMAT(disbursement_date, \'%Y\') = '+year+' and applicationid in (select id from applications where status = 2) group by extract(year_month from payment_date)';
+                'where status = 1 and extract(year_month from interest_collect_date) <> (select extract(year_month from curdate()))  ' +
+                'and DATE_FORMAT(interest_collect_date, \'%Y\') = '+year+' and applicationid in (select id from applications where status = 2) group by extract(year_month from interest_collect_date)';
     }
     if (frequency && frequency === '3'){
         query = 'select sum(interest_amount) amount, DATE_FORMAT(interest_collect_date, \'%Y\') period ' +
                 'from application_schedules ' +
-                'where status = 1 and applicationid in (select id from applications where status = 2) group by period'
+                'where status = 1  and extract(year from interest_collect_date) <> (select extract(year from curdate())) ' +
+                'and applicationid in (select id from applications where status = 2) group by period'
     }
     if (frequency && frequency === '4' && year !== '0'){
         query = 'select sum(interest_amount) amount, concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) period ' +
-                'from schedule_history ' +
+                'from application_schedules ' +
                 'where status = 1 and applicationid in (select id from applications where status = 2) ' +
+                'and concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) <> (select concat(\'Q\', extract(quarter from curdate()),\'-\' , extract(year from curdate()))) '+
                 'and DATE_FORMAT(interest_collect_date, \'%Y\') = '+year+' ' +
                 'group by period order by extract(year_month from interest_collect_date)';
     }
@@ -6074,6 +6131,7 @@ users.get('/interest-receivable-trends', function(req, res, next){
         query = 'select sum(interest_amount) amount, concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) period ' +
                 'from application_schedules ' +
                 'where status = 1 and applicationid in (select id from applications where status = 2) ' +
+                'and concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) <> (select concat(\'Q\', extract(quarter from curdate()),\'-\' , extract(year from curdate()))) '+
                 'group by period order by extract(year_month from interest_collect_date)';
     }
     db.query(query, function(error, results, fields){
