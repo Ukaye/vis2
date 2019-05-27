@@ -93,6 +93,8 @@ functions.setUpMandate = function (payload, callback) {
             if (error) {
                 return callback(payload, error);
             }
+            console.log(body)
+            console.log('=SETUP==============================================')
             callback(payload, functions.formatJSONP(body));
         })
 };
@@ -160,6 +162,8 @@ functions.authorizeMandate = function (payload, type, callback) {
             if (error) {
                 return callback(error);
             }
+            console.log(body)
+            console.log('=AUTHORIZE==============================================')
             return callback(functions.formatJSONP(body));
         })
 };
