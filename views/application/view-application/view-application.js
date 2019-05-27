@@ -198,7 +198,7 @@ function loadApplication(user_id){
             }
 
             getApplicationSettings(application);
-            checkForExistingMandate(application.userID);
+            checkForExistingMandate(application);
         },
         'error': function (err) {
             console.log(err);
@@ -1621,10 +1621,10 @@ function payOffLoan() {
     });
 }
 
-function checkForExistingMandate(user_id) {
+function checkForExistingMandate(data) {
     $.ajax({
         type: 'GET',
-        url: `/preapproved-loan/get/${user_id}?key=userID`,
+        url: `/preapproved-loan/get/${data.user_id}?key=userID`,
         success: function (response) {
             let mandate = response.data;
             const HOST = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
@@ -1638,8 +1638,15 @@ function checkForExistingMandate(user_id) {
                 $('#registrationDate').text(mandate.remita.registrationDate || 'N/A');
                 $('#mandateLink').val(`${HOST}/offer?t=${encodeURIComponent(mandate.hash)}`);
             } else {
+                let today = new Date(),
+                    date1 = new Date(data.schedule[0]['payment_collect_date']),
+                    date2 = new Date(data.schedule[0]['interest_collect_date']);
+                if (date1 < today || date2 < today) {
+                    $('#setupDirectDebit').hide();
+                } else {
+                    $('#setupDirectDebit').show();
+                }
                 $('#viewMandate').hide();
-                $('#setupDirectDebit').show();
             }
         }
     });

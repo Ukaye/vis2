@@ -2,7 +2,6 @@
     jQuery(document).ready(function() {
         getUsers();
         getWorkflows();
-        read_write_custom();
         getApplicationSettings();
     });
 
@@ -122,6 +121,7 @@
                     $('a.grouped_elements').fancybox();
                     $('.thumbnail').tooltip();
                 }
+                read_write_custom();
             }
         });
     }
@@ -957,9 +957,9 @@
 
     function read_write_custom() {
         let perms = JSON.parse(localStorage.getItem("permissions")),
-            approveInitialApplication = ($.grep(perms, function(e){return e.module_name === 'approveInitialApplication';}))[0],
-            rejectInitialApplication = ($.grep(perms, function(e){return e.module_name === 'rejectInitialApplication';}))[0],
-            saveInitialApplication = ($.grep(perms, function(e){return e.module_name === 'saveInitialApplication';}))[0];
+            approveInitialApplication = ($.grep(perms, function(e){return e.module_name === 'approveInitiateApplication';}))[0],
+            rejectInitialApplication = ($.grep(perms, function(e){return e.module_name === 'rejectInitiateApplication';}))[0],
+            saveInitialApplication = ($.grep(perms, function(e){return e.module_name === 'saveInitiateApplication';}))[0];
 
         if (approveInitialApplication && approveInitialApplication['read_only'] === '0')
             $('#approveApplication').hide();
