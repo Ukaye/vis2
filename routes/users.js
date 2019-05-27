@@ -5945,13 +5945,13 @@ users.get('/growth-trends', function(req, res, next){
     let query, query1, query2, payload;
     query = 'select sum(loan_amount) amount, DATE_FORMAT(disbursement_date, \'%M, %Y\') period ' +
             'from applications ' +
-            'where status = 2 group by extract(year_month from disbursement_date)';
+            'where status = 2 and extract(year_month from disbursement_date) <> (select extract(year_month from curdate())) group by extract(year_month from disbursement_date)';
     query1 = 'select sum(interest_amount) amount, DATE_FORMAT(payment_date, \'%M, %Y\') period ' +
             'from schedule_history ' +
-            'where status = 1 and applicationid in (select id from applications where status = 2) group by extract(year_month from payment_date)';
+            'where status = 1 and extract(year_month from payment_date) <> (select extract(year_month from curdate())) and applicationid in (select id from applications where status = 2) group by extract(year_month from payment_date)';
     query2 = 'select sum(interest_amount) amount, DATE_FORMAT(interest_collect_date, \'%M, %Y\') period ' +
             'from application_schedules ' +
-            'where status = 1 ' +
+            'where status = 1 and extract(year_month from interest_collect_date) <> (select extract(year_month from curdate())) ' +
             'and applicationid in (select id from applications where status = 2)' +
             'group by extract(year_month from interest_collect_date)';
     payload = {};
@@ -6008,7 +6008,7 @@ users.get('/disbursement-trends', function(req, res, next){
     if (frequency && frequency === '3'){
         query = 'select sum(loan_amount) amount, DATE_FORMAT(disbursement_date, \'%Y\') period ' +
                 'from applications ' +
-                'where status = 2 and extract(year_month from disbursement_date) <> (select extract(year_month from curdate())) ' +
+                'where status = 2 and extract(year from disbursement_date) <> (select extract(year from curdate())) ' +
                 'group by period';
     }
     if (frequency && frequency === '4' && year !== '0'){
