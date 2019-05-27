@@ -57,6 +57,10 @@ function nextPrev(n) {
         swal ({"icon": "warning", "text": "Choose a valid Loan Officer & Branch" });
         return false;
     }
+    if (($('#bank').find('option:selected').attr('id') === '0') || ($('#bvn').val() === '') || ($('#account').val() === '')){
+        swal ({"icon": "warning", "text": "Complete Client's Bank Information" });
+        return false;
+    }
     if (currentTab === 2){
         if ($.trim($('#guarantor_email').val()) !== ''){
             if (!(validateEmail($('#guarantor_email').val()))){
@@ -358,12 +362,15 @@ function createClient(){
 }
 
 function upload(i){
-    var name = $('#first_name').val() + ' '+ $('#middle_name').val() + ' ' +$('#last_name').val(); var folder_name = " ";
+    var name = $.trim($('#first_name').val()) + ' '+ $.trim($('#middle_name').val()) + ' ' +$.trim($('#last_name').val()); var folder_name = " ";
     if ($('#email').val() === "" || $('#email').val() === null){
         return swal('Incomplete Information', 'Please Enter Client Email!', 'warning');
     }
     else {
-        folder_name = name + '_' + $('#email').val();
+        if (validateEmail($('#email').val()))
+            folder_name = name + '_' + $('#email').val();
+        else
+            return swal('', 'Please Enter a Valid Email', 'warning');
     }
     var file; var item;
     if (i === 1){
@@ -376,8 +383,8 @@ function upload(i){
         file = $('#file-upload-idcard')[0].files[0]
         item = "ID Card";
     }
-    if (file === "undefined") {
-        swal ("Choose file to upload");
+    if (!file) {
+        return swal ('No File Chosen!', "Choose file to upload", 'warning');
     }else{
         var formData = new FormData();
         formData.append('file', file); formData.append('type', i);

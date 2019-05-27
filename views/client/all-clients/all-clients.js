@@ -53,6 +53,11 @@ function nextPrev(n) {
         return false;
     }
 
+    if (($('#bank').find('option:selected').attr('id') === '0') || ($('#bvn').val() === '') || ($('#account').val() === '')){
+        swal ({"icon": "warning", "text": "Complete Client's Bank Information" });
+        return false;
+    }
+
     x[currentTab].style.display = "none";
     currentTab = currentTab + n;
     if (currentTab >= x.length) {
@@ -637,9 +642,9 @@ function checkForEdit(){
 
 
 
-                $('#first_name2').val(fullname.split(' ')[0]);
-                $('#middle_name2').val(fullname.split(' ')[1]);
-                $('#last_name2').val(fullname.split(' ')[2]);
+                $('#first_name2').val(data[0].first_name);
+                $('#middle_name2').val(data[0].middle_name);
+                $('#last_name2').val(data[0].last_name);
                 $('#phone2').val(data[0].phone);
                 $('#address2').val(data[0].address);
                 $('#email2').val(data[0].email);
@@ -717,6 +722,9 @@ function submitDetails(){
 
     if (edit_client.client_type === 'business_individual') {
         obj.username = $('#email2').val();
+        obj.first_name = $.trim($('#first_name2').val());
+        obj.middle_name = $.trim($('#middle_name2').val());
+        obj.last_name = $.trim($('#last_name2').val());
         obj.fullname = $('#first_name2').val() + ' '+ $('#middle_name2').val() + ' ' +$('#last_name2').val();
         obj.phone = $('#phone2').val();
         obj.address = $('#address2').val();
@@ -763,7 +771,10 @@ function upload(i){
         return swal('Incomplete Information', 'Please Enter Client Email!', 'warning');
     }
     else {
-        folder_name = name + '_' + $('#email').val();
+        if (validateEmail($('#email').val()))
+            folder_name = name + '_' + $('#email').val();
+        else
+            return swal('', 'Please Enter a Valid Email', 'warning');
     }
     var file; var item;
     if (i === 1){
@@ -776,8 +787,8 @@ function upload(i){
         file = $('#file-upload-idcard')[0].files[0]
         item = "ID Card";
     }
-    if (file === "undefined") {
-        swal ("Choose file to upload");
+    if (!file) {
+        return swal ('No File Chosen!', "Choose file to upload", 'warning');
     }else{
         var formData = new FormData();
         formData.append('file', file); formData.append('type', i);

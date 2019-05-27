@@ -204,9 +204,9 @@
                                 <li class="nav-item">
                                     <a class="nav-link" id="branches" href="#branch-reports" role="tab" data-toggle="tab">Branch Reports</a>
                                 </li>
-                                <!--<li class="nav-item">-->
-                                    <!--<a class="nav-link" id="demographies" href="#demo-reports" role="tab" data-toggle="tab">Demographic Reports</a>-->
-                                <!--</li>-->
+                                <li class="nav-item">
+                                    <a class="nav-link" id="demo" href="#demo-reports" role="tab" data-toggle="tab">Demographic Reports</a>
+                                </li>
                                 <li class="nav-item">
                                     <a class="nav-link" id="trends" href="#trend-reports" role="tab" data-toggle="tab">Trends</a>
                                 </li>
@@ -1285,33 +1285,58 @@
                                         <div class="card-body">
                                             <div class="col-sm-12">
                                                 <div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">
-                                                    <div class="col-sm-4 card" style="background-color: transparent; border-color: transparent">
+                                                    <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
                                                         <div class="form-group">
                                                             <div class="input-group">
                                                                 <select id="demo-report" onchange="demoReportChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
                                                                     <option id="-1">Choose a report</option>
-                                                                    <option id="1">Interest</option>
-                                                                    <option id="2">Bad Loans</option>
-                                                                    <option id="3">Overdue Loans</option>
+                                                                    <option id="Interest">Interest</option>
+                                                                    <option id="Bad Loans">Bad Loans</option>
+                                                                    <option id="Overdue Loans">Overdue Loans</option>
                                                                 </select>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div class="col-sm-4">
+                                                    <div class="col-sm-3">
                                                         <div class="form-group">
                                                             <div class="input-group">
                                                                 <select id="demo-filter" onchange="demoFilterChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
                                                                     <option id="-1">Select Filter</option>
-                                                                    <option id="age">Age</option>
-                                                                    <option id="gender">Gender</option>
+                                                                    <option id="Age">Age</option>
+                                                                    <option id="Gender">Gender</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-3">
+                                                        <div class="form-group">
+                                                            <div class="input-group">
+                                                                <select id="demo-frequency" onchange="demoFrequencyChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                    <option value="-1">-- Select Period --</option>
+                                                                    <option value="1">Q1</option>
+                                                                    <option value="2">Q2</option>
+                                                                    <option value="3">Q3</option>
+                                                                    <option value="4">Q4</option>
+                                                                    <!--<option id="young-adults">18 - 35</option>-->
+                                                                    <!--<option id="middle-aged">35 - 50</option>-->
+                                                                    <!--<option id="older-adults">50 and older</option>-->
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-3">
+                                                        <div class="form-group">
+                                                            <div class="input-group">
+                                                                <select id="demo-year" onchange="demoYearChange(this)" class="year form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                    <option value="0">Select Year</option>
                                                                 </select>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div id="interest-demo-chart" style="text-align: center; display: none">Charts will load here!</div><hr/>
-                                                <div id="badloan-demo-chart" style="text-align: center; display: none">Charts will load here!</div><hr/>
-                                                <div id="overdue-demo-chart" style="text-align: center; display: none">Charts will load here!</div><hr/>
+                                                <div id="interest-demo-chart" style="text-align: center; display: none"></div><hr/>
+                                                <div id="badloan-demo-chart" style="text-align: center; display: none"></div><hr/>
+                                                <div id="overdue-demo-chart" style="text-align: center; display: none"></div><hr/>
                                             </div>
                                         </div>
                                     </div>
@@ -1437,7 +1462,8 @@
         loadYears('p-r-year');
         loadYears('p-r-rec-year');
         loadYears('pvi-year');
-        loadYears('trend-year')
+        loadYears('trend-year');
+        loadYears('demo-year');
         getOfficers();
         getBranches();
         loadInfo();
@@ -2975,7 +3001,7 @@
                 let v = dets[i];
                 var duedate = new Date(v.duedate);
 //                if ((Math.round((now.getTime() - duedate.getTime())/(oneDay))) > 90){
-                let validpayment = amount_paid[v.applicationID]; console.log(amount_paid);
+                let validpayment = amount_paid[v.applicationID];
                 total += parseFloat(v.principal - validpayment);
                 v.id = padWithZeroes(parseInt(v.applicationID), 6);
                 v.amount = formatter.format(parseFloat(v.principal));
@@ -7074,93 +7100,550 @@
 
     // Demographics Reports
 
+    function demographics(){
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                int = data.message.interest;
+                bl = data.message.bad_loans;
+                ol = data.message.overdue_loans;
+                jQuery.each(dr, function(k, v){
+                    d.push({label: v.period , value: v.amount}, );
+                });
+                jQuery.each(ir, function(k, v){
+                    interest.push({label: v.period , value: v.amount}, );
+                });
+                jQuery.each(irec, function(k, v){
+                    interest_rec.push({label: v.period , value: v.amount}, );
+                });
+                var disburseConfigs = {
+                    type: 'line', // The chart type
+                    width: '100%', // Width of the chart
+                    height: '400', // Height of the chart
+                    dataFormat: 'json', // Data type
+                    dataSource: {
+                        "chart": {
+                            "caption": "Monthly Disbursements",
+//                            "subCaption": "In MMbbl = One Million barrels",
+                            "xAxisName": "Period",
+                            "yAxisName": "Amount Disbursed (In Naira)",
+                            "numberSuffix": "",
+                            "theme": "fusion",
+                        },
+                        "data": d
+                    }
+                };
+                var interestConfigs = {
+                    type: 'line', // The chart type
+                    width: '100%', // Width of the chart
+                    height: '400', // Height of the chart
+                    dataFormat: 'json', // Data type
+                    dataSource: {
+                        "chart": {
+                            "caption": "Monthly Interest Received",
+//                            "subCaption": "In MMbbl = One Million barrels",
+                            "xAxisName": "Period",
+                            "yAxisName": "Interest Received (In Naira)",
+                            "numberSuffix": "",
+                            "theme": "fusion",
+                        },
+                        "data": interest
+                    }
+                };
+                var intRecConfigs = {
+                    type: 'line', // The chart type
+                    width: '100%', // Width of the chart
+                    height: '400', // Height of the chart
+                    dataFormat: 'json', // Data type
+                    dataSource: {
+                        "chart": {
+                            "caption": "Monthly Interest Receivable",
+//                            "subCaption": "In MMbbl = One Million barrels",
+                            "xAxisName": "Period",
+                            "yAxisName": "Interest Receivable (In Naira)",
+                            "numberSuffix": "",
+                            "theme": "fusion",
+                        },
+                        "data": interest_rec
+                    }
+                };
+                $("#disburse-trend-chart").insertFusionCharts(disburseConfigs);
+                $("#interest-received-trend-chart").insertFusionCharts(interestConfigs);
+                $("#interest-receivable-trend-chart").insertFusionCharts(intRecConfigs);
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
+    }
+
+    function demoReportChange(report){
+        $('#demo-year').val(0);
+        $('#demo-frequency').val(-1);
+        if (report.value === 'Interest'){
+            $('#interest-demo-chart').show();
+            $('#badloan-demo-chart').hide();
+            $('#overdue-demo-chart').hide();
+        }
+        else if (report.value === 'Bad Loans'){
+            $('#interest-demo-chart').hide();
+            $('#badloan-demo-chart').show();
+            $('#overdue-demo-chart').hide();
+        }
+        else if (report.value === 'Overdue Loans'){
+            $('#interest-demo-chart').hide();
+            $('#badloan-demo-chart').hide();
+            $('#overdue-demo-chart').show();
+        }
+    }
+
     function demoFilterChange(filter){
-        let url,
-            report = $('#demo-report option:selected').attr('id'); console.log(report);
+        let url, caption, xaxisname,
+            period = $('#demo-frequency').val(),
+            year = $('#demo-year').val(),
+            report = $('#demo-report option:selected').attr('id');
+//        url = `/user/trends?trend=${report}&&filter=${filter.value}&&`;
         if (report === "-1"){
             return swal('', 'Please Choose a Report!', 'warning');
         }
-        url = '/user/trends?report='
-//        $.ajax({
-//            'url': url,
-//            'type': 'get',
-//            'success': function (data) {
-////                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
-//                jQuery.each(data.response, function(k, v){
-//                    if (v.officer){
-//                        agent = ': '+v.officer;
-//                        d.push({label: v.officer , value: v.amount_received}, );
-//                    }
-//                    if (v.year){
-//                        agent = ': '+v.agent;
-//                        xaxis = 'Years'
-//                        d.push({label: v.year , value: v.amount_received}, );
-//                    }
-//                    if (v.month){
-//                        agent = ': '+v.agent;
-//                        xaxis = 'Months';
-//                        d.push({label: v.PaymentMonth , value: v.amount_received}, )
-//                    }
-//                    if (v.paymonth){
-//                        agent = ': '+v.agent;
-//                        xaxis = 'Months';
-//                        d.push({label: v.paymonth , value: v.amount_received}, )
-//                    }
-//                    if (v.Monthyear){
-//                        agent = ' ';
-//                        xaxis = 'Months';
-//                        d.push({label: v.Monthyear , value: v.amount_received}, )
-//                    }
-//                    if (v.OfficerQuarter){
-//                        agent = ': '+v.agent;
-//                        xaxis = 'Period';
-//                        d.push({label: v.OfficerQuarter , value: v.amount_received}, )
-//                    }
-//                    if (v.Quarter){
-//                        agent = '';
-//                        xaxis = 'Quarters';
-//                        d.push({label: v.Quarter , value: v.amount_received}, )
-//                    }
-//                    if (v.PaymentYear){
-//                        agent = '';
-//                        xaxis = 'Years';
-//                        d.push({label: v.PaymentYear, value: v.amount_received}, );
-//                    }
-//                    if (v.OfficerYear){
-//                        agent = '';
-//                        xaxis = 'Years';
-//                        d.push({label: v.OfficerYear, value: v.amount_received}, );
-//                    }
-//                });
-//                var chartConfigs = {
-//                    type: 'column2d', // The chart type
-//                    width: '100%', // Width of the chart
-//                    height: '400', // Height of the chart
-//                    dataFormat: 'json', // Data type
-//                    dataSource: {
-//                        // Chart Configuration
-//                        "chart": {
-//                            "caption": "Principal Received"+agent,
-////                            "subCaption": "In MMbbl = One Million barrels",
-//                            "xAxisName": xaxis,
-//                            "yAxisName": "Amount (In Naira)",
-//                            "numberSuffix": "",
-//                            "theme": "fusion",
-//                        },
-//                        // Chart Data
-//                        "data": d
-//                    }
-//                };
-//                $("#principal-received-chart").insertFusionCharts(chartConfigs);
-//            },
-//            'error': function (err) {
-//                swal('Error in Connection!','','error')
-//            }
-//        });
+        if (report === 'Interest'){
+            let d = [];
+            url = `/user/demographic-interest-report?trend=${report}&&filter=${filter.value}&&period=${period}&&year=${year}`,
+                $.ajax({
+                    'url': url,
+                    'type': 'get',
+                    'success': function (data) {
+                        int = data.message.interest;
+                        jQuery.each(int, function(k, v){
+                            if (v.gender){
+                                d.push({label: v.gender , value: v.amount}, );
+                                caption = 'Interest Received by Gender';
+                                xaxisname = 'Gender';
+                            }
+                            if (v.dob){
+                                d.push({label: v.age_range, value: v.amount}, );
+                                caption = 'Interest Received by Age Groups';
+                                xaxisname = 'Age Groups';
+                            }
+                        });
+                        var interestConfigs = {
+                            type: 'column2d', // The chart type
+                            width: '100%', // Width of the chart
+                            height: '400', // Height of the chart
+                            dataFormat: 'json', // Data type
+                            dataSource: {
+                                "chart": {
+                                    "caption": caption,
+//                            "subCaption": "In MMbbl = One Million barrels",
+                                    "xAxisName": xaxisname,
+                                    "yAxisName": "Amount (In Naira)",
+                                    "numberSuffix": "",
+                                    "theme": "fusion",
+                                },
+                                "data": d
+                            }
+                        };
+                        $('#interest-demo-chart').show();
+                        $("#interest-demo-chart").insertFusionCharts(interestConfigs);
+                    },
+                    'error': function (err) {
+                        return swal('Error in Connection!','','error')
+                    }
+                });
+        }
+        if (report === 'Bad Loans'){
+            let d = [];
+            url = `user/demographic-badloans-report?trend=${report}&&filter=${filter.value}&&period=${period}&&year=${year}`,
+                $.ajax({
+                    'url': url,
+                    'type': 'get',
+                    'success': function (data) {
+                        bd = data.message.badloans;
+                        jQuery.each(bd, function(k, v){
+                            if (v.gender){
+                                d.push({label: v.gender , value: v.amount}, );
+                                caption = 'Badloans by Gender';
+                                xaxisname = 'Gender';
+                            }
+                            if (v.dob){
+                                d.push({label: v.age_range, value: v.amount}, );
+                                caption = 'Badloans by Age Groups';
+                                xaxisname = 'Age Groups';
+                            }
+                        });
+                        var badloanConfigs = {
+                            type: 'column2d', // The chart type
+                            width: '100%', // Width of the chart
+                            height: '400', // Height of the chart
+                            dataFormat: 'json', // Data type
+                            dataSource: {
+                                "chart": {
+                                    "caption": caption,
+//                            "subCaption": "In MMbbl = One Million barrels",
+                                    "xAxisName": xaxisname,
+                                    "yAxisName": "Amount (In Naira)",
+                                    "numberSuffix": "",
+                                    "theme": "fusion",
+                                },
+                                "data": d
+                            }
+                        };
+                        $('#badloan-demo-chart').show();
+                        $("#badloan-demo-chart").insertFusionCharts(badloanConfigs);
+                    },
+                    'error': function (err) {
+                        return swal('Error in Connection!','','error')
+                    }
+                });
+        }
+        if (report === 'Overdue Loans'){
+            let d = [];
+            url = `user/demographic-overdues-report?trend=${report}&&filter=${filter.value}&&period=${period}&&year=${year}`,
+                $.ajax({
+                    'url': url,
+                    'type': 'get',
+                    'success': function (data) {
+                        od = data.message.overdues;
+                        jQuery.each(od, function(k, v){
+                            if (v.gender){
+                                d.push({label: v.gender , value: v.amount}, );
+                                caption = 'Overdue Loans by Gender';
+                                xaxisname = 'Gender';
+                            }
+                            if (v.dob){
+                                d.push({label: v.age_range, value: v.amount}, );
+                                caption = 'Overdue Loans by Age Groups';
+                                xaxisname = 'Age Groups';
+                            }
+                        });
+                        var overdueConfigs = {
+                            type: 'column2d', // The chart type
+                            width: '100%', // Width of the chart
+                            height: '400', // Height of the chart
+                            dataFormat: 'json', // Data type
+                            dataSource: {
+                                "chart": {
+                                    "caption": caption,
+//                            "subCaption": "In MMbbl = One Million barrels",
+                                    "xAxisName": xaxisname,
+                                    "yAxisName": "Amount (In Naira)",
+                                    "numberSuffix": "",
+                                    "theme": "fusion",
+                                },
+                                "data": d
+                            }
+                        };
+                        $('#overdue-demo-chart').show();
+                        $("#overdue-demo-chart").insertFusionCharts(overdueConfigs);
+                    },
+                    'error': function (err) {
+                        return swal('Error in Connection!','','error')
+                    }
+                });
+        }
     }
 
-    function demoReportChange(){
+    function demoFrequencyChange(period){
+        let report = $('#demo-report option:selected').attr('id'),
+            filter = $('#demo-filter option:selected').attr('id'),
+            year = $('#demo-year').val(),
+            url;
+        if (report === "-1"){
+            return swal('', 'Please Choose a Report!', 'warning');
+        }
+        if (filter === "-1"){
+            return swal('', 'Please Select a Filter!', 'warning');
+        }
+        if (period.value === '-1'){
+            $('#demo-year').val(0);
+        }
+        if (report === 'Interest'){
+            let d = [];
+            url = url,
+                $.ajax({
+                    'url': `/user/demographic-interest-report?trend=${report}&&filter=${filter}&&period=${period.value}&&year=${year}`,
+                    'type': 'get',
+                    'success': function (data) {
+                        int = data.message.interest;
+                        jQuery.each(int, function(k, v){
+                            if (v.gender){
+                                d.push({label: v.gender , value: v.amount}, );
+                                caption = 'Interest Received by Gender';
+                                xaxisname = 'Gender';
+                            }
+                            if (v.dob){
+                                d.push({label: v.age_range, value: v.amount}, );
+                                caption = 'Interest Received by Age Groups';
+                                xaxisname = 'Age Groups';
+                            }
+                        });
+                        var interestConfigs = {
+                            type: 'column2d', // The chart type
+                            width: '100%', // Width of the chart
+                            height: '400', // Height of the chart
+                            dataFormat: 'json', // Data type
+                            dataSource: {
+                                "chart": {
+                                    "caption": caption,
+//                            "subCaption": "In MMbbl = One Million barrels",
+                                    "xAxisName": xaxisname,
+                                    "yAxisName": "Amount (In Naira)",
+                                    "numberSuffix": "",
+                                    "theme": "fusion",
+                                },
+                                "data": d
+                            }
+                        };
+                        $('#interest-demo-chart').show();
+                        $("#interest-demo-chart").insertFusionCharts(interestConfigs);
+                    },
+                    'error': function (err) {
+                        return swal('Error in Connection!','','error')
+                    }
+                });
+        }
+        if (report === 'Bad Loans'){
+            let d = [];
+            url = `user/demographic-badloans-report?trend=${report}&&filter=${filter}&&period=${period.value}&&year=${year}`,
+                $.ajax({
+                    'url': url,
+                    'type': 'get',
+                    'success': function (data) {
+                        bd = data.message.badloans;
+                        jQuery.each(bd, function(k, v){
+                            if (v.gender){
+                                d.push({label: v.gender , value: v.amount}, );
+                                caption = 'Badloans by Gender';
+                                xaxisname = 'Gender';
+                            }
+                            if (v.dob){
+                                d.push({label: v.age_range, value: v.amount}, );
+                                caption = 'Badloans by Age Groups';
+                                xaxisname = 'Age Groups';
+                            }
+                        });
+                        var badloanConfigs = {
+                            type: 'column2d', // The chart type
+                            width: '100%', // Width of the chart
+                            height: '400', // Height of the chart
+                            dataFormat: 'json', // Data type
+                            dataSource: {
+                                "chart": {
+                                    "caption": caption,
+//                            "subCaption": "In MMbbl = One Million barrels",
+                                    "xAxisName": xaxisname,
+                                    "yAxisName": "Amount (In Naira)",
+                                    "numberSuffix": "",
+                                    "theme": "fusion",
+                                },
+                                "data": d
+                            }
+                        };
+                        $('#badloan-demo-chart').show();
+                        $("#badloan-demo-chart").insertFusionCharts(badloanConfigs);
+                    },
+                    'error': function (err) {
+                        return swal('Error in Connection!','','error')
+                    }
+                });
+        }
+        if (report === 'Overdue Loans'){
+            let d = [];
+            url = `user/demographic-overdues-report?trend=${report}&&filter=${filter}&&period=${period.value}&&year=${year}`,
+                $.ajax({
+                    'url': url,
+                    'type': 'get',
+                    'success': function (data) {
+                        od = data.message.overdues;
+                        jQuery.each(od, function(k, v){
+                            if (v.gender){
+                                d.push({label: v.gender , value: v.amount}, );
+                                caption = 'Overdue Loans by Gender';
+                                xaxisname = 'Gender';
+                            }
+                            if (v.dob){
+                                d.push({label: v.age_range, value: v.amount}, );
+                                caption = 'Overdue Loans by Age Groups';
+                                xaxisname = 'Age Groups';
+                            }
+                        });
+                        var overdueConfigs = {
+                            type: 'column2d', // The chart type
+                            width: '100%', // Width of the chart
+                            height: '400', // Height of the chart
+                            dataFormat: 'json', // Data type
+                            dataSource: {
+                                "chart": {
+                                    "caption": caption,
+//                            "subCaption": "In MMbbl = One Million barrels",
+                                    "xAxisName": xaxisname,
+                                    "yAxisName": "Amount (In Naira)",
+                                    "numberSuffix": "",
+                                    "theme": "fusion",
+                                },
+                                "data": d
+                            }
+                        };
+                        $('#overdue-demo-chart').show();
+                        $("#overdue-demo-chart").insertFusionCharts(overdueConfigs);
+                    },
+                    'error': function (err) {
+                        return swal('Error in Connection!','','error')
+                    }
+                });
+        }
+    }
 
+    function demoYearChange(year){
+        let report = $('#demo-report option:selected').attr('id'),
+            filter = $('#demo-filter option:selected').attr('id'),
+            period = $('#demo-frequency').val(),
+            url;
+        if (report === "-1"){
+            return swal('', 'Please Choose a Report!', 'warning');
+        }
+        if (filter === "-1"){
+            return swal('', 'Please Select a Filter!', 'warning');
+        }
+        if (period === "-1"){
+            return swal('', 'Please Select a Period!', 'warning');
+        }
+        if (report === 'Interest'){
+            let d = [];
+            url = url,
+                $.ajax({
+                    'url': `/user/demographic-interest-report?trend=${report}&&filter=${filter}&&period=${period}&&year=${year.value}`,
+                    'type': 'get',
+                    'success': function (data) {
+                        int = data.message.interest;
+                        jQuery.each(int, function(k, v){
+                            if (v.gender){
+                                d.push({label: v.gender , value: v.amount}, );
+                                caption = 'Interest Received by Gender';
+                                xaxisname = 'Gender';
+                            }
+                            if (v.dob){
+                                d.push({label: v.age_range, value: v.amount}, );
+                                caption = 'Interest Received by Age Groups';
+                                xaxisname = 'Age Groups';
+                            }
+                        });
+                        var interestConfigs = {
+                            type: 'column2d', // The chart type
+                            width: '100%', // Width of the chart
+                            height: '400', // Height of the chart
+                            dataFormat: 'json', // Data type
+                            dataSource: {
+                                "chart": {
+                                    "caption": caption,
+//                            "subCaption": "In MMbbl = One Million barrels",
+                                    "xAxisName": xaxisname,
+                                    "yAxisName": "Amount (In Naira)",
+                                    "numberSuffix": "",
+                                    "theme": "fusion",
+                                },
+                                "data": d
+                            }
+                        };
+                        $('#interest-demo-chart').show();
+                        $("#interest-demo-chart").insertFusionCharts(interestConfigs);
+                    },
+                    'error': function (err) {
+                        return swal('Error in Connection!','','error')
+                    }
+                });
+        }
+        if (report === 'Bad Loans'){
+            let d = [];
+            url = `user/demographic-badloans-report?trend=${report}&&filter=${filter}&&period=${period}&&year=${year.value}`,
+                $.ajax({
+                    'url': url,
+                    'type': 'get',
+                    'success': function (data) {
+                        bd = data.message.badloans;
+                        jQuery.each(bd, function(k, v){
+                            if (v.gender){
+                                d.push({label: v.gender , value: v.amount}, );
+                                caption = 'Badloans by Gender';
+                                xaxisname = 'Gender';
+                            }
+                            if (v.dob){
+                                d.push({label: v.age_range, value: v.amount}, );
+                                caption = 'Badloans by Age Groups';
+                                xaxisname = 'Age Groups';
+                            }
+                        });
+                        var badloanConfigs = {
+                            type: 'column2d', // The chart type
+                            width: '100%', // Width of the chart
+                            height: '400', // Height of the chart
+                            dataFormat: 'json', // Data type
+                            dataSource: {
+                                "chart": {
+                                    "caption": caption,
+//                            "subCaption": "In MMbbl = One Million barrels",
+                                    "xAxisName": xaxisname,
+                                    "yAxisName": "Amount (In Naira)",
+                                    "numberSuffix": "",
+                                    "theme": "fusion",
+                                },
+                                "data": d
+                            }
+                        };
+                        $('#badloan-demo-chart').show();
+                        $("#badloan-demo-chart").insertFusionCharts(badloanConfigs);
+                    },
+                    'error': function (err) {
+                        return swal('Error in Connection!','','error')
+                    }
+                });
+        }
+        if (report === 'Overdue Loans'){
+            let d = [];
+            url = `user/demographic-overdues-report?trend=${report}&&filter=${filter}&&period=${period}&&year=${year.value}`,
+                $.ajax({
+                    'url': url,
+                    'type': 'get',
+                    'success': function (data) {
+                        od = data.message.overdues;
+                        jQuery.each(od, function(k, v){
+                            if (v.gender){
+                                d.push({label: v.gender , value: v.amount}, );
+                                caption = 'Overdue Loans by Gender';
+                                xaxisname = 'Gender';
+                            }
+                            if (v.dob){
+                                d.push({label: v.age_range, value: v.amount}, );
+                                caption = 'Overdue Loans by Age Groups';
+                                xaxisname = 'Age Groups';
+                            }
+                        });
+                        var overdueConfigs = {
+                            type: 'column2d', // The chart type
+                            width: '100%', // Width of the chart
+                            height: '400', // Height of the chart
+                            dataFormat: 'json', // Data type
+                            dataSource: {
+                                "chart": {
+                                    "caption": caption,
+//                            "subCaption": "In MMbbl = One Million barrels",
+                                    "xAxisName": xaxisname,
+                                    "yAxisName": "Amount (In Naira)",
+                                    "numberSuffix": "",
+                                    "theme": "fusion",
+                                },
+                                "data": d
+                            }
+                        };
+                        $('#overdue-demo-chart').show();
+                        $("#overdue-demo-chart").insertFusionCharts(overdueConfigs);
+                    },
+                    'error': function (err) {
+                        return swal('Error in Connection!','','error')
+                    }
+                });
+        }
     }
 
 </script>
