@@ -3,7 +3,7 @@ let functions = {},
     moment = require('moment'),
     request = require('request'),
     SHA512 = require('js-sha512');
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+// process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 functions.getNextWorkflowProcess = function(application_id, workflow_id, stage, callback) {
     db.query('SELECT * FROM workflow_stages WHERE workflowID=? ORDER BY ID asc',[workflow_id], function (error, stages, fields) {
@@ -93,6 +93,8 @@ functions.setUpMandate = function (payload, callback) {
             if (error) {
                 return callback(payload, error);
             }
+            console.log(body)
+            console.log('=SETUP==============================================')
             callback(payload, functions.formatJSONP(body));
         })
 };
@@ -149,6 +151,12 @@ functions.authorizeMandate = function (payload, type, callback) {
     headers.MERCHANT_ID = process.env.REMITA_MERCHANT_ID;
     headers.API_DETAILS_HASH = SHA512(headers.API_KEY + headers.REQUEST_ID + process.env.REMITA_API_TOKEN);
     headers.REQUEST_TS = functions.remitaTimeStampFormat(date);
+    console.log(process.env)
+    console.log('=ENV==============================================')
+    console.log(headers)
+    console.log('=HEADERS==============================================')
+    console.log(payload)
+    console.log('=PAYLOAD==============================================')
     request.post(
         {
             url: `${process.env.REMITA_BASE_URL}/requestAuthorization`,
@@ -160,6 +168,8 @@ functions.authorizeMandate = function (payload, type, callback) {
             if (error) {
                 return callback(error);
             }
+            console.log(body)
+            console.log('=AUTHORIZE==============================================')
             return callback(functions.formatJSONP(body));
         })
 };

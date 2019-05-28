@@ -1624,7 +1624,7 @@ function payOffLoan() {
 function checkForExistingMandate(data) {
     $.ajax({
         type: 'GET',
-        url: `/preapproved-loan/get/${data.user_id}?key=userID`,
+        url: `/preapproved-loan/get/${data.userID}?key=userID`,
         success: function (response) {
             let mandate = response.data;
             const HOST = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
