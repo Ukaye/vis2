@@ -143,7 +143,7 @@ function populateCards(data) {
     if (obj.escrow)
         $('.escrow-balance').text(parseFloat(obj.escrow).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
     let folder = obj.fullname + '_' + obj.email;
-    loadImages(folder);
+    loadImages(obj.images_folder);
     // loadImages(obj.phone, obj.fullname);
     $('#fullname').html(obj.fullname);
     $('#phone').html(' ' + obj.phone);
