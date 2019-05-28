@@ -218,6 +218,7 @@ users.post('/new-client', function(req, res, next) {
         if (err) throw err;
         connection.query(query2,[req.body.username, req.body.email, req.body.phone], function (error, results, fields) {
             if (results && results[0]){
+                console.log('Exists')
                 return res.send(JSON.stringify({"status": 200, "error": null, "response": results, "message": "Information in use by existing client!"}));
             }
             let bvn = req.body.bvn;
@@ -1318,7 +1319,7 @@ users.get('/incomplete-records', function(req, res, next){
     });
 });
 
-/* Custom API to update all clients' first_name, middle_name and last_name*/
+/* Custom APIs to update all clients' first_name, middle_name and last_name*/
 users.get('/update-records', function(req, res, next){
     let query = `select ID, fullname from clients `
                 // where (first_name = ' ' or first_name is null) or
@@ -1360,10 +1361,7 @@ users.get('/update-records', function(req, res, next){
 });
 
 users.get('/update-folders', function(req, res, next){
-    let query = `select ID, fullname, email from clients `
-    // where (first_name = ' ' or first_name is null) or
-    // (middle_name = ' ' or middle_name is null) or
-    // (last_name = ' ' or last_name is null)`
+    let query = `select ID, first_name, middle_name, last_name, email from clients`
     db.query(query, function (error, results, fields) {
         if(error){
             res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
@@ -1372,15 +1370,16 @@ users.get('/update-folders', function(req, res, next){
                 if (err) throw err;
                 for (let i = 0; i < results.length; i++){
                     let id = results[i]['ID'];
-                    let fullname = (results[i]['fullname'] === null) ? ' ' : results[i]['fullname'];
-                    let first_name = fullname.split(' ')[0].trim();
-                    let middle_name = fullname.split(' ')[1].trim();
-                    let last_name = fullname.split(' ')[2].trim();
-                    console.log(fullname + ': ')
-                    console.log(first_name + middle_name + last_name + '\n')
+                    let first_name = (results[i]['first_name'] === null) ? '' : results[i]['first_name'].trim();
+                    let middle_name = (results[i]['middle_name'] === null) ? '' : results[i]['middle_name'].trim();
+                    let last_name = (results[i]['last_name'] === null) ? '' : results[i]['last_name'].trim();
+                    let email = results[i]['email'];
+                    let folder_name = first_name + ' ' + middle_name + ' ' + last_name + '_' + email
+                    console.log(folder_name)
                     let dets = {};
-                    let query = 'update clients set first_name = ?, middle_name = ?, last_name = ? where ID = ?  ';
-                    connect.query(query, [first_name, middle_name, last_name, id], function (error, results, fields) {
+                    let query = 'update clients set images_folder = ? where ID = ?  ';
+                    // console.log(query)
+                    connect.query(query, [folder_name, id], function (error, results, fields) {
                         if (error) {
                             console.log(error)
                             // res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
@@ -1398,6 +1397,7 @@ users.get('/update-folders', function(req, res, next){
         }
     });
 });
+/* */
 
 users.get('/user-roles', function(req, res, next) {
     let query = 'SELECT * from user_roles where status = 1 and id not in (1, 3, 4)';
@@ -1512,15 +1512,15 @@ users.post('/edit-client/:id', function(req, res, next) {
         postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let payload = [postData.username, postData.fullname, postData.first_name, postData.middle_name, postData.last_name, postData.phone, postData.address, postData.email,
-        postData.gender, postData.dob, postData.marital_status, postData.loan_officer, postData.branch, postData.bank, postData.bvn, postData.account , postData.client_state, postData.postcode, postData.client_country,
+        postData.gender, postData.dob, postData.marital_status, postData.loan_officer, postData.branch, postData.bank, postData.account, postData.bvn, postData.client_state, postData.postcode, postData.client_country,
         postData.years_add, postData.ownership , postData.employer_name ,postData.industry ,postData.job, postData.salary, postData.job_country , postData.off_address, postData.off_state,
         postData.doe, postData.guarantor_name, postData.guarantor_occupation, postData.relationship, postData.years_known, postData.guarantor_phone, postData.guarantor_email,
         postData.guarantor_address, postData.gua_country, postData.product_sold, postData.capital_invested, postData.market_name, postData.market_years,
-        postData.market_address, postData.kin_fullname, postData.kin_phone, postData.kin_relationship, postData.date_modified, req.params.id];
+        postData.market_address, postData.kin_fullname, postData.kin_phone, postData.kin_relationship, postData.images_folder, postData.date_modified, req.params.id];
     let query = 'Update clients SET username = ?, fullname=?, first_name=?, middle_name=?, last_name=?,  phone=?, address = ?, email=?, gender=?, dob = ?, marital_status=?, loan_officer=?, branch=?, bank=?, account=?, bvn = ?, ' +
         'client_state=?, postcode=?, client_country=?, years_add=?, ownership=?, employer_name=?, industry=?, job=?, salary=?, job_country=?, off_address=?, off_state=?, ' +
         'doe=?, guarantor_name=?, guarantor_occupation=?, relationship=?, years_known=?, guarantor_phone=?, guarantor_email=?, guarantor_address=?, gua_country=?, ' +
-        'product_sold =? , capital_invested = ?, market_name =? , market_years = ?, market_address =? , kin_fullname = ?, kin_phone =? , kin_relationship = ?, date_modified = ? where ID=?';
+        'product_sold =? , capital_invested = ?, market_name =? , market_years = ?, market_address =? , kin_fullname = ?, kin_phone =? , kin_relationship = ?, images_folder = ?, date_modified = ? where ID=?';
     db.query(query, payload, function (error, results, fields) {
         if(error){
             res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
@@ -3071,7 +3071,7 @@ users.get('/report-cards', function(req, res, next) {
     let query, query1, query2, query3;
     query = 'select count(*) as branches from branches'
     query1 = 'select count(*) as loan_officers from users where ID in (select loan_officer from clients where clients.id in (select userid from applications where applications.status = 2))'
-    query2 = 'select count(*) as all_applications from applications where status = 2'
+    query2 = 'select count(*) as all_applications from applications where status = 2 and close_status = 0 '
     query3 = 'select count(*) as apps from applications'
     var items = {}; var num;
     var den;
@@ -5938,6 +5938,10 @@ users.get('/demographic-overdues-report', function(req, res, next){
             res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
         }
     });
+});
+
+users.get('/demographic-age-reports', function(req, res, next){
+
 });
 
 /*Unfortunately won't be called anymore*/

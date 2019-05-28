@@ -324,6 +324,7 @@ function createClient(){
     obj.kin_fullname = $('#ind_kin_fullname').val();
     obj.kin_phone = $('#ind_kin_phone').val();
     obj.kin_relationship = $('#ind_kin_relationship').val();
+    obj.images_folder = obj.first_name + ' ' + obj.middle_name + ' ' + obj.last_name + '_' + obj.email;
 
 
     var test={};
@@ -487,14 +488,14 @@ function createBusinessIndividual() {
                 for (let i = 0; i < (test.response).length; i++){
                     clients += ', '+test.response[i]["fullname"];
                 }
-                notification(`Information already exists for client(s) ${clients}`, '', 'info');
+                return notification(`Information already exists for client(s) ${clients}`, '', 'info');
             }
             if(test.bvn_exists){
                 let client = test.response[0]['fullname'];
                 return swal({icon: 'info', text: "BVN already exists for client, "+client});
             }
             else if(test.status === 500){
-                notification('Failed!', 'Unable to Create Client.', 'error');
+                return notification('Failed!', 'Unable to Create Client.', 'error');
             }
             else{
                 notification('Success!', 'Client Information Registered!', 'success');

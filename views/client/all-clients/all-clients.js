@@ -526,7 +526,7 @@ function edit(){
             $("#email").prop("readonly", true);
             $("#phone").prop("readonly", true);
             let folder = data[0].fullname + '_' + data[0].email;
-            loadImages(folder);
+            loadImages(data[0].images_folder);
 
 
 
@@ -638,7 +638,7 @@ function checkForEdit(){
                 $("#email").prop("readonly", true);
                 $("#phone").prop("readonly", true);
                 let folder = data[0].fullname + '_' + data[0].email;
-                loadImages(folder);
+                loadImages(data[0].images_folder);
 
 
 
@@ -717,6 +717,7 @@ function submitDetails(){
     obj.kin_fullname = $('#ind_kin_fullname').val();
     obj.kin_phone = $('#ind_kin_phone').val();
     obj.kin_relationship = $('#ind_kin_relationship').val();
+    obj.images_folder = obj.first_name + ' ' + obj.middle_name + ' ' + obj.last_name + '_' + obj.email;
 
 
 
@@ -766,7 +767,8 @@ function submitDetails(){
 }
 
 function upload(i){
-    var name = $('#first_name').val() + ' '+ $('#middle_name').val() + ' ' +$('#last_name').val(); var folder_name = " ";
+    var name = $.trim($('#first_name').val()) + ' '+ $.trim($('#middle_name').val()) + ' ' +$.trim($('#last_name').val());
+    var folder_name = " ";
     if ($('#email').val() === "" || $('#email').val() === null){
         return swal('Incomplete Information', 'Please Enter Client Email!', 'warning');
     }
