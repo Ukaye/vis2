@@ -121,6 +121,7 @@ app.post('/login', function (req, res) {
                             db.query(query3, [user.user_role, user.user_role, user.user_role], function (er, mods, fields) {
                                 modules = modules.concat(mods);
                                 user.modules = modules;
+                                user.tenant = process.env.TENANT;
                                 let payload = {}
                                 payload.category = 'Authentication'
                                 payload.userid = user.ID

@@ -208,7 +208,7 @@
             text: "Setting up a direct debit mandate enables us to debit your account when your loan payment is due.",
             icon: "warning",
             buttons: true,
-            dangerMode: true,
+            dangerMode: true
         })
             .then((yes) => {
                 if (yes) {
@@ -291,7 +291,7 @@
             text: "Once accepted, this process is not reversible!",
             icon: "warning",
             buttons: true,
-            dangerMode: true,
+            dangerMode: true
         })
             .then((yes) => {
                 if (yes) {
@@ -335,7 +335,7 @@
             text: "Once declined, this process is not reversible!",
             icon: "warning",
             buttons: true,
-            dangerMode: true,
+            dangerMode: true
         })
             .then((yes) => {
                 if (yes) {

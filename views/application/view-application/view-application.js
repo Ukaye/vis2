@@ -445,7 +445,7 @@ $('.cancel').on('click', function(e) {
         text: "Once cancelled, this process is not reversible!",
         icon: "warning",
         buttons: true,
-        dangerMode: true,
+        dangerMode: true
     })
         .then((yes) => {
             if (yes) {
@@ -1061,7 +1061,7 @@ function checkTotalDue() {
                 text: "All repayments for this loan application has been made",
                 icon: "warning",
                 buttons: true,
-                dangerMode: true,
+                dangerMode: true
             })
                 .then((yes) => {
                     if (yes) {
@@ -1440,7 +1440,7 @@ function initCSVUpload2(application, settings) {
             text: "Once started, this process is not reversible!",
             icon: "warning",
             buttons: true,
-            dangerMode: true,
+            dangerMode: true
         })
             .then((yes) => {
                 if (yes) {
@@ -1665,7 +1665,7 @@ $("#setupDirectDebit").click(function () {
         text: "Once initiated, this process is not reversible!",
         icon: "warning",
         buttons: true,
-        dangerMode: true,
+        dangerMode: true
     })
         .then((yes) => {
             if (yes) {
