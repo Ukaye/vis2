@@ -434,3 +434,9 @@ function bindInvestmentDataTable(id) {
         ]
     });
 }
+
+function onViewWalletBalance() {
+    let url = `./investment-transactions?clientId=${application_id}&clientName=${$('#fullname').html()}`;
+    console.log(url);
+    $(location).attr('href', url);
+}

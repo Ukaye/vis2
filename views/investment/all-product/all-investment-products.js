@@ -85,6 +85,7 @@ function onRequirement(value, id) {
 }
 
 function onReview(value, id) {
+    console.log('Inside reviewer');
     reqObject.productId = id;
     $("#viewReviewModalHeader").html(`${value} REVIEWER SETTINGS`);
 
@@ -104,6 +105,7 @@ function onReview(value, id) {
                 };
             },
             processResults: function (data, params) {
+                console.log(data);
                 params.page = params.page || 1;
                 if (data.error) {
                     return {
@@ -609,11 +611,9 @@ function getProductReview(id) {
                 "mRender": function (data, type, full) {
                     if (full.operationId.toString() === "1") {
                         return "Deposit";
-                    }
-                    // else if (full.operationId.toString() === "2") {
-                    //     return "Transfer";
-                    // } 
-                    else if (full.operationId.toString() === "3") {
+                    } else if (full.operationId.toString() === "2") {
+                        return "Transfer";
+                    } else if (full.operationId.toString() === "3") {
                         return "Withdrawal";
                     }
                 }

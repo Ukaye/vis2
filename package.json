@@ -30,6 +30,7 @@
     "getmac": "^1.4.6",
     "js-sha512": "^0.8.0",
     "jsonwebtoken": "^8.4.0",
+    "jspdf": "^1.5.3",
     "lodash": "^4.17.11",
     "moment": "^2.22.2",
     "moment-range": "^4.0.1",

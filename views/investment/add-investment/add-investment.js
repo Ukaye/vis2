@@ -184,7 +184,7 @@ $("#btn_save_product").on("click", function (event) {
     var data = {
         clientId: $('#client').on('select2:select').val(),
         productId: $('#investment_product').on('select2:select').val(),
-        amount: $('#investment_amount').val().split('.'),
+        amount: $('#investment_amount').val().split('.').join(''),
         investment_start_date: $('#investment_date_start').val(),
         investment_mature_date: $('#investment_mature_date').val(),
         code: selectedValue.code,

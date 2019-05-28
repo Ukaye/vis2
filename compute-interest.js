@@ -123,7 +123,7 @@ _module.computeInvestmentInterest = function () {
 
                             let interestInDays = T / 365;
                             let SI = (total * parseFloat(_result_[0].interest_rate.split(',').join('')) * interestInDays) / 100;
-                            if(SI !== 0){
+                            if (SI !== 0) {
                                 let refId = moment().utcOffset('+0100').format('YYMMDDhmmss');
                                 let _data = {
                                     txn_date: dt,
@@ -155,3 +155,139 @@ _module.computeInvestmentInterest = function () {
 }
 
 module.exports = _module;
+
+
+
+dailyMaturedInvestmentTxns(HOST, data.investmentId, formatedDate).then(payload => {
+    console.log("------------dailyMaturedInvestmentTxns-----------");
+    console.log(payload.data);
+    console.log("------------dailyMaturedInvestmentTxns Ends-----------");
+    if (payload.data.status === undefined) {
+        if (payload.data.length > 0) {
+            let daysInYear = 365;
+            if (isLeapYear(new Date(formatedDate))) {
+                daysInYear = 366;
+            }
+            let totalInvestedAmount = 0;
+            payload.data.map(x => {
+                if (x.isApproved === 1) {
+                    let _x = x.amount.split(',').join('');
+                    if (x.is_credit.toString() === '1') {
+                        totalInvestedAmount += parseFloat(_x);
+                    } else {
+                        totalInvestedAmount -= parseFloat(_x);
+                    }
+                }
+            });
+            let interestInDays = payload.data[0].interest_rate / daysInYear;
+            let SI = (totalInvestedAmount * interestInDays) / 100;
+            let _amount = parseFloat(Math.round(SI * 100) / 100).toFixed(2);
+            sumUpInvestmentInterest(HOST, data.investmentId).then(payload1 => {
+                console.log("------------sumUpInvestmentInterest-----------");
+                console.log(payload1.data);
+                console.log("------------sumUpInvestmentInterest Ends-----------");
+                let dailyInterest = {
+                    clientId: payload.data[0].clientId,
+                    investmentId: data.investmentId,
+                    createdAt: dt,
+                    interestDate: formatedDate,
+                    amount: Math.round(_amount).toFixed(2),
+                    year: data.year,
+                    month: data.month,
+                    balance: payload1.data[0].total + Math.round(_amount).toFixed(2)
+                }
+                setInvestmentInterest(HOST, dailyInterest).then(payload2 => {
+                    if (index === daysInMonth) {
+                        if (payload2.data.status === undefined) {
+                            if (response3.data[0].interest_moves_wallet === 1) {
+                                sumAllWalletInvestmentTxns(HOST, payload.data[0].clientId).then(payload3 => {
+                                    let inv_txn = {
+                                        txn_date: dt,
+                                        description: `Balance@ ${formatedDate} ${payload1.data[0].balance + Math.round(_amount).toFixed(2)}`,
+                                        amount: Math.round(payload2.data[0].total).toFixed(2),
+                                        is_credit: 1,
+                                        created_date: dt,
+                                        balance: response2_counter.data[0].total + Math.round(payload2.data[0].total).toFixed(2),
+                                        is_capital: 0,
+                                        isCharge: 0,
+                                        isApproved: 1,
+                                        postDone: 1,
+                                        reviewDone: 1,
+                                        approvalDone: 1,
+                                        ref_no: refId,
+                                        updated_date: dt,
+                                        investmentId: data.investmentId,
+                                        createdBy: data.createdBy,
+                                        clientId: response3.data[0].clientId,
+                                        isWallet: 1
+                                    };
+                                    setInvestmentTxns(HOST, inv_txn).then(payload4 => {
+                                        let _formatedDate = new Date(formatedDate);
+                                        let query = `UPDATE investment_interests SET isPosted = 1 
+                                    WHERE id <> 0 AND investmentId = ${data.investmentId} 
+                                    AND month = ${_formatedDate.getMonth()} 
+                                    AND year = ${_formatedDate.getFullYear()}`;
+                                        console.log(query);
+                                        endpoint = '/core-service/get';
+                                        url = `${HOST}${endpoint}`;
+                                        axios.get(url, {
+                                            params: {
+                                                query: query
+                                            }
+                                        }).then(_payload_2 => {
+
+                                        }, err => {
+
+                                        });
+                                    }, err => {})
+                                }, err => {})
+                            } else {
+                                let inv_txn = {
+                                    txn_date: dt,
+                                    description: `Investment interest@ ${data.month}/${currentDate.getUTCFullYear()}`,
+                                    amount: Math.round(payload2.data[0].total).toFixed(2),
+                                    is_credit: 1,
+                                    created_date: dt,
+                                    balance: totalInvestedAmount,
+                                    is_capital: 0,
+                                    isCharge: 0,
+                                    isApproved: 1,
+                                    postDone: 1,
+                                    reviewDone: 1,
+                                    approvalDone: 1,
+                                    ref_no: refId,
+                                    updated_date: dt,
+                                    investmentId: data.investmentId,
+                                    createdBy: data.createdBy
+                                };
+                                setInvestmentTxns(HOST, inv_txn).then(payload4 => {
+                                    let _formatedDate = new Date(formatedDate);
+                                    query = `UPDATE investment_interests SET isPosted = 1 
+                            WHERE id <> 0 AND investmentId = ${data.investmentId} 
+                            AND month = ${_formatedDate.getMonth()} 
+                            AND year = ${_formatedDate.getFullYear()}`;
+                                    console.log(query);
+                                    endpoint = '/core-service/get';
+                                    url = `${HOST}${endpoint}`;
+                                    axios.get(url, {
+                                        params: {
+                                            query: query
+                                        }
+                                    }).then(_payload_2 => {
+
+                                    }, err => {
+
+                                    });
+                                }, err => {
+
+                                });
+                            }
+                        }
+                    }
+                }, err => {});
+            }, err => {});
+        }
+    }
+}, err => {
+    console.log(role);
+});

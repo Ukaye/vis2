@@ -373,15 +373,15 @@ $("#saving_fees").on('focusout',
         validate_values_2($("#saving_fees"), $("#product_investment_amount_max"), $("#product_investment_amount_min"), "Charges on Deposit can not be greater than either Minimum or Maximum investment value");
     });
 
-$("#minimum_bal").on('focusout',
-    function () {
-        if ($("#minimum_bal_penalty_amount").val() === '') {
-            validate_values_2($("#minimum_bal"), $("#product_investment_amount_max"), $("#product_investment_amount_min"), "Minimum balance can not be greater than either Minimum or Maximum investment value");
-        } else {
-            validate_values_3($("#minimum_bal_penalty_amount"), $("#minimum_bal"), $("#product_investment_amount_max"), $("#product_investment_amount_min"), "Penalty Charge can not be greater than either Minimum balance, Minimum or Maximum investment value");
-        }
+// $("#minimum_bal").on('focusout',
+//     function () {
+//         if ($("#minimum_bal_penalty_amount").val() === '') {
+//             validate_values_2($("#minimum_bal"), $("#product_investment_amount_max"), $("#product_investment_amount_min"), "Minimum balance can not be greater than either Minimum or Maximum investment value");
+//         } else {
+//             validate_values_3($("#minimum_bal_penalty_amount"), $("#minimum_bal"), $("#product_investment_amount_max"), $("#product_investment_amount_min"), "Penalty Charge can not be greater than either Minimum balance, Minimum or Maximum investment value");
+//         }
 
-    });
+//     });
 
 $("#minimum_bal_penalty_amount").on('focusout',
     function () {
