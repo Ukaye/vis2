@@ -394,6 +394,12 @@ function createClient(){
 }
 
 function upload(i){
+    if ($.trim($('#first_name').val()) === '' || $.trim($('#first_name').val()) === null){
+        return swal('Incomplete Information', 'Please Enter Client First Name!', 'warning');
+    }
+    if ($.trim($('#last_name').val()) === '' || $.trim($('#last_name').val()) === null){
+        return swal('Incomplete Information', 'Please Enter Client Last Name!', 'warning');
+    }
     var name = $.trim($('#first_name').val()) + ' '+ $.trim($('#middle_name').val()) + ' ' +$.trim($('#last_name').val()); var folder_name = " ";
     if ($('#email').val() === "" || $('#email').val() === null){
         return swal('Incomplete Information', 'Please Enter Client Email!', 'warning');
@@ -407,12 +413,24 @@ function upload(i){
     var file; var item;
     if (i === 1){
         file = $('#file-upload')[0].files[0];
+        let ext = file["name"].split('.').pop().toLowerCase();
+        if($.inArray(ext, ['gif','png','jpg','jpeg']) == -1) {
+            return swal('Upload Failed!', 'Invalid file extension', 'warning');
+        }
         item ="Image";
     }else if (i === 2){
-        file = $('#file-upload-signature')[0].files[0]
+        file = $('#file-upload-signature')[0].files[0];
+        let ext = file["name"].split('.').pop().toLowerCase();
+        if($.inArray(ext, ['gif','png','jpg','jpeg']) == -1) {
+            return swal('Upload Failed!', 'Invalid file extension', 'warning');
+        }
         item = "Signature";
     }else if (i === 3){
-        file = $('#file-upload-idcard')[0].files[0]
+        file = $('#file-upload-idcard')[0].files[0];
+        let ext = file["name"].split('.').pop().toLowerCase();
+        if($.inArray(ext, ['gif','png','jpg','jpeg']) == -1) {
+            return swal('Upload Failed!', 'Invalid file extension', 'warning');
+        }
         item = "ID Card";
     }
     if (!file) {

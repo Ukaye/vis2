@@ -277,7 +277,8 @@ function loadImages(folder) {
             } else {
                 let image =
                     '<a href="#">' +
-                    '<img src="/' + res['response']['Image'] + '" alt="Profile Pic ' + name + '" style="max-width:100%;" height = 150 width = 150>' +
+                    '<img src="' + res['response']['Image'] + '" alt="Profile Pic ' + name + '" style="max-width:100%;" height = 150 width = 150>' +
+                    // '<div style = "background-image: url("'+res['response']['Image']+'"); max-width:100%;" height = 150 width = 150></div>'+
                     '</a>';
                 $('#pic').append(image);
             }
