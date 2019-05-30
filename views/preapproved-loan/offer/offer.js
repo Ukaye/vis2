@@ -25,7 +25,7 @@
                     $('#loan-amount-text').text(`₦${numberToCurrencyformatter(preapproved_loan.loan_amount)}`);
                     $('#tenor-text').text(`${numberToCurrencyformatter(preapproved_loan.duration)} month(s)`);
                     $('#first-repayment-text').text(preapproved_loan.repayment_date);
-                    $('#expiry-text').html(`Please note that this loan offer is only valid till <strong>${preapproved_loan.expiry_date}</strong>`);
+                    $('#expiry-text').html(`Please note that this loan is only valid till <strong>${preapproved_loan.expiry_date}</strong>`);
                     $('#fullname').text(preapproved_loan.fullname);
                     $('#email').text(preapproved_loan.email);
                     $('#phone').text(preapproved_loan.phone);
@@ -56,11 +56,11 @@
                         let message = '<div class="text-muted" style="text-align: center" >\n' +
                                     '    <div width="100px" height="100px" class="img-thumbnail" style="text-align: center; border: transparent">' +
                                     '       <i class="fa fa-exclamation-circle fa-lg" style="font-size: 10em; margin: 60px 0 30px 0;"></i>'+
-                                    '    <h2>No Offer Available!</h2>\n' +
-                                    '    <p><br/>You will be contacted when next we have an offer available for you.</p><br/>\n' +
+                                    '    <h2>Not Available!</h2>\n' +
+                                    '    <p><br/>You will be contacted when next we have a loan available for you.</p><br/>\n' +
                                     '</div>';
                         $('.card-body').html(message);
-                        return swal('This offer is no longer available!','','error');
+                        return swal('This loan is no longer available!','','error');
                     }
                 } else {
                     $('#acceptApplication').hide();
@@ -68,11 +68,11 @@
                     let message = '<div class="text-muted" style="text-align: center" >\n' +
                                 '    <div width="100px" height="100px" class="img-thumbnail" style="text-align: center; border: transparent">' +
                                 '       <i class="fa fa-exclamation-circle fa-lg" style="font-size: 10em; margin: 60px 0 30px 0;"></i>'+
-                                '    <h2>No Offer Available!</h2>\n' +
-                                '    <p><br/>You will be contacted when next we have an offer available for you.</p><br/>\n' +
+                                '    <h2>Not Available!</h2>\n' +
+                                '    <p><br/>You will be contacted when next we have a loan available for you.</p><br/>\n' +
                                 '</div>';
                     $('.card-body').html(message);
-                    return swal('This offer is no longer available!','','error');
+                    return swal('This loan is no longer available!','','error');
                 }
             }
         });
@@ -208,11 +208,11 @@
             text: "Setting up a direct debit mandate enables us to debit your account when your loan payment is due.",
             icon: "warning",
             buttons: true,
-            dangerMode: true,
+            dangerMode: true
         })
             .then((yes) => {
                 if (yes) {
-                    notification('You would receive an OTP from your bank to proceed with this loan offer!', '', 'warning');
+                    notification('You would receive an OTP from your bank to proceed!', '', 'warning');
                     let start = preapproved_loan.schedule[0]['payment_collect_date'],
                         end = preapproved_loan.schedule[preapproved_loan.schedule.length-1]['payment_collect_date'];
                     if (start === end) {
@@ -291,7 +291,7 @@
             text: "Once accepted, this process is not reversible!",
             icon: "warning",
             buttons: true,
-            dangerMode: true,
+            dangerMode: true
         })
             .then((yes) => {
                 if (yes) {
@@ -335,7 +335,7 @@
             text: "Once declined, this process is not reversible!",
             icon: "warning",
             buttons: true,
-            dangerMode: true,
+            dangerMode: true
         })
             .then((yes) => {
                 if (yes) {

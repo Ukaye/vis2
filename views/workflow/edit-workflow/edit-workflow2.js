@@ -95,7 +95,7 @@ function archiveWorkflow(e) {
             "Once started, this process is not reversible!",
             icon: "warning",
             buttons: true,
-            dangerMode: true,
+            dangerMode: true
         })
             .then((yes) => {
                 if (yes) {

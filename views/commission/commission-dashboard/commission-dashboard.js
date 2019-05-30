@@ -388,7 +388,7 @@ function reverseCommissionPayment(payment_id) {
         text: "Once cancelled, this process is not reversible!",
         icon: "warning",
         buttons: true,
-        dangerMode: true,
+        dangerMode: true
     })
         .then((yes) => {
             if (yes) {
@@ -413,7 +413,7 @@ function reverseCommissionProcess(process_id) {
         text: "Once cancelled, this process is not reversible!",
         icon: "warning",
         buttons: true,
-        dangerMode: true,
+        dangerMode: true
     })
         .then((yes) => {
             if (yes) {

@@ -157,7 +157,7 @@ function onTerminateInvest() {
             text: "Once terminated, you will not be able to reverse this transaction!",
             icon: "warning",
             buttons: true,
-            dangerMode: true,
+            dangerMode: true
         })
         .then((willDelete) => {
             if (willDelete) {
@@ -409,7 +409,7 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
             text: "You want to reverse this transaction!",
             icon: "warning",
             buttons: true,
-            dangerMode: true,
+            dangerMode: true
         })
         .then((willDelete) => {
             if (willDelete) {

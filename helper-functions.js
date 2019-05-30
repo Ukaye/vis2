@@ -3,7 +3,6 @@ let functions = {},
     moment = require('moment'),
     request = require('request'),
     SHA512 = require('js-sha512');
-// process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 functions.getNextWorkflowProcess = function(application_id, workflow_id, stage, callback) {
     db.query('SELECT * FROM workflow_stages WHERE workflowID=? ORDER BY ID asc',[workflow_id], function (error, stages, fields) {

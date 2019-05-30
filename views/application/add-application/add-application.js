@@ -655,7 +655,7 @@
                         text: "Once approved, this process is not reversible!",
                         icon: "warning",
                         buttons: true,
-                        dangerMode: true,
+                        dangerMode: true
                     })
                         .then((yes) => {
                             if (yes) {
@@ -841,7 +841,7 @@
             text: "Once rejected, this process is not reversible!",
             icon: "warning",
             buttons: true,
-            dangerMode: true,
+            dangerMode: true
         })
             .then((yes) => {
                 if (yes) {
