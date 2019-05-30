@@ -671,6 +671,37 @@ function checkForEdit(){
     }
 }
 
+$("#phone").on("keyup", function () {
+    let val = $("#phone").val();
+    $("#phone").val(numbersOnly(val));
+});
+
+$("#bvn").on("keyup", function () {
+    let val = $("#bvn").val();
+    $("#bvn").val(numbersOnly(val));
+});
+
+$("#account").on("keyup", function () {
+    let val = $("#account").val();
+    $("#account").val(numbersOnly(val));
+});
+
+$("#years_add").on("keyup", function () {
+    let val = $("#years_add").val();
+    $("#years_add").val(numbersOnly(val));
+});
+
+$("#years_known").on("keyup", function () {
+    let val = $("#years_known").val();
+    $("#years_known").val(numbersOnly(val));
+});
+
+$("#salary").on("keyup", function () {
+    let val = $("#salary").val();
+    $("#salary").val(numberToCurrencyformatter(val));
+    validateSalary();
+});
+
 function submitDetails(){
     const url = new URLSearchParams(window.location.search);
     const user_id = url.get('id');
@@ -682,7 +713,7 @@ function submitDetails(){
     obj.middle_name = $.trim($('#middle_name').val());
     obj.last_name = $.trim($('#last_name').val());
     obj.fullname = $('#first_name').val() + ' '+ $('#middle_name').val() + ' ' +$('#last_name').val();
-    obj.phone = $('#phone').val();
+    obj.phone = numbersOnly($('#phone').val());
     obj.address = $('#address').val();
     obj.email = $('#email').val();
     obj.gender = $('#gender').find('option:selected').attr('value');
@@ -690,18 +721,18 @@ function submitDetails(){
     obj.marital_status = $('#marital_status').find('option:selected').attr('value');
     obj.loan_officer = $('#loan_officer').find('option:selected').attr('id');
     obj.branch = $('#branch').find('option:selected').attr('id');
-    obj.bvn= $("#bvn").val();
-    obj.account= $("#account").val();
+    obj.bvn= numbersOnly($("#bvn").val());
+    obj.account= numbersOnly($("#account").val());
     obj.bank = $('#bank').find('option:selected').attr('id');
     obj.client_state = $('#client_state').find('option:selected').attr('id');
     obj.postcode = $("#postcode").val();
     obj.client_country = $('#client_country').find('option:selected').attr('id');
-    obj.years_add = $("#years_add").val();
+    obj.years_add = numbersOnly($("#years_add").val());
     obj.ownership = $('#ownership').find('option:selected').attr('id');
     obj.employer_name = $("#employer_name").val();
     obj.industry = $('#industry').find('option:selected').val();
     obj.job = $("#job").val();
-    obj.salary = $("#salary").val();
+    obj.salary = currencyToNumberformatter($("#salary").val());
     obj.job_country = $('#job_country').find('option:selected').attr('id');
     obj.off_address = $("#off_address").val();
     obj.off_state = $('#off_state').find('option:selected').attr('id');
@@ -767,8 +798,13 @@ function submitDetails(){
 }
 
 function upload(i){
-    var name = $.trim($('#first_name').val()) + ' '+ $.trim($('#middle_name').val()) + ' ' +$.trim($('#last_name').val());
-    var folder_name = " ";
+    if ($.trim($('#first_name').val()) === '' || $.trim($('#first_name').val()) === null){
+        return swal('Incomplete Information', 'Please Enter Client First Name!', 'warning');
+    }
+    if ($.trim($('#last_name').val()) === '' || $.trim($('#last_name').val()) === null){
+        return swal('Incomplete Information', 'Please Enter Client Last Name!', 'warning');
+    }
+    var name = $.trim($('#first_name').val()) + ' '+ $.trim($('#middle_name').val()) + ' ' +$.trim($('#last_name').val()); var folder_name = " ";
     if ($('#email').val() === "" || $('#email').val() === null){
         return swal('Incomplete Information', 'Please Enter Client Email!', 'warning');
     }
@@ -781,12 +817,24 @@ function upload(i){
     var file; var item;
     if (i === 1){
         file = $('#file-upload')[0].files[0];
+        let ext = file["name"].split('.').pop().toLowerCase();
+        if($.inArray(ext, ['gif','png','jpg','jpeg']) == -1) {
+            return swal('Upload Failed!', 'Invalid file extension', 'warning');
+        }
         item ="Image";
     }else if (i === 2){
-        file = $('#file-upload-signature')[0].files[0]
+        file = $('#file-upload-signature')[0].files[0];
+        let ext = file["name"].split('.').pop().toLowerCase();
+        if($.inArray(ext, ['gif','png','jpg','jpeg']) == -1) {
+            return swal('Upload Failed!', 'Invalid file extension', 'warning');
+        }
         item = "Signature";
     }else if (i === 3){
-        file = $('#file-upload-idcard')[0].files[0]
+        file = $('#file-upload-idcard')[0].files[0];
+        let ext = file["name"].split('.').pop().toLowerCase();
+        if($.inArray(ext, ['gif','png','jpg','jpeg']) == -1) {
+            return swal('Upload Failed!', 'Invalid file extension', 'warning');
+        }
         item = "ID Card";
     }
     if (!file) {
@@ -804,7 +852,7 @@ function upload(i){
                 swal('Success', "File Uploaded Successfully!", 'success');
             },
             error: function() {
-                swal('Error', "Connection Error. Please Try Again", 'error');
+                swal('Failed', "Error! Please Try Again", 'error');
             }
         });
     }
