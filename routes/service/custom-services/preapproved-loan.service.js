@@ -240,6 +240,10 @@ router.get('/recommendations/get/:id', function (req, res, next) {
     });
 });
 
+/**
+ * 1. Preapproved Loan Offer
+ * 2. Direct Debit Mandate Setup
+ */
 router.post('/create', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let data = {},
