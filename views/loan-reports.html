@@ -7348,7 +7348,7 @@
         let report = $('#demo-report option:selected').attr('id'),
             filter = $('#demo-filter option:selected').attr('id'),
             year = $('#demo-year').val(),
-            url;
+            url, caption, xaxisname;
         if (report === "-1"){
             return swal('', 'Please Choose a Report!', 'warning');
         }
@@ -7499,7 +7499,7 @@
         let report = $('#demo-report option:selected').attr('id'),
             filter = $('#demo-filter option:selected').attr('id'),
             period = $('#demo-frequency').val(),
-            url;
+            url, caption, xaxisname;
         if (report === "-1"){
             return swal('', 'Please Choose a Report!', 'warning');
         }

@@ -3349,7 +3349,7 @@ users.get('/bad-loans/', function(req, res, next) {
         '(select fullname from clients where clients.ID = userID) as client, \n' +
         'loan_amount, date_created\n' +
         'from applications \n' +
-        'where status = 2\n' +
+        'where status = 2 and close_status = 0 \n' +
         'and ID not in (select applicationID from schedule_history where status = 1)';
     if (start  && end){
         start = "'"+start+"'"
@@ -3493,7 +3493,7 @@ users.get('/overdues/', function(req, res, next) {
         '(select loan_amount from applications where applications.ID = applicationID) as principal,\n' +
         'sum(payment_amount) as amount_due, sum(interest_amount) as interest_due\n' +
         'from application_schedules\n' +
-        'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n' +
+        'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0 \n' +
         'and payment_collect_date < (select curdate()) ';
     group = 'group by applicationID';
     query = queryPart.concat(group);
@@ -5799,14 +5799,14 @@ users.get('/demographic-badloans-report', function(req, res, next){
                 sum(payment_amount) amount, 
                 (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender
                 from application_schedules 
-                where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) 
+                where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0 
                 and datediff(curdate(), payment_collect_date) > 90 group by gender  `;
         if (period !== '-1' && year !== '0'){
             query = `select
                 sum(payment_amount) amount, 
                 (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender
                 from application_schedules 
-                where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) 
+                where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0  
                 and quarter(payment_collect_date) = ${period} and year(payment_collect_date) = ${year} 
                 and datediff(curdate(), payment_collect_date) > 90 group by gender  `;
         }
@@ -5828,7 +5828,7 @@ users.get('/demographic-badloans-report', function(req, res, next){
                 END as age_range
                 from application_schedules
                 where payment_status = 0 and status = 1 and 
-                applicationid in (select id from applications where status = 2)
+                applicationid in (select id from applications where status = 2) and (select close_status from applications where applications.id = applicationID) = 0 
                 group by age_range
                 `;
         if (period !== '-1' && year !== '0'){
@@ -5848,7 +5848,7 @@ users.get('/demographic-badloans-report', function(req, res, next){
                 END as age_range
                 from application_schedules
                 where payment_status = 0 and status = 1 and 
-                applicationid in (select id from applications where status = 2)
+                applicationid in (select id from applications where status = 2) and (select close_status from applications where applications.id = applicationID) = 0 
                 and quarter(payment_collect_date) = ${period} and year(payment_collect_date) = ${year} 
                 group by age_range
                 `;
@@ -5878,14 +5878,14 @@ users.get('/demographic-overdues-report', function(req, res, next){
                 sum(payment_amount) amount, 
                 (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender
                 from application_schedules 
-                where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) 
+                where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0  
                 and payment_collect_date < (select curdate()) group by gender  `;
         if (period !== '-1' && year !== '0'){
             query = `select
                 sum(payment_amount) amount, 
                 (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender
                 from application_schedules 
-                where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) 
+                where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0  
                 and quarter(payment_collect_date) = ${period} and year(payment_collect_date) = ${year} 
                 and payment_collect_date < (select curdate()) group by gender  `;
         }
@@ -5906,7 +5906,7 @@ users.get('/demographic-overdues-report', function(req, res, next){
                     WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) IS NULL THEN 'Not Filled In (NULL)'
                 END as age_range
                 from application_schedules 
-                where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) 
+                where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0  
                 and payment_collect_date < (select curdate()) group by age_range  `;
         if (period !== '-1' && year !== '0'){
             query = `select
@@ -5924,7 +5924,7 @@ users.get('/demographic-overdues-report', function(req, res, next){
                     WHEN (select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid)) IS NULL THEN 'Not Filled In (NULL)'
                 END as age_range
                 from application_schedules 
-                where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) 
+                where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0  
                 and quarter(payment_collect_date) = ${period} and year(payment_collect_date) = ${year} 
                 and payment_collect_date < (select curdate()) group by age_range  `;
         }
