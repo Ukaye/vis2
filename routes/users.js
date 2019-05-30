@@ -1728,9 +1728,11 @@ users.post('/apply', function(req, res) {
                 from: 'no-reply '+process.env.TENANT+' <applications@loan35.com>',
                 to: req.body.email,
                 subject: process.env.TENANT+' Application Successful',
-                template: 'main',
+                template: 'application',
                 context: data
             };
+            if (!workflow_id)
+                mailOptions.template =  'main';
             transporter.sendMail(mailOptions, function(error, info){
                 if(error)
                     console.log({"status": 500, "message": "Error occurred!", "response": error});
