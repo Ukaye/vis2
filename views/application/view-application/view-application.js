@@ -1641,6 +1641,7 @@ function checkForExistingMandate(data) {
                 let today = new Date(),
                     date1 = new Date(data.schedule[0]['payment_collect_date']),
                     date2 = new Date(data.schedule[0]['interest_collect_date']);
+                today.setHours(0,0,0,0);
                 if (date1 < today || date2 < today) {
                     $('#setupDirectDebit').hide();
                 } else {

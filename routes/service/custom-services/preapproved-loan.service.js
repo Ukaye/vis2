@@ -240,6 +240,10 @@ router.get('/recommendations/get/:id', function (req, res, next) {
     });
 });
 
+/**
+ * 1. Preapproved Loan Offer
+ * 2. Direct Debit Mandate Setup
+ */
 router.post('/create', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let data = {},
@@ -292,6 +296,10 @@ router.post('/create', function (req, res, next) {
                             template: 'offer',
                             context: data
                         };
+                        if (req.body.applicationID) {
+                            mailOptions.template = 'mandate';
+                            mailOptions.subject = process.env.TENANT+' Mandate Setup';
+                        }
                         transporter.sendMail(mailOptions, function(error, info){
                             if(error)
                                 return res.send({status: 500, error: error, response: null});
@@ -310,7 +318,7 @@ router.post('/create', function (req, res, next) {
 });
 
 function getApplicationID(req, query, postData, callback) {
-    if (!req.query.applicationID) {
+    if (!req.body.applicationID) {
         db.query(query, postData, function (error, response) {
             if(error){
                 callback(error, null);
@@ -318,6 +326,8 @@ function getApplicationID(req, query, postData, callback) {
                 callback(null, response);
             }
         });
+    } else {
+        callback(null, null);
     }
 }
 
