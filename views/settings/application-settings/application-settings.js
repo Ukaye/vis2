@@ -133,11 +133,6 @@ $("#vat").on("keyup", function () {
     $("#vat").val(numberToCurrencyformatter(val));
 });
 
-$("#wht").on("keyup", function () {
-    let val = $("#wht").val();
-    $("#wht").val(numberToCurrencyformatter(val));
-});
-
 $("#fee_amount").on("keyup", function () {
     let val = $("#fee_amount").val();
     $("#fee_amount").val(numberToCurrencyformatter(val));
@@ -183,7 +178,6 @@ function getFeeSettings() {
             $('#wait').hide();
             if (settings_obj) {
                 $('#vat').val(numberToCurrencyformatter(settings_obj.vat));
-                $('#wht').val(numberToCurrencyformatter(settings_obj.wht));
                 $('#fees_type').val(settings_obj.fees_type).trigger('change');
                 if (settings_obj.fees_automatic_type) {
                     $('#fees_automatic_type').val(settings_obj.fees_automatic_type).trigger('change');
@@ -436,8 +430,7 @@ function saveFeesSettings() {
     let payload = {};
     payload.fees_type = $('#fees_type').val();
     payload.vat = currencyToNumberformatter($('#vat').val());
-    payload.wht = currencyToNumberformatter($('#wht').val());
-    if (payload.fees_type === '-- Select Fees Type --' || !payload.vat || !payload.wht)
+    if (payload.fees_type === '-- Select Fees Type --' || !payload.vat)
         return notification('Kindly fill all required inputs','','warning');
     if (payload.fees_type === 'automatic') {
         payload.fees_automatic_type = $('#fees_automatic_type').val();
