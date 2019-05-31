@@ -984,6 +984,8 @@
                                                                     <th>Principal</th>
                                                                     <th>Principal Due</th>
                                                                     <th>Interest Due</th>
+                                                                    <th>Date Due</th>
+                                                                    <th>Days Since Due</th>
                                                                 </tr>
                                                                 </thead>
                                                                 <tbody></tbody>
@@ -996,9 +998,9 @@
                                                 <div id="glp-div" style="display: none" class="col-sm-6">
                                                     <div class="card">
                                                         <div class="card-header">
-                                                            <div class="col-sm-5" style="background-color: transparent; border-color: transparent">
-                                                                <strong>Gross Loan Portfolio</strong>
-                                                                <span>Total: <span id="glp"></span></span>
+                                                            <div class="col-sm-2" style="background-color: transparent; border-color: transparent">
+                                                                <strong>Total GLP: </strong>
+                                                                <span id="glp"></span>
                                                             </div>
                                                             <div class="col-sm-7" style="background-color: transparent; border-color: transparent">
                                                                 <form id="filterglp" class="form-inline" style="float: right;">
@@ -1012,6 +1014,14 @@
                                                                     </div>
                                                                     <button type="submit" class="btn btn-success">Filter</button>
                                                                 </form>
+                                                            </div>
+                                                            <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
+                                                                <div class="form-group">
+                                                                    <div class="input-group">
+                                                                        <select id="filter-glp-officers" onchange="filterglpOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <div class="card-body">
@@ -1129,7 +1139,7 @@
                                                                         <option value="1">Disbursements</option>
                                                                         <option value="2">Interests</option>
                                                                         <option value="3">Payments</option>
-                                                                        <!--<option value="4">Bad Loans</option>-->
+                                                                        <option value="4">Bad Loans</option>
                                                                         <!--<option value="5">Overdues</option>-->
                                                                     </select>
                                                                 </div>
@@ -1269,6 +1279,41 @@
                                                                     <th>Branch Name</th>
                                                                     <th>Payments Expected (Principal)</th>
                                                                     <th>Payments Received</th>
+                                                                </tr>
+                                                                </thead>
+                                                                <tbody></tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                    <div id="div-badloan" class="card" style="display: none">
+                                                        <div class="card-header">
+                                                            <div class="col-sm-5">
+                                                                <strong>Payments by Branch</strong>&nbsp;&nbsp;&nbsp;
+                                                                <span>Total: <span id="total-badloans-by-branch"></span></span>
+                                                            </div>
+                                                            <div class="col-sm-7">
+                                                                <form id="filterbadloansbybranch" class="form-inline" style="float: right;">
+                                                                    <div class="form-group">
+                                                                        <label class="" for="startDate">Start date</label>
+                                                                        <input type="date" class="form-control" id="filterbadloanssbranchstart" placeholder="Start date">
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label class="" for="endDate">End date</label>
+                                                                        <input type="date" class="form-control" id="filterbadloansbranchend" placeholder="End date">
+                                                                    </div>
+                                                                    <button type="submit" class="btn btn-success">Filter</button>
+                                                                </form>
+                                                            </div>
+                                                            <!--<select id="branch-filter" onchange="filterBranch(this)" style="width: 200px">-->
+                                                            <!--</select>-->
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <table id="badloans-by-branch-table" class="table table-striped table-bordered">
+                                                                <thead>
+                                                                <tr>
+                                                                    <th>Branch ID</th>
+                                                                    <th>Branch Name</th>
+                                                                    <th>Bad - Loans Debt</th>
                                                                 </tr>
                                                                 </thead>
                                                                 <tbody></tbody>
@@ -1604,7 +1649,7 @@
             bAutoWidth: true,
             "aoColumns": [
                 { "bSortable": false },
-                null, { "bSortable": true }, null, null
+                null, { "bSortable": true }, null, null, null, null
                 // , null, { "bSortable": false },
             ],
             "aaSorting": [],
@@ -2183,6 +2228,9 @@
         if (!start || !end ) {
             return loadGLP();
         }
+        if (officer != 0){
+            url = url.concat('&&officer='+officer);
+        }
 
         $.ajax({
             'url': url,
@@ -2443,6 +2491,59 @@
         }
     }
 
+    function loadBadloansByBranch(){
+        let start = $("#filterbadloansbranchstart").val(),
+            end = $("#filterbadloansbranchend").val(),
+            url;
+        url = (start === "" || start === null || end === "" || end === null ) ? 'user/badloans-by-branches/' : 'user/badloans-by-branches?start='+formatDate(start)+'&&end='+formatDate(end)
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                (data.status === 200) ? populateBadloansByBranch(data.response) : swal({"icon": "error", "text": 'Database Error'})
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
+    }
+
+    function populateBadloansByBranch(dets){
+        $("#badloans-by-branch-table").dataTable().fnClearTable();
+        if (dets.length === 0){
+            $("#badloans-by-branch-table").dataTable().fnClearTable();
+            $('#total-badloans-by-branch').html(formatter.format(0));
+        }else{
+            let deta = [];
+            var total = 0; var collected = 0;
+            let num = dets.length;
+            for (let i = 0; i < num; i++){
+                let v = dets[i];
+                total += (v.amount) ? v.amount : 0;
+                v.id = padWithZeroes(v.branchID, 6);
+                v.amount = formatter.format(v.amount);
+                deta.push(v);
+                if (i === num - 1){
+                    $('#badloans-by-branch-table').DataTable({
+                        dom: 'Blfrtip',
+                        bDestroy: true,
+                        data: deta,
+                        search: {search: ' '},
+                        buttons: [
+                            'copy', 'csv', 'excel', 'pdf', 'print'
+                        ],
+                        columns: [
+                            { data: "id" },
+                            { data: "branch" },
+                            { data: "amount" }
+                        ]
+                    });
+                }
+            }
+            $('#total-badloans-by-branch').html(formatter.format(total));
+        }
+    }
+
     $("#filterbybranch").submit(function (e) {
         e.preventDefault();
 
@@ -2505,6 +2606,29 @@
                 let applications = data.response;
                 results = applications;
                 populatePaymentsByBranch(applications);
+            },
+            'error': function (err) {
+                console.log(err);
+            }
+        });
+    });
+
+    $("#filterbadloansbybranch").submit(function (e) {
+        e.preventDefault();
+
+        let start = $("#filterbadloansbranchstart").val(),
+            end = $("#filterbadloansbranchend").val(),
+            url = '/user/badloans-by-branches?start='+formatDate(start)+'&&end='+formatDate(end);
+        if (!start || !end)
+            return loadBadloansByBranch();
+
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                let applications = data.response;
+                results = applications;
+                populateBadloansByBranch(applications);
             },
             'error': function (err) {
                 console.log(err);
@@ -3123,6 +3247,7 @@
                 v.amount = formatter.format(parseFloat(v.principal));
                 v.owed = formatter.format(parseFloat(v.amount_due));
                 v.int_owed = formatter.format(parseFloat(v.interest_due));
+
                 deta.push(v);
                 if (i === num - 1) {
                     $('#overdues-table').DataTable({
@@ -3138,7 +3263,9 @@
                             {data: "client"},
                             {data: "amount"},
                             {data: "owed"},
-                            {data: "int_owed"}
+                            {data: "int_owed"},
+                            {data: "payment_collect_date"},
+                            {data: "days_since"}
                         ]
                     });
                 }
@@ -3206,6 +3333,7 @@
                 $("#principal-officers").empty().append('<option value="0" id="0">All Loan Officers</option>');
                 $("#principal-rec-officers").empty().append('<option value="0" id="0">All Loan Officers</option>');
                 $("#pvifilterofficers").empty().append('<option value="0" id="0">All Loan Officers</option>');
+                $("#filter-glp-officers").empty().append('<option value="0" id="0">All Loan Officers</option>');
                 $.each(JSON.parse(response), function (key, val) {
                     $("#filter-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#overdue-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
@@ -3221,6 +3349,7 @@
                     $("#principal-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#principal-rec-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#pvifilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                    $("#filter-glp-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                 });
             }
         });
@@ -3249,6 +3378,33 @@
                 let applications = data.response;
                 results = applications;
                 populateDisbursed(applications);
+            },
+            'error': function (err) {
+                console.log(err);
+            }
+        });
+    }
+
+    function filterglpOfficer(officer){
+        let start = $("#startGLPDate").val(),
+            end = $("#endGLPDate").val(),
+            url = '/user/disbursements/filter?',
+            d=[], agent;
+        if (start && end){
+            url = url.concat('start='+formatDate(start)+'&&end='+formatDate(end)+'&&');
+        }
+        if (officer.value == 0){
+            return loadGLP();
+        }
+        url = url.concat('officer='+officer.value);
+
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                let applications = data.response;
+                results = applications;
+                populateGLP(applications);
             },
             'error': function (err) {
                 console.log(err);
@@ -3943,6 +4099,15 @@
                             d.push({label: v.branchQuarter , value: v.amount_received}, );
                         }
                     }
+                    if ($('#branchreport').val() == '4'){
+                        xaxis = '';
+                        yaxis = 'Badloans (Naira)';
+                        caption = 'Badloans by Branches ';
+                        agent = ': '+v.branch;
+                        d.push({label: v.branch, value: v.amount},);
+                        if (v.period)
+                            xaxis = 'Period';
+                    }
                 });
                 var chartConfigs = {
                     type: 'column2d', // The chart type
@@ -4259,6 +4424,15 @@
                                 d.push({label: v.branchQuarter , value: v.amount_received}, );
                             }
                         }
+                        if ($('#branchreport').val() == '4'){
+                            xaxis = '';
+                            yaxis = 'Badloans (Naira)';
+                            caption = 'Badloans by Branches ';
+                            agent = ': '+v.branch;
+                            d.push({label: v.branch, value: v.amount},);
+                            if (v.period)
+                                xaxis = 'Period';
+                        }
                     });
                     var chartConfigs = {
                         type: 'column2d', // The chart type
@@ -4367,6 +4541,37 @@
                                 let branch_series_value = ($.grep(values[i], function(e){return e.office === nondupSeriesNames[j];}))[0];
                                 if (branch_series_value){
                                     datum.push({value: branch_series_value.amount_received});
+                                } else {
+                                    datum.push({value: 0});
+                                }
+                            }
+                            dataset.push({seriesname: nondupSeriesNames[j], data: datum});
+                        }
+                    }
+                    if ($('#branchreport').val() == '4') {
+                        jQuery.each(data.response, function (k, v) {
+                            yaxis = 'Badloans (Naira)';
+                            caption = 'Badloans by Branches';
+                            xaxis = 'Period';
+                            categories.push({label: k});
+                            chartTemp = $.grep(v, function(e){return e.period === k.toString();});
+                            values.push(chartTemp);
+                            diffSeries.push(chartTemp.length);
+                            jQuery.each(v, function (key, val) {
+                                seriesNames.push(val.office);
+                            });
+                        });
+                        countSeries = Math.max.apply(Math, diffSeries);
+                        nondupSeriesNames = seriesNames.filter(function(elem, index, self) {
+                            return index === self.indexOf(elem);
+                        }).sort();
+                        for (let j = 0; j < nondupSeriesNames.length; j++) {
+                            let datum = [];
+                            for (let i = 0; i < values.length; i++) {
+                                let branch_series_value = ($.grep(values[i], function(e){return e.office === nondupSeriesNames[j];}))[0];
+
+                                if (branch_series_value){
+                                    datum.push({value: branch_series_value.amount_due});
                                 } else {
                                     datum.push({value: 0});
                                 }
@@ -4485,6 +4690,15 @@
                                 d.push({label: v.branchQuarter , value: v.amount_received}, );
                             }
                         }
+                        if ($('#branchreport').val() == '4'){
+                            xaxis = '';
+                            yaxis = 'Badloans (Naira)';
+                            caption = 'Badloans by Branches ';
+                            agent = ': '+v.branch;
+                            d.push({label: v.branch, value: v.amount},);
+                            if (v.period)
+                                xaxis = 'Period';
+                        }
                     });
                     var chartConfigs = {
                         type: 'column2d', // The chart type
@@ -4598,6 +4812,36 @@
                             dataset.push({seriesname: nondupSeriesNames[j], data: datum});
                         }
                     }
+                    if ($('#branchreport').val() == '4') {
+                        jQuery.each(data.response, function (k, v) {
+                            yaxis = 'Badloans (Naira)';
+                            caption = 'Badloans by Branches';
+                            xaxis = 'Period';
+                            categories.push({label: k});
+                            chartTemp = $.grep(v, function(e){return e.period === k.toString();});
+                            values.push(chartTemp);
+                            diffSeries.push(chartTemp.length);
+                            jQuery.each(v, function (key, val) {
+                                seriesNames.push(val.office);
+                            });
+                        });
+                        countSeries = Math.max.apply(Math, diffSeries);
+                        nondupSeriesNames = seriesNames.filter(function(elem, index, self) {
+                            return index === self.indexOf(elem);
+                        }).sort();
+                        for (let j = 0; j < nondupSeriesNames.length; j++) {
+                            let datum = [];
+                            for (let i = 0; i < values.length; i++) {
+                                let branch_series_value = ($.grep(values[i], function(e){return e.office === nondupSeriesNames[j];}))[0];
+                                if (branch_series_value){
+                                    datum.push({value: branch_series_value.amount_due});
+                                } else {
+                                    datum.push({value: 0});
+                                }
+                            }
+                            dataset.push({seriesname: nondupSeriesNames[j], data: datum});
+                        }
+                    }
                     var dConfigs = {
                         type: 'mscolumn2d',
                         renderAt: 'chart-container',
@@ -4637,18 +4881,28 @@
             $('#div-disbursement').show();
             $('#div-interest').hide();
             $('#div-payment').hide();
+            $('#div-badloan').hide();
         }
         if (type.value == '2'){//Interest
             $('#div-disbursement').hide();
             $('#div-interest').show();
             $('#div-payment').hide();
+            $('#div-badloan').hide();
             loadInterestsByBranch();
         }
         if (type.value == '3'){//Payments
             $('#div-disbursement').hide();
             $('#div-interest').hide();
-            $('#div-payment').show();
+            $('#div-payment').show()
+            $('#div-badloan').hide();
             loadPaymentsByBranch();
+        }
+        if (type.value == '4'){//Payments
+            $('#div-disbursement').hide();
+            $('#div-interest').hide();
+            $('#div-payment').hide();
+            $('#div-badloan').show();
+            loadBadloansByBranch();
         }
         return branches(type.value);
     }

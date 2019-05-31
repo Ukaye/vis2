@@ -3490,7 +3490,7 @@ users.get('/overdues/', function(req, res, next) {
     let queryPart,
         query,
         group
-    queryPart = 'select ID, applicationID,\n' +
+    queryPart = 'select ID, applicationID, (datediff(curdate(), payment_collect_date)) as days_since,\n' +
         'payment_collect_date, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
         '(select loan_amount from applications where applications.ID = applicationID) as principal,\n' +
         'sum(payment_amount) as amount_due, sum(interest_amount) as interest_due\n' +
@@ -3732,6 +3732,70 @@ users.get('/payments-by-branches', function(req, res, next) {
             res.send({"status": 500, "error": error, "response": null});
         } else {
             res.send({"status": 200, "error": null, "response": results, "message": "Report pulled!"});
+        }
+    });
+});
+
+/* Bad Loans by Branches */
+users.get('/badloans-by-branches', function(req, res, next) {
+    let start = req.query.start,
+        end = req.query.end
+    // end = moment(end).add(1, 'days').format("YYYY-MM-DD");
+    let queryPart,
+        query,
+        group;
+    // queryPart = 'select (select branch from clients where ID = userID) as branchID, \n' +
+    //     '(select branch_name from branches br where br.id = branchID) as branch,\n' +
+    //     'loan_amount, sum(loan_amount) as disbursed,\n' +
+    //     '(select sum(payment_amount) from schedule_history sh\n' +
+    //     'where sh.status = 1 and \n' +
+    //     '(select branch from clients c where c.ID = (select userID from applications b where b.ID = sh.applicationID)) = branchID ' +
+    //     'and sh.applicationID in (select ap.ID from applications ap where ap.status = 2)) as collected\n' +
+    //     '\n' +
+    //     'from applications a\n' +
+    //     'where status = 2\n ';
+    query = `
+            select applicationid, (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) branchID,      
+            sum(payment_amount) amount, payment_collect_date period,
+            (select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch
+            from application_schedules ap
+            where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0
+            and datediff(curdate(), payment_collect_date) > 90 group by branchID 
+            `;
+    group = 'group by branchID';
+    // query = queryPart.concat(group);
+    var items = {};
+    if (start  && end){
+        start = "'"+start+"'"
+        end = "'"+end+"'"
+        // query = (queryPart.concat('AND (TIMESTAMP(disbursement_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
+        query = 'select (select branch from clients where ID = userID) as branchID, \n' +
+            '(select branch_name from branches br where br.id = branchID) as branch,\n' +
+            'loan_amount, sum(loan_amount) as disbursed,\n' +
+            '(select sum(payment_amount) from schedule_history sh\n' +
+            'where sh.status = 1 and \n' +
+            '(select branch from clients c where c.ID = (select userID from applications b where b.ID = sh.applicationID)) = branchID ' +
+            'and sh.applicationID in (select ap.ID from applications ap where ap.status = 2)\n' +
+            'and TIMESTAMP(payment_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+') ) as collected\n' +
+            'from applications a\n' +
+            'where status = 2\n '+
+            'AND TIMESTAMP(disbursement_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')\n '+
+            'group by branchID';
+        query = `
+                select applicationid, (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) branchID ,     
+                sum(payment_amount) amount, payment_collect_date period,
+                (select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch
+                from application_schedules ap
+                where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0
+                AND TIMESTAMP(payment_collect_date) between TIMESTAMP(${start}) and TIMESTAMP(${end})
+                and datediff(curdate(), payment_collect_date) > 90 group by branchID 
+                `;
+    }
+    db.query(query, function (error, results, fields) {
+        if(error){
+            res.send({"status": 500, "error": error, "response": null});
+        } else {
+            res.send({"status": 200, "error": null, "response": results, "message": "All Badloans pulled!"});
         }
     });
 });
@@ -4213,83 +4277,96 @@ users.get('/analytics', function(req, res, next) {
             }
             //Bad Loans
             if (bt == '4'){
-                query = 'select ID, applicationID, \n' +
-                    'min(payment_collect_date) as duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
-                    '(select loan_amount from applications where applications.ID = applicationID) as principal,\n' +
-                    '(sum(payment_amount) - payment_amount) as amount_due, (sum(interest_amount) - interest_amount) as interest_due\n' +
-                    'from application_schedules\n' +
-                    'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) group by applicationid\n';
+                query = `
+                        select  applicationid,      
+                        sum(payment_amount) amount,
+                        (select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch
+                        from application_schedules ap
+                        where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0
+                        and datediff(curdate(), payment_collect_date) > 90 group by branch
+                        `;
                 //Specific Branch
                 if (b){
-                    query = 'select sum(payment_amount) amount_received, \n' +
-                        '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch\n' +
-                        'from schedule_history \n' +
-                        'where status = 1 and applicationid in (select id from applications where applications.status <> 0)\n' +
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-                        'group by branch'
+                    query = `
+                            select  applicationid,      
+                            sum(payment_amount) amount, 
+                            (select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch
+                            from application_schedules ap
+                            where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0
+                            and (select branch from clients where clients.id = (select userid from applications where applications.id = ap.applicationid)) = ${b}
+                            and datediff(curdate(), payment_collect_date) > 90 group by branch
+                            `;
                 }
                 //Specific Branch, Monthly, Specific Year
                 if (b !== '0' && freq == "2"){
-                    query = 'select sum(payment_amount) amount_received, \n' +
-                        'DATE_FORMAT(payment_date, \'%M %Y\') monthpayed, \n'+
-                        '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
-                        'from schedule_history \n' +
-                        'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-                        'and Date_format(Payment_date, \'%Y\') = '+y+'\n'+
-                        'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)'
+                    query = `
+                            select  applicationid,      
+                            sum(payment_amount) amount, DATE_FORMAT(payment_collect_date, \'%M %Y\') period,
+                            (select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch
+                            from application_schedules ap
+                            where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0
+                            and (select branch from clients where clients.id = (select userid from applications where applications.id = ap.applicationid)) = ${b}
+                            and Date_format(Payment_collect_date, \'%Y\') = ${y} 
+                            and datediff(curdate(), payment_collect_date) > 90 group by branch, EXTRACT(YEAR_MONTH FROM payment_collect_date) order by EXTRACT(YEAR_MONTH FROM payment_collect_date)
+                            `;
                 }
                 if (b !== '0' && freq == "2" && y == '0'){
-                    query = 'select sum(payment_amount) amount_received, \n' +
-                        'DATE_FORMAT(payment_date, \'%M %Y\') monthpayed, \n'+
-                        '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
-                        'from schedule_history \n' +
-                        'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-                        'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)'
+                    query = `
+                            select  applicationid,      
+                            sum(payment_amount) amount, DATE_FORMAT(payment_collect_date, \'%M %Y\') period,
+                            (select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch
+                            from application_schedules ap
+                            where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0
+                            and (select branch from clients where clients.id = (select userid from applications where applications.id = ap.applicationid)) = ${b}
+                            and datediff(curdate(), payment_collect_date) > 90 group by branch, EXTRACT(YEAR_MONTH FROM payment_collect_date) order by EXTRACT(YEAR_MONTH FROM payment_collect_date)
+                            `;
                 }
                 //Specific Branch, Yearly
                 if (b !== '0' && freq == "3"){
-                    query = 'select sum(payment_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') PaymentYear, \n' +
-                        '(select branch_name from branches where branches.id = '+b+') office \n'+
-                        'from schedule_history \n' +
-                        'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-                        'and date_format(payment_date, \'%Y\') = '+y+'\n'+
-                        'group by office, DATE_FORMAT(Payment_date, \'%Y\')'
+                    query = `
+                            select applicationid,      
+                            sum(payment_amount) amount, DATE_FORMAT(payment_collect_date, \'%Y\') period,
+                            (select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch
+                            from application_schedules ap
+                            where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0
+                            and (select branch from clients where clients.id = (select userid from applications where applications.id = ap.applicationid)) = ${b}
+                            and Date_format(Payment_collect_date, \'%Y\') = ${y} 
+                            and datediff(curdate(), payment_collect_date) > 90 group by branch, EXTRACT(YEAR FROM payment_collect_date) order by EXTRACT(YEAR FROM payment_collect_date)
+                            `;
                 }
                 if (b !== '0' && freq == "3" && y == '0'){
-                    query = 'select sum(payment_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') PaymentYear, \n' +
-                        '(select branch_name from branches where branches.id = '+b+') office \n'+
-                        'from schedule_history \n' +
-                        'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-                        'group by office, DATE_FORMAT(Payment_date, \'%Y\')'
+                    query = `
+                            select applicationid,      
+                            sum(payment_amount) amount, DATE_FORMAT(payment_collect_date, \'%Y\') period,
+                            (select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch
+                            from application_schedules ap
+                            where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0
+                            and (select branch from clients where clients.id = (select userid from applications where applications.id = ap.applicationid)) = ${b}
+                            and datediff(curdate(), payment_collect_date) > 90 group by branch, EXTRACT(YEAR FROM payment_collect_date) order by EXTRACT(YEAR FROM payment_collect_date)
+                            `;
                 }
                 if (b !== '0' && freq == "4"){
-                    query = 'select sum(payment_amount) amount_received, \n' +
-                        '(select branch_name from branches where branches.id = '+b+') office, \n'+
-                        'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) branchQuarter\n'+
-                        'from schedule_history \n' +
-                        'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-                        'and Date_format(Payment_date, \'%Y\') = '+y+'\n'+
-                        'group by branchQuarter order by EXTRACT(YEAR_MONTH FROM payment_date)'
+                    query = `
+                            select applicationid,      
+                            sum(payment_amount) amount, concat('Q',quarter(payment_collect_date),'-', year(payment_collect_date)) period,
+                            (select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch
+                            from application_schedules ap
+                            where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0
+                            and (select branch from clients where clients.id = (select userid from applications where applications.id = ap.applicationid)) = ${b}
+                            and Date_format(Payment_collect_date, \'%Y\') = ${y} 
+                            and datediff(curdate(), payment_collect_date) > 90 group by branch, EXTRACT(YEAR_MONTH FROM payment_collect_date) order by EXTRACT(YEAR_MONTH FROM payment_collect_date)
+                            `;
                 }
                 if (b !== '0' && freq == "4" && y == '0'){
-                    query = 'select sum(payment_amount) amount_received, \n' +
-                        '(select branch_name from branches where branches.id = '+b+') office, \n'+
-                        'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) branchQuarter\n'+
-                        'from schedule_history \n' +
-                        'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-                        'group by branchQuarter order by EXTRACT(YEAR_MONTH FROM payment_date)'
+                    query = `
+                            select applicationid,      
+                            sum(payment_amount) amount, concat('Q',quarter(payment_collect_date),'-', year(payment_collect_date)) period,
+                            (select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch
+                            from application_schedules ap
+                            where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0
+                            and (select branch from clients where clients.id = (select userid from applications where applications.id = ap.applicationid)) = ${b}
+                            and datediff(curdate(), payment_collect_date) > 90 group by branch, EXTRACT(YEAR_MONTH FROM payment_collect_date) order by EXTRACT(YEAR_MONTH FROM payment_collect_date)
+                            `;
                 }
             }
             break;
@@ -5191,84 +5268,106 @@ users.get('/multi-analytics', function (req, res, next){
             break;
         case '4':
             query1 = 'select distinct(DATE_FORMAT(payment_collect_date, \'%M, %Y\')) periods from application_schedules where status = 1 and \n'+
-                'payment_collect_date is not null and applicationid in (select id from applications where status <> 0) order by EXTRACT(YEAR_MONTH from payment_collect_date)'
-            query2 = 'select ID, applicationID, \n' +
+                'payment_collect_date is not null and applicationid in (select id from applications where status = 2) ' +
+                'and extract(year_month from payment_collect_date) < (select extract(year_month from curdate())) '+
+                'order by EXTRACT(YEAR_MONTH from payment_collect_date)'
+            query2 = 'select ID, applicationID, DATE_FORMAT(payment_collect_date, \'%M, %Y\') period,\n' +
                 'min(payment_collect_date) duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
                 '(sum(payment_amount)) as amount_due,\n' +
                 '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n'+
                 'from application_schedules\n' +
                 'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n'+
                 'and DATEDIFF(curdate(), payment_collect_date) > 90\n'+
-                'and date_format(payment_collect_date, \'%M, %Y\') = ? group by office, Date_format(Payment_collect_date, \'%M%Y\')';
+                'and date_format(payment_collect_date, \'%M, %Y\') = ? group by office';
             if (freq == '2' && y == '0'){
-                query1 = 'select distinct(DATE_FORMAT(payment_date, \'%M, %Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                    ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
-                query2 = 'select sum(interest_amount) amount_received, \n' +
-                    'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n'+
-                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
-                    'from schedule_history \n' +
-                    'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
-                    'group by office, Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                query1 = 'select distinct(DATE_FORMAT(payment_collect_date, \'%M, %Y\')) periods from application_schedules where status = 1 and \n'+
+                        'payment_collect_date is not null and applicationid in (select id from applications where status = 2) ' +
+                        'and extract(year_month from payment_collect_date) < (select extract(year_month from curdate())) '+
+                        'order by EXTRACT(YEAR_MONTH from payment_collect_date)'
+                query2 = 'select ID, applicationID, DATE_FORMAT(payment_collect_date, \'%M, %Y\') period, \n' +
+                        'min(payment_collect_date) duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
+                        '(sum(payment_amount)) as amount_due,\n' +
+                        '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n'+
+                        'from application_schedules\n' +
+                        'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n'+
+                        'and DATEDIFF(curdate(), payment_collect_date) > 90\n'+
+                        'and date_format(payment_collect_date, \'%M, %Y\') = ? group by office, Date_format(Payment_collect_date, \'%M%Y\')';
             }
             if (freq == '2' && y != '0'){
-                query1 = 'select distinct(DATE_FORMAT(payment_date, \'%M, %Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                    ' and date_format(payment_date, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM payment_date)';
-                query2 = 'select sum(interest_amount) amount_received, \n' +
-                    'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n'+
-                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
-                    'from schedule_history \n' +
-                    'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
-                    'group by office, Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                query1 = 'select distinct(DATE_FORMAT(payment_collect_date, \'%M, %Y\')) periods from application_schedules where status = 1 and \n'+
+                    'payment_collect_date is not null and applicationid in (select id from applications where status = 2) ' +
+                    'and extract(year_month from payment_collect_date) < (select extract(year_month from curdate())) '+
+                    'and DATE_FORMAT(payment_collect_date, \'%Y\') = '+y+' \n'+
+                    'order by EXTRACT(YEAR_MONTH from payment_collect_date)'
+                query2 = 'select ID, applicationID, DATE_FORMAT(payment_collect_date, \'%M, %Y\') period,\n' +
+                    'min(payment_collect_date) duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
+                    '(sum(payment_amount)) as amount_due,\n' +
+                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n'+
+                    'from application_schedules\n' +
+                    'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n'+
+                    'and DATEDIFF(curdate(), payment_collect_date) > 90\n'+
+                    'and DATE_FORMAT(payment_collect_date, \'%Y\') = '+y+' \n'+
+                    'and date_format(payment_collect_date, \'%M, %Y\') = ? group by office, Date_format(Payment_collect_date, \'%M%Y\')';
             }
             if (freq == '3' && y == '0'){
-                query1 = 'select distinct(DATE_FORMAT(payment_date, \'%Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                    ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
-                query2 = 'select sum(interest_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') period, \n' +
-                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
-                    'from schedule_history \n' +
-                    'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and DATE_FORMAT(payment_date, \'%Y\') = ?\n'+
-                    'group by office, DATE_FORMAT(Payment_date, \'%Y\')'
+                query1 = 'select distinct(DATE_FORMAT(payment_collect_date, \' %Y\')) periods from application_schedules where status = 1 and \n'+
+                    'payment_collect_date is not null and applicationid in (select id from applications where status = 2) ' +
+                    'and extract(year from payment_collect_date) <= (select extract(year from curdate())) '+
+                    'order by EXTRACT(YEAR_MONTH from payment_collect_date)'
+                query2 = 'select ID, applicationID, DATE_FORMAT(payment_collect_date, \'%Y\') period,\n' +
+                    'min(payment_collect_date) duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
+                    '(sum(payment_amount)) as amount_due,\n' +
+                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n'+
+                    'from application_schedules\n' +
+                    'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n'+
+                    'and DATEDIFF(curdate(), payment_collect_date) > 90\n'+
+                    'and date_format(payment_collect_date, \'%Y\') = ? group by office, Date_format(Payment_collect_date, \'%Y\')';
             }
             if (freq == '3' && y != '0'){
-                query1 = 'select distinct(DATE_FORMAT(payment_date, \'%Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                    ' and date_format(payment_date, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM payment_date)';
-                query2 = 'select sum(interest_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') period, \n' +
-                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
-                    'from schedule_history \n' +
-                    'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and DATE_FORMAT(payment_date, \'%Y\') = ?\n'+
-                    'group by office, DATE_FORMAT(Payment_date, \'%Y\')'
+                query1 = 'select distinct(DATE_FORMAT(payment_collect_date, \' %Y\')) periods from application_schedules where status = 1 and \n'+
+                    'payment_collect_date is not null and applicationid in (select id from applications where status = 2) ' +
+                    'and extract(year from payment_collect_date) <= (select extract(year from curdate())) '+
+                    'and DATE_FORMAT(payment_collect_date, \'%Y\') = '+y+' \n'+
+                    'order by EXTRACT(YEAR_MONTH from payment_collect_date)'
+                query2 = 'select ID, applicationID, DATE_FORMAT(payment_collect_date, \'%Y\') period,\n' +
+                        'min(payment_collect_date) duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
+                        '(sum(payment_amount)) as amount_due,\n' +
+                        '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n'+
+                        'from application_schedules\n' +
+                        'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n'+
+                        'and DATEDIFF(curdate(), payment_collect_date) > 90\n'+
+                        'and DATE_FORMAT(payment_collect_date, \'%Y\') = '+y+' \n'
+                        'and date_format(payment_collect_date, \'%Y\') = ? group by office';
             }
             if (freq == '4' && y == '0'){
-                query1 = 'select distinct(concat(\'Q\',quarter(payment_date),\'-\', year(payment_date))) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                    ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
-                query2 = 'select sum(interest_amount) amount_received, \n' +
-                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office,\n' +
-                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period\n'+
-                    'from schedule_history \n' +
-                    'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n'+
-                    'group by office, period'
+                query1 = 'select distinct(concat(\'Q\',quarter(payment_collect_date),\'-\', year(payment_collect_date))) periods from application_schedules where status = 1 and \n'+
+                    'payment_collect_date is not null and applicationid in (select id from applications where status = 2) ' +
+                    'and (quarter(payment_collect_date) + year(payment_collect_date)) < ((select quarter(curdate()) + (select year(curdate())))) '+
+                    'order by EXTRACT(YEAR_MONTH from payment_collect_date)'
+                query2 = 'select ID, applicationID, concat(\'Q\',quarter(payment_collect_date),\'-\', year(payment_collect_date)) period,\n' +
+                    'min(payment_collect_date) duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
+                    '(sum(payment_amount)) as amount_due,\n' +
+                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n'+
+                    'from application_schedules\n' +
+                    'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n'+
+                    'and DATEDIFF(curdate(), payment_collect_date) > 90\n'+
+                    'and (concat(\'Q\',quarter(payment_collect_date),\'-\', year(payment_collect_date))) = ? group by office';
             }
             if (freq == '4' && y != '0'){
-                query1 = 'select distinct(concat(\'Q\',quarter(payment_date),\'-\', year(payment_date))) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                    ' and DATE_FORMAT(payment_date, \'%Y\') ='+y+'  order by EXTRACT(YEAR_MONTH FROM payment_date)';
-                query2 = 'select sum(interest_amount) amount_received, \n' +
-                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office,\n' +
-                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period\n'+
-                    'from schedule_history \n' +
-                    'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n'+
-                    'group by office, period'
+                query1 = 'select distinct(concat(\'Q\',quarter(payment_collect_date),\'-\', year(payment_collect_date))) periods from application_schedules where status = 1 and \n'+
+                    'payment_collect_date is not null and applicationid in (select id from applications where status = 2) ' +
+                    'and (quarter(payment_collect_date) + year(payment_collect_date)) <= ((select quarter(curdate()) + (select year(curdate())))) '+
+                    'and DATE_FORMAT(payment_collect_date, \'%Y\') = '+y+' \n'+
+                    'order by EXTRACT(YEAR_MONTH from payment_collect_date)'
+                query2 = 'select ID, applicationID, concat(\'Q\',quarter(payment_collect_date),\'-\', year(payment_collect_date)) period, \n' +
+                    'min(payment_collect_date) duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
+                    '(sum(payment_amount)) as amount_due,\n' +
+                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n'+
+                    'from application_schedules\n' +
+                    'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n'+
+                    'and DATEDIFF(curdate(), payment_collect_date) > 90\n'+
+                    'and DATE_FORMAT(payment_collect_date, \'%Y\') = '+y+' \n'+
+                    'and (concat(\'Q\',quarter(payment_collect_date),\'-\', year(payment_collect_date))) = ? group by office';
             }
             break;
         case '5':
@@ -6103,33 +6202,34 @@ users.get('/interest-receivable-trends', function(req, res, next){
         payload = {};
     query = 'select sum(interest_amount) amount, DATE_FORMAT(interest_collect_date, \'%M, %Y\') period ' +
             'from application_schedules ' +
-            'where status = 1 and extract(year_month from interest_collect_date) <> (select extract(year_month from curdate())) ' +
+            'where status = 1 and extract(year_month from interest_collect_date) < (select extract(year_month from curdate())) ' +
             'and applicationid in (select id from applications where status = 2)' +
             'group by extract(year_month from interest_collect_date)';
     if (!frequency || frequency === '-1' || frequency === '2' && year === '0'){
         query = 'select sum(interest_amount) amount, DATE_FORMAT(interest_collect_date, \'%M, %Y\') period ' +
                 'from application_schedules ' +
-                'where status = 1  and extract(year_month from interest_collect_date) <> (select extract(year_month from curdate())) ' +
+                'where status = 1  and extract(year_month from interest_collect_date) < (select extract(year_month from curdate())) ' +
                 'and applicationid in (select id from applications where status = 2)' +
                 'group by extract(year_month from interest_collect_date)';
     }
     if (frequency && frequency === '2' && year !== '0'){
         query = 'select sum(interest_amount) amount, DATE_FORMAT(interest_collect_date, \'%M, %Y\') period ' +
                 'from application_schedules ' +
-                'where status = 1 and extract(year_month from interest_collect_date) <> (select extract(year_month from curdate()))  ' +
+                'where status = 1 and extract(year_month from interest_collect_date) < (select extract(year_month from curdate()))  ' +
                 'and DATE_FORMAT(interest_collect_date, \'%Y\') = '+year+' and applicationid in (select id from applications where status = 2) group by extract(year_month from interest_collect_date)';
     }
     if (frequency && frequency === '3'){
         query = 'select sum(interest_amount) amount, DATE_FORMAT(interest_collect_date, \'%Y\') period ' +
                 'from application_schedules ' +
-                'where status = 1  and extract(year from interest_collect_date) <> (select extract(year from curdate())) ' +
+                'where status = 1  and extract(year from interest_collect_date) < (select extract(year from curdate())) ' +
                 'and applicationid in (select id from applications where status = 2) group by period'
     }
     if (frequency && frequency === '4' && year !== '0'){
         query = 'select sum(interest_amount) amount, concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) period ' +
                 'from application_schedules ' +
                 'where status = 1 and applicationid in (select id from applications where status = 2) ' +
-                'and concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) <> (select concat(\'Q\', extract(quarter from curdate()),\'-\' , extract(year from curdate()))) '+
+                // 'and concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) < (select concat(\'Q\', extract(quarter from curdate()),\'-\' , extract(year from curdate()))) '+
+                'and (quarter(interest_collect_date) + year(interest_collect_date)) < ((select quarter(curdate()) + (select year(curdate()))) ' +
                 'and DATE_FORMAT(interest_collect_date, \'%Y\') = '+year+' ' +
                 'group by period order by extract(year_month from interest_collect_date)';
     }
@@ -6137,7 +6237,8 @@ users.get('/interest-receivable-trends', function(req, res, next){
         query = 'select sum(interest_amount) amount, concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) period ' +
                 'from application_schedules ' +
                 'where status = 1 and applicationid in (select id from applications where status = 2) ' +
-                'and concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) <> (select concat(\'Q\', extract(quarter from curdate()),\'-\' , extract(year from curdate()))) '+
+                // 'and concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) < (select concat(\'Q\', extract(quarter from curdate()),\'-\' , extract(year from curdate()))) '+
+                'and (quarter(interest_collect_date) + year(interest_collect_date)) < ((select quarter(curdate()) + (select year(curdate())))) ' +
                 'group by period order by extract(year_month from interest_collect_date)';
     }
     db.query(query, function(error, results, fields){
