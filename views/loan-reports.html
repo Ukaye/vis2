@@ -984,6 +984,8 @@
                                                                     <th>Principal</th>
                                                                     <th>Principal Due</th>
                                                                     <th>Interest Due</th>
+                                                                    <th>Date Due</th>
+                                                                    <th>Days Since Due</th>
                                                                 </tr>
                                                                 </thead>
                                                                 <tbody></tbody>
@@ -1647,7 +1649,7 @@
             bAutoWidth: true,
             "aoColumns": [
                 { "bSortable": false },
-                null, { "bSortable": true }, null, null
+                null, { "bSortable": true }, null, null, null, null
                 // , null, { "bSortable": false },
             ],
             "aaSorting": [],
@@ -3245,6 +3247,7 @@
                 v.amount = formatter.format(parseFloat(v.principal));
                 v.owed = formatter.format(parseFloat(v.amount_due));
                 v.int_owed = formatter.format(parseFloat(v.interest_due));
+
                 deta.push(v);
                 if (i === num - 1) {
                     $('#overdues-table').DataTable({
@@ -3260,7 +3263,9 @@
                             {data: "client"},
                             {data: "amount"},
                             {data: "owed"},
-                            {data: "int_owed"}
+                            {data: "int_owed"},
+                            {data: "payment_collect_date"},
+                            {data: "days_since"}
                         ]
                     });
                 }

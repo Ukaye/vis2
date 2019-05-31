@@ -3490,7 +3490,7 @@ users.get('/overdues/', function(req, res, next) {
     let queryPart,
         query,
         group
-    queryPart = 'select ID, applicationID,\n' +
+    queryPart = 'select ID, applicationID, (datediff(curdate(), payment_collect_date)) as days_since,\n' +
         'payment_collect_date, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
         '(select loan_amount from applications where applications.ID = applicationID) as principal,\n' +
         'sum(payment_amount) as amount_due, sum(interest_amount) as interest_due\n' +
