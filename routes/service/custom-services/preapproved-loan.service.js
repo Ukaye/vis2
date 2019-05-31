@@ -290,7 +290,7 @@ router.post('/create', function (req, res, next) {
                         data.amount = helperFunctions.numberToCurrencyFormatter(postData.loan_amount);
                         data.offer_url = `${HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}`;
                         let mailOptions = {
-                            from: 'no-reply '+process.env.TENANT+' <applications@loan35.com>',
+                            from: process.env.TENANT+' <noreply@finratus.com>',
                             to: req.body.email,
                             subject: process.env.TENANT+' Loan Application Offer',
                             template: 'offer',
@@ -493,7 +493,7 @@ router.post('/offer/accept/:id', function (req, res, next) {
                             res.send({status: 500, error: error, response: null});
                         } else {
                             let mailOptions = {
-                                from: 'no-reply '+process.env.TENANT+' <applications@loan35.com>',
+                                from: process.env.TENANT+' <noreply@finratus.com>',
                                 to: email,
                                 subject: process.env.TENANT+' Application Successful',
                                 template: 'main',

@@ -1725,7 +1725,7 @@ users.post('/apply', function(req, res) {
             data.name = req.body.username;
             data.date = postData.date_created;
             let mailOptions = {
-                from: 'no-reply '+process.env.TENANT+' <applications@loan35.com>',
+                from: process.env.TENANT+' <noreply@finratus.com>',
                 to: req.body.email,
                 subject: process.env.TENANT+' Application Successful',
                 template: 'application',
@@ -6743,7 +6743,7 @@ users.get('/target-mail', function(req, res) {
     //     return res.send("Required Parameters not sent!");
     // data.date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let mailOptions = {
-        from: process.env.TENANT+' Target <applications@loan35.com>',
+        from: process.env.TENANT+' Target <noreply@finratus.com>',
         to: 'itaukemeabasi@gmail.com',
         subject: 'Target',
         template: 'target'
