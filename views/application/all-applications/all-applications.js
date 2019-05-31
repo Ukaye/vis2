@@ -53,8 +53,8 @@ function populateDataTable(data) {
             v.loanCirrusID || 'N/A',
             v.fullname,
             v.phone,
-            v.loan_amount,
-            v.product || 'N/A',
+            numberToCurrencyformatter(v.loan_amount),
+            v.product || 'preapproved',
             v.date_created,
             v.current_stage,
             '<button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#myModal" onclick="openModal('+v.ID+')"><i class="fa fa-eye"></i> View Client</button>'
