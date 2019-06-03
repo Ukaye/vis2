@@ -1484,15 +1484,24 @@
         src="https://unpkg.com/fusioncharts/themes/fusioncharts.theme.fusion.js"
 ></script>
 
-<script type="text/javascript" src="fscharts/js/fusioncharts.js"></script>
-<script type="text/javascript" src="fscharts/integrations/jquery/js/jquery-fusioncharts.js"></script>
-<script type="text/javascript" src="fscharts/js/themes/fusioncharts.theme.fusion.js"></script>
-<script type="text/javascript" src="fscharts/js/themes/fusioncharts.theme.candy.js"></script>
-<script type="text/javascript" src="fscharts/js/themes/fusioncharts.theme.carbon.js"></script>
-<script type="text/javascript" src="fscharts/js/themes/fusioncharts.theme.gammel.js"></script>
-<script type="text/javascript" src="fscharts/js/themes/fusioncharts.theme.ocean.js"></script>
-<script type="text/javascript" src="fscharts/js/themes/fusioncharts.theme.fint.js"></script>
-<script type="text/javascript" src="fscharts/js/themes/fusioncharts.theme.zune.js"></script>
+<!--<script type="text/javascript" src="fscharts/js/fusioncharts.js"></script>-->
+<!--<script type="text/javascript" src="fscharts/integrations/jquery/js/jquery-fusioncharts.js"></script>-->
+<!--<script type="text/javascript" src="fscharts/js/themes/fusioncharts.theme.fusion.js"></script>-->
+<!--<script type="text/javascript" src="fscharts/js/themes/fusioncharts.theme.candy.js"></script>-->
+<!--<script type="text/javascript" src="fscharts/js/themes/fusioncharts.theme.carbon.js"></script>-->
+<!--<script type="text/javascript" src="fscharts/js/themes/fusioncharts.theme.gammel.js"></script>-->
+<!--<script type="text/javascript" src="fscharts/js/themes/fusioncharts.theme.ocean.js"></script>-->
+<!--<script type="text/javascript" src="fscharts/js/themes/fusioncharts.theme.fint.js"></script>-->
+<!--<script type="text/javascript" src="fscharts/js/themes/fusioncharts.theme.zune.js"></script>-->
+<script type="text/javascript" src="fusioncharts/js/fusioncharts.js"></script>
+<script type="text/javascript" src="fusioncharts/integrations/jquery/js/jquery-fusioncharts.js"></script>
+<script type="text/javascript" src="fusioncharts/js/themes/fusioncharts.theme.fusion.js"></script>
+<script type="text/javascript" src="fusioncharts/js/themes/fusioncharts.theme.candy.js"></script>
+<script type="text/javascript" src="fusioncharts/js/themes/fusioncharts.theme.carbon.js"></script>
+<script type="text/javascript" src="fusioncharts/js/themes/fusioncharts.theme.gammel.js"></script>
+<script type="text/javascript" src="fusioncharts/js/themes/fusioncharts.theme.ocean.js"></script>
+<script type="text/javascript" src="fusioncharts/js/themes/fusioncharts.theme.fint.js"></script>
+<script type="text/javascript" src="fusioncharts/js/themes/fusioncharts.theme.zune.js"></script>
 <script src="js/loader.js"></script>
 
 <script src="js/notifications.js"></script>
@@ -1996,7 +2005,10 @@
                     v.id = padWithZeroes(parseInt(v.ID),6);
                     v.balance = formatter.format(parseFloat(v.loan_amount));
                     v.principal = formatter.format(parseFloat(v.loan_amount));
-                    v.date = formatDate(v.disbursement_date);
+                    if (v.reschedule_amount)
+                        v.date_ = formatDate(v.date_modified.split(' ')[0]);
+                    else
+                        v.date_ = formatDate(v.disbursement_date);
                     processed_data.push(v);
                 }
 
@@ -2013,6 +2025,10 @@
                     v.id = padWithZeroes(parseInt(v.applicationID),6);
                     v.balance = formatter.format(parseFloat((v.loan_amount - v.valid_payment) < 0 ? 0 : v.loan_amount - v.valid_payment));
                     v.principal = formatter.format(parseFloat(v.loan_amount));
+                    if (v.reschedule_amount)
+                        v.date_ = formatDate(v.date_modified.split(' ')[0]);
+                    else
+                        v.date_ = formatDate(v.date);
                     processed_data.push(v);
                 }
 
@@ -2030,6 +2046,10 @@
                     v.id = padWithZeroes(parseInt(v.applicationID),6);
                     v.balance = formatter.format(parseFloat(v.loan_amount));
                     v.principal = formatter.format(parseFloat(v.loan_amount));
+                    if (v.reschedule_amount)
+                        v.date_ = formatDate(v.date_modified.split(' ')[0]);
+                    else
+                        v.date_ = formatDate(v.date);
                     processed_data.push(v);
                 }
 
@@ -2047,7 +2067,7 @@
                             { data: "fullname" },
                             { data: "principal" },
                             { data: "balance" },
-                            { data: "date" }
+                            { data: "date_" }
                         ]
                     });
                 }

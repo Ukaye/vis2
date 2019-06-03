@@ -323,7 +323,7 @@
                                                     <div class="form-group col-sm-4 col-md-4">
                                                         <label class="form-control-label">BVN</label>
                                                         <div class="input-group">
-                                                            <input id="bvn" class="form-control" type="number" tabindex="5.2" />
+                                                            <input id="bvn" class="form-control" type="number" tabindex="5.2" min=1/>
                                                             <!-- ngIf: idForm.user.$dirty -->
                                                         </div>
                                                     </div>
@@ -341,7 +341,7 @@
                                                     <div class="form-group col-sm-4 col-md-4">
                                                         <label class="form-control-label">Account</label>
                                                         <div class="input-group">
-                                                            <input type="number" id="account" class="form-control" >
+                                                            <input type="number" id="account" class="form-control" min=1>
                                                             <!-- ngIf: idForm.user.$dirty -->
                                                         </div>
                                                     </div>
@@ -367,7 +367,7 @@
                                                     <div class="form-group col-sm-4 col-md-4">
                                                         <label class="form-control-label">Phone Number <span class="text-danger">*</span></label>
                                                         <div class="input-group">
-                                                            <input type="number" id="phone" class="form-control imp" placeholder="555-555-5555" >
+                                                            <input type="number" id="phone" class="form-control imp" placeholder="555-555-5555" min=1>
                                                             <!-- ngIf: idForm.home_phone.$dirty -->
                                                         </div>
                                                     </div>
@@ -391,7 +391,7 @@
                                                     <div class="form-group col-sm-4 col-md-4">
                                                         <label class="form-control-label">Postal Code</label>
                                                         <div class="input-group">
-                                                            <input type="text" id="postcode" class="form-control" placeholder="" >
+                                                            <input type="number" id="postcode" class="form-control" placeholder="" min=1>
                                                             <!-- ngIf: idForm.home_phone.$dirty -->
                                                         </div>
                                                     </div>
@@ -712,7 +712,7 @@
                                                         <div class="form-group">
                                                             <label class="form-control-label">Phone</label>
                                                             <div class="input-group">
-                                                                <input type="number" id="guarantor_phone" class="form-control" placeholder="Enter Reference Phone Number">
+                                                                <input type="number" id="guarantor_phone" class="form-control" placeholder="Enter Reference Phone Number" min=1>
                                                             </div>
                                                         </div>
 
