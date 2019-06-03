@@ -3106,11 +3106,11 @@ users.get('/disbursements/filter', function(req, res, next) {
         query,
         query3,
         group
-    queryPart = 'select \n' +
+    queryPart = 'select (select reschedule_amount from applications where ID = applicationID) as reschedule_amount, \n' +
             '(select userID from applications where ID = applicationID) as user, (select fullname from clients where ID = user) as fullname, payment_amount, \n' +
             'applicationID, (select loan_amount from applications where ID = applicationID) as loan_amount, sum(payment_amount) as paid, \n' +
             '((select loan_amount from applications where ID = applicationID) - sum(payment_amount)) as balance, (select disbursement_date from applications where ID = applicationID) as date, \n' +
-            '(select date_created from applications ap where ap.ID = applicationID) as created_date, ' +
+            '(select date_modified from applications where ID = applicationID) as date_modified, (select date_created from applications ap where ap.ID = applicationID) as created_date, ' +
             'CASE\n' +
             '    WHEN status = 0 THEN sum(payment_amount)\n' +
             'END as invalid_payment,\n' +
@@ -3122,11 +3122,11 @@ users.get('/disbursements/filter', function(req, res, next) {
             '\t\t\t\t\t\twhere applicationID in (select ID from applications where status = 2) and status = 1)\n'+
             'and status = 1 '
             ;
-    queryPart2 = 'select \n' +
+    queryPart2 = 'select (select reschedule_amount from applications where ID = applicationID) as reschedule_amount, \n' +
         '(select userID from applications where ID = applicationID) as user, (select fullname from clients where ID = user) as fullname, payment_amount, \n' +
         'applicationID, (select loan_amount from applications where ID = applicationID) as loan_amount, sum(payment_amount) as paid, \n' +
         '((select loan_amount from applications where ID = applicationID) - sum(payment_amount)) as balance, (select disbursement_date from applications where ID = applicationID) as date, \n' +
-        '(select date_created from applications ap where ap.ID = applicationID) as created_date, ' +
+        '(select date_modified from applications where ID = applicationID) as date_modified, (select date_created from applications ap where ap.ID = applicationID) as created_date, ' +
         'CASE\n' +
         '    WHEN status = 0 THEN sum(payment_amount)\n' +
         'END as invalid_payment,\n' +
@@ -3143,7 +3143,7 @@ users.get('/disbursements/filter', function(req, res, next) {
     query = queryPart.concat(group);
     query3 = queryPart2.concat(group);
 
-    let query2 = 'select ID, (select fullname from clients where ID = userID) as fullname, loan_amount, disbursement_date, date_created ' +
+    let query2 = 'select ID, (select fullname from clients where ID = userID) as fullname, loan_amount, disbursement_date, date_modified, date_created, reschedule_amount ' +
                  'from applications where status = 2 and ID not in (select applicationID from schedule_history) '
 
     var items = {};
@@ -3157,10 +3157,12 @@ users.get('/disbursements/filter', function(req, res, next) {
     if (start  && end){
         start = "'"+start+"'"
         end = "'"+end+"'"
-        // query = (queryPart.concat('AND (TIMESTAMP((select date_modified from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
-        query = (queryPart.concat('AND (TIMESTAMP((select disbursement_date from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
-        query3 = (queryPart2.concat('AND (TIMESTAMP((select disbursement_date from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
-        query2 = query2.concat('AND (TIMESTAMP(disbursement_date) between TIMESTAMP('+start+') AND TIMESTAMP('+end+')) ');
+        // query = (queryPart.concat('AND (TIMESTAMP((select date_modified from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) OR (TIMESTAMP(select date_modified from applications ap where ap.ID = applicationID) between TIMESTAMP('+start+') AND TIMESTAMP('+end+'))')).concat(group);
+        query = (queryPart.concat('AND ((TIMESTAMP((select disbursement_date from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ' +
+                'OR (TIMESTAMP((select date_modified from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') AND TIMESTAMP('+end+'))) ')).concat(group);
+        query3 = (queryPart2.concat('AND ((TIMESTAMP((select disbursement_date from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ' +
+                'OR (TIMESTAMP((select date_modified from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') AND TIMESTAMP('+end+'))) ')).concat(group);
+        query2 = query2.concat('AND ((TIMESTAMP(disbursement_date) between TIMESTAMP('+start+') AND TIMESTAMP('+end+')) OR (TIMESTAMP(date_modified) between TIMESTAMP('+start+') AND TIMESTAMP('+end+')))');
     }
     db.query(query, [loan_officer], function (error, results, fields) {
         items.with_payments = results;
