@@ -21,7 +21,7 @@
   },
   {
     "name": "FIDELITY BANK PLC",
-    "authorization": "FORM",
+    "authorization": "OTP",
     "code": "070"
   },
   {
@@ -31,7 +31,7 @@
   },
   {
     "name": "FIRST CITY MONUMENT BANK PLC",
-    "authorization": "FORM",
+    "authorization": "OTP",
     "code": "214"
   },
   {
@@ -41,27 +41,27 @@
   },
   {
     "name": "HERITAGE BANK",
-    "authorization": "FORM",
+    "authorization": "OTP",
     "code": "030"
   },
   {
     "name": "JAIZ BANK",
-    "authorization": "FORM",
+    "authorization": "OTP",
     "code": "301"
   },
   {
     "name": "KEYSTONE BANK",
-    "authorization": "FORM",
+    "authorization": "OTP",
     "code": "082"
   },
   {
     "name": "PROVIDUS BANK",
-    "authorization": "FORM",
+    "authorization": "OTP",
     "code": "101"
   },
   {
     "name": "SKYE BANK PLC",
-    "authorization": "FORM",
+    "authorization": "OTP",
     "code": "076"
   },
   {
@@ -76,12 +76,12 @@
   },
   {
     "name": "STERLING BANK PLC",
-    "authorization": "FORM",
+    "authorization": "OTP",
     "code": "232"
   },
   {
     "name": "SUNTRUST BANK",
-    "authorization": "FORM",
+    "authorization": "OTP",
     "code": "100"
   },
   {
@@ -96,7 +96,7 @@
   },
   {
     "name": "UNITY BANK PLC",
-    "authorization": "FORM",
+    "authorization": "OTP",
     "code": "215"
   },
   {
@@ -106,7 +106,7 @@
   },
   {
     "name": "ZENITH BANK PLC",
-    "authorization": "FORM",
+    "authorization": "OTP",
     "code": "057"
   },
   {
