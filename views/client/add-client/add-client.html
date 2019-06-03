@@ -172,7 +172,7 @@
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label" for="phone3">Phone Number</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="phone3" class="form-control imp" placeholder="555-555-5555" >
+                                                        <input type="number" id="phone3" class="form-control imp" min=1 placeholder="555-555-5555" >
                                                     </div>
                                                 </div>
                                                 <div class="form-group col-sm-4 col-md-4">
@@ -196,7 +196,7 @@
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label" for="postcode3">Postal Code</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="postcode3" class="form-control" placeholder="" >
+                                                        <input type="number" id="postcode3" min=1 class="form-control" placeholder="" >
                                                     </div>
                                                 </div>
                                                 <div class="form-group col-sm-4 col-md-4">
@@ -230,7 +230,7 @@
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label" for="business_phone">Business Phone Number</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="business_phone" class="form-control imp" placeholder="555-555-5555" >
+                                                        <input type="number" id="business_phone" class="form-control imp" placeholder="555-555-5555" min=1>
                                                     </div>
                                                 </div>
                                                 <div class="form-group col-sm-4 col-md-4">
@@ -242,7 +242,7 @@
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label" for="tax_id">Tax ID Number</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="tax_id" class="form-control imp" placeholder="555-555-5555" >
+                                                        <input type="number" id="tax_id" class="form-control imp" placeholder="555-555-5555" min=1>
                                                     </div>
                                                 </div>
                                                 <div class="form-group col-sm-4 col-md-4">
@@ -393,7 +393,7 @@
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label" for="tax_id">Registration Number</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="registration_number" class="form-control imp" placeholder="5555555555" >
+                                                        <input type="number" id="registration_number" class="form-control imp" placeholder="5555555555" min=1>
                                                     </div>
                                                 </div>
                                             </div>
@@ -461,7 +461,7 @@
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label">BVN</label>
                                                     <div class="input-group">
-                                                        <input id="bvn2" class="form-control" type="number" tabindex="5.2" />
+                                                        <input id="bvn2" class="form-control" type="number" tabindex="5.2" min=1/>
                                                     </div>
                                                 </div>
                                             </div>
@@ -477,7 +477,7 @@
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label">Account</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="account2" class="form-control" >
+                                                        <input type="number" id="account2" class="form-control" min=1>
                                                     </div>
                                                 </div>
                                             </div>
@@ -499,7 +499,7 @@
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label">Phone Number <span class="text-danger">*</span></label>
                                                     <div class="input-group">
-                                                        <input type="number" id="phone2" class="form-control imp" placeholder="555-555-5555" >
+                                                        <input type="number" id="phone2" class="form-control imp" placeholder="555-555-5555" min=1>
                                                     </div>
                                                 </div>
                                                 <div class="form-group col-sm-4 col-md-4">
@@ -539,7 +539,7 @@
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label">Year(s) in Market</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="market_years" class="form-control imp" placeholder="10" >
+                                                        <input type="text" id="market_years" class="form-control imp" placeholder="10" min=1>
                                                     </div>
                                                 </div>
                                                 <div class="form-group col-sm-4 col-md-4">
@@ -567,7 +567,7 @@
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label">Phone Number</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="kin_phone" class="form-control" placeholder="555-555-5555" >
+                                                        <input type="number" id="kin_phone" class="form-control" placeholder="555-555-5555" min=1>
                                                     </div>
                                                 </div>
                                                 <div class="form-group col-sm-4 col-md-4">
@@ -699,7 +699,7 @@
                                                     <div class="form-group col-sm-4 col-md-4">
                                                         <label class="form-control-label">BVN</label>
                                                         <div class="input-group">
-                                                            <input id="bvn" class="form-control" type="number" tabindex="5.2" />
+                                                            <input id="bvn" class="form-control" type="number" tabindex="5.2" min=1/>
                                                             <!-- ngIf: idForm.user.$dirty -->
                                                         </div>
                                                     </div>
@@ -717,7 +717,7 @@
                                                     <div class="form-group col-sm-4 col-md-4">
                                                         <label class="form-control-label">Account</label>
                                                         <div class="input-group">
-                                                            <input type="number" id="account" class="form-control" >
+                                                            <input type="number" id="account" class="form-control" min=1>
                                                             <!-- ngIf: idForm.user.$dirty -->
                                                         </div>
                                                     </div>
@@ -743,7 +743,7 @@
                                                     <div class="form-group col-sm-4 col-md-4">
                                                         <label class="form-control-label">Phone Number <span class="text-danger">*</span></label>
                                                         <div class="input-group">
-                                                            <input type="number" id="phone" class="form-control imp" placeholder="555-555-5555" >
+                                                            <input type="number" id="phone" class="form-control imp" placeholder="555-555-5555" min=1>
                                                             <!-- ngIf: idForm.home_phone.$dirty -->
                                                         </div>
                                                     </div>
@@ -767,7 +767,7 @@
                                                     <div class="form-group col-sm-4 col-md-4">
                                                         <label class="form-control-label">Postal Code</label>
                                                         <div class="input-group">
-                                                            <input type="text" id="postcode" class="form-control" placeholder="" >
+                                                            <input type="number" id="postcode" class="form-control" placeholder="" min=1>
                                                             <!-- ngIf: idForm.home_phone.$dirty -->
                                                         </div>
                                                     </div>
@@ -1080,7 +1080,7 @@
                                                         <div class="form-group">
                                                             <label class="form-control-label">Years Known</label>
                                                             <div class="input-group">
-                                                                <input type="text" id="years_known" class="form-control" placeholder="Choose Number of Years">
+                                                                <input type="number" id="years_known" class="form-control" placeholder="Choose Number of Years" min=1>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1089,7 +1089,7 @@
                                                         <div class="form-group">
                                                             <label class="form-control-label">Phone</label>
                                                             <div class="input-group">
-                                                                <input type="number" id="guarantor_phone" class="form-control" placeholder="Enter Reference Phone Number">
+                                                                <input type="number" id="guarantor_phone" class="form-control" placeholder="Enter Reference Phone Number" min=1>
                                                             </div>
                                                         </div>
 
