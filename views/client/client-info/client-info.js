@@ -6,6 +6,7 @@ $(document).ready(function () {
     loadInfo();
     loadActivities();
     bindInvestmentDataTable(application_id);
+    getBanks();
 });
 
 var myTable = $('#vehicles-table')
@@ -438,6 +439,137 @@ function bindInvestmentDataTable(id) {
     });
 }
 
+$("#cheque-no").on("keyup", function (event) {
+    let val = $("#cheque-no").val();
+    $("#cheque-no").val(integerFormat(val));
+});
 
-/**
- Business Individual & Corporate Client Updates*/
+$("#cheque-account").on("keyup", function (event) {
+    let val = $("#cheque-account").val();
+    $("#cheque-account").val(integerFormat(val));
+});
+
+let banks,
+    reasons;
+
+function getBanks(){
+    $.ajax({
+        type: 'GET',
+        url: '/user/banks',
+        success: function (response) {
+            banks = response;
+            $.each(response, function (key, val) {
+                $('#cheque-bank').append(`<option value="${val.code}">${val.name}</option>`);
+            });
+            getBadChequeReasons();
+        }
+    });
+}
+
+function getBadChequeReasons() {
+    $.ajax({
+        type: 'GET',
+        url: '/settings/application/bad_cheque_reason',
+        success: function (response) {
+            reasons = response.response;
+            $.each(response.response, function (key, val) {
+                $('#cheque-reason').append(`<option value="${val.ID}">${val.title}</option>`);
+            });
+            getBadCheques();
+        }
+    });
+}
+
+function getBadCheques() {
+    $.ajax({
+        type: 'GET',
+        url: '/client/bad_cheque',
+        success: function (response) {
+            populateBadChequeReasons(response.response);
+        }
+    });
+}
+
+$("#cheque-form").submit(function (e) {
+    e.preventDefault();
+    let cheque = {};
+    cheque.name = $('#cheque-name').val();
+    cheque.number = $('#cheque-no').val();
+    cheque.bank = $('#cheque-bank').val();
+    cheque.account = $('#cheque-account').val();
+    cheque.reason = $('#cheque-reason').val();
+    if (!cheque.name || !cheque.number || cheque.bank === 'Select Bank' || !cheque.account || cheque.reason === 'Select Reason')
+        return notification('Kindly fill all required field(s)','','warning');
+    cheque.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
+
+    $('#wait').show();
+    $.ajax({
+        'url': '/client/bad_cheque',
+        'type': 'post',
+        'data': cheque,
+        'success': function (response) {
+            $('#wait').hide();
+            if(response.status === 500){
+                notification(response.error, "", "error");
+            } else{
+                $('#reason_bad_cheque').val('');
+                notification("Bad cheque added successfully!", "", "success");
+                populateBadChequeReasons(response.response);
+            }
+        }
+    });
+});
+
+function populateBadChequeReasons(data){
+    let $cheques = $("#bad-cheques");
+    $cheques.DataTable().clear();
+    let cheques = [];
+    $.each(data, function(k, v){
+        v.bank = ($.grep(banks, function (e) { return e.code === v.bank }))[0]['name'];
+        v.reason = ($.grep(reasons, function (e) { return e.ID === v.reason }))[0]['title'];
+        v.actions = '<button type="button" class="btn btn-danger" onclick="removeBadChequeReason('+v.ID+')"><i class="fa fa-remove"></i></button>';
+        cheques.push(v);
+    });
+    $cheques.DataTable({
+        dom: 'Bfrtip',
+        bDestroy: true,
+        data: cheques,
+        buttons: [],
+        columns: [
+            { data: "name" },
+            { data: "number" },
+            { data: "bank" },
+            { data: "account" },
+            { data: "reason" },
+            { data: "actions" }
+        ]
+    });
+}
+
+function removeBadChequeReason(id) {
+    swal({
+        title: "Are you sure?",
+        text: "Once deleted, this process is not reversible!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true
+    })
+        .then((yes) => {
+            if (yes) {
+                $('#wait').show();
+                $.ajax({
+                    'url': '/client/bad_cheque/'+id,
+                    'type': 'delete',
+                    'success': function (response) {
+                        $('#wait').hide();
+                        if(response.status === 500){
+                            notification("No internet connection", "", "error");
+                        } else{
+                            notification("Bad cheque deleted successfully!", "", "success");
+                            populateBadChequeReasons(response.response);
+                        }
+                    }
+                });
+            }
+        });
+}

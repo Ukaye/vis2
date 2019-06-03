@@ -254,4 +254,83 @@ router.post('/corporate/enable/:id', function (req, res, next) {
     });
 });
 
+router.post('/bad_cheque', function (req, res, next) {
+    let data = req.body;
+    data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    db.query('INSERT INTO bad_cheques SET ?', data, function (error, result, fields) {
+        if (error) {
+            res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+        } else {
+            db.query("SELECT * FROM bad_cheques WHERE status = 1", function (error, results, fields) {
+                if (error) {
+                    res.send({
+                        "status": 500,
+                        "error": error,
+                        "response": null
+                    });
+                } else {
+                    res.send({
+                        "status": 200,
+                        "message": "Bad cheque saved successfully!",
+                        "response": results
+                    });
+                }
+            });
+        }
+    });
+});
+
+router.get('/bad_cheque', function (req, res, next) {
+    db.query("SELECT * FROM bad_cheques WHERE status = 1", function (error, results, fields) {
+        if (error) {
+            res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+        } else {
+            res.send({
+                "status": 200,
+                "message": "Bad cheques fetched successfully!",
+                "response": results
+            });
+        }
+    });
+});
+
+router.delete('/bad_cheque/:id', function (req, res, next) {
+    let query = "UPDATE bad_cheques SET status = 0, date_modified = ? WHERE ID = ? AND status = 1",
+        date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    db.query(query, [date_modified, req.params.id], function (error, results, fields) {
+        if (error) {
+            res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+        } else {
+            db.query("SELECT * FROM bad_cheques WHERE status = 1", function (error, results, fields) {
+                if (error) {
+                    res.send({
+                        "status": 500,
+                        "error": error,
+                        "response": null
+                    });
+                } else {
+                    res.send({
+                        "status": 200,
+                        "message": "Bad cheque deleted successfully!",
+                        "response": results
+                    });
+                }
+            });
+        }
+    });
+});
+
+
 module.exports = router;

@@ -297,4 +297,92 @@ router.get('/fees', function (req, res, next) {
     });
 });
 
+router.post('/application/bad_cheque_reason', function (req, res, next) {
+    let data = req.body;
+    data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    db.query('SELECT * FROM bad_cheque_reason_settings WHERE title = ? AND status = 1', [data.title], function (error, bad_cheque_reasons, fields) {
+        if (bad_cheque_reasons && bad_cheque_reasons[0]) {
+            res.send({
+                "status": 500,
+                "error": data.title+" has already been added!",
+                "response": bad_cheque_reasons[0]
+            });
+        } else {
+            db.query('INSERT INTO bad_cheque_reason_settings SET ?', data, function (error, result, fields) {
+                if (error) {
+                    res.send({
+                        "status": 500,
+                        "error": error,
+                        "response": null
+                    });
+                } else {
+                    db.query("SELECT * FROM bad_cheque_reason_settings WHERE status = 1", function (error, results, fields) {
+                        if (error) {
+                            res.send({
+                                "status": 500,
+                                "error": error,
+                                "response": null
+                            });
+                        } else {
+                            res.send({
+                                "status": 200,
+                                "message": "Bad cheque reason saved successfully!",
+                                "response": results
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    });
+});
+
+router.get('/application/bad_cheque_reason', function (req, res, next) {
+    db.query("SELECT * FROM bad_cheque_reason_settings WHERE status = 1", function (error, results, fields) {
+        if (error) {
+            res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+        } else {
+            res.send({
+                "status": 200,
+                "message": "Bad cheque reasons fetched successfully!",
+                "response": results
+            });
+        }
+    });
+});
+
+router.delete('/application/bad_cheque_reason/:id', function (req, res, next) {
+    let query = "UPDATE bad_cheque_reason_settings SET status = 0, date_modified = ? WHERE ID = ? AND status = 1",
+        date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    db.query(query, [date_modified, req.params.id], function (error, results, fields) {
+        if (error) {
+            res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+        } else {
+            db.query("SELECT * FROM bad_cheque_reason_settings WHERE status = 1", function (error, results, fields) {
+                if (error) {
+                    res.send({
+                        "status": 500,
+                        "error": error,
+                        "response": null
+                    });
+                } else {
+                    res.send({
+                        "status": 200,
+                        "message": "Bad cheque reason deleted successfully!",
+                        "response": results
+                    });
+                }
+            });
+        }
+    });
+});
+
 module.exports = router;

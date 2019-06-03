@@ -1,6 +1,7 @@
 $(document).ready(function () {
     getLoanPurposes();
     getLoanBusinesses();
+    getBadChequeReasons();
     getFeeSettings();
     getApplicationSettings();
     const $body = $('body');
@@ -480,3 +481,77 @@ function saveFeesSettings() {
     });
 }
 
+function getBadChequeReasons(){
+    $.ajax({
+        'url': '/settings/application/bad_cheque_reason',
+        'type': 'get',
+        'success': function (data) {
+            let reasons = data.response;
+            populateBadChequeReasons(reasons);
+        },
+        'error': function (err) {
+            console.log(err);
+        }
+    });
+}
+
+function addBadChequeReason() {
+    let reason = {};
+    reason.title = $('#reason_bad_cheque').val();
+    if (!reason.title)
+        return notification('Kindly input a title','','warning');
+    reason.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
+    $('#wait').show();
+    $.ajax({
+        'url': '/settings/application/bad_cheque_reason',
+        'type': 'post',
+        'data': reason,
+        'success': function (response) {
+            $('#wait').hide();
+            if(response.status === 500){
+                notification(response.error, "", "error");
+            } else{
+                $('#reason_bad_cheque').val('');
+                notification("Bad cheque reason added successfully!", "", "success");
+                populateBadChequeReasons(response.response);
+            }
+        }
+    });
+}
+
+function populateBadChequeReasons(data){
+    let $reasons = $("#reasons");
+    $reasons.DataTable().clear();
+    let reasons = [];
+    $.each(data, function(k, v){
+        v.actions = '<button type="button" class="btn btn-danger" onclick="removeBadChequeReason('+v.ID+')"><i class="fa fa-remove"></i></button>';
+        reasons.push(v);
+    });
+    $reasons.DataTable({
+        dom: 'Bfrtip',
+        bDestroy: true,
+        data: reasons,
+        buttons: [],
+        columns: [
+            { data: "title" },
+            { data: "actions" }
+        ]
+    });
+}
+
+function removeBadChequeReason(id) {
+    $('#wait').show();
+    $.ajax({
+        'url': '/settings/application/bad_cheque_reason/'+id,
+        'type': 'delete',
+        'success': function (response) {
+            $('#wait').hide();
+            if(response.status === 500){
+                notification("No internet connection", "", "error");
+            } else{
+                notification("Bad cheque reason deleted successfully!", "", "success");
+                populateBadChequeReasons(response.response);
+            }
+        }
+    });
+}
