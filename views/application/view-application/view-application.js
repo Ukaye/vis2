@@ -779,35 +779,59 @@ function initCSVUpload(application) {
                         } else if (i === 1) {
                             cells = ["INVOICE DATE","COLLECTION DATE","AMOUNT","INVOICE DATE","COLLECTION DATE","AMOUNT","AMOUNT"];
                         }
-                        for (let j = 0; j < cells.length; j++) {
-                            let cell = $("<td />");
-                            if (i === 0){
-                                if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
-                                    cell = $("<td colspan='3' />");
-                            }
-                            if (cells[j]){
-                                if (i > 1){
-                                    if (j === 0 || j === 1 || j === 3 || j === 4){
-                                        cell.html('<input id="invoice-'+i+'-'+j+'" type="date" value="'+cells[j]+'" />');
+                        if (cells.join(' ').length > 10) {
+                            for (let j = 0; j < cells.length; j++) {
+                                cells[j] = (cells[j]) ? (cells[j]).trim() : cells[j];
+                                if (!cells[j])
+                                    continue;
+                                let cell = $("<td />");
+                                if (i === 0) {
+                                    if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
+                                        cell = $("<td colspan='3' />");
+                                }
+                                if (i > 1) {
+                                    if (j === 0 || j === 1 || j === 3 || j === 4) {
+                                        cell.html('<input id="invoice-' + i + '-' + j + '" type="date" value="' + cells[j] + '" />');
                                     } else {
-                                        cell.html('<span id="invoice-'+i+'-'+j+'">'+cells[j]+'</span>');
+                                        cell.html('<span id="invoice-' + i + '-' + j + '">' + cells[j] + '</span>');
                                     }
                                 } else {
                                     cell.html(cells[j]);
                                 }
-                            }
-                            row.append(cell);
-                            switch (j){
-                                case 0:{ invoice.payment_create_date = cells[j]; break; }
-                                case 1:{ invoice.payment_collect_date = cells[j]; break; }
-                                case 2:{ invoice.payment_amount = cells[j]; break; }
-                                case 3:{ invoice.interest_create_date = cells[j]; break; }
-                                case 4:{ invoice.interest_collect_date = cells[j]; break; }
-                                case 5:{ invoice.interest_amount = cells[j]; break; }
-                                case 6:{ invoice.balance = cells[j]; break; }
+                                row.append(cell);
+                                switch (j) {
+                                    case 0: {
+                                        invoice.payment_create_date = cells[j];
+                                        break;
+                                    }
+                                    case 1: {
+                                        invoice.payment_collect_date = cells[j];
+                                        break;
+                                    }
+                                    case 2: {
+                                        invoice.payment_amount = cells[j];
+                                        break;
+                                    }
+                                    case 3: {
+                                        invoice.interest_create_date = cells[j];
+                                        break;
+                                    }
+                                    case 4: {
+                                        invoice.interest_collect_date = cells[j];
+                                        break;
+                                    }
+                                    case 5: {
+                                        invoice.interest_amount = cells[j];
+                                        break;
+                                    }
+                                    case 6: {
+                                        invoice.balance = cells[j];
+                                        break;
+                                    }
+                                }
                             }
                         }
-                        if (i>1 && cells.length === 7)
+                        if (i>1 && cells.length === 7 && !$.isEmptyObject(invoice))
                             schedule.push(invoice);
                         table.append(row);
                     }
@@ -1226,45 +1250,62 @@ function initCSVUpload2(application, settings) {
                 } else if (i === 1) {
                     cells = ["INVOICE DATE","COLLECTION DATE","AMOUNT","INVOICE DATE","COLLECTION DATE","AMOUNT","AMOUNT"];
                 }
-                if (cells.join(' ').length > 10){
+                if (cells.join(' ').length > 10) {
                     for (let j = 0; j < cells.length; j++) {
+                        cells[j] = (cells[j]) ? (cells[j]).trim() : cells[j];
+                        if (!cells[j])
+                            continue;
                         let cell = $("<td />");
-                        if (i === 0){
+                        if (i === 0) {
                             if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
                                 cell = $("<td colspan='3' />");
                         }
-                        if (cells[j]){
-                            if (i > 1){
-                                if (j === 0 || j === 1 || j === 3 || j === 4){
-                                    cell.html('<input id="invoice-'+i+'-'+j+'" type="date" value="'+cells[j]+'" />');
-                                } else {
-                                    cell.html('<span id="invoice-'+i+'-'+j+'">'+cells[j]+'</span>');
-                                }
+                        if (i > 1) {
+                            if (j === 0 || j === 1 || j === 3 || j === 4) {
+                                cell.html('<input id="invoice-' + i + '-' + j + '" type="date" value="' + cells[j] + '" />');
                             } else {
-                                cell.html(cells[j]);
+                                cell.html('<span id="invoice-' + i + '-' + j + '">' + cells[j] + '</span>');
                             }
+                        } else {
+                            cell.html(cells[j]);
                         }
                         row.append(cell);
-                        switch (j){
-                            case 0:{ invoice.payment_create_date = cells[j]; break; }
-                            case 1:{ invoice.payment_collect_date = cells[j]; break; }
-                            case 2:{
+                        switch (j) {
+                            case 0: {
+                                invoice.payment_create_date = cells[j];
+                                break;
+                            }
+                            case 1: {
+                                invoice.payment_collect_date = cells[j];
+                                break;
+                            }
+                            case 2: {
                                 if (i > 1)
                                     loan_amount = (loan_amount + parseFloat(cells[j])).round(2);
                                 invoice.payment_amount = cells[j];
                                 break;
                             }
-                            case 3:{ invoice.interest_create_date = cells[j]; break; }
-                            case 4:{ invoice.interest_collect_date = cells[j]; break; }
-                            case 5:{ invoice.interest_amount = cells[j]; break; }
-                            case 6:{ invoice.balance = cells[j]; break; }
+                            case 3: {
+                                invoice.interest_create_date = cells[j];
+                                break;
+                            }
+                            case 4: {
+                                invoice.interest_collect_date = cells[j];
+                                break;
+                            }
+                            case 5: {
+                                invoice.interest_amount = cells[j];
+                                break;
+                            }
+                            case 6: {
+                                invoice.balance = cells[j];
+                                break;
+                            }
                         }
                     }
                 }
-                if (i>1 && cells.length === 7){
-                    if (Object.keys(invoice).length > 0)
-                        schedule.push(invoice);
-                }
+                if (i>1 && cells.length === 7 && !$.isEmptyObject(invoice))
+                    schedule.push(invoice);
                 table.append(row);
             }
             $dvCSV.html('');
@@ -1295,40 +1336,61 @@ function initCSVUpload2(application, settings) {
                         } else if (i === 1) {
                             cells = ["INVOICE DATE","COLLECTION DATE","AMOUNT","INVOICE DATE","COLLECTION DATE","AMOUNT","AMOUNT"];
                         }
-                        for (let j = 0; j < cells.length; j++) {
-                            let cell = $("<td />");
-                            if (i === 0){
-                                if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
-                                    cell = $("<td colspan='3' />");
-                            }
-                            if (cells[j]){
-                                if (i > 1){
-                                    if (j === 0 || j === 1 || j === 3 || j === 4){
-                                        cell.html('<input id="invoice-'+i+'-'+j+'" type="date" value="'+cells[j]+'" />');
+                        if (cells.join(' ').length > 10) {
+                            for (let j = 0; j < cells.length; j++) {
+                                cells[j] = (cells[j]) ? (cells[j]).trim() : cells[j];
+                                if (!cells[j])
+                                    continue;
+                                let cell = $("<td />");
+                                if (i === 0) {
+                                    if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
+                                        cell = $("<td colspan='3' />");
+                                }
+                                if (i > 1) {
+                                    if (j === 0 || j === 1 || j === 3 || j === 4) {
+                                        cell.html('<input id="invoice-' + i + '-' + j + '" type="date" value="' + cells[j] + '" />');
                                     } else {
-                                        cell.html('<span id="invoice-'+i+'-'+j+'">'+cells[j]+'</span>');
+                                        cell.html('<span id="invoice-' + i + '-' + j + '">' + cells[j] + '</span>');
                                     }
                                 } else {
                                     cell.html(cells[j]);
                                 }
-                            }
-                            row.append(cell);
-                            switch (j){
-                                case 0:{ invoice.payment_create_date = cells[j]; break; }
-                                case 1:{ invoice.payment_collect_date = cells[j]; break; }
-                                case 2:{
-                                    if (i > 1)
-                                        loan_amount = (loan_amount + parseFloat(cells[j])).round(2);
-                                    invoice.payment_amount = cells[j];
-                                    break;
+                                row.append(cell);
+                                switch (j) {
+                                    case 0: {
+                                        invoice.payment_create_date = cells[j];
+                                        break;
+                                    }
+                                    case 1: {
+                                        invoice.payment_collect_date = cells[j];
+                                        break;
+                                    }
+                                    case 2: {
+                                        if (i > 1)
+                                            loan_amount = (loan_amount + parseFloat(cells[j])).round(2);
+                                        invoice.payment_amount = cells[j];
+                                        break;
+                                    }
+                                    case 3: {
+                                        invoice.interest_create_date = cells[j];
+                                        break;
+                                    }
+                                    case 4: {
+                                        invoice.interest_collect_date = cells[j];
+                                        break;
+                                    }
+                                    case 5: {
+                                        invoice.interest_amount = cells[j];
+                                        break;
+                                    }
+                                    case 6: {
+                                        invoice.balance = cells[j];
+                                        break;
+                                    }
                                 }
-                                case 3:{ invoice.interest_create_date = cells[j]; break; }
-                                case 4:{ invoice.interest_collect_date = cells[j]; break; }
-                                case 5:{ invoice.interest_amount = cells[j]; break; }
-                                case 6:{ invoice.balance = cells[j]; break; }
                             }
                         }
-                        if (i>1 && cells.length === 7)
+                        if (i>1 && cells.length === 7 && !$.isEmptyObject(invoice))
                             schedule.push(invoice);
                         table.append(row);
                     }
@@ -1348,7 +1410,9 @@ function initCSVUpload2(application, settings) {
         if (!schedule[0])
             return notification('Please preview the schedule to be uploaded.','','warning');
 
+        console.log(schedule)
         validateSchedule(schedule, function (validation) {
+            console.log(validation)
             if (validation.status){
                 if (loan_amount.round(2) < total_due_amount.round(2))
                     return notification('Total principal on the new schedule must be greater than Principal balance','','warning');
