@@ -192,6 +192,8 @@ router.get('/corporates/get', function (req, res, next) {
                 query: query
             }
         }).then(payload => {
+            if (!payload.data[0])
+                return res.send({draw: draw, recordsTotal: 0, recordsFiltered: 0, data: []});
             res.send({
                 draw: draw,
                 recordsTotal: payload.data[0].recordsTotal,
