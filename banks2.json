@@ -1,0 +1,117 @@
+[
+  {
+    "name": "ACCESS BANK PLC",
+    "authorization": "FORM",
+    "code": "044"
+  },
+  {
+    "name": "CITI BANK",
+    "authorization": "FORM",
+    "code": "023"
+  },
+  {
+    "name": "DIAMOND BANK PLC",
+    "authorization": "FORM",
+    "code": "063"
+  },
+  {
+    "name": "ECOBANK NIGERIA PLC",
+    "authorization": "FORM",
+    "code": "050"
+  },
+  {
+    "name": "FIDELITY BANK PLC",
+    "authorization": "OTP",
+    "code": "070"
+  },
+  {
+    "name": "FIRST BANK OF NIGERIA PLC",
+    "authorization": "FORM",
+    "code": "011"
+  },
+  {
+    "name": "FIRST CITY MONUMENT BANK PLC",
+    "authorization": "OTP",
+    "code": "214"
+  },
+  {
+    "name": "GUARANTY TRUST BANK PLC",
+    "authorization": "FORM",
+    "code": "058"
+  },
+  {
+    "name": "HERITAGE BANK",
+    "authorization": "OTP",
+    "code": "030"
+  },
+  {
+    "name": "JAIZ BANK",
+    "authorization": "OTP",
+    "code": "301"
+  },
+  {
+    "name": "KEYSTONE BANK",
+    "authorization": "OTP",
+    "code": "082"
+  },
+  {
+    "name": "PROVIDUS BANK",
+    "authorization": "OTP",
+    "code": "101"
+  },
+  {
+    "name": "SKYE BANK PLC",
+    "authorization": "OTP",
+    "code": "076"
+  },
+  {
+    "name": "STANBIC-IBTC BANK PLC",
+    "authorization": "FORM",
+    "code": "039"
+  },
+  {
+    "name": "STANDARD CHARTERED",
+    "authorization": "FORM",
+    "code": "068"
+  },
+  {
+    "name": "STERLING BANK PLC",
+    "authorization": "OTP",
+    "code": "232"
+  },
+  {
+    "name": "SUNTRUST BANK",
+    "authorization": "OTP",
+    "code": "100"
+  },
+  {
+    "name": "UNION BANK OF NIGERIA PLC",
+    "authorization": "FORM",
+    "code": "032"
+  },
+  {
+    "name": "UNITED BANK FOR AFRICA PLC",
+    "authorization": "FORM",
+    "code": "033"
+  },
+  {
+    "name": "UNITY BANK PLC",
+    "authorization": "OTP",
+    "code": "215"
+  },
+  {
+    "name": "WEMA BANK PLC",
+    "authorization": "FORM",
+    "code": "035"
+  },
+  {
+    "name": "ZENITH BANK PLC",
+    "authorization": "OTP",
+    "code": "057"
+  },
+  {
+    "name": "CBN",
+    "authorization": "FORM",
+    "code": "000"
+  }
+]

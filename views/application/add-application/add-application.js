@@ -2,7 +2,6 @@
     jQuery(document).ready(function() {
         getUsers();
         getWorkflows();
-        read_write_custom();
         getApplicationSettings();
     });
 
@@ -122,6 +121,7 @@
                     $('a.grouped_elements').fancybox();
                     $('.thumbnail').tooltip();
                 }
+                read_write_custom();
             }
         });
     }
@@ -405,51 +405,68 @@
                 for (let i = 0; i < rows.length; i++) {
                     let invoice = {},
                         row = $("<tr />"),
-                        cells = rows[i].split(",");
+                        cells = (rows[i].split(",").length > 7)? rows[i].split(",").slice(0, 7) : rows[i].split(",");
                     if (i === 0) {
                         cells = ["PRINCIPAL","INTEREST","BALANCE"];
                     } else if (i === 1) {
                         cells = ["INVOICE DATE","COLLECTION DATE","AMOUNT","INVOICE DATE","COLLECTION DATE","AMOUNT","AMOUNT"];
                     }
-                    if (cells.join(' ').length > 10){
+                    if (cells.join(' ').length > 10) {
                         for (let j = 0; j < cells.length; j++) {
+                            cells[j] = (cells[j]) ? (cells[j]).trim() : cells[j];
+                            if (!cells[j])
+                                continue;
                             let cell = $("<td />");
-                            if (i === 0){
+                            if (i === 0) {
                                 if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
                                     cell = $("<td colspan='3' />");
                             }
-                            if (cells[j]){
-                                if (i > 1){
-                                    if (j === 0 || j === 1 || j === 3 || j === 4){
-                                        cell.html('<input id="invoice-'+i+'-'+j+'" type="date" value="'+cells[j]+'" />');
-                                    } else {
-                                        cell.html('<span id="invoice-'+i+'-'+j+'">'+cells[j]+'</span>');
-                                    }
+                            if (i > 1) {
+                                if (j === 0 || j === 1 || j === 3 || j === 4) {
+                                    cell.html('<input id="invoice-' + i + '-' + j + '" type="date" value="' + cells[j] + '" />');
                                 } else {
-                                    cell.html(cells[j]);
+                                    cell.html('<span id="invoice-' + i + '-' + j + '">' + cells[j] + '</span>');
                                 }
+                            } else {
+                                cell.html(cells[j]);
                             }
                             row.append(cell);
-                            switch (j){
-                                case 0:{ invoice.payment_create_date = cells[j]; break; }
-                                case 1:{ invoice.payment_collect_date = cells[j]; break; }
-                                case 2:{
+                            switch (j) {
+                                case 0: {
+                                    invoice.payment_create_date = cells[j];
+                                    break;
+                                }
+                                case 1: {
+                                    invoice.payment_collect_date = cells[j];
+                                    break;
+                                }
+                                case 2: {
                                     if (i > 1)
                                         loan_amount = (loan_amount + parseFloat(cells[j])).round(2);
                                     invoice.payment_amount = cells[j];
                                     break;
                                 }
-                                case 3:{ invoice.interest_create_date = cells[j]; break; }
-                                case 4:{ invoice.interest_collect_date = cells[j]; break; }
-                                case 5:{ invoice.interest_amount = cells[j]; break; }
-                                case 6:{ invoice.balance = cells[j]; break; }
+                                case 3: {
+                                    invoice.interest_create_date = cells[j];
+                                    break;
+                                }
+                                case 4: {
+                                    invoice.interest_collect_date = cells[j];
+                                    break;
+                                }
+                                case 5: {
+                                    invoice.interest_amount = cells[j];
+                                    break;
+                                }
+                                case 6: {
+                                    invoice.balance = cells[j];
+                                    break;
+                                }
                             }
                         }
                     }
-                    if (i>1 && cells.length === 7){
-                        if (Object.keys(invoice).length > 0)
-                            schedule.push(invoice);
-                    }
+                    if (i>1 && cells.length === 7 && !$.isEmptyObject(invoice))
+                        schedule.push(invoice);
                     table.append(row);
                 }
                 $dvCSV.html('');
@@ -474,51 +491,68 @@
                         for (let i = 0; i < rows.length; i++) {
                             let invoice = {},
                                 row = $("<tr />"),
-                                cells = rows[i].split(",");
+                                cells = (rows[i].split(",").length > 7)? rows[i].split(",").slice(0, 7) : rows[i].split(",");
                             if (i === 0) {
                                 cells = ["PRINCIPAL","INTEREST","BALANCE"];
                             } else if (i === 1) {
                                 cells = ["INVOICE DATE","COLLECTION DATE","AMOUNT","INVOICE DATE","COLLECTION DATE","AMOUNT","AMOUNT"];
                             }
-                            if (cells.join(' ').length > 10){
+                            if (cells.join(' ').length > 10) {
                                 for (let j = 0; j < cells.length; j++) {
+                                    cells[j] = (cells[j]) ? (cells[j]).trim() : cells[j];
+                                    if (!cells[j])
+                                        continue;
                                     let cell = $("<td />");
-                                    if (i === 0){
+                                    if (i === 0) {
                                         if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
                                             cell = $("<td colspan='3' />");
                                     }
-                                    if (cells[j]){
-                                        if (i > 1){
-                                            if (j === 0 || j === 1 || j === 3 || j === 4){
-                                                cell.html('<input id="invoice-'+i+'-'+j+'" type="date" value="'+cells[j]+'" />');
-                                            } else {
-                                                cell.html('<span id="invoice-'+i+'-'+j+'">'+cells[j]+'</span>');
-                                            }
+                                    if (i > 1) {
+                                        if (j === 0 || j === 1 || j === 3 || j === 4) {
+                                            cell.html('<input id="invoice-' + i + '-' + j + '" type="date" value="' + cells[j] + '" />');
                                         } else {
-                                            cell.html(cells[j]);
+                                            cell.html('<span id="invoice-' + i + '-' + j + '">' + cells[j] + '</span>');
                                         }
+                                    } else {
+                                        cell.html(cells[j]);
                                     }
                                     row.append(cell);
-                                    switch (j){
-                                        case 0:{ invoice.payment_create_date = cells[j]; break; }
-                                        case 1:{ invoice.payment_collect_date = cells[j]; break; }
-                                        case 2:{
+                                    switch (j) {
+                                        case 0: {
+                                            invoice.payment_create_date = cells[j];
+                                            break;
+                                        }
+                                        case 1: {
+                                            invoice.payment_collect_date = cells[j];
+                                            break;
+                                        }
+                                        case 2: {
                                             if (i > 1)
                                                 loan_amount = (loan_amount + parseFloat(cells[j])).round(2);
                                             invoice.payment_amount = cells[j];
                                             break;
                                         }
-                                        case 3:{ invoice.interest_create_date = cells[j]; break; }
-                                        case 4:{ invoice.interest_collect_date = cells[j]; break; }
-                                        case 5:{ invoice.interest_amount = cells[j]; break; }
-                                        case 6:{ invoice.balance = cells[j]; break; }
+                                        case 3: {
+                                            invoice.interest_create_date = cells[j];
+                                            break;
+                                        }
+                                        case 4: {
+                                            invoice.interest_collect_date = cells[j];
+                                            break;
+                                        }
+                                        case 5: {
+                                            invoice.interest_amount = cells[j];
+                                            break;
+                                        }
+                                        case 6: {
+                                            invoice.balance = cells[j];
+                                            break;
+                                        }
                                     }
                                 }
                             }
-                            if (i>1 && cells.length === 7){
-                                if (Object.keys(invoice).length > 0)
-                                    schedule.push(invoice);
-                            }
+                            if (i>1 && cells.length === 7 && !$.isEmptyObject(invoice))
+                                schedule.push(invoice);
                             table.append(row);
                         }
                         $dvCSV.html('');
@@ -655,7 +689,7 @@
                         text: "Once approved, this process is not reversible!",
                         icon: "warning",
                         buttons: true,
-                        dangerMode: true,
+                        dangerMode: true
                     })
                         .then((yes) => {
                             if (yes) {
@@ -841,7 +875,7 @@
             text: "Once rejected, this process is not reversible!",
             icon: "warning",
             buttons: true,
-            dangerMode: true,
+            dangerMode: true
         })
             .then((yes) => {
                 if (yes) {
@@ -957,9 +991,9 @@
 
     function read_write_custom() {
         let perms = JSON.parse(localStorage.getItem("permissions")),
-            approveInitialApplication = ($.grep(perms, function(e){return e.module_name === 'approveInitialApplication';}))[0],
-            rejectInitialApplication = ($.grep(perms, function(e){return e.module_name === 'rejectInitialApplication';}))[0],
-            saveInitialApplication = ($.grep(perms, function(e){return e.module_name === 'saveInitialApplication';}))[0];
+            approveInitialApplication = ($.grep(perms, function(e){return e.module_name === 'approveInitiateApplication';}))[0],
+            rejectInitialApplication = ($.grep(perms, function(e){return e.module_name === 'rejectInitiateApplication';}))[0],
+            saveInitialApplication = ($.grep(perms, function(e){return e.module_name === 'saveInitiateApplication';}))[0];
 
         if (approveInitialApplication && approveInitialApplication['read_only'] === '0')
             $('#approveApplication').hide();

@@ -1,7 +1,6 @@
 (function( $ ) {
     jQuery(document).ready(function() {
         getWorkflows();
-        getLoanPurposes();
         getApplicationSettings();
     });
 
@@ -16,14 +15,19 @@
             success: function (response) {
                 recommendation = response.data;
                 if (recommendation){
-                    $('#user-list').val($("#user-list option:contains('"+recommendation.client+"')").val());
-                    $('#user-list').prop('disabled', true);
+                    let $user_list = $('#user-list');
+                    $user_list.val($user_list.find("option:contains('"+recommendation.client+"')").val());
+                    $user_list.prop('disabled', true);
+                    let client = ($user_list.val() !== '-- Choose Client --')? JSON.parse(decodeURIComponent($user_list.val())) : false;
+                    if (client) {
+                        $('#client-text').html(`<a href="/client-info?id=${client.ID}">
+                            <strong>${client.fullname}</strong> (${client.email})</a>`);
+                    }
                     $('#term').val(numberToCurrencyformatter(recommendation.tenor));
                     $('#amount').val(numberToCurrencyformatter(recommendation.loan_amount));
                     $('#interest-rate').val(numberToCurrencyformatter(recommendation.interest_rate));
                     $('#repayment-date').val(recommendation.first_repayment_date);
                     $('#amortization').val('standard').trigger('change');
-                    $('#client-text').text(recommendation.client);
                     $('#loan-amount-text').text(`₦${numberToCurrencyformatter(recommendation.loan_amount)}`);
                     $('#credit-score-text').text(`${recommendation.credit_score}%`);
                     $('#default-frequency-text').text(numberToCurrencyformatter(recommendation.defaults));
@@ -67,19 +71,6 @@
                 $.each(response.response, function (key, val) {
                     $("#workflows").append('<option value = "'+val.ID+'"">'+val.name+'</option>');
                 });
-            }
-        });
-    }
-
-    function getLoanPurposes(){
-        $.ajax({
-            type: "GET",
-            url: "/settings/application/loan_purpose",
-            success: function (response) {
-                $.each(response.response, function (key, val) {
-                    $("#purposes").append('<option value = "'+val.ID+'"">'+val.title+'</option>');
-                });
-                $("#purposes").select2();
             }
         });
     }
@@ -250,51 +241,68 @@
                 for (let i = 0; i < rows.length; i++) {
                     let invoice = {},
                         row = $("<tr />"),
-                        cells = rows[i].split(",");
+                        cells = (rows[i].split(",").length > 7)? rows[i].split(",").slice(0, 7) : rows[i].split(",");
                     if (i === 0) {
                         cells = ["PRINCIPAL","INTEREST","BALANCE"];
                     } else if (i === 1) {
                         cells = ["INVOICE DATE","COLLECTION DATE","AMOUNT","INVOICE DATE","COLLECTION DATE","AMOUNT","AMOUNT"];
                     }
-                    if (cells.join(' ').length > 10){
+                    if (cells.join(' ').length > 10) {
                         for (let j = 0; j < cells.length; j++) {
+                            cells[j] = (cells[j]) ? (cells[j]).trim() : cells[j];
+                            if (!cells[j])
+                                continue;
                             let cell = $("<td />");
-                            if (i === 0){
+                            if (i === 0) {
                                 if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
                                     cell = $("<td colspan='3' />");
                             }
-                            if (cells[j]){
-                                if (i > 1){
-                                    if (j === 0 || j === 1 || j === 3 || j === 4){
-                                        cell.html('<input id="invoice-'+i+'-'+j+'" type="date" value="'+cells[j]+'" />');
-                                    } else {
-                                        cell.html('<span id="invoice-'+i+'-'+j+'">'+cells[j]+'</span>');
-                                    }
+                            if (i > 1) {
+                                if (j === 0 || j === 1 || j === 3 || j === 4) {
+                                    cell.html('<input id="invoice-' + i + '-' + j + '" type="date" value="' + cells[j] + '" />');
                                 } else {
-                                    cell.html(cells[j]);
+                                    cell.html('<span id="invoice-' + i + '-' + j + '">' + cells[j] + '</span>');
                                 }
+                            } else {
+                                cell.html(cells[j]);
                             }
                             row.append(cell);
-                            switch (j){
-                                case 0:{ invoice.payment_create_date = cells[j]; break; }
-                                case 1:{ invoice.payment_collect_date = cells[j]; break; }
-                                case 2:{
+                            switch (j) {
+                                case 0: {
+                                    invoice.payment_create_date = cells[j];
+                                    break;
+                                }
+                                case 1: {
+                                    invoice.payment_collect_date = cells[j];
+                                    break;
+                                }
+                                case 2: {
                                     if (i > 1)
                                         loan_amount = (loan_amount + parseFloat(cells[j])).round(2);
                                     invoice.payment_amount = cells[j];
                                     break;
                                 }
-                                case 3:{ invoice.interest_create_date = cells[j]; break; }
-                                case 4:{ invoice.interest_collect_date = cells[j]; break; }
-                                case 5:{ invoice.interest_amount = cells[j]; break; }
-                                case 6:{ invoice.balance = cells[j]; break; }
+                                case 3: {
+                                    invoice.interest_create_date = cells[j];
+                                    break;
+                                }
+                                case 4: {
+                                    invoice.interest_collect_date = cells[j];
+                                    break;
+                                }
+                                case 5: {
+                                    invoice.interest_amount = cells[j];
+                                    break;
+                                }
+                                case 6: {
+                                    invoice.balance = cells[j];
+                                    break;
+                                }
                             }
                         }
                     }
-                    if (i>1 && cells.length === 7){
-                        if (Object.keys(invoice).length > 0)
-                            schedule.push(invoice);
-                    }
+                    if (i>1 && cells.length === 7 && !$.isEmptyObject(invoice))
+                        schedule.push(invoice);
                     table.append(row);
                 }
                 $dvCSV.html('');
@@ -319,51 +327,68 @@
                         for (let i = 0; i < rows.length; i++) {
                             let invoice = {},
                                 row = $("<tr />"),
-                                cells = rows[i].split(",");
+                                cells = (rows[i].split(",").length > 7)? rows[i].split(",").slice(0, 7) : rows[i].split(",");
                             if (i === 0) {
                                 cells = ["PRINCIPAL","INTEREST","BALANCE"];
                             } else if (i === 1) {
                                 cells = ["INVOICE DATE","COLLECTION DATE","AMOUNT","INVOICE DATE","COLLECTION DATE","AMOUNT","AMOUNT"];
                             }
-                            if (cells.join(' ').length > 10){
+                            if (cells.join(' ').length > 10) {
                                 for (let j = 0; j < cells.length; j++) {
+                                    cells[j] = (cells[j]) ? (cells[j]).trim() : cells[j];
+                                    if (!cells[j])
+                                        continue;
                                     let cell = $("<td />");
-                                    if (i === 0){
+                                    if (i === 0) {
                                         if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
                                             cell = $("<td colspan='3' />");
                                     }
-                                    if (cells[j]){
-                                        if (i > 1){
-                                            if (j === 0 || j === 1 || j === 3 || j === 4){
-                                                cell.html('<input id="invoice-'+i+'-'+j+'" type="date" value="'+cells[j]+'" />');
-                                            } else {
-                                                cell.html('<span id="invoice-'+i+'-'+j+'">'+cells[j]+'</span>');
-                                            }
+                                    if (i > 1) {
+                                        if (j === 0 || j === 1 || j === 3 || j === 4) {
+                                            cell.html('<input id="invoice-' + i + '-' + j + '" type="date" value="' + cells[j] + '" />');
                                         } else {
-                                            cell.html(cells[j]);
+                                            cell.html('<span id="invoice-' + i + '-' + j + '">' + cells[j] + '</span>');
                                         }
+                                    } else {
+                                        cell.html(cells[j]);
                                     }
                                     row.append(cell);
-                                    switch (j){
-                                        case 0:{ invoice.payment_create_date = cells[j]; break; }
-                                        case 1:{ invoice.payment_collect_date = cells[j]; break; }
-                                        case 2:{
+                                    switch (j) {
+                                        case 0: {
+                                            invoice.payment_create_date = cells[j];
+                                            break;
+                                        }
+                                        case 1: {
+                                            invoice.payment_collect_date = cells[j];
+                                            break;
+                                        }
+                                        case 2: {
                                             if (i > 1)
                                                 loan_amount = (loan_amount + parseFloat(cells[j])).round(2);
                                             invoice.payment_amount = cells[j];
                                             break;
                                         }
-                                        case 3:{ invoice.interest_create_date = cells[j]; break; }
-                                        case 4:{ invoice.interest_collect_date = cells[j]; break; }
-                                        case 5:{ invoice.interest_amount = cells[j]; break; }
-                                        case 6:{ invoice.balance = cells[j]; break; }
+                                        case 3: {
+                                            invoice.interest_create_date = cells[j];
+                                            break;
+                                        }
+                                        case 4: {
+                                            invoice.interest_collect_date = cells[j];
+                                            break;
+                                        }
+                                        case 5: {
+                                            invoice.interest_amount = cells[j];
+                                            break;
+                                        }
+                                        case 6: {
+                                            invoice.balance = cells[j];
+                                            break;
+                                        }
                                     }
                                 }
                             }
-                            if (i>1 && cells.length === 7){
-                                if (Object.keys(invoice).length > 0)
-                                    schedule.push(invoice);
-                            }
+                            if (i>1 && cells.length === 7 && !$.isEmptyObject(invoice))
+                                schedule.push(invoice);
                             table.append(row);
                         }
                         $dvCSV.html('');
@@ -385,7 +410,6 @@
                 if (validation.status){
                     let obj = {},
                         schedule = validation.data,
-                        $purposes = $('#purposes'),
                         $user_list = $('#user-list'),
                         user = ($user_list.val() !== '-- Choose Client --')? JSON.parse(decodeURIComponent($user_list.val())) : false;
                     obj.userID = user.ID;
@@ -394,9 +418,8 @@
                     obj.interest_rate = currencyToNumberformatter($('#interest-rate').val());
                     obj.duration = currencyToNumberformatter($('#term').val());
                     obj.repayment_date = $('#repayment-date').val();
-                    obj.loan_purpose = $purposes.val();
                     obj.agentID = (JSON.parse(localStorage.getItem("user_obj"))).ID;
-                    if (!user || isNaN(obj.workflowID) || !obj.loan_amount || !obj.interest_rate || !obj.duration || $purposes.val() === '-- Choose Loan Purpose --')
+                    if (!user || isNaN(obj.workflowID) || !obj.loan_amount || !obj.interest_rate || !obj.duration)
                         return notification('Kindly fill all required fields!','','warning');
                     if (parseFloat(obj.duration) < settings.tenor_min || parseFloat(obj.duration) > settings.tenor_max)
                         return notification(`Minimum tenor is ${numberToCurrencyformatter(settings.tenor_min)} (month) 
@@ -436,14 +459,13 @@
                             preapproved_loan: preapproved_loan
                         },
                         'success': function (data) {
-                            $purposes.val("");
                             $user_list.val("");
                             $('#workflows').val("");
                             $('#amount').val("");
                             $('#interest-rate').val("");
                             $('#term').val("");
                             $('#repayment-date').val("");
-                            uploadSchedule(schedule, data.ID);
+                            uploadSchedule(schedule, data.ID, user.email);
                         },
                         'error': function (err) {
                             console.log(err);
@@ -459,7 +481,6 @@
 
         $("#rejectApplication").click(function () {
             let obj = {},
-                $purposes = $('#purposes'),
                 $user_list = $('#user-list'),
                 $workflow = $('#workflows'),
                 user = ($user_list.val() !== '-- Choose Client --')? JSON.parse(decodeURIComponent($user_list.val())) : false,
@@ -471,8 +492,6 @@
             obj.interest_rate = currencyToNumberformatter($('#interest-rate').val());
             obj.duration = currencyToNumberformatter($('#term').val());
             obj.repayment_date = $('#repayment-date').val();
-            if ($purposes.val() !== '-- Choose Loan Purpose --')
-                obj.loan_purpose = $purposes.val();
 
             let preapproved_loan = Object.assign({}, obj);
             preapproved_loan.client = recommendation.client;
@@ -496,7 +515,6 @@
                     preapproved_loan: preapproved_loan
                 },
                 'success': function (data) {
-                    $purposes.val("");
                     $user_list.val("");
                     $workflow.val("");
                     $('#amount').val("");
@@ -504,7 +522,7 @@
                     $('#term').val("");
                     $('#repayment-date').val("");
                     $('#wait').hide();
-                    notification('Loan Application rejected successfully!','','success');
+                    notification('Offer rejected successfully!','','success');
                     window.location.href = '/all-suggested-loans';
                 },
                 'error': function (err) {
@@ -516,14 +534,14 @@
         });
     }
 
-    function uploadSchedule(schedule, application_id) {
+    function uploadSchedule(schedule, application_id, email) {
         $.ajax({
             'url': '/user/application/schedule/'+application_id,
             'type': 'post',
             'data': {schedule:schedule},
             'success': function (data) {
                 $('#wait').hide();
-                notification('Loan Application approved successfully!','','success');
+                notification(`Offer successfully sent to ${email}`,'','success');
                 window.location.href = '/all-suggested-loans';
             },
             'error': function (err) {

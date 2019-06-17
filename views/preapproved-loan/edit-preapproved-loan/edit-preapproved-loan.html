@@ -45,7 +45,15 @@
         .pb-0{
             text-align: center;
         }
-        .alert-success, .alert-success p {color: #155724;}
+        .alert-success, .alert-success p {
+            color: #155724;
+        }
+        #client-text a {
+            color: #212529;
+        }
+        #client-text:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -88,7 +96,7 @@
                 <div id="user-form" class="col-xs-12 col-sm-12">
                     <div class="card">
                         <div class="card-header">
-                            <strong id="client-text"></strong> <small> Loan Information</small>
+                            <span id="client-text"></span> <small> Loan Information</small>
                         </div>
                         <div class="card-body card-block">
                             <div style="padding: 20px;">
@@ -215,15 +223,6 @@
                                                             <select id="amortization" class="form-control" required="required">
                                                                 <option value="custom" selected="selected">Custom (Manual)</option>
                                                                 <option value="standard">Standard (Automatic)</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-sm-6 form-group">
-                                                        <label class="col-form-label">Select Purpose Of Loan <strong style="color:red"> *</strong></label>
-                                                        <div class="input-group">
-                                                            <div class="input-group-addon"><i class="fa fa-user"></i></div>
-                                                            <select id="purposes" class="form-control" required="required">
-                                                                <option selected="selected">-- Choose Loan Purpose --</option>
                                                             </select>
                                                         </div>
                                                     </div>

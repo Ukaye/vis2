@@ -821,7 +821,7 @@ function onRemoveItemReq(value) {
             text: "Once deleted, you will not be able to undo this action!",
             icon: "warning",
             buttons: true,
-            dangerMode: true,
+            dangerMode: true
         })
         .then((willDelete) => {
             if (willDelete) {
@@ -856,7 +856,7 @@ function onRemoveItemReview(value) {
             text: "Once deleted, you will not be able to undo this action!",
             icon: "warning",
             buttons: true,
-            dangerMode: true,
+            dangerMode: true
         })
         .then((willDelete) => {
             if (willDelete) {
@@ -891,7 +891,7 @@ function onRemoveItemPost(value) {
             text: "Once deleted, you will not be able to undo this action!",
             icon: "warning",
             buttons: true,
-            dangerMode: true,
+            dangerMode: true
         })
         .then((willDelete) => {
             if (willDelete) {

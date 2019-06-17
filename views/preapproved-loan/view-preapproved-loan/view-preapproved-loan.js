@@ -15,8 +15,14 @@
             success: function (response) {
                 preapproved_loan = response.data;
                 if (preapproved_loan){
-                    $('#user-list').val($("#user-list option:contains('"+preapproved_loan.client+"')").val());
-                    $('#user-list').prop('disabled', true);
+                    let $user_list = $('#user-list');
+                    $user_list.val($user_list.find("option:contains('"+preapproved_loan.client+"')").val());
+                    $user_list.prop('disabled', true);
+                    let client = ($user_list.val() !== '-- Choose Client --')? JSON.parse(decodeURIComponent($user_list.val())) : false;
+                    if (client) {
+                        $('#client-text').html(`<a href="/client-info?id=${client.ID}">
+                            <strong>${client.fullname}</strong> (${client.email})</a>`);
+                    }
                     $('#workflows').val(preapproved_loan.workflowID);
                     $('#workflows').prop('disabled', true);
                     $('#amount').val(numberToCurrencyformatter(preapproved_loan.loan_amount));
@@ -27,7 +33,6 @@
                     $('#term').prop('disabled', true);
                     $('#repayment-date').val(preapproved_loan.repayment_date);
                     $('#repayment-date').prop('disabled', true);
-                    $('#client-text').text(preapproved_loan.client);
                     $('#loan-amount-text').text(`₦${numberToCurrencyformatter(preapproved_loan.loan_amount)}`);
                     $('#credit-score-text').text(`${preapproved_loan.credit_score}%`);
                     $('#default-frequency-text').text(numberToCurrencyformatter(preapproved_loan.defaults));
@@ -166,7 +171,7 @@
             text: "Once deleted, this process is not reversible!",
             icon: "warning",
             buttons: true,
-            dangerMode: true,
+            dangerMode: true
         })
             .then((yes) => {
                 if (yes) {
@@ -202,7 +207,7 @@
             text: "Once disbursed, this process is not reversible!",
             icon: "warning",
             buttons: true,
-            dangerMode: true,
+            dangerMode: true
         })
             .then((yes) => {
                 if (yes) {

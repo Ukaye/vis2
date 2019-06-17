@@ -27,6 +27,14 @@ function currencyToNumberformatter(value) {
     return parseFloat(value.replace(/,/g, ''));
 }
 
+function numbersOnly(value) {
+    if (!value)
+        return value;
+    if (value.constructor === 'String'.constructor)
+        value = parseFloat(value);
+    return value;
+};
+
 function notification(title,text,type) {
     return swal({
         title: title,

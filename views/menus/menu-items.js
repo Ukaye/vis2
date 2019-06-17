@@ -1,9 +1,8 @@
 // let $ = jQuery.noConflict();
 $(document).ready(function () {
     includeHTML();
-    const $body = $('body');
-    $body.delegate('.locked', 'click', function (event) {
-        return swal({
+  $body.delegate('.locked', 'click', function(event) {
+    return swal({
             title: 'You do not have licence for this module!',
             text: 'Please contact your admin to purchase the necessary licence.',
             icon: 'warning',
@@ -110,6 +109,9 @@ function includeHTML() {
     check();
     read_write();
     loadMenus();
+    let tenant = JSON.parse(localStorage.user_obj).tenant || 'Finratus';
+    document.title = `${tenant} ${(location.pathname.replace(/[^a-zA-Z0-9]/g,' ')).trim()}`;
+    $('#left-panel').find('a.navbar-brand:first').text(tenant);
 }
 
 function logout() {

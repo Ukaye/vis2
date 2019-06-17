@@ -1,7 +1,7 @@
 [
   {
     "name": "ACCESS BANK PLC",
-    "authorization": "OTP",
+    "authorization": "FORM",
     "code": "044"
   },
   {
@@ -55,6 +55,11 @@
     "code": "082"
   },
   {
+    "name": "PROVIDUS BANK",
+    "authorization": "FORM",
+    "code": "101"
+  },
+  {
     "name": "SKYE BANK PLC",
     "authorization": "FORM",
     "code": "076"
@@ -73,6 +78,11 @@
     "name": "STERLING BANK PLC",
     "authorization": "FORM",
     "code": "232"
+  },
+  {
+    "name": "SUNTRUST BANK",
+    "authorization": "FORM",
+    "code": "100"
   },
   {
     "name": "UNION BANK OF NIGERIA PLC",

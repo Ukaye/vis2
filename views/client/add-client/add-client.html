@@ -127,17 +127,15 @@
             <div class="row">
                 <div class="col-xs-12 col-sm-12">
                     <div class="row">
-                        <div class="col-lg-7"></div>
-                        <div class="col-lg-1">
-                            <div class="row">
-                                <label class="form-control-label">
-                                    Client Type <span class="text-danger">*</span>
-                                </label>
-                            </div>
+                        <div class="col-lg-2">
+                            <label class="form-control-label">
+                                Client Type <span class="text-danger">*</span>
+                            </label>
                         </div>
-                        <div class="col-lg-4">
+                        <div class="col-lg-10">
                             <select class="form-control" id="client_type" title="client_type">
-                                <option value="individual" selected="selected">Individual</option>
+                                <option selected="selected">-- Select Client Type --</option>
+                                <option value="individual">Individual</option>
                                 <option value="business_individual">Business Individual</option>
                                 <option value="corporate">Corporate</option>
                             </select>
@@ -174,7 +172,7 @@
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label" for="phone3">Phone Number</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="phone3" class="form-control imp" placeholder="555-555-5555" >
+                                                        <input type="number" id="phone3" class="form-control imp" min=1 placeholder="555-555-5555" >
                                                     </div>
                                                 </div>
                                                 <div class="form-group col-sm-4 col-md-4">
@@ -198,7 +196,7 @@
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label" for="postcode3">Postal Code</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="postcode3" class="form-control" placeholder="" >
+                                                        <input type="number" id="postcode3" min=1 class="form-control" placeholder="" >
                                                     </div>
                                                 </div>
                                                 <div class="form-group col-sm-4 col-md-4">
@@ -224,7 +222,7 @@
                                             <h3>Business Information</h3><hr><br>
                                             <div class="row">
                                                 <div class="form-group col-sm-4 col-md-4">
-                                                    <label class="form-control-label" for="business_name">Business Name</label>
+                                                    <label class="form-control-label" for="business_name">Business Name<span class="text-danger">*</span></label>
                                                     <div class="input-group">
                                                         <input type="text" id="business_name" class="form-control imp" placeholder="Enter business name" >
                                                     </div>
@@ -232,7 +230,7 @@
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label" for="business_phone">Business Phone Number</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="business_phone" class="form-control imp" placeholder="555-555-5555" >
+                                                        <input type="number" id="business_phone" class="form-control imp" placeholder="555-555-5555" min=1>
                                                     </div>
                                                 </div>
                                                 <div class="form-group col-sm-4 col-md-4">
@@ -244,7 +242,7 @@
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label" for="tax_id">Tax ID Number</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="tax_id" class="form-control imp" placeholder="555-555-5555" >
+                                                        <input type="number" id="tax_id" class="form-control imp" placeholder="555-555-5555" min=1>
                                                     </div>
                                                 </div>
                                                 <div class="form-group col-sm-4 col-md-4">
@@ -368,6 +366,12 @@
                                                         </select>
                                                     </div>
                                                 </div>
+                                                <div id="industry2_div" class="form-group col-sm-4 col-md-4" style="display: none;">
+                                                    <label class="form-control-label" for="industry2_">Specify Industry</label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="industry2_" class="form-control imp" placeholder="Enter Industry" >
+                                                    </div>
+                                                </div>
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label" for="registration_date">Registration Date</label>
                                                     <div class="input-group">
@@ -389,7 +393,7 @@
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label" for="tax_id">Registration Number</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="registration_number" class="form-control imp" placeholder="5555555555" >
+                                                        <input type="number" id="registration_number" class="form-control imp" placeholder="5555555555" min=1>
                                                     </div>
                                                 </div>
                                             </div>
@@ -457,7 +461,7 @@
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label">BVN</label>
                                                     <div class="input-group">
-                                                        <input id="bvn2" class="form-control" type="number" tabindex="5.2" />
+                                                        <input id="bvn2" class="form-control" type="number" tabindex="5.2" min=1/>
                                                     </div>
                                                 </div>
                                             </div>
@@ -473,7 +477,7 @@
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label">Account</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="account2" class="form-control" >
+                                                        <input type="number" id="account2" class="form-control" min=1>
                                                     </div>
                                                 </div>
                                             </div>
@@ -495,7 +499,7 @@
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label">Phone Number <span class="text-danger">*</span></label>
                                                     <div class="input-group">
-                                                        <input type="number" id="phone2" class="form-control imp" placeholder="555-555-5555" >
+                                                        <input type="number" id="phone2" class="form-control imp" placeholder="555-555-5555" min=1>
                                                     </div>
                                                 </div>
                                                 <div class="form-group col-sm-4 col-md-4">
@@ -535,7 +539,7 @@
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label">Year(s) in Market</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="market_years" class="form-control imp" placeholder="10" >
+                                                        <input type="text" id="market_years" class="form-control imp" placeholder="10" min=1>
                                                     </div>
                                                 </div>
                                                 <div class="form-group col-sm-4 col-md-4">
@@ -557,19 +561,19 @@
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label">Full Name</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="kin_fullname" class="form-control imp" placeholder="Enter name">
+                                                        <input type="text" id="kin_fullname" class="form-control" placeholder="Enter name">
                                                     </div>
                                                 </div>
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label">Phone Number</label>
                                                     <div class="input-group">
-                                                        <input type="number" id="kin_phone" class="form-control imp" placeholder="555-555-5555" >
+                                                        <input type="number" id="kin_phone" class="form-control" placeholder="555-555-5555" min=1>
                                                     </div>
                                                 </div>
                                                 <div class="form-group col-sm-4 col-md-4">
                                                     <label class="form-control-label">Relationship</label>
                                                     <div class="input-group">
-                                                        <input type="text" id="kin_relationship" class="form-control imp" placeholder="Enter relationship">
+                                                        <input type="text" id="kin_relationship" class="form-control" placeholder="Enter relationship">
                                                     </div>
                                                 </div>
                                             </div>
@@ -586,7 +590,7 @@
                         </div>
                     </div>
                 </div>
-                <div id="user-form" class="col-xs-12 col-sm-12">
+                <div id="user-form" class="col-xs-12 col-sm-12" style="display: none;">
                     <div class="card">
                         <div class="card-header">
                             <strong id="new_edit">Add Client Data (Individual)</strong> <small id="def_name"> Client Information</small>
@@ -695,7 +699,7 @@
                                                     <div class="form-group col-sm-4 col-md-4">
                                                         <label class="form-control-label">BVN</label>
                                                         <div class="input-group">
-                                                            <input id="bvn" class="form-control" type="number" tabindex="5.2" />
+                                                            <input id="bvn" class="form-control" type="number" tabindex="5.2" min=1/>
                                                             <!-- ngIf: idForm.user.$dirty -->
                                                         </div>
                                                     </div>
@@ -713,7 +717,7 @@
                                                     <div class="form-group col-sm-4 col-md-4">
                                                         <label class="form-control-label">Account</label>
                                                         <div class="input-group">
-                                                            <input type="number" id="account" class="form-control" >
+                                                            <input type="number" id="account" class="form-control" min=1>
                                                             <!-- ngIf: idForm.user.$dirty -->
                                                         </div>
                                                     </div>
@@ -739,7 +743,7 @@
                                                     <div class="form-group col-sm-4 col-md-4">
                                                         <label class="form-control-label">Phone Number <span class="text-danger">*</span></label>
                                                         <div class="input-group">
-                                                            <input type="number" id="phone" class="form-control imp" placeholder="555-555-5555" >
+                                                            <input type="number" id="phone" class="form-control imp" placeholder="555-555-5555" min=1>
                                                             <!-- ngIf: idForm.home_phone.$dirty -->
                                                         </div>
                                                     </div>
@@ -763,7 +767,7 @@
                                                     <div class="form-group col-sm-4 col-md-4">
                                                         <label class="form-control-label">Postal Code</label>
                                                         <div class="input-group">
-                                                            <input type="text" id="postcode" class="form-control" placeholder="" >
+                                                            <input type="number" id="postcode" class="form-control" placeholder="" min=1>
                                                             <!-- ngIf: idForm.home_phone.$dirty -->
                                                         </div>
                                                     </div>
@@ -803,6 +807,34 @@
                                     </div>
                                     <div class="panel push-down">
                                         <div class="panel-body">
+                                            <div class="example-box-wrapper">
+                                                <h3>Next of Kin Information</h3><hr><br>
+                                                <div class="row">
+                                                    <div class="form-group col-sm-4 col-md-4">
+                                                        <label class="form-control-label">Full Name</label>
+                                                        <div class="input-group">
+                                                            <input type="text" id="ind_kin_fullname" class="form-control" placeholder="Enter name">
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group col-sm-4 col-md-4">
+                                                        <label class="form-control-label">Phone Number</label>
+                                                        <div class="input-group">
+                                                            <input type="number" id="ind_kin_phone" class="form-control" placeholder="555-555-5555" >
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group col-sm-4 col-md-4">
+                                                        <label class="form-control-label">Relationship</label>
+                                                        <div class="input-group">
+                                                            <input type="text" id="ind_kin_relationship" class="form-control" placeholder="Enter relationship">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <hr/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="panel push-down">
+                                        <div class="panel-body">
 
                                             <div class="example-box-wrapper">
                                                 <h3>Uploads</h3><hr><br>
@@ -815,7 +847,7 @@
                                                             <label for="file-upload" class="custom-file-upload">
                                                                 <i class="fa fa-cloud-upload"></i> Upload Customer Image
                                                             </label>
-                                                            <input id="file-upload" class="image admin-img" type="file" tabindex="6">
+                                                            <input id="file-upload" class="image admin-img" type="file" tabindex="6" accept=".jpg,.jpeg, .png">
                                                             <label id="path"></label><br>
                                                             <small><strong>Image must be JPG/JPEG or PNG format, maximum 2MB</strong></small>
 
@@ -834,7 +866,7 @@
                                                             <label for="file-upload-signature" class="custom-file-upload">
                                                                 <i class="fa fa-cloud-upload"></i> Upload ID Card
                                                             </label>
-                                                            <input id="file-upload-idcard" class="image admin-img" type="file" tabindex="7">
+                                                            <input id="file-upload-idcard" class="image admin-img" type="file" tabindex="7" accept=".jpg,.jpeg, .png">
                                                             <label id="path-idcard"></label><br>
                                                             <small><strong>Image must be JPG/JPEG or PNG format, maximum 2MB</strong></small>
 
@@ -854,7 +886,7 @@
                                                             <label for="file-upload-signature" class="custom-file-upload">
                                                                 <i class="fa fa-cloud-upload"></i> Upload Signature
                                                             </label>
-                                                            <input id="file-upload-signature" class="image admin-img" type="file" tabindex="7">
+                                                            <input id="file-upload-signature" class="image admin-img" type="file" tabindex="7" accept=".jpg,.jpeg, .png">
                                                             <label id="path-signature"></label><br>
                                                             <small><strong>Image must be JPG/JPEG or PNG format, maximum 2MB</strong></small>
 
@@ -962,9 +994,9 @@
                                                         </div>
                                                     </div>
                                                     <div class="form-group col-sm-6 col-md-6">
-                                                        <label class="form-control-label">Salary</label>
+                                                        <label class="form-control-label">Salary <span class="text-danger">*</span></label>
                                                         <div class="input-group">
-                                                            <input type="number" min=1 id="salary" onkeyup="validateSalary()" class="form-control" placeholder="Enter Client's Salary" required="">
+                                                            <input type="text" id="salary" class="form-control imp" placeholder="Enter Client's Salary" required="">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1048,7 +1080,7 @@
                                                         <div class="form-group">
                                                             <label class="form-control-label">Years Known</label>
                                                             <div class="input-group">
-                                                                <input type="text" id="years_known" class="form-control" placeholder="Choose Number of Years">
+                                                                <input type="number" id="years_known" class="form-control" placeholder="Choose Number of Years" min=1>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1057,7 +1089,7 @@
                                                         <div class="form-group">
                                                             <label class="form-control-label">Phone</label>
                                                             <div class="input-group">
-                                                                <input type="number" id="guarantor_phone" class="form-control" placeholder="Enter Reference Phone Number">
+                                                                <input type="number" id="guarantor_phone" class="form-control" placeholder="Enter Reference Phone Number" min=1>
                                                             </div>
                                                         </div>
 

@@ -6,18 +6,31 @@ $(document).ready(function() {
 const urlParams = new URLSearchParams(window.location.search);
 const application_id = urlParams.get('id');
 
+let workflow,
+    application,
+    settings_obj = {
+        loan_requested_min: 1,
+        loan_requested_max: 100000000,
+        tenor_min: 1,
+        tenor_max: 60,
+        interest_rate_min: 1,
+        interest_rate_max: 1000
+    };
+
+$("#disbursement-fees").on("keyup", function () {
+    let val = $("#disbursement-fees").val();
+    $("#disbursement-fees").val(numberToCurrencyformatter(val));
+});
+
+$("#disbursement-vat").on("keyup", function () {
+    let val = $("#disbursement-vat").val();
+    $("#disbursement-vat").val(numberToCurrencyformatter(val));
+});
+
 function goToLoanRepayment() {
     window.location.href = '/loan-repayment?id='+application_id;
 }
 
-let settings_obj = {
-    loan_requested_min: 1,
-    loan_requested_max: 100000000,
-    tenor_min: 1,
-    tenor_max: 60,
-    interest_rate_min: 1,
-    interest_rate_max: 1000
-};
 function getApplicationSettings(application) {
     $('#wait').show();
     $.ajax({
@@ -39,14 +52,82 @@ function getApplicationSettings(application) {
                 if (settings_obj.interest_rate_max)
                     $('#interest_rate_max').text(numberToCurrencyformatter(settings_obj.interest_rate_max));
             }
+            getFeeSettings();
             initCSVUpload(application);
             initCSVUpload2(application, settings_obj);
         }
     });
 }
 
-let workflow,
-    application;
+function getFeeSettings() {
+    $.ajax({
+        type: "GET",
+        url: "/settings/fees",
+        success: function (data) {
+            let settings_obj = data.response,
+                $vat = $('#disbursement-vat'),
+                $fees = $('#disbursement-fees');
+            if (settings_obj) {
+                if (settings_obj.fees_type === 'automatic') {
+                    let fees = calculateFee(parseFloat(application.loan_amount), settings_obj.grades),
+                        vat = calculateVAT(fees, settings_obj.vat);
+                    $vat.val(numberToCurrencyformatter(vat));
+                    $fees.val(numberToCurrencyformatter(fees));
+                    $fees.prop('disabled', true);
+                } else {
+                    $fees.keyup(function (e) {
+                        let fees = currencyToNumberformatter(e.target.value),
+                            vat = calculateVAT(fees, settings_obj.vat);
+                        $vat.val(numberToCurrencyformatter(vat));
+                    });
+                }
+            }
+        }
+    });
+}
+
+function calculateVAT(fees, rate) {
+    return (fees * (parseFloat(rate) / 100)).round(2);
+}
+
+function calculateFee(amount, grades) {
+    let fee = 0,
+        grade = getFeeGrade(amount, grades);
+    if (grade) {
+        grade.amount = parseFloat(grade.amount);
+        switch (grade.type) {
+            case 'fixed': {
+                fee = grade.amount;
+                break;
+            }
+            case 'percentage': {
+                fee = (amount * (grade.amount / 100)).round(2);
+                break;
+            }
+        }
+    }
+    return fee;
+}
+
+function getFeeGrade(amount, grades) {
+    let result;
+    for (let i=0; i<grades.length; i++) {
+        let grade = grades[i];
+        if (amount >= parseFloat(grade.lower_limit) && amount <= parseFloat(grade.upper_limit)) {
+            result = grade;
+            break;
+        }
+    }
+    return result;
+}
+
+$('#fees-check').click(function () {
+    if ($('#fees-check').is(':checked')) {
+        $('#fees-div').show();
+    } else {
+        $('#fees-div').hide();
+    }
+});
 
 function loadApplication(user_id){
     $.ajax({
@@ -117,6 +198,7 @@ function loadApplication(user_id){
             }
 
             getApplicationSettings(application);
+            checkForExistingMandate(application);
         },
         'error': function (err) {
             console.log(err);
@@ -363,7 +445,7 @@ $('.cancel').on('click', function(e) {
         text: "Once cancelled, this process is not reversible!",
         icon: "warning",
         buttons: true,
-        dangerMode: true,
+        dangerMode: true
     })
         .then((yes) => {
             if (yes) {
@@ -691,41 +773,65 @@ function initCSVUpload(application) {
                     for (let i = 0; i < rows.length; i++) {
                         let invoice = {},
                             row = $("<tr />"),
-                            cells = rows[i].split(",");
+                            cells = (rows[i].split(",").length > 7)? rows[i].split(",").slice(0, 7) : rows[i].split(",");
                         if (i === 0) {
                             cells = ["PRINCIPAL","INTEREST","BALANCE"];
                         } else if (i === 1) {
                             cells = ["INVOICE DATE","COLLECTION DATE","AMOUNT","INVOICE DATE","COLLECTION DATE","AMOUNT","AMOUNT"];
                         }
-                        for (let j = 0; j < cells.length; j++) {
-                            let cell = $("<td />");
-                            if (i === 0){
-                                if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
-                                    cell = $("<td colspan='3' />");
-                            }
-                            if (cells[j]){
-                                if (i > 1){
-                                    if (j === 0 || j === 1 || j === 3 || j === 4){
-                                        cell.html('<input id="invoice-'+i+'-'+j+'" type="date" value="'+cells[j]+'" />');
+                        if (cells.join(' ').length > 10) {
+                            for (let j = 0; j < cells.length; j++) {
+                                cells[j] = (cells[j]) ? (cells[j]).trim() : cells[j];
+                                if (!cells[j])
+                                    continue;
+                                let cell = $("<td />");
+                                if (i === 0) {
+                                    if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
+                                        cell = $("<td colspan='3' />");
+                                }
+                                if (i > 1) {
+                                    if (j === 0 || j === 1 || j === 3 || j === 4) {
+                                        cell.html('<input id="invoice-' + i + '-' + j + '" type="date" value="' + cells[j] + '" />');
                                     } else {
-                                        cell.html('<span id="invoice-'+i+'-'+j+'">'+cells[j]+'</span>');
+                                        cell.html('<span id="invoice-' + i + '-' + j + '">' + cells[j] + '</span>');
                                     }
                                 } else {
                                     cell.html(cells[j]);
                                 }
-                            }
-                            row.append(cell);
-                            switch (j){
-                                case 0:{ invoice.payment_create_date = cells[j]; break; }
-                                case 1:{ invoice.payment_collect_date = cells[j]; break; }
-                                case 2:{ invoice.payment_amount = cells[j]; break; }
-                                case 3:{ invoice.interest_create_date = cells[j]; break; }
-                                case 4:{ invoice.interest_collect_date = cells[j]; break; }
-                                case 5:{ invoice.interest_amount = cells[j]; break; }
-                                case 6:{ invoice.balance = cells[j]; break; }
+                                row.append(cell);
+                                switch (j) {
+                                    case 0: {
+                                        invoice.payment_create_date = cells[j];
+                                        break;
+                                    }
+                                    case 1: {
+                                        invoice.payment_collect_date = cells[j];
+                                        break;
+                                    }
+                                    case 2: {
+                                        invoice.payment_amount = cells[j];
+                                        break;
+                                    }
+                                    case 3: {
+                                        invoice.interest_create_date = cells[j];
+                                        break;
+                                    }
+                                    case 4: {
+                                        invoice.interest_collect_date = cells[j];
+                                        break;
+                                    }
+                                    case 5: {
+                                        invoice.interest_amount = cells[j];
+                                        break;
+                                    }
+                                    case 6: {
+                                        invoice.balance = cells[j];
+                                        break;
+                                    }
+                                }
                             }
                         }
-                        if (i>1 && cells.length === 7)
+                        if (i>1 && cells.length === 7 && !$.isEmptyObject(invoice))
                             schedule.push(invoice);
                         table.append(row);
                     }
@@ -979,7 +1085,7 @@ function checkTotalDue() {
                 text: "All repayments for this loan application has been made",
                 icon: "warning",
                 buttons: true,
-                dangerMode: true,
+                dangerMode: true
             })
                 .then((yes) => {
                     if (yes) {
@@ -1008,6 +1114,14 @@ function disburse() {
     disbursal.disbursement_date = $('#disbursement-date').val();
     if (disbursal.funding_source === "-- Select a Funding Source --" || disbursal.disbursement_channel === "-- Select a Channel --" || !disbursal.disbursement_date)
         return notification('Kindly fill all required fields!','','warning');
+    if ($('#fees-check').is(':checked')) {
+        let $fees = $('#disbursement-fees');
+        if (!$fees.val())
+            return notification('The fees amount is not valid!','','warning');
+        disbursal.fees = currencyToNumberformatter($fees.val());
+        disbursal.vat = currencyToNumberformatter($('#disbursement-vat').val());
+        disbursal.fees_payment = $('#fees-payment').val();
+    }
     $('#wait').show();
     $('#disburseModal').modal('hide');
     $.ajax({
@@ -1130,51 +1244,68 @@ function initCSVUpload2(application, settings) {
             for (let i = 0; i < rows.length; i++) {
                 let invoice = {},
                     row = $("<tr />"),
-                    cells = rows[i].split(",");
+                    cells = (rows[i].split(",").length > 7)? rows[i].split(",").slice(0, 7) : rows[i].split(",");
                 if (i === 0) {
                     cells = ["PRINCIPAL","INTEREST","BALANCE"];
                 } else if (i === 1) {
                     cells = ["INVOICE DATE","COLLECTION DATE","AMOUNT","INVOICE DATE","COLLECTION DATE","AMOUNT","AMOUNT"];
                 }
-                if (cells.join(' ').length > 10){
+                if (cells.join(' ').length > 10) {
                     for (let j = 0; j < cells.length; j++) {
+                        cells[j] = (cells[j]) ? (cells[j]).trim() : cells[j];
+                        if (!cells[j])
+                            continue;
                         let cell = $("<td />");
-                        if (i === 0){
+                        if (i === 0) {
                             if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
                                 cell = $("<td colspan='3' />");
                         }
-                        if (cells[j]){
-                            if (i > 1){
-                                if (j === 0 || j === 1 || j === 3 || j === 4){
-                                    cell.html('<input id="invoice-'+i+'-'+j+'" type="date" value="'+cells[j]+'" />');
-                                } else {
-                                    cell.html('<span id="invoice-'+i+'-'+j+'">'+cells[j]+'</span>');
-                                }
+                        if (i > 1) {
+                            if (j === 0 || j === 1 || j === 3 || j === 4) {
+                                cell.html('<input id="invoice-' + i + '-' + j + '" type="date" value="' + cells[j] + '" />');
                             } else {
-                                cell.html(cells[j]);
+                                cell.html('<span id="invoice-' + i + '-' + j + '">' + cells[j] + '</span>');
                             }
+                        } else {
+                            cell.html(cells[j]);
                         }
                         row.append(cell);
-                        switch (j){
-                            case 0:{ invoice.payment_create_date = cells[j]; break; }
-                            case 1:{ invoice.payment_collect_date = cells[j]; break; }
-                            case 2:{
+                        switch (j) {
+                            case 0: {
+                                invoice.payment_create_date = cells[j];
+                                break;
+                            }
+                            case 1: {
+                                invoice.payment_collect_date = cells[j];
+                                break;
+                            }
+                            case 2: {
                                 if (i > 1)
                                     loan_amount = (loan_amount + parseFloat(cells[j])).round(2);
                                 invoice.payment_amount = cells[j];
                                 break;
                             }
-                            case 3:{ invoice.interest_create_date = cells[j]; break; }
-                            case 4:{ invoice.interest_collect_date = cells[j]; break; }
-                            case 5:{ invoice.interest_amount = cells[j]; break; }
-                            case 6:{ invoice.balance = cells[j]; break; }
+                            case 3: {
+                                invoice.interest_create_date = cells[j];
+                                break;
+                            }
+                            case 4: {
+                                invoice.interest_collect_date = cells[j];
+                                break;
+                            }
+                            case 5: {
+                                invoice.interest_amount = cells[j];
+                                break;
+                            }
+                            case 6: {
+                                invoice.balance = cells[j];
+                                break;
+                            }
                         }
                     }
                 }
-                if (i>1 && cells.length === 7){
-                    if (Object.keys(invoice).length > 0)
-                        schedule.push(invoice);
-                }
+                if (i>1 && cells.length === 7 && !$.isEmptyObject(invoice))
+                    schedule.push(invoice);
                 table.append(row);
             }
             $dvCSV.html('');
@@ -1199,46 +1330,67 @@ function initCSVUpload2(application, settings) {
                     for (let i = 0; i < rows.length; i++) {
                         let invoice = {},
                             row = $("<tr />"),
-                            cells = rows[i].split(",");
+                            cells = (rows[i].split(",").length > 7)? rows[i].split(",").slice(0, 7) : rows[i].split(",");
                         if (i === 0) {
                             cells = ["PRINCIPAL","INTEREST","BALANCE"];
                         } else if (i === 1) {
                             cells = ["INVOICE DATE","COLLECTION DATE","AMOUNT","INVOICE DATE","COLLECTION DATE","AMOUNT","AMOUNT"];
                         }
-                        for (let j = 0; j < cells.length; j++) {
-                            let cell = $("<td />");
-                            if (i === 0){
-                                if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
-                                    cell = $("<td colspan='3' />");
-                            }
-                            if (cells[j]){
-                                if (i > 1){
-                                    if (j === 0 || j === 1 || j === 3 || j === 4){
-                                        cell.html('<input id="invoice-'+i+'-'+j+'" type="date" value="'+cells[j]+'" />');
+                        if (cells.join(' ').length > 10) {
+                            for (let j = 0; j < cells.length; j++) {
+                                cells[j] = (cells[j]) ? (cells[j]).trim() : cells[j];
+                                if (!cells[j])
+                                    continue;
+                                let cell = $("<td />");
+                                if (i === 0) {
+                                    if (cells[j] === "PRINCIPAL" || cells[j] === "INTEREST")
+                                        cell = $("<td colspan='3' />");
+                                }
+                                if (i > 1) {
+                                    if (j === 0 || j === 1 || j === 3 || j === 4) {
+                                        cell.html('<input id="invoice-' + i + '-' + j + '" type="date" value="' + cells[j] + '" />');
                                     } else {
-                                        cell.html('<span id="invoice-'+i+'-'+j+'">'+cells[j]+'</span>');
+                                        cell.html('<span id="invoice-' + i + '-' + j + '">' + cells[j] + '</span>');
                                     }
                                 } else {
                                     cell.html(cells[j]);
                                 }
-                            }
-                            row.append(cell);
-                            switch (j){
-                                case 0:{ invoice.payment_create_date = cells[j]; break; }
-                                case 1:{ invoice.payment_collect_date = cells[j]; break; }
-                                case 2:{
-                                    if (i > 1)
-                                        loan_amount = (loan_amount + parseFloat(cells[j])).round(2);
-                                    invoice.payment_amount = cells[j];
-                                    break;
+                                row.append(cell);
+                                switch (j) {
+                                    case 0: {
+                                        invoice.payment_create_date = cells[j];
+                                        break;
+                                    }
+                                    case 1: {
+                                        invoice.payment_collect_date = cells[j];
+                                        break;
+                                    }
+                                    case 2: {
+                                        if (i > 1)
+                                            loan_amount = (loan_amount + parseFloat(cells[j])).round(2);
+                                        invoice.payment_amount = cells[j];
+                                        break;
+                                    }
+                                    case 3: {
+                                        invoice.interest_create_date = cells[j];
+                                        break;
+                                    }
+                                    case 4: {
+                                        invoice.interest_collect_date = cells[j];
+                                        break;
+                                    }
+                                    case 5: {
+                                        invoice.interest_amount = cells[j];
+                                        break;
+                                    }
+                                    case 6: {
+                                        invoice.balance = cells[j];
+                                        break;
+                                    }
                                 }
-                                case 3:{ invoice.interest_create_date = cells[j]; break; }
-                                case 4:{ invoice.interest_collect_date = cells[j]; break; }
-                                case 5:{ invoice.interest_amount = cells[j]; break; }
-                                case 6:{ invoice.balance = cells[j]; break; }
                             }
                         }
-                        if (i>1 && cells.length === 7)
+                        if (i>1 && cells.length === 7 && !$.isEmptyObject(invoice))
                             schedule.push(invoice);
                         table.append(row);
                     }
@@ -1258,7 +1410,9 @@ function initCSVUpload2(application, settings) {
         if (!schedule[0])
             return notification('Please preview the schedule to be uploaded.','','warning');
 
+        console.log(schedule)
         validateSchedule(schedule, function (validation) {
+            console.log(validation)
             if (validation.status){
                 if (loan_amount.round(2) < total_due_amount.round(2))
                     return notification('Total principal on the new schedule must be greater than Principal balance','','warning');
@@ -1350,7 +1504,7 @@ function initCSVUpload2(application, settings) {
             text: "Once started, this process is not reversible!",
             icon: "warning",
             buttons: true,
-            dangerMode: true,
+            dangerMode: true
         })
             .then((yes) => {
                 if (yes) {
@@ -1530,6 +1684,109 @@ function payOffLoan() {
         }
     });
 }
+
+function checkForExistingMandate(data) {
+    $.ajax({
+        type: 'GET',
+        url: `/preapproved-loan/get/${data.userID}?key=userID`,
+        success: function (response) {
+            let mandate = response.data;
+            const HOST = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
+            if (mandate && mandate.ID) {
+                $('#viewMandate').show();
+                $('#setupDirectDebit').hide();
+                $('#mandateId').text(mandate.mandateId || 'N/A');
+                $('#requestId').text(mandate.requestId || 'N/A');
+                $('#isActive').text(mandate.remita.isActive || 'N/A');
+                $('#remitaTransRef').text(mandate.remitaTransRef || 'N/A');
+                $('#registrationDate').text(mandate.remita.registrationDate || 'N/A');
+                $('#mandateLink').val(`${HOST}/offer?t=${encodeURIComponent(mandate.hash)}`);
+            } else {
+                let today = new Date(),
+                    date1 = new Date(data.schedule[0]['payment_collect_date']),
+                    date2 = new Date(data.schedule[0]['interest_collect_date']);
+                today.setHours(0,0,0,0);
+                if (date1 < today || date2 < today) {
+                    $('#setupDirectDebit').hide();
+                } else {
+                    $('#setupDirectDebit').show();
+                }
+                $('#viewMandate').hide();
+            }
+        }
+    });
+}
+
+function copyLink() {
+    let text = document.getElementById("mandateLink");
+    text.select();
+    document.execCommand("copy");
+    notification('Link copied!', text.value, 'success');
+}
+
+$("#setupDirectDebit").click(function () {
+    swal({
+        title: "Are you sure?",
+        text: "Once initiated, this process is not reversible!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true
+    })
+        .then((yes) => {
+            if (yes) {
+                let obj = {};
+                obj.userID = application.userID;
+                obj.workflowID = application.workflowID;
+                obj.loan_amount = application.loan_amount;
+                obj.interest_rate = application.interest_rate;
+                obj.duration = application.duration;
+                obj.repayment_date = application.repayment_date;
+                obj.agentID = (JSON.parse(localStorage.getItem("user_obj"))).ID;
+
+                let preapproved_loan = Object.assign({}, obj);
+                delete preapproved_loan.agentID;
+                preapproved_loan.client = application.fullname;
+                preapproved_loan.average_loan = '';
+                preapproved_loan.credit_score = '';
+                preapproved_loan.defaults = '';
+                preapproved_loan.invoices_due = '';
+                preapproved_loan.offer_duration = application.duration;
+                preapproved_loan.offer_loan_amount = application.loan_amount;
+                preapproved_loan.offer_first_repayment_date = application.repayment_date;
+                preapproved_loan.offer_interest_rate = application.interest_rate;
+                preapproved_loan.months_left = '';
+                preapproved_loan.salary_loan = '';
+                preapproved_loan.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
+
+                $('#wait').show();
+                $.ajax({
+                    'url': '/preapproved-loan/create',
+                    'type': 'post',
+                    'data': {
+                        application: obj,
+                        email: application.email,
+                        applicationID: application.ID,
+                        fullname: application.fullname,
+                        preapproved_loan: preapproved_loan
+                    },
+                    'success': function (response) {
+                        $('#wait').hide();
+                        if(response.status === 500) {
+                            notification('No internet connection', '', 'error');
+                        } else {
+                            notification(`Offer successfully sent to ${application.email}`,'','success');
+                            window.location.reload();
+                        }
+                    },
+                    'error': function (err) {
+                        console.log(err);
+                        $('#wait').hide();
+                        notification('No internet connection','','error');
+                    }
+                });
+            }
+        });
+});
 
 function read_write_1(){
     let perms = JSON.parse(localStorage.getItem("permissions")),

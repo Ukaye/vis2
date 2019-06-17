@@ -1,4 +1,4 @@
-var table = {},
+let table = {},
     $wait = $('#wait');
 $(document).ready(function () {
     bindDataTable();
@@ -98,7 +98,7 @@ function bindDataTable() {
                             return `<span class="badge badge-danger">Rejected</span>`
                         }
                         case 1: {
-                            return '<span class="badge badge-primary">Approved</span>'
+                            return '<span class="badge badge-primary">Awaiting Acceptance</span>'
                         }
                         case 2: {
                             return '<span class="badge badge-success">Accepted</span>'
@@ -155,7 +155,7 @@ function disburse() {
         text: "Once disbursed, this process is not reversible!",
         icon: "warning",
         buttons: true,
-        dangerMode: true,
+        dangerMode: true
     })
         .then((yes) => {
             if (yes) {
@@ -166,9 +166,19 @@ function disburse() {
                     'type': 'post',
                     'data': disbursal,
                     'success': function (data) {
-                        $('#wait').hide();
-                        notification('Loan disbursed successfully','','success');
-                        window.location.reload();
+                        $.ajax({
+                            'url': `/preapproved-loan/delete/${preapproved_loan.ID}`,
+                            'type': 'get',
+                            'success': function (data) {
+                                $('#wait').hide();
+                                notification('Loan disbursed successfully','','success');
+                                window.location.reload();
+                            },
+                            'error': function (err) {
+                                console.log(err);
+                                notification('No internet connection','','error');
+                            }
+                        });
                     },
                     'error': function (err) {
                         $('#wait').hide();
@@ -185,7 +195,7 @@ function deletePreapprovedLoan(id) {
         text: "Once deleted, this process is not reversible!",
         icon: "warning",
         buttons: true,
-        dangerMode: true,
+        dangerMode: true
     })
         .then((yes) => {
             if (yes) {

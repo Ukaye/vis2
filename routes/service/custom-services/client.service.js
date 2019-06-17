@@ -1,5 +1,6 @@
 const axios = require('axios'),
     moment = require('moment'),
+    db = require('../../../db'),
     express = require('express'),
     router = express.Router(),
     helperFunctions = require('../../../helper-functions');
@@ -39,6 +40,7 @@ router.post('/mandate/setup', function (req, res, next) {
         amount = req.body.amount,
         account = req.body.account,
         fullname = req.body.fullname,
+        authorization = req.body.authorization,
         application_id = req.body.application_id,
         date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
         query = `INSERT INTO remita_mandates Set ?`;
@@ -60,8 +62,9 @@ router.post('/mandate/setup', function (req, res, next) {
                 mandateId: setup_response.mandateId,
                 requestId: setup_response.requestId
             };
-            helperFunctions.authorizeMandate(authorize_payload, function (authorization_response) {
-                if (authorization_response && authorization_response.remitaTransRef) {
+          helperFunctions.authorizeMandate(authorize_payload, authorization, function (authorization_response) {
+                if (authorization_response && authorization_response.remitaTransRef){
+                    payload.authParams = JSON.stringify(authorization_response.authParams);
                     payload.remitaTransRef = authorization_response.remitaTransRef;
                     payload.mandateId = setup_response.mandateId;
                     payload.applicationID = application_id;
@@ -78,23 +81,13 @@ router.post('/mandate/setup', function (req, res, next) {
                         }
                         const endpoint = `/core-service/post?query=${query}`,
                             url = `${HOST}${endpoint}`;
-                        axios.post(url, payload)
-                            .then(function (remita_response) {
+                            db.query(query, payload, function (error, remita_response) {
+                            if(error) {
+                                res.send({status: 500, error: error, response: null});
+                            } else {
                                 res.send(authorization_response);
-                            }, err => {
-                                res.send({
-                                    status: 500,
-                                    error: err,
-                                    response: null
-                                });
-                            })
-                            .catch(function (error) {
-                                res.send({
-                                    status: 500,
-                                    error: error,
-                                    response: null
-                                });
-                            });
+                            }
+                        });
                     });
                 } else {
                     res.send({
@@ -170,24 +163,13 @@ router.post('/corporate/create', function (req, res, next) {
                 endpoint = `/core-service/post?query=${query}`;
                 url = `${HOST}${endpoint}`;
                 postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-
-                axios.post(url, postData)
-                    .then(function (response_) {
-                        return res.send(response_['data']);
-                    }, err => {
-                        res.send({
-                            status: 500,
-                            error: err,
-                            response: null
-                        });
-                    })
-                    .catch(function (error) {
-                        res.send({
-                            status: 500,
-                            error: error,
-                            response: null
-                        });
-                    });
+                db.query(query, postData, function (error, response_) {
+                    if(error) {
+                        res.send({status: 500, error: error, response: null});
+                    } else {
+                        return res.send(response_);
+                    }
+                });
             }
         }, err => {
             res.send({
@@ -213,8 +195,8 @@ router.get('/corporates/get', function (req, res, next) {
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
     let query = `SELECT *, (SELECT fullname FROM clients WHERE ID = p.clientID) client FROM corporates p 
-                 WHERE upper(p.name) LIKE "${search_string}%" OR upper(p.email) LIKE "${search_string}%" 
-                 OR upper(p.phone) LIKE "${search_string}%" ${order} LIMIT ${limit} OFFSET ${offset}`;
+                 WHERE upper(p.name) LIKE "${search_string}%" OR upper(p.business_name) LIKE "${search_string}%" 
+                 OR upper(p.ID) LIKE "${search_string}%" ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -223,8 +205,8 @@ router.get('/corporates/get', function (req, res, next) {
         }
     }).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM corporates p 
-                 WHERE upper(p.name) LIKE "${search_string}%" OR upper(p.email) LIKE "${search_string}%" 
-                 OR upper(p.phone) LIKE "${search_string}%") as recordsFiltered FROM corporates`;
+                 WHERE upper(p.name) LIKE "${search_string}%" OR upper(p.business_name) LIKE "${search_string}%" 
+                 OR upper(p.ID) LIKE "${search_string}%") as recordsFiltered FROM corporates`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {
@@ -232,6 +214,8 @@ router.get('/corporates/get', function (req, res, next) {
                 query: query
             }
         }).then(payload => {
+            if (!payload.data[0])
+                return res.send({draw: draw, recordsTotal: 0, recordsFiltered: 0, data: []});
             res.send({
                 draw: draw,
                 recordsTotal: payload.data[0].recordsTotal,
@@ -257,5 +241,120 @@ router.get('/corporate/get/:id', function (req, res, next) {
         });
     });
 });
+
+router.post('/corporate/disable/:id', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let query =  `UPDATE corporates Set ? WHERE ID = ${req.params.id}`;
+    let endpoint = `/core-service/post?query=${query}`;
+    let url = `${HOST}${endpoint}`;
+    let payload = {
+        status: 0,
+        date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
+    };
+    db.query(query, payload, function (error, response_) {
+        if(error) {
+            res.send({status: 500, error: error, response: null});
+        } else {
+            res.send({status: 200, error: null, response: response_});
+        }
+    });
+});
+
+router.post('/corporate/enable/:id', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let query =  `UPDATE corporates Set ? WHERE ID = ${req.params.id}`;
+    let endpoint = `/core-service/post?query=${query}`;
+    let url = `${HOST}${endpoint}`;
+    let payload = {
+        status: 1,
+        date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
+    };
+    db.query(query, payload, function (error, response_) {
+        if(error) {
+            res.send({status: 500, error: error, response: null});
+        } else {
+            res.send({status: 200, error: null, response: response_});
+        }
+    });
+});
+
+router.post('/bad_cheque', function (req, res, next) {
+    let data = req.body;
+    data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    db.query('INSERT INTO bad_cheques SET ?', data, function (error, result, fields) {
+        if (error) {
+            res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+        } else {
+            db.query("SELECT * FROM bad_cheques WHERE status = 1", function (error, results, fields) {
+                if (error) {
+                    res.send({
+                        "status": 500,
+                        "error": error,
+                        "response": null
+                    });
+                } else {
+                    res.send({
+                        "status": 200,
+                        "message": "Bad cheque saved successfully!",
+                        "response": results
+                    });
+                }
+            });
+        }
+    });
+});
+
+router.get('/bad_cheque', function (req, res, next) {
+    db.query("SELECT * FROM bad_cheques WHERE status = 1", function (error, results, fields) {
+        if (error) {
+            res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+        } else {
+            res.send({
+                "status": 200,
+                "message": "Bad cheques fetched successfully!",
+                "response": results
+            });
+        }
+    });
+});
+
+router.delete('/bad_cheque/:id', function (req, res, next) {
+    let query = "UPDATE bad_cheques SET status = 0, date_modified = ? WHERE ID = ? AND status = 1",
+        date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    db.query(query, [date_modified, req.params.id], function (error, results, fields) {
+        if (error) {
+            res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+        } else {
+            db.query("SELECT * FROM bad_cheques WHERE status = 1", function (error, results, fields) {
+                if (error) {
+                    res.send({
+                        "status": 500,
+                        "error": error,
+                        "response": null
+                    });
+                } else {
+                    res.send({
+                        "status": 200,
+                        "message": "Bad cheque deleted successfully!",
+                        "response": results
+                    });
+                }
+            });
+        }
+    });
+});
+
 
 module.exports = router;

@@ -153,7 +153,7 @@ function deleteTarget(id) {
         text: "Once deleted, this process is not reversible!",
         icon: "warning",
         buttons: true,
-        dangerMode: true,
+        dangerMode: true
     })
         .then((yes) => {
             if (yes) {

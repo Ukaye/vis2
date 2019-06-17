@@ -84,6 +84,11 @@
         td.numericCol {
             float: right;
         }
+
+        #cheque-form input, #cheque-form select {
+            width: 150px;
+            margin-right: 5px;
+        }
     </style>
 
     <aside id="left-panel" class="left-panel" include-html="/includes/sidebar.html">
@@ -202,29 +207,52 @@
                             </div>
                             <div class="col-sm-12">
                                 <div class="card">
-                                    <!-- <div class="card-header">
-                                        <h4 class="widget-title lighter smaller"><strong>Investment</strong> <span id="no_of_investments"></span></h4>
+                                    <div class="card-header">
+                                        <h4 class="widget-title lighter smaller"><strong>Bad Cheques</strong></h4>
                                     </div>
-
                                     <div class="card-body">
                                         <div class="widget-main padding-8">
+                                            <form id="cheque-form" class="form-inline">
+                                                <div class="form-group">
+                                                    <input id="cheque-name" class="form-control" title="Cheque Name" placeholder="Cheque Name" >
+                                                </div>
+                                                <div class="form-group">
+                                                    <input id="cheque-no" class="form-control" title="Cheque Number" placeholder="Cheque Number" >
+                                                </div>
+                                                <div class="form-group">
+                                                    <select id="cheque-bank" class="form-control" title="Cheque Bank">
+                                                        <option selected="selected">Select Bank</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-group">
+                                                    <input id="cheque-account" class="form-control" title="Cheque Account" placeholder="Cheque Account" >
+                                                </div>
+                                                <div class="form-group">
+                                                    <select id="cheque-reason" class="form-control" title="Cheque Reason">
+                                                        <option selected="selected">Select Reason</option>
+                                                    </select>
+                                                </div>
+                                                <button type="submit" class="btn btn-success">Add Cheque</button>
+                                            </form>
+                                            <hr>
                                             <div>
-                                                <table id="investment-data-table" class="table table-striped table-bordered">
+                                                <table id="bad-cheques" class="table table-striped table-bordered">
                                                     <thead>
-                                                        <tr>
-                                                            <th>Investment</th>
-                                                            <th>Amount</th>
-                                                            <th>Start Date</th>
-                                                            <th>Maturity Date</th>
-                                                            <th>Action</th>
-                                                        </tr>
+                                                    <tr>
+                                                        <th>Cheque Name</th>
+                                                        <th>Cheque No</th>
+                                                        <th>Bank</th>
+                                                        <th>Account</th>
+                                                        <th>Reason</th>
+                                                        <th>Action</th>
+                                                    </tr>
                                                     </thead>
-                                                    <tbody id="investment_data_items">
+                                                    <tbody>
                                                     </tbody>
                                                 </table>
                                             </div>
                                         </div>
-                                    </div> -->
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-sm-12">
@@ -235,38 +263,8 @@
                                     </div>
 
                                     <div id="feed" class="card-body">
-                                        <!--<div  class="card-body" style="border-radius: 0px"></div>-->
                                     </div>
                                 </div>
-
-                                <!--<div class="col-sm-5">-->
-
-                                <!--<div class="card">-->
-                                <!--<div class="card-header">-->
-                                <!--<h4 class="widget-title lighter smaller">Vehicles Owned <span id="selectedName"></span></h4>-->
-                                <!--</div>-->
-
-                                <!--<div class="card-body">-->
-                                <!--<div>-->
-                                <!--<table id="vehicles-table" class="table table-striped table-bordered">-->
-                                <!--<thead>-->
-                                <!--<tr>-->
-                                <!--<th>Number Plate</th>-->
-                                <!--<th>Status</th>-->
-                                <!--&lt;!&ndash;<th>View</th>&ndash;&gt;-->
-                                <!--&lt;!&ndash;<th>Write</th>&ndash;&gt;-->
-                                <!--</tr>-->
-                                <!--</thead>-->
-
-                                <!--<tbody id="roleassignmentbody">-->
-                                <!--</tbody>-->
-
-                                <!--</table>-->
-                                <!--</div>-->
-                                <!--</div>-->
-                                <!--</div>-->
-                                <!--</div>-->
-
                             </div>
                             <div class="col-sm-12">
                                 <div class="col-sm-4">
@@ -367,8 +365,8 @@
     <script src="assets/js/lib/data-table/buttons.print.min.js"></script>
     <script src="assets/js/lib/data-table/buttons.colVis.min.js"></script>
     <script src="assets/js/lib/data-table/datatables-init.js"></script>
+    <script src="../../js/helper-functions.js"></script>
     <script type="text/javascript" src="../../client/client-info/client-info.js"></script>
-    <script src="../../js/loader.js"></script>
     <script src="../../js/notifications.js"></script>
 
     <script>

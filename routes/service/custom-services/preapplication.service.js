@@ -166,6 +166,7 @@ router.post('/upload/:id/:name', function(req, res) {
         query = `SELECT * FROM preapplications WHERE ID = ${preapplication_id}`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
+    if (extension) extension = extension.toLowerCase();
 
     if (!name) return res.status(400).send('No files were uploaded.');
     if (!req.files) return res.status(400).send('No files were uploaded.');

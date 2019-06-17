@@ -1,9 +1,11 @@
 $(document).ready(function() {
     getOfficers();
     read_write_custom();
+    corporatesDataTable();
 });
 
-let client_id;
+let client_id,
+    edit_client;
 
 let currentTab = 0;
 showTab(currentTab);
@@ -42,12 +44,17 @@ function nextPrev(n) {
                 return false;
             }
         }else{
-            swal('', 'Please Enter a Valid Email', '', 'warning');
+            swal('', 'Please Enter a Valid Email', 'warning');
             return false;
         }
 
     }else{
         swal ({"icon": "warning", "text": "Choose a valid Loan Officer & Branch" });
+        return false;
+    }
+
+    if (($('#bank').find('option:selected').attr('id') === '0') || ($('#bvn').val() === '') || ($('#account').val() === '')){
+        swal ({"icon": "warning", "text": "Complete Client's Bank Information" });
         return false;
     }
 
@@ -89,14 +96,6 @@ function validateEmail(email) {
     let re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     return re.test(email);
 }
-
-$(document).ajaxStart(function(){
-    $("#wait").css("display", "block");
-});
-
-$(document).ajaxComplete(function(){
-    $("#wait").css("display", "none");
-});
 
 let results;
 
@@ -171,6 +170,28 @@ function read_write_custom(){
     }
 }
 
+function read_write(){
+    let w,
+        perms = JSON.parse(localStorage.getItem("permissions")),
+        page = (window.location.pathname.split('/')[1].split('.'))[0],
+        clientsList = ($.grep(perms, function(e){return e.module_name === 'clientsList';}))[0],
+        editLoanOfficer = ($.grep(perms, function(e){return e.module_name === 'editLoanOfficer';}))[0];
+    perms.forEach(function (k){
+        if (k.module_name === page)
+            w = $.grep(perms, function(e){return e.id === parseInt(k.id);});
+    });
+    if (w && w[0] && (parseInt(w[0]['editable']) !== 1))
+        $(".write").hide();
+
+    if (!editLoanOfficer || editLoanOfficer['read_only'] !== '1')
+        $('#loan_officer').prop('disabled', true);
+    if (clientsList && clientsList['read_only'] === '1'){
+        loadUsers();
+    } else {
+        loadUsers((JSON.parse(localStorage.user_obj)).ID);
+    }
+}
+
 function loadMenus(){
     let modules = {};
     modules = JSON.parse(localStorage.getItem("modules"));
@@ -183,15 +204,6 @@ function loadMenus(){
             $('#'+$(k.module_tag).attr('id')).append('<ul class="sub-menu children dropdown-menu"></ul>');
         }else{
             $('#'+k.module_name).show();
-        }
-    });
-    $.ajax({
-        type: "GET",
-        url: "/user/all-requests",
-        success: function (response) {
-            $.each(response, function(k,v){
-                $('#requests-badge').html(v.requests);
-            });
         }
     });
     $.ajax({
@@ -240,10 +252,10 @@ function populateDataTable(data) {
         let actions;
         if (v.status === "1"){
             actions = '<a href="./client-info?id='+v.ID+'" class="write btn btn-primary "><i class="fa fa-tasks"></i> View Profile</a>'+
-                '<button onclick="confirm('+v.ID+')" class="write btn btn-danger "><i class="fa fa-trash"></i> Disable Client</button>'
+                '<button onclick="disableClient('+v.ID+')" class="write btn btn-danger "><i class="fa fa-trash"></i> Disable Client</button>'
         }
         else {
-            actions = '<button id="'+v.ID+'" name="'+v.ID+'" onclick="confirmEnable('+v.ID+')" class="write btn btn-success "><i class="fa fa-lightbulb-o"></i> Enable Client</button>';
+            actions = '<button id="'+v.ID+'" name="'+v.ID+'" onclick="enableClient('+v.ID+')" class="write btn btn-success "><i class="fa fa-lightbulb-o"></i> Enable Client</button>';
         }
         v.actions = actions;
         processed_data.push(v);
@@ -267,7 +279,7 @@ function populateDataTable(data) {
     });
 }
 
-function confirm(id) {
+function disableClient(id, type){
     swal({
         title: "Disable this client?",
         text: "Click OK to continue",
@@ -276,12 +288,36 @@ function confirm(id) {
     }).then(
         function(isConfirm) {
             if (isConfirm){
-                disableClient(id);
+                let test = {},
+                    url = (type === 'corporate')? `/client/corporate/disable/${id}` : `/user/del-client/${id}`;
+                $.ajax({
+                    'url': url,
+                    'type': 'post',
+                    'data': {},
+                    'success': function (data) {
+                        if (type !== 'corporate')
+                            test = JSON.parse(data);
+                        if(test.status === 500){
+                            swal("Please Retry Action!");
+                        }
+                        else{
+                            swal("Client Disabled Successfully!");
+                            if (type === 'corporate') {
+                                window.location.reload();
+                            } else {
+                                read_write_custom();
+                            }
+                        }
+                    },
+                    'error': function(e){
+                        swal('Internet Connection Error!');
+                    }
+                });
             }
         });
 }
 
-function confirmEnable(id) {
+function enableClient(id, type){
     swal({
         title: "Reactivate this client?",
         text: "Click OK to continue",
@@ -290,53 +326,33 @@ function confirmEnable(id) {
     }).then(
         function(isConfirm) {
             if (isConfirm){
-                enableClient(id);
+                let test = {},
+                    url = (type === 'corporate')? `/client/corporate/enable/${id}` : `/user/en-client/${id}`;
+                $.ajax({
+                    'url': url,
+                    'type': 'post',
+                    'data': {},
+                    'success': function (data) {
+                        if (type !== 'corporate')
+                            test = JSON.parse(data);
+                        if(test.status === 500){
+                            swal("Please Retry Action!");
+                        }
+                        else{
+                            swal("Client Enabled Successfully!");
+                            if (type === 'corporate') {
+                                window.location.reload();
+                            } else {
+                                read_write_custom();
+                            }
+                        }
+                    },
+                    'error': function(e){
+                        swal('Internet Connection Error!');
+                    }
+                });
             }
         });
-}
-
-function disableClient(id){
-    let test = {};
-    $.ajax({
-        'url': '/user/del-client/'+id,
-        'type': 'post',
-        'data': {},
-        'success': function (data) {
-            test = JSON.parse(data);
-            if(test.status === 500){
-                swal("Please Retry Action!");
-            }
-            else{
-                swal("Client Disabled Successfully!");
-                read_write_custom();
-            }
-        },
-        'error': function(e){
-            swal('Internet Connection Error!');
-        }
-    });
-}
-
-function enableClient(id){
-    let test = {};
-    $.ajax({
-        'url': '/user/en-client/'+id,
-        'type': 'post',
-        'data': {},
-        'success': function (data) {
-            test = JSON.parse(data);
-            if(test.status === 500){
-                swal("Please Retry Action!");
-            }
-            else{
-                swal("Client Enabled Successfully!");
-                read_write_custom();
-            }
-        },
-        'error': function(e){
-            swal('Internet Connection Error!');
-        }
-    });
 }
 
 function openDetailsModal(id) {
@@ -365,12 +381,15 @@ function openDetailsModal(id) {
 function getOfficers(){
     $.ajax({
         type: "GET",
-        url: "/user/loan-officers/",
+        url: "/user/users-list/",
         success: function (response) {
             let role = $("[id=loan_officer]");
+            let role2 = $("[id=loan_officer2]");
             role.empty().append('<option selected="selected" id="0">-- Choose Loan Officer --</option>');
+            role2.empty().append('<option selected="selected">-- Choose Loan Officer --</option>');
             $.each(JSON.parse(response), function (key, val) {
                 $("#loan_officer").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                $("#loan_officer2").append('<option value = "' + val.ID + '">' + val.fullname + '</option>');
             });
             getBranches();
         }
@@ -383,9 +402,12 @@ function getBranches(){
         url: "/user/branches/",
         success: function (response) {
             let branch = $("[id=branch]");
+            let branch2 = $("[id=branch2]");
             branch.empty().append('<option id="0" value ="0">-- Select a Branch --</option>');
+            branch2.empty().append('<option value ="0">-- Select a Branch --</option>');
             $.each(JSON.parse(response), function (key, val) {
                 $("#branch").append('<option value = "' + val.id + '" id="' + val.id + '">' + val.branch_name + '</option>');
+                $("#branch2").append('<option value = "' + val.id + '">' + val.branch_name + '</option>');
             });
             getBanks();
         }
@@ -398,9 +420,12 @@ function getBanks(){
         url: "/user/banks/",
         success: function (response) {
             let bank = $("[id=bank]");
+            let bank2 = $("[id=bank2]");
             bank.empty().append('<option id="0" value ="0">-- Select a Bank --</option>');
+            bank2.empty().append('<option value ="0">-- Select a Bank --</option>');
             $.each(response, function (key, val) {
                 $("#bank").append(`<option value = "${val.code}" id="${val.code}">${val.name} (${val.authorization})</option>`);
+                $("#bank2").append(`<option value = "${val.code}">${val.name} (${val.authorization})</option>`);
             });
             getCountries();
         }
@@ -446,12 +471,23 @@ function edit(){
         'type': 'get',
         'success': function (data) {
             $('#wait').hide();
-            $('#user-form').slideDown();
+            edit_client = data[0];
+            switch (data[0].client_type){
+                case 'individual': {
+                    $('#user-form').slideDown();
+                    break;
+                }
+                case 'business_individual': {
+                    $('#user-form2').slideDown();
+                    break;
+                }
+            }
             $('#user-table').slideToggle();
+            $('#user-table2').hide();
             let fullname = data[0].fullname;
-            $('#first_name').val(fullname.split(' ')[0]);
-            $('#middle_name').val(fullname.split(' ')[1]);
-            $('#last_name').val(fullname.split(' ')[2]);
+            $('#first_name').val(data[0].first_name);
+            $('#middle_name').val(data[0].middle_name);
+            $('#last_name').val(data[0].last_name);
             $('#phone').val(data[0].phone);
             $('#address').val(data[0].address);
             $('#email').val(data[0].email);
@@ -464,6 +500,7 @@ function edit(){
             $('#client_country').val(data[0].client_country);
             $('#marital_status').val(data[0].marital_status);
             $('#loan_officer').val(data[0].loan_officer);
+            $('#bvn').val(data[0].bvn);
             $('#client_state').val(data[0].client_state);
             $('#years_add').val(data[0].years_add);
             $('#ownership').val(data[0].ownership);
@@ -483,10 +520,37 @@ function edit(){
             $('#guarantor_email').val(data[0].guarantor_email);
             $('#guarantor_address').val(data[0].guarantor_address);
             $('#gua_country').val(data[0].gua_country);
+            $('#ind_kin_fullname').val(data[0].kin_fullname);
+            $('#ind_kin_phone').val(data[0].kin_phone);
+            $('#ind_kin_relationship').val(data[0].kin_relationship);
             $("#email").prop("readonly", true);
             $("#phone").prop("readonly", true);
             let folder = data[0].fullname + '_' + data[0].email;
-            loadImages(folder);
+            loadImages(data[0].images_folder);
+
+
+
+            $('#first_name2').val(fullname.split(' ')[0]);
+            $('#middle_name2').val(fullname.split(' ')[1]);
+            $('#last_name2').val(fullname.split(' ')[2]);
+            $('#phone2').val(data[0].phone);
+            $('#address2').val(data[0].address);
+            $('#email2').val(data[0].email);
+            $('#branch2').val(data[0].branch);
+            $('#bank2').val(data[0].bank);
+            $('#account2').val(data[0].account);
+            $('#loan_officer2').val(data[0].loan_officer);
+            $('#bvn2').val(data[0].bvn);
+            $('#product_sold').val(data[0].product_sold);
+            $('#capital_invested').val(data[0].capital_invested);
+            $('#market_name').val(data[0].market_name);
+            $('#market_years').val(data[0].market_years);
+            $('#market_address').val(data[0].market_address);
+            $('#kin_fullname').val(data[0].kin_fullname);
+            $('#kin_phone').val(data[0].kin_phone);
+            $('#kin_relationship').val(data[0].kin_relationship);
+            $("#email2").prop("readonly", true);
+            $("#phone2").prop("readonly", true);
         },
         'error': function (err) {
             $('#wait').hide();
@@ -501,18 +565,41 @@ function checkForEdit(){
 
     if (application_id){
         client_id = application_id;
+        $('#client_type').hide();
         $('#new_edit').html("Edit Client");
+        $('#new_edit2').html("Edit Client");
         $.ajax({
             'url': '/user/client-dets/'+client_id,
             'type': 'get',
             'success': function (data) {
+                edit_client = data[0];
+                switch (data[0].client_type){
+                    case 'individual': {
+                        $('#user-form').slideDown();
+                        break;
+                    }
+                    case 'business_individual': {
+                        $('#user-form2').slideDown();
+                        break;
+                    }
+                }
+                switch (data.client_type){
+                    case 'individual': {
+                        $('#user-form').slideDown();
+                        break;
+                    }
+                    case 'business_individual': {
+                        $('#user-form2').slideDown();
+                        break;
+                    }
+                }
                 $('#client_name').html(data[0].fullname);
-                $('#user-form').slideDown();
                 $('#user-table').slideToggle();
+                $('#user-table2').hide();
                 let fullname = data[0].fullname;
-                $('#first_name').val(fullname.split(' ')[0]);
-                $('#middle_name').val(fullname.split(' ')[1]);
-                $('#last_name').val(fullname.split(' ')[2]);
+                $('#first_name').val(data[0].first_name);
+                $('#middle_name').val(data[0].middle_name);
+                $('#last_name').val(data[0].last_name);
                 $('#phone').val(data[0].phone);
                 $('#address').val(data[0].address);
                 $('#email').val(data[0].email);
@@ -525,6 +612,7 @@ function checkForEdit(){
                 $('#client_country').val(data[0].client_country);
                 $('#marital_status').val(data[0].marital_status);
                 $('#loan_officer').val(data[0].loan_officer);
+                $('#bvn').val(data[0].bvn);
                 $('#client_state').val(data[0].client_state);
                 $('#years_add').val(data[0].years_add);
                 $('#ownership').val(data[0].ownership);
@@ -544,10 +632,37 @@ function checkForEdit(){
                 $('#guarantor_email').val(data[0].guarantor_email);
                 $('#guarantor_address').val(data[0].guarantor_address);
                 $('#gua_country').val(data[0].gua_country);
+                $('#ind_kin_fullname').val(data[0].kin_fullname);
+                $('#ind_kin_phone').val(data[0].kin_phone);
+                $('#ind_kin_relationship').val(data[0].kin_relationship);
                 $("#email").prop("readonly", true);
                 $("#phone").prop("readonly", true);
                 let folder = data[0].fullname + '_' + data[0].email;
-                loadImages(folder);
+                loadImages(data[0].images_folder);
+
+
+
+                $('#first_name2').val(data[0].first_name);
+                $('#middle_name2').val(data[0].middle_name);
+                $('#last_name2').val(data[0].last_name);
+                $('#phone2').val(data[0].phone);
+                $('#address2').val(data[0].address);
+                $('#email2').val(data[0].email);
+                $('#branch2').val(data[0].branch);
+                $('#bank2').val(data[0].bank);
+                $('#account2').val(data[0].account);
+                $('#loan_officer2').val(data[0].loan_officer);
+                $('#bvn2').val(data[0].bvn);
+                $('#product_sold').val(data[0].product_sold);
+                $('#capital_invested').val(data[0].capital_invested);
+                $('#market_name').val(data[0].market_name);
+                $('#market_years').val(data[0].market_years);
+                $('#market_address').val(data[0].market_address);
+                $('#kin_fullname').val(data[0].kin_fullname);
+                $('#kin_phone').val(data[0].kin_phone);
+                $('#kin_relationship').val(data[0].kin_relationship);
+                $("#email2").prop("readonly", true);
+                $("#phone2").prop("readonly", true);
             },
             'error': function (err) {
                 swal('Oops! An error occurred while retrieving details.');
@@ -556,6 +671,37 @@ function checkForEdit(){
     }
 }
 
+$("#phone").on("keyup", function () {
+    let val = $("#phone").val();
+    $("#phone").val(numbersOnly(val));
+});
+
+$("#bvn").on("keyup", function () {
+    let val = $("#bvn").val();
+    $("#bvn").val(numbersOnly(val));
+});
+
+$("#account").on("keyup", function () {
+    let val = $("#account").val();
+    $("#account").val(numbersOnly(val));
+});
+
+$("#years_add").on("keyup", function () {
+    let val = $("#years_add").val();
+    $("#years_add").val(numbersOnly(val));
+});
+
+$("#years_known").on("keyup", function () {
+    let val = $("#years_known").val();
+    $("#years_known").val(numbersOnly(val));
+});
+
+$("#salary").on("keyup", function () {
+    let val = $("#salary").val();
+    $("#salary").val(numberToCurrencyformatter(val));
+    validateSalary();
+});
+
 function submitDetails(){
     const url = new URLSearchParams(window.location.search);
     const user_id = url.get('id');
@@ -563,8 +709,11 @@ function submitDetails(){
     ed = (user_id) ? user_id : localStorage.getItem("user_id");
     let obj = {};
     obj.username = $('#email').val();
+    obj.first_name = $.trim($('#first_name').val());
+    obj.middle_name = $.trim($('#middle_name').val());
+    obj.last_name = $.trim($('#last_name').val());
     obj.fullname = $('#first_name').val() + ' '+ $('#middle_name').val() + ' ' +$('#last_name').val();
-    obj.phone = $('#phone').val();
+    obj.phone = numbersOnly($('#phone').val());
     obj.address = $('#address').val();
     obj.email = $('#email').val();
     obj.gender = $('#gender').find('option:selected').attr('value');
@@ -572,18 +721,18 @@ function submitDetails(){
     obj.marital_status = $('#marital_status').find('option:selected').attr('value');
     obj.loan_officer = $('#loan_officer').find('option:selected').attr('id');
     obj.branch = $('#branch').find('option:selected').attr('id');
-    obj.bvn= $("#bvn").val();
-    obj.account= $("#account").val();
+    obj.bvn= numbersOnly($("#bvn").val());
+    obj.account= numbersOnly($("#account").val());
     obj.bank = $('#bank').find('option:selected').attr('id');
     obj.client_state = $('#client_state').find('option:selected').attr('id');
     obj.postcode = $("#postcode").val();
     obj.client_country = $('#client_country').find('option:selected').attr('id');
-    obj.years_add = $("#years_add").val();
+    obj.years_add = numbersOnly($("#years_add").val());
     obj.ownership = $('#ownership').find('option:selected').attr('id');
     obj.employer_name = $("#employer_name").val();
-    obj.industry = $('#industry').find('option:selected').text();
+    obj.industry = $('#industry').find('option:selected').val();
     obj.job = $("#job").val();
-    obj.salary = $("#salary").val();
+    obj.salary = currencyToNumberformatter($("#salary").val());
     obj.job_country = $('#job_country').find('option:selected').attr('id');
     obj.off_address = $("#off_address").val();
     obj.off_state = $('#off_state').find('option:selected').attr('id');
@@ -596,6 +745,36 @@ function submitDetails(){
     obj.guarantor_email = $("#guarantor_email").val();
     obj.guarantor_address = $("#guarantor_address").val();
     obj.gua_country = $('#gua_country').find('option:selected').attr('id');
+    obj.kin_fullname = $('#ind_kin_fullname').val();
+    obj.kin_phone = $('#ind_kin_phone').val();
+    obj.kin_relationship = $('#ind_kin_relationship').val();
+    obj.images_folder = obj.first_name + ' ' + obj.middle_name + ' ' + obj.last_name + '_' + obj.email;
+
+
+
+    if (edit_client.client_type === 'business_individual') {
+        obj.username = $('#email2').val();
+        obj.first_name = $.trim($('#first_name2').val());
+        obj.middle_name = $.trim($('#middle_name2').val());
+        obj.last_name = $.trim($('#last_name2').val());
+        obj.fullname = $('#first_name2').val() + ' '+ $('#middle_name2').val() + ' ' +$('#last_name2').val();
+        obj.phone = $('#phone2').val();
+        obj.address = $('#address2').val();
+        obj.branch = $('#branch2').val();
+        obj.bank = $('#bank2').val();
+        obj.account = $('#account2').val();
+        obj.loan_officer = $('#loan_officer2').val();
+        obj.bvn = $('#bvn2').val();
+        obj.product_sold = $('#product_sold').val();
+        obj.capital_invested = $('#capital_invested').val();
+        obj.market_name = $('#market_name').val();
+        obj.market_years = $('#market_years').val();
+        obj.market_address = $('#market_address').val();
+        obj.kin_fullname = $('#kin_fullname').val();
+        obj.kin_phone = $('#kin_phone').val();
+        obj.kin_relationship = $('#kin_relationship').val();
+    }
+
     let test={};
     $.ajax({
         'url': '/user/edit-client/'+ed,
@@ -619,27 +798,47 @@ function submitDetails(){
 }
 
 function upload(i){
-    var name = $('#first_name').val() + ' '+ $('#middle_name').val() + ' ' +$('#last_name').val(); var folder_name = " ";
+    if ($.trim($('#first_name').val()) === '' || $.trim($('#first_name').val()) === null){
+        return swal('Incomplete Information', 'Please Enter Client First Name!', 'warning');
+    }
+    if ($.trim($('#last_name').val()) === '' || $.trim($('#last_name').val()) === null){
+        return swal('Incomplete Information', 'Please Enter Client Last Name!', 'warning');
+    }
+    var name = $.trim($('#first_name').val()) + ' '+ $.trim($('#middle_name').val()) + ' ' +$.trim($('#last_name').val()); var folder_name = " ";
     if ($('#email').val() === "" || $('#email').val() === null){
         return swal('Incomplete Information', 'Please Enter Client Email!', 'warning');
     }
     else {
-        folder_name = name + '_' + $('#email').val();
-        // return console.log(folder_name)
+        if (validateEmail($('#email').val()))
+            folder_name = name + '_' + $('#email').val();
+        else
+            return swal('', 'Please Enter a Valid Email', 'warning');
     }
     var file; var item;
     if (i === 1){
         file = $('#file-upload')[0].files[0];
+        let ext = file["name"].split('.').pop().toLowerCase();
+        if($.inArray(ext, ['gif','png','jpg','jpeg']) == -1) {
+            return swal('Upload Failed!', 'Invalid file extension', 'warning');
+        }
         item ="Image";
     }else if (i === 2){
-        file = $('#file-upload-signature')[0].files[0]
+        file = $('#file-upload-signature')[0].files[0];
+        let ext = file["name"].split('.').pop().toLowerCase();
+        if($.inArray(ext, ['gif','png','jpg','jpeg']) == -1) {
+            return swal('Upload Failed!', 'Invalid file extension', 'warning');
+        }
         item = "Signature";
     }else if (i === 3){
-        file = $('#file-upload-idcard')[0].files[0]
+        file = $('#file-upload-idcard')[0].files[0];
+        let ext = file["name"].split('.').pop().toLowerCase();
+        if($.inArray(ext, ['gif','png','jpg','jpeg']) == -1) {
+            return swal('Upload Failed!', 'Invalid file extension', 'warning');
+        }
         item = "ID Card";
     }
-    if (file === "undefined") {
-        swal ("Choose file to upload");
+    if (!file) {
+        return swal ('No File Chosen!', "Choose file to upload", 'warning');
     }else{
         var formData = new FormData();
         formData.append('file', file); formData.append('type', i);
@@ -667,7 +866,7 @@ function loadImages(folder){
         'success': function (data) {
             let res = JSON.parse(data);
             if(res.status === 500){
-                swal({"icon": "info", "text": "No Image Uploaded!"});
+                notification('No Image Uploaded!', '', 'info');
             }
             else{
                 $.each(res['response'], function (key, value){
@@ -681,5 +880,124 @@ function loadImages(folder){
                 });
             }
         }
+    });
+}
+
+/**
+ Business Individual & Corporate Client Updates*/
+let table = {};
+
+$('#client_type').change(function (e) {
+    switch (e.target.value) {
+        case 'non_corporate': {
+            $('#user-table').show();
+            $('#user-table2').hide();
+            break;
+        }
+        case 'corporate': {
+            $('#user-table').hide();
+            $('#user-table2').show();
+            break;
+        }
+    }
+});
+
+function corporatesDataTable() {
+    table = $('#corporates').DataTable({
+        dom: 'Blfrtip',
+        bProcessing: true,
+        bServerSide: true,
+        buttons: [
+            'copy', 'csv', 'excel', 'pdf', 'print'
+        ],
+        fnServerData: function (sSource, aoData, fnCallback) {
+            let tableHeaders = [
+                {
+                    name: 'ID',
+                    query: `ORDER BY ID ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'name',
+                    query: `ORDER BY name ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'business_name',
+                    query: `ORDER BY business_name ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'client',
+                    query: `ORDER BY client ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'date_created',
+                    query: `ORDER BY date_created ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'action',
+                    query: `ORDER BY ID ${aoData[2].value[0].dir}`
+                }
+            ];
+            $.ajax({
+                dataType: 'json',
+                type: "GET",
+                url: `/client/corporates/get`,
+                data: {
+                    limit: aoData[4].value,
+                    offset: aoData[3].value,
+                    draw: aoData[0].value,
+                    search_string: aoData[5].value.value,
+                    order: tableHeaders[aoData[2].value[0].column].query
+                },
+                success: function (data) {
+                    fnCallback(data)
+                }
+            });
+        },
+        aoColumnDefs: [
+            {
+                sClass: "numericCol",
+                aTargets: [0],
+                sType: "numeric"
+            }
+        ],
+        columns: [
+            {
+                data: "ID",
+                width: "1%",
+                className: "text-right"
+            },
+            {
+                data: "name",
+                width: "25%"
+            },
+            {
+                data: "business_name",
+                width: "20%"
+            },
+            {
+                data: "client",
+                width: "20%"
+            },
+            {
+                data: "date_created",
+                width: "15%"
+            },
+            {
+                width: "19%",
+                mRender: function (data, type, full) {
+                    let actions;
+                    if (full.status === 1){
+                        actions = `<a class="btn btn-info btn-sm" href="/client-info?id=${full.clientID}">
+                                        <i class="fa fa-tasks"></i> View Contact</a> 
+                                   <a class="btn btn-danger btn-sm" onclick="disableClient(${full.ID}, 'corporate')">
+                                        <i class="fa fa-trash"></i> Disable</a>`
+                    } else {
+                        actions = `<a class="btn btn-success btn-sm" onclick="enableClient(${full.ID}, 'corporate')">
+                                        <i class="fa fa-lightbulb-o"></i> Enable</a>`;
+                    }
+                    return actions;
+                }
+            }
+        ]
     });
 }

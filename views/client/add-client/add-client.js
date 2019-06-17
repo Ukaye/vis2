@@ -8,7 +8,6 @@ jQuery(document).ready(function() {
     getClients();
 });
 let $ = jQuery.noConflict();
-//    console.log($.timeago(new Date()))
 var currentTab = 0; // Current tab is set to be the first tab (0)
 showTab(currentTab); // Display the current tab
 
@@ -50,7 +49,7 @@ function nextPrev(n) {
                 return false;
             }
         }else{
-            swal('', 'Please Enter a Valid Email', 'warning');
+            swal('', 'Please Enter a Valid Client Email', 'warning');
             return false;
         }
 
@@ -58,10 +57,25 @@ function nextPrev(n) {
         swal ({"icon": "warning", "text": "Choose a valid Loan Officer & Branch" });
         return false;
     }
+    if (($('#bank').find('option:selected').attr('id') === '0') || ($('#bvn').val() === '') || ($('#account').val() === '')){
+        swal ({"icon": "warning", "text": "Complete Client's Bank Information" });
+        return false;
+    }
+    if (currentTab === 2){
+        if ($.trim($('#guarantor_email').val()) !== ''){
+            if (!(validateEmail($('#guarantor_email').val()))){
+                // obj.guarantor_email = $("#guarantor_email").val();
+                swal('', 'Please Enter a Valid Email for the Reference', 'warning');
+                return false;
+            }
+        }
+    }
+
     //return false;
 //        if (n == 1) return false;
     // Hide the current tab:
-    x[currentTab].style.display = "none";
+    if (currentTab !== x.length)
+        x[currentTab].style.display = "none";
     // Increase or decrease the current tab by 1:
     currentTab = currentTab + n;
     // if you have reached the end of the form... :
@@ -165,9 +179,6 @@ function validateEmail(email) {
 }
 
 function confirmPassword(){
-    console.log("Here");
-    console.log($('#cpassword').val());
-    console.log($('#password').val());
     if ($('#cpassword').val() == "" || $('#cpassword').val() != $('#password').val()){
         $('#cpassword').css('border-color', 'red');
         $('#cpassword-error').html("Passwords don't match");
@@ -263,11 +274,45 @@ function getStates(){
     });
 }
 
+$("#phone").on("keyup", function () {
+    let val = $("#phone").val();
+    $("#phone").val(numbersOnly(val));
+});
+
+$("#bvn").on("keyup", function () {
+    let val = $("#bvn").val();
+    $("#bvn").val(numbersOnly(val));
+});
+
+$("#account").on("keyup", function () {
+    let val = $("#account").val();
+    $("#account").val(numbersOnly(val));
+});
+
+$("#years_add").on("keyup", function () {
+    let val = $("#years_add").val();
+    $("#years_add").val(numbersOnly(val));
+});
+
+$("#years_known").on("keyup", function () {
+    let val = $("#years_known").val();
+    $("#years_known").val(numbersOnly(val));
+});
+
+$("#salary").on("keyup", function () {
+    let val = $("#salary").val();
+    $("#salary").val(numberToCurrencyformatter(val));
+    validateSalary();
+});
+
 function createClient(){
     var obj = {};
     obj.username = $('#email').val();
-    obj.fullname = $('#first_name').val() + ' '+ $('#middle_name').val() + ' ' +$('#last_name').val();
-    obj.phone = $('#phone').val();
+    obj.first_name = $.trim($('#first_name').val());
+    obj.middle_name = $.trim($('#middle_name').val());
+    obj.last_name = $.trim($('#last_name').val());
+    obj.fullname = $.trim($('#first_name').val()) + ' '+ $.trim($('#middle_name').val()) + ' ' +$.trim($('#last_name').val());
+    obj.phone = numbersOnly($('#phone').val());
     obj.address = $('#address').val();
     obj.email = $('#email').val();
     obj.gender = $('#gender').find('option:selected').attr('value');
@@ -275,18 +320,18 @@ function createClient(){
     obj.marital_status = $('#marital_status').find('option:selected').attr('value');
     obj.loan_officer = $('#loan_officer').find('option:selected').attr('id');
     obj.branch = $('#branch').find('option:selected').attr('id');
-    obj.bvn= $("#bvn").val();
-    obj.account= $("#account").val();
+    obj.bvn= numbersOnly($("#bvn").val());
+    obj.account= numbersOnly($("#account").val());
     obj.bank = $('#bank').find('option:selected').attr('id');
     obj.client_state = $('#client_state').find('option:selected').attr('id');
     obj.postcode = $("#postcode").val();
     obj.client_country = $('#client_country').find('option:selected').attr('id');
-    obj.years_add = $("#years_add").val();
+    obj.years_add = numbersOnly($("#years_add").val());
     obj.ownership = $('#ownership').find('option:selected').attr('id');
     obj.employer_name = $("#employer_name").val();
-    obj.industry = $('#industry').find('option:selected').text();
+    obj.industry = $('#industry').find('option:selected').val();
     obj.job = $("#job").val();
-    obj.salary = $("#salary").val();
+    obj.salary = currencyToNumberformatter($("#salary").val());
     obj.job_country = $('#job_country').find('option:selected').attr('id');
     obj.off_address = $("#off_address").val();
     obj.off_state = $('#off_state').find('option:selected').attr('id');
@@ -294,11 +339,23 @@ function createClient(){
     obj.guarantor_name = $("#guarantor_name").val();
     obj.guarantor_occupation = $("#doe").val();
     obj.relationship = $("#relationship").val();
-    obj.years_known = $("#years_known").val();
+    obj.years_known = numbersOnly($("#years_known").val());
     obj.guarantor_phone = $("#guarantor_phone").val();
     obj.guarantor_email = $("#guarantor_email").val();
+    // if ($.trim($('#guarantor_email').val()) !== ' ' || $.trim($('#guarantor_email').val()) !== 'null'){
+    //     if (validateEmail($('#guarantor_email').val())){
+    //         obj.guarantor_email = $("#guarantor_email").val();
+    //     }
+    //     else {
+    //         return swal('', 'Please Enter a Valid Email for the Reference', 'warning');
+    //     }
+    // }
     obj.guarantor_address = $("#guarantor_address").val();
     obj.gua_country = $('#gua_country').find('option:selected').attr('id');
+    obj.kin_fullname = $('#ind_kin_fullname').val();
+    obj.kin_phone = $('#ind_kin_phone').val();
+    obj.kin_relationship = $('#ind_kin_relationship').val();
+    obj.images_folder = obj.first_name + ' ' + obj.middle_name + ' ' + obj.last_name + '_' + obj.email;
 
 
     var test={};
@@ -315,15 +372,19 @@ function createClient(){
                 for (var i = 0; i < (test.response).length; i++){
                     clients += ', '+test.response[i]["fullname"];
                 }
-                swal({icon: 'info', text: "Information already exists for client(s)"+clients});
-                window.location.href = "./add-client";
+                return swal({icon: 'info', text: "Information already exists for client(s)"+clients});
+                // window.location.href = "./add-client";
+            }
+            if(test.bvn_exists){
+                let client = test.response[0]['fullname'];
+                return swal({icon: 'info', text: "BVN already exists for client, "+client});
+                // window.location.href = "./add-client";
             }
             else if(test.status == 500){
-                swal('Failed!', "Unable to Create Client.", 'error');
+                return swal('Failed!', "Unable to Create Client.", 'error');
                 // window.location.href = "./add-client";
             }
             else{
-                console.log('Done');
                 swal('Success!', "Client Information Registered!", 'success');
                 window.location.href = "./add-client";
             }
@@ -333,27 +394,47 @@ function createClient(){
 }
 
 function upload(i){
-    var name = $('#first_name').val() + ' '+ $('#middle_name').val() + ' ' +$('#last_name').val(); var folder_name = " ";
+    if ($.trim($('#first_name').val()) === '' || $.trim($('#first_name').val()) === null){
+        return swal('Incomplete Information', 'Please Enter Client First Name!', 'warning');
+    }
+    if ($.trim($('#last_name').val()) === '' || $.trim($('#last_name').val()) === null){
+        return swal('Incomplete Information', 'Please Enter Client Last Name!', 'warning');
+    }
+    var name = $.trim($('#first_name').val()) + ' '+ $.trim($('#middle_name').val()) + ' ' +$.trim($('#last_name').val()); var folder_name = " ";
     if ($('#email').val() === "" || $('#email').val() === null){
         return swal('Incomplete Information', 'Please Enter Client Email!', 'warning');
     }
     else {
-        folder_name = name + '_' + $('#email').val();
-        // return console.log(folder_name)
+        if (validateEmail($('#email').val()))
+            folder_name = name + '_' + $('#email').val();
+        else
+            return swal('', 'Please Enter a Valid Email', 'warning');
     }
     var file; var item;
     if (i === 1){
         file = $('#file-upload')[0].files[0];
+        let ext = file["name"].split('.').pop().toLowerCase();
+        if($.inArray(ext, ['gif','png','jpg','jpeg']) == -1) {
+            return swal('Upload Failed!', 'Invalid file extension', 'warning');
+        }
         item ="Image";
     }else if (i === 2){
-        file = $('#file-upload-signature')[0].files[0]
+        file = $('#file-upload-signature')[0].files[0];
+        let ext = file["name"].split('.').pop().toLowerCase();
+        if($.inArray(ext, ['gif','png','jpg','jpeg']) == -1) {
+            return swal('Upload Failed!', 'Invalid file extension', 'warning');
+        }
         item = "Signature";
     }else if (i === 3){
-        file = $('#file-upload-idcard')[0].files[0]
+        file = $('#file-upload-idcard')[0].files[0];
+        let ext = file["name"].split('.').pop().toLowerCase();
+        if($.inArray(ext, ['gif','png','jpg','jpeg']) == -1) {
+            return swal('Upload Failed!', 'Invalid file extension', 'warning');
+        }
         item = "ID Card";
     }
-    if (file === "undefined") {
-        swal ("Choose file to upload");
+    if (!file) {
+        return swal ('No File Chosen!', "Choose file to upload", 'warning');
     }else{
         var formData = new FormData();
         formData.append('file', file); formData.append('type', i);
@@ -397,6 +478,11 @@ $('#client_type').change(function (e) {
             $('#user-form3').show();
             break;
         }
+        default: {
+            $('#user-form').hide();
+            $('#user-form2').hide();
+            $('#user-form3').hide();
+        }
     }
 });
 
@@ -407,7 +493,7 @@ $("#capital_invested").on("keyup", function () {
 
 $("#market_years").on("keyup", function () {
     let val = $("#market_years").val();
-    $("#market_years").val(numberToCurrencyformatter(val));
+    $("#market_years").val(numbersOnly(val));
 });
 
 function createBusinessIndividual() {
@@ -425,7 +511,7 @@ function createBusinessIndividual() {
     obj.product_sold = $('#product_sold').val();
     obj.capital_invested = currencyToNumberformatter($('#capital_invested').val());
     obj.market_name = $('#market_name').val();
-    obj.market_years = currencyToNumberformatter($('#market_years').val());
+    obj.market_years = numbersOnly($('#market_years').val());
     obj.market_address = $('#market_address').val();
     obj.kin_fullname = $('#kin_fullname').val();
     obj.kin_phone = $('#kin_phone').val();
@@ -451,10 +537,14 @@ function createBusinessIndividual() {
                 for (let i = 0; i < (test.response).length; i++){
                     clients += ', '+test.response[i]["fullname"];
                 }
-                notification(`Information already exists for client(s) ${clients}`, '', 'info');
+                return notification(`Information already exists for client(s) ${clients}`, '', 'info');
+            }
+            if(test.bvn_exists){
+                let client = test.response[0]['fullname'];
+                return swal({icon: 'info', text: "BVN already exists for client, "+client});
             }
             else if(test.status === 500){
-                notification('Failed!', 'Unable to Create Client.', 'error');
+                return notification('Failed!', 'Unable to Create Client.', 'error');
             }
             else{
                 notification('Success!', 'Client Information Registered!', 'success');
@@ -469,6 +559,13 @@ function createBusinessIndividual() {
 /**
  Corporate Client Updates*/
 $("#industry2").select2();
+$('#industry2').change(function (e) {
+    if (e.target.value === 'other') {
+        $('#industry2_div').show();
+    } else {
+        $('#industry2_div').hide();
+    }
+});
 function getClients() {
     $.ajax({
         type: 'GET',
@@ -500,14 +597,14 @@ function createCorporate() {
     obj.business_type = $('#business_type').val();
     obj.tax_id = $('#tax_id').val();
     if ($('#industry2').val() !== '-- Select Industry --')
-        obj.industry = $('#industry2').val();
+        obj.industry = ($('#industry2').val() === 'other')? $('#industry2_').val() : $('#industry2').val();
     obj.registration_date = $('#registration_date').val();
     obj.incorporation_date = $('#incorporation_date').val();
     obj.commencement_date = $('#commencement_date').val();
     obj.registration_number = $('#registration_number').val();
     obj.created_by = (JSON.parse(localStorage.user_obj)).ID;
 
-    if (!obj.name ||  (obj.clientID === '-- Choose Client --')) {
+    if (!obj.name || !obj.business_name || (obj.clientID === '-- Choose Client --')) {
         return notification('Kindly fill all required fields!', '', 'warning');
     }
 

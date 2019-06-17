@@ -240,6 +240,10 @@ router.get('/recommendations/get/:id', function (req, res, next) {
     });
 });
 
+/**
+ * 1. Preapproved Loan Offer
+ * 2. Direct Debit Mandate Setup
+ */
 router.post('/create', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let data = {},
@@ -252,45 +256,56 @@ router.post('/create', function (req, res, next) {
     delete postData.fullname;
     postData.status = 0;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    axios.post(url, postData)
-        .then(function (response) {
-            query = `SELECT * from applications WHERE ID = (SELECT MAX(ID) from applications)`;
+
+    getApplicationID(req, query, postData, function (error, response) {
+        if(error){
+            res.send({status: 500, error: error, response: null});
+        } else {
+            let applicationID = req.body.applicationID || '(SELECT MAX(ID) from applications)';
+            query = `SELECT a.*, (SELECT u.phone FROM users u WHERE u.ID = (SELECT c.loan_officer FROM clients c WHERE c.ID = a.userID)) AS contact 
+                    FROM applications a WHERE a.ID = ${applicationID}`;
             endpoint = `/core-service/get`;
             url = `${HOST}${endpoint}`;
             axios.get(url, {
                 params: {
                     query: query
                 }
-            }).then(function (response_) {
+            }).
+            then(function (response_) {
                 query =  'INSERT INTO preapproved_loans Set ?';
                 endpoint = `/core-service/post?query=${query}`;
                 url = `${HOST}${endpoint}`;
-                preapproved_loan.applicationID = response_['data'][0]['ID'];
+                preapproved_loan.applicationID = req.body.applicationID ||  response_['data'][0]['ID'];
                 preapproved_loan.date_created = postData.date_created;
                 preapproved_loan.expiry_date = moment().add(5, 'days').utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                 preapproved_loan.hash = bcrypt.hashSync(postData.userID, parseInt(process.env.SALT_ROUNDS));
-                axios.post(url, preapproved_loan)
-                    .then(function (response__) {
+                db.query(query, preapproved_loan, function (error, response__) {
+                    if(error){
+                        res.send({status: 500, error: error, response: null});
+                    } else {
                         data.name = req.body.fullname;
                         data.date = postData.date_created;
+                        data.expiry = preapproved_loan.expiry_date;
+                        data.contact = response_['data'][0]['contact'];
+                        data.amount = helperFunctions.numberToCurrencyFormatter(postData.loan_amount);
                         data.offer_url = `${HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}`;
                         let mailOptions = {
-                            from: 'no-reply Finratus <applications@loan35.com>',
+                            from: process.env.TENANT+' <noreply@finratus.com>',
                             to: req.body.email,
-                            subject: 'Finratus Loan Application Offer',
+                            subject: process.env.TENANT+' Loan Application Offer',
                             template: 'offer',
                             context: data
                         };
+                        if (req.body.applicationID) {
+                            mailOptions.template = 'mandate';
+                            mailOptions.subject = process.env.TENANT+' Mandate Setup';
+                        }
                         transporter.sendMail(mailOptions, function(error, info){
                             if(error)
                                 return res.send({status: 500, error: error, response: null});
                             return res.send(response_['data'][0]);
                         });
-                }, err => {
-                    res.send({status: 500, error: err, response: null});
-                })
-                .catch(function (error) {
-                    res.send({status: 500, error: error, response: null});
+                    }
                 });
             }, err => {
                 res.send({status: 500, error: err, response: null});
@@ -298,13 +313,23 @@ router.post('/create', function (req, res, next) {
             .catch(function (error) {
                 res.send({status: 500, error: error, response: null});
             });
-        }, err => {
-            res.send({status: 500, error: err, response: null});
-        })
-        .catch(function (error) {
-            res.send({status: 500, error: error, response: null});
-        });
+        }
+    });
 });
+
+function getApplicationID(req, query, postData, callback) {
+    if (!req.body.applicationID) {
+        db.query(query, postData, function (error, response) {
+            if(error){
+                callback(error, null);
+            } else {
+                callback(null, response);
+            }
+        });
+    } else {
+        callback(null, null);
+    }
+}
 
 router.post('/reject', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
@@ -314,15 +339,13 @@ router.post('/reject', function (req, res, next) {
         url = `${HOST}${endpoint}`;
     preapproved_loan.status = 0;
     preapproved_loan.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    axios.post(url, preapproved_loan)
-        .then(function (response) {
-            res.send(response.data);
-        }, err => {
-            res.send({status: 500, error: err, response: null});
-        })
-        .catch(function (error) {
+    db.query(query, preapproved_loan, function (error, response) {
+        if(error){
             res.send({status: 500, error: error, response: null});
-        });
+        } else {
+            res.send(response.data);
+        }
+    });
 });
 
 router.get('/get', function (req, res, next) {
@@ -364,10 +387,14 @@ router.get('/get', function (req, res, next) {
 
 router.get('/get/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, r.requestId, r.remitaTransRef FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
+    let query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, r.requestId, r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
                 LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) WHERE (p.ID = '${decodeURIComponent(req.params.id)}' OR p.hash = '${decodeURIComponent(req.params.id)}')`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
+    if (req.query.key === 'userID') {
+        query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, r.requestId, r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
+                LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) WHERE p.userID = '${req.params.id}'`;
+    }
     axios.get(url, {
         params: {
             query: query
@@ -425,11 +452,10 @@ router.get('/delete/:id', function (req, res, next) {
 router.post('/offer/accept/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let offer = {},
-        otp = req.body.otp,
         id = req.params.id,
-        card = req.body.card,
         email = req.body.email,
         fullname = req.body.fullname,
+        authParams = req.body.authParams,
         created_by = req.body.created_by,
         workflow_id = req.body.workflow_id,
         authorization = req.body.authorization,
@@ -442,17 +468,8 @@ router.post('/offer/accept/:id', function (req, res, next) {
         validate_payload = {
             id: id,
             host: HOST,
-            remitaTransRef: remitaTransRef,
-            authParams: [
-                {
-                    param1: 'OTP',
-                    value: otp
-                },
-                {
-                    param2: 'CARD',
-                    value: card
-                }
-            ]
+            authParams: authParams,
+            remitaTransRef: remitaTransRef
         };
 
     helperFunctions.validateMandate(validate_payload, authorization, function (validation_response) {
@@ -461,20 +478,24 @@ router.post('/offer/accept/:id', function (req, res, next) {
                 return res.send({status: 500, error: {status: 'Your direct debit mandate is still pending activation.'}, response: null});
             offer.status = 2;
             offer.date_modified = date;
-            axios.post(url, offer)
-                .then(function (preapproved_response) {
+            db.query(query, offer, function (error, preapproved_response) {
+                if(error) {
+                    res.send({status: 500, error: error, response: null});
+                } else {
                     let application = {};
                     query =  `UPDATE applications Set ? WHERE ID = ${application_id}`;
                     endpoint = `/core-service/post?query=${query}`;
                     url = `${HOST}${endpoint}`;
                     application.status = 1;
                     application.date_modified = date;
-                    axios.post(url, application)
-                        .then(function (application_response) {
+                    db.query(query, application, function (error, application_response) {
+                        if(error) {
+                            res.send({status: 500, error: error, response: null});
+                        } else {
                             let mailOptions = {
-                                from: 'no-reply Finratus <applications@loan35.com>',
+                                from: process.env.TENANT+' <noreply@finratus.com>',
                                 to: email,
-                                subject: 'Finratus Application Successful',
+                                subject: process.env.TENANT+' Application Successful',
                                 template: 'main',
                                 context: {
                                     name: fullname,
@@ -492,29 +513,19 @@ router.post('/offer/accept/:id', function (req, res, next) {
                                     process.agentID = created_by;
                                     process.applicationID = application_id;
                                     process.date_created = date;
-                                    axios.post(url, process)
-                                        .then(function (process_response) {
-                                            res.send(process_response.data);
-                                        }, err => {
-                                            res.send({status: 500, error: err, response: null});
-                                        })
-                                        .catch(function (error) {
+                                    db.query(query, process, function (error, process_response) {
+                                        if(error) {
                                             res.send({status: 500, error: error, response: null});
-                                        });
+                                        } else {
+                                            res.send(process_response);
+                                        }
+                                    });
                                 });
                             });
-                        }, err => {
-                            res.send({status: 500, error: err, response: null});
-                        })
-                        .catch(function (error) {
-                            res.send({status: 500, error: error, response: null});
-                        });
-                }, err => {
-                    res.send({status: 500, error: err, response: null});
-                })
-                .catch(function (error) {
-                    res.send({status: 500, error: error, response: null});
-                });
+                        }
+                    });
+                }
+            });
         } else {
             res.send({status: 500, error: validation_response, response: null});
         }
@@ -529,15 +540,13 @@ router.get('/offer/decline/:id', function (req, res, next) {
         url = `${HOST}${endpoint}`;
     offer.status = 3;
     offer.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    axios.post(url, offer)
-        .then(function (response) {
-            res.send(response.data);
-        }, err => {
-            res.send({status: 500, error: err, response: null});
-        })
-        .catch(function (error) {
+    db.query(query, offer, function (error, response) {
+        if(error) {
             res.send({status: 500, error: error, response: null});
-        });
+        } else {
+            res.send(response);
+        }
+    });
 });
 
 router.get('/mandate/get/:id', function (req, res, next) {

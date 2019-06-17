@@ -59,9 +59,9 @@ router.post('/vehicle-upload/:number_plate/', function(req, res) {
     if (!req.files) return res.status(400).send('No files were uploaded.');
     if (!req.params) return res.status(400).send('No Number Plate specified!');
     let sampleFile = req.files.file;
-    let name = sampleFile.name;
     let extArray = sampleFile.name.split(".");
     let extension = extArray[extArray.length - 1];
+    if (extension) extension = extension.toLowerCase();
 
     fs.stat('files/'+req.params.number_plate+'/', function(err) {
         if (!err) {
@@ -1083,9 +1083,9 @@ router.post('/maintenance-upload/:number_plate/', function(req, res) {
     if (!req.files) return res.status(400).send('No files were uploaded.');
     if (!req.params) return res.status(400).send('No Number Plate specified!');
     let sampleFile = req.files.file;
-    let name = sampleFile.name;
     let extArray = sampleFile.name.split(".");
     let extension = extArray[extArray.length - 1];
+    if (extension) extension = extension.toLowerCase();
 
     fs.stat('files/'+req.params.number_plate+'/', function(err) {
         if (err.code === 'ENOENT') {
@@ -1420,6 +1420,7 @@ router.post('/document-upload/:id/:name', function(req, res) {
     let sampleFile = req.files['files[]'],
         extArray = sampleFile.name.split("."),
         extension = extArray[extArray.length - 1];
+    if (extension) extension = extension.toLowerCase();
 
     db.query('SELECT * FROM applications WHERE ID = ?', [application_id], function (error, application, fields) {
         if(error){

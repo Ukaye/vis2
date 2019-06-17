@@ -175,19 +175,22 @@ jQuery(document).ready(function($){
     }
 
     //create task
-    window.createTodo = function (stage,id){
+    window.createTodo = function (stage_,id){
         let markup = '',
+            stage = $.extend({},stage_),
             count = parseInt($sortable.find("li").length);
+        delete stage.onLoad;
+        delete stage.disabled;
         if (id && localStorage.list_type === 'disabled'){
             markup = '<li class="ui-state-default disabled"><span>'+stage.name+' <small> '+stage.stage_name+' → '+stage.action_names.join(" → ")+'</small></span> <input class="stage-items" value="'+encodeURIComponent(JSON.stringify(stage))+'" style="display: none;"/>' +
                 '<button class="edit-item edit-item-disabled btn btn-outline-info btn-xs pull-right" id="'+encodeURIComponent(JSON.stringify(stage))+'" data-toggle="modal" data-target="#addStage"><span class="fa fa-edit"></span></button></li>';
         } else {
             if (stage.action_names){
-                markup = '<li class="ui-state-default"><span>'+stage.name+' <small> '+stage.stage_name+' → '+stage.action_names.join(" → ")+'</small></span> <input class="stage-items" value="'+encodeURIComponent(JSON.stringify(stage))+'" style="display: none;"/>' +
-                    '<button class="remove-item btn btn-outline-danger btn-xs pull-right" id="'+stage.name+'"><span class="fa fa-trash"></span></button><button class="edit-item edit-item-enabled btn btn-outline-info btn-xs pull-right" id="'+encodeURIComponent(JSON.stringify(stage))+'" data-toggle="modal" data-target="#addStage"><span class="fa fa-edit"></span></button></li>';
+                markup = `<li class="ui-state-default ${(stage_.disabled)? 'disabled' : ''}"><span>${stage.name} <small> ${stage.stage_name} → ${stage.action_names.join(" → ")}</small></span> <input class="stage-items" value="${encodeURIComponent(JSON.stringify(stage))}" style="display: none;"/>
+                    <button class="remove-item btn btn-outline-danger btn-xs pull-right ${(stage_.disabled)? 'hide' : ''}" id="${stage.name}"><span class="fa fa-trash"></span></button><button class="edit-item edit-item-enabled btn btn-outline-info btn-xs pull-right" id="${encodeURIComponent(JSON.stringify(stage))}" data-toggle="modal" data-target="#addStage"><span class="fa fa-edit"></span></button></li>`;
             } else {
-                markup = '<li class="ui-state-default"><span>'+stage.name+'</span> <input class="stage-items" value="'+encodeURIComponent(JSON.stringify(stage))+'" style="display: none;"/>' +
-                    '<button class="remove-item btn btn-outline-danger btn-xs pull-right" id="'+stage.name+'"><span class="fa fa-trash"></span></button><button class="edit-item edit-item-enabled btn btn-outline-info btn-xs pull-right" id="'+encodeURIComponent(JSON.stringify(stage))+'" data-toggle="modal" data-target="#addStage"><span class="fa fa-edit"></span></button></li>';
+                markup = `<li class="ui-state-default ${(stage_.disabled)? 'disabled' : ''}"><span>${stage.name}</span> <input class="stage-items" value="${encodeURIComponent(JSON.stringify(stage))}" style="display: none;"/>
+                    <button class="remove-item btn btn-outline-danger btn-xs pull-right ${(stage_.disabled)? 'hide' : ''}" id="${stage.name}"><span class="fa fa-trash"></span></button><button class="edit-item edit-item-enabled btn btn-outline-info btn-xs pull-right" id="${encodeURIComponent(JSON.stringify(stage))}" data-toggle="modal" data-target="#addStage"><span class="fa fa-edit"></span></button></li>`;
             }
         }
         if (id){
@@ -199,7 +202,11 @@ jQuery(document).ready(function($){
                 $sortable.find('li:eq('+count+')').remove();
             }
         } else {
-            $sortable.find('li:eq('+(count-2)+')').before(markup);
+            if (stage_.onLoad) {
+                $sortable.append(markup);
+            } else {
+                $sortable.find('li:eq('+(count-2)+')').before(markup);
+            }
         }
         clearStageInputs();
         resetMultiselect();

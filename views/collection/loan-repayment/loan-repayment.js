@@ -464,7 +464,7 @@ function confirmPayment() {
                 text: "Overpayment of ₦"+(parseFloat(overpayment).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'))+" would be saved to escrow",
                 icon: "warning",
                 buttons: true,
-                dangerMode: true,
+                dangerMode: true
             })
                 .then((yes) => {
                     if (yes) {
@@ -689,7 +689,7 @@ function writeOff(invoice_id) {
         text: "Once started, this process is not reversible!",
         icon: "warning",
         buttons: true,
-        dangerMode: true,
+        dangerMode: true
     })
         .then((yes) => {
             if (yes) {
@@ -764,7 +764,7 @@ function makeRemitaPayment() {
         text: "Once started, this process may not reversible!",
         icon: "warning",
         buttons: true,
-        dangerMode: true,
+        dangerMode: true
     })
         .then((yes) => {
             if (yes) {
@@ -840,7 +840,7 @@ function cancelRemitaPayment(transactionRef) {
         text: "Once cancelled, this process is not reversible!",
         icon: "warning",
         buttons: true,
-        dangerMode: true,
+        dangerMode: true
     })
         .then((yes) => {
             if (yes) {
@@ -875,7 +875,7 @@ function stopMandate() {
         text: "Once stopped, this process is not reversible!",
         icon: "warning",
         buttons: true,
-        dangerMode: true,
+        dangerMode: true
     })
         .then((yes) => {
             if (yes) {

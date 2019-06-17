@@ -62,7 +62,7 @@
                 line-height:0 !important;
             }
             td[class="img-flex"] img{
-                width:100% !important;
+                /*width:100% !important;*/
                 height:auto !important;
             }
             td[class="aligncenter"]{text-align:center !important;}
@@ -143,7 +143,9 @@
                     <td data-bgcolor="bg-module" bgcolor="#eaeced">
                         <table class="flexible" width="600" align="center" style="margin:0 auto;" cellpadding="0" cellspacing="0">
                             <tr>
-                                <td class="img-flex"><img src="https://loan35.com/fin-ratus-mail/fin-ratus-header.jpg" style="vertical-align:top;" width="600" height="306" alt="" /></td>
+                                <td class="img-flex">
+                                    <img src="https://x3.loanratus.com/img/tenant.png" style="vertical-align:top;margin:100px 200px;" width="200" height="auto" alt="" />
+                                </td>
                             </tr>
                             <tr>
                                 <td data-bgcolor="bg-block" class="holder" style="padding:58px 60px 52px;" bgcolor="#f9f9f9">
@@ -156,11 +158,11 @@
 
                                         <tr>
                                             <td data-color="text" data-size="size text" data-min="10" data-max="26" data-link-color="link text color" data-link-style="font-weight:normal; text-decoration:underline; color:#40aceb;" align="center" style="font:normal 16px/25px Arial, Helvetica, sans-serif; color:#1d1d1d; padding:0 0 23px;">
-                                                Congratulations! You are eligible for a preapproved loan.
+                                                A loan of <strong>₦{{amount}}</strong> has been approved for you. Please click on the button below to get it in your account immediately. This offer expires on <strong>{{expiry}}</strong>.
                                         </tr>
                                         <tr>
                                             <td data-color="text" data-size="size text" data-min="10" data-max="26" data-link-color="link text color" data-link-style="font-weight:normal; text-decoration:underline; color:#40aceb;" align="center" style="font:normal 16px/25px Arial, Helvetica, sans-serif; color:#1d1d1d; padding:0 0 23px;">
-                                                For more information about this loan offer, Please click the button below.
+                                                For enquiries, contact your account manager on this phone number <strong>{{contact}}</strong>
                                                 <br>
                                                 <br>
                                                 <a href="{{offer_url}}"><button>View Loan Offer</button></a>

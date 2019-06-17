@@ -43,15 +43,13 @@ router.post('/payment/create', function (req, res, next) {
             payload.mandateId = payment_response.mandateId;
             payload.transactionRef = payment_response.transactionRef;
             payload.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-            axios.post(url, payload)
-                .then(function (response) {
-                    res.send(response.data);
-                }, err => {
-                    res.send({status: 500, error: err, response: null});
-                })
-                .catch(function (error) {
+            db.query(query, payload, function (error, response) {
+                if(error) {
                     res.send({status: 500, error: error, response: null});
-                });
+                } else {
+                    res.send(response);
+                }
+            });
         } else {
             res.send({status: 500, error: payment_response, response: null});
         }
@@ -113,15 +111,13 @@ router.post('/payment/cancel', function (req, res, next) {
                     query =  `UPDATE remita_payments Set ? WHERE transactionRef = ${payment.transactionRef}`;
                     endpoint = `/core-service/post?query=${query}`;
                     url = `${HOST}${endpoint}`;
-                    axios.post(url, payload)
-                        .then(function (response) {
-                            res.send(response.data);
-                        }, err => {
-                            res.send({status: 500, error: err, response: null});
-                        })
-                        .catch(function (error) {
+                    db.query(query, payload, function (error, response) {
+                        if(error) {
                             res.send({status: 500, error: error, response: null});
-                        });
+                        } else {
+                            res.send(response);
+                        }
+                    });
                 } else {
                     res.send({status: 500, error: payment_response, response: null});
                 }
@@ -163,6 +159,23 @@ router.get('/mandate/get/:applicationID', function (req, res, next) {
             });
         }
     });
+});
+
+router.post('/notification/push', function (req, res, next) {
+    let payload = req.body;
+    if (payload && payload.constructor === Object && Object.keys(payload).length !== 0) {
+        res.send({
+            status: 200,
+            response: 'Success! Notification received successfully',
+            data: payload
+        });
+    } else {
+        res.send({
+            status: 500,
+            response: 'Error! No payload found',
+            data: payload
+        });
+    }
 });
 
 module.exports = router;

@@ -42,7 +42,7 @@ if (fs.existsSync('./files')) {
 let app = express(),
     cors = require('cors'),
     user = require('./routes/users'),
-    settings = require('./routes/settings'),
+    settings = require('./routes/service/custom-services/settings.service'),
     investment = require('./routes/investment'),
     core_service = require('./routes/service/core-service'),
     client_service = require('./routes/service/custom-services/client.service'),
@@ -121,19 +121,17 @@ app.post('/login', function (req, res) {
                             modules = modules.concat(mods);
                             db.query(query2, [user.user_role, user.user_role, user.user_role], function (er, mods, fields) {
                                 modules = modules.concat(mods);
-                                db.query(query3, [user.user_role, user.user_role, user.user_role], function (er, mods, fields) {
-                                    modules = modules.concat(mods);
-                                    user.modules = modules;
-                                    let payload = {}
-                                    payload.category = 'Authentication'
-                                    payload.userid = user.ID
-                                    payload.description = 'New User Login'
-                                    payload.affected = user.ID
-                                    notificationsService.log(req, payload)
-                                    res.send({
-                                        "status": 200,
-                                        "response": user
-                                    });
+                                user.modules = modules;
+                                user.tenant = process.env.TENANT;
+                                let payload = {}
+                                payload.category = 'Authentication'
+                                payload.userid = user.ID
+                                payload.description = 'New User Login'
+                                payload.affected = user.ID
+                                notificationsService.log(req, payload)
+                                res.send({
+                                    "status": 200,
+                                    "response": user
                                 });
                             });
                         });
@@ -379,6 +377,12 @@ app.get('/client-info', requireLogin, function (req, res) {
     });
 });
 
+app.get('/incomplete-records', requireLogin, function (req, res) {
+    res.sendFile('client/client-info/incomplete-records.html', {
+        root: __dirname + '/views'
+    });
+});
+
 app.get('/loan-reports', requireLogin, function (req, res) {
     res.sendFile('loan-reports.html', {
         root: __dirname + '/views'
@@ -568,8 +572,4 @@ var cron = require('node-cron');
 server.listen(process.env.port || process.env.PORT || 4000, function () {
     console.log('server running on %s [%s]', process.env.PORT, process.env.STATUS);
 });
-server.timeout = 0; //Server timeout set to never
-// var computeInterest = require('../vis2/compute-interest');
-// cron.schedule('*/1440 * * * *', () => {
-//     computeInterest.computeInvestmentInterest();
-// });
+server.timeout = 0;
