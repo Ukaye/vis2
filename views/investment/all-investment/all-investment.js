@@ -18,7 +18,6 @@ async function onRemoveBadge(id) {
         url: `investment-service/remove-mandates/${id}`,
         'type': 'get',
         'success': function (data) {
-            console.log(data);
             if (data.status === undefined) {
                 getMandates(data_row.ID);
             }
@@ -58,7 +57,6 @@ async function onAddMandatePassport() {
         if (ext_.toString().toLowerCase() === 'jpg' || ext_.toString().toLowerCase() === 'png') {
             let filePath = `/mandate/passport/${imgId}.${ext_}`;
             let uploadItem = await upload('mandate', 'passport', $(`#idPassportImage`)[0].files[0], imgId);
-            console.log(uploadItem);
             if (uploadItem === 1) {
                 let _data = {
                     investmentId: data_row.ID,
@@ -88,7 +86,6 @@ async function onAddMandateSignature() {
         if (ext_.toString().toLowerCase() === 'jpg' || ext_.toString().toLowerCase() === 'png') {
             let filePath = `/mandate/signature/${imgId}.${ext_}`;
             let uploadItem = await upload('mandate', 'signature', $(`#idSignatureImage`)[0].files[0], imgId);
-            console.log(uploadItem);
             if (uploadItem === 1) {
                 let _data = {
                     investmentId: data_row.ID,
@@ -116,7 +113,6 @@ async function onAddMandateInstructure() {
         isInstruction: 1,
         name: $('#idInstructionName').val().toUpperCase()
     };
-    console.log(_data);
     await saveMandate(_data);
     $('#idInstructionName').val('');
     $('#idInstructionBody').val('');
@@ -131,7 +127,6 @@ async function saveMandate(data) {
             type: "POST",
             data: data,
             success: function (response) {
-                console.log(response);
                 if (response.error === undefined) {
                     swal('Mandate item added successfully!', '', 'success');
                     getMandates(data_row.ID);
@@ -155,10 +150,8 @@ function getMandates(id) {
         url: `investment-service/get-mandates/${id}`,
         'type': 'get',
         'success': function (data) {
-            console.log(data);
             if (data.status === undefined) {
                 $('#wait').hide();
-                console.log(data);
                 let htmlPassportTags = '';
                 let htmlSignatureTags = '';
                 let htmlInstructionTags = '';
@@ -203,13 +196,11 @@ function onViewInstruction(instruction, title) {
 }
 
 function onViewPassport(path) {
-    console.log("Am here", path);
     window.open(`/files${path}`);
 }
 
 $('#bootstrap-data-table2 tbody').on('click', '#idButtonMandate', function () {
     data_row = table.row($(this).parents('tr')).data();
-    console.log(data_row);
     getMandates(data_row.ID)
 });
 

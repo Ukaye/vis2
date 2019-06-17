@@ -980,7 +980,6 @@ router.get('/get-doc-requirements/:id', function (req, res, next) {
     }
 
     let query = `SELECT * FROM investment_doc_requirement WHERE productId = ${req.params.id} ${option}`;
-    console.log(query);
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -1003,7 +1002,6 @@ router.get('/get-txn-doc-requirements/:id', function (req, res, next) {
     let query = `SELECT d.*,r.name FROM investment_doc_requirement r
     left join investment_txn_doc_requirements d on d.docRequirementId = r.Id
     WHERE d.txnId = ${req.params.id}`;
-    console.log(query);
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -1024,7 +1022,6 @@ router.get('/get-txn-doc-requirements/:id', function (req, res, next) {
 router.post('/update-txn-doc-requirements', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.body;
-    console.log(req.body);
     if (data.isReplaced.toString() === '0') {
         let query = `UPDATE investment_txn_doc_requirements
         SET
@@ -1032,7 +1029,6 @@ router.post('/update-txn-doc-requirements', function (req, res, next) {
         status = ${data.status}
         WHERE id = ${data.id}`;
 
-        console.log(query);
         let endpoint = '/core-service/get';
         let url = `${HOST}${endpoint}`;
         axios.get(url, {

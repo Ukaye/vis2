@@ -86,7 +86,6 @@ function onRequirement(value, id) {
 }
 
 function onReview(value, id) {
-    console.log('Inside reviewer');
     reqObject.productId = id;
     $("#viewReviewModalHeader").html(`${value} REVIEWER SETTINGS`);
 
@@ -106,7 +105,6 @@ function onReview(value, id) {
                 };
             },
             processResults: function (data, params) {
-                console.log(data);
                 params.page = params.page || 1;
                 if (data.error) {
                     return {
@@ -301,7 +299,6 @@ function bindDataTable() {
 
 $('#product-data-table tbody').on('click', '#dropdownItemDoc', function () {
     data_row = table.row($(this).parents('tr')).data();
-    console.log(data_row);
     getProductDocRequirements();
 });
 
@@ -772,7 +769,6 @@ $("#list_operations_review").on('change',
             url: `investment-products/required-review-roles?productId=${reqObject.productId}&operationId=${$("#list_operations_review").val()}`,
             'type': 'get',
             'success': function (data) {
-                console.log(data);
                 if (data.status === undefined && data.length > 0) {
                     $('#wait').hide();
                     $("#list_review_roles").val(null).trigger('change');
@@ -1244,7 +1240,6 @@ function ceateProductDoc() {
         name: $('#docName').val().toUpperCase(),
         createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID
     };
-    console.log(doc);
     $.ajax({
         url: `investment-products/create-docs`,
         'type': 'post',
@@ -1261,7 +1256,6 @@ function ceateProductDoc() {
             }
         },
         'error': function (err) {
-            console.log(err);
             $('#wait').hide();
             swal('Oops! An error occurred while creating document requirement', '', 'error');
         }
@@ -1274,7 +1268,6 @@ function getProductDocRequirements() {
         url: `investment-products/get-doc-requirements/${data_row.ID}`,
         data: '{}',
         success: function (response) {
-            console.log(response);
             $("#tbodyDocs").html('');
             response.forEach((element, index) => {
                 let opName = '';
