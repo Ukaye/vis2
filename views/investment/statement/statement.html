@@ -1,0 +1,245 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Finratus Admin</title>
+    <meta name="description" content="Finratus Admin">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="apple-touch-icon" href="apple-icon.png">
+    <link rel="shortcut icon" href="../../favicon.png">
+    <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script src="../../assets/js/vendor/jquery-2.1.4.min.js"></script>
+
+    <style>
+        .invoice-box {
+            max-width: 800px;
+            margin: auto;
+            padding: 30px;
+            border: 1px solid #eee;
+            box-shadow: 0 0 10px rgba(0, 0, 0, .15);
+            font-size: 16px;
+            line-height: 24px;
+            font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
+            color: #555;
+        }
+
+        .invoice-box table {
+            width: 100%;
+            line-height: inherit;
+            text-align: left;
+        }
+
+        .invoice-box table td {
+            padding: 10px 5px;
+            vertical-align: top;
+        }
+
+        .invoice-box table .top td:nth-child(2) {
+            text-align: right;
+        }
+
+        .invoice-box table .information td:nth-child(2) {
+            text-align: right;
+        }
+
+        .invoice-box table tr td:nth-child(3) {
+            text-align: right;
+        }
+
+        .invoice-box table tr.top table td {
+            padding-bottom: 20px;
+        }
+
+        .invoice-box table tr.top table td.title {
+            font-size: 45px;
+            line-height: 45px;
+            color: #333;
+        }
+
+        .invoice-box table tr.information table td {
+            padding-bottom: 40px;
+        }
+
+        .invoice-box table tr.heading td {
+            background: #eee;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+        }
+
+        .title {
+            border-bottom: 2px solid #eee;
+        }
+
+        .title p {
+            text-align: center;
+            margin: 0;
+        }
+
+        .invoice-box table tr.details td {
+            padding-bottom: 20px;
+        }
+
+        .invoice-box table tr.item td {
+            border-bottom: 1px solid #eee;
+        }
+
+        .invoice-box table tr.item.last td {
+            border-bottom: none;
+        }
+
+        /*.invoice-box table tr.total td:nth-child(2) {*/
+        /*border-top: 2px solid #eee;*/
+        /*font-weight: bold;*/
+        /*}*/
+        .invoice-box table tr.item td:nth-child(3) {
+            color: red;
+        }
+
+        .stamp {
+            margin-bottom: 200px !important;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .invoice-box table tr.top table td {
+                width: 100%;
+                display: block;
+                text-align: center;
+            }
+
+            .invoice-box table tr.information table td {
+                width: 100%;
+                display: block;
+                text-align: center;
+            }
+        }
+
+        /** RTL **/
+        .rtl {
+            direction: rtl;
+            font-family: Tahoma, 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
+        }
+
+        .rtl table {
+            text-align: right;
+        }
+
+        .rtl table tr td:nth-child(2) {
+            text-align: left;
+        }
+    </style>
+    <script>
+        $(function () {
+            // when the modal is closed
+            $('#myModal').on('hidden.bs.modal', function () {
+                // remove the bs.modal data attribute from it
+                $(this).removeData('bs.modal');
+                // and empty the modal-content element
+                $('#myModal .modal-content span').empty();
+                $('#myModal .modal-footer span').empty();
+                $('#myModal input').val("");
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <div class="invoice-box">
+        <table cellpadding="0" cellspacing="0">
+            <tr class="top" style="box-shadow: 0 0 10px rgba(0, 0, 0, .15);
+    border-radius: 5px;
+    padding: 20px;">
+                <td colspan="3" style="padding: 28px;">
+                    <table>
+                        <tr>
+                            <td class="title">
+                                <img id="logo" style="width:130px; max-width:300px;">
+                            </td>
+
+                            <td>
+                                <b>Client Name:</b> <span id="clientName"></span><br>
+                                <b>Account Type:</b> <span id="inventmentName">Savings Account</span><br>
+                                <b>Period: </b><span id="period"></span><br>
+                                <b>Date Printed:</b> <span id="printedDate"></span>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <tr class="information">
+                <td colspan="3">
+                    <table>
+                        <tr>
+                            <td>
+                                <span id="name"></span>,<br>
+                                <span id="address"></span>,<br>
+                                <span id="state_poCode"></span>.<br>
+                                <span id="phone"></span><br>
+                                <span id="email"></span>
+                            </td>
+
+                            <td>
+                                <b>Opening Balance:</b>₦<span id="openingBal"></span><br>
+                                <b>Closing Balance:</b>₦<span id="closingBal"></span><br>
+                                <b>Total Debit:</b>₦<span id="debitBal"></span><br>
+                                <strong>Total Credit:</strong>₦<span id="creditBal"></span>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <tr class="heading">
+                <td class="col-6">
+                    Description
+                </td>
+
+                <td class="col-3">
+                    Credit
+                </td>
+
+                <td class="col-3">
+                    Debit
+                </td>
+            </tr>
+
+            <tbody id="statementTable">
+            </tbody>
+
+            <tr class="total">
+                <td></td>
+                <td></td>
+
+                <td class="title stamp">
+                    <img id="idStamp"
+                        style="width:150px; max-width:300px; margin-top: -166px; position: absolute; margin-left: -140px">
+                </td>
+            </tr>
+            <tr class="total">
+                <td></td>
+                <td></td>
+
+                <td class="title stamp">
+                    <img id="idSign"
+                        style="width:130px; max-width:300px; margin-top: -121px; position: absolute; margin-left: -130px;">
+                </td>
+            </tr>
+        </table>
+    </div>
+    <script src="../../assets/js/vendor/jquery-2.1.4.min.js"></script>
+    <script src="../../assets/js/popper.min.js"></script>
+    <script src="../../assets/js/plugins.js"></script>
+    <script src="../../assets/js/main.js"></script>
+    <script src="../../assets/js/lib/chosen/chosen.jquery.min.js"></script>
+    <script src="../../js/jquery.timeago.js" type="text/javascript"></script>
+    <script src="../../js/money-formater.js"></script>
+    <script src="../../investment/statement/statement.js"> </script>
+</body>
+
+</html>

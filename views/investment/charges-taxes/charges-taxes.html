@@ -1,0 +1,226 @@
+<!doctype html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang=""> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8" lang=""> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9" lang=""> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js" lang="">
+<!--<![endif]-->
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Finratus Admin</title>
+    <meta name="description" content="Finratus Admin">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="apple-touch-icon" href="apple-icon.png">
+    <link rel="shortcut icon" href="favicon.png">
+
+    <link rel="stylesheet" href="assets/css/normalize.css">
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/font-awesome.min.css">
+    <link rel="stylesheet" href="assets/css/themify-icons.css">
+    <link rel="stylesheet" href="assets/css/flag-icon.min.css">
+    <link rel="stylesheet" href="assets/css/cs-skin-elastic.css">
+    <link rel="stylesheet" href="assets/css/lib/datatable/dataTables.bootstrap.min.css">
+    <link rel="stylesheet" href="assets/scss/style.css">
+
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,800' rel='stylesheet' type='text/css'>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script src="assets/js/vendor/jquery-2.1.4.min.js"></script>
+    <script>
+        $(function () {
+            $('#myModal1').on('hidden.bs.modal', function () {
+                $(this).removeData('bs.modal');
+                $('#myModal1 .modal-content span').empty();
+                $('#myModal1 input').val("");
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <script src="assets/js/vendor/jquery-2.1.4.min.js"></script>
+    <script src="../../menus/menu-items.js"></script>
+    <!-- Left Panel -->
+
+    <style>
+        #regForm {
+            background-color: rgba(255, 255, 255, 0.44);
+            /*margin: 100px auto;*/
+            padding: 20px;
+            /*width: 70%;*/
+            /*!*min-width: 300px;*!*/
+        }
+
+        /* Hide all steps by default: */
+        .tab {
+            display: none;
+        }
+
+        /* Make circles that indicate the steps of the form: */
+        .step {
+            height: 15px;
+            width: 15px;
+            margin: 0 2px;
+            background-color: #bbbbbb;
+            border: none;
+            border-radius: 50%;
+            display: inline-block;
+            opacity: 0.5;
+        }
+
+        /* Mark the active step: */
+        .step.active {
+            opacity: 1;
+        }
+
+        /* Mark the steps that are finished and valid: */
+        .step.finish {
+            background-color: #4CAF50;
+        }
+
+        div.dataTables_wrapper div.dataTables_filter {
+            float: right;
+            margin-right: 15px;
+        }
+
+        div.dataTables_length {
+            float: left;
+        }
+
+        .dt-buttons.btn-group {
+            float: right;
+        }
+
+        .btn-default {
+            color: #fff;
+            background-color: #6c757d;
+            border-color: #666e76;
+        }
+
+        td.numericCol {
+            float: right;
+        }
+    </style>
+
+    <aside id="left-panel" class="left-panel" include-html="/includes/sidebar.html">
+    </aside><!-- /#left-panel -->
+
+    <!-- Left Panel -->
+
+    <!-- Right Panel -->
+
+    <div id="right-panel" class="right-panel">
+
+        <!-- Header-->
+        <header id="header" class="header" include-html="/includes/header.html">
+        </header>
+        <!-- Header-->
+
+        <div class="breadcrumbs">
+            <div class="col-sm-4">
+                <div class="page-header float-left">
+                    <div class="page-title">
+                        <h1>Investment Charges and Taxes</h1>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-8">
+                <div class="page-header float-right">
+                    <div class="page-title">
+                        <ol class="breadcrumb text-right">
+                            <li><a href="#">Dashboard</a></li>
+                            <li><a href="#">Investment</a></li>
+                            <li class="active">Charges & Taxes</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content mt-3">
+            <div class="animated fadeIn">
+                <div class="row">
+
+                    <div id="user-table" class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="col-sm-4">
+                                    <div class="row">
+                                        <span><strong>Total Charged: </strong> <span id="idChargeTotal"
+                                                class="card-title"></span></span>
+                                        <br />
+                                    </div>
+                                    <div class="row">
+                                        <span><strong>Total VAT: </strong> <span id="idVatTotal"
+                                                class="card-title"></span></span><br />
+                                    </div>
+                                    <div class="row">
+                                        <span><strong>Total With-Holding Tax: </strong> <span id="idWithHoldingTax"
+                                                class="card-title"></span></span>
+                                        <br />
+                                    </div>
+                                    <div class="row">
+                                        <span><strong>Total Balance: </strong> <span id="idTotalBalance"
+                                                class="card-title"></span></span>
+                                        <br />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-body">
+                                <table id="bootstrap-data-charges" class="table table-striped table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Status</th>
+                                            <th>Date</th>
+                                            <th>Ref. Number</th>
+                                            <th>Description</th>
+                                            <th>Credit</th>
+                                            <th>Debit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="investment_products">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                    </div>
+                </div>
+            </div><!-- .animated -->
+            <div id="wait" style=";width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;">
+                <img src='spinner.gif' width="100" height="100" style="background-color: transparent" /></div>
+        </div><!-- .content -->
+
+
+    </div><!-- /#right-panel -->
+    <!-- <div id="panels" include-html="/includes/notifications.html"></div> -->
+
+    <script src="assets/js/popper.min.js"></script>
+    <script src="assets/js/plugins.js"></script>
+    <script src="assets/js/main.js"></script>
+
+
+    <script src="assets/js/lib/data-table/datatables.min.js"></script>
+    <script src="assets/js/lib/data-table/dataTables.bootstrap.min.js"></script>
+    <script src="assets/js/lib/data-table/dataTables.buttons.min.js"></script>
+    <script src="assets/js/lib/data-table/buttons.bootstrap.min.js"></script>
+    <script src="assets/js/lib/data-table/jszip.min.js"></script>
+    <script src="assets/js/lib/data-table/pdfmake.min.js"></script>
+    <script src="assets/js/lib/data-table/vfs_fonts.js"></script>
+    <script src="assets/js/lib/data-table/buttons.html5.min.js"></script>
+    <script src="assets/js/lib/data-table/buttons.print.min.js"></script>
+    <script src="assets/js/lib/data-table/buttons.colVis.min.js"></script>
+    <script src="assets/js/lib/data-table/datatables-init.js"></script>
+    <script src="./js/money-formater.js"></script>
+    <script type="text/javascript" src="../../investment/charges-taxes/charges-taxes.js"></script>
+    <script src="../../js/loader.js"></script>
+    <!-- <script src="../../js/notifications.js"></script> -->
+    <script type="text/javascript">
+    </script>
+</body>
+
+</html>

@@ -946,4 +946,132 @@ router.post('/update-post-priority/:id', function (req, res, next) {
         });
 });
 
+router.post('/create-docs', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    var data = req.body;
+    data.createdAt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    let query = `INSERT INTO investment_doc_requirement SET ?`;
+    let endpoint = `/core-service/post?query=${query}`;
+    let url = `${HOST}${endpoint}`;
+    axios.post(url, data)
+        .then(function (response) {
+            res.send(response.data);
+        }, err => {
+            res.send({
+                status: 500,
+                error: err,
+                response: null
+            });
+        })
+        .catch(function (error) {
+            res.send({
+                status: 500,
+                error: error,
+                response: null
+            });
+        });
+});
+
+router.get('/get-doc-requirements/:id', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let option = '';
+    if (req.query.operationId !== undefined) {
+        option = `AND operationId = ${req.query.operationId}`;
+    }
+
+    let query = `SELECT * FROM investment_doc_requirement WHERE productId = ${req.params.id} ${option}`;
+    console.log(query);
+    let endpoint = '/core-service/get';
+    let url = `${HOST}${endpoint}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        res.send(response.data);
+    }, err => {
+        res.send({
+            status: 500,
+            error: error,
+            response: null
+        });
+    });
+});
+
+router.get('/get-txn-doc-requirements/:id', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let query = `SELECT d.*,r.name FROM investment_doc_requirement r
+    left join investment_txn_doc_requirements d on d.docRequirementId = r.Id
+    WHERE d.txnId = ${req.params.id}`;
+    console.log(query);
+    let endpoint = '/core-service/get';
+    let url = `${HOST}${endpoint}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        res.send(response.data);
+    }, err => {
+        res.send({
+            status: 500,
+            error: error,
+            response: null
+        });
+    });
+});
+
+router.post('/update-txn-doc-requirements', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let data = req.body;
+    console.log(req.body);
+    if (data.isReplaced.toString() === '0') {
+        let query = `UPDATE investment_txn_doc_requirements
+        SET
+        filePath = '${data.filePath}',
+        status = ${data.status}
+        WHERE id = ${data.id}`;
+
+        console.log(query);
+        let endpoint = '/core-service/get';
+        let url = `${HOST}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(response => {
+            res.send(response.data);
+        }, err => {
+            res.send({
+                status: 500,
+                error: error,
+                response: null
+            });
+        });
+    } else {
+        let data_ = {
+            docRequirementId: data.docRequirementId,
+            filePath: data.filePath,
+            status: 1,
+            createdAt: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+            txnId: data.txnId,
+            isReplaced: 1
+        };
+
+        let query = `INSERT INTO investment_txn_doc_requirements SET ?`;
+        let endpoint = `/core-service/post?query=${query}`;
+        let url = `${HOST}${endpoint}`;
+        axios.post(url, data_)
+            .then(function (response) {
+                res.send(response.data);
+            }, err => {
+                res.send({
+                    status: 500,
+                    error: error,
+                    response: null
+                });
+            });
+    }
+});
+
 module.exports = router;

@@ -50,28 +50,31 @@
     <script src="../../menus/menu-items.js"></script>
 
     <style>
-        .select2-container{
+        .select2-container {
             width: 90% !important;
         }
-        .select2-selection{
+
+        .select2-selection {
             height: 100% !important;
             border: 1px solid #ced4da !important;
             border-radius: .25rem !important;
             color: #495057 !important;
         }
-        input.invalid, span.invalid {
+
+        input.invalid,
+        span.invalid {
             border: 2px dashed red;
         }
 
 
         #regForm {
-        background-color: rgba(255, 255, 255, 0.44);
-        /*margin: 100px auto;*/
-        padding: 20px;
-        /*width: 70%;*/
-        /*!*min-width: 300px;*!*/
-    }   
-</style>
+            background-color: rgba(255, 255, 255, 0.44);
+            /*margin: 100px auto;*/
+            padding: 20px;
+            /*width: 70%;*/
+            /*!*min-width: 300px;*!*/
+        }
+    </style>
 
     <aside id="left-panel" class="left-panel" include-html="/includes/sidebar.html">
     </aside><!-- /#left-panel -->
@@ -130,20 +133,25 @@
                                                     <hr>
                                                     <div class="row">
                                                         <div class="form-group col-sm-4 col-md-4">
-                                                            <label class="form-control-label">Client<span class="text-danger">*</span></label>
+                                                            <label class="form-control-label">Client<span
+                                                                    class="text-danger">*</span></label>
                                                             <div class="input-group">
-                                                                <select id="client" class="form-control" required="required">
-                                                                    <option value="0" selected="selected">-- Select --</option>
+                                                                <select id="client" class="form-control"
+                                                                    required="required">
+                                                                    <option value="0" selected="selected">-- Select --
+                                                                    </option>
                                                                 </select>
                                                             </div>
                                                         </div>
 
                                                         <div class="form-group col-sm-4 col-md-4">
-                                                            <label class="form-control-label">Product<span class="text-danger">*</span></label>
+                                                            <label class="form-control-label">Product<span
+                                                                    class="text-danger">*</span></label>
                                                             <div class="input-group">
                                                                 <select id="investment_product" class="form-control"
                                                                     required="required">
-                                                                    <option value="0" selected="selected">-- Select --</option>
+                                                                    <option value="0" selected="selected">-- Select --
+                                                                    </option>
                                                                 </select>
                                                             </div>
                                                         </div>
@@ -160,16 +168,28 @@
                                                     <h6>Investment</h6>
                                                     <hr><br>
                                                     <div class="row">
+                                                        <div class="form-group col-sm-4 col-md-4">
+                                                            <label class="form-control-label">Payment Made By<span
+                                                                    class="text-danger">*</span></label>
+                                                            <div class="input-group">
+                                                                <select id="opt_payment_made_by" class="form-control"
+                                                                    required="required">
+                                                                </select>
+                                                            </div>
+                                                        </div>
 
                                                         <div class="form-group col-sm-4 col-md-4">
-                                                            <label class="form-control-label">Amount<span class="text-danger">*</span></label>
+                                                            <label class="form-control-label">Amount<span
+                                                                    class="text-danger">*</span></label>
                                                             <div class="input-group">
-                                                                <input type="text" id="investment_amount" class="form-control imp"
+                                                                <input type="text" id="investment_amount"
+                                                                    class="form-control imp"
                                                                     placeholder="Investment Amount" min="0">
                                                             </div>
                                                             <small id="product_def">
                                                                 <span id="amount_info"><span>
-                                                                        <span id="amount_info_error" style='color:red'><span>
+                                                                        <span id="amount_info_error"
+                                                                            style='color:red'><span>
                                                             </small>
                                                         </div>
                                                         <!-- <div class="form-group col-sm-4 col-md-4">
@@ -194,17 +214,19 @@
                                                     <div class="row">
 
                                                         <div class="form-group col-sm-4 col-md-4">
-                                                            <label class="form-control-label">Start <span class="text-danger">*</span></label>
+                                                            <label class="form-control-label">Start <span
+                                                                    class="text-danger">*</span></label>
                                                             <div class="input-group">
-                                                                <input type="date" id="investment_date_start" class="form-control imp">
+                                                                <input type="date" id="investment_date_start"
+                                                                    class="form-control imp">
                                                             </div>
                                                         </div>
                                                         <div class="form-group col-sm-4 col-md-4">
                                                             <label class="form-control-label">End
                                                                 <span class="text-danger">*</span></label>
                                                             <div class="input-group">
-                                                                <input type="date" id="investment_mature_date" class="form-control imp"
-                                                                    disabled>
+                                                                <input type="date" id="investment_mature_date"
+                                                                    class="form-control imp" disabled>
                                                             </div>
                                                             <small>
                                                                 <span id="duration_info"><span>
@@ -230,8 +252,8 @@
 
                 </div>
             </div><!-- .animated -->
-            <div id="wait" style=";width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;"><img
-                    src='spinner.gif' width="100" height="100" style="background-color: transparent" /></div>
+            <div id="wait" style=";width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;">
+                <img src='spinner.gif' width="100" height="100" style="background-color: transparent" /></div>
         </div><!-- .content -->
 
 

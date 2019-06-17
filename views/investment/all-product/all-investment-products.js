@@ -3,6 +3,7 @@ let reqObject = {};
 let roleObject = [];
 let selectedApproval = {};
 let selectedRow = {};
+let data_row = {};
 $(document).ready(function () {
     bindDataTable();
 });
@@ -85,6 +86,7 @@ function onRequirement(value, id) {
 }
 
 function onReview(value, id) {
+    console.log('Inside reviewer');
     reqObject.productId = id;
     $("#viewReviewModalHeader").html(`${value} REVIEWER SETTINGS`);
 
@@ -104,6 +106,7 @@ function onReview(value, id) {
                 };
             },
             processResults: function (data, params) {
+                console.log(data);
                 params.page = params.page || 1;
                 if (data.error) {
                     return {
@@ -284,6 +287,7 @@ function bindDataTable() {
                     <div class="dropdown-menu" aria-labelledby="dropdownMenu2">
                     <a class="dropdown-item" href="./add-investment-products?id=${full.ID}">Edit</a> 
                     <button type="button" class="dropdown-item ${status_class}" onclick="updateStatus(${full.ID},${status_})">${status_label}</button>
+                    <button class="dropdown-item" type="button" id="dropdownItemDoc" data-toggle="modal" data-target="#viewDocModal" onclick="onDoc('${full.name}','${full.ID}')">Document</button>
                     <button class="dropdown-item" type="button" data-toggle="modal" data-target="#viewReviewModal" onclick="onReview('${full.name}','${full.ID}')">Set Review</button>
                     <button class="dropdown-item" type="button" data-toggle="modal" data-target="#viewRequirementModal" onclick="onRequirement('${full.name}','${full.ID}')">Set Approval</button>
                     <button class="dropdown-item" type="button" data-toggle="modal" data-target="#viewPostModal" onclick="onPost('${full.name}','${full.ID}')">Set Post</button>
@@ -294,6 +298,12 @@ function bindDataTable() {
         ]
     });
 }
+
+$('#product-data-table tbody').on('click', '#dropdownItemDoc', function () {
+    data_row = table.row($(this).parents('tr')).data();
+    console.log(data_row);
+    getProductDocRequirements();
+});
 
 function ceateRequirement() {
     if (reqObject.ID === undefined) {
@@ -329,6 +339,7 @@ function ceateRequirement() {
             'type': 'post',
             'data': reqObject,
             'success': function (data) {
+                $("#btn_requirement").html('Set Approval Requirement');
                 if (data.status === undefined) {
                     $('#wait').hide();
                     $("#list_user_roles").val(null).trigger('change');
@@ -383,6 +394,7 @@ function ceateReview() {
             'type': 'post',
             'data': reqObject,
             'success': function (data) {
+                $("#btn_review").html('Set Post Requirement');
                 if (data.status === undefined) {
                     $('#wait').hide();
                     $("#list_review_roles").val(null).trigger('change');
@@ -437,6 +449,7 @@ function ceatePost() {
             'type': 'post',
             'data': reqObject,
             'success': function (data) {
+                $("#btn_post").html('Set Post Requirement');
                 if (data.status === undefined) {
                     $('#wait').hide();
                     $("#list_post_roles").val(null).trigger('change');
@@ -515,7 +528,7 @@ function getProductRequirement(id) {
                 "mRender": function (data, type, full) {
                     if (full.operationId.toString() === "1") {
                         return "Deposit";
-                    } 
+                    }
                     // else if (full.operationId.toString() === "2") {
                     //     return "Transfer";
                     // } 
@@ -606,11 +619,9 @@ function getProductReview(id) {
                 "mRender": function (data, type, full) {
                     if (full.operationId.toString() === "1") {
                         return "Deposit";
-                    } 
-                    // else if (full.operationId.toString() === "2") {
-                    //     return "Transfer";
-                    // } 
-                    else if (full.operationId.toString() === "3") {
+                    } else if (full.operationId.toString() === "2") {
+                        return "Transfer";
+                    } else if (full.operationId.toString() === "3") {
                         return "Withdrawal";
                     }
                 }
@@ -697,7 +708,7 @@ function getProductPost(id) {
                 "mRender": function (data, type, full) {
                     if (full.operationId.toString() === "1") {
                         return "Deposit";
-                    } 
+                    }
                     // else if (full.operationId.toString() === "2") {
                     //     return "Transfer";
                     // } 
@@ -737,14 +748,63 @@ $("#list_operations").on('change',
             url: `investment-products/required-roles?productId=${reqObject.productId}&operationId=${$("#list_operations").val()}`,
             'type': 'get',
             'success': function (data) {
-                if (data.status === undefined) {
+                if (data.status === undefined && data.length > 0) {
                     $('#wait').hide();
                     $("#list_user_roles").val(null).trigger('change');
                     data.forEach(element => {
                         $("#list_user_roles").append(new Option(element.text, element.id, true, true)).trigger('change');
                     });
                     reqObject.ID = data[0].reqId;
-                    $("#btn_requirement").html('Update Approval');
+                    $("#btn_requirement").html('Update Approval Requirement');
+                } else {
+                    $('#wait').hide();
+                }
+            },
+            'error': function (err) {
+                $('#wait').hide();
+            }
+        });
+    });
+
+$("#list_operations_review").on('change',
+    function () {
+        $.ajax({
+            url: `investment-products/required-review-roles?productId=${reqObject.productId}&operationId=${$("#list_operations_review").val()}`,
+            'type': 'get',
+            'success': function (data) {
+                console.log(data);
+                if (data.status === undefined && data.length > 0) {
+                    $('#wait').hide();
+                    $("#list_review_roles").val(null).trigger('change');
+                    data.forEach(element => {
+                        $("#list_review_roles").append(new Option(element.text, element.id, true, true)).trigger('change');
+                    });
+                    reqObject.ID = data[0].reqId;
+                    $("#btn_review").html('Update Reviewer Requirement');
+                } else {
+                    $('#wait').hide();
+                }
+            },
+            'error': function (err) {
+                $('#wait').hide();
+            }
+        });
+    });
+//list_post_roles
+$("#list_operations_post").on('change',
+    function () {
+        $.ajax({
+            url: `investment-products/required-post-roles?productId=${reqObject.productId}&operationId=${$("#list_operations_post").val()}`,
+            'type': 'get',
+            'success': function (data) {
+                if (data.status === undefined && data.length > 0) {
+                    $('#wait').hide();
+                    $("#list_post_roles").val(null).trigger('change');
+                    data.forEach(element => {
+                        $("#list_post_roles").append(new Option(element.text, element.id, true, true)).trigger('change');
+                    });
+                    reqObject.ID = data[0].reqId;
+                    $("#btn_post").html('Update Post Requirement');
                 } else {
                     $('#wait').hide();
                 }
@@ -1169,6 +1229,73 @@ function setPostPriority(id, priority) {
         'error': function (err) {
             $('#wait').hide();
             swal('Oops! An error occurred while updating post priority', '', 'error');
+        }
+    });
+}
+
+function onDoc() {
+
+}
+
+function ceateProductDoc() {
+    let doc = {
+        productId: data_row.ID,
+        operationId: $('#list_operations_doc').val(),
+        name: $('#docName').val().toUpperCase(),
+        createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID
+    };
+    console.log(doc);
+    $.ajax({
+        url: `investment-products/create-docs`,
+        'type': 'post',
+        'data': doc,
+        'success': function (data) {
+            if (data.status === undefined) {
+                $('#wait').hide();
+                $("#docName").val('');
+                swal('Document requirement added successfully!', '', 'success');
+                getProductDocRequirements();
+            } else {
+                $('#wait').hide();
+                swal('Oops! An error occurred while creating document requirement', '', 'error');
+            }
+        },
+        'error': function (err) {
+            console.log(err);
+            $('#wait').hide();
+            swal('Oops! An error occurred while creating document requirement', '', 'error');
+        }
+    });
+}
+
+function getProductDocRequirements() {
+    $.ajax({
+        type: "GET",
+        url: `investment-products/get-doc-requirements/${data_row.ID}`,
+        data: '{}',
+        success: function (response) {
+            console.log(response);
+            $("#tbodyDocs").html('');
+            response.forEach((element, index) => {
+                let opName = '';
+                if (element.operationId !== null) {
+                    if (element.operationId.toString() === '1') {
+                        opName = 'Deposit';
+                    } else if (element.operationId.toString() === '2') {
+                        opName = 'Transfer';
+                    } else if (element.operationId.toString() === '3') {
+                        opName = 'Withdrawal';
+                    }
+                }
+                $("#tbodyDocs").append(`<tr>
+                <th scope="row">${index+1}</th>
+                <td>${element.name}</td>
+                <td>${opName}</td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm">Remove</button>
+                </td>
+            </tr>`).trigger('change');
+            });
         }
     });
 }
