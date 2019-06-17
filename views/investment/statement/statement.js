@@ -3,7 +3,6 @@ $(document).ready(function () {
     let strPathItems = window.location.pathname.split('/');
     let id = strPathItems[strPathItems.length - 1];
     let params = sPageURL.split('&');
-    console.log(id);
     $('#wait').show();
     getStatements(id, params[0].split('=')[1], params[1].split('=')[1]);
 
@@ -15,7 +14,6 @@ async function getStatements(investmentId, startDate, endDate) {
         'type': 'get',
         'success': function (data) {
             if (data.status === undefined) {
-                console.log(data);
                 if (data.length > 0) {
                     $('#balanceHeader').html(`Opening Balance@ ${data[0].txn_date}`);
                     $('#balanceAmount').html(`${formater(data[0].balance)}`);
@@ -72,7 +70,6 @@ function getConfigInfo() {
         'type': 'get',
         'success': function (data) {
             if (data.status === undefined) {
-                console.log(data);
                 $('#wait').hide();
                 $('#logo').attr("src", "../files" + data[0].logoPath);
                 $('#idSign').attr("src", "../files" + data[0].signaturePath);

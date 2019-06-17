@@ -8,15 +8,12 @@ let isWalletPage = 1;
 let sPageURL = '';
 let sURLVariables = "";
 $(document).ready(function () {
-    console.log('Entering transactions')
     $('#bootstrap-data-table-export').DataTable();
     sPageURL = window.location.search.substring(1);
     isWalletPage = (sPageURL.includes('clientId')) ? 1 : 0;
-    console.log(sPageURL);
     decideListOfAccounts(0);
     if (sPageURL !== "") {
         sURLVariables = sPageURL.split('=')[1].split('&')[0];
-        console.log(sURLVariables);
         if (sURLVariables !== "") {
             controlVisibility();
             bindDataTable(sURLVariables);
@@ -32,7 +29,6 @@ let products = [];
 let selectedAccount = {};
 
 function decideListOfAccounts(id) {
-    console.log(selectedInvestment);
     selectedAccount = $('#list_accounts').select2({
         allowClear: true,
         placeholder: (id === 1) ? "Search by Name/Code" : "Search by Name",
@@ -51,7 +47,6 @@ function decideListOfAccounts(id) {
                 };
             },
             processResults: function (data, params) {
-                console.log(data);
                 if (data.length > 0) {
                     products.push(...data);
                 }
@@ -83,14 +78,12 @@ function decideListOfAccounts(id) {
 
 function bindWalletTransaction() {
     let url = `./investment-transactions?clientId=${selectedInvestment.clientId}&clientName=${selectedInvestment.fullname}`;
-    console.log(url);
     $(location).attr('href', url);
 }
 
 $("#chk_own_accounts").on('change',
     function () {
         let status = $('#chk_own_accounts').is(':checked');
-        console.log('Wallet checked');
         if (status) {
             products = [];
             $('#chk_investment_accounts').attr('checked', false);
@@ -102,7 +95,6 @@ $("#chk_own_accounts").on('change',
 $("#chk_investment_accounts").on('change',
     function () {
         let status = $('#chk_investment_accounts').is(':checked');
-        console.log('list of investments');
         if (status) {
             products = [];
             $('#chk_own_accounts').attr('checked', false);
@@ -152,7 +144,6 @@ function controlVisibility() {
 }
 
 function getMaturedMonths() {
-    console.log("Zjn fbhjkefed ", selectedInvestment.investmentId);
     $.ajax({
         url: `investment-txns/mature-interest-months/${selectedInvestment.investmentId}`,
         'type': 'get',
@@ -168,7 +159,6 @@ function getMaturedMonths() {
             }
         },
         'error': function (err) {
-            console.log(err);
             $('#wait').hide();
         }
     });
@@ -177,7 +167,6 @@ function getMaturedMonths() {
 let _table = $('#bootstrap-data-table-export').DataTable();
 
 function bindDataTable(id) {
-    console.log(id);
     table = $('#bootstrap-data-table2').DataTable({
         dom: 'Blfrtip',
         destroy: true,
@@ -232,13 +221,11 @@ function bindDataTable(id) {
                     order: tableHeaders[aoData[2].value[0].column].query
                 },
                 success: function (data) {
-                    console.log(data);
                     if (data.data.length > 0) {
                         selectedInvestment = data.data[0];
                         if (selectedInvestment.canTerminate.toString() === '0') {
                             $('#btnTerminateInvestment').attr('disabled', true);
                         }
-                        console.log(data.data[0]);
                         if (selectedInvestment.isMatured === 1 || selectedInvestment.isTerminated === 1) {
                             $('#btnWithdrawal').attr('disabled', true);
                             $('#btnDeposit').attr('disabled', true);
@@ -551,16 +538,13 @@ $("#idChkForceTerminate").on('change',
         if (status) {
             let date = new Date();
             let minDate = `${date.getUTCFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
-            console.log(minDate);
             $('#notice_date').attr('min', minDate);
             $('#notice_date').val(date).trigger('change');
         } else {
             let date = new Date();
             date.setDate(date.getDate() + selectedConfig.investment_termination_days);
-            console.log(date);
             let minDate = `${date.getUTCFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 
-            console.log(minDate);
             $('#notice_date').attr('min', minDate);
         }
     });
@@ -572,24 +556,19 @@ function getConfigItems() {
         'success': function (data) {
             $('#wait').hide();
             selectedConfig = data;
-            console.log(selectedConfig);
             let date = new Date();
             date.setDate(date.getDate() + data.investment_termination_days + data.min_days_termination);
-            console.log(date);
             let minDate = `${date.getUTCFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 
-            console.log(minDate);
             $('#notice_date').attr('min', minDate);
         },
         'error': function (err) {
-            console.log(err);
             $('#wait').hide();
         }
     });
 }
 
 function onTerminateInvest() {
-    console.log(selectedInvestment);
     swal({
             title: "Are you sure?",
             text: "Once terminated, you will not be able to reverse this transaction!",
@@ -630,8 +609,6 @@ function onTerminateInvest() {
                     isForceTerminate: ($('#idChkForceTerminate').is(':checked') === true) ? 1 : 0,
                     expectedTerminationDate: ($('#notice_date').val() === '') ? date.toLocaleString() : $('#notice_date').val()
                 };
-                console.log(investmentOps);
-
                 $.ajax({
                     url: `investment-txns/create`,
                     'type': 'post',
@@ -723,7 +700,6 @@ $("#input_amount").on("keyup", function (event) {
 });
 
 $("#input_amount").on("focusout", function (event) {
-    console.log(selectedInvestment._is_credit);
     if (selectedInvestment._is_credit === 1) {
         let min = parseFloat(product_config.investment_min.split(',').join(''));
         let max = parseFloat(product_config.investment_max.split(',').join(''));
@@ -741,45 +717,27 @@ $("#input_amount").on("focusout", function (event) {
 
 
 function setReviewRequirements(value) {
-    console.log('a');
     let pbody = $("#transactionDetails");
-    console.log('b');
     let tr = "";
-    console.log('c');
     pbody.empty();
-    console.log('d');
     tr += "<tr><td><strong>Created By</strong></td><td>" + value.createdByName + "</td></tr>";
-    console.log('f');
     tr += "<tr><td><strong>Amount</strong></td><td>" + formater(value.amount) + "</td></tr>";
-    console.log('g');
     tr += "<tr><td><strong>Type</strong></td><td>" + (value.is_credit === 1) ? 'Credit' : 'Debit' + "</td></tr>";
-    console.log('h');
     tr += "<tr><td><strong>Dated</strong></td><td>" + value.txn_date + "</td></tr>";
-    console.log('i');
     pbody.html(tr);
-    console.log('j');
     $("#review_list_group").html('');
-    console.log('k');
     $.ajax({
         url: `investment-txns/get-txn-user-roles/${value.ID}?method='REVIEW'&userId=${(JSON.parse(localStorage.getItem("user_obj"))).ID}`,
         'type': 'get',
         'success': function (data) {
-            console.log('l');
-            console.log(data);
             if (data.length > 0) {
                 if (data.status === undefined) {
                     $('#viewReviewModalHeader').html(data[0].description);
                     $('#viewReviewModalHeader2').html(data[0].ref_no);
                     $('#wait').hide();
-                    console.log('m');
-                    console.log(data);
-                    console.log('n');
                     if (data.length > 0) {
-                        console.log('o');
                         data.forEach((element, index) => {
-                            console.log('p');
                             if (element.method === 'REVIEW') {
-                                console.log('q');
                                 $("#review_list_group").append(`<li class="list-group-item">
                                 <div class="row">
                                     <div class="form-group col-6">
@@ -802,7 +760,6 @@ function setReviewRequirements(value) {
                                     </div>
                                 </div>
                             </li>`).trigger('change');
-                                console.log('r');
                             }
                         });
                     }
@@ -850,7 +807,6 @@ function onExecutiveTransaction() {
         txn_date: $('#input_txn_date').val()
     };
 
-    console.log(investmentOps);
 
     $.ajax({
         url: `investment-txns/create`,
@@ -935,13 +891,11 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
                                         ref_no: data_row.ref_no,
                                         parentTxnId: data_row.ID
                                     };
-                                    console.log(investmentOps);
                                     $.ajax({
                                         url: `investment-txns/create`,
                                         'type': 'post',
                                         'data': investmentOps,
                                         'success': function (data) {
-                                            console.log(data);
                                             if (data.status === undefined) {
                                                 $('#wait').hide();
                                                 $("#input_amount").val('');
@@ -955,7 +909,6 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
                                             }
                                         },
                                         'error': function (err) {
-                                            console.log(err);
                                             $('#wait').hide();
                                             swal('Oops! An error occurred while executing reversal transaction', '', 'error');
                                         }
@@ -978,7 +931,6 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
 
 $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemDoc', function () {
     data_row = table.row($(this).parents('tr')).data();
-    console.log(data_row);
     $("#viewListDocModalHeader").html(data_row.description);
     $("#viewListDocModalHeader2").html(data_row.ref_no);
     getProductDocRequirements(0);
@@ -993,7 +945,6 @@ function getProductDocRequirements(verify) {
         success: function (response) {
             reqDocumentItems = response;
             $('#wait').hide();
-            console.log(response);
             $("#tbodyDocs").html('');
             $("#tbodyUploadedDocs").html('');
 
@@ -1060,7 +1011,6 @@ function onOpenMandate() {
         url: `investment-service/get-mandates/${selectedInvestment.investmentId}`,
         'type': 'get',
         'success': function (data) {
-            console.log(data);
             let passPortData = data.filter(x => x.isPassport === 1);
             let signatureData = data.filter(x => x.isSignature === 1);
             let instructionData = data.filter(x => x.isInstruction === 1);
@@ -1108,7 +1058,6 @@ function onViewPassport(path, statusImage, title) {
 
 
 async function onAddDoc(id, status, docRequirementId, txnId) {
-    console.log(id, status, docRequirementId, txnId);
     if ($(`#id_file_${id}`)[0].files[0] !== undefined) {
         let dt = new Date();
         let imgId = `${dt.getFullYear()}${dt.getMonth()}${dt.getDate()}${dt.getHours()}${dt.getMinutes()}${dt.getSeconds()}${dt.getMilliseconds()}`;
@@ -1172,7 +1121,6 @@ function uploadDocRequirement(data) {
 
 $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemReview', function () {
     data_row = table.row($(this).parents('tr')).data();
-    console.log(isWalletPage);
     if (isWalletPage === 0) {
         let mOperationId = 0;
         if (data_row.isDeposit === 1) {
@@ -1187,9 +1135,7 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemReview', function ()
             url: `investment-txns/verify-doc-uploads?productId=${data_row.productId}&operationId=${mOperationId}&txnId=${data_row.ID}`,
             'type': 'get',
             'success': function (data) {
-                console.log('Inside review');
                 if (data.status === undefined) {
-                    console.log(data);
                     if (data[0].total_doc_required === data[0].total_uploaded) {
                         setReviewRequirements(data_row);
                         getProductDocRequirements(1);
@@ -1207,13 +1153,11 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemReview', function ()
 
 $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemApproval', function () {
     data_row = table.row($(this).parents('tr')).data();
-    console.log(data_row);
     setApprovalRequirements(data_row);
 });
 
 $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemPost', function () {
     data_row = table.row($(this).parents('tr')).data();
-    console.log(data_row);
     setPostRequirements(data_row);
 });
 
@@ -1223,7 +1167,6 @@ function setApprovalRequirements(value) {
         url: `investment-txns/get-txn-user-roles/${value.ID}?method='APPROVAL'&userId=${(JSON.parse(localStorage.getItem("user_obj"))).ID}`,
         'type': 'get',
         'success': function (data) {
-            console.log(data);
             if (data.length > 0) {
                 if (data.status === undefined) {
                     $('#viewListApprovalModalHeader').html(data[0].description);
@@ -1338,18 +1281,12 @@ function onApproved(value, approvedId, txnId) {
         'data': _data,
         'success': function (data) {
             if (data.status === undefined) {
-                console.log('11');
                 $('#wait').hide();
-                console.log('22');
                 swal('Execution successful!', '', 'success');
-                console.log('33');
                 $("#role_list_group").html('');
-                console.log('44');
                 setApprovalRequirements(data_row);
-                console.log('55');
                 // bindDataTable(selectedInvestment.investmentId, false);
                 table.ajax.reload(null, false);
-                console.log('66');
             } else {
                 $('#wait').hide();
                 swal('Oops! An error occurred while executing action', '', 'error');
@@ -1379,17 +1316,12 @@ function onReviewed(value, approvedId, txnId) {
         'success': function (data) {
             if (data.status === undefined) {
                 $('#wait').hide();
-                console.log(2);
                 swal('Execution successful!', '', 'success');
-                console.log(3);
                 $("#review_list_group").html('');
-                console.log(4);
                 setReviewRequirements(data_row);
-                console.log(5);
                 // bindDataTable(selectedInvestment.investmentId, false);
                 table.ajax.reload(null, false);
                 // location.reload();
-                console.log(6);
             } else {
                 $('#wait').hide();
                 swal('Oops! An error occurred while executing action', '', 'error');
@@ -1407,7 +1339,6 @@ function onReviewed(value, approvedId, txnId) {
 
 
 function onPost(value, approvedId, txnId) {
-    console.log(data_row);
     let _data = {
         status: value,
         id: approvedId,
@@ -1432,7 +1363,6 @@ function onPost(value, approvedId, txnId) {
         isPaymentMadeByWallet: data_row.isPaymentMadeByWallet
 
     }
-    console.log(_data);
     $.ajax({
         url: `investment-txns/posts`,
         'type': 'post',
@@ -1467,13 +1397,11 @@ function onComputeInterest(value) {
         year: value.year,
         startDay: value.day
     }
-    console.log(_data);
     $.ajax({
         url: `investment-txns/compute-interest`,
         'type': 'post',
         'data': _data,
         'success': function (data) {
-            console.log(data);
             if (data.status === undefined) {
                 $('#wait').hide();
                 swal('Interest computed successfully', '', 'success');
@@ -1598,7 +1526,6 @@ function onTransferOperation() {
 
 function onTransferToInvestments(amount, desc, is_credit, investmentId) {
     new Promise((resolve, reject) => {
-        console.log(selectedInvestment);
         let _mRoleId = [];
         let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === 2 && status === 1);
         if (mRoleId.length === 0) {
@@ -1622,13 +1549,11 @@ function onTransferToInvestments(amount, desc, is_credit, investmentId) {
             operationId: 2,
             productId: selectedAccount.productId
         };
-        console.log(investmentOps);
         $.ajax({
             url: `investment-txns/create`,
             'type': 'post',
             'data': investmentOps,
             'success': function (data) {
-                console.log(data);
                 if (data.status === undefined) {
                     resolve(data);
                 } else {

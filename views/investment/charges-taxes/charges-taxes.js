@@ -4,7 +4,6 @@ $(document).ready(function () {
 });
 
 function bindDataTable() {
-    console.log('Am here');
     let table = $('#bootstrap-data-charges').DataTable({
         dom: 'Blfrtip3',
         destroy: true,
@@ -50,7 +49,6 @@ function bindDataTable() {
                     order: tableHeaders[aoData[2].value[0].column].query
                 },
                 success: function (data) {
-                    console.log(data.data);
                     if (data.data.length > 0) {
 
                     }
@@ -103,7 +101,6 @@ function getSumTotalChargeTaxes() {
         url: "/investment-txns/get-sum-charges",
         data: '{}',
         success: function (response) {
-            console.log(response);
             $("#idChargeTotal").html(formater(response.chargeTotal.toString()));
             $("#idVatTotal").html(formater(response.vatTotal.toString()));
 

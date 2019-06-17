@@ -480,7 +480,6 @@ function set_investment_product() {
                 'type': 'post',
                 'data': product_obj,
                 'success': function (data) {
-                    console.log(data);
                     if (data.status === 200) {
                         $('#wait').hide();
                         swal('Investment Product updated successfully!', '', 'success');
@@ -495,7 +494,6 @@ function set_investment_product() {
                     }
                 },
                 'error': function (err) {
-                    console.log(err);
                     $('#wait').hide();
                     swal('Oops! An error occurred while updating Investment Product; Required field(s) missing',
                         '', 'error');
