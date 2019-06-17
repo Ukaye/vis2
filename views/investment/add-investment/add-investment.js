@@ -263,7 +263,7 @@ $('#client').on("select2:selecting", function (e) {
             'type': 'get',
             'success': function (data) {
                 console.log(data);
-                clientBalance = data[0].balance;
+                clientBalance = (data[0] !== undefined) ? data[0].balance : 0.00;
                 $('#opt_payment_made_by').html('');
                 if (data.status === undefined) {
                     $('#wait').hide();
