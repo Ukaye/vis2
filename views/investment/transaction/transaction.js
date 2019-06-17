@@ -6,6 +6,7 @@ let product_config = {};
 let offset = 0;
 let isWalletPage = 1;
 let sPageURL = '';
+let sURLVariables = "";
 $(document).ready(function () {
     console.log('Entering transactions')
     $('#bootstrap-data-table-export').DataTable();
@@ -14,11 +15,14 @@ $(document).ready(function () {
     console.log(sPageURL);
     decideListOfAccounts(0);
     if (sPageURL !== "") {
-        var sURLVariables = sPageURL.split('=')[1].split('&')[0];
+        sURLVariables = sPageURL.split('=')[1].split('&')[0];
         console.log(sURLVariables);
         if (sURLVariables !== "") {
             controlVisibility();
             bindDataTable(sURLVariables);
+            let currentDate = new Date();
+            let _cmax = `${currentDate.getUTCFullYear()}-${pad(currentDate.getMonth()+1)}-${pad(currentDate.getDate())}`;
+            $('#input_txn_date').attr('max', _cmax);
         }
     }
 
@@ -28,6 +32,7 @@ let products = [];
 let selectedAccount = {};
 
 function decideListOfAccounts(id) {
+    console.log(selectedInvestment);
     selectedAccount = $('#list_accounts').select2({
         allowClear: true,
         placeholder: (id === 1) ? "Search by Name/Code" : "Search by Name",
@@ -41,7 +46,8 @@ function decideListOfAccounts(id) {
                     limit: 10,
                     page: params.page,
                     search_string: params.term,
-                    clientId: selectedInvestment.clientId
+                    clientId: selectedInvestment.clientId,
+                    excludedItem: selectedInvestment.investmentId
                 };
             },
             processResults: function (data, params) {
@@ -57,7 +63,7 @@ function decideListOfAccounts(id) {
                 } else {
                     return {
 
-                        results: data.map(function (item) {
+                        results: data.map((item) => {
                             return {
                                 id: item.ID,
                                 text: `${item.code}-${item.productName}-(${item.name})`,
@@ -73,6 +79,12 @@ function decideListOfAccounts(id) {
             cache: true
         }
     });
+}
+
+function bindWalletTransaction() {
+    let url = `./investment-transactions?clientId=${selectedInvestment.clientId}&clientName=${selectedInvestment.fullname}`;
+    console.log(url);
+    $(location).attr('href', url);
 }
 
 $("#chk_own_accounts").on('change',
@@ -128,17 +140,14 @@ function validateObject(amount, account, descriotion) {
 function controlVisibility() {
     if (isWalletPage === 1) {
         $('#spanProductName').html('');
+        $('#spanAccountNo').html('');
         $('#lblViewInterestTxns').html('');
         $('#btnOperations').attr('hidden', true);
-
-        $('#btnWithdrawal').attr('hidden', true);
         $('#btnDeposit').attr('hidden', true);
+        $('#lblViewWalletTxns').attr('hidden', true);
 
         $('#main_menu').html('Clients');
         $('#sub_menu').html('Wallet');
-    } else {
-        // $('#btnTransfer').attr('hidden', true);
-        // $('#lblViewInterestTxns').html('');
     }
 }
 
@@ -168,7 +177,7 @@ function getMaturedMonths() {
 let _table = $('#bootstrap-data-table-export').DataTable();
 
 function bindDataTable(id) {
-
+    console.log(id);
     table = $('#bootstrap-data-table2').DataTable({
         dom: 'Blfrtip',
         destroy: true,
@@ -182,6 +191,10 @@ function bindDataTable(id) {
             //     offset = aoData[3].value;
             // }
             let tableHeaders = [{
+                    name: "txn_date",
+                    query: `ORDER BY STR_TO_DATE(v.created_date, '%Y-%m-%d') ${aoData[2].value[0].dir}`
+                },
+                {
                     name: "txn_date",
                     query: `ORDER BY STR_TO_DATE(v.txn_date, '%Y-%m-%d') ${aoData[2].value[0].dir}`
                 },
@@ -222,6 +235,9 @@ function bindDataTable(id) {
                     console.log(data);
                     if (data.data.length > 0) {
                         selectedInvestment = data.data[0];
+                        if (selectedInvestment.canTerminate.toString() === '0') {
+                            $('#btnTerminateInvestment').attr('disabled', true);
+                        }
                         console.log(data.data[0]);
                         if (selectedInvestment.isMatured === 1 || selectedInvestment.isTerminated === 1) {
                             $('#btnWithdrawal').attr('disabled', true);
@@ -232,12 +248,16 @@ function bindDataTable(id) {
                         }
                         $("#client_name").html(data.data[0].fullname);
                         $("#inv_name").html(`${data.data[0].name} (${data.data[0].code})`);
-                        $("#inv_bal_amount").html(`${formater(data.data[data.data.length - 1].balance)}`);
+                        $("#inv_acct_no").html(`${data.data[0].acctNo}`);
+                        let sign = '';
+                        if (data.data[data.data.length - 1].balance.includes('-')) {
+                            sign = '-';
+                        }
+                        $("#inv_bal_amount").html(`${sign}₦${formater(data.data[data.data.length - 1].balance)}`);
 
                     } else {
-                        $("#client_name").html(sPageURL.split('=')[2]);
-                        // $("#inv_name").html(`${data.data[0].name} (${data.data[0].code})`);
-                        $("#inv_bal_amount").html(`0.00`);
+                        $("#client_name").html(sPageURL.split('=')[2].split('%20').join(''));
+                        $("#inv_bal_amount").html(`₦0.00`);
                     }
                     fnCallback(data)
                 }
@@ -245,16 +265,16 @@ function bindDataTable(id) {
         },
         aoColumnDefs: [{
                 sClass: "numericCol",
-                aTargets: [4]
+                aTargets: [5]
             },
 
             {
                 sClass: "numericCol",
-                aTargets: [6]
+                aTargets: [7]
             },
             {
                 className: "text-center",
-                aTargets: [7]
+                aTargets: [8]
             }
         ],
         columns: [{
@@ -262,6 +282,10 @@ function bindDataTable(id) {
                 "mRender": function (data, type, full) {
                     return `<span class="badge badge-pill ${(full.isApproved===1)?'badge-primary':'badge-danger'}">${(full.isApproved===1)?'Approved':'Pending Approval'}</span>`;
                 }
+            },
+            {
+                width: "auto",
+                data: "created_date"
             },
             {
                 width: "auto",
@@ -293,32 +317,28 @@ function bindDataTable(id) {
             {
                 width: "auto",
                 "mRender": function (data, type, full) {
-                    return `<span><strong>${(formater(full.balance.split(',').join('')).includes('.')?formater(full.balance.split(',').join('')):
-                        formater(full.balance.split(',').join(''))+'.00')}</strong></span>`;
+                    let sign = '';
+                    if (full.txnBalance.toString().includes('-')) {
+                        sign = '-';
+                    }
+                    return `<span><strong>${sign}${(formater(full.txnBalance.split(',').join('')).includes('.')?formater(full.txnBalance.split(',').join('')):
+                        formater(full.txnBalance.split(',').join(''))+'.00')}</strong></span>`;
                 }
             },
             {
                 width: "auto",
                 "mRender": function (data, type, full) {
-                    if (isWalletPage === 0) {
-                        return `<div class="dropdown dropleft">
+                    return `<div class="dropdown dropleft">
                         <i class="fa fa-ellipsis-v" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         </i> 
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        <button class="dropdown-item" id="dropdownItemDoc" data-toggle="modal" data-target="#viewListDocModal">Document</button>
                           <button class="dropdown-item" id="dropdownItemRevert" ${(full.postDone === 1 && full.is_capital === 0)?'':'disabled'}>Reverse</button>
                           <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal">Review</button>
                           <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(full.reviewDone === 1)?'':'disabled'}>Approval</button>
                           <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal"${(full.reviewDone === 1 && full.approvalDone === 1)?'':'disabled'}>Post</button>
                         </div>
                       </div>`;
-                    } else {
-                        return `<div class="dropdown dropleft">
-                        <i class="fa fa-ellipsis-v" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        </i> 
-                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        </div>
-                      </div>`;
-                    }
 
                 }
             }
@@ -399,7 +419,7 @@ function bindInterestDataTable() {
                 width: "auto",
                 "mRender": function (data, type, full) {
                     let st = new Date(full.interestDate);
-                    return `Balance ${full.balance} @${st.toDateString()}`;
+                    return `Balance as @${st.toDateString()} <strong>${formater(full.balance)}</strong>`;
                 }
             },
             {
@@ -552,8 +572,9 @@ function getConfigItems() {
         'success': function (data) {
             $('#wait').hide();
             selectedConfig = data;
+            console.log(selectedConfig);
             let date = new Date();
-            date.setDate(date.getDate() + data.investment_termination_days);
+            date.setDate(date.getDate() + data.investment_termination_days + data.min_days_termination);
             console.log(date);
             let minDate = `${date.getUTCFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 
@@ -568,6 +589,7 @@ function getConfigItems() {
 }
 
 function onTerminateInvest() {
+    console.log(selectedInvestment);
     swal({
             title: "Are you sure?",
             text: "Once terminated, you will not be able to reverse this transaction!",
@@ -588,25 +610,30 @@ function onTerminateInvest() {
                 } else {
                     _mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === withdrawalOperation && status === 1);
                 }
+                let date = new Date();
                 let investmentOps = {
                     description: 'Terminate Investment',
                     is_credit: 0,
+                    amount: selectedInvestment.balance,
                     investmentId: selectedInvestment.investmentId,
+                    isWithdrawal: 1,
                     operationId: withdrawalOperation,
                     is_capital: 0,
                     isApproved: 0,
                     status: 0,
-                    isterminate: 1,
+                    isTerminated: 1,
+                    isInvestmentTerminated: 1,
                     approvedBy: '',
                     createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
                     roleIds: _mRoleId,
                     productId: selectedInvestment.productId,
                     isForceTerminate: ($('#idChkForceTerminate').is(':checked') === true) ? 1 : 0,
-                    expectedTerminationDate: $('#notice_date').val()
+                    expectedTerminationDate: ($('#notice_date').val() === '') ? date.toLocaleString() : $('#notice_date').val()
                 };
+                console.log(investmentOps);
 
                 $.ajax({
-                    url: `investment-txns/terminate`,
+                    url: `investment-txns/create`,
                     'type': 'post',
                     'data': investmentOps,
                     'success': function (data) {
@@ -635,6 +662,14 @@ function onTerminateInvest() {
 $(document).ready(function () {});
 
 function onOpenMode(name, operationId, is_credit) {
+    if (name === 'Transfer') {
+        $("#chk_own_accounts").attr('checked', false);
+        $("#chk_own_accounts").attr('hidden', true);
+        $("#chk_client_wallet").attr('hidden', true);
+
+        $("#lbl_chk_own_accounts").attr('hidden', true);
+        $("#lbl_chk_client_wallet").attr('hidden', true);
+    }
     selectedInvestment._operationId = operationId;
     selectedInvestment._is_credit = is_credit;
     opsObj.is_credit = is_credit;
@@ -651,6 +686,7 @@ function onOpenMode(name, operationId, is_credit) {
                 $('#wait').hide();
                 $("#input_amount").attr('disabled', false);
                 $("#input_description").attr('disabled', false);
+                $("#input_txn_date").attr('disabled', false);
                 let hint = '';
                 if (operationId === '1') {
                     hint = `Min.: ${product_config.investment_min} - Max.: ${product_config.investment_max}`;
@@ -667,6 +703,7 @@ function onOpenMode(name, operationId, is_credit) {
                 $("#input_amount").attr('disabled', true);
                 $("#btnTransaction").attr('disabled', true);
                 $("#input_description").attr('disabled', true);
+                $("#input_txn_date").attr('disabled', true);
                 swal('Oops! An error occurred while initiating deposit dialog', '', 'error');
             }
         },
@@ -675,6 +712,7 @@ function onOpenMode(name, operationId, is_credit) {
             $("#input_amount").attr('disabled', true);
             $("#btnTransaction").attr('disabled', true);
             $("#input_description").attr('disabled', true);
+            $("#input_txn_date").attr('disabled', true);
             swal('Oops! An error occurred while initiating deposit dialog', '', 'error');
         }
     });
@@ -710,7 +748,7 @@ function setReviewRequirements(value) {
     console.log('c');
     pbody.empty();
     console.log('d');
-    tr += "<tr><td><strong>Created By</strong></td><td>" + value.fullname + "</td></tr>";
+    tr += "<tr><td><strong>Created By</strong></td><td>" + value.createdByName + "</td></tr>";
     console.log('f');
     tr += "<tr><td><strong>Amount</strong></td><td>" + formater(value.amount) + "</td></tr>";
     console.log('g');
@@ -799,7 +837,7 @@ function onExecutiveTransaction() {
         isWithdrawal: (opsObj.operationId === '3') ? 1 : 0,
         isDeposit: (opsObj.operationId === '1') ? 1 : 0,
         isTransfer: (opsObj.operationId === '2') ? 1 : 0,
-        investmentId: selectedInvestment.investmentId,
+        investmentId: (isWalletPage === 0) ? selectedInvestment.investmentId : '',
         operationId: opsObj.operationId,
         is_capital: 0,
         isApproved: 0,
@@ -807,7 +845,12 @@ function onExecutiveTransaction() {
         createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
         roleIds: _mRoleId,
         productId: selectedInvestment.productId,
+        isWallet: isWalletPage,
+        clientId: sURLVariables,
+        txn_date: $('#input_txn_date').val()
     };
+
+    console.log(investmentOps);
 
     $.ajax({
         url: `investment-txns/create`,
@@ -933,18 +976,244 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
     }
 });
 
+$('#bootstrap-data-table2 tbody').on('click', '#dropdownItemDoc', function () {
+    data_row = table.row($(this).parents('tr')).data();
+    console.log(data_row);
+    $("#viewListDocModalHeader").html(data_row.description);
+    $("#viewListDocModalHeader2").html(data_row.ref_no);
+    getProductDocRequirements(0);
+});
+let reqDocumentItems = [];
+
+function getProductDocRequirements(verify) {
+    $.ajax({
+        type: "GET",
+        url: `investment-products/get-txn-doc-requirements/${data_row.ID}`,
+        data: {},
+        success: function (response) {
+            reqDocumentItems = response;
+            $('#wait').hide();
+            console.log(response);
+            $("#tbodyDocs").html('');
+            $("#tbodyUploadedDocs").html('');
+
+            $("#review_list_doc").html('');
+            let uploadItemData = [];
+            response.forEach(element => {
+                if (verify === 0) {
+                    let item = uploadItemData.filter(x => x.txnId === element.txnId);
+                    if (item.length === 0) {
+                        uploadItemData.push(element);
+                        let statusHtml = '';
+                        if (element.status.toString() === '1') {
+                            statusHtml = `<span style="color:Green"><strong>UPLOADED</strong></span>`
+                        } else {
+                            statusHtml = `<span style="color:Red"><strong>NOT FOUND</strong></span>`
+                        }
+                        $("#tbodyDocs").append(`<tr>
+                    <td><span>${element.name}</span></td>
+                    <td><input id="id_file_${element.id}" class="image admin-img" type="file" tabindex="6"></td>
+                    <td>
+                    ${statusHtml}
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="onAddDoc(${element.id},${element.status},${element.docRequirementId},${element.txnId})">${(element.status.toString()==='1')?'Update':'Add'} File</button>
+                    </td>
+                </tr>`).trigger('change');
+                    }
+                    if (element.status.toString() === '1') {
+                        $("#tbodyUploadedDocs").append(`<tr>
+                        <td><span>${element.name} (<a href="/files${element.filePath}" class="badge badge-light">View File</a>)</span></td>
+                        <td>
+                        ${element.createdAt}
+                        </td>
+                    </tr>`).trigger('change');
+                    }
+                } else {
+                    $("#review_list_doc").append(`<li class="list-group-item">
+                    <div class="row">
+                        <div class="form-group col-6">
+                            <div class="form-group">
+                                <label class="form-control-label"><strong>Document</strong></label>
+                                <div class="form-control-label">
+                                    <small>File Name: </small><small class="text-muted">${element.name}</small>
+                                </div>
+                                <div class="form-control-label">
+                                ${(element.status.toString()==='1')?
+                                `<a href="/files${element.filePath}" class="badge badge-light">View File</a>`
+                                :
+                                `<a class="badge badge-light">File Not Found</a>`}                                
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>`).trigger('change');
+                }
+            });
+        }
+    });
+}
+
+function onOpenMandate() {
+    let mandataData = [];
+    $.ajax({
+        url: `investment-service/get-mandates/${selectedInvestment.investmentId}`,
+        'type': 'get',
+        'success': function (data) {
+            console.log(data);
+            let passPortData = data.filter(x => x.isPassport === 1);
+            let signatureData = data.filter(x => x.isSignature === 1);
+            let instructionData = data.filter(x => x.isInstruction === 1);
+            mandataData.push(...passPortData);
+            mandataData.push(...signatureData);
+            mandataData.push(...instructionData);
+            let htmlTags = '';
+            mandataData.forEach(item => {
+                let type_ = '';
+                let path = '';
+                if (item.isInstruction === 1) {
+                    type_ = "Instruction";
+                    path = item.instruction;
+                } else if (item.isPassport === 1) {
+                    type_ = "Passport";
+                    path = item.passportPath;
+                } else if (item.isSignature === 1) {
+                    type_ = "Signature";
+                    path = item.signaturePath;
+                }
+                htmlTags += `<tr>
+                    <td><strong>${type_}</strong></td>
+                    <td>${item.name}</td>
+                    <td><div class="button" style="text-decoration: underline" onclick="onViewPassport('${path}',${item.isInstruction}, '${item.name}')">View</div></td>
+                </tr>`
+            });
+            $("#idListMandates").html(htmlTags);
+        },
+        'error': function (err) {
+            $('#wait').hide();
+        }
+    });
+}
+
+function onViewPassport(path, statusImage, title) {
+    if (statusImage === 1) {
+        swal({
+            title: title,
+            text: path
+        });
+    } else {
+        window.open(`/files${path}`);
+    }
+}
+
+
+async function onAddDoc(id, status, docRequirementId, txnId) {
+    console.log(id, status, docRequirementId, txnId);
+    if ($(`#id_file_${id}`)[0].files[0] !== undefined) {
+        let dt = new Date();
+        let imgId = `${dt.getFullYear()}${dt.getMonth()}${dt.getDate()}${dt.getHours()}${dt.getMinutes()}${dt.getSeconds()}${dt.getMilliseconds()}`;
+        let ext_ = $(`#id_file_${id}`)[0].files[0].type.split('/')[1];
+        ext_ = (ext_ === 'jpeg') ? 'jpg' : ext_;
+        let filePath = `/organisations/investment-doc/${imgId}.${ext_}`;
+        let uploadItem = await upload('organisations', 'investment-doc', $(`#id_file_${id}`)[0].files[0], imgId);
+        if (uploadItem === 1) {
+            let updateData = {
+                id: id,
+                status: 1,
+                filePath: filePath,
+                isReplaced: status,
+                docRequirementId: docRequirementId,
+                txnId: txnId
+            };
+            uploadDocRequirement(updateData);
+        } else {
+            swal('Oops! An error occurred while uploading file', '', 'error');
+        }
+    }
+}
+
+function upload(parentFolder, subFolderName, file, imgId) {
+    return new Promise((resolve, reject) => {
+        let formData = new FormData();
+        formData.append('file', file);
+        $.ajax({
+            url: `/investment-service/upload-file/${imgId}/${parentFolder}/${subFolderName}`,
+            type: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                resolve(1)
+            },
+            error: function () {
+                reject(error);
+            }
+        });
+    });
+}
+
+function uploadDocRequirement(data) {
+    $.ajax({
+        url: `/investment-products/update-txn-doc-requirements`,
+        type: "POST",
+        data: data,
+        success: function (response) {
+            $('#wait').hide();
+            swal('File uploaded successfully!', '', 'success');
+        },
+        error: function () {
+            $('#wait').hide();
+            swal('Oops! An error occurred while uploading file', '', 'error');
+        }
+    });
+}
+
+
+
 $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemReview', function () {
     data_row = table.row($(this).parents('tr')).data();
-    setReviewRequirements(data_row);
+    console.log(isWalletPage);
+    if (isWalletPage === 0) {
+        let mOperationId = 0;
+        if (data_row.isDeposit === 1) {
+            mOperationId = 1;
+        } else if (data_row.isTransfer === 1) {
+            mOperationId = 2;
+        } else if (data_row.isWithdrawal === 1) {
+            mOperationId = 3;
+        }
+        $("#post_list_group").html('');
+        $.ajax({
+            url: `investment-txns/verify-doc-uploads?productId=${data_row.productId}&operationId=${mOperationId}&txnId=${data_row.ID}`,
+            'type': 'get',
+            'success': function (data) {
+                console.log('Inside review');
+                if (data.status === undefined) {
+                    console.log(data);
+                    if (data[0].total_doc_required === data[0].total_uploaded) {
+                        setReviewRequirements(data_row);
+                        getProductDocRequirements(1);
+                    } else {
+                        swal('Oops! Please kindly upload required document(s) before REVIEW', '', 'error');
+                    }
+                }
+            }
+        });
+    } else {
+        setReviewRequirements(data_row);
+        getProductDocRequirements(1);
+    }
 });
 
 $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemApproval', function () {
     data_row = table.row($(this).parents('tr')).data();
+    console.log(data_row);
     setApprovalRequirements(data_row);
 });
 
 $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemPost', function () {
     data_row = table.row($(this).parents('tr')).data();
+    console.log(data_row);
     setPostRequirements(data_row);
 });
 
@@ -1060,7 +1329,7 @@ function onApproved(value, approvedId, txnId) {
         txnId: txnId,
         isCredit: data_row,
         amount: data_row.amount,
-        balance: data_row.balance,
+        balance: data_row.txnBalance,
         userId: (JSON.parse(localStorage.getItem("user_obj"))).ID
     }
     $.ajax({
@@ -1100,7 +1369,7 @@ function onReviewed(value, approvedId, txnId) {
         txnId: txnId,
         isCredit: data_row,
         amount: data_row.amount,
-        balance: data_row.balance,
+        balance: data_row.txnBalance,
         userId: (JSON.parse(localStorage.getItem("user_obj"))).ID
     }
     $.ajax({
@@ -1109,7 +1378,6 @@ function onReviewed(value, approvedId, txnId) {
         'data': _data,
         'success': function (data) {
             if (data.status === undefined) {
-                console.log(1);
                 $('#wait').hide();
                 console.log(2);
                 swal('Execution successful!', '', 'success');
@@ -1134,7 +1402,12 @@ function onReviewed(value, approvedId, txnId) {
     });
 }
 
+
+
+
+
 function onPost(value, approvedId, txnId) {
+    console.log(data_row);
     let _data = {
         status: value,
         id: approvedId,
@@ -1142,11 +1415,24 @@ function onPost(value, approvedId, txnId) {
         txnId: txnId,
         isCredit: data_row.is_credit,
         amount: data_row.amount,
-        balance: data_row.balance,
+        balance: data_row.txnBalance,
+        isTransfer: data_row.isTransfer,
+        beneficialInvestmentId: data_row.beneficialInvestmentId,
+        description: data_row.description,
         investmentId: data_row.investmentId,
         userId: (JSON.parse(localStorage.getItem("user_obj"))).ID,
-        isReversedTxn: data_row.isReversedTxn
+        isReversedTxn: data_row.isReversedTxn,
+        refId: data_row.ref_no,
+        isInvestmentTerminated: data_row.isInvestmentTerminated,
+        expectedTerminationDate: data_row.expectedTerminationDate,
+        created_date: data_row.created_date,
+        isMoveFundTransfer: data_row.isMoveFundTransfer,
+        isWallet: data_row.isWallet,
+        clientId: data_row.clientId,
+        isPaymentMadeByWallet: data_row.isPaymentMadeByWallet
+
     }
+    console.log(_data);
     $.ajax({
         url: `investment-txns/posts`,
         'type': 'post',
@@ -1204,13 +1490,11 @@ function onComputeInterest(value) {
         }
     });
 }
-
-
-
-function onTransferOperation() {
+///transfer-fund-wallet
+function onFundWalletOperation() {
     let amount = $("#input_transfer_amount").val();
     let desc = $("#input_transfer_description").val();
-    selectedAccount = products.find(x => x.ID.toString() === $("#list_accounts").val());
+    // selectedAccount = products.find(x => x.ID.toString() === $("#list_accounts").val());
     let _mRoleId = [];
     let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === 2 && status === 1);
     if (mRoleId.length === 0) {
@@ -1223,16 +1507,21 @@ function onTransferOperation() {
     }
     let investmentOps = {
         amount: amount,
-        description: desc,
+        description: `MOVE FUND FROM INVESTMENT ACCT. TO CLIENT'S WALLET`,
         investmentId: selectedInvestment.investmentId,
         is_credit: 0,
         operationId: 2,
         isCharge: 0,
         is_capital: 0,
         isApproved: 0,
+        isMoveFundTransfer: 1,
         approvedBy: '',
+        isTransfer: 1,
+        clientId: selectedInvestment.clientId,
         createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
-        roleIds: _mRoleId
+        roleIds: _mRoleId,
+        beneficialInvestmentId: selectedInvestment.investmentId,
+        productId: selectedInvestment.productId
     };
 
     $.ajax({
@@ -1240,43 +1529,71 @@ function onTransferOperation() {
         'type': 'post',
         'data': investmentOps,
         'success': function (data) {
-            console.log(data);
-            investmentOps = {
-                amount: amount,
-                description: desc,
-                investmentId: selectedAccount.ID,
-                is_credit: 1,
-                operationId: 2,
-                isCharge: 0,
-                is_capital: 0,
-                isApproved: 0,
-                approvedBy: '',
-                createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
-                roleIds: _mRoleId
-            };
-
-            console.log(investmentOps);
-            $.ajax({
-                url: `investment-txns/create`,
-                'type': 'post',
-                'data': investmentOps,
-                'success': function (data2) {
-                    console.log(data2);
-                    $('#wait').hide();
-                    swal('Transfer operation completed successfully', '', 'success');
-                    $(".input").val('');
-                },
-                'error': function (err1) {
-                    $('#wait').hide();
-                    swal('Something went wrong while executing transfer operation', '', 'error');
-                }
-            });
+            $('#wait').hide();
+            swal('Transfer operation completed successfully', '', 'success');
+            $(".input").val('');
         },
         'error': function (err) {
             $('#wait').hide();
             swal('Something went wrong while executing transfer operation', '', 'error');
         }
     });
+}
+
+
+
+
+function onTransferOperation() {
+    if ($('#chk_client_wallet').is(':checked') === true) {
+        onFundWalletOperation();
+    } else {
+        let amount = $("#input_transfer_amount").val();
+        let desc = $("#input_transfer_description").val();
+        selectedAccount = products.find(x => x.ID.toString() === $("#list_accounts").val());
+        let _mRoleId = [];
+        let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === 2 && status === 1);
+        if (mRoleId.length === 0) {
+            _mRoleId.push({
+                roles: "[]",
+                operationId: 2
+            });
+        } else {
+            _mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === 2 && status === 1);
+        }
+        let investmentOps = {
+            amount: amount,
+            description: `TRANSFER BETWEEN CLIENTS ACCOUNT; TRANSFER FROM : ${selectedInvestment.acctNo}(${selectedInvestment.fullname}) TO ${selectedAccount.code}(${selectedAccount.name})`,
+            investmentId: (isWalletPage === 0) ? selectedInvestment.investmentId : '',
+            is_credit: 0,
+            operationId: 2,
+            isCharge: 0,
+            is_capital: 0,
+            isApproved: 0,
+            isTransfer: 1,
+            approvedBy: '',
+            createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
+            roleIds: _mRoleId,
+            beneficialInvestmentId: selectedAccount.ID,
+            productId: selectedInvestment.productId,
+            isWallet: isWalletPage,
+            clientId: sURLVariables
+        };
+
+        $.ajax({
+            url: `investment-txns/create`,
+            'type': 'post',
+            'data': investmentOps,
+            'success': function (data) {
+                $('#wait').hide();
+                swal('Transfer operation completed successfully', '', 'success');
+                $(".input").val('');
+            },
+            'error': function (err) {
+                $('#wait').hide();
+                swal('Something went wrong while executing transfer operation', '', 'error');
+            }
+        });
+    }
 }
 
 function onTransferToInvestments(amount, desc, is_credit, investmentId) {

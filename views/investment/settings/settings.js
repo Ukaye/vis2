@@ -4,126 +4,126 @@ $(document).ready(function () {
 });
 
 function component_initializer() {
-    $('#investment_product').select2({
-        allowClear: true,
-        placeholder: "Search by Product Code/Name",
-        ajax: {
-            url: "/investment-products/all",
-            dataType: "json",
-            delay: 250,
-            data: function (params) {
-                params.page = (params.page === undefined || params.page === null) ? 0 : params.page;
-                return {
-                    limit: 10,
-                    page: params.page,
-                    search_string: params.term
-                };
-            },
-            processResults: function (data, params) {
-                params.page = params.page || 1;
-                if (data.error) {
-                    return {
-                        results: []
-                    };
-                } else {
-                    return {
-                        results: data.map(function (item) {
-                            return {
-                                id: item.ID,
-                                text: `${item.name} (${item.code})`
+    // $('#investment_product').select2({
+    //     allowClear: true,
+    //     placeholder: "Search by Product Code/Name",
+    //     ajax: {
+    //         url: "/investment-products/all",
+    //         dataType: "json",
+    //         delay: 250,
+    //         data: function (params) {
+    //             params.page = (params.page === undefined || params.page === null) ? 0 : params.page;
+    //             return {
+    //                 limit: 10,
+    //                 page: params.page,
+    //                 search_string: params.term
+    //             };
+    //         },
+    //         processResults: function (data, params) {
+    //             params.page = params.page || 1;
+    //             if (data.error) {
+    //                 return {
+    //                     results: []
+    //                 };
+    //             } else {
+    //                 return {
+    //                     results: data.map(function (item) {
+    //                         return {
+    //                             id: item.ID,
+    //                             text: `${item.name} (${item.code})`
 
-                            };
-                        }),
-                        pagination: {
-                            more: params.page * 10
-                        }
-                    };
-                }
-            },
-            cache: true
-        }
-    });
+    //                         };
+    //                     }),
+    //                     pagination: {
+    //                         more: params.page * 10
+    //                     }
+    //                 };
+    //             }
+    //         },
+    //         cache: true
+    //     }
+    // });
 
-    $('#investment_product_with_holdings').select2({
-        allowClear: true,
-        placeholder: "Search by Product Code/Name",
-        ajax: {
-            url: "/investment-products/all",
-            dataType: "json",
-            delay: 250,
-            data: function (params) {
-                params.page = (params.page === undefined || params.page === null) ? 0 : params.page;
-                return {
-                    limit: 10,
-                    page: params.page,
-                    search_string: params.term
-                };
-            },
-            processResults: function (data, params) {
-                params.page = params.page || 1;
-                if (data.error) {
-                    return {
-                        results: []
-                    };
-                } else {
-                    return {
-                        results: data.map(function (item) {
-                            return {
-                                id: item.ID,
-                                text: `${item.name} (${item.code})`
+    // $('#investment_product_with_holdings').select2({
+    //     allowClear: true,
+    //     placeholder: "Search by Product Code/Name",
+    //     ajax: {
+    //         url: "/investment-products/all",
+    //         dataType: "json",
+    //         delay: 250,
+    //         data: function (params) {
+    //             params.page = (params.page === undefined || params.page === null) ? 0 : params.page;
+    //             return {
+    //                 limit: 10,
+    //                 page: params.page,
+    //                 search_string: params.term
+    //             };
+    //         },
+    //         processResults: function (data, params) {
+    //             params.page = params.page || 1;
+    //             if (data.error) {
+    //                 return {
+    //                     results: []
+    //                 };
+    //             } else {
+    //                 return {
+    //                     results: data.map(function (item) {
+    //                         return {
+    //                             id: item.ID,
+    //                             text: `${item.name} (${item.code})`
 
-                            };
-                        }),
-                        pagination: {
-                            more: params.page * 10
-                        }
-                    };
-                }
-            },
-            cache: true
-        }
-    });
+    //                         };
+    //                     }),
+    //                     pagination: {
+    //                         more: params.page * 10
+    //                     }
+    //                 };
+    //             }
+    //         },
+    //         cache: true
+    //     }
+    // });
 
-    $('#investment_product_vat').select2({
-        allowClear: true,
-        placeholder: "Search by Product Code/Name",
-        ajax: {
-            url: "/investment-products/all",
-            dataType: "json",
-            delay: 250,
-            data: function (params) {
-                params.page = (params.page === undefined || params.page === null) ? 0 : params.page;
-                return {
-                    limit: 10,
-                    page: params.page,
-                    search_string: params.term
-                };
-            },
-            processResults: function (data, params) {
-                console.log(data);
-                params.page = params.page || 1;
-                if (data.error) {
-                    return {
-                        results: []
-                    };
-                } else {
-                    return {
-                        results: data.map(function (item) {
-                            return {
-                                id: item.ID,
-                                text: `${item.name} (${item.code})`
+    // $('#investment_product_vat').select2({
+    //     allowClear: true,
+    //     placeholder: "Search by Product Code/Name",
+    //     ajax: {
+    //         url: "/investment-products/all",
+    //         dataType: "json",
+    //         delay: 250,
+    //         data: function (params) {
+    //             params.page = (params.page === undefined || params.page === null) ? 0 : params.page;
+    //             return {
+    //                 limit: 10,
+    //                 page: params.page,
+    //                 search_string: params.term
+    //             };
+    //         },
+    //         processResults: function (data, params) {
+    //             console.log(data);
+    //             params.page = params.page || 1;
+    //             if (data.error) {
+    //                 return {
+    //                     results: []
+    //                 };
+    //             } else {
+    //                 return {
+    //                     results: data.map(function (item) {
+    //                         return {
+    //                             id: item.ID,
+    //                             text: `${item.name} (${item.code})`
 
-                            };
-                        }),
-                        pagination: {
-                            more: params.page * 10
-                        }
-                    };
-                }
-            },
-            cache: true
-        }
-    });
+    //                         };
+    //                     }),
+    //                     pagination: {
+    //                         more: params.page * 10
+    //                     }
+    //                 };
+    //             }
+    //         },
+    //         cache: true
+    //     }
+    // });
 
     getExistingConfigs();
 }
@@ -144,15 +144,15 @@ function getExistingConfigs() {
             if (data.status === undefined) {
                 $('#btnSave').val('Update');
                 $('#wait').hide();
-                let option = new Option(`${data.acctName} (${data.code})`, data.productId, true, true);
-                $('#investment_product').append(option).trigger('change');
+                // let option = new Option(`${data.acctName} (${data.code})`, data.productId, true, true);
+                // $('#investment_product').append(option).trigger('change');
                 $('#termination_no_day').val(data.investment_termination_days);
 
                 $('#organisationName').val(data.name);
                 $('#organisationEmail').val(data.email);
                 $('#organisationPhone').val(data.phone);
                 $('#organisationAddress').val(data.address);
-                option = new Option(`${data.country}`, data.country, true, true);
+                let option = new Option(`${data.country}`, data.country, true, true);
                 $('#organisationCountry').append(option).trigger('change');
                 option = new Option(`${data.state}`, data.state, true, true);
                 $('#organisationState').append(option).trigger('change');
@@ -174,10 +174,14 @@ function getExistingConfigs() {
                     $('#idWithHoldingTaxMethod').val(data.withHoldingTaxChargeMethod);
 
 
-                option = new Option(`${data.vatAcctName} (${data.vatCode})`, data.vatProductId, true, true);
-                $('#investment_product_vat').append(option).trigger('change');
-                option = new Option(`${data.withHoldingsAcctName} (${data.withHoldingCode})`, data.withHoldingsProductId, true, true);
-                $('#investment_product_with_holdings').append(option).trigger('change');
+                // option = new Option(`${data.vatAcctName} (${data.vatCode})`, data.vatProductId, true, true);
+                // $('#investment_product_vat').append(option).trigger('change');
+                // option = new Option(`${data.withHoldingsAcctName} (${data.withHoldingCode})`, data.withHoldingsProductId, true, true);
+                // $('#investment_product_with_holdings').append(option).trigger('change');
+
+                $('#idTransferCharge').val(data.transferValue);
+                if (data.transferChargeMethod !== null)
+                    $('#idTransferMethod').val(data.transferChargeMethod);
             }
         },
         'error': function (err) {
@@ -223,11 +227,11 @@ function getStates() {
     });
 }
 
-function upload(folderName, file, imgId) {
+function upload(parentFolder,folderName, file, imgId) {
     let formData = new FormData();
     formData.append('file', file);
     $.ajax({
-        url: `/investment-service/upload-file/${imgId}/${folderName}`,
+        url: `/investment-service/upload-file/${imgId}/${parentFolder}/${folderName}`,
         type: "POST",
         data: formData,
         processData: false,
@@ -268,7 +272,7 @@ function saveOrganisationData() {
         let ext_ = $('#file-upload-logo')[0].files[0].type.split('/')[1];
         ext_ = (ext_ === 'jpeg') ? 'jpg' : ext_;
         logoPath = `/organisations/logos/${imgId}.${ext_}`;
-        upload('logos', $('#file-upload-logo')[0].files[0], imgId);
+        upload('organisations','logos', $('#file-upload-logo')[0].files[0], imgId);
     }
 
     if ($('#file-upload-stamp')[0].files[0] !== undefined) {
@@ -276,7 +280,7 @@ function saveOrganisationData() {
         let ext_ = $('#file-upload-logo')[0].files[0].type.split('/')[1];
         ext_ = (ext_ === 'jpeg') ? 'jpg' : ext_;
         stampPath = `/organisations/stamps/${imgId}.${ext_}`;
-        upload('stamps', $('#file-upload-stamp')[0].files[0], imgId);
+        upload('organisations','stamps', $('#file-upload-stamp')[0].files[0], imgId);
     }
 
     if ($('#file-upload-signature')[0].files[0] !== undefined) {
@@ -284,7 +288,7 @@ function saveOrganisationData() {
         let ext_ = $('#file-upload-logo')[0].files[0].type.split('/')[1];
         ext_ = (ext_ === 'jpeg') ? 'jpg' : ext_;
         signaturePath = `/organisations/signatures/${imgId}.${ext_}`;
-        upload('signatures', $('#file-upload-signature')[0].files[0], imgId);
+        upload('organisations','signatures', $('#file-upload-signature')[0].files[0], imgId);
     }
 
     console.log(selectedConfig.logoPath, logoPath);
@@ -306,8 +310,10 @@ function saveOrganisationData() {
         withHoldingTax: $('#idWithHoldingTaxCharge').val(),
         vatChargeMethod: $('#idVatMethod').val(),
         withHoldingTaxChargeMethod: $('#idWithHoldingTaxMethod').val(),
-        withHoldingProductId: $('#investment_product_with_holdings').on('select2:select').val(),
-        vatProductId: $('#investment_product_vat').on('select2:select').val()
+        // withHoldingProductId: $('#investment_product_with_holdings').on('select2:select').val(),
+        // vatProductId: $('#investment_product_vat').on('select2:select').val(),
+        transferValue: $('#idTransferCharge').val(),
+        transferChargeMethod: $('#idTransferMethod').val()
     }
 
     console.log(organisation);

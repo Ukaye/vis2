@@ -33,11 +33,12 @@ router.post('/create', function (req, res, next) {
         let query = `INSERT INTO investments SET ?`;
         let endpoint = `/core-service/post?query=${query}`;
         let url = `${HOST}${endpoint}`;
-        let dt_ = moment().utcOffset('+0100').format('YYMMDDhmmss');
+        let dt_ = moment().utcOffset('+0100').format('x');
         let _data = JSON.parse(JSON.stringify(data));
         delete _data.selectedProduct;
         axios.post(url, _data)
             .then(function (response) {
+                console.log(response.data);
                 console.log('Created investment');
                 console.log(dt);
                 console.log(parseFloat(data.amount.split(',').join('')));
@@ -228,9 +229,11 @@ router.post('/create', function (req, res, next) {
                                 }
                             })
                             .catch(function (error) {});
+
+                        setDocRequirement(HOST, data, response.data.insertId);
                         if (data.selectedProduct.interest_disbursement_time.toString() === 'Up-Front') {
                             dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                            refId = moment().utcOffset('+0100').format('YYMMDDhmmss');
+                            refId = moment().utcOffset('+0100').format('x');
                             query = `SELECT t.*,p.*,v.description,v.amount as txnAmount, v.balance as txnBalance FROM investments t 
                             left join investment_products p on p.ID = t.productId
                             left join investment_txns v on v.investmentId = t.ID
@@ -489,8 +492,41 @@ router.post('/create', function (req, res, next) {
 
 });
 
+function setDocRequirement(HOST, data, txnId) {
+    let query = `SELECT * FROM investment_doc_requirement
+                WHERE productId = ${data.productId} AND operationId = ${data.operationId}`;
+    let endpoint = "/core-service/get";
+    let url = `${HOST}${endpoint}`;
+    axios.get(url, {
+            params: {
+                query: query
+            }
+        })
+        .then(function (response2) {
+            if (response2.data.length > 0) {
+                response2.data.map((item, index) => {
+                    let doc = {
+                        docRequirementId: item.Id,
+                        txnId: txnId,
+                        createdAt: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
+                    }
+                    query = `INSERT INTO investment_txn_doc_requirements SET ?`;
+                    endpoint = `/core-service/post?query=${query}`;
+                    url = `${HOST}${endpoint}`;
+                    try {
+                        axios.post(url, doc);
+                    } catch (error) {}
+                })
+            }
+        })
+        .catch(function (error) {});
+}
+
 
 router.get('/get-investments', function (req, res, next) {
+    console.log('***********************************Date Format*******************************************');
+    console.log(moment().utcOffset('+0100').format('x'));
+    console.log('***********************************Date Format End*******************************************');
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
@@ -585,16 +621,20 @@ router.get('/client-investments/:id', function (req, res, next) {
     let draw = req.query.draw;
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
-    let query = `SELECT v.ID,v.ref_no,c.fullname,v.description,v.amount,v.txn_date,p.ID as productId,u.fullname as createdByName,
-    v.approvalDone,v.reviewDone,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,i.clientId,
-    v.balance,v.is_capital,v.investmentId,i.isTerminated, i.isMatured, v.isReversedTxn FROM investment_txns v 
+    let query = `SELECT 
+    (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} ORDER BY ID DESC LIMIT 1) as balance,
+    v.ID,v.ref_no,c.fullname,v.description,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName,
+    v.approvalDone,v.reviewDone,v.created_date,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,
+    i.clientId,v.isMoveFundTransfer,v.isWallet,v.isWithdrawal,isDeposit,v.isDocUploaded,p.canTerminate,i.isPaymentMadeByWallet,
+    v.is_capital,v.investmentId,i.isTerminated, i.isMatured, v.isReversedTxn,v.isInvestmentTerminated,v.expectedTerminationDate,
+    i.code as acctNo, v.isTransfer, v.beneficialInvestmentId FROM investment_txns v
     left join investments i on v.investmentId = i.ID
     left join clients c on i.clientId = c.ID
     left join users u on u.ID = v.createdBy
     left join investment_products p on i.productId = p.ID
     WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id} 
     AND (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%") LIMIT ${limit} OFFSET ${offset}`;
-
+    // console.log(query);
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     var data = [];
@@ -627,7 +667,7 @@ router.get('/client-investments/:id', function (req, res, next) {
     left join investments i on v.investmentId = i.ID
     left join clients c on i.clientId = c.ID 
     left join investment_products p on i.productId = p.ID
-    WHERE v.investmentId = ${req.params.id}
+    WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id}
     AND (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%")`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
@@ -636,7 +676,7 @@ router.get('/client-investments/:id', function (req, res, next) {
                 query: query
             }
         }).then(payload => {
-            query = `SELECT count(*) as recordsTotal FROM investment_txns WHERE investmentId = ${req.params.id}`;
+            query = `SELECT count(*) as recordsTotal FROM investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id}`;
             endpoint = '/core-service/get';
             url = `${HOST}${endpoint}`;
             axios.get(url, {
@@ -658,77 +698,59 @@ router.get('/client-investments/:id', function (req, res, next) {
 router.post('/create-configs', function (req, res, next) {
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query = `SELECT ID FROM investment_products WHERE isWallet = ${1}`;
+    let query = `INSERT INTO investment_config SET ?`;
+    let endpoint = `/core-service/post?query=${query}`;
+    let url = `${HOST}${endpoint}`;
+    let data = req.body;
+    data.createdAt = dt;
+    axios.post(url, data)
+        .then(function (response2) {
+            res.send(response2.data);
+        }, err => {
+            res.send({
+                status: 500,
+                error: err,
+                response: null
+            });
+        });
+});
+
+
+
+router.post('/create-mandates', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let query = `INSERT INTO investment_mandate SET ?`;
+    let endpoint = `/core-service/post?query=${query}`;
+    let url = `${HOST}${endpoint}`;
+    let data = req.body;
+    data.createdAt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    axios.post(url, data)
+        .then(function (response2) {
+            res.send(response2.data);
+        }, err => {
+            res.send({
+                status: 500,
+                error: err,
+                response: null
+            });
+        });
+
+});
+
+router.get('/get-mandates/:id', function (req, res, next) {
+    console.log('get inside GET for mandate');
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let query = `SELECT * FROM investment_mandate 
+    WHERE investmentId = ${req.params.id} AND status = 1`;
+
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
-    let data = req.body
     axios.get(url, {
         params: {
             query: query
         }
     }).then(response => {
-        if (response.data.status === undefined) {
-            updateWithHoldingsProducts(HOST, data.withHoldingProductId);
-            updateVatProducts(HOST, data.vatProductId);
-            response.data.map((x, index) => {
-                query = `UPDATE investment_products SET isWallet =${0}, date_modified ='${dt.toString()}' WHERE ID =${x.ID}`;
-                endpoint = `/core-service/post?query=${query}`;
-                url = `${HOST}${endpoint}`;
-                axios.post(url, {})
-                    .then(function (response_) {
-                        if (index === response.data.length - 1) {
-                            data.createdAt = dt;
-                            query = `INSERT INTO investment_config SET ?`;
-                            endpoint = `/core-service/post?query=${query}`;
-                            url = `${HOST}${endpoint}`;
-                            let productId = data.productId;
-                            delete data.productId;
-                            axios.post(url, data)
-                                .then(function (response2) {
-                                    query = `UPDATE investment_products SET isWallet =${1}, date_modified ='${dt.toString()}' WHERE ID =${productId}`;
-                                    endpoint = `/core-service/post?query=${query}`;
-                                    url = `${HOST}${endpoint}`;
-                                    axios.post(url, data)
-                                        .then(function (response3) {
-                                            res.send({});
-                                        }, err => {
-                                            res.send({
-                                                status: 500,
-                                                error: err,
-                                                response: null
-                                            });
-                                        })
-                                        .catch(function (error) {
-                                            res.send({
-                                                status: 500,
-                                                error: error,
-                                                response: null
-                                            });
-                                        });
-                                }, err => {
-                                    res.send({
-                                        status: 500,
-                                        error: err,
-                                        response: null
-                                    });
-                                })
-                                .catch(function (error) {
-                                    res.send({
-                                        status: 500,
-                                        error: error,
-                                        response: null
-                                    });
-                                });
-                        }
-                    }, err => {
-                        res.send({
-                            status: 500,
-                            error: err,
-                            response: null
-                        });
-                    });
-            });
-        }
+        res.send(response.data);
     }, err => {
         res.send({
             status: 500,
@@ -736,12 +758,12 @@ router.post('/create-configs', function (req, res, next) {
             response: null
         });
     })
-
 });
 
-function updateVatProducts(HOST, vatProductId) {
-    let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    let query = `SELECT ID FROM investment_products WHERE isVat = ${1}`;
+router.get('/remove-mandates/:id', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let query = `UPDATE investment_mandate SET status = 0 WHERE id = ${req.params.id}`;
+
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -749,117 +771,21 @@ function updateVatProducts(HOST, vatProductId) {
             query: query
         }
     }).then(response => {
-        if (response.data.status === undefined) {
-            let strParams = "";
-            response.data.map((x, index) => {
-                strParams += ` ID=${x.ID} ${(index+1 === response.data.length)?'':'||'}`;
-            });
-            query = `UPDATE investment_products SET isVat =${0}, date_modified ='${dt.toString()}' WHERE ${strParams}`;
-            endpoint = `/core-service/post?query=${query}`;
-            url = `${HOST}${endpoint}`;
-            axios.post(url, {})
-                .then(function (response_) {
-                    console.log(response_.data);
-                    query = `UPDATE investment_products SET isVat =${1}, date_modified ='${dt.toString()}' WHERE ID =${vatProductId}`;
-                    endpoint = `/core-service/post?query=${query}`;
-                    url = `${HOST}${endpoint}`;
-                    axios.post(url, {})
-                        .then(function (response3) {}, err => {
-                            res.send({
-                                status: 500,
-                                error: err,
-                                response: null
-                            });
-                        })
-                        .catch(function (error) {
-                            res.send({
-                                status: 500,
-                                error: error,
-                                response: null
-                            });
-                        });
-                }, err => {
-                    res.send({
-                        status: 500,
-                        error: err,
-                        response: null
-                    });
-                });
-        }
+        res.send(response.data);
     }, err => {
         res.send({
             status: 500,
             error: err,
             response: null
         });
-    });
-}
-
-function updateWithHoldingsProducts(HOST, withHoldingProductId) {
-    console.log('This is here');
-    let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    let query = `SELECT ID FROM investment_products WHERE isWithHoldings = ${1}`;
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(response => {
-        if (response.data.status === undefined) {
-            let strParams = "";
-            response.data.map((x, index) => {
-                strParams += ` ID=${x.ID} ${(index+1 === response.data.length)?'':'||'}`;
-            });
-            query = `UPDATE investment_products SET isWithHoldings =${0}, date_modified ='${dt.toString()}' WHERE ${strParams}`;
-            endpoint = `/core-service/post?query=${query}`;
-            url = `${HOST}${endpoint}`;
-            axios.post(url, {})
-                .then(function (response_) {
-                    query = `UPDATE investment_products SET isWithHoldings =${1}, date_modified ='${dt.toString()}' WHERE ID =${withHoldingProductId}`;
-                    endpoint = `/core-service/post?query=${query}`;
-                    url = `${HOST}${endpoint}`;
-                    axios.post(url, {})
-                        .then(function (response3) {}, err => {
-                            res.send({
-                                status: 500,
-                                error: err,
-                                response: null
-                            });
-                        })
-                        .catch(function (error) {
-                            res.send({
-                                status: 500,
-                                error: error,
-                                response: null
-                            });
-                        });
-                }, err => {
-                    res.send({
-                        status: 500,
-                        error: err,
-                        response: null
-                    });
-                });
-        }
-    }, err => {
-        res.send({
-            status: 500,
-            error: err,
-            response: null
-        });
-    });
-}
-
+    })
+});
 
 router.get('/get-configs', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query = `SELECT c.*,p.name as acctName, p.code,p.ID as productId,
-    p1.name as vatAcctName,p1.code as vatCode,p1.ID as vatProductId,
-    p2.name as withHoldingsAcctName,p2.code as withHoldingCode,p2.ID as withHoldingsProductId 
-    FROM investment_config c, investment_products p,
-    investment_products p1, investment_products p2 
-    WHERE p.isWallet = 1 && p1.isVat = 1 && p2.isWithHoldings = 1`;
+    let query = `SELECT c.*, p.min_days_termination FROM investment_config c
+                left join investment_products p
+                on p.ID > 1 ORDER BY ID DESC LIMIT 1`;
 
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
@@ -869,7 +795,7 @@ router.get('/get-configs', function (req, res, next) {
         }
     }).then(response => {
         console.log(response.data);
-        res.send(response.data[response.data.length - 1]);
+        res.send(response.data[0]);
     }, err => {
         res.send({
             status: 500,
@@ -880,7 +806,7 @@ router.get('/get-configs', function (req, res, next) {
 });
 
 
-router.post('/upload-file/:id/:item', function (req, res) {
+router.post('/upload-file/:id/:item/:sub', function (req, res) {
     if (!req.files) return res.status(400).send('No files were uploaded.');
     if (!req.params) return res.status(400).send('No Number Plate specified!');
     let sampleFile = req.files.file,
@@ -888,12 +814,12 @@ router.post('/upload-file/:id/:item', function (req, res) {
         extArray = sampleFile.name.split("."),
         extension = extArray[extArray.length - 1],
         fileName = name + '.' + extension;
-    fs.stat(`files/organisations/${req.params.item}/`, function (err) {
+    fs.stat(`files/${req.params.item}/${req.params.sub}/`, function (err) {
         if (!err) {
             console.log('file or directory exists');
         } else if (err.code === 'ENOENT') {
             try {
-                fs.mkdirSync(`files/organisations/${req.params.item}/`);
+                fs.mkdirSync(`files/${req.params.item}/${req.params.sub}/`);
             } catch (error) {
                 console.log(error);
             }
@@ -901,18 +827,18 @@ router.post('/upload-file/:id/:item', function (req, res) {
         }
     });
 
-    fs.stat(`files/organisations/${req.params.item}/${req.params.id}.${extension}`, function (err) {
+    fs.stat(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
         if (err) {
-            sampleFile.mv(`files/organisations/${req.params.item}/${req.params.id}.${extension}`, function (err) {
+            sampleFile.mv(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
                 if (err) return res.status(500).send(err);
                 res.send('File uploaded!');
             });
         } else {
-            fs.unlink(`files/organisations/${req.params.item}/${req.params.id}.${extension}`, function (err) {
+            fs.unlink(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
                 if (err) {
                     res.send('Unable to delete file!');
                 } else {
-                    sampleFile.mv(`files/organisations/${req.params.item}/${req.params.id}.${extension}`, function (err) {
+                    sampleFile.mv(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
                         if (err)
                             return res.status(500).send(err);
                         res.send('File uploaded!');

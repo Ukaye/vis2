@@ -276,6 +276,66 @@
     </div>
 
     <!--Pariority Modal -->
+    <div class="modal fade" id="viewDocModal" role="dialog" aria-labelledby="viewDocModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="viewDocHeader">Add Document Requirement</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="form-group col-sm-12 col-md-12">
+                            <label class="form-control-label">Operation: <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <select id="list_operations_doc" class="form-control" required="required">
+                                    <option value="" disabled selected>-- Select Operation --</option>
+                                    <option value="1">Deposit</option>
+                                    <option value="2">Transfer</option>
+                                    <option value="3">Withdrawal</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group col-sm-12 col-md-12">
+                            <label class="form-control-label">Document Name: <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input id="docName" class="form-control imp" placeholder="Enter name" required="">
+                            </div>
+                        </div>
+                        <div class="form-group col-sm-12 col-md-12">
+                            <button type="button" class="btn btn-primary" onclick="ceateProductDoc()">Save</button>
+                        </div>
+                        <div class="form-group col-sm-12 col-md-12">
+                            <label class="form-control-label">Require Document(s)</label>
+                            <div class="input-group">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">#</th>
+                                            <th scope="col">Name</th>
+                                            <th scope="col">Operation</th>
+                                            <th scope="col">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbodyDocs">
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!--Pariority Modal -->
     <div class="modal fade" id="viewPariorityModal" role="dialog" aria-labelledby="viewPariorityModalLabel">
         <div class="modal-dialog" role="document">
             <div class="modal-content">

@@ -12,6 +12,7 @@ router.get('/all', function (req, res, next) {
     let search_string = (req.query.search_string === undefined) ? "" : req.query.search_string.toUpperCase();
     let query = `SELECT ID,fullname FROM clients WHERE status = 1 AND upper(email) LIKE "${search_string}%" OR upper(fullname) LIKE "${search_string}%" ORDER BY ID desc LIMIT ${limit} OFFSET ${page}`;
     const endpoint = "/core-service/get";
+    console.log(query);
     const url = `${HOST}${endpoint}`;
     axios.get(url, {
             params: {
@@ -40,7 +41,7 @@ router.post('/mandate/setup', function (req, res, next) {
         fullname = req.body.fullname,
         application_id = req.body.application_id,
         date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-        query =  `INSERT INTO remita_mandates Set ?`;
+        query = `INSERT INTO remita_mandates Set ?`;
 
     helperFunctions.setUpMandate({
         payerName: fullname,
@@ -60,7 +61,7 @@ router.post('/mandate/setup', function (req, res, next) {
                 requestId: setup_response.requestId
             };
             helperFunctions.authorizeMandate(authorize_payload, function (authorization_response) {
-                if (authorization_response && authorization_response.remitaTransRef){
+                if (authorization_response && authorization_response.remitaTransRef) {
                     payload.remitaTransRef = authorization_response.remitaTransRef;
                     payload.mandateId = setup_response.mandateId;
                     payload.applicationID = application_id;
@@ -72,8 +73,8 @@ router.post('/mandate/setup', function (req, res, next) {
                             query: `SELECT * FROM remita_mandates WHERE applicationID = ${application_id}`
                         }
                     }).then(remita_mandate => {
-                        if (remita_mandate.data[0]){
-                            query =  `UPDATE remita_mandates Set ? WHERE ID = ${remita_mandate.data[0]['ID']}`;
+                        if (remita_mandate.data[0]) {
+                            query = `UPDATE remita_mandates Set ? WHERE ID = ${remita_mandate.data[0]['ID']}`;
                         }
                         const endpoint = `/core-service/post?query=${query}`,
                             url = `${HOST}${endpoint}`;
@@ -81,18 +82,34 @@ router.post('/mandate/setup', function (req, res, next) {
                             .then(function (remita_response) {
                                 res.send(authorization_response);
                             }, err => {
-                                res.send({status: 500, error: err, response: null});
+                                res.send({
+                                    status: 500,
+                                    error: err,
+                                    response: null
+                                });
                             })
                             .catch(function (error) {
-                                res.send({status: 500, error: error, response: null});
+                                res.send({
+                                    status: 500,
+                                    error: error,
+                                    response: null
+                                });
                             });
                     });
                 } else {
-                    res.send({status: 500, error: authorization_response, response: null});
+                    res.send({
+                        status: 500,
+                        error: authorization_response,
+                        response: null
+                    });
                 }
             })
         } else {
-            res.send({status: 500, error: setup_response, response: null});
+            res.send({
+                status: 500,
+                error: setup_response,
+                response: null
+            });
         }
     });
 });
@@ -124,7 +141,8 @@ router.get('/mandate/get/:id', function (req, res, next) {
                 error: 'Oops! Your direct debit mandate cannot be verified at the moment',
                 data: {
                     statuscode: '022',
-                    status: 'Oops! Your direct debit mandate cannot be verified at the moment'}
+                    status: 'Oops! Your direct debit mandate cannot be verified at the moment'
+                }
             });
         }
     });
@@ -133,18 +151,22 @@ router.get('/mandate/get/:id', function (req, res, next) {
 router.post('/corporate/create', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let postData = req.body,
-        query =  `SELECT * FROM corporates WHERE name = '${req.body.name}'`,
+        query = `SELECT * FROM corporates WHERE name = '${req.body.name}'`,
         endpoint = `/core-service/get`,
         url = `${HOST}${endpoint}`;
     axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(function (response) {
+            params: {
+                query: query
+            }
+        }).then(function (response) {
             if (response['data'][0]) {
-                res.send({status: 500, error: 'Corporate already exists!', response: response['data']});
+                res.send({
+                    status: 500,
+                    error: 'Corporate already exists!',
+                    response: response['data']
+                });
             } else {
-                query =  'INSERT INTO corporates Set ?';
+                query = 'INSERT INTO corporates Set ?';
                 endpoint = `/core-service/post?query=${query}`;
                 url = `${HOST}${endpoint}`;
                 postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -153,17 +175,33 @@ router.post('/corporate/create', function (req, res, next) {
                     .then(function (response_) {
                         return res.send(response_['data']);
                     }, err => {
-                        res.send({status: 500, error: err, response: null});
+                        res.send({
+                            status: 500,
+                            error: err,
+                            response: null
+                        });
                     })
                     .catch(function (error) {
-                        res.send({status: 500, error: error, response: null});
+                        res.send({
+                            status: 500,
+                            error: error,
+                            response: null
+                        });
                     });
             }
         }, err => {
-            res.send({status: 500, error: err, response: null});
+            res.send({
+                status: 500,
+                error: err,
+                response: null
+            });
         })
         .catch(function (error) {
-            res.send({status: 500, error: error, response: null});
+            res.send({
+                status: 500,
+                error: error,
+                response: null
+            });
         });
 });
 

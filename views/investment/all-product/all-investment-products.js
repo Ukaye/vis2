@@ -3,6 +3,7 @@ let reqObject = {};
 let roleObject = [];
 let selectedApproval = {};
 let selectedRow = {};
+let data_row = {};
 $(document).ready(function () {
     bindDataTable();
 });
@@ -286,6 +287,7 @@ function bindDataTable() {
                     <div class="dropdown-menu" aria-labelledby="dropdownMenu2">
                     <a class="dropdown-item" href="./add-investment-products?id=${full.ID}">Edit</a> 
                     <button type="button" class="dropdown-item ${status_class}" onclick="updateStatus(${full.ID},${status_})">${status_label}</button>
+                    <button class="dropdown-item" type="button" id="dropdownItemDoc" data-toggle="modal" data-target="#viewDocModal" onclick="onDoc('${full.name}','${full.ID}')">Document</button>
                     <button class="dropdown-item" type="button" data-toggle="modal" data-target="#viewReviewModal" onclick="onReview('${full.name}','${full.ID}')">Set Review</button>
                     <button class="dropdown-item" type="button" data-toggle="modal" data-target="#viewRequirementModal" onclick="onRequirement('${full.name}','${full.ID}')">Set Approval</button>
                     <button class="dropdown-item" type="button" data-toggle="modal" data-target="#viewPostModal" onclick="onPost('${full.name}','${full.ID}')">Set Post</button>
@@ -296,6 +298,12 @@ function bindDataTable() {
         ]
     });
 }
+
+$('#product-data-table tbody').on('click', '#dropdownItemDoc', function () {
+    data_row = table.row($(this).parents('tr')).data();
+    console.log(data_row);
+    getProductDocRequirements();
+});
 
 function ceateRequirement() {
     if (reqObject.ID === undefined) {
@@ -1221,6 +1229,73 @@ function setPostPriority(id, priority) {
         'error': function (err) {
             $('#wait').hide();
             swal('Oops! An error occurred while updating post priority', '', 'error');
+        }
+    });
+}
+
+function onDoc() {
+
+}
+
+function ceateProductDoc() {
+    let doc = {
+        productId: data_row.ID,
+        operationId: $('#list_operations_doc').val(),
+        name: $('#docName').val().toUpperCase(),
+        createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID
+    };
+    console.log(doc);
+    $.ajax({
+        url: `investment-products/create-docs`,
+        'type': 'post',
+        'data': doc,
+        'success': function (data) {
+            if (data.status === undefined) {
+                $('#wait').hide();
+                $("#docName").val('');
+                swal('Document requirement added successfully!', '', 'success');
+                getProductDocRequirements();
+            } else {
+                $('#wait').hide();
+                swal('Oops! An error occurred while creating document requirement', '', 'error');
+            }
+        },
+        'error': function (err) {
+            console.log(err);
+            $('#wait').hide();
+            swal('Oops! An error occurred while creating document requirement', '', 'error');
+        }
+    });
+}
+
+function getProductDocRequirements() {
+    $.ajax({
+        type: "GET",
+        url: `investment-products/get-doc-requirements/${data_row.ID}`,
+        data: '{}',
+        success: function (response) {
+            console.log(response);
+            $("#tbodyDocs").html('');
+            response.forEach((element, index) => {
+                let opName = '';
+                if (element.operationId !== null) {
+                    if (element.operationId.toString() === '1') {
+                        opName = 'Deposit';
+                    } else if (element.operationId.toString() === '2') {
+                        opName = 'Transfer';
+                    } else if (element.operationId.toString() === '3') {
+                        opName = 'Withdrawal';
+                    }
+                }
+                $("#tbodyDocs").append(`<tr>
+                <th scope="row">${index+1}</th>
+                <td>${element.name}</td>
+                <td>${opName}</td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm">Remove</button>
+                </td>
+            </tr>`).trigger('change');
+            });
         }
     });
 }

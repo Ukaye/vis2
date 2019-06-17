@@ -156,6 +156,8 @@ function getInvestmentProducts(id) {
                     true : false));
                 $('#interest_moves_wallet').attr('checked', ((product_obj.interest_moves_wallet) ?
                     true : false));
+                $('#chk_can_terminate').attr('checked', ((product_obj.canTerminate) ?
+                    true : false));
                 $('#min_term').val(product_obj.min_term);
                 $('#max_term').val(product_obj.max_term);
                 $('#premature_interest_rate').val(product_obj.premature_interest_rate);
@@ -438,6 +440,8 @@ function set_investment_product() {
     product_obj.min_days_termination_charge = $('#min_days_termination_charge').val();
     product_obj.opt_on_min_days_termination = $('#opt_on_min_days_termination').val();
     product_obj.createdBy = (JSON.parse(localStorage.getItem("user_obj"))).ID;
+
+    product_obj.canTerminate = $('#chk_can_terminate').is(':checked') ? 1 : 0;
     if (product_obj.code !== '' && product_obj.name !== '' && product_obj.investment_max !== '' && product_obj.investment_min && product_obj.minimum_bal !== '') {
         if (product_obj.ID === undefined) {
             $.ajax({
@@ -476,6 +480,7 @@ function set_investment_product() {
                 'type': 'post',
                 'data': product_obj,
                 'success': function (data) {
+                    console.log(data);
                     if (data.status === 200) {
                         $('#wait').hide();
                         swal('Investment Product updated successfully!', '', 'success');
@@ -490,6 +495,7 @@ function set_investment_product() {
                     }
                 },
                 'error': function (err) {
+                    console.log(err);
                     $('#wait').hide();
                     swal('Oops! An error occurred while updating Investment Product; Required field(s) missing',
                         '', 'error');

@@ -264,7 +264,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="panel push-down">
+                            <!-- <div class="panel push-down">
                                 <div class="panel-body">
                                     <div class="example-box-wrapper">
                                         <h3>Wallet Account</h3>
@@ -282,7 +282,7 @@
                                         <hr />
                                     </div>
                                 </div>
-                            </div>
+                            </div> -->
                             <div class="panel push-down">
                                 <div class="panel-body">
                                     <div class="example-box-wrapper">
@@ -308,12 +308,13 @@
                                         <h3>Tax</h3>
                                         <hr><br>
 
-                                        <div class="row">
+                                        <!-- <div class="row">
                                             <div class="form-group col-sm-4 col-md-4">
                                                 <label class="form-control-label">Choose WithHolding Tax Account <span
                                                         class="text-danger">*</span></label>
                                                 <div class="input-group">
-                                                    <select id="investment_product_with_holdings" class="form-control" required="">
+                                                    <select id="investment_product_with_holdings" class="form-control"
+                                                        required="">
                                                     </select>
                                                 </div>
                                             </div>
@@ -321,11 +322,12 @@
                                                 <label class="form-control-label">Choose VAT Account <span
                                                         class="text-danger">*</span></label>
                                                 <div class="input-group">
-                                                    <select id="investment_product_vat" class="form-control" required="">
+                                                    <select id="investment_product_vat" class="form-control"
+                                                        required="">
                                                     </select>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </div> -->
                                         <div class="row">
                                             <div class="form-group col-sm-4 col-md-4">
                                                 <label class="form-control-label">WithHolding Tax Charge</label>
@@ -348,6 +350,31 @@
                                                         type="number" min="0" placeholder="VAT Charge"
                                                         data-mask="#,##0.00">
                                                     <select id="idVatMethod" class="form-control" required="required">
+                                                        <option value="Fixed" selected="selected">Fixed
+                                                        </option>
+                                                        <option value="Percentage">Percentage</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <hr />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel push-down">
+                                <div class="panel-body">
+                                    <div class="example-box-wrapper">
+                                        <h3>Fund Transfer</h3>
+                                        <hr><br>
+                                        <div class="row">
+                                            <div class="form-group col-sm-4 col-md-4">
+                                                <label class="form-control-label">Transfer Charge</label>
+                                                <div class="input-group">
+                                                    <input type="text" id="idTransferCharge" class="form-control imp"
+                                                        type="number" min="0" placeholder="Transfer Charge"
+                                                        data-mask="#,##0.00">
+                                                    <select id="idTransferMethod" class="form-control"
+                                                        required="required">
                                                         <option value="Fixed" selected="selected">Fixed
                                                         </option>
                                                         <option value="Percentage">Percentage</option>

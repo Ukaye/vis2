@@ -170,6 +170,10 @@
                                             <br />
                                         </div>
                                         <div class="row">
+                                            <span id="spanAccountNo"><strong>Account No.: </strong> <span
+                                                    id="inv_acct_no" class="card-title"></span></span>
+                                        </div>
+                                        <div class="row">
                                             <span id="spanProductName"><strong>Product: </strong> <span id="inv_name"
                                                     class="card-title"></span></span>
                                         </div>
@@ -184,6 +188,14 @@
                                                     data-target="#viewInterestModal"
                                                     onclick="bindInterestDataTable()">View
                                                     Interest Transaction
+                                                </a>
+                                            </label>
+                                        </div>
+                                        <div class="row">
+                                            <label id="lblViewWalletTxns">
+                                                <a href="#" style="text-decoration: underline;"
+                                                    onclick="bindWalletTransaction()">View
+                                                    Wallet Balance
                                                 </a>
                                             </label>
                                         </div>
@@ -211,6 +223,10 @@
                                                 <button class="btn btn-danger" id="btnTerminateInvestment"
                                                     data-toggle="modal" data-target="#viewTerminateModal"
                                                     onclick="getConfigItems()">Terminate</button>
+                                                <button class="btn btn-info" id="btnMandateInvestment"
+                                                    data-toggle="modal" data-target="#viewMandateModal"
+                                                    onclick="onOpenMandate()">View
+                                                    Mandate</button>
                                                 <!-- onclick="onTerminateInvest()" -->
                                                 <button class="btn btn-primary" data-toggle="modal"
                                                     data-target="#viewStatementModal"
@@ -242,7 +258,8 @@
                                 <thead>
                                     <tr>
                                         <th>Status</th>
-                                        <th>Date</th>
+                                        <th>Timestamp</th>
+                                        <th>Txn. Date</th>
                                         <th>Ref. Number</th>
                                         <th>Description</th>
                                         <th>Credit</th>
@@ -286,6 +303,12 @@
                         </div>
                         <div class="row" style="margin-bottom: 15px;">
                             <div class="col-lg-12">
+                                <small><span>Date:</span></small>
+                                <input id="input_txn_date" type="date" class="form-control" disabled />
+                            </div>
+                        </div>
+                        <div class="row" style="margin-bottom: 15px;">
+                            <div class="col-lg-12">
                                 <textarea id="input_description" type="text" placeholder="Description"
                                     class="form-control" disabled></textarea>
                             </div>
@@ -322,13 +345,18 @@
                         </div>
                         <div class="row" style="margin-bottom: 15px;">
                             <div class="col-lg-12">
-                                <label class="form-control-label"><input type="checkbox" id="chk_own_accounts"
-                                        checked>
+                                <label class="form-control-label" id="lbl_chk_own_accounts"><input type="checkbox"
+                                        id="chk_own_accounts" checked>
                                     Client's own Account</label>
                             </div>
                             <div class="col-lg-12">
                                 <label class="form-control-label"><input type="checkbox" id="chk_investment_accounts">
                                     Transfer to Other Account</label>
+                            </div>
+                            <div class="col-lg-12">
+                                <label class="form-control-label" id="lbl_chk_client_wallet"><input type="checkbox"
+                                        id="chk_client_wallet">
+                                    Transfer to Own Wallet</label>
                             </div>
                         </div>
                         <div class="row" style="margin-bottom: 15px;">
@@ -393,6 +421,73 @@
             </div>
         </div>
 
+        <div class="modal fade" id="viewListDocModal" role="dialog" aria-labelledby="viewListDocModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content" style="width: fit-content;">
+                    <div class="modal-header">
+                        <div class="card-header">
+                            <div class="col">
+                                <div class="row">
+                                    <span><strong>Description: </strong> <span id="viewListDocModalHeader"
+                                            class="card-title"></span></span>
+                                    <span><strong>Ref.: </strong> <span id="viewListDocModalHeader2"
+                                            class="card-title"></span></span>
+
+                                </div>
+
+                            </div>
+                        </div>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="form-group col-sm-12 col-md-12">
+                                <label class="form-control-label">Require Document(s)</label>
+                                <div class="input-group">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Name</th>
+                                                <th scope="col">Upload</th>
+                                                <th scope="col">Status</th>
+                                                <th scope="col">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbodyDocs">
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-sm-12 col-md-12">
+                                <label class="form-control-label">Uploaded Document(s)</label>
+                                <div class="input-group">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Name</th>
+                                                <th scope="col">Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbodyUploadedDocs">
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal"
+                            onclick="onCloseApproval()">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="modal fade" id="viewReviewModal" role="dialog" aria-labelledby="viewReviewModalLabel">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -421,6 +516,10 @@
                             </div>
                             <div class="col-lg-12">
                                 <ul class="list-group" id="review_list_group">
+                                </ul>
+                            </div>
+                            <div class="col-lg-12">
+                                <ul class="list-group" id="review_list_doc">
                                 </ul>
                             </div>
                         </div>
@@ -500,6 +599,37 @@
             </div>
         </div>
 
+        <div class="modal fade" id="viewMandateModal" role="dialog" aria-labelledby="viewMandateModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="card-header">
+                            <b>Account Mandate</b>
+                        </div>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row" style="margin-bottom: 15px;">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Type</th>
+                                        <th scope="col">Title</th>
+                                        <th scope="col">View</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="idListMandates">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div class="modal fade" id="viewStatementModal" role="dialog" aria-labelledby="viewStatementModalLabel">
             <div class="modal-dialog" role="document">
@@ -566,15 +696,15 @@
                         <div>
                             <div class="form-group">
                                 <label for="exampleInputEmail1">Notice Date</label>
-                                <input type="date" class="form-control" id="notice_date" aria-describedby="emailHelp">
-                                <small id="emailHelp" class="form-text text-muted">Set Notice date for investment
+                                <input type="date" class="form-control" id="notice_date">
+                                <small class="form-text text-muted">Set Notice date for investment
                                     termination.</small>
                             </div>
                             <div class="form-check">
                                 <input type="checkbox" class="form-check-input" id="idChkForceTerminate">
                                 <label class="form-check-label">Force Termination</label>
                             </div>
-                            <button type="submit" class="btn btn-primary" onclick="onTerminate">Submit</button>
+                            <button type="submit" class="btn btn-primary" onclick="onTerminateInvest()">Submit</button>
                         </div>
                     </div>
                     <div class="modal-footer">
