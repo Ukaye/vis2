@@ -203,7 +203,6 @@ $("#btn_save_product").on("click", function (event) {
             'type': 'post',
             'data': data,
             'success': function (data) {
-                console.log(data);
                 if (data.error) {
                     $('#wait').hide();
                     swal('Oops! An error occurred while creating Investment; Required field(s) missing',
@@ -218,7 +217,6 @@ $("#btn_save_product").on("click", function (event) {
                 }
             },
             'error': function (err) {
-                console.log(err);
                 $('#wait').hide();
                 swal('Oops! An error occurred while creating Investment; ', '', 'error');
             }
@@ -257,12 +255,10 @@ $('#client').on("select2:selecting", function (e) {
     $('#wait').show();
     setTimeout(function () {
         let _id = $('#client').on('select2:select').val();
-        console.log(_id);
         $.ajax({
             url: `/investment-txns/client-wallet-balance/${_id}`,
             'type': 'get',
             'success': function (data) {
-                console.log(data);
                 clientBalance = (data[0] !== undefined) ? data[0].balance : 0.00;
                 $('#opt_payment_made_by').html('');
                 if (data.status === undefined) {
@@ -285,8 +281,7 @@ $('#client').on("select2:selecting", function (e) {
                 }
             },
             'error': function (err) {
-                console.log(err);
-                $('#wait').hide();
+               $('#wait').hide();
             }
         });
     }, 2500);

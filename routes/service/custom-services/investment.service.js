@@ -13,7 +13,6 @@ router.post('/create', function (req, res, next) {
     let _date = new Date();
     const HOST = `${req.protocol}://${req.get('host')}`;
     var data = req.body
-    console.log(data);
     const is_after = isAfter(new Date(data.investment_mature_date.toString()), new Date(data.investment_start_date.toString()))
     if (is_after) {
         data.status = 1;
@@ -38,11 +37,6 @@ router.post('/create', function (req, res, next) {
         delete _data.selectedProduct;
         axios.post(url, _data)
             .then(function (response) {
-                console.log(response.data);
-                console.log('Created investment');
-                console.log(dt);
-                console.log(parseFloat(data.amount.split(',').join('')));
-                console.log(data.createdBy, dt_, response.data.insertId);
                 let inv_txn = {
                     txn_date: dt,
                     description: "Opening Capital",
@@ -61,7 +55,6 @@ router.post('/create', function (req, res, next) {
                 url = `${HOST}${endpoint}`;
                 axios.post(url, inv_txn)
                     .then(function (response_) {
-                        console.log('Created investment txns');
                         query = `SELECT * FROM investment_product_requirements
                             WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
                         endpoint = "/core-service/get";
@@ -72,7 +65,6 @@ router.post('/create', function (req, res, next) {
                                 }
                             })
                             .then(function (response2) {
-                                console.log('SELECT investment_product_requirements');
                                 if (response2.data.length > 0) {
                                     let result = response2.data[0];
                                     let pasrsedData = JSON.parse(result.roleId);
@@ -131,9 +123,6 @@ router.post('/create', function (req, res, next) {
                                 if (response2.data.length > 0) {
                                     let result = response2.data[0];
                                     let pasrsedData = JSON.parse(result.roleId);
-                                    console.log('*********************************************Review Data**************************************');
-                                    console.log(pasrsedData);
-                                    console.log('*********************************************Review Data**************************************');
                                     pasrsedData.map((role) => {
                                         let invOps = {
                                             investmentId: response.data.insertId,
@@ -451,7 +440,6 @@ router.post('/create', function (req, res, next) {
                         }
                         res.send({});
                     }, err => {
-                        console.log(err);
                         res.send({
                             status: 500,
                             error: err,
@@ -459,7 +447,6 @@ router.post('/create', function (req, res, next) {
                         });
                     })
                     .catch(function (error) {
-                        console.log(error);
                         res.send({
                             status: 500,
                             error: error,
@@ -524,9 +511,6 @@ function setDocRequirement(HOST, data, txnId) {
 
 
 router.get('/get-investments', function (req, res, next) {
-    console.log('***********************************Date Format*******************************************');
-    console.log(moment().utcOffset('+0100').format('x'));
-    console.log('***********************************Date Format End*******************************************');
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
@@ -634,7 +618,7 @@ router.get('/client-investments/:id', function (req, res, next) {
     left join investment_products p on i.productId = p.ID
     WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id} 
     AND (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%") LIMIT ${limit} OFFSET ${offset}`;
-    // console.log(query);
+    
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     var data = [];
@@ -738,7 +722,6 @@ router.post('/create-mandates', function (req, res, next) {
 });
 
 router.get('/get-mandates/:id', function (req, res, next) {
-    console.log('get inside GET for mandate');
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT * FROM investment_mandate 
     WHERE investmentId = ${req.params.id} AND status = 1`;
@@ -794,7 +777,6 @@ router.get('/get-configs', function (req, res, next) {
             query: query
         }
     }).then(response => {
-        console.log(response.data);
         res.send(response.data[0]);
     }, err => {
         res.send({
@@ -816,12 +798,10 @@ router.post('/upload-file/:id/:item/:sub', function (req, res) {
         fileName = name + '.' + extension;
     fs.stat(`files/${req.params.item}/${req.params.sub}/`, function (err) {
         if (!err) {
-            console.log('file or directory exists');
         } else if (err.code === 'ENOENT') {
             try {
                 fs.mkdirSync(`files/${req.params.item}/${req.params.sub}/`);
             } catch (error) {
-                console.log(error);
             }
 
         }

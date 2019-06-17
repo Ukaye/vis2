@@ -138,7 +138,6 @@ function getExistingConfigs() {
         url: `investment-service/get-configs`,
         'type': 'get',
         'success': function (data) {
-            console.log(data);
             selectedConfig = data;
 
             if (data.status === undefined) {
@@ -291,7 +290,6 @@ function saveOrganisationData() {
         upload('organisations','signatures', $('#file-upload-signature')[0].files[0], imgId);
     }
 
-    console.log(selectedConfig.logoPath, logoPath);
     let organisation = {
         name: $('#organisationName').val(),
         email: $('#organisationEmail').val(),
@@ -316,8 +314,6 @@ function saveOrganisationData() {
         transferChargeMethod: $('#idTransferMethod').val()
     }
 
-    console.log(organisation);
-
     $.ajax({
         'url': '/investment-service/create-configs',
         'type': 'post',
@@ -333,7 +329,6 @@ function saveOrganisationData() {
             }
         },
         'error': function (err) {
-            console.log(err);
             $('#wait').hide();
             swal('Oops! An error occurred while saving Investment settings ', '', 'error');
         }

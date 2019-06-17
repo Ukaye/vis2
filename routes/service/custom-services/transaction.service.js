@@ -36,9 +36,6 @@ router.get('/get-txn-user-roles/:id', function (req, res, next) {
     left join users u on u.ID = a.approvedBy
     left join users ut on ut.ID = ${req.query.userId}
     WHERE a.txnId = ${req.params.id} AND a.method = ${req.query.method}`;
-    console.log('***********************************************************Satrt*******************************************');
-    console.log(query);
-    console.log('***********************************************************Satrt*******************************************');
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -81,7 +78,6 @@ router.get('/get-product-configs/:id', function (req, res, next) {
 router.post('/create', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     var data = req.body
-    console.log(data);
     const dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let refId = moment().utcOffset('+0100').format('x');
     let query = (data.isWallet.toString() === '0') ?
@@ -95,13 +91,11 @@ router.post('/create', function (req, res, next) {
             }
         })
         .then(function (response) {
-            console.log(response.data);
             let total = 0;
             if (response.data.length > 0) {
                 response.data.map(x => {
                     if (x.isApproved === 1) {
                         let _x = x.amount.toString().split(',').join('');
-                        console.log(_x);
                         if (x.is_credit.toString() === '1') {
                             total += parseFloat(_x);
                         } else {
@@ -110,11 +104,8 @@ router.post('/create', function (req, res, next) {
                     }
                 });
             } //data.isPaymentMadeByWallet.toString() === '1'
-            console.log('Total:' + Math.round(total).toFixed(2));
-            console.log('Amount:' + Math.round(data.amount.split(',').join('')).toFixed(2));
-
+            
             let formatedDate = new Date(dt);
-            console.log(`${formatedDate.getFullYear()}-${(formatedDate.getMonth()+1)}-${formatedDate.getDate()}`);
             let inv_txn = {
                 txn_date: (data.txn_date !== undefined) ? data.txn_date : moment().utcOffset('+0100').format('YYYY-MM-DD'),
                 description: (data.isPaymentMadeByWallet !== undefined && data.isPaymentMadeByWallet === '1') ? 'Opening balance from wallet' : data.description,
@@ -390,10 +381,7 @@ router.get('/verify-doc-uploads', function (req, res, next) {
             }
         })
         .then(function (response) {
-            console.log(query);
-            console.log(response.data);
             if (response.data.status === undefined) {
-                console.log(response.data);
                 res.send(response.data);
             }
         }, err => {
@@ -416,9 +404,6 @@ router.get('/verify-doc-uploads', function (req, res, next) {
 router.post('/create-transfers', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     var data = req.body
-    console.log('***********************************Main Data***********************************');
-    console.log(data);
-    console.log('***********************************Main Data End***********************************');
     const dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let refId = moment().utcOffset('+0100').format('x');
     let query = `SELECT amount,is_credit,isApproved FROM investment_txns WHERE clientId = ${data.debitedClientId} AND isApproved = 1`;
@@ -430,9 +415,6 @@ router.post('/create-transfers', function (req, res, next) {
             }
         })
         .then(function (response) {
-            console.log('----------------debitedClientId record----------------------------');
-            console.log(response.data);
-            console.log('----------------debitedClientId record end----------------------------');
             if (response.data.length > 0) {
                 let total = 0;
                 response.data.map(x => {
@@ -445,9 +427,7 @@ router.post('/create-transfers', function (req, res, next) {
                         }
                     }
                 });
-                console.log('total: ' + total);
-                console.log('a');
-                let inv_txn = {
+            let inv_txn = {
                     txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                     description: `TRANSFER BETWEEN ${(data.creditedClientId !=='')?'CLIENTS WALLET':'CLIENT AND INVESTMENT ACCOUNT'} Transfer from : ${data.debitedClientName} to ${data.creditedClientName}`,
                     amount: Math.round(data.amount).toFixed(2),
@@ -466,14 +446,11 @@ router.post('/create-transfers', function (req, res, next) {
                     approvalDone: 1,
                     updated_date: dt
                 };
-                console.log('b');
-                console.log('inv_txn: ' + inv_txn);
                 query = `INSERT INTO investment_txns SET ?`;
                 endpoint = `/core-service/post?query=${query}`;
                 url = `${HOST}${endpoint}`;
                 axios.post(url, inv_txn)
                     .then(function (_response) {
-                        console.log(_response.data);
                         if (_response.data.status === undefined) {
                             let queryString = (data.investmentId === '') ? `clientId = ${data.creditedClientId}` : `investmentId = ${data.investmentId}`;
                             query = `SELECT amount,is_credit,isApproved FROM investment_txns WHERE ${queryString} AND isApproved = 1`;
@@ -485,9 +462,6 @@ router.post('/create-transfers', function (req, res, next) {
                                     }
                                 })
                                 .then(function (response2) {
-                                    console.log('----------------Client record 1----------------------------');
-                                    console.log(response2.data);
-                                    console.log('----------------Client record 1 end----------------------------');
                                     total = 0;
                                     if (response2.data.length > 0) {
                                         response2.data.map(x => {
@@ -501,8 +475,6 @@ router.post('/create-transfers', function (req, res, next) {
                                             }
                                         });
                                     }
-                                    console.log('total: ' + total);
-                                    console.log('a');
                                     let inv_txn = {
                                         txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                         description: `TRANSFER BETWEEN ${(data.creditedClientId !=='')?'CLIENTS WALLET':'CLIENT AND INVESTMENT ACCOUNT'} Transfer from : ${data.debitedClientName} to ${data.creditedClientName}`,
@@ -523,14 +495,11 @@ router.post('/create-transfers', function (req, res, next) {
                                         approvalDone: 1,
                                         updated_date: dt
                                     };
-                                    console.log('b');
-                                    console.log('inv_txn: ' + inv_txn);
                                     query = `INSERT INTO investment_txns SET ?`;
                                     endpoint = `/core-service/post?query=${query}`;
                                     url = `${HOST}${endpoint}`;
                                     axios.post(url, inv_txn)
                                         .then(function (_response2) {
-                                            console.log(_response2.data);
                                             if (_response2.data.status === undefined) {
                                                 res.send(_response.data);
                                             } else {
@@ -812,7 +781,6 @@ router.post('/reviews', function (req, res, next) {
 });
 
 router.post('/posts', function (req, res, next) {
-    console.log('Enter Post transactions');
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.body
@@ -864,9 +832,6 @@ router.post('/posts', function (req, res, next) {
                                 });
 
                                 total_bal = (isNaN(total_bal) || total_bal === '') ? 0 : total_bal;
-                                console.log('****************************************Computing Deposit******************************************');
-                                console.log(total_bal, data.amount, total_bal + parseFloat(data.amount.split(',').join('')));
-                                console.log('****************************************Computing Deposit End******************************************')
                                 let bal = (data.isCredit.toString() === '1') ? (total_bal + parseFloat(data.amount.split(',').join(''))) :
                                     (total_bal - parseFloat(data.amount.split(',').join('')))
                                 if (data.isInvestmentTerminated.toString() === '0') {
@@ -875,7 +840,6 @@ router.post('/posts', function (req, res, next) {
                                         amount = ${Math.round(data.amount.split(',').join('')).toFixed(2)} , balance ='${Math.round(bal).toFixed(2)}'
                                         WHERE ID =${data.txnId}`;
                                     endpoint = `/core-service/get`;
-                                    console.log(query);
                                     url = `${HOST}${endpoint}`;
                                     axios.get(url, {
                                             params: {
@@ -883,11 +847,7 @@ router.post('/posts', function (req, res, next) {
                                             }
                                         })
                                         .then(function (response_) {
-                                            console.log('****************************************Interest status******************************************');
-                                            console.log(data);
-                                            console.log('****************************************Interest status End******************************************');
                                             if (data.isReversedTxn === '0') {
-                                                console.log('About to deduct wallet');
                                                 debitWalletTxns(HOST, data).then(payld => {
                                                     setcharges(data, HOST, false).then(payload => {
                                                         res.send(response.data);
@@ -1039,12 +999,7 @@ router.post('/transfer-fund-wallet', function (req, res, next) {
 });
 
 async function fundBeneficialAccount(data, HOST) {
-    console.log('Inside beneficial account');
-    console.log('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$');
-    console.log(data);
-    console.log('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$');
     if (data.isTransfer === '1') {
-        console.log("Insider--------------------------1");
         let query = '';
         if (data.isMoveFundTransfer.toString() === '1') {
             query = `SELECT amount,is_credit FROM investment_txns 
@@ -1064,9 +1019,6 @@ async function fundBeneficialAccount(data, HOST) {
                 }
             })
             .then(function (response_bal) {
-                console.log('******************************************Fund Beneficial***************************************************');
-                console.log(response_bal.data);
-                console.log('******************************************Fund Beneficial End***************************************************');
                 if (response_bal.data.length > 0) {
                     let total_bal = 0;
                     response_bal.data.map(x => {
@@ -1077,9 +1029,6 @@ async function fundBeneficialAccount(data, HOST) {
                             total_bal -= (isNaN(parseFloat(_x))) ? 0 : parseFloat(_x);
                         }
                     });
-                    console.log('******************************************Beneficial total***************************************************');
-                    console.log(total_bal);
-                    console.log('******************************************Beneficial total End***************************************************');
                     let inv_txn = {
                         txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                         description: data.description,
@@ -1101,10 +1050,6 @@ async function fundBeneficialAccount(data, HOST) {
                         createdBy: data.userId
                     };
 
-                    console.log('******************************************Beneficial txn***************************************************');
-                    console.log(inv_txn);
-                    console.log('******************************************Beneficial txn End***************************************************');
-
                     query = `INSERT INTO investment_txns SET ?`;
                     endpoint = `/core-service/post?query=${query}`;
                     let url = `${HOST}${endpoint}`;
@@ -1122,7 +1067,6 @@ async function fundBeneficialAccount(data, HOST) {
                 }
             });
     } else if (data.isInvestmentTerminated === '1') {
-        console.log("Insider--------------------------2");
         await chargeForceTerminate(data, HOST);
         let result = await reverseEarlierInterest(data, HOST);
         return result;
@@ -1188,10 +1132,8 @@ function computeCurrentBalance(investmentId, HOST) {
 
 async function deductTransferCharge(data, HOST, amount) {
     let currentBalance = await computeCurrentBalance(data.investmentId, HOST);
-    console.log('Current Balance ' + currentBalance);
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `SELECT * FROM investment_config ORDER BY ID DESC LIMIT 1`;
-    console.log(query);
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -1199,7 +1141,6 @@ async function deductTransferCharge(data, HOST, amount) {
             query: query
         }
     }).then(response => {
-        console.log(response.data);
         if (response.data.status === undefined) {
             let configData = response.data[0];
             let configAmount = (configData.transferChargeMethod == 'Fixed') ? configData.transferValue : (configData.transferValue * parseFloat(Math.round(amount).toFixed(2))) / 100;
@@ -1284,7 +1225,6 @@ function closeInvestmentWallet(investmentId, HOST) {
                 query: query
             }
         }).then(response_prdt_ => {
-            console.log(response_prdt_.data);
             resolve(response_prdt_.data);
         }, err => {
             reject(0);
@@ -1316,7 +1256,6 @@ async function chargeForceTerminate(data, HOST) {
         left join investment_products p on p.ID = t.productId
         left join investment_txns v on v.investmentId = t.ID
         WHERE v.investmentId = ${data.investmentId} AND p.status = 1 AND v.isApproved = 1 ORDER BY v.ID DESC LIMIT 1`;
-        console.log(query);
         let endpoint = '/core-service/get';
         let url = `${HOST}${endpoint}`;
         axios.get(url, {
@@ -1324,7 +1263,6 @@ async function chargeForceTerminate(data, HOST) {
                 query: query
             }
         }).then(response => {
-            console.log(response.data);
             if (response.data.status === undefined) {
                 let configData = response.data[0];
                 let configAmount = (configData.opt_on_min_days_termination == 'Fixed') ? configData.min_days_termination_charge : (configData.min_days_termination_charge * parseFloat(Math.round(balance).toFixed(2))) / 100;
@@ -1385,7 +1323,6 @@ async function reverseEarlierInterest(data, HOST) {
             query: query
         }
     }).then(response_prdt_ => {
-        console.log(response_prdt_.data);
         let totalInterestAmount = 0; //premature_interest_rate:
         let reduceInterestRateApplied = response_prdt_.data.filter(x => x.premature_interest_rate !== '' && x.premature_interest_rate !== undefined && x.premature_interest_rate.toString() !== '0');
         if (reduceInterestRateApplied.length > 0) {
@@ -1398,15 +1335,11 @@ async function reverseEarlierInterest(data, HOST) {
             let total = 0.0;
             response_prdt_.data.map(x => {
                 let _x = x.txnAmount.split(',').join('');
-                console.log(_x);
                 if (x.is_credit.toString() === '1') {
                     total += parseFloat(_x);
-                    console.log('Positive ' + total);
                 } else {
                     total -= parseFloat(_x);
-                    console.log('Negative ' + _x);
                 }
-                console.log('total ---' + total);
             });
             let refId = moment().utcOffset('+0100').format('x');
             inv_txn = {
@@ -1441,26 +1374,14 @@ async function reverseEarlierInterest(data, HOST) {
                     let totalInvestedAmount = total - totalInterestAmount;
 
 
-                    console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-                    console.log('totalInvestedAmount ---' + totalInvestedAmount);
-                    console.log('total ---' + total);
-                    console.log('totalInterestAmount ---' + totalInterestAmount);
-                    console.log('daysInYear ---' + daysInYear);
-                    console.log('premature_interest_rate ---' + response_prdt_.data[0].premature_interest_rate);
-                    console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-
                     let interestInDays = parseFloat(response_prdt_.data[0].premature_interest_rate) / daysInYear;
                     let SI = (totalInvestedAmount * interestInDays) / 100;
                     let _amount = parseFloat(Math.round(SI * 100) / 100).toFixed(2);
-                    console.log(_amount);
                     let date = new Date();
                     let diffInDays = differenceInDays(
                         new Date(),
                         new Date(response_prdt_.data[0].investment_start_date)
                     );
-                    console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-                    console.log(_amount, diffInDays);
-                    console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
                     let interestAmount = diffInDays * _amount;
                     refId = moment().utcOffset('+0100').format('x');
                     inv_txn = {
@@ -1513,7 +1434,6 @@ async function reverseEarlierInterest(data, HOST) {
                             };
                             setInvestmentTxns(HOST, inv_txn).then(payload => {
                                 deductVatTax(HOST, data, configAmount, inv_txn, ((totalInvestedAmount + interestAmount) - configAmount)).then(result => {
-                                    console.log("Balance after VAT: " + result);
                                     query = `DELETE FROM investment_txns WHERE ID=${data.txnId}`;
                                     endpoint = `/core-service/get`;
                                     url = `${HOST}${endpoint}`;
@@ -1575,7 +1495,6 @@ async function reverseEarlierInterest(data, HOST) {
                                                         return {};
                                                     });
                                                 }, err => {
-                                                    console.log(err);
                                                     return {};
                                                 });
                                             }
@@ -1613,7 +1532,6 @@ async function reverseEarlierInterest(data, HOST) {
             };
             setInvestmentTxns(HOST, inv_txn).then(payload_2 => {
                 deductVatTax(HOST, data, configAmount, inv_txn, (balance - configAmount)).then(result => {
-                    console.log("Balance after VAT: " + result);
                     query = `DELETE FROM investment_txns WHERE ID=${data.txnId}`;
                     endpoint = `/core-service/get`;
                     url = `${HOST}${endpoint}`;
@@ -1676,7 +1594,6 @@ async function reverseEarlierInterest(data, HOST) {
                                         return {};
                                     });
                                 }, err => {
-                                    console.log(err);
                                 });
                             }
                         }, err => {});
@@ -1700,8 +1617,6 @@ function debitWalletTxns(HOST, data) {
                     query: query
                 }
             }).then(response_ => {
-                console.log(query);
-                console.log(response_.data);
                 if (response_.data.length === 0) {
                     response_.data.push[{
                         balance: 0
@@ -1710,8 +1625,6 @@ function debitWalletTxns(HOST, data) {
                 let walletBal = parseFloat(response_.data[0].balance.toString());
                 let walletAmt = parseFloat(data.amount.toString());
                 let walletCurrentBal = walletBal - walletAmt;
-                console.log('Balance:' + walletBal, ' Amount:' + walletAmt);
-                console.log(walletCurrentBal);
                 let inv_txn = {
                     txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                     description: `Transfer to investment account`,
@@ -1732,15 +1645,11 @@ function debitWalletTxns(HOST, data) {
                     clientId: data.clientId,
                     createdBy: data.createdBy
                 };
-                console.log('#####################################################');
-                console.log(inv_txn);
-                console.log('#####################################################');
                 query = `INSERT INTO investment_txns SET ?`;
                 endpoint = `/core-service/post?query=${query}`;
                 let url = `${HOST}${endpoint}`;
                 axios.post(url, inv_txn)
                     .then(function (__paylod__) {
-                        console.log(__paylod__.data);
                         resolve({});
                     }, _err__ => {
                         reject(_err__);
@@ -1754,7 +1663,6 @@ function debitWalletTxns(HOST, data) {
 
 
 async function setcharges(data, HOST, isReversal) {
-    console.log(data);
     if (data.isInvestmentTerminated === '1' || data.isTransfer === '1') {
         fundBeneficialAccount(data, HOST);
     } else {
@@ -1772,7 +1680,6 @@ async function setcharges(data, HOST, isReversal) {
                 query: query
             }
         }).then(response_product => {
-            console.log(response_product.data);
             //Charge for deposit
             if (response_product.data[0].isInterest.toString() === '0') {
                 if (data.isCredit.toString() === '1') {
@@ -1850,9 +1757,6 @@ async function setcharges(data, HOST, isReversal) {
                         let url = `${HOST}${endpoint}`;
                         axios.post(url, inv_txn)
                             .then(function (payload) {
-                                console.log('*********************************************************Charge Values**********************************');
-                                console.log(payload.data);
-                                console.log('*********************************************************Charge Values End**********************************');
                                 if (payload.data.status === undefined) {
                                     let txnAmount2 = Math.round(chargedCostMinBal).toFixed(2);
                                     let txnBal = Math.round(getInvestBalance.txnBalance - chargedCostMinBal).toFixed(2);
@@ -1877,17 +1781,11 @@ async function setcharges(data, HOST, isReversal) {
                             }
                         }).then(response_product_ => {
                             if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)) {
-                                console.log('*******************************************************************************');
-                                console.log(response_product.data[0].freq_withdrawal);
-                                console.log('*******************************************************************************');
                                 let _getInvestBalance = response_product.data[response_product.data.length - 1];
-                                console.log('a');
                                 let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
                                     parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
                                     ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
                                         parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
-                                console.log('b');
-                                console.log(_getInvestBalance);
                                 if (parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join('')) >
                                     parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
                                     refId = moment().utcOffset('+0100').format('x');
@@ -2181,10 +2079,8 @@ async function setcharges(data, HOST, isReversal) {
 
 function deductVatTax(HOST, data, _amount, txn, balance) {
     return new Promise((resolve, reject) => {
-        console.log('Balance before vat: ' + balance);
         let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
         let query = `SELECT * FROM investment_config ORDER BY ID DESC LIMIT 1`;
-        console.log(query);
         let endpoint = '/core-service/get';
         let url = `${HOST}${endpoint}`;
         axios.get(url, {
@@ -2192,7 +2088,6 @@ function deductVatTax(HOST, data, _amount, txn, balance) {
                 query: query
             }
         }).then(response => {
-            console.log(response.data);
             if (response.data.status === undefined) {
                 let configData = response.data[0];
                 let configAmount = (configData.withHoldingTaxChargeMethod == 'Fixed') ? configData.withHoldingTax : (configData.withHoldingTax * parseFloat(Math.round(_amount).toFixed(2))) / 100;
@@ -2218,7 +2113,6 @@ function deductVatTax(HOST, data, _amount, txn, balance) {
                     isVat: 1
                 };
                 setInvestmentTxns(HOST, inv_txn).then(result => {
-                    console.log(result);
                     let result_ = balance - configAmount;
                     resolve(result_);
                 }, err_ => {
@@ -2233,9 +2127,7 @@ function deductVatTax(HOST, data, _amount, txn, balance) {
 }
 
 router.post('/compute-interest', function (req, res, next) {
-    console.log('Entering server');
     const HOST = `${req.protocol}://${req.get('host')}`;
-    console.log(1)
     let data = req.body;
     computeInterestTxns(HOST, data).then(payload => {
         res.send(payload.data);
@@ -2247,19 +2139,14 @@ router.post('/compute-interest', function (req, res, next) {
 router.get('/mature-interest-months/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     monthlyMaturedInvestmentDate(HOST, req.params.id).then(payload => {
-        console.log(payload.data);
-
         const data = payload.data.filter(x => isPast(endOfMonth(`${x.year}-${x.month}`)));
-        console.log(data);
         res.send(data);
     }, err => {
-        console.log(err);
         res.send(err);
     });
 });
 
 router.get('/client-interests/:id', function (req, res, next) {
-    console.log("coming inside interest");
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
@@ -2287,7 +2174,6 @@ router.get('/client-interests/:id', function (req, res, next) {
                 query: query
             }
         }).then(payload => {
-            console.log(payload.data);
             query = `SELECT count(*) as recordsTotal FROM investment_interests WHERE investmentId = ${req.params.id}`;
             endpoint = '/core-service/get';
             url = `${HOST}${endpoint}`;
@@ -2308,7 +2194,6 @@ router.get('/client-interests/:id', function (req, res, next) {
 });
 
 router.get('/investment-statements/:id', function (req, res, next) {
-    console.log('Enter investment statement');
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
@@ -2332,7 +2217,6 @@ router.get('/investment-statements/:id', function (req, res, next) {
             query: query
         }
     }).then(response => {
-        console.log(response.data);
         query = `SELECT count(*) as recordsFiltered FROM investment_txns v 
     left join investments i on v.investmentId = i.ID
     left join clients c on i.clientId = c.ID 
@@ -2347,7 +2231,6 @@ router.get('/investment-statements/:id', function (req, res, next) {
                 query: query
             }
         }).then(payload => {
-            console.log(payload.data);
             query = `SELECT count(*) as recordsTotal FROM investment_txns WHERE investmentId = ${req.params.id} 
             AND STR_TO_DATE(updated_date, '%Y-%m-%d')>= '${req.query.startDate}' AND STR_TO_DATE(updated_date, '%Y-%m-%d')<= '${req.query.endDate}'`;
             endpoint = '/core-service/get';
@@ -2357,7 +2240,6 @@ router.get('/investment-statements/:id', function (req, res, next) {
                     query: query
                 }
             }).then(payload2 => {
-                console.log(payload2.data);
                 res.send({
                     draw: draw,
                     recordsTotal: payload2.data[0].recordsTotal,
@@ -2367,7 +2249,6 @@ router.get('/investment-statements/:id', function (req, res, next) {
             });
         });
     }, err => {
-        console.log(err);
     });
 });
 
@@ -2377,7 +2258,6 @@ async function monthlyMaturedInvestmentDate(host, investmentId) {
     let query = `SELECT DAY(updated_date) as day, MONTH(updated_date) AS month, YEAR(updated_date) AS year
     FROM investment_txns WHERE investmentId = ${investmentId} AND isApproved = 1 AND isInterestCharged = 0 AND isInterest = 0
     GROUP BY MONTH(updated_date), YEAR(updated_date)`;
-    console.log(query);
     let endpoint = '/core-service/get';
     let url = `${host}${endpoint}`;
     try {
@@ -2386,7 +2266,6 @@ async function monthlyMaturedInvestmentDate(host, investmentId) {
                 query: query
             }
         });
-        console.log(months.data);
         return months;
     } catch (err) {
         return err;
@@ -2478,7 +2357,6 @@ async function getDatedTxns(host, data) {
     let query = `SELECT ID FROM investment_txns 
                  WHERE ID <> 0 AND investmentId = ${data.investmentId} 
                  AND CONCAT(YEAR(updated_date),'-',MONTH(updated_date)) = '${data.year}-${data.month}'`;
-    console.log(query);
     let endpoint = '/core-service/get';
     let url = `${host}${endpoint}`;
     try {
@@ -2499,7 +2377,6 @@ async function updateDatedTxns(host, value) {
         const element = value[index];
         let query = `UPDATE investment_txns SET isInterestCharged = 1 
         WHERE ID = ${element.ID}`;
-        console.log(query);
         let endpoint = '/core-service/get';
         let url = `${host}${endpoint}`;
         try {
@@ -2516,21 +2393,13 @@ async function updateDatedTxns(host, value) {
 
 async function computeInterestTxns(HOST, data) {
     try {
-        console.log(data);
-        console.log(2)
         let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-        console.log(3)
         let refId = moment().utcOffset('+0100').format('x');
-        console.log(4)
         let currentDate = new Date();
-        console.log(5)
         let daysInMonth = getDaysInMonth(new Date(currentDate.getUTCFullYear(), data.month));
-        console.log(6)
         for (let index = data.startDay; index <= daysInMonth; index++) {
-            console.log(7)
             let formatedDate = `${data.year}-${data.month}-${index}`;
             let startDate = `${data.year}-${data.month}-${data.startDay}`;
-            console.log(8)
             let payload = await dailyMaturedInvestmentTxns(HOST, data.investmentId, startDate, formatedDate);
             if (payload.data.status === undefined) {
                 if (payload.data.length > 0) {
@@ -2554,9 +2423,6 @@ async function computeInterestTxns(HOST, data) {
                     let _amount = parseFloat(Math.round(SI * 100) / 100).toFixed(2);
 
                     let payload1 = await sumUpInvestmentInterest(HOST, data.investmentId);
-                    console.log("------------sumUpInvestment-----------");
-                    console.log(totalInvestedAmount, _amount);
-                    console.log("------------sumUpInvestment Ends-----------");
                     // let bal_ = (payload1.data[0].total !== null) ? payload1.data[0].total + parseFloat(Math.round(_amount).toFixed(2)) : 0 + parseFloat(Math.round(_amount).toFixed(2));
 
 
@@ -2572,22 +2438,13 @@ async function computeInterestTxns(HOST, data) {
                         month: data.month,
                         balance: bal_
                     }
-                    console.log('After sum up inv');
-                    console.log(dailyInterest);
                     let payload2 = await setInvestmentInterest(HOST, dailyInterest);
-                    console.log(payload2.data);
-                    console.log(daysInMonth, index);
                     if (index === daysInMonth) {
                         if (payload2.data.status === undefined) {
                             if (payload.data[0].interest_moves_wallet === 1) {
                                 let payload3 = await sumAllWalletInvestmentTxns(HOST, payload.data[0].clientId);
                                 bal_ = payload3.data[0].total + (payload1.data[0].total + parseFloat(Math.round(_amount).toFixed(2)));
-                                console.log('***********************************************start Payload3********************************');
-                                console.log(payload3.data[0]);
-                                console.log(payload3.data[0].total, payload1.data[0].total, _amount);
-                                console.log('Balance ' + bal_);
-                                console.log('***********************************************start Payload3********************************');
-
+                                
                                 let inv_txn = {
                                     txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                     description: `Balance ${payload3.data[0].total + (payload1.data[0].total +  parseFloat(Math.round(_amount).toFixed(2)))} @${formatedDate}`,
@@ -2617,7 +2474,7 @@ async function computeInterestTxns(HOST, data) {
                                         WHERE id <> 0 AND investmentId = ${data.investmentId} 
                                         AND month = ${_formatedDate.getMonth()} 
                                         AND year = ${_formatedDate.getFullYear()}`;
-                                console.log(query);
+                                
                                 endpoint = '/core-service/get';
                                 url = `${HOST}${endpoint}`;
                                 axios.get(url, {
@@ -2629,7 +2486,7 @@ async function computeInterestTxns(HOST, data) {
                                     updateDatedTxns(HOST, datedTxns.data).then(updatedDates => {});
                                 });
                             } else {
-                                console.log(totalInvestedAmount, payload1.data[0].total, parseFloat(Math.round(_amount).toFixed(2)));
+                                
                                 let inv_txn = {
                                     txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                     description: `Investment interest@ ${formatedDate}`,
@@ -2657,7 +2514,6 @@ async function computeInterestTxns(HOST, data) {
                                 WHERE id <> 0 AND investmentId = ${data.investmentId} 
                                 AND month = ${_formatedDate.getMonth()} 
                                 AND year = ${_formatedDate.getFullYear()}`;
-                                console.log(query);
                                 endpoint = '/core-service/get';
                                 url = `${HOST}${endpoint}`;
                                 axios.get(url, {
@@ -2676,7 +2532,6 @@ async function computeInterestTxns(HOST, data) {
         }
         return {};
     } catch (error) {
-        console.log(error);
         return error;
     }
 }
@@ -2684,7 +2539,6 @@ async function computeInterestTxns(HOST, data) {
 async function deductWithHoldingTax(HOST, data, _amount, total, bal_, clientId, isWallet, txn) {
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `SELECT * FROM investment_config ORDER BY ID DESC LIMIT 1`;
-    console.log(query);
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -2727,7 +2581,6 @@ async function deductWithHoldingTax(HOST, data, _amount, total, bal_, clientId, 
 }
 
 router.get('/client-wallets/:id', function (req, res, next) {
-    console.log('Inside client wallet');
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
@@ -2805,18 +2658,16 @@ router.get('/client-wallets/:id', function (req, res, next) {
 });
 
 router.get('/client-wallet-balance/:id', function (req, res, next) {
-    console.log('Inside client wallet');
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id} ORDER BY ID DESC LIMIT 1`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
-    console.log(query);
+    
     axios.get(url, {
         params: {
             query: query
         }
     }).then(response => {
-        console.log(response.data);
         res.send(response.data);
     }, err => {
         res.send(err);
@@ -2825,13 +2676,11 @@ router.get('/client-wallet-balance/:id', function (req, res, next) {
 
 //Get Investment Product
 router.get('/investment-accounts/:id', function (req, res, next) {
-    console.log('Welcome...');
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let page = ((req.query.page - 1) * 10 < 0) ? 0 : (req.query.page - 1) * 10;
     let search_string = (req.query.search_string === undefined) ? "" : req.query.search_string.toUpperCase();
     let query = '';
-    console.log(req.params.id);
     if (req.params.id.toString() === '0') {
         query = `SELECT v.ID,v.code,c.fullname AS name,v.productId, p.name as productName FROM investments v 
         left join clients c on v.clientId = c.ID 
@@ -2845,9 +2694,6 @@ router.get('/investment-accounts/:id', function (req, res, next) {
         WHERE v.ID != ${parseInt(req.query.excludedItem)} AND c.ID != ${req.query.clientId} AND upper(v.code) LIKE "${search_string}%" AND upper(c.fullname) 
         LIKE "${search_string}%" AND upper(p.name) LIKE "${search_string}%" ORDER BY v.ID desc LIMIT ${limit} OFFSET ${page}`;
     }
-    console.log('---------------------------------------------------------------------------')
-    console.log(query)
-    console.log('---------------------------------------------------------------------------')
     const endpoint = "/core-service/get";
     const url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -2867,10 +2713,8 @@ router.get('/investment-accounts/:id', function (req, res, next) {
 
 
 router.get('/inv-statements/:id', function (req, res, next) {
-    console.log('Am here');
     const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.query;
-    console.log(data);
     let query = `SELECT v.ID,v.ref_no,c.fullname,v.description,v.amount,v.txn_date,p.ID as productId,u.fullname as createdByName,
     v.approvalDone,v.reviewDone,v.postDone,p.code,p.name,i.investment_start_date,i.investment_mature_date, v.ref_no, v.isApproved,v.is_credit,i.clientId,
     v.balance,v.is_capital,v.investmentId,i.isTerminated, i.isMatured FROM investment_txns v 
@@ -2879,7 +2723,6 @@ router.get('/inv-statements/:id', function (req, res, next) {
     left join users u on u.ID = v.createdBy
     left join investment_products p on i.productId = p.ID
     WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id} AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') >= '${data.startDate}' AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') <= '${data.endDate}' AND v.isApproved = 1 ORDER BY STR_TO_DATE(v.txn_date, '%Y-%m-%d')`;
-    console.log(query);
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -2887,7 +2730,6 @@ router.get('/inv-statements/:id', function (req, res, next) {
             query: query
         }
     }).then(response => {
-        console.log(response.data);
         if (response.data.status === undefined) {
             res.send(response.data);
         } else {
@@ -2920,7 +2762,6 @@ router.get('/get-organisation-configs', function (req, res, next) {
 
 
 router.get('/get-organisation-taxes', function (req, res, next) {
-    console.log("Inside server");
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
@@ -2987,7 +2828,6 @@ router.get('/get-sum-charges', function (req, res, next) {
             let withHoldingTaxTotal = 0;
             if (response.data.length > 0) {
                 response.data.map(x => {
-                    console.log(x);
                     if (x.isCharge === 1) {
                         chargeTotal += parseFloat(x.amount.toString());
                     } else if (x.isVat === 1) {
