@@ -42,7 +42,7 @@ router.post('/mandate/setup', function (req, res, next) {
         authorization = req.body.authorization,
         application_id = req.body.application_id,
         date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-        query =  `INSERT INTO remita_mandates Set ?`;
+        query = `INSERT INTO remita_mandates Set ?`;
 
     helperFunctions.setUpMandate({
         payerName: fullname,
@@ -61,7 +61,7 @@ router.post('/mandate/setup', function (req, res, next) {
                 mandateId: setup_response.mandateId,
                 requestId: setup_response.requestId
             };
-            helperFunctions.authorizeMandate(authorize_payload, authorization, function (authorization_response) {
+          helperFunctions.authorizeMandate(authorize_payload, authorization, function (authorization_response) {
                 if (authorization_response && authorization_response.remitaTransRef){
                     payload.authParams = JSON.stringify(authorization_response.authParams);
                     payload.remitaTransRef = authorization_response.remitaTransRef;
@@ -75,12 +75,12 @@ router.post('/mandate/setup', function (req, res, next) {
                             query: `SELECT * FROM remita_mandates WHERE applicationID = ${application_id}`
                         }
                     }).then(remita_mandate => {
-                        if (remita_mandate.data[0]){
-                            query =  `UPDATE remita_mandates Set ? WHERE ID = ${remita_mandate.data[0]['ID']}`;
+                        if (remita_mandate.data[0]) {
+                            query = `UPDATE remita_mandates Set ? WHERE ID = ${remita_mandate.data[0]['ID']}`;
                         }
                         const endpoint = `/core-service/post?query=${query}`,
                             url = `${HOST}${endpoint}`;
-                        db.query(query, payload, function (error, remita_response) {
+                            db.query(query, payload, function (error, remita_response) {
                             if(error) {
                                 res.send({status: 500, error: error, response: null});
                             } else {
@@ -89,11 +89,19 @@ router.post('/mandate/setup', function (req, res, next) {
                         });
                     });
                 } else {
-                    res.send({status: 500, error: authorization_response, response: null});
+                    res.send({
+                        status: 500,
+                        error: authorization_response,
+                        response: null
+                    });
                 }
             })
         } else {
-            res.send({status: 500, error: setup_response, response: null});
+            res.send({
+                status: 500,
+                error: setup_response,
+                response: null
+            });
         }
     });
 });
@@ -125,7 +133,8 @@ router.get('/mandate/get/:id', function (req, res, next) {
                 error: 'Oops! Your direct debit mandate cannot be verified at the moment',
                 data: {
                     statuscode: '022',
-                    status: 'Oops! Your direct debit mandate cannot be verified at the moment'}
+                    status: 'Oops! Your direct debit mandate cannot be verified at the moment'
+                }
             });
         }
     });
@@ -134,18 +143,22 @@ router.get('/mandate/get/:id', function (req, res, next) {
 router.post('/corporate/create', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let postData = req.body,
-        query =  `SELECT * FROM corporates WHERE name = '${req.body.name}'`,
+        query = `SELECT * FROM corporates WHERE name = '${req.body.name}'`,
         endpoint = `/core-service/get`,
         url = `${HOST}${endpoint}`;
     axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(function (response) {
+            params: {
+                query: query
+            }
+        }).then(function (response) {
             if (response['data'][0]) {
-                res.send({status: 500, error: 'Corporate already exists!', response: response['data']});
+                res.send({
+                    status: 500,
+                    error: 'Corporate already exists!',
+                    response: response['data']
+                });
             } else {
-                query =  'INSERT INTO corporates Set ?';
+                query = 'INSERT INTO corporates Set ?';
                 endpoint = `/core-service/post?query=${query}`;
                 url = `${HOST}${endpoint}`;
                 postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -158,10 +171,18 @@ router.post('/corporate/create', function (req, res, next) {
                 });
             }
         }, err => {
-            res.send({status: 500, error: err, response: null});
+            res.send({
+                status: 500,
+                error: err,
+                response: null
+            });
         })
         .catch(function (error) {
-            res.send({status: 500, error: error, response: null});
+            res.send({
+                status: 500,
+                error: error,
+                response: null
+            });
         });
 });
 

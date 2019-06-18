@@ -153,7 +153,7 @@
                                     <div class="pull-right">
                                         <a href="/add-investments" class="btn btn-primary"><i class="fa fa-plus"></i>
                                             New
-                                            Investment</a>
+                                            Account</a>
                                     </div>
                                 </div>
                             </div>
@@ -184,6 +184,149 @@
             <div id="wait" style=";width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;">
                 <img src='spinner.gif' width="100" height="100" style="background-color: transparent" /></div>
         </div><!-- .content -->
+
+        <div class="modal fade" id="viewMandateModal" role="dialog" aria-labelledby="viewMandateModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Add Account Mandate</h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="panel push-down">
+                            <div class="panel-body">
+                                <div class="example-box-wrapper">
+                                    <strong>
+                                        <h6>PHOTOGRAPH</h6>
+                                    </strong>
+                                    <hr>
+                                    <div class="row">
+                                        <div class="form-group col-sm-4 col-md-4">
+                                            <label class="form-control-label">Name<span
+                                                    class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <input type="text" id="idPassportName" class="form-control imp"
+                                                    placeholder="Name">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group col-sm-6 col-md-6">
+                                            <label class="form-control-label">Add Image<span
+                                                    class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <input type="file" id="idPassportImage" class="form-control imp"
+                                                    accept="image/x-png,image/jpeg">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-control-label"></label>
+                                            <div class="input-group">
+                                                <button type="button" class="btn btn-dark"
+                                                    onclick="onAddMandatePassport()">Add</button>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <strong><span>Saved Items</span></strong>
+                                    <hr />
+                                    <div id="divPassportRecords" class="row">
+
+                                    </div>
+                                    <hr />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel push-down">
+                            <div class="panel-body">
+
+                                <div class="example-box-wrapper">
+                                    <h6>SIGNATURE</h6>
+                                    <hr><br>
+                                    <div class="row">
+                                        <div class="form-group col-sm-4 col-md-4">
+                                            <label class="form-control-label">Name<span
+                                                    class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <input type="text" id="idSignatureName" class="form-control imp"
+                                                    placeholder="Title">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group col-sm-6 col-md-6">
+                                            <label class="form-control-label">Add Image<span
+                                                    class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <input type="file" id="idSignatureImage" class="form-control imp"
+                                                    accept="image/x-png,image/jpeg">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="form-control-label"></label>
+                                            <div class="input-group">
+                                                <button type="button" class="btn btn-dark"
+                                                    onclick="onAddMandateSignature()">Add</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <strong><span>Saved Items</span></strong>
+                                    <hr />
+                                    <div id="divSignatureRecords" class="row">
+
+                                    </div>
+                                    <hr />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel push-down">
+                            <div class="panel-body">
+
+                                <div class="example-box-wrapper">
+                                    <h6>INSTRUCTION</h6>
+                                    <hr><br>
+                                    <div class="row">
+
+                                        <div class="form-group col-sm-4 col-md-4">
+                                            <label class="form-control-label">Title </label>
+                                            <div class="input-group">
+                                                <input type="text" id="idInstructionName" class="form-control imp"
+                                                    placeholder="Title">
+                                            </div>
+                                        </div>
+                                        <div class="form-group col-sm-6 col-md-6">
+                                            <label class="form-control-label">Body</label>
+                                            <div class="input-group">
+                                                <textarea id="idInstructionBody" class="form-control imp"></textarea>
+                                            </div>
+                                            <small>
+                                                <span id="duration_info"><span>
+                                            </small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-control-label"></label>
+                                            <div class="input-group">
+                                                <button type="button" class="btn btn-dark"
+                                                    onclick="onAddMandateInstructure()">Add</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <strong><span>Saved Items</span></strong>
+                                    <hr />
+                                    <div id="divInstructionRecords" class="row">
+
+                                    </div>
+                                    <hr />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
 
     </div><!-- /#right-panel -->

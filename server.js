@@ -1,6 +1,7 @@
 // Loads the environment variables from the .env file
 require('dotenv').config();
 
+
 let express = require('express');
 let fs = require('fs'),
     db = require('./db'),
@@ -47,6 +48,7 @@ let app = express(),
     client_service = require('./routes/service/custom-services/client.service'),
     investment_product_service = require('./routes/service/custom-services/investment-product.service'),
     investment_service = require('./routes/service/custom-services/investment.service'),
+    investment_interest_service = require('./routes/service/custom-services/investment-interest.service'),
     inv_transaction_service = require('./routes/service/custom-services/transaction.service'),
     preapproved_loan_service = require('./routes/service/custom-services/preapproved-loan.service'),
     preapplication_service = require('./routes/service/custom-services/preapplication.service'),
@@ -104,21 +106,20 @@ app.post('/login', function (req, res) {
             req.session.user = rows[0]['user_role'];
             user = rows[0];
             db.query('SELECT id,module_id, (select module_name from modules m where m.id = module_id) as module_name, (select menu_name from modules m where m.id = module_id) as menu_name, read_only, editable ' +
-                'FROM permissions where role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?)) group by module_id', [parseInt(user.user_role), parseInt(user.user_role), parseInt(user.user_role)], function (error, perm, fields) {
-                if (!error) {
-                    user.permissions = perm;
-                    let modules = [],
-                        query1 = 'select * from modules m where m.id in (select p.module_id from permissions p where read_only = 1 ' +
+                'FROM permissions where role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?)) group by module_id', [parseInt(user.user_role), parseInt(user.user_role), parseInt(user.user_role)],
+                function (error, perm, fields) {
+                    if (!error) {
+                        user.permissions = perm;
+                        let modules = [],
+                            query1 = 'select * from modules m where m.id in (select p.module_id from permissions p where read_only = 1 ' +
                             'and p.role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?)) group by module_id) and menu_name = "Main Menu" order by id asc',
-                        query2 = 'select * from modules m where m.id in (select p.module_id from permissions p where read_only = 1 ' +
+                            query2 = 'select * from modules m where m.id in (select p.module_id from permissions p where read_only = 1 ' +
                             'and p.role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?)) group by module_id) and menu_name = "Sub Menu" order by id asc',
-                        query3 = 'select * from modules m where m.id in (select p.module_id from permissions p where read_only = 1 ' +
+                            query3 = 'select * from modules m where m.id in (select p.module_id from permissions p where read_only = 1 ' +
                             'and p.role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?)) group by module_id) and menu_name = "Others" order by id asc';
-                    db.query(query1, [user.user_role, user.user_role, user.user_role], function (er, mods, fields) {
-                        modules = modules.concat(mods);
-                        db.query(query2, [user.user_role, user.user_role, user.user_role], function (er, mods, fields) {
+                        db.query(query1, [user.user_role, user.user_role, user.user_role], function (er, mods, fields) {
                             modules = modules.concat(mods);
-                            db.query(query3, [user.user_role, user.user_role, user.user_role], function (er, mods, fields) {
+                            db.query(query2, [user.user_role, user.user_role, user.user_role], function (er, mods, fields) {
                                 modules = modules.concat(mods);
                                 user.modules = modules;
                                 user.tenant = process.env.TENANT;
@@ -134,14 +135,13 @@ app.post('/login', function (req, res) {
                                 });
                             });
                         });
-                    });
-                } else {
-                    res.send({
-                        "status": 500,
-                        "response": "No permissions set for this user"
-                    })
-                }
-            });
+                    } else {
+                        res.send({
+                            "status": 500,
+                            "response": "No permissions set for this user"
+                        })
+                    }
+                });
         } else {
             res.send({
                 "status": 500,
@@ -209,6 +209,8 @@ app.use('/investment-products', investment_product_service);
 app.use('/investment-txns', inv_transaction_service);
 app.use('/preapproved-loan', preapproved_loan_service);
 app.use('/preapplication', preapplication_service);
+app.use('/investment-interests', investment_interest_service);
+// app.use('/notification-service', notification_service);
 app.use('/remita', remita_service);
 app.use('/notifications', notification);
 app.use('/files', express.static(__dirname + '/files'));
@@ -477,6 +479,24 @@ app.get('/investment-transactions', requireLogin, function (req, res) {
     });
 });
 
+app.get('/investment-settings', requireLogin, function (req, res) {
+    res.sendFile('investment/settings/settings.html', {
+        root: __dirname + '/views'
+    });
+});
+
+app.get('/investment-charges', requireLogin, function (req, res) {
+    res.sendFile('investment/charges-taxes/charges-taxes.html', {
+        root: __dirname + '/views'
+    });
+});
+
+app.get('/investment-statements/:id?', requireLogin, function (req, res) {
+    res.sendFile('investment/statement/statement.html', {
+        root: __dirname + '/views'
+    });
+});
+
 app.get('/all-commissions', requireLogin, function (req, res) {
     res.sendFile('commission/all-commissions/all-commissions.html', {
         root: __dirname + '/views'
@@ -544,11 +564,15 @@ app.use(function (req, res, next) {
     res.status(404);
 
     if (req.accepts('html')) {
-        return res.render('404', { url: req.url });
+        return res.render('404', {
+            url: req.url
+        });
     }
 
     if (req.accepts('json')) {
-        return res.send({ error: 'Not found' });
+        return res.send({
+            error: 'Not found'
+        });
     }
 
     res.type('txt').send('Not found');
@@ -556,8 +580,9 @@ app.use(function (req, res, next) {
 
 module.exports = app;
 let server = http.createServer(app);
+// var cron = require('node-cron');
 
 server.listen(process.env.port || process.env.PORT || 4000, function () {
     console.log('server running on %s [%s]', process.env.PORT, process.env.STATUS);
 });
-server.timeout = 0; //Server timeout set to never
+server.timeout = 0;

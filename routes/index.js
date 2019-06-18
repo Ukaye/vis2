@@ -7,6 +7,12 @@ const Moment = require('moment');
 const MomentRange = require('moment-range');
 const moment = MomentRange.extendMoment(Moment);
 let notificationsService = require('./notifications-service');
+
+
+//Compute Interest
+router.post('/investment-interests/compute', function(req, res) {
+    
+});
 //File Upload - Inspection
 router.post('/upload/:number_plate/:part', function(req, res) {
     if (!req.files) return res.status(400).send('No files were uploaded.');

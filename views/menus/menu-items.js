@@ -1,22 +1,23 @@
+// let $ = jQuery.noConflict();
 $(document).ready(function () {
     includeHTML();
-    $body.delegate('.locked', 'click', function(event) {
-        return swal({
+  $body.delegate('.locked', 'click', function(event) {
+    return swal({
             title: 'You do not have licence for this module!',
             text: 'Please contact your admin to purchase the necessary licence.',
             icon: 'warning',
             timer: 1000
         });
     });
-    $body.delegate('#menuToggle', 'click', function(event) {
+    $body.delegate('#menuToggle', 'click', function (event) {
         $('body').toggleClass('open');
     });
-    $body.delegate('.search-trigger', 'click', function(event) {
+    $body.delegate('.search-trigger', 'click', function (event) {
         event.preventDefault();
         event.stopPropagation();
         $('.search-trigger').parent('.header-left').addClass('open');
     });
-    $body.delegate('.search-close', 'click', function(event) {
+    $body.delegate('.search-close', 'click', function (event) {
         event.preventDefault();
         event.stopPropagation();
         $('.search-trigger').parent('.header-left').removeClass('open');
@@ -29,10 +30,10 @@ function check() {
         jQuery('#new-user').hide();
         jQuery('#models-card').hide();
         jQuery('#user').html(localStorage.getItem("name"));
-        jQuery('#message').html("Welcome, "+localStorage.getItem("name"));
+        jQuery('#message').html("Welcome, " + localStorage.getItem("name"));
     } else {
         jQuery('#user').html(localStorage.getItem("name"));
-        jQuery('#message').html("Welcome, "+localStorage.getItem("name"));
+        jQuery('#message').html("Welcome, " + localStorage.getItem("name"));
     }
 }
 
@@ -88,10 +89,14 @@ function includeHTML() {
         file = elmnt.getAttribute("include-html");
         if (file) {
             xhttp = new XMLHttpRequest();
-            xhttp.onreadystatechange = function() {
+            xhttp.onreadystatechange = function () {
                 if (this.readyState === 4) {
-                    if (this.status === 200) {elmnt.innerHTML = this.responseText;}
-                    if (this.status === 404) {elmnt.innerHTML = "Page not found.";}
+                    if (this.status === 200) {
+                        elmnt.innerHTML = this.responseText;
+                    }
+                    if (this.status === 404) {
+                        elmnt.innerHTML = "Page not found.";
+                    }
                     elmnt.removeAttribute("include-html");
                     includeHTML();
                 }

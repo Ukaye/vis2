@@ -438,6 +438,11 @@ function bindInvestmentDataTable(id) {
         ]
     });
 }
+function onViewWalletBalance() {
+    let url = `./investment-transactions?clientId=${application_id}&clientName=${$('#fullname').html()}`;
+    console.log(url);
+    $(location).attr('href', url);
+}
 
 $("#cheque-no").on("keyup", function (event) {
     let val = $("#cheque-no").val();

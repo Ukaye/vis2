@@ -9,6 +9,7 @@ router.post('/products', function (req, res, next) {
     data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('INSERT INTO investment_products SET ?', data, function (error, result, fields) {
         if (error) {
+            console.log(error);
             res.send({
                 "status": 500,
                 "error": error,

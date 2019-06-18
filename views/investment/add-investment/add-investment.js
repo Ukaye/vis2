@@ -1,8 +1,12 @@
 var addMonths = '../../../node_modules/date-fns/add_months/index';
 // import * as differenceInMinutes from 'date-fns/difference_in_minutes';
+let clientBalance = 0;
 
 $(document).ready(function () {
     component_initializer();
+    let currentDate = new Date();
+    let _cmax = `${currentDate.getUTCFullYear()}-${pad(currentDate.getMonth()+1)}-${pad(currentDate.getDate())}`;
+    $('#investment_date_start').attr('max', _cmax);
 });
 var productsControl = {};
 var products = [];
@@ -180,43 +184,46 @@ $("#investment_date_start").on("change", function (event) {
 });
 
 $("#btn_save_product").on("click", function (event) {
+
     let selectedValue = products.find(x => x.ID.toString() === $("#investment_product").val().toString());
     var data = {
         clientId: $('#client').on('select2:select').val(),
         productId: $('#investment_product').on('select2:select').val(),
-        amount: $('#investment_amount').val().split('.'),
+        amount: $('#investment_amount').val().split('.').join(''),
         investment_start_date: $('#investment_date_start').val(),
         investment_mature_date: $('#investment_mature_date').val(),
         code: selectedValue.code,
         selectedProduct: selectedValue,
-        createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID
+        createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
+        isPaymentMadeByWallet: $('#opt_payment_made_by').val()
     };
-    $.ajax({
-        'url': '/investment-service/create',
-        'type': 'post',
-        'data': data,
-        'success': function (data) {
-            console.log(data);
-            if (data.error) {
+    if (parseFloat(data.amount.toString()) <= parseFloat(clientBalance.toString())) {
+        $.ajax({
+            'url': '/investment-service/create',
+            'type': 'post',
+            'data': data,
+            'success': function (data) {
+                if (data.error) {
+                    $('#wait').hide();
+                    swal('Oops! An error occurred while creating Investment; Required field(s) missing',
+                        '', 'error');
+                } else {
+                    $('#wait').hide();
+                    swal('Investment created successfully!', '', 'success');
+                    var url = "./all-investments";
+                    $(location).attr('href', url);
+                    $('input').val("");
+                    $('input').prop("checked", false);
+                }
+            },
+            'error': function (err) {
                 $('#wait').hide();
-                swal('Oops! An error occurred while creating Investment; Required field(s) missing',
-                    '', 'error');
-            } else {
-                $('#wait').hide();
-                swal('Investment created successfully!', '', 'success');
-                var url = "./all-investments";
-                $(location).attr('href', url);
-                $('input').val("");
-                $('input').prop("checked", false);
+                swal('Oops! An error occurred while creating Investment; ', '', 'error');
             }
-        },
-        'error': function (err) {
-            console.log(err);
-            $('#wait').hide();
-            swal('Oops! An error occurred while creating Investment; ', '', 'error');
-        }
-    });
-
+        });
+    } else {
+        swal('Oops! Clent has insufficient balance', '', 'error');
+    }
 });
 
 $("input").on("change", function (event) {
@@ -241,3 +248,41 @@ function validate() {
         $("#btn_save_product").attr('disabled', true);
     }
 }
+
+
+
+$('#client').on("select2:selecting", function (e) {
+    $('#wait').show();
+    setTimeout(function () {
+        let _id = $('#client').on('select2:select').val();
+        $.ajax({
+            url: `/investment-txns/client-wallet-balance/${_id}`,
+            'type': 'get',
+            'success': function (data) {
+                clientBalance = (data[0] !== undefined) ? data[0].balance : 0.00;
+                $('#opt_payment_made_by').html('');
+                if (data.status === undefined) {
+                    $('#wait').hide();
+                    if (data.length > 0) {
+                        let sign = '';
+                        if (data[0].balance.toString().includes('-')) {
+                            sign = '-';
+                        }
+                        $('<option/>').val('Wallet').html(`Wallet <strong>(₦${sign}${formater(data[0].balance)})</strong>`).appendTo(
+                            '#opt_payment_made_by');
+                        $('<option/>').val('Cash').html(`Cash`).appendTo(
+                            '#opt_payment_made_by');
+                    } else {
+                        $('<option/>').val('Wallet').html(`Wallet <strong>(₦0.00)</strong>`).appendTo(
+                            '#opt_payment_made_by');
+                        $('<option/>').val('Cash').html(`Cash`).appendTo(
+                            '#opt_payment_made_by');
+                    }
+                }
+            },
+            'error': function (err) {
+               $('#wait').hide();
+            }
+        });
+    }, 2500);
+});
