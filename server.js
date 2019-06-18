@@ -525,6 +525,19 @@ app.get('/all-preapplications', requireLogin, function (req, res) {
     });
 });
 
+app.get('/bulk-upload', requireLogin, function (req, res) {
+    res.sendFile('collection/bulk-upload/bulk-upload.html', {
+        root: __dirname + '/views'
+    });
+});
+
+
+app.get('/bulk-collection', requireLogin, function (req, res) {
+    res.sendFile('collection/bulk-collection/bulk-collection.html', {
+        root: __dirname + '/views'
+    });
+});
+
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
