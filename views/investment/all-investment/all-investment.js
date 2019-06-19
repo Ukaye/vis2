@@ -41,8 +41,8 @@ function upload(parentFolder, subFolder, file, imgId) {
             success: function (response) {
                 resolve(1)
             },
-            error: function () {
-                reject(error);
+            error: err__ => {
+                reject(err__);
             }
         });
     });

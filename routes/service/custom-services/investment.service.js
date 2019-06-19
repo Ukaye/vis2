@@ -609,7 +609,7 @@ router.get('/client-investments/:id', function (req, res, next) {
     (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} ORDER BY ID DESC LIMIT 1) as balance,
     v.ID,v.ref_no,c.fullname,v.description,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName,
     v.approvalDone,v.reviewDone,v.created_date,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,
-    i.clientId,v.isMoveFundTransfer,v.isWallet,v.isWithdrawal,isDeposit,v.isDocUploaded,p.canTerminate,i.isPaymentMadeByWallet,
+    i.clientId,v.isMoveFundTransfer,v.isWallet,v.isWithdrawal,isDeposit,v.isDocUploaded,p.canTerminate,i.isPaymentMadeByWallet,p.acct_allows_withdrawal,
     v.is_capital,v.investmentId,i.isTerminated, i.isMatured, v.isReversedTxn,v.isInvestmentTerminated,v.expectedTerminationDate,
     i.code as acctNo, v.isTransfer, v.beneficialInvestmentId FROM investment_txns v
     left join investments i on v.investmentId = i.ID
@@ -790,7 +790,7 @@ router.get('/get-configs', function (req, res, next) {
 
 router.post('/upload-file/:id/:item/:sub', function (req, res) {
     if (!req.files) return res.status(400).send('No files were uploaded.');
-    if (!req.params) return res.status(400).send('No Number Plate specified!');
+    if (!req.params) return res.status(400).send('');
     let sampleFile = req.files.file,
         name = sampleFile.name,
         extArray = sampleFile.name.split("."),
@@ -799,7 +799,7 @@ router.post('/upload-file/:id/:item/:sub', function (req, res) {
     fs.stat(`files/${req.params.item}/${req.params.sub}/`, function (err) {
         if (!err) {} else if (err.code === 'ENOENT') {
             try {
-                fs.mkdirSync(`files/${req.params.item}/${req.params.sub}/`);
+                fs.mkdirSync(err.path);
             } catch (error) {}
 
         }
@@ -808,7 +808,9 @@ router.post('/upload-file/:id/:item/:sub', function (req, res) {
     fs.stat(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
         if (err) {
             sampleFile.mv(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
-                if (err) return res.status(500).send(err);
+                if (err) {
+                    return res.status(500).send(err);
+                }
                 res.send('File uploaded!');
             });
         } else {
@@ -817,8 +819,9 @@ router.post('/upload-file/:id/:item/:sub', function (req, res) {
                     res.send('Unable to delete file!');
                 } else {
                     sampleFile.mv(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
-                        if (err)
+                        if (err) {
                             return res.status(500).send(err);
+                        }
                         res.send('File uploaded!');
                     });
                 }

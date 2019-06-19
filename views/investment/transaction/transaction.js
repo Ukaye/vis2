@@ -226,6 +226,10 @@ function bindDataTable(id) {
                         if (selectedInvestment.canTerminate.toString() === '0') {
                             $('#btnTerminateInvestment').attr('disabled', true);
                         }
+                        if (selectedInvestment.acct_allows_withdrawal.toString() === '0') {
+                            $('#btnTransfer').attr('disabled', true);
+                            $('#btnWithdrawal').attr('disabled', true);
+                        }
                         if (selectedInvestment.isMatured === 1 || selectedInvestment.isTerminated === 1) {
                             $('#btnWithdrawal').attr('disabled', true);
                             $('#btnDeposit').attr('disabled', true);
