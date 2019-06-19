@@ -197,12 +197,41 @@ $("#btn_save_product").on("click", function (event) {
         createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
         isPaymentMadeByWallet: $('#opt_payment_made_by').val()
     };
-    if (parseFloat(data.amount.toString()) <= parseFloat(clientBalance.toString())) {
+    if (data.isPaymentMadeByWallet === '1') {
+        if (parseFloat(data.amount.toString()) <= parseFloat(clientBalance.toString())) {
+            $.ajax({
+                'url': '/investment-service/create',
+                'type': 'post',
+                'data': data,
+                'success': function (data) {
+                    if (data.error) {
+                        $('#wait').hide();
+                        swal('Oops! An error occurred while creating Investment; Required field(s) missing',
+                            '', 'error');
+                    } else {
+                        $('#wait').hide();
+                        swal('Investment created successfully!', '', 'success');
+                        var url = "./all-investments";
+                        $(location).attr('href', url);
+                        $('input').val("");
+                        $('input').prop("checked", false);
+                    }
+                },
+                'error': function (err) {
+                    $('#wait').hide();
+                    swal('Oops! An error occurred while creating Investment; ', '', 'error');
+                }
+            });
+        } else {
+            swal('Oops! Clent has insufficient wallet balance', '', 'error');
+        }
+    } else {
         $.ajax({
             'url': '/investment-service/create',
             'type': 'post',
             'data': data,
             'success': function (data) {
+                console.log(data);
                 if (data.error) {
                     $('#wait').hide();
                     swal('Oops! An error occurred while creating Investment; Required field(s) missing',
@@ -221,8 +250,6 @@ $("#btn_save_product").on("click", function (event) {
                 swal('Oops! An error occurred while creating Investment; ', '', 'error');
             }
         });
-    } else {
-        swal('Oops! Clent has insufficient balance', '', 'error');
     }
 });
 
@@ -239,10 +266,7 @@ function validate() {
 
         $('#client').on('select2:select').val() !== "0" &&
         $('#investment_product').on('select2:select').val() !== "0" &&
-        $('#investment_amount').val() !== "" &&
-        $('#investment_date_start').val() !== "" &&
-        $('#investment_mature_date').val() !== ""
-    ) {
+        $('#investment_amount').val() !== "") {
         $("#btn_save_product").attr('disabled', false);
     } else {
         $("#btn_save_product").attr('disabled', true);
@@ -268,20 +292,20 @@ $('#client').on("select2:selecting", function (e) {
                         if (data[0].balance.toString().includes('-')) {
                             sign = '-';
                         }
-                        $('<option/>').val('Wallet').html(`Wallet <strong>(₦${sign}${formater(data[0].balance)})</strong>`).appendTo(
+                        $('<option/>').val('1').html(`Wallet <strong>(₦${sign}${formater(data[0].balance)})</strong>`).appendTo(
                             '#opt_payment_made_by');
-                        $('<option/>').val('Cash').html(`Cash`).appendTo(
+                        $('<option/>').val('0').html(`Cash`).appendTo(
                             '#opt_payment_made_by');
                     } else {
-                        $('<option/>').val('Wallet').html(`Wallet <strong>(₦0.00)</strong>`).appendTo(
+                        $('<option/>').val('1').html(`Wallet <strong>(₦0.00)</strong>`).appendTo(
                             '#opt_payment_made_by');
-                        $('<option/>').val('Cash').html(`Cash`).appendTo(
+                        $('<option/>').val('0').html(`Cash`).appendTo(
                             '#opt_payment_made_by');
                     }
                 }
             },
             'error': function (err) {
-               $('#wait').hide();
+                $('#wait').hide();
             }
         });
     }, 2500);

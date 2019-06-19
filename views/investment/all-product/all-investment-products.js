@@ -20,7 +20,7 @@ function updateStatus(id, status) {
         'success': function (data) {
             if (data.status === 200) {
                 $('#wait').hide();
-                swal('Investment Product updated successfully!', '', 'success');
+                swal('Product activated/deactivated successfully', '', 'success');
                 var url = "./all-investment-products";
                 $(location).attr('href', url);
             } else {
@@ -236,23 +236,25 @@ function bindDataTable() {
             sType: "numeric"
         }],
         columns: [{
-                width: "15%",
+                width: "auto",
                 "mRender": function (data, type, full) {
                     return `<span class="badge badge-pill ${(full.status===1)?'badge-primary':'badge-danger'}">${(full.status===1)?'Active':'Inactive'}</span>`;
                 }
             },
             {
                 data: "code",
-                width: "15%"
+                width: "auto"
             },
             {
                 data: "name",
                 width: "30%"
             },
             {
-                data: "interest_rate",
                 width: "auto",
-                className: "text-right"
+                className: "text-right",
+                "mRender": function (data, type, full) {
+                    return (full.interest_rate === '') ? 'N/A' : full.interest_rate;
+                }
             },
             {
                 data: "investment_min",
@@ -266,10 +268,10 @@ function bindDataTable() {
             },
             {
                 data: "date_created",
-                width: "30%"
+                width: "auto"
             },
             {
-                width: "15%",
+                width: "auto",
                 "mRender": function (data, type, full) {
                     let status_ = (full.status === 1) ? 0 : 1;
                     let status_label = (full.status === 1) ? "Deactivate" : "Activate";
@@ -525,11 +527,9 @@ function getProductRequirement(id) {
                 "mRender": function (data, type, full) {
                     if (full.operationId.toString() === "1") {
                         return "Deposit";
-                    }
-                    // else if (full.operationId.toString() === "2") {
-                    //     return "Transfer";
-                    // } 
-                    else if (full.operationId.toString() === "3") {
+                    } else if (full.operationId.toString() === "2") {
+                        return "Transfer";
+                    } else if (full.operationId.toString() === "3") {
                         return "Withdrawal";
                     }
                 }
@@ -705,11 +705,9 @@ function getProductPost(id) {
                 "mRender": function (data, type, full) {
                     if (full.operationId.toString() === "1") {
                         return "Deposit";
-                    }
-                    // else if (full.operationId.toString() === "2") {
-                    //     return "Transfer";
-                    // } 
-                    else if (full.operationId.toString() === "3") {
+                    } else if (full.operationId.toString() === "2") {
+                        return "Transfer";
+                    } else if (full.operationId.toString() === "3") {
                         return "Withdrawal";
                     }
                 }

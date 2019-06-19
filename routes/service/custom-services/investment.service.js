@@ -14,7 +14,7 @@ router.post('/create', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     var data = req.body
     const is_after = isAfter(new Date(data.investment_mature_date.toString()), new Date(data.investment_start_date.toString()))
-    if (is_after) {
+    if (is_after || data.investment_start_date === '' || data.investment_mature_date === '') {
         data.status = 1;
         let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
         data.date_created = dt;
@@ -618,7 +618,7 @@ router.get('/client-investments/:id', function (req, res, next) {
     left join investment_products p on i.productId = p.ID
     WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id} 
     AND (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%") LIMIT ${limit} OFFSET ${offset}`;
-    
+
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     var data = [];
@@ -797,12 +797,10 @@ router.post('/upload-file/:id/:item/:sub', function (req, res) {
         extension = extArray[extArray.length - 1],
         fileName = name + '.' + extension;
     fs.stat(`files/${req.params.item}/${req.params.sub}/`, function (err) {
-        if (!err) {
-        } else if (err.code === 'ENOENT') {
+        if (!err) {} else if (err.code === 'ENOENT') {
             try {
                 fs.mkdirSync(`files/${req.params.item}/${req.params.sub}/`);
-            } catch (error) {
-            }
+            } catch (error) {}
 
         }
     });
