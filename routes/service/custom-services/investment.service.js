@@ -710,10 +710,8 @@ router.post('/create-mandates', function (req, res, next) {
     data.createdAt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     axios.post(url, data)
         .then(function (response2) {
-            console.log(response2.data);
             res.send(response2.data);
         }, err => {
-            console.log(err);
             res.send({
                 status: 500,
                 error: err,
@@ -792,7 +790,7 @@ router.get('/get-configs', function (req, res, next) {
 
 router.post('/upload-file/:id/:item/:sub', function (req, res) {
     if (!req.files) return res.status(400).send('No files were uploaded.');
-    if (!req.params) return res.status(400).send('No Number Plate specified!');
+    if (!req.params) return res.status(400).send('');
     let sampleFile = req.files.file,
         name = sampleFile.name,
         extArray = sampleFile.name.split("."),
@@ -801,7 +799,7 @@ router.post('/upload-file/:id/:item/:sub', function (req, res) {
     fs.stat(`files/${req.params.item}/${req.params.sub}/`, function (err) {
         if (!err) {} else if (err.code === 'ENOENT') {
             try {
-                fs.mkdirSync(`files/${req.params.item}/${req.params.sub}/`);
+                fs.mkdirSync(err.path);
             } catch (error) {}
 
         }
@@ -810,7 +808,9 @@ router.post('/upload-file/:id/:item/:sub', function (req, res) {
     fs.stat(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
         if (err) {
             sampleFile.mv(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
-                if (err) return res.status(500).send(err);
+                if (err) {
+                    return res.status(500).send(err);
+                }
                 res.send('File uploaded!');
             });
         } else {
@@ -819,8 +819,9 @@ router.post('/upload-file/:id/:item/:sub', function (req, res) {
                     res.send('Unable to delete file!');
                 } else {
                     sampleFile.mv(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
-                        if (err)
+                        if (err) {
                             return res.status(500).send(err);
+                        }
                         res.send('File uploaded!');
                     });
                 }
