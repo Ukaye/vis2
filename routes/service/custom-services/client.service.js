@@ -11,7 +11,7 @@ router.get('/all', function (req, res, next) {
     let limit = req.query.limit;
     let page = ((req.query.page - 1) * 10 < 0) ? 0 : (req.query.page - 1) * 10;
     let search_string = (req.query.search_string === undefined) ? "" : req.query.search_string.toUpperCase();
-    let query = `SELECT ID,fullname FROM clients WHERE status = 1 AND upper(email) LIKE "${search_string}%" OR upper(fullname) LIKE "${search_string}%" ORDER BY ID desc LIMIT ${limit} OFFSET ${page}`;
+    let query = `SELECT ID,fullname FROM clients WHERE status = 1 AND (upper(email) LIKE "${search_string}%" OR upper(fullname) LIKE "${search_string}%") ORDER BY ID desc LIMIT ${limit} OFFSET ${page}`;
     const endpoint = "/core-service/get";
     const url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -61,8 +61,8 @@ router.post('/mandate/setup', function (req, res, next) {
                 mandateId: setup_response.mandateId,
                 requestId: setup_response.requestId
             };
-          helperFunctions.authorizeMandate(authorize_payload, authorization, function (authorization_response) {
-                if (authorization_response && authorization_response.remitaTransRef){
+            helperFunctions.authorizeMandate(authorize_payload, authorization, function (authorization_response) {
+                if (authorization_response && authorization_response.remitaTransRef) {
                     payload.authParams = JSON.stringify(authorization_response.authParams);
                     payload.remitaTransRef = authorization_response.remitaTransRef;
                     payload.mandateId = setup_response.mandateId;
@@ -80,9 +80,13 @@ router.post('/mandate/setup', function (req, res, next) {
                         }
                         const endpoint = `/core-service/post?query=${query}`,
                             url = `${HOST}${endpoint}`;
-                            db.query(query, payload, function (error, remita_response) {
-                            if(error) {
-                                res.send({status: 500, error: error, response: null});
+                        db.query(query, payload, function (error, remita_response) {
+                            if (error) {
+                                res.send({
+                                    status: 500,
+                                    error: error,
+                                    response: null
+                                });
                             } else {
                                 res.send(authorization_response);
                             }
@@ -163,8 +167,12 @@ router.post('/corporate/create', function (req, res, next) {
                 url = `${HOST}${endpoint}`;
                 postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                 db.query(query, postData, function (error, response_) {
-                    if(error) {
-                        res.send({status: 500, error: error, response: null});
+                    if (error) {
+                        res.send({
+                            status: 500,
+                            error: error,
+                            response: null
+                        });
                     } else {
                         return res.send(response_);
                     }
@@ -214,7 +222,12 @@ router.get('/corporates/get', function (req, res, next) {
             }
         }).then(payload => {
             if (!payload.data[0])
-                return res.send({draw: draw, recordsTotal: 0, recordsFiltered: 0, data: []});
+                return res.send({
+                    draw: draw,
+                    recordsTotal: 0,
+                    recordsFiltered: 0,
+                    data: []
+                });
             res.send({
                 draw: draw,
                 recordsTotal: payload.data[0].recordsTotal,
@@ -243,7 +256,7 @@ router.get('/corporate/get/:id', function (req, res, next) {
 
 router.post('/corporate/disable/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query =  `UPDATE corporates Set ? WHERE ID = ${req.params.id}`;
+    let query = `UPDATE corporates Set ? WHERE ID = ${req.params.id}`;
     let endpoint = `/core-service/post?query=${query}`;
     let url = `${HOST}${endpoint}`;
     let payload = {
@@ -251,17 +264,25 @@ router.post('/corporate/disable/:id', function (req, res, next) {
         date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
     };
     db.query(query, payload, function (error, response_) {
-        if(error) {
-            res.send({status: 500, error: error, response: null});
+        if (error) {
+            res.send({
+                status: 500,
+                error: error,
+                response: null
+            });
         } else {
-            res.send({status: 200, error: null, response: response_});
+            res.send({
+                status: 200,
+                error: null,
+                response: response_
+            });
         }
     });
 });
 
 router.post('/corporate/enable/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query =  `UPDATE corporates Set ? WHERE ID = ${req.params.id}`;
+    let query = `UPDATE corporates Set ? WHERE ID = ${req.params.id}`;
     let endpoint = `/core-service/post?query=${query}`;
     let url = `${HOST}${endpoint}`;
     let payload = {
@@ -269,10 +290,18 @@ router.post('/corporate/enable/:id', function (req, res, next) {
         date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
     };
     db.query(query, payload, function (error, response_) {
-        if(error) {
-            res.send({status: 500, error: error, response: null});
+        if (error) {
+            res.send({
+                status: 500,
+                error: error,
+                response: null
+            });
         } else {
-            res.send({status: 200, error: null, response: response_});
+            res.send({
+                status: 200,
+                error: null,
+                response: response_
+            });
         }
     });
 });

@@ -79,7 +79,7 @@
             <div class="col-sm-4">
                 <div class="page-header float-left">
                     <div class="page-title">
-                        <h1>Investment Product</h1>
+                        <h1>Savings/Investment Product</h1>
                     </div>
                 </div>
             </div>
@@ -88,7 +88,7 @@
                     <div class="page-title">
                         <ol class="breadcrumb text-right">
                             <li><a href="#">Dashboard</a></li>
-                            <li><a href="#">Investment</a></li>
+                            <li><a href="#">Savings & Investment</a></li>
                             <li id="li_sub_dir" class="active">New Product</li>
                         </ol>
                     </div>
@@ -103,7 +103,7 @@
                     <div id="user-form" class="col-xs-12 col-sm-12">
                         <div class="card">
                             <div class="card-header">
-                                <strong id="new_edit">Configure Investment Product</strong>
+                                <strong id="new_edit">Configure Savings/Investment Product</strong>
                             </div>
                             <div class="card-body card-block">
                                 <div id="regForm" action="user/new-client" method="post">
@@ -145,13 +145,12 @@
                                             <div class="panel-body">
 
                                                 <div class="example-box-wrapper">
-                                                    <h6>Investment Amount</h6>
+                                                    <h6>Amount</h6>
                                                     <hr><br>
                                                     <div class="row">
 
                                                         <div class="form-group col-sm-4 col-md-4">
-                                                            <label class="form-control-label">Min. Amount <span
-                                                                    class="text-danger">*</span></label>
+                                                            <label class="form-control-label">Min. Amount </label>
                                                             <div class="input-group">
                                                                 <input type="text" id="product_investment_amount_min"
                                                                     class="form-control imp"
@@ -159,8 +158,7 @@
                                                             </div>
                                                         </div>
                                                         <div class="form-group col-sm-4 col-md-4">
-                                                            <label class="form-control-label">Max. Amount <span
-                                                                    class="text-danger">*</span></label>
+                                                            <label class="form-control-label">Max. Amount</label>
                                                             <div class="input-group">
                                                                 <input type="text" id="product_investment_amount_max"
                                                                     class="form-control imp"
@@ -168,7 +166,7 @@
                                                             </div>
                                                         </div>
                                                         <div class="form-group col-sm-4 col-md-4">
-                                                            <label class="form-control-label">Charges on Investment
+                                                            <label class="form-control-label">Charges on Deposit
                                                             </label>
                                                             <div class="input-group">
                                                                 <input type="text" id="saving_fees"
@@ -313,7 +311,7 @@
                                                                     min="0" disabled>
                                                             </div>
                                                         </div>
-                                                        <div class="form-group col-sm-4 col-md-4">
+                                                        <!-- <div class="form-group col-sm-4 col-md-4">
                                                             <label class="form-control-label">Computation Period</label>
                                                             <div class="input-group">
                                                                 <select id="compute_interest_time" class="form-control"
@@ -322,10 +320,7 @@
                                                                     </option>
                                                                 </select>
                                                             </div>
-                                                        </div>
-                                                    </div>
-                                                    <hr><br>
-                                                    <div class="row">
+                                                        </div> -->
                                                         <div class="form-group col-sm-4 col-md-4">
                                                             <label class="form-control-label">Interest Payment
                                                                 Circle</label>
@@ -347,6 +342,10 @@
                                                             </div>
                                                         </div>
                                                     </div>
+                                                    <hr><br>
+                                                    <div class="row">
+
+                                                    </div>
 
                                                     <hr />
                                                 </div>
@@ -365,16 +364,17 @@
                                                             <div class="input-group">
                                                                 <input type="number" id="withdrawal_conditions_value"
                                                                     class="form-control imp" placeholder="Count"
-                                                                    min="0">
+                                                                    disabled min="0">
                                                             </div>
-                                                            <div><input type="checkbox" id="chk_enforce_count">Enforce
+                                                            <div><input type="checkbox" id="chk_enforce_count"
+                                                                    disabled>Enforce
                                                                 Count</div>
                                                         </div>
                                                         <div class="form-group col-sm-4 col-md-4">
                                                             <label class="form-control-label"> Duration
                                                             </label>
                                                             <div class="input-group">
-                                                                <select id="withdrawal_charge_duration"
+                                                                <select id="withdrawal_charge_duration" disabled
                                                                     class="form-control" required="required">
                                                                     <option value="0" selected="selected">-- Select --
                                                                     </option>
@@ -385,11 +385,11 @@
                                                             <label class="form-control-label">Charge For Exceeding
                                                                 Freq.</label>
                                                             <div class="input-group">
-                                                                <input type="text" id="withdrawal_charge_freq"
+                                                                <input type="text" id="withdrawal_charge_freq" disabled
                                                                     class="form-control imp" placeholder="Freq. Charge"
                                                                     data-mask="#,##0.00">
                                                                 <select id="opt_on_freq_charge" class="form-control"
-                                                                    required="required">
+                                                                    disabled required="required">
                                                                     <option value="Fixed" selected="selected">Fixed
                                                                     </option>
                                                                     <option value="Percentage">Percentage</option>
@@ -415,7 +415,8 @@
                                                                 Account</label>
                                                         </div>
                                                         <div class="form-group col-sm-4 col-md-4">
-                                                            <label class="form-control-label"> Min. Day(s) </label>
+                                                            <label class="form-control-label"> Min. Notice Days
+                                                            </label>
                                                             <div class="input-group">
                                                                 <input type="number" id="min_days_termination"
                                                                     class="form-control imp" placeholder="Min. Day(s)"
