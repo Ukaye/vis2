@@ -6253,6 +6253,84 @@ users.get('/interest-receivable-trends', function(req, res, next){
     });
 });
 
+/////// Loan Classification
+/* Create New Loan Classification
+ */
+
+users.post('/new-classification-type', function(req, res, next) {
+    let postData = req.body,
+        query =  'INSERT INTO loan_classifications Set ?',
+        query2 = 'select * from loan_classifications where description = ?';
+    postData.status = 1;
+    postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    db.query(query2,req.body.description, function (error, results, fields) {
+        if (results && results[0])
+            return res.send(JSON.stringify({"status": 200, "error": null, "response": results, "message": "Classifcation already exists!"}));
+        db.query(query,{"description":postData.description, "min_days":postData.min_days, "max_days":postData.max_days, "date_created": postData.date_created, "status": 1}, function (error, results, fields) {
+            if(error){
+                res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+            } else {
+                res.send(JSON.stringify({"status": 200, "error": null, "response": "New Loan Classifcation Added!"}));
+            }
+        });
+    });
+});
+
+users.get('/classification-types', function(req, res, next) {
+    let query = 'SELECT * from loan_classifications where status = 1';
+    db.query(query, function (error, results, fields) {
+        if(error){
+            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        } else {
+            res.send(JSON.stringify(results));
+        }
+    });
+});
+
+users.get('/classification-types-full', function(req, res, next) {
+    let query = 'SELECT * from loan_classifications';
+    db.query(query, function (error, results, fields) {
+        if(error){
+            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        } else {
+            res.send(JSON.stringify(results));
+        }
+    });
+});
+
+/* Change Classification Type Status */
+users.post('/del-class-type/:id', function(req, res, next) {
+    let date = Date.now(),
+        postData = req.body;
+    postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    let payload = [postData.date_modified, req.params.id],
+        query = 'Update loan_classifications SET status = 0, date_modified = ? where id=?';
+    db.query(query, payload, function (error, results, fields) {
+        if(error){
+            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        } else {
+            res.send(JSON.stringify({"status": 200, "error": null, "response": "Role Disabled!"}));
+        }
+    });
+});
+
+/* Reactivate Classification Type */
+users.post('/en-class-type/:id', function(req, res, next) {
+    let date = Date.now(),
+        postData = req.body;
+    postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    let payload = [postData.date_modified, req.params.id],
+        query = 'Update loan_classifications SET status = 1, date_modified = ? where id=?';
+    db.query(query, payload, function (error, results, fields) {
+        if(error){
+            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        } else {
+            res.send(JSON.stringify({"status": 200, "error": null, "response": "Role Re-enabled!"}));
+        }
+    });
+});
+
+
 /////// Activity
 /*Create New Activity Type*/
 users.post('/new-activity-type', function(req, res, next) {

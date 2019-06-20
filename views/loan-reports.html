@@ -921,6 +921,14 @@
                                                                     <!--<button type="submit" class="btn btn-success">Filter</button>-->
                                                                 <!--</form>-->
                                                             </div>
+                                                            <div class="col-sm-4 card" style="background-color: transparent; border-color: transparent">
+                                                                <div class="form-group">
+                                                                    <div class="input-group">
+                                                                        <select id="loan-classes" onchange="loanclassFilter(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
                                                             <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
                                                                 <div class="form-group">
                                                                     <div class="input-group">
@@ -1519,6 +1527,7 @@
         loadYears('trend-year');
         loadYears('demo-year');
         getOfficers();
+        getLoanClasses();
         getBranches();
         loadInfo();
         disbursed();
@@ -3375,6 +3384,20 @@
         });
     }
 
+    function getLoanClasses(){
+        $.ajax({
+            type: "GET",
+            url: "/user/classification-types/",
+            data: '{}',
+            success: function (response) {
+                $("#loan-classes").empty().append('<option value="0" id="0">Choose Loan Classification</option>');
+                $.each(JSON.parse(response), function (key, val) {
+                    $("#loan-classes").append('<option value = "' + val.id + '" id="' + val.id + '">' + val.description + '</option>');
+                });
+            }
+        });
+    }
+
     function filterOfficer(officer) {
         let urlAn = '/user/analytics?t=disbursements&&';
         let start = $("#startDate").val(),
@@ -3540,15 +3563,69 @@
         });
     }
 
+//    function blfilterOfficer(officer) {
+//        let start = $("#startDate").val(),
+//            end = $("#endDate").val(),
+//            url = '/user/badloans?',
+//            d=[], agent;
+//        if (officer.value == 0){
+//            return loadBadLoans();
+//        }
+//        url = url.concat('officer='+officer.value);
+//
+//        $.ajax({
+//            'url': url,
+//            'type': 'get',
+//            'success': function (data) {
+//                let applications = data.response;
+//                results = applications;
+//                populateBadLoans(applications);
+//            },
+//            'error': function (err) {
+//                console.log(err);
+//            }
+//        });
+//    }
+
     function blfilterOfficer(officer) {
         let start = $("#startDate").val(),
             end = $("#endDate").val(),
             url = '/user/badloans?',
-            d=[], agent;
-        if (officer.value == 0){
+            classification = $('#loan-classes').val();
+        if (officer.value == 0 && classification == 0){
             return loadBadLoans();
         }
+        else {
+            url = '/user/badloanss?class='+classification+'&&';
+        }
         url = url.concat('officer='+officer.value);
+
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                let applications = data.response;
+                results = applications;
+                populateBadLoans(applications);
+            },
+            'error': function (err) {
+                console.log(err);
+            }
+        });
+    }
+
+    function loanclassFilter(classification){
+        let start = $("#startDate").val(),
+            end = $("#endDate").val(),
+            officer = $('#badloans-officers').val(),
+            url = '/user/badloans?';
+        if (classification.value == 0 && officer == 0){
+            return loadBadLoans();
+        }
+        else {
+            url = '/user/badloanss?class='+classification.value+'&&';
+        }
+        url = url.concat('officer='+officer);
 
         $.ajax({
             'url': url,
