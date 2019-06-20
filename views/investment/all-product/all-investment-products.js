@@ -4,6 +4,7 @@ let roleObject = [];
 let selectedApproval = {};
 let selectedRow = {};
 let data_row = {};
+let reviewerDropDown = {};
 $(document).ready(function () {
     bindDataTable();
 });
@@ -87,11 +88,14 @@ function onRequirement(value, id) {
 
 function onReview(value, id) {
     reqObject.productId = id;
-    $("#viewReviewModalHeader").html(`${value} REVIEWER SETTINGS`);
+    if (value !== '') {
+        $("#viewReviewModalHeader").html(`${value} REVIEWER SETTINGS`);
+    }
 
-    $('#list_review_roles').select2({
+    reviewerDropDown = $('#list_review_roles').select2({
         allowClear: true,
         placeholder: "Select Role",
+        allowClear: true,
         ajax: {
             url: "/investment-products/roles",
             dataType: "json",
@@ -179,6 +183,7 @@ function bindDataTable() {
         dom: 'Blfrtip',
         bProcessing: true,
         bServerSide: true,
+        destroy: true,
         buttons: [
             'copy', 'csv', 'excel', 'pdf', 'print'
         ],
@@ -321,6 +326,7 @@ function ceateRequirement() {
                 if (data.status === undefined) {
                     $('#wait').hide();
                     $("#list_user_roles").val(null).trigger('change');
+                    $("#list_user_roles").html('');
                     $("#list_operations").val('');
                     swal('Approval set-up successfully!', '', 'success');
                     getProductRequirement(reqObject.productId);
@@ -346,6 +352,7 @@ function ceateRequirement() {
                 if (data.status === undefined) {
                     $('#wait').hide();
                     $("#list_user_roles").val(null).trigger('change');
+                    $("#list_user_roles").html('');
                     $("#list_operations").val('');
                     swal('Approval updated successfully!', '', 'success');
                     delete reqObject.ID;
@@ -375,7 +382,8 @@ function ceateReview() {
             'success': function (data) {
                 if (data.status === undefined) {
                     $('#wait').hide();
-                    $("#list_review_roles").val(null).trigger('change');
+                    // $("#list_review_roles").val(null).trigger('change');
+                    $("#list_review_roles").html('');
                     $("#list_operations_review").val('');
                     swal('Reviewer set-up successfully!', '', 'success');
                     getProductReview(reqObject.productId);
@@ -400,7 +408,8 @@ function ceateReview() {
                 $("#btn_review").html('Set Post Requirement');
                 if (data.status === undefined) {
                     $('#wait').hide();
-                    $("#list_review_roles").val(null).trigger('change');
+                    // $("#list_review_roles").val(null).trigger('change');
+                    $("#list_review_roles").html('');
                     $("#list_operations_review").val('');
                     swal('Reviewer updated successfully!', '', 'success');
                     delete reqObject.ID;
@@ -431,6 +440,7 @@ function ceatePost() {
                 if (data.status === undefined) {
                     $('#wait').hide();
                     $("#list_post_roles").val(null).trigger('change');
+                    $("#list_post_roles").html('');
                     $("#list_operations_post").val('');
                     swal('Post role(s) set-up successfully!', '', 'success');
                     getProductPost(reqObject.productId);
@@ -456,6 +466,7 @@ function ceatePost() {
                 if (data.status === undefined) {
                     $('#wait').hide();
                     $("#list_post_roles").val(null).trigger('change');
+                    $("#list_post_roles").html('');
                     $("#list_operations_post").val('');
                     swal('Post role updated successfully!', '', 'success');
                     delete reqObject.ID;
@@ -775,7 +786,7 @@ $("#list_operations_review").on('change',
                     $('#wait').hide();
                     $("#list_review_roles").val(null).trigger('change');
                     data.forEach(element => {
-                        $("#list_review_roles").append(new Option(element.text, element.id, true, true)).trigger('change');
+                        $("#list_review_roles").append(new Option(element.text, element.id, false, true)).trigger('change');
                     });
                     reqObject.ID = data[0].reqId;
                     $("#btn_review").html('Update Reviewer Requirement');

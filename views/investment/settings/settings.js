@@ -248,10 +248,7 @@ function onInputChange() {
         $('#organisationPhone').val() !== '' && $('#organisationPhone').val() !== ' ' &&
         $('#organisationAddress').val() !== '' && $('#organisationAddress').val() !== ' ' &&
         $('#organisationCountry').val() !== '' && $('#organisationCountry').val() !== ' ' &&
-        $('#organisationState').val() !== '' && $('#organisationState').val() !== ' ' &&
-        $('#organisationPostcode').val() !== '' && $('#organisationPostcode').val() != ' ' &&
-        $('#termination_no_day').val() !== '' && $('#termination_no_day').val() != ' ' &&
-        $('#investment_product').on('select2:select').val() !== '' && $('#termination_no_day').val() != ' ') {
+        $('#organisationState').val() !== '' && $('#organisationState').val() !== ' ') {
         $('#btnSave').attr('disabled', false);
     } else {
         $('#btnSave').attr('disabled', true);
