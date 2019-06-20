@@ -798,47 +798,47 @@ router.post('/upload-file/:id/:item/:sub', function (req, res) {
         fileName = name + '.' + extension;
     extension = extension.toLowerCase();
     fs.stat(`files/${req.params.item}/`, function (err) {
-
         if (!err) {} else if (err.code === 'ENOENT') {
             try {
                 fs.mkdirSync(`./files/${req.params.item}/`);
             } catch (error) {}
 
         }
-    });
-    fs.stat(`files/${req.params.item}/${req.params.sub}/`, function (err) {
+        fs.stat(`files/${req.params.item}/${req.params.sub}/`, function (err_) {
+            if (!err_) {} else if (err_.code === 'ENOENT') {
+                try {
+                    fs.mkdirSync(`./files/${req.params.item}/${req.params.sub}/`);
+                } catch (error_) {}
 
-        if (!err) {} else if (err.code === 'ENOENT') {
-            try {
-                fs.mkdirSync(`./files/${req.params.item}/${req.params.sub}/`);
-            } catch (error) {}
-
-        }
-    });
-
-    fs.stat(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
-        if (err) {
-            sampleFile.mv(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
+            }
+            fs.stat(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
                 if (err) {
-                    return res.status(500).send(err);
-                }
-                res.send('File uploaded!');
-            });
-        } else {
-            fs.unlink(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
-                if (err) {
-                    res.send('Unable to delete file!');
-                } else {
                     sampleFile.mv(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
                         if (err) {
                             return res.status(500).send(err);
                         }
                         res.send('File uploaded!');
                     });
+                } else {
+                    fs.unlink(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
+                        if (err) {
+                            res.send('Unable to delete file!');
+                        } else {
+                            sampleFile.mv(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
+                                if (err) {
+                                    return res.status(500).send(err);
+                                }
+                                res.send('File uploaded!');
+                            });
+                        }
+                    });
                 }
             });
-        }
+        });
     });
+
+
+
 });
 
 
