@@ -484,7 +484,7 @@ function set_investment_product() {
     product_obj.createdBy = (JSON.parse(localStorage.getItem("user_obj"))).ID;
 
     product_obj.canTerminate = $('#chk_can_terminate').is(':checked') ? 1 : 0;
-    if (product_obj.code !== '' && product_obj.name !== '' && product_obj.investment_max !== '' && product_obj.investment_min && product_obj.minimum_bal !== '') {
+    if (product_obj.code !== '' && product_obj.name !== '' && product_obj.minimum_bal !== '') {
         if (product_obj.ID === undefined) {
             $.ajax({
                 'url': '/investment/products',
@@ -522,6 +522,8 @@ function set_investment_product() {
                 'type': 'post',
                 'data': product_obj,
                 'success': function (data) {
+                    console.log(data);
+
                     if (data.status === 200) {
                         $('#wait').hide();
                         swal('Investment Product updated successfully!', '', 'success');

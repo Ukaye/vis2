@@ -129,7 +129,7 @@ $("#investment_product").on("change", function (event) {
     const selectedID = $("#investment_product").val();
     let selectedValue = products.find(x => x.ID.toString() === selectedID.toString());
     if (selectedValue !== undefined) {
-        $("#amount_info").html(`Min.: ${selectedValue.investment_min} Max.:${selectedValue.investment_max}`);
+        $("#amount_info").html(`Min.: ${(selectedValue.investment_min === '')? 'N/A' : selectedValue.investment_min} Max.:${(selectedValue.investment_max === '')? 'N/A' :selectedValue.investment_max}`);
         let start_with = $("#investment_date_start").val();
 
         let min_date = new Date(start_with);

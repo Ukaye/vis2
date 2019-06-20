@@ -257,14 +257,18 @@ function bindDataTable() {
                 }
             },
             {
-                data: "investment_min",
                 width: "auto",
-                className: "text-right"
+                className: "text-right",
+                "mRender": function (data, type, full) {
+                    return (full.investment_min === '') ? 'N/A' : full.investment_min;
+                }
             },
             {
-                data: "investment_max",
                 width: "auto",
-                className: "text-right"
+                className: "text-right",
+                "mRender": function (data, type, full) {
+                    return (full.investment_max === '') ? 'N/A' : full.investment_max;
+                }
             },
             {
                 data: "date_created",
