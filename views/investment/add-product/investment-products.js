@@ -114,7 +114,65 @@ $('#product_code').keypress(function (e) {
 });
 
 function getInvestmentProducts(id) {
+    $.ajax({
+        type: "GET",
+        url: `/investment/products/${id}`,
+        success: function (data) {
+            if (data.status === undefined) {
+                $("li_sub_dir").html("Update Product");
+                product_obj = data[0];
+                product_obj.histories = JSON.parse(product_obj.histories);
+                $('#product_name').val(product_obj.name);
+                $('#product_investment_amount_min').val(product_obj.investment_min);
+                $('#product_investment_amount_max').val(product_obj.investment_max);
+                $('#withdrawal_conditions_value').val(product_obj.freq_withdrawal);
+                $('#saving_fees').val(product_obj.saving_fees);
+                $('#opt_on_deposit').val((product_obj.saving_charge_opt === null) ? $(
+                    '#opt_on_deposit').val() : product_obj.saving_charge_opt);
+                $('#withdrawal_charge_freq').val(product_obj.withdrawal_fees);
+                $('#withdrawal_charge_duration').val(product_obj.withdrawal_freq_duration);
+                $('#minimum_bal').val(product_obj.minimum_bal);
+                $('#product_code').val(product_obj.code);
+                $('#interest_rate').val(product_obj.interest_rate);
+                $('#condition_for_interest').val(product_obj.interest_disbursement_time);
+                $('#compute_interest_time').val(product_obj.interest_compute_time);
+                $('#forfeit_interest_on_withdrawal').attr('checked', true);
+                $('#minimum_bal_penalty_amount').val(product_obj.minimum_bal_charges);
+                $('#opt_on_minimum_bal_penalty_amount').val((product_obj.minimum_bal_charges_opt ===
+                    null) ? $(
+                    '#opt_on_minimum_bal_penalty_amount').val() : product_obj.minimum_bal_charges_opt);
 
+                $('#charge_interest_on_withdrawal').val(product_obj.interest_forfeit_charge);
+                $('#opt_on_charge_interest_on_withdrawal').val((product_obj.interest_forfeit_charge_opt ===
+                    null) ? $(
+                    '#opt_on_charge_interest_on_withdrawal').val() : product_obj.interest_forfeit_charge_opt);
+
+                $('#opt_on_freq_charge').val((product_obj.withdrawal_freq_fees_opt ===
+                    null) ? $(
+                    '#opt_on_freq_charge').val() : product_obj.withdrawal_freq_fees_opt);
+                $('#acct_allows_withdrawal').attr('checked', ((product_obj.acct_allows_withdrawal) ?
+                    true : false));
+                $('#inv_moves_wallet').attr('checked', ((product_obj.inv_moves_wallet) ?
+                    true : false));
+                $('#interest_moves_wallet').attr('checked', ((product_obj.interest_moves_wallet) ?
+                    true : false));
+                $('#chk_can_terminate').attr('checked', ((product_obj.canTerminate) ?
+                    true : false));
+                $('#min_term').val(product_obj.min_term);
+                $('#max_term').val(product_obj.max_term);
+                $('#premature_interest_rate').val(product_obj.premature_interest_rate);
+                $('#min_days_termination').val(product_obj.min_days_termination);
+                $('#min_days_termination_charge').val(product_obj.min_days_termination_charge);
+                $('#opt_on_min_days_termination').val(product_obj.opt_on_min_days_termination);
+                //opt_on_min_days_termination
+                $('#btnSaveProduct').html('Update');
+                $('#wait').hide();
+            } else {
+                $('#wait').hide();
+                swal('Oops! An error occurred while geting Investment Product; Required field(s) missing', '', 'error');
+            }
+        }
+    });
 }
 
 $("#acct_allows_withdrawal").on('change',
