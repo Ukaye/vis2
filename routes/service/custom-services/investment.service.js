@@ -7,8 +7,6 @@ var differenceInCalendarDays = require('date-fns/difference_in_calendar_days');
 let fs = require('fs');
 
 
-
-
 router.post('/create', function (req, res, next) {
     let _date = new Date();
     const HOST = `${req.protocol}://${req.get('host')}`;
@@ -219,7 +217,7 @@ router.post('/create', function (req, res, next) {
                             })
                             .catch(function (error) {});
 
-                        setDocRequirement(HOST, data, response.data.insertId);
+                        setDocRequirement(HOST, data, response_.data.insertId);
                         if (data.selectedProduct.interest_disbursement_time.toString() === 'Up-Front') {
                             dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                             refId = moment().utcOffset('+0100').format('x');
