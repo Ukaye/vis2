@@ -26,10 +26,10 @@ function get_global_items() {
             '#withdrawal_charge_duration');
     }
 
-    for (var i = 0; i < freq_withdrawal.length; i++) {
-        $('<option/>').val(freq_withdrawal[i].value).html(freq_withdrawal[i].value).appendTo(
-            '#compute_interest_time');
-    }
+    // for (var i = 0; i < freq_withdrawal.length; i++) {
+    //     $('<option/>').val(freq_withdrawal[i].value).html(freq_withdrawal[i].value).appendTo(
+    //         '#compute_interest_time');
+    // }
 }
 
 $("#product_investment_amount_min").on("keyup", function (event) {
@@ -182,13 +182,32 @@ $("#acct_allows_withdrawal").on('change',
             $('#inv_moves_wallet').attr("checked", false);
             $('#interest_moves_wallet').attr("checked", false);
         }
+        setWalletControlStatus(status);
     });
+
+function setWalletControlStatus(status) {
+    if (status) {
+        $('#withdrawal_conditions_value').attr("disabled", false);
+        $('#chk_enforce_count').attr("disabled", false);
+        $('#withdrawal_charge_duration').attr("disabled", false);
+        $('#withdrawal_charge_freq').attr("disabled", false);
+        $('#opt_on_freq_charge').attr("disabled", false);
+    } else {
+        $('#withdrawal_conditions_value').attr("disabled", true);
+        $('#chk_enforce_count').attr("checked", false);
+        $('#chk_enforce_count').attr("disabled", true);
+        $('#withdrawal_charge_duration').attr("disabled", true);
+        $('#withdrawal_charge_freq').attr("disabled", true);
+        $('#opt_on_freq_charge').attr("disabled", true);
+    }
+}
 
 $("#inv_moves_wallet").on('change',
     function () {
         let status = $('#inv_moves_wallet').is(':checked');
         if (status) {
             $('#acct_allows_withdrawal').attr("checked", false);
+            setWalletControlStatus(false);
         }
     });
 
@@ -197,7 +216,24 @@ $("#interest_moves_wallet").on('change',
         let status = $('#interest_moves_wallet').is(':checked');
         if (status) {
             $('#acct_allows_withdrawal').attr("checked", false);
+            setWalletControlStatus(false);
         }
+    });
+
+
+$("#min_days_termination").on('focusout',
+    function () {
+        $.ajax({
+            type: "GET",
+            url: `/investment-txns/get-organisation-configs`,
+            success: function (data) {
+                let _noticeDays = $("#min_days_termination").val();
+                if (_noticeDays < data[0].investment_termination_days) {
+                    $("#min_days_termination").val('');
+                    swal('Product termination notice can not be lesser than the system global notice days', '', 'error');
+                }
+            }
+        });
     });
 
 
@@ -207,7 +243,7 @@ $("#chk_interest_rate").on('change',
         if (!status) {
             $('#interest_rate').val('');
             $('#condition_for_interest').val('');
-            $('#compute_interest_time').val('');
+            // $('#compute_interest_time').val('');
             $('#charge_interest_on_withdrawal').val('');
             $('#opt_on_charge_interest_on_withdrawal').val('');
             $('#premature_interest_rate').val('');
@@ -227,6 +263,13 @@ $("#chk_wallet").on('change',
         $('#acct_allows_withdrawal').attr('disabled', !status);
         $('#inv_moves_wallet').attr('disabled', !status);
         $('#interest_moves_wallet').attr('disabled', !status);
+
+        $('#withdrawal_conditions_value').attr("disabled", true);
+        $('#chk_enforce_count').attr("checked", false);
+        $('#chk_enforce_count').attr("disabled", true);
+        $('#withdrawal_charge_duration').attr("disabled", true);
+        $('#withdrawal_charge_freq').attr("disabled", true);
+        $('#opt_on_freq_charge').attr("disabled", true);
     });
 
 $("#chk_maturity_term").on('change',
@@ -268,7 +311,7 @@ function activate_interest_controls(status) {
     $('#premature_interest_rate').attr('disabled', status);
     $('#interest_rate').attr('disabled', status);
     $('#condition_for_interest').attr('disabled', status);
-    $('#compute_interest_time').attr('disabled', status);
+    // $('#compute_interest_time').attr('disabled', status);
     $('#forfeit_interest_on_withdrawal').attr('disabled', status);
 }
 
@@ -293,7 +336,7 @@ function validate_values(val1, val2, message) {
     if (val1.val() !== '') {
         let _val1 = parseInt(val1.val().split(',').join(''));
         let _val2 = parseInt(val2.val().split(',').join(''));
-        if (_val1 <= _val2) {
+        if (_val1 > _val2) {
             val1.val('');
             swal(message, '', 'error');
         }
@@ -305,8 +348,7 @@ function validate_values_(val1, val2, message) {
         let _val1 = parseInt(val1.val().split(',').join(''));
         let _val2 = parseInt(val2.val().split(',').join(''));
         if (_val1 > _val2) {
-            val1.val('');
-            swal(message, '', 'error');
+            swal(message, '', 'warning');
         }
     }
 }
@@ -348,10 +390,10 @@ $("#product_name").on('focusout',
     });
 
 
-$("#withdrawal_charge_freq").on('focusout',
-    function () {
-        validate_values_($("#withdrawal_charge_freq"), $("#product_investment_amount_min"), "Charge for above freq. can not be greater than the Minimum investment");
-    });
+// $("#withdrawal_charge_freq").on('focusout',
+//     function () {
+//         validate_values_($("#withdrawal_charge_freq"), $("#product_investment_amount_min"), "Charge for above freq. can not be greater than the Minimum investment");
+//     });
 
 $("#charge_interest_on_withdrawal").on('focusout',
     function () {
@@ -366,13 +408,13 @@ $("#min_days_termination_charge").on('focusout',
 
 $("#product_investment_amount_max").on('focusout',
     function () {
-        validate_values($("#product_investment_amount_max"), $("#product_investment_amount_min"), "Minimum investment value can not be greater than the Maximum investment value");
+        validate_values($("#product_investment_amount_min"), $("#product_investment_amount_max"), "Minimum investment value can not be greater than the Maximum investment value");
     });
 
 
 $("#saving_fees").on('focusout',
     function () {
-        validate_values_2($("#saving_fees"), $("#product_investment_amount_max"), $("#product_investment_amount_min"), "Charges on Deposit can not be greater than either Minimum or Maximum investment value");
+        validate_values_2($("#saving_fees"), $("#product_investment_amount_max"), $("#product_investment_amount_min"), "Charges on Deposit cannot be greater than minimum amount");
     });
 
 // $("#minimum_bal").on('focusout',
@@ -420,7 +462,7 @@ function set_investment_product() {
     product_obj.code = $('#product_code').val();
     product_obj.interest_rate = $('#interest_rate').val();
     product_obj.interest_disbursement_time = $('#condition_for_interest').val();
-    product_obj.interest_compute_time = $('#compute_interest_time').val();
+    // product_obj.interest_compute_time = $('#compute_interest_time').val();
     product_obj.is_forfeit = $('#forfeit_interest_on_withdrawal').is(':checked') ? 1 : 0;
     product_obj.interest_forfeit_charge = $('#charge_interest_on_withdrawal').val();
     product_obj.interest_forfeit_charge_opt = $('#opt_on_charge_interest_on_withdrawal').val();
@@ -442,7 +484,7 @@ function set_investment_product() {
     product_obj.createdBy = (JSON.parse(localStorage.getItem("user_obj"))).ID;
 
     product_obj.canTerminate = $('#chk_can_terminate').is(':checked') ? 1 : 0;
-    if (product_obj.code !== '' && product_obj.name !== '' && product_obj.investment_max !== '' && product_obj.investment_min && product_obj.minimum_bal !== '') {
+    if (product_obj.code !== '' && product_obj.name !== '' && product_obj.minimum_bal !== '') {
         if (product_obj.ID === undefined) {
             $.ajax({
                 'url': '/investment/products',
@@ -480,6 +522,8 @@ function set_investment_product() {
                 'type': 'post',
                 'data': product_obj,
                 'success': function (data) {
+                    console.log(data);
+
                     if (data.status === 200) {
                         $('#wait').hide();
                         swal('Investment Product updated successfully!', '', 'success');

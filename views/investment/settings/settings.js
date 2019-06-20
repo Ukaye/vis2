@@ -226,7 +226,7 @@ function getStates() {
     });
 }
 
-function upload(parentFolder,folderName, file, imgId) {
+function upload(parentFolder, folderName, file, imgId) {
     let formData = new FormData();
     formData.append('file', file);
     $.ajax({
@@ -237,7 +237,7 @@ function upload(parentFolder,folderName, file, imgId) {
         contentType: false,
         success: function (response) {},
         error: function () {
-            swal('Failed', `Error! Uploading to ${folderName}`, 'error');
+            swal('Failed', `Error! Uploading to ${folderName}, ${error}`, 'error');
         }
     });
 }
@@ -258,6 +258,19 @@ function onInputChange() {
     }
 }
 
+function validateEmail(email) {
+    var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
+}
+
+$("#organisationEmail").on('focusout',
+    function () {
+        if (!validateEmail($(this).val())) {
+            $(this).val('');
+            swal('Invalid email format', '', 'error');
+        }
+    });
+
 
 function saveOrganisationData() {
     $('#wait').show();
@@ -271,7 +284,7 @@ function saveOrganisationData() {
         let ext_ = $('#file-upload-logo')[0].files[0].type.split('/')[1];
         ext_ = (ext_ === 'jpeg') ? 'jpg' : ext_;
         logoPath = `/organisations/logos/${imgId}.${ext_}`;
-        upload('organisations','logos', $('#file-upload-logo')[0].files[0], imgId);
+        upload('organisations', 'logos', $('#file-upload-logo')[0].files[0], imgId);
     }
 
     if ($('#file-upload-stamp')[0].files[0] !== undefined) {
@@ -279,7 +292,7 @@ function saveOrganisationData() {
         let ext_ = $('#file-upload-logo')[0].files[0].type.split('/')[1];
         ext_ = (ext_ === 'jpeg') ? 'jpg' : ext_;
         stampPath = `/organisations/stamps/${imgId}.${ext_}`;
-        upload('organisations','stamps', $('#file-upload-stamp')[0].files[0], imgId);
+        upload('organisations', 'stamps', $('#file-upload-stamp')[0].files[0], imgId);
     }
 
     if ($('#file-upload-signature')[0].files[0] !== undefined) {
@@ -287,7 +300,7 @@ function saveOrganisationData() {
         let ext_ = $('#file-upload-logo')[0].files[0].type.split('/')[1];
         ext_ = (ext_ === 'jpeg') ? 'jpg' : ext_;
         signaturePath = `/organisations/signatures/${imgId}.${ext_}`;
-        upload('organisations','signatures', $('#file-upload-signature')[0].files[0], imgId);
+        upload('organisations', 'signatures', $('#file-upload-signature')[0].files[0], imgId);
     }
 
     let organisation = {

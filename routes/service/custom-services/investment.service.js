@@ -14,7 +14,7 @@ router.post('/create', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     var data = req.body
     const is_after = isAfter(new Date(data.investment_mature_date.toString()), new Date(data.investment_start_date.toString()))
-    if (is_after) {
+    if (is_after || data.investment_start_date === '' || data.investment_mature_date === '') {
         data.status = 1;
         let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
         data.date_created = dt;
@@ -609,7 +609,7 @@ router.get('/client-investments/:id', function (req, res, next) {
     (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} ORDER BY ID DESC LIMIT 1) as balance,
     v.ID,v.ref_no,c.fullname,v.description,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName,
     v.approvalDone,v.reviewDone,v.created_date,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,
-    i.clientId,v.isMoveFundTransfer,v.isWallet,v.isWithdrawal,isDeposit,v.isDocUploaded,p.canTerminate,i.isPaymentMadeByWallet,
+    i.clientId,v.isMoveFundTransfer,v.isWallet,v.isWithdrawal,isDeposit,v.isDocUploaded,p.canTerminate,i.isPaymentMadeByWallet,p.acct_allows_withdrawal,
     v.is_capital,v.investmentId,i.isTerminated, i.isMatured, v.isReversedTxn,v.isInvestmentTerminated,v.expectedTerminationDate,
     i.code as acctNo, v.isTransfer, v.beneficialInvestmentId FROM investment_txns v
     left join investments i on v.investmentId = i.ID
@@ -618,7 +618,7 @@ router.get('/client-investments/:id', function (req, res, next) {
     left join investment_products p on i.productId = p.ID
     WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id} 
     AND (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%") LIMIT ${limit} OFFSET ${offset}`;
-    
+
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     var data = [];
@@ -790,43 +790,55 @@ router.get('/get-configs', function (req, res, next) {
 
 router.post('/upload-file/:id/:item/:sub', function (req, res) {
     if (!req.files) return res.status(400).send('No files were uploaded.');
-    if (!req.params) return res.status(400).send('No Number Plate specified!');
+    if (!req.params) return res.status(400).send('');
     let sampleFile = req.files.file,
         name = sampleFile.name,
         extArray = sampleFile.name.split("."),
         extension = extArray[extArray.length - 1],
         fileName = name + '.' + extension;
-    fs.stat(`files/${req.params.item}/${req.params.sub}/`, function (err) {
-        if (!err) {
-        } else if (err.code === 'ENOENT') {
+    extension = extension.toLowerCase();
+    fs.stat(`files/${req.params.item}/`, function (err) {
+        if (!err) {} else if (err.code === 'ENOENT') {
             try {
-                fs.mkdirSync(`files/${req.params.item}/${req.params.sub}/`);
-            } catch (error) {
-            }
+                fs.mkdirSync(`./files/${req.params.item}/`);
+            } catch (error) {}
 
         }
-    });
+        fs.stat(`files/${req.params.item}/${req.params.sub}/`, function (err_) {
+            if (!err_) {} else if (err_.code === 'ENOENT') {
+                try {
+                    fs.mkdirSync(`./files/${req.params.item}/${req.params.sub}/`);
+                } catch (error_) {}
 
-    fs.stat(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
-        if (err) {
-            sampleFile.mv(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
-                if (err) return res.status(500).send(err);
-                res.send('File uploaded!');
-            });
-        } else {
-            fs.unlink(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
+            }
+            fs.stat(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
                 if (err) {
-                    res.send('Unable to delete file!');
-                } else {
                     sampleFile.mv(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
-                        if (err)
+                        if (err) {
                             return res.status(500).send(err);
+                        }
                         res.send('File uploaded!');
+                    });
+                } else {
+                    fs.unlink(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
+                        if (err) {
+                            res.send('Unable to delete file!');
+                        } else {
+                            sampleFile.mv(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
+                                if (err) {
+                                    return res.status(500).send(err);
+                                }
+                                res.send('File uploaded!');
+                            });
+                        }
                     });
                 }
             });
-        }
+        });
     });
+
+
+
 });
 
 

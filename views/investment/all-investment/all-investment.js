@@ -41,8 +41,8 @@ function upload(parentFolder, subFolder, file, imgId) {
             success: function (response) {
                 resolve(1)
             },
-            error: function () {
-                reject(error);
+            error: err__ => {
+                reject(err__);
             }
         });
     });
@@ -281,11 +281,15 @@ function bindDataTable() {
                 width: "15%"
             },
             {
-                data: "investment_start_date",
-                width: "15%"
+                width: "15%",
+                "mRender": function (data, type, full) {
+                    return (full.investment_start_date === "") ? "N/A" : full.investment_start_date;
+                }
             }, {
-                data: "investment_mature_date",
-                width: "15%"
+                width: "15%",
+                "mRender": function (data, type, full) {
+                    return (full.investment_mature_date === "") ? "N/A" : full.investment_mature_date;
+                }
             },
             {
                 width: "15%",
