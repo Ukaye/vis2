@@ -796,6 +796,7 @@ router.post('/upload-file/:id/:item/:sub', function (req, res) {
         extArray = sampleFile.name.split("."),
         extension = extArray[extArray.length - 1],
         fileName = name + '.' + extension;
+    extension = extension.toLowerCase();
     fs.stat(`files/${req.params.item}/`, function (err) {
 
         if (!err) {} else if (err.code === 'ENOENT') {
