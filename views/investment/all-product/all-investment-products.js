@@ -1053,6 +1053,7 @@ function onSelectedReviewPost(operationId) {
 
 function onChoosePariority(id) {
     let item = movedFromItems.filter(x => x.id === id);
+    item[0].name = item[0].name.replace(/'/g, '');
     movedToItems.push(item[0]);
     movedFromItems = movedFromItems.filter(x => x.id !== id);
     $("#lstRoles_1").html('');
@@ -1073,29 +1074,8 @@ function onChoosePariority(id) {
 }
 
 function onChooseReviewPariority(id) {
-    console.log(id);
-    $.ajax({
-        url: `investment-products/get-product-reviews/${selectedRow.ID}`,
-        'type': 'get',
-        'success': function (data) {
-            console.log(data);
-            if (data.status === undefined) {
-                $('#wait').hide();
-
-            } else {
-                $('#wait').hide();
-                // swal('Oops! An error occurred while remove Post role(s)', '', 'error');
-            }
-        },
-        'error': function (err) {
-            console.log(err);
-            $('#wait').hide();
-            // swal('Oops! An error occurred while remove Post role(s)', '', 'error');
-        }
-    });
-    // console.log(selectedRow);
     let item = movedFromItems.filter(x => x.id === id);
-
+    item[0].name = item[0].name.replace(/'/g, '');
     movedToItems.push(item[0]);
     movedFromItems = movedFromItems.filter(x => x.id !== id);
     console.log(movedFromItems, item, movedToItems, roleObject);
@@ -1118,6 +1098,7 @@ function onChooseReviewPariority(id) {
 
 function onChoosePostPariority(id) {
     let item = movedFromItems.filter(x => x.id === id);
+    item[0].name = item[0].name.replace(/'/g, '');
     movedToItems.push(item[0]);
     movedFromItems = movedFromItems.filter(x => x.id !== id);
     $("#lstRolesPost_1").html('');
@@ -1139,6 +1120,7 @@ function onChoosePostPariority(id) {
 
 function onRemovePariority(id) {
     let item = movedToItems.filter(x => x.id === id);
+    item[0].name = item[0].name.replace(/'/g, '');
     movedFromItems.push(item[0]);
     movedToItems = movedToItems.filter(x => x.id !== id);
     $("#lstRoles_1").html('');
@@ -1159,8 +1141,8 @@ function onRemovePariority(id) {
 }
 
 function onRemoveReviewPariority(id) {
-
     let item = movedToItems.filter(x => x.id === id);
+    item[0].name = item[0].name.replace(/'/g, '');
     movedFromItems.push(item[0]);
     movedToItems = movedToItems.filter(x => x.id !== id);
     $("#lstRolesReview_1").html('');
@@ -1181,6 +1163,7 @@ function onRemoveReviewPariority(id) {
 
 function onRemovePostPariority(id) {
     let item = movedToItems.filter(x => x.id === id);
+    item[0].name = item[0].name.replace(/'/g, '');
     movedFromItems.push(item[0]);
     movedToItems = movedToItems.filter(x => x.id !== id);
     $("#lstRolesPost_1").html('');
@@ -1231,6 +1214,7 @@ function setReviewPriority(id, priority) {
             priority: JSON.stringify(priority)
         },
         'success': function (data) {
+            console.log(data);
             if (data.status === undefined) {
                 $('#wait').hide();
                 swal(`Review priority updated updated successfully`, '', 'success');
