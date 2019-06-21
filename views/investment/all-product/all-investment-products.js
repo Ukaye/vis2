@@ -968,8 +968,10 @@ let movedToItems = [];
 let movedFromItems = [];
 
 function onSelectedPariority(operationId) {
+    console.log("Enetr");
     movedToItems = [];
     movedFromItems = [];
+    console.log(roleObject);
     let operationRoles = JSON.parse(JSON.stringify(roleObject.filter(x => x.operationId === operationId.toString())[0]));
 
     movedFromItems = operationRoles.roles;
@@ -1071,9 +1073,32 @@ function onChoosePariority(id) {
 }
 
 function onChooseReviewPariority(id) {
+    console.log(id);
+    $.ajax({
+        url: `investment-products/get-product-reviews/${selectedRow.ID}`,
+        'type': 'get',
+        'success': function (data) {
+            console.log(data);
+            if (data.status === undefined) {
+                $('#wait').hide();
+
+            } else {
+                $('#wait').hide();
+                // swal('Oops! An error occurred while remove Post role(s)', '', 'error');
+            }
+        },
+        'error': function (err) {
+            console.log(err);
+            $('#wait').hide();
+            // swal('Oops! An error occurred while remove Post role(s)', '', 'error');
+        }
+    });
+    // console.log(selectedRow);
     let item = movedFromItems.filter(x => x.id === id);
+
     movedToItems.push(item[0]);
     movedFromItems = movedFromItems.filter(x => x.id !== id);
+    console.log(movedFromItems, item, movedToItems, roleObject);
     $("#lstRolesReview_1").html('');
     movedFromItems.map(x => {
         $("#lstRolesReview_1").append(`
@@ -1134,6 +1159,7 @@ function onRemovePariority(id) {
 }
 
 function onRemoveReviewPariority(id) {
+
     let item = movedToItems.filter(x => x.id === id);
     movedFromItems.push(item[0]);
     movedToItems = movedToItems.filter(x => x.id !== id);
@@ -1184,6 +1210,7 @@ function setPriority(id, priority) {
             if (data.status === undefined) {
                 $('#wait').hide();
                 swal(`Approval priority updated updated successfully`, '', 'success');
+                table2.ajax.reload(null, false);
             } else {
                 $('#wait').hide();
                 swal('Oops! An error occurred while updating approval priority', '', 'error');
@@ -1207,6 +1234,7 @@ function setReviewPriority(id, priority) {
             if (data.status === undefined) {
                 $('#wait').hide();
                 swal(`Review priority updated updated successfully`, '', 'success');
+                table2.ajax.reload(null, false);
             } else {
                 $('#wait').hide();
                 swal('Oops! An error occurred while updating review priority', '', 'error');
@@ -1230,6 +1258,7 @@ function setPostPriority(id, priority) {
             if (data.status === undefined) {
                 $('#wait').hide();
                 swal(`Post priority updated updated successfully`, '', 'success');
+                table2.ajax.reload(null, false);
             } else {
                 $('#wait').hide();
                 swal('Oops! An error occurred while updating post priority', '', 'error');
