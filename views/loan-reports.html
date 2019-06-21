@@ -3392,7 +3392,8 @@
             success: function (response) {
                 $("#loan-classes").empty().append('<option value="0" id="0">Choose Loan Classification</option>');
                 $.each(JSON.parse(response), function (key, val) {
-                    $("#loan-classes").append('<option value = "' + val.id + '" id="' + val.id + '">' + val.description + '</option>');
+                    let value = val.id+'-'+val.un_max;
+                    $("#loan-classes").append('<option value = "' + value + '" id="' + val.id + '" un_max="'+val.un_max+'">' + val.description + '</option>');
                 });
             }
         });
@@ -3591,7 +3592,9 @@
         let start = $("#startDate").val(),
             end = $("#endDate").val(),
             url = '/user/badloans?',
-            classification = $('#loan-classes').val();
+            classification = $('#loan-classes').val().split('-')[0],
+            unmax = $('#loan-classes').val().split('-')[1] ;
+        let off_ = classification.value.split('-')[0];
         if (officer.value == 0 && classification == 0){
             return loadBadLoans();
         }
@@ -3599,6 +3602,7 @@
             url = '/user/badloanss?class='+classification+'&&';
         }
         url = url.concat('officer='+officer.value);
+        url = url.concat('&&unmax='+unmax);
 
         $.ajax({
             'url': url,
@@ -3618,14 +3622,18 @@
         let start = $("#startDate").val(),
             end = $("#endDate").val(),
             officer = $('#badloans-officers').val(),
+//            unmax = $('#loan-classes').attr('un_max') ;
             url = '/user/badloans?';
-        if (classification.value == 0 && officer == 0){
+        let class_ = classification.value.split('-')[0],
+            unmax = classification.value.split('-')[1] ;
+        if (class_ == 0 && officer == 0){
             return loadBadLoans();
         }
         else {
-            url = '/user/badloanss?class='+classification.value+'&&';
+            url = '/user/badloanss?class='+class_+'&&';
         }
         url = url.concat('officer='+officer);
+        url = url.concat('&&unmax='+unmax);
 
         $.ajax({
             'url': url,
