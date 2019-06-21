@@ -407,7 +407,7 @@ function notifications(){
                         break;
                     case 'Application':
                         icon = '<i class="fa fa-table fa-4x"></i>';
-                        link = `/view-application?id=${val.affected}`;
+                        link = `/application?id=${val.affected}`;
                         break;
                     case 'Workflow':
                         icon = '<img src="../workflow.png">';

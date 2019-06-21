@@ -3156,7 +3156,7 @@
 //                if ((Math.round((now.getTime() - duedate.getTime())/(oneDay))) > 90){
                 let validpayment = amount_paid[v.applicationID];
                 total += parseFloat(v.principal - validpayment);
-                v.id = padWithZeroes(parseInt(v.applicationID), 6);
+                v.id = '<a href="/application?id='+v.applicationID+'">'+padWithZeroes(parseInt(v.applicationID), 6)+'</a>';
                 v.amount = formatter.format(parseFloat(v.principal));
                 v.owed = formatter.format(parseFloat(v.principal - validpayment));
                 deta.push(v);
