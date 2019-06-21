@@ -433,6 +433,12 @@ app.get('/notification-settings', requireLogin, function (req, res) {
     });
 });
 
+app.get('/loan-classification-settings', requireLogin, function (req, res) {
+    res.sendFile('loan-classification-settings.html', {
+        root: __dirname + '/views/settings/loan-classification'
+    });
+});
+
 app.get('/all-periods', requireLogin, function (req, res) {
     res.sendFile('target/all-periods/all-periods.html', {
         root: __dirname + '/views'

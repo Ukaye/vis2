@@ -633,6 +633,36 @@ router.get('/remove-reviews/:id', function (req, res, next) {
         });
 });
 
+
+router.get('/get-product-reviews/:id', function (req, res, next) {
+    let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let query = `SELECT * FROM investment_product_reviews WHERE id = ${req.params.id}`;
+    let endpoint = `/core-service/get`;
+    let url = `${HOST}${endpoint}`;
+    axios.get(url, {
+            params: {
+                query: query
+            }
+        })
+        .then(function (response) {
+            res.send(response.data);
+        }, err => {
+            res.send({
+                status: 500,
+                error: err,
+                response: null
+            });
+        })
+        .catch(function (error) {
+            res.send({
+                status: 500,
+                error: error,
+                response: null
+            });
+        });
+});
+
 router.post('/update-review-priority/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.body

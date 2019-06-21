@@ -3535,7 +3535,7 @@ users.get('/badloans/', function(req, res, next) {
         // 'payment_amount, sum(payment_amount) sum,  (sum(interest_amount) - interest_amount) as interest_due\n' +
         'from application_schedules\n' +
         'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) \n'+
-        'and datediff(curdate(), payment_collect_date) > 90 ';
+        'and datediff(curdate(), payment_collect_date) > 0 ';
     group = 'group by applicationID';
     query = queryPart.concat(group);
     if (start  && end){
@@ -3544,6 +3544,63 @@ users.get('/badloans/', function(req, res, next) {
         query = (queryPart.concat('AND (TIMESTAMP(payment_collect_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
     }
     if (officer){
+        query = (queryPart.concat('and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationID)) = '+officer+'\n')).concat(group);
+    }
+    db.query(query, function (error, results, fields) {
+        if(error){
+            res.send({"status": 500, "error": error, "response": null});
+        } else {
+            res.send({"status": 200, "error": null, "response": results, "message": "All Overdue Loans pulled!"});
+        }
+    });
+});
+
+users.get('/badloanss/', function(req, res, next) {
+    let start = req.query.start,
+        end = req.query.end,
+        classification = req.query.class,
+        un_max = req.query.unmax,
+        officer = req.query.officer;
+    // end = moment(end).add(1, 'days').format("YYYY-MM-DD");
+    let queryPart,
+        query,
+        group
+    queryPart = 'select ID, applicationID, \n' +
+        '(payment_collect_date) as duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
+        '(select loan_amount from applications where applications.ID = applicationID) as principal, payment_amount\n' +
+        // 'payment_amount, sum(payment_amount) sum,  (sum(interest_amount) - interest_amount) as interest_due\n' +
+        'from application_schedules\n' +
+        'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) \n'+
+        'and datediff(curdate(), payment_collect_date) > 0 ';
+    group = 'group by applicationID';
+    query = queryPart.concat(group)
+    if (classification && classification != '0'){
+        queryPart = 'select ID, applicationID, \n' +
+            '(payment_collect_date) as duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
+            '(select loan_amount from applications where applications.ID = applicationID) as principal, payment_amount\n' +
+            'from application_schedules\n' +
+            'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) \n'+
+            'and datediff(curdate(), payment_collect_date) between ' +
+            '(select min_days from loan_classifications lc where lc.id = '+classification+') ' +
+            'and (select max_days from loan_classifications lc where lc.id = '+classification+') ';
+        query = queryPart.concat(group);
+    }
+    if (classification && classification != '0' && un_max == '1'){
+        queryPart = 'select ID, applicationID, \n' +
+            '(payment_collect_date) as duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
+            '(select loan_amount from applications where applications.ID = applicationID) as principal, payment_amount\n' +
+            'from application_schedules\n' +
+            'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) \n'+
+            'and datediff(curdate(), payment_collect_date) > ' +
+            '(select min_days from loan_classifications lc where lc.id = '+classification+') ';
+        query = queryPart.concat(group);
+    }
+    if (start  && end){
+        start = "'"+start+"'"
+        end = "'"+end+"'"
+        query = (queryPart.concat('AND (TIMESTAMP(payment_collect_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
+    }
+    if (officer && officer != '0'){
         query = (queryPart.concat('and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationID)) = '+officer+'\n')).concat(group);
     }
     db.query(query, function (error, results, fields) {
@@ -6254,6 +6311,84 @@ users.get('/interest-receivable-trends', function(req, res, next){
         }
     });
 });
+
+/////// Loan Classification
+/* Create New Loan Classification
+ */
+
+users.post('/new-classification-type', function(req, res, next) {
+    let postData = req.body,
+        query =  'INSERT INTO loan_classifications Set ?',
+        query2 = 'select * from loan_classifications where description = ?';
+    postData.status = 1;
+    postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    db.query(query2,req.body.description, function (error, results, fields) {
+        if (results && results[0])
+            return res.send(JSON.stringify({"status": 200, "error": null, "response": results, "message": "Classifcation already exists!"}));
+        db.query(query,{"description":postData.description, "min_days":postData.min_days, "max_days":postData.max_days, "un_max":postData.un_max, "date_created": postData.date_created, "status": 1}, function (error, results, fields) {
+            if(error){
+                res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+            } else {
+                res.send(JSON.stringify({"status": 200, "error": null, "response": "New Loan Classifcation Added!"}));
+            }
+        });
+    });
+});
+
+users.get('/classification-types', function(req, res, next) {
+    let query = 'SELECT * from loan_classifications where status = 1';
+    db.query(query, function (error, results, fields) {
+        if(error){
+            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        } else {
+            res.send(JSON.stringify(results));
+        }
+    });
+});
+
+users.get('/classification-types-full', function(req, res, next) {
+    let query = 'SELECT * from loan_classifications';
+    db.query(query, function (error, results, fields) {
+        if(error){
+            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        } else {
+            res.send(JSON.stringify(results));
+        }
+    });
+});
+
+/* Change Classification Type Status */
+users.post('/del-class-type/:id', function(req, res, next) {
+    let date = Date.now(),
+        postData = req.body;
+    postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    let payload = [postData.date_modified, req.params.id],
+        query = 'Update loan_classifications SET status = 0, date_modified = ? where id=?';
+    db.query(query, payload, function (error, results, fields) {
+        if(error){
+            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        } else {
+            res.send(JSON.stringify({"status": 200, "error": null, "response": "Role Disabled!"}));
+        }
+    });
+});
+
+/* Reactivate Classification Type */
+users.post('/en-class-type/:id', function(req, res, next) {
+    let date = Date.now(),
+        postData = req.body;
+    postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    let payload = [postData.date_modified, req.params.id],
+        query = 'Update loan_classifications SET status = 1, date_modified = ? where id=?';
+    db.query(query, payload, function (error, results, fields) {
+        if(error){
+            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        } else {
+            res.send(JSON.stringify({"status": 200, "error": null, "response": "Role Re-enabled!"}));
+        }
+    });
+});
+
 
 /////// Activity
 /*Create New Activity Type*/

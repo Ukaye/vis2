@@ -921,6 +921,14 @@
                                                                     <!--<button type="submit" class="btn btn-success">Filter</button>-->
                                                                 <!--</form>-->
                                                             </div>
+                                                            <div class="col-sm-4 card" style="background-color: transparent; border-color: transparent">
+                                                                <div class="form-group">
+                                                                    <div class="input-group">
+                                                                        <select id="loan-classes" onchange="loanclassFilter(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
                                                             <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
                                                                 <div class="form-group">
                                                                     <div class="input-group">
@@ -1519,6 +1527,7 @@
         loadYears('trend-year');
         loadYears('demo-year');
         getOfficers();
+        getLoanClasses();
         getBranches();
         loadInfo();
         disbursed();
@@ -3147,7 +3156,7 @@
 //                if ((Math.round((now.getTime() - duedate.getTime())/(oneDay))) > 90){
                 let validpayment = amount_paid[v.applicationID];
                 total += parseFloat(v.principal - validpayment);
-                v.id = padWithZeroes(parseInt(v.applicationID), 6);
+                v.id = '<a href="/application?id='+v.applicationID+'">'+padWithZeroes(parseInt(v.applicationID), 6)+'</a>';
                 v.amount = formatter.format(parseFloat(v.principal));
                 v.owed = formatter.format(parseFloat(v.principal - validpayment));
                 deta.push(v);
@@ -3375,6 +3384,21 @@
         });
     }
 
+    function getLoanClasses(){
+        $.ajax({
+            type: "GET",
+            url: "/user/classification-types/",
+            data: '{}',
+            success: function (response) {
+                $("#loan-classes").empty().append('<option value="0" id="0">Choose Loan Classification</option>');
+                $.each(JSON.parse(response), function (key, val) {
+                    let value = val.id+'-'+val.un_max;
+                    $("#loan-classes").append('<option value = "' + value + '" id="' + val.id + '" un_max="'+val.un_max+'">' + val.description + '</option>');
+                });
+            }
+        });
+    }
+
     function filterOfficer(officer) {
         let urlAn = '/user/analytics?t=disbursements&&';
         let start = $("#startDate").val(),
@@ -3540,15 +3564,76 @@
         });
     }
 
+//    function blfilterOfficer(officer) {
+//        let start = $("#startDate").val(),
+//            end = $("#endDate").val(),
+//            url = '/user/badloans?',
+//            d=[], agent;
+//        if (officer.value == 0){
+//            return loadBadLoans();
+//        }
+//        url = url.concat('officer='+officer.value);
+//
+//        $.ajax({
+//            'url': url,
+//            'type': 'get',
+//            'success': function (data) {
+//                let applications = data.response;
+//                results = applications;
+//                populateBadLoans(applications);
+//            },
+//            'error': function (err) {
+//                console.log(err);
+//            }
+//        });
+//    }
+
     function blfilterOfficer(officer) {
         let start = $("#startDate").val(),
             end = $("#endDate").val(),
             url = '/user/badloans?',
-            d=[], agent;
-        if (officer.value == 0){
+            classification = $('#loan-classes').val().split('-')[0],
+            unmax = $('#loan-classes').val().split('-')[1] ;
+        let off_ = classification.value.split('-')[0];
+        if (officer.value == 0 && classification == 0){
             return loadBadLoans();
         }
+        else {
+            url = '/user/badloanss?class='+classification+'&&';
+        }
         url = url.concat('officer='+officer.value);
+        url = url.concat('&&unmax='+unmax);
+
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                let applications = data.response;
+                results = applications;
+                populateBadLoans(applications);
+            },
+            'error': function (err) {
+                console.log(err);
+            }
+        });
+    }
+
+    function loanclassFilter(classification){
+        let start = $("#startDate").val(),
+            end = $("#endDate").val(),
+            officer = $('#badloans-officers').val(),
+//            unmax = $('#loan-classes').attr('un_max') ;
+            url = '/user/badloans?';
+        let class_ = classification.value.split('-')[0],
+            unmax = classification.value.split('-')[1] ;
+        if (class_ == 0 && officer == 0){
+            return loadBadLoans();
+        }
+        else {
+            url = '/user/badloanss?class='+class_+'&&';
+        }
+        url = url.concat('officer='+officer);
+        url = url.concat('&&unmax='+unmax);
 
         $.ajax({
             'url': url,

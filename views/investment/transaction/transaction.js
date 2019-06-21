@@ -226,6 +226,10 @@ function bindDataTable(id) {
                         if (selectedInvestment.canTerminate.toString() === '0') {
                             $('#btnTerminateInvestment').attr('disabled', true);
                         }
+                        if (selectedInvestment.acct_allows_withdrawal.toString() === '0') {
+                            $('#btnTransfer').attr('disabled', true);
+                            $('#btnWithdrawal').attr('disabled', true);
+                        }
                         if (selectedInvestment.isMatured === 1 || selectedInvestment.isTerminated === 1) {
                             $('#btnWithdrawal').attr('disabled', true);
                             $('#btnDeposit').attr('disabled', true);
@@ -889,7 +893,8 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
                                         productId: selectedInvestment.productId,
                                         isReversedTxn: 1,
                                         ref_no: data_row.ref_no,
-                                        parentTxnId: data_row.ID
+                                        parentTxnId: data_row.ID,
+                                        isWallet: data_row.isWallet
                                     };
                                     $.ajax({
                                         url: `investment-txns/create`,
@@ -1109,6 +1114,7 @@ function uploadDocRequirement(data) {
         success: function (response) {
             $('#wait').hide();
             swal('File uploaded successfully!', '', 'success');
+            getProductDocRequirements(0);
         },
         error: function () {
             $('#wait').hide();
