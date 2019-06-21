@@ -49,7 +49,7 @@ function upload(parentFolder, subFolder, file, imgId) {
 }
 
 async function onAddMandatePassport() {
-    if ($(`#idPassportImage`)[0].files[0] !== undefined) {
+    if ($(`#idPassportImage`)[0].files[0] !== undefined && $('#idPassportName').val() !== '' && $('#idPassportName').val() !== ' ') {
         let dt = new Date();
         let imgId = `${dt.getFullYear()}${dt.getMonth()+1}${dt.getDate()}${dt.getHours()}${dt.getMinutes()}${dt.getSeconds()}${dt.getMilliseconds()}`;
         let ext_ = $(`#idPassportImage`)[0].files[0].type.split('/')[1];
@@ -74,11 +74,13 @@ async function onAddMandatePassport() {
         } else {
             swal('Oops! You can only upload PNG or JPEG Image', '', 'error');
         }
+    } else {
+        swal('Required field(s) has invalid input', '', 'error');
     }
 }
 
 async function onAddMandateSignature() {
-    if ($(`#idSignatureImage`)[0].files[0] !== undefined) {
+    if ($(`#idSignatureImage`)[0].files[0] !== undefined && $('#idSignatureName').val() !== '' && $('#idSignatureName').val() !== ' ') {
         let dt = new Date();
         let imgId = `${dt.getFullYear()}${dt.getMonth()+1}${dt.getDate()}${dt.getHours()}${dt.getMinutes()}${dt.getSeconds()}${dt.getMilliseconds()}`;
         let ext_ = $(`#idSignatureImage`)[0].files[0].type.split('/')[1];
@@ -103,19 +105,25 @@ async function onAddMandateSignature() {
         } else {
             swal('Oops! You can only upload PNG or JPEG Image', '', 'error');
         }
+    } else {
+        swal('Required field(s) has invalid input', '', 'error');
     }
 }
 //onAddMandateInstructure()
 async function onAddMandateInstructure() {
-    let _data = {
-        investmentId: data_row.ID,
-        instruction: $('#idInstructionBody').val(),
-        isInstruction: 1,
-        name: $('#idInstructionName').val().toUpperCase()
-    };
-    await saveMandate(_data);
-    $('#idInstructionName').val('');
-    $('#idInstructionBody').val('');
+    if ($(`#idInstructionBody`).val() !== '' && $(`#idInstructionBody`).val() !== ' ' && $('#idInstructionName').val() !== '' && $('#idInstructionName').val() !== ' ') {
+        let _data = {
+            investmentId: data_row.ID,
+            instruction: $('#idInstructionBody').val(),
+            isInstruction: 1,
+            name: $('#idInstructionName').val().toUpperCase()
+        };
+        await saveMandate(_data);
+        $('#idInstructionName').val('');
+        $('#idInstructionBody').val('');
+    } else {
+        swal('Required field(s) has invalid input', '', 'error');
+    }
 }
 
 
