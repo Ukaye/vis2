@@ -479,7 +479,7 @@ router.post('/create', function (req, res, next) {
 
 function setDocRequirement(HOST, data, txnId) {
     let query = `SELECT * FROM investment_doc_requirement
-                WHERE productId = ${data.productId} AND operationId = ${data.operationId}`;
+                WHERE productId = ${data.productId} AND operationId = ${1}`;
     let endpoint = "/core-service/get";
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -488,7 +488,7 @@ function setDocRequirement(HOST, data, txnId) {
             }
         })
         .then(function (response2) {
-            if (response2.data.length > 0) {
+           if (response2.data.length > 0) {
                 response2.data.map((item, index) => {
                     let doc = {
                         docRequirementId: item.Id,
@@ -499,7 +499,8 @@ function setDocRequirement(HOST, data, txnId) {
                     endpoint = `/core-service/post?query=${query}`;
                     url = `${HOST}${endpoint}`;
                     try {
-                        axios.post(url, doc);
+                        axios.post(url, doc).then(p => {
+                        });
                     } catch (error) {}
                 })
             }

@@ -1113,6 +1113,7 @@ function uploadDocRequirement(data) {
         success: function (response) {
             $('#wait').hide();
             swal('File uploaded successfully!', '', 'success');
+            getProductDocRequirements(0);
         },
         error: function () {
             $('#wait').hide();
