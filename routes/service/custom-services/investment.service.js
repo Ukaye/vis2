@@ -42,6 +42,7 @@ router.post('/create', function (req, res, next) {
                     is_credit: 1,
                     created_date: dt,
                     balance: 0,
+                    isDeposit: 1,
                     is_capital: 1,
                     createdBy: data.createdBy,
                     ref_no: dt_,
@@ -488,7 +489,7 @@ function setDocRequirement(HOST, data, txnId) {
             }
         })
         .then(function (response2) {
-           if (response2.data.length > 0) {
+            if (response2.data.length > 0) {
                 response2.data.map((item, index) => {
                     let doc = {
                         docRequirementId: item.Id,
@@ -499,8 +500,7 @@ function setDocRequirement(HOST, data, txnId) {
                     endpoint = `/core-service/post?query=${query}`;
                     url = `${HOST}${endpoint}`;
                     try {
-                        axios.post(url, doc).then(p => {
-                        });
+                        axios.post(url, doc).then(p => {});
                     } catch (error) {}
                 })
             }
