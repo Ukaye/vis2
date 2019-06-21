@@ -893,7 +893,8 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
                                         productId: selectedInvestment.productId,
                                         isReversedTxn: 1,
                                         ref_no: data_row.ref_no,
-                                        parentTxnId: data_row.ID
+                                        parentTxnId: data_row.ID,
+                                        isWallet: data_row.isWallet
                                     };
                                     $.ajax({
                                         url: `investment-txns/create`,
@@ -1113,6 +1114,7 @@ function uploadDocRequirement(data) {
         success: function (response) {
             $('#wait').hide();
             swal('File uploaded successfully!', '', 'success');
+            getProductDocRequirements(0);
         },
         error: function () {
             $('#wait').hide();

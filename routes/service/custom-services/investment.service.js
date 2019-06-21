@@ -7,8 +7,6 @@ var differenceInCalendarDays = require('date-fns/difference_in_calendar_days');
 let fs = require('fs');
 
 
-
-
 router.post('/create', function (req, res, next) {
     let _date = new Date();
     const HOST = `${req.protocol}://${req.get('host')}`;
@@ -44,6 +42,7 @@ router.post('/create', function (req, res, next) {
                     is_credit: 1,
                     created_date: dt,
                     balance: 0,
+                    isDeposit: 1,
                     is_capital: 1,
                     createdBy: data.createdBy,
                     ref_no: dt_,
@@ -219,7 +218,7 @@ router.post('/create', function (req, res, next) {
                             })
                             .catch(function (error) {});
 
-                        setDocRequirement(HOST, data, response.data.insertId);
+                        setDocRequirement(HOST, data, response_.data.insertId);
                         if (data.selectedProduct.interest_disbursement_time.toString() === 'Up-Front') {
                             dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                             refId = moment().utcOffset('+0100').format('x');
@@ -481,7 +480,7 @@ router.post('/create', function (req, res, next) {
 
 function setDocRequirement(HOST, data, txnId) {
     let query = `SELECT * FROM investment_doc_requirement
-                WHERE productId = ${data.productId} AND operationId = ${data.operationId}`;
+                WHERE productId = ${data.productId} AND operationId = ${1}`;
     let endpoint = "/core-service/get";
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -501,7 +500,7 @@ function setDocRequirement(HOST, data, txnId) {
                     endpoint = `/core-service/post?query=${query}`;
                     url = `${HOST}${endpoint}`;
                     try {
-                        axios.post(url, doc);
+                        axios.post(url, doc).then(p => {});
                     } catch (error) {}
                 })
             }
