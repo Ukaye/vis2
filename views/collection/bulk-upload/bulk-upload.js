@@ -40,6 +40,7 @@
                         if (i === 0) {
                             let select = `<select id="invoice-${i}-${j}">`;
                             for (let k = 0; k < headers.length; k++) {
+                                headers[k] =  headers[k].trim();
                                 if (headers[k] === cells[j]) {
                                     select = select.concat(`<option value="${headers[k]}" selected="selected">${headers[k]}</option>`);
                                 } else {
@@ -52,7 +53,8 @@
                             cell.html(cells[j]);
                         }
                     }
-                    row.append(cell);
+                    if (j < 6)
+                        row.append(cell);
                     switch (j) {
                         case 0: {
                             invoice.posting_date = cells[j];
@@ -92,21 +94,34 @@
 
     $('body').delegate('select[id^="invoice-0-"]', 'change', function(e) {
         let target_index = e.target.id.split('-')[2],
-            source_index = headers.indexOf(e.target.value);
-        statement_ = (statement_.length === 0)? statement : statement_;
-        for (let i=1; i < statement.length; i++) {
-            let transaction = statement[i - 1],
+            target_name = e.target.value,
+            source_index = headers.indexOf(target_name);
+        statement_ = (statement_.length === 0)? $.extend(true, [], statement) : statement_;
+        for (let i=0; i < statement.length; i++) {
+            let transaction = statement[i],
+                $invoice = $(`#invoice-${i+1}-${target_index}`),
                 source_value = transaction[Object.keys(transaction)[source_index]];
-            statement_[i-1][Object.keys(transaction)[source_index]] = source_value;
-            console.log(Object.keys(transaction)[source_index])
-            console.log(source_value)
-            if (target_index < 2) {
-                $(`#invoice-${i}-${target_index}`).val(source_value);
-            } else {
-                $(`#invoice-${i}-${target_index}`).text(source_value);
+            statement_[i][Object.keys(transaction)[target_index]] = source_value;
+            switch (target_index) {
+                case '0':
+                case '1': {
+                    $invoice.val(source_value);
+                    break;
+                }
+                case '2':
+                case '3':
+                case '4': {
+                    if (!isNaN(source_value)) {
+                        $invoice.text(numberToCurrencyformatter(source_value));
+                        break;
+                    }
+                }
+                default: {
+                    $invoice.text(source_value);
+                    break;
+                }
             }
         }
-        console.log(statement_)
     });
 
     function init(settings) {
@@ -129,68 +144,32 @@
         });
 
         $("#saveBulkUpload").click(function () {
-            console.log(statement)
-            console.log(statement_)
-            let statementX = (statement_.length === 0)? statement : statement_;
+            let statementX = (statement_.length === 0)? $.extend(true, [], statement) : statement_;
             if (!statementX[0])
                 return notification('Please upload a valid CSV file.','','warning');
             validateStatement(statementX, function (validation) {
-                return console.log(validation)
                 if (validation.status){
-                    let obj = {},
-                        statement = validation.data,
-                        $purposes = $('#purposes'),
-                        $user_list = $('#user-list'),
-                        user = ($user_list.val() !== '-- Choose Client --')? JSON.parse(decodeURIComponent($user_list.val())) : false;
-                    if (user)
-                        obj.userID = user.ID;
-                        obj.email = user.email;
-                        obj.username = user.username;
-                    obj.workflowID = $('#workflows').val();
-                    obj.loan_amount = $('#amount').val();
-                    obj.interest_rate = $('#interest-rate').val();
-                    obj.duration = $('#term').val();
-                    obj.repayment_date = $('#repayment-date').val();
-                    obj.loan_purpose = $purposes.val();
-                    obj.agentID = (JSON.parse(localStorage.getItem("user_obj"))).ID;
-                    if (preapplication && preapplication.ID)
-                        obj.preapplicationID = preapplication.ID;
-                    if (!user || isNaN(obj.workflowID) || !obj.loan_amount || !obj.interest_rate || !obj.duration || $purposes.val() === '-- Choose Loan Purpose --')
-                        return notification('Kindly fill all required fields!','','warning');
-                    if (parseFloat(obj.duration) < settings.tenor_min || parseFloat(obj.duration) > settings.tenor_max)
-                        return notification(`Minimum tenor is ${numberToCurrencyformatter(settings.tenor_min)} (month) 
-                        and Maximum is ${numberToCurrencyformatter(settings.tenor_max)} (months)`,'','warning');
-                    if (parseFloat(obj.interest_rate) < settings.interest_rate_min || parseFloat(obj.interest_rate) > settings.interest_rate_max)
-                        return notification(`Minimum interest rate is ${numberToCurrencyformatter(settings.interest_rate_min)}% 
-                        and Maximum is ${numberToCurrencyformatter(settings.interest_rate_max)}%`,'','warning');
-                    if (parseFloat(obj.loan_amount) < settings.loan_requested_min || parseFloat(obj.loan_amount) > settings.loan_requested_max)
-                        return notification(`Minimum loan amount is ₦${numberToCurrencyformatter(settings.loan_requested_min)} 
-                        and Maximum is ₦${numberToCurrencyformatter(settings.loan_requested_max)}`,'','warning');
-                    if (loan_amount !== parseFloat(obj.loan_amount))
-                        return notification('Loan amount ('+parseFloat(obj.loan_amount)+') and statement ('+loan_amount+') mismatch','','warning');
+                    let obj = {};
+                    obj.statement = validation.data;
+                    obj.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
 
                     $('#wait').show();
                     $.ajax({
-                        'url': '/user/apply',
+                        'url': '/collection/bulk_upload',
                         'type': 'post',
                         'data': obj,
                         'success': function (data) {
-                            $purposes.val("");
-                            $user_list.val("");
-                            $('#workflows').val("");
-                            $('#amount').val("");
-                            $('#interest-rate').val("");
-                            $('#term').val("");
-                            $('#repayment-date').val("");
+                            notification(data.response, '', 'success');
+                            window.location.reload();
                         },
                         'error': function (err) {
                             console.log(err);
                             $('#wait').hide();
-                            notification('No internet connection','','error');
+                            notification('No internet connection', '', 'error');
                         }
                     });
                 } else {
-                    notification('There are error(s) in the uploaded statement!','','warning');
+                    notification('There are error(s) in the uploaded statement!', '', 'warning');
                 }
             });
         });
@@ -236,7 +215,7 @@
                 $col2.addClass('invalid');
                 $col3.addClass('invalid');
                 errors.push(c+' is not a valid number');
-                errors.push(d+' is not a valid date');
+                errors.push(d+' is not a valid number');
             }
             if (!isNaN(e)) {
                 $col4.removeClass('invalid');

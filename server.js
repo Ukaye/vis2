@@ -52,6 +52,7 @@ let app = express(),
     inv_transaction_service = require('./routes/service/custom-services/transaction.service'),
     preapproved_loan_service = require('./routes/service/custom-services/preapproved-loan.service'),
     preapplication_service = require('./routes/service/custom-services/preapplication.service'),
+    collection_service = require('./routes/service/custom-services/collection.service'),
     remita_service = require('./routes/service/custom-services/remita.service'),
     notification = require('./routes/notifications'),
     index = require('./routes/index');
@@ -209,6 +210,7 @@ app.use('/investment-products', investment_product_service);
 app.use('/investment-txns', inv_transaction_service);
 app.use('/preapproved-loan', preapproved_loan_service);
 app.use('/preapplication', preapplication_service);
+app.use('/collection', collection_service);
 app.use('/investment-interests', investment_interest_service);
 // app.use('/notification-service', notification_service);
 app.use('/remita', remita_service);
