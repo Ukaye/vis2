@@ -178,3 +178,9 @@ function integerFormat(value) {
         return value;
     return value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
 }
+
+function sumArrayObjects(array, key) {
+    return array.reduce((a, b) => {
+        return parseFloat(a) + parseFloat(b[key]);
+    }, 0);
+}
