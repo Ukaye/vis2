@@ -589,7 +589,7 @@ router.get('/mains/', function(req, res, next) {
 
 /* GET permissions for each role*/
 router.get('/permissions/:id', function(req, res, next) {
-    let query = 'select *, (select module_name from modules m where m.id = permissions.module_id) as module, (select menu_name from modules ms where ms.module_name = module) as menu_name ' +
+    let query = 'select *, (select module_name from modules m where m.id = module_id) as module, (select menu_name from modules ms where ms.module_name = module_id) as menu_name ' +
         'from permissions where role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?))';
     db.query(query, [req.params.id, req.params.id, req.params.id], function (error, results, fields) {
         if(error){
