@@ -115,6 +115,50 @@ router.post('/requirements', function (req, res, next) {
         });
 });
 
+
+async function getProductApprovalItems(HOST, search_string, order, offset, limit, id, draw) {
+    let query = `SELECT ID, operationId,roleId,isAllRoles,priority FROM investment_product_requirements WHERE status = 1 AND productId = ${id} AND 
+        (operationId LIKE "${search_string}%" OR roleId LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
+    let endpoint = "/core-service/get";
+    let url = `${HOST}${endpoint}`;
+    try {
+        let response = await axios.get(url, {
+            params: {
+                query: query
+            }
+        });
+        let roles = [];
+        if (response.data.length > 0) {
+            for (let index = 0; index < response.data.length; index++) {
+                let x = response.data[index];
+                x.roles = [];
+                x.htmlTag = "";
+                x.roleId = JSON.parse(x.roleId);
+                x.priority = JSON.parse(x.priority);
+                for (let index2 = 0; index2 < x.roleId.length; index2++) {
+                    let roleIds = await getRoleUserDetails(x, index2, HOST);
+                    roles.push(roleIds);
+                }
+            }
+            return {
+                draw: draw,
+                recordsTotal: 3,
+                recordsFiltered: 3,
+                data: response.data
+            };
+        } else {
+            return {
+                draw: draw,
+                recordsTotal: 0,
+                recordsFiltered: 0,
+                data: []
+            };
+        }
+    } catch (error) {
+        return error;
+    }
+}
+
 router.get('/requirements/:id', function (req, res, next) {
     let HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
@@ -122,95 +166,12 @@ router.get('/requirements/:id', function (req, res, next) {
     let draw = req.query.draw;
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
-    let color = ["badge-primary", "badge-secondary", "badge-success", "badge-danger", "badge-warning", "badge-info", "badge-light", "badge-dark"];
-    let query = `SELECT ID, operationId,roleId,isAllRoles,priority FROM investment_product_requirements WHERE status = 1 AND productId = ${req.params.id} AND 
-    (operationId LIKE "${search_string}%" OR roleId LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
-    let endpoint = "/core-service/get";
-    let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-            params: {
-                query: query
-            }
-        })
-        .then(function (response) {
-            let roles = [];
-            if (response.data.length > 0) {
-                response.data.forEach((x, index) => {
-                    x.roles = [];
-                    x.htmlTag = "";
-                    x.roleId = JSON.parse(x.roleId);
-                    x.priority = JSON.parse(x.priority);
-                    x.roleId.forEach((r, index2) => {
-                        query = `SELECT ID,role_name FROM user_roles WHERE id = ${r}`;
-                        endpoint = "/core-service/get";
-                        url = `${HOST}${endpoint}`;
-                        axios.get(url, {
-                                params: {
-                                    query: query
-                                }
-                            })
-                            .then(function (response2) {
-                                x.roles.push({
-                                    id: response2.data[0].ID,
-                                    name: response2.data[0].role_name
-                                });
 
-                                let rand = Math.floor(Math.random() * 8) + 1;
-                                let badgeColor = (color[index2] !== undefined && color[index2] !== null) ? color[index2] : color[rand];
-                                x.htmlTag = x.htmlTag + `<span class="badge badge-pill ${badgeColor}">${response2.data[0].role_name}</span>`
-                                if (index === (response.data.length - 1)) {
-                                    query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM investment_product_requirements WHERE status AND productId = ${req.params.id} AND 
-                                    (operationId LIKE "${search_string}%" OR roleId LIKE "${search_string}%")) as recordsFiltered FROM investment_product_requirements`;
-                                    endpoint = '/core-service/get';
-                                    url = `${HOST}${endpoint}`;
-                                    axios.get(url, {
-                                        params: {
-                                            query: query
-                                        }
-                                    }).then(payload => {
-                                        res.send({
-                                            draw: draw,
-                                            recordsTotal: payload.data[0].recordsTotal,
-                                            recordsFiltered: payload.data[0].recordsFiltered,
-                                            data: (response.data === undefined) ? [] : response.data
-                                        });
-                                    }, err => {
-                                        res.send({
-                                            draw: draw,
-                                            recordsTotal: 0,
-                                            recordsFiltered: 0,
-                                            data: []
-                                        });
-                                    });
-                                }
-                            });
-                    });
-                });
-            } else {
-                res.send({
-                    draw: draw,
-                    recordsTotal: 0,
-                    recordsFiltered: 0,
-                    data: []
-                });
-            }
-
-        }, err => {
-            res.send({
-                draw: draw,
-                recordsTotal: 0,
-                recordsFiltered: 0,
-                data: []
-            });
-        })
-        .catch(function (error) {
-            res.send({
-                draw: draw,
-                recordsTotal: 0,
-                recordsFiltered: 0,
-                data: []
-            });
-        });
+    getProductApprovalItems(HOST, search_string, order, offset, limit, req.params.id, draw).then(payload => {
+        res.send(payload);
+    }, err => {
+        res.send(err);
+    });
 });
 
 router.post('/requirements/:id', function (req, res, next) {
@@ -401,6 +362,71 @@ router.post('/reviews', function (req, res, next) {
         });
 });
 
+async function getRoleUserDetails(x, index2, HOST) {
+    let r = x.roleId[index2];
+    let query = `SELECT ID,role_name FROM user_roles WHERE id = ${r}`;
+    let endpoint = "/core-service/get";
+    let url = `${HOST}${endpoint}`;
+    try {
+        let response2 = await axios.get(url, {
+            params: {
+                query: query
+            }
+        });
+        x.roles.push({
+            id: response2.data[0].ID,
+            name: response2.data[0].role_name
+        });
+        x.htmlTag = x.htmlTag + `<span class="badge badge-pill badge-primary">${response2.data[0].role_name}</span>`;
+        return x;
+    } catch (error) {
+        return error;
+    }
+}
+
+async function getProductReviewItems(HOST, search_string, order, offset, limit, id, draw) {
+    let query = `SELECT ID, operationId,roleId,isAllRoles,priority FROM investment_product_reviews WHERE status = 1 AND productId = ${id} AND 
+        (operationId LIKE "${search_string}%" OR roleId LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
+    let endpoint = "/core-service/get";
+    let url = `${HOST}${endpoint}`;
+    try {
+        let response = await axios.get(url, {
+            params: {
+                query: query
+            }
+        });
+        let roles = [];
+        if (response.data.length > 0) {
+            for (let index = 0; index < response.data.length; index++) {
+                let x = response.data[index];
+                x.roles = [];
+                x.htmlTag = "";
+                x.roleId = JSON.parse(x.roleId);
+                x.priority = JSON.parse(x.priority);
+                for (let index2 = 0; index2 < x.roleId.length; index2++) {
+                    let roleIds = await getRoleUserDetails(x, index2, HOST);
+                    roles.push(roleIds);
+                }
+            }
+            return {
+                draw: draw,
+                recordsTotal: 3,
+                recordsFiltered: 3,
+                data: response.data
+            };
+        } else {
+            return {
+                draw: draw,
+                recordsTotal: 0,
+                recordsFiltered: 0,
+                data: []
+            };
+        }
+    } catch (error) {
+        return error;
+    }
+}
+
 router.get('/reviews/:id', function (req, res, next) {
     let HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
@@ -408,95 +434,11 @@ router.get('/reviews/:id', function (req, res, next) {
     let draw = req.query.draw;
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
-    let color = ["badge-primary", "badge-secondary", "badge-success", "badge-danger", "badge-warning", "badge-info", "badge-light", "badge-dark"];
-    let query = `SELECT ID, operationId,roleId,isAllRoles,priority FROM investment_product_reviews WHERE status = 1 AND productId = ${req.params.id} AND 
-    (operationId LIKE "${search_string}%" OR roleId LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
-    let endpoint = "/core-service/get";
-    let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-            params: {
-                query: query
-            }
-        })
-        .then(function (response) {
-            let roles = [];
-            if (response.data.length > 0) {
-                response.data.forEach((x, index) => {
-                    x.roles = [];
-                    x.htmlTag = "";
-                    x.roleId = JSON.parse(x.roleId);
-                    x.priority = JSON.parse(x.priority);
-                    x.roleId.forEach((r, index2) => {
-                        query = `SELECT ID,role_name FROM user_roles WHERE id = ${r}`;
-                        endpoint = "/core-service/get";
-                        url = `${HOST}${endpoint}`;
-                        axios.get(url, {
-                                params: {
-                                    query: query
-                                }
-                            })
-                            .then(function (response2) {
-                                x.roles.push({
-                                    id: response2.data[0].ID,
-                                    name: response2.data[0].role_name
-                                });
-
-                                let rand = Math.floor(Math.random() * 8) + 1;
-                                let badgeColor = (color[index2] !== undefined && color[index2] !== null) ? color[index2] : color[rand];
-                                x.htmlTag = x.htmlTag + `<span class="badge badge-pill ${badgeColor}">${response2.data[0].role_name}</span>`
-                                if (index === (response.data.length - 1)) {
-                                    query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM investment_product_reviews WHERE status AND productId = ${req.params.id} AND 
-                                    (operationId LIKE "${search_string}%" OR roleId LIKE "${search_string}%")) as recordsFiltered FROM investment_product_reviews`;
-                                    endpoint = '/core-service/get';
-                                    url = `${HOST}${endpoint}`;
-                                    axios.get(url, {
-                                        params: {
-                                            query: query
-                                        }
-                                    }).then(payload => {
-                                        res.send({
-                                            draw: draw,
-                                            recordsTotal: payload.data[0].recordsTotal,
-                                            recordsFiltered: payload.data[0].recordsFiltered,
-                                            data: (response.data === undefined) ? [] : response.data
-                                        });
-                                    }, err => {
-                                        res.send({
-                                            draw: draw,
-                                            recordsTotal: 0,
-                                            recordsFiltered: 0,
-                                            data: []
-                                        });
-                                    });
-                                }
-                            });
-                    });
-                });
-            } else {
-                res.send({
-                    draw: draw,
-                    recordsTotal: 0,
-                    recordsFiltered: 0,
-                    data: []
-                });
-            }
-
-        }, err => {
-            res.send({
-                draw: draw,
-                recordsTotal: 0,
-                recordsFiltered: 0,
-                data: []
-            });
-        })
-        .catch(function (error) {
-            res.send({
-                draw: draw,
-                recordsTotal: 0,
-                recordsFiltered: 0,
-                data: []
-            });
-        });
+    getProductReviewItems(HOST, search_string, order, offset, limit, req.params.id, draw).then(payload => {
+        res.send(payload);
+    }, err => {
+        res.send(err);
+    });
 });
 
 router.post('/reviews/:id', function (req, res, next) {
@@ -718,6 +660,49 @@ router.post('/posts', function (req, res, next) {
         });
 });
 
+async function getProductPostItems(HOST, search_string, order, offset, limit, id, draw) {
+    let query = `SELECT ID, operationId,roleId,isAllRoles,priority FROM investment_product_posts WHERE status = 1 AND productId = ${id} AND 
+        (operationId LIKE "${search_string}%" OR roleId LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
+    let endpoint = "/core-service/get";
+    let url = `${HOST}${endpoint}`;
+    try {
+        let response = await axios.get(url, {
+            params: {
+                query: query
+            }
+        });
+        let roles = [];
+        if (response.data.length > 0) {
+            for (let index = 0; index < response.data.length; index++) {
+                let x = response.data[index];
+                x.roles = [];
+                x.htmlTag = "";
+                x.roleId = JSON.parse(x.roleId);
+                x.priority = JSON.parse(x.priority);
+                for (let index2 = 0; index2 < x.roleId.length; index2++) {
+                    let roleIds = await getRoleUserDetails(x, index2, HOST);
+                    roles.push(roleIds);
+                }
+            }
+            return {
+                draw: draw,
+                recordsTotal: 3,
+                recordsFiltered: 3,
+                data: response.data
+            };
+        } else {
+            return {
+                draw: draw,
+                recordsTotal: 0,
+                recordsFiltered: 0,
+                data: []
+            };
+        }
+    } catch (error) {
+        return error;
+    }
+}
+
 router.get('/posts/:id', function (req, res, next) {
     let HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
@@ -725,95 +710,11 @@ router.get('/posts/:id', function (req, res, next) {
     let draw = req.query.draw;
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
-    let color = ["badge-primary", "badge-secondary", "badge-success", "badge-danger", "badge-warning", "badge-info", "badge-light", "badge-dark"];
-    let query = `SELECT ID, operationId,roleId,isAllRoles,priority FROM investment_product_posts WHERE status = 1 AND productId = ${req.params.id} AND 
-    (operationId LIKE "${search_string}%" OR roleId LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
-    let endpoint = "/core-service/get";
-    let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-            params: {
-                query: query
-            }
-        })
-        .then(function (response) {
-            let roles = [];
-            if (response.data.length > 0) {
-                response.data.forEach((x, index) => {
-                    x.roles = [];
-                    x.htmlTag = "";
-                    x.roleId = JSON.parse(x.roleId);
-                    x.priority = JSON.parse(x.priority);
-                    x.roleId.forEach((r, index2) => {
-                        query = `SELECT ID,role_name FROM user_roles WHERE id = ${r}`;
-                        endpoint = "/core-service/get";
-                        url = `${HOST}${endpoint}`;
-                        axios.get(url, {
-                                params: {
-                                    query: query
-                                }
-                            })
-                            .then(function (response2) {
-                                x.roles.push({
-                                    id: response2.data[0].ID,
-                                    name: response2.data[0].role_name
-                                });
-
-                                let rand = Math.floor(Math.random() * 8) + 1;
-                                let badgeColor = (color[index2] !== undefined && color[index2] !== null) ? color[index2] : color[rand];
-                                x.htmlTag = x.htmlTag + `<span class="badge badge-pill ${badgeColor}">${response2.data[0].role_name}</span>`
-                                if (index === (response.data.length - 1)) {
-                                    query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM investment_product_posts WHERE status AND productId = ${req.params.id} AND 
-                                    (operationId LIKE "${search_string}%" OR roleId LIKE "${search_string}%")) as recordsFiltered FROM investment_product_posts`;
-                                    endpoint = '/core-service/get';
-                                    url = `${HOST}${endpoint}`;
-                                    axios.get(url, {
-                                        params: {
-                                            query: query
-                                        }
-                                    }).then(payload => {
-                                        res.send({
-                                            draw: draw,
-                                            recordsTotal: payload.data[0].recordsTotal,
-                                            recordsFiltered: payload.data[0].recordsFiltered,
-                                            data: (response.data === undefined) ? [] : response.data
-                                        });
-                                    }, err => {
-                                        res.send({
-                                            draw: draw,
-                                            recordsTotal: 0,
-                                            recordsFiltered: 0,
-                                            data: []
-                                        });
-                                    });
-                                }
-                            });
-                    });
-                });
-            } else {
-                res.send({
-                    draw: draw,
-                    recordsTotal: 0,
-                    recordsFiltered: 0,
-                    data: []
-                });
-            }
-
-        }, err => {
-            res.send({
-                draw: draw,
-                recordsTotal: 0,
-                recordsFiltered: 0,
-                data: []
-            });
-        })
-        .catch(function (error) {
-            res.send({
-                draw: draw,
-                recordsTotal: 0,
-                recordsFiltered: 0,
-                data: []
-            });
-        });
+    getProductPostItems(HOST, search_string, order, offset, limit, req.params.id, draw).then(payload => {
+        res.send(payload);
+    }, err => {
+        res.send(err);
+    });
 });
 
 router.post('/post/:id', function (req, res, next) {
