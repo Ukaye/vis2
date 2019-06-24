@@ -24,8 +24,13 @@ function getApplication(){
             let data = result.response,
                 fullname = data.fullname || '';
             application = data;
-            $('#client-id').text(padWithZeroes(application.userID,6));
-            $('#application-id').text(padWithZeroes(application.ID,9));
+            if (application.client_type === 'corporate') {
+                $('#client-id').text(padWithZeroes(application.contactID, 6));
+                $('#client-id-label').text('Contact ID#:');
+            } else {
+                $('#client-id').text(padWithZeroes(application.userID, 6));
+            }
+            $('#application-id').text(padWithZeroes(application.ID, 9));
             if (application.escrow)
                 $('.escrow-balance').text(parseFloat(application.escrow).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
             initRepaymentSchedule(application);
@@ -62,7 +67,11 @@ function getMandateStatus(){
 }
 
 function goToClientProfile() {
-    window.location.href = '/client-info?id='+application.userID;
+    if (application.client_type === 'corporate'){
+        window.location.href = '/client-info?id='+application.contactID;
+    } else {
+        window.location.href = '/client-info?id='+application.userID;
+    }
 }
 
 function getComments(comments) {

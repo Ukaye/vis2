@@ -1897,49 +1897,38 @@ users.get('/application-id/:id', function(req, res, next) {
     let obj = {},
         application_id = req.params.id,
         path = 'files/application-'+application_id+'/',
-        query = 'SELECT u.ID AS userID, u.fullname, u.phone, u.email, u.address, cast(u.loan_officer as unsigned) loan_officer, ' +
+        query = 'SELECT u.ID userID, u.fullname, u.phone, u.email, u.address, cast(u.loan_officer as unsigned) loan_officer, ' +
             'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.interest_rate, a.repayment_date, ' +
-            'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, ' +
+            'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, ' +
             '(SELECT l.supervisor FROM users l WHERE l.ID = u.loan_officer) AS supervisor, ' +
             '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
             'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
             'FROM clients AS u INNER JOIN applications AS a ON u.ID = a.userID LEFT JOIN remita_mandates r ' +
+            'ON (r.applicationID = a.ID AND r.status = 1) WHERE a.ID = ?',
+        query2 = 'SELECT u.ID userID, c.ID contactID, u.name fullname, u.phone, u.email, u.address, cast(c.loan_officer as unsigned) loan_officer, ' +
+            'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.interest_rate, a.repayment_date, ' +
+            'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, ' +
+            '(SELECT l.supervisor FROM users l WHERE l.ID = c.loan_officer) AS supervisor, ' +
+            '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
+            'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
+            'FROM corporates AS u INNER JOIN applications AS a ON u.ID = a.userID INNER JOIN clients AS c ON u.clientID=c.ID LEFT JOIN remita_mandates r ' +
             'ON (r.applicationID = a.ID AND r.status = 1) WHERE a.ID = ?';
     db.getConnection(function(err, connection) {
         if (err) throw err;
 
-        connection.query(query, [application_id], function (error, result, fields) {
-            if(error){
+        connection.query('SELECT client_type FROM applications WHERE ID = ?', [application_id], function (error, app, fields) {
+            if (error || !app[0]) {
                 res.send({"status": 500, "error": error, "response": null});
             } else {
-                result = (result[0])? result[0] : {};
-                if (!fs.existsSync(path)){
-                    result.files = {};
-                    connection.query('SELECT * FROM application_schedules WHERE applicationID=?', [application_id], function (error, schedule, fields) {
-                        if (error) {
-                            res.send({"status": 500, "error": error, "response": null});
-                        } else {
-                            result.schedule = schedule;
-                            connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', [application_id], function (error, payment_history, fields) {
-                                connection.release();
-                                if (error) {
-                                    res.send({"status": 500, "error": error, "response": null});
-                                } else {
-                                    result.payment_history = payment_history;
-                                    return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
-                                }
-                            });
-                        }
-                    });
-                } else {
-                    fs.readdir(path, function (err, files){
-                        async.forEach(files, function (file, callback){
-                            let filename = file.split('.')[0].split('_');
-                            filename.shift();
-                            obj[filename.join('_')] = path+file;
-                            callback();
-                        }, function(data){
-                            result.files = obj;
+                if (app[0]['client_type'] === 'corporate')
+                    query = query2;
+                connection.query(query, [application_id], function (error, result, fields) {
+                    if(error){
+                        res.send({"status": 500, "error": error, "response": null});
+                    } else {
+                        result = (result[0])? result[0] : {};
+                        if (!fs.existsSync(path)){
+                            result.files = {};
                             connection.query('SELECT * FROM application_schedules WHERE applicationID=?', [application_id], function (error, schedule, fields) {
                                 if (error) {
                                     res.send({"status": 500, "error": error, "response": null});
@@ -1956,9 +1945,36 @@ users.get('/application-id/:id', function(req, res, next) {
                                     });
                                 }
                             });
-                        });
-                    });
-                }
+                        } else {
+                            fs.readdir(path, function (err, files){
+                                async.forEach(files, function (file, callback){
+                                    let filename = file.split('.')[0].split('_');
+                                    filename.shift();
+                                    obj[filename.join('_')] = path+file;
+                                    callback();
+                                }, function(data){
+                                    result.files = obj;
+                                    connection.query('SELECT * FROM application_schedules WHERE applicationID=?', [application_id], function (error, schedule, fields) {
+                                        if (error) {
+                                            res.send({"status": 500, "error": error, "response": null});
+                                        } else {
+                                            result.schedule = schedule;
+                                            connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', [application_id], function (error, payment_history, fields) {
+                                                connection.release();
+                                                if (error) {
+                                                    res.send({"status": 500, "error": error, "response": null});
+                                                } else {
+                                                    result.payment_history = payment_history;
+                                                    return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
+                                                }
+                                            });
+                                        }
+                                    });
+                                });
+                            });
+                        }
+                    }
+                });
             }
         });
     });

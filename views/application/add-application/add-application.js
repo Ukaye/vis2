@@ -1,6 +1,6 @@
 (function( $ ) {
     jQuery(document).ready(function() {
-        getUsers();
+        getLoanPurposes();
         getWorkflows();
         getApplicationSettings();
     });
@@ -36,13 +36,13 @@
                     }
                 }
                 if (response.name && response.email) {
-                    $('#name').val($('#name').find(`option[name='${response.email}']`).val());
-                    $('#name').select2('destroy');
-                    $('#name').select2();
-                    $('#user-list').val($('#user-list').find(`option[name='${response.email}']`).val());
-                    $('#user-list').prop('disabled', true);
-                    $('#user-list').select2('destroy');
-                    $('#user-list').select2();
+                    $name.val($name.find(`option[name='${response.email}']`).val());
+                    $name.select2('destroy');
+                    $name.select2();
+                    $user_list.val($user_list.find(`option[name='${response.email}']`).val());
+                    $user_list.prop('disabled', true);
+                    $user_list.select2('destroy');
+                    $user_list.select2();
                 }
                 if (response.business_turnover)
                     $('#business_turnover').val(response.business_turnover);
@@ -143,18 +143,49 @@
         $('#contribution-div').toggle();
     });
 
-    function getUsers(){
+    let client_list = [],
+        $name = $('#name'),
+        $form = $('#step1'),
+        $user_list = $('#user-list');
+
+    function getClients(){
+        $('#wait').show();
         $.ajax({
-            type: "GET",
-            url: "/user/users-list-v2",
+            type: 'get',
+            url: '/user/users-list-v2',
             success: function (response) {
-                getLoanPurposes();
+                $('#wait').hide();
+                $name.append('<option selected="selected">-- Choose Client --</option>');
+                $user_list.append('<option selected="selected">-- Choose Client --</option>');
                 $.each(JSON.parse(response), function (key, val) {
-                    $("#name").append('<option name="'+val.email+'" value = "' + encodeURIComponent(JSON.stringify(val)) + '">' + val.fullname + ' &nbsp; (' + val.username + ')</option>');
-                    $("#user-list").append('<option name="'+val.email+'" value = "' + encodeURIComponent(JSON.stringify(val)) + '">' + val.fullname + ' &nbsp; (' + val.username + ')</option>');
+                    client_list.push(val);
+                    $name.append(`<option name="${val.email}" value ="${encodeURIComponent(JSON.stringify(val))}">${val.fullname} &nbsp; (${val.username})</option>`);
+                    $user_list.append(`<option name="${val.email}" value ="${encodeURIComponent(JSON.stringify(val))}">${val.fullname} &nbsp; (${val.username})</option>`);
                 });
-                $("#name").select2();
-                $("#user-list").select2();
+                $name.select2();
+                $user_list.select2();
+                $form.show();
+            }
+        });
+    }
+
+    function getCorporates(){
+        $('#wait').show();
+        $.ajax({
+            type: 'get',
+            url: '/client/corporates-v2/get',
+            success: function (response) {
+                $('#wait').hide();
+                $name.append('<option selected="selected">-- Choose Client --</option>');
+                $user_list.append('<option selected="selected">-- Choose Client --</option>');
+                $.each(response, function (key, val) {
+                    client_list.push(val);
+                    $name.append(`<option name="${val.email}" value ="${encodeURIComponent(JSON.stringify(val))}">${val.name} &nbsp; (${val.email})</option>`);
+                    $user_list.append(`<option name="${val.email}" value ="${encodeURIComponent(JSON.stringify(val))}">${val.name} &nbsp; (${val.email})</option>`);
+                });
+                $name.select2();
+                $user_list.select2();
+                $form.show();
             }
         });
     }
@@ -575,12 +606,12 @@
                     let obj = {},
                         schedule = validation.data,
                         $purposes = $('#purposes'),
-                        $user_list = $('#user-list'),
                         user = ($user_list.val() !== '-- Choose Client --')? JSON.parse(decodeURIComponent($user_list.val())) : false;
-                    if (user)
+                    if (user) {
                         obj.userID = user.ID;
                         obj.email = user.email;
-                        obj.username = user.username;
+                        obj.username = user.username || user.name;
+                    }
                     obj.workflowID = $('#workflows').val();
                     obj.loan_amount = $('#amount').val();
                     obj.interest_rate = $('#interest-rate').val();
@@ -641,7 +672,7 @@
                         'data': obj,
                         'success': function (data) {
                             $('#wait').hide();
-                            $('#name').val('');
+                            $name.val('');
                             $('#market_name').val('');
                             $('#market_leader_name').val('');
                             $('#market_leader_phone').val('');
@@ -909,7 +940,7 @@
     function validateApplication(settings, callback) {
         let obj = {},
             contribution_status = $('input[name=contribution_status]:checked').val(),
-            user = ($('#name').val() !== '-- Choose Client --')? JSON.parse(decodeURIComponent($('#name').val())) : false;
+            user = ($name.val() !== '-- Choose Client --')? JSON.parse(decodeURIComponent($name.val())) : false;
         if (user)
             obj.userID = user.ID;
         obj.name = user.fullname;
@@ -1002,4 +1033,30 @@
         if (saveInitialApplication && saveInitialApplication['read_only'] === '0')
             $('#saveApplication').hide();
     }
+
+    /** Corporate Updates*/
+    $('#client_type').change(function (e) {
+        $form.hide();
+        if (client_list.length > 0) {
+            $user_list.select2('destroy');
+            $name.select2('destroy');
+            $user_list.html('');
+            $name.html('');
+            client_list = [];
+        }
+        switch (e.target.value) {
+            case 'non_corporate': {
+                getClients();
+                break;
+            }
+            case 'corporate': {
+                getCorporates();
+                break;
+            }
+            default: {
+                $form.hide();
+            }
+        }
+    });
+
 })(jQuery);

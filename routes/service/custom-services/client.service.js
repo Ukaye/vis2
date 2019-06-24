@@ -384,5 +384,18 @@ router.delete('/bad_cheque/:id', function (req, res, next) {
     });
 });
 
+router.get('/corporates-v2/get', function(req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let query = `SELECT ID, name, email, status, date_created from corporates WHERE status = 1 ORDER BY name asc`,
+        endpoint = '/core-service/get',
+        url = `${HOST}${endpoint}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        res.send(response['data'] || []);
+    });
+});
 
 module.exports = router;
