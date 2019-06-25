@@ -3587,7 +3587,7 @@ users.get('/badloanss/', function(req, res, next) {
         // 'payment_amount, sum(payment_amount) sum,  (sum(interest_amount) - interest_amount) as interest_due\n' +
         'from application_schedules\n' +
         'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) \n'+
-        'and datediff(curdate(), payment_collect_date) > 0 ';
+        'and datediff(curdate(), (payment_collect_date)) > 0 ';
     group = 'group by applicationID';
     query = queryPart.concat(group)
     if (classification && classification != '0'){
@@ -3596,7 +3596,7 @@ users.get('/badloanss/', function(req, res, next) {
             '(select loan_amount from applications where applications.ID = applicationID) as principal, payment_amount\n' +
             'from application_schedules\n' +
             'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) \n'+
-            'and datediff(curdate(), payment_collect_date) between ' +
+            'and datediff(curdate(), (payment_collect_date)) between ' +
             '(select min_days from loan_classifications lc where lc.id = '+classification+') ' +
             'and (select max_days from loan_classifications lc where lc.id = '+classification+') ';
         query = queryPart.concat(group);
@@ -3607,7 +3607,7 @@ users.get('/badloanss/', function(req, res, next) {
             '(select loan_amount from applications where applications.ID = applicationID) as principal, payment_amount\n' +
             'from application_schedules\n' +
             'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) \n'+
-            'and datediff(curdate(), payment_collect_date) > ' +
+            'and datediff(curdate(), (payment_collect_date)) > ' +
             '(select min_days from loan_classifications lc where lc.id = '+classification+') ';
         query = queryPart.concat(group);
     }
@@ -5817,6 +5817,359 @@ users.get('/multi-analytics', function (req, res, next){
                 res.send({"status": 200, "error": null, "response": load, "message": "Success!"});
             });
         });
+    });
+});
+
+users.get('/individual-borrowers', function(req, res, next) {
+    query =
+        `select
+
+            ID as CustomerID,
+            concat('00000', branch) as BranchCode,
+            last_name as Surname,
+            first_name as FirstName,
+            middle_name as MiddleName,
+            dob as Date_Of_Birth,
+            'N/A' as National_Identity_Number,
+            'N/A' as Driver_License_Number,
+            bvn as BVN,
+            'N/A' as Passport_Number,
+            gender as Gender,
+            (select country_name from country where country.ID = client_country) as Nationality,
+            marital_status as Marital_Status,
+            phone as Mobile_Number,
+            address as Primary_Address,
+            'N/A' as Primary_City_LGA,
+            (select state from state where state.ID = client_state) as Primary_State,
+            (select country_name from country where country.ID = client_country) as Primary_Country,
+            'N/A' as Employment_Status,
+            job as Occupation,
+            industry as Business_Category,
+            'N/A' as Business_Sector,
+            client_type as Borrower_Type,
+            'N/A' as Other_ID,
+            'N/A' as Tax_ID,
+            email as Email_Address,
+            employer_name as Employer_Name,
+            off_address as Employer_Address,
+            'N/A' as Employer_City,
+            (select state from state where state.ID = off_state) as Employer_State,
+            (select country_name from country where country.ID = job_country) as Employer_Country,
+            CASE 
+                when (gender = 'Male') then 'Mr.'
+                when (gender = 'Female' and marital_status <> 'married') then 'Miss'
+                when (gender = 'Female' and marital_status = 'married') then 'Mrs.'
+                else 'N/A'
+            END as Title,
+            'N/A' as Place_of_Birth,
+            'N/A' as Work_Phone,
+            'N/A' as Home_Phone,
+            'N/A' as Secondary_Address,
+            'N/A' as Secondary_City,
+            'N/A' as Secondary_State,
+            'N/A' as Secondary_Country,
+            'N/A' as Spouse_Surname,
+            'N/A' as Spouse_Firstname,
+            'N/A' as Spouse_Middlename
+            
+        from clients`;
+
+    db.query(query, function (error, results, fields) {
+        if(error){
+            res.send({"status": 500, "error": error, "response": null});
+        } else {
+            res.send({"status": 200, "error": null, "response": results, "message": "Success!"});
+        }
+    });
+});
+
+users.get('/corporate-borrowers', function(req, res, next) {
+    query =
+        `select 
+
+            ID as Business_Identification_Number,
+            name as Business_Name,
+            business_type as Business_Corporate_Type,
+            'N/A' as Business_Category,
+            incorporation_date as Date_of_Incorporation,
+            clientID as Customer_ID,
+            (select concat('00000', branch) from clients where clients.ID = clientID) as Customer_Branch_Code,
+            address as Business_Office_Address,
+            'N/A' as City,
+            (select state from state where state.ID = state) as State,
+            (select country_name from country where country.ID = country) as Country, 
+            email as Email_Address,
+            'N/A' as Secondary_Address, tax_id as Tax_ID,
+            phone as Phone_Number
+            
+        from corporates`;
+
+    db.query(query, function (error, results, fields) {
+        if(error){
+            res.send({"status": 500, "error": error, "response": null});
+        } else {
+            res.send({"status": 200, "error": null, "response": results, "message": "Success!"});
+        }
+    });
+});
+
+users.get('/principal-officers', function(req, res, next) {
+    query =
+        `select 
+
+            ID as CustomerID,
+            (select fullname from clients where clients.id = clientID) as Principal_Officer1,
+            (select dob from clients where clients.ID = clientID) as Date_Of_Birth,
+            (select gender from clients where clients.ID = clientID) as Gender,
+            (select address from clients where clients.ID = clientID) as Primary_Address,
+            'N/A' as City,
+            (select state from state where state.ID = (select client_state from clients where clients.ID = clientID)) as State,
+            (select country_name from country where country.ID = (select client_country from clients where clients.ID = clientID)) as Country, 
+            'N/A' as National_Identity_Number,
+            'N/A' as Driver_License_Number,
+            (select bvn from clients where clients.ID = clientID) as BVN,
+            'N/A' as Passport_Number,
+            (select phone from clients where clients.ID = clientID) as PhoneNo1,
+            (select email from clients where clients.ID = clientID) as Email_Address,
+            (select job from clients where clients.ID = clientID) as Position_In_Business,
+            'N/A' as Principal_Officer2_Surname,
+            'N/A' as Principal_Officer2_Firstname,
+            'N/A' as Principal_Officer2_Middlename
+            
+        from corporates`;
+
+    db.query(query, function (error, results, fields) {
+        if(error){
+            res.send({"status": 500, "error": error, "response": null});
+        } else {
+            res.send({"status": 200, "error": null, "response": results, "message": "Success!"});
+        }
+    });
+});
+
+users.get('/credit-information', function(req, res, next) {
+    query =
+        `select 
+
+            userID as CustomerID,
+            ID as LoanID,
+            (select max(payment_collect_date) 
+            from application_schedules 
+            where applicationID = app.ID and payment_status = 1 group by applicationID) as Last_Payment_Date,
+            'N/A' as Loan_Status_Date,
+            disbursement_date as Disbursement_Date,
+            loan_amount as Loan_Amount,
+            (select 
+            CASE 
+            when (select count(*)
+                from application_schedules
+                where applicationID = 30 and payment_status = 1 group by applicationID) is null then loan_amount
+            else 
+                (loan_amount - 
+                (select sum(payment_amount) 
+                from application_schedules
+                where applicationID = app.ID and payment_status = 1 group by applicationID))
+            END) as Outstanding_Balance,
+            (loan_amount / duration) as Installment_Amount,
+            'NGN' as Currency,
+            (select 
+            CASE 
+            when (select datediff(curdate(), payment_collect_date) 
+                    from application_schedules 
+                    where payment_status = 0 and applicationID = app.ID 
+                    and payment_collect_date < (select curdate())
+                    group by applicationID) is null then 0
+            else (select datediff(curdate(), payment_collect_date) 
+                    from application_schedules 
+                    where payment_status = 0 and applicationID = app.ID 
+                    and payment_collect_date < (select curdate())
+                    group by applicationID)
+            END) as Days_in_Arrears,
+            (select 
+            CASE 
+            when (select sum(payment_amount) 
+                    from application_schedules 
+                    where payment_status = 0 and applicationID = app.ID 
+                    and payment_collect_date < (select curdate())
+                    group by applicationID) = '' then 0
+            else (select sum(payment_amount)
+                    from application_schedules 
+                    where payment_status = 0 and applicationID = app.ID 
+                    and payment_collect_date < (select curdate())
+                    group by applicationID)
+            END) as Overdue_Amount,
+            'N/A' as Loan_Type,
+            duration as Loan_Tenor,
+            'Monthly' as Repayment_Frequency,
+            (select (payment_amount + interest_amount)
+            from schedule_history sh where sh.ID = 
+            (select max(ID) from schedule_history shy where shy.applicationID = app.ID)
+            and status = 1) as Last_Payment_Amount,
+            (select max(payment_collect_date) 
+            from application_schedules
+            where applicationID = app.ID) as Maturity_Date,
+            'N/A' as Loan_Classification,
+            'N/A' as Legal_Challenge_Status,
+            'N/A' as Litigation_Date,
+            'N/A' as Consent_Status,
+            'N/A' as Loan_Security_Status,
+            'N/A' as Collateral_Type,
+            'N/A' as Collateral_Details,
+            'N/A' as Previous_Account_Number,
+            'N/A' as Previous_Name,
+            'N/A' as Previous_CustomerID,
+            'N/A' as Previous_BranchCode
+            
+        from applications app
+        where status <> 0
+            
+`;
+
+    db.query(query, function (error, results, fields) {
+        if(error){
+            res.send({"status": 500, "error": error, "response": null});
+        } else {
+            res.send({"status": 200, "error": null, "response": results, "message": "Success!"});
+        }
+    });
+});
+
+users.get('/portfolio-loan-risk', function(req, res, next) {
+    query =
+        `select 
+
+            ID,
+            (select fullname from clients where clients.id = userID) as Customer_Name,
+            concat('00000', (select branch from clients where clients.id = userID))as Branch,
+            (select address from clients where clients.id = userID) Address,
+            (select gender from clients where clients.id = userID) Gender,
+            (select phone from clients where clients.id = userID) Phone_Number,
+            loan_amount as Loan_Amount,
+            concat(interest_rate, '%') as Interest_Rate,
+            'N/A' as Economic_Sector,
+            (select sum(payment_amount) from application_schedules aps
+            where aps.status = 1
+            and aps.applicationID = app.ID
+            and payment_collect_date > (select curdate())) as Principal_Balance,
+            'N/A' as Customer_Account_Balance,
+            disbursement_date as Disbursement_Date,
+            (select max(payment_collect_date) 
+            from application_schedules
+            where applicationID = app.ID) as Maturation_Date,
+            (select fullname from users where users.ID = 
+            (select loan_officer from clients where clients.ID = userID)) as Credit_Officer,
+            (select 
+            CASE 
+            when (select count(*)
+                from application_schedules
+                where applicationID = app.ID and payment_status = 1 group by applicationID) is null then loan_amount
+            else 
+                (loan_amount - 
+                (select sum(payment_amount) 
+                from application_schedules
+                where applicationID = app.ID and payment_status = 1 group by applicationID))
+            END) as Total_Outstanding_Principal,
+            (select sum(payment_amount) from application_schedules aps
+            where aps.status = 1 
+            and aps.applicationID = app.ID
+            and payment_collect_date < (select curdate())) as Past_Due_Principal,
+            (select sum(interest_amount) from application_schedules aps
+            where aps.status = 1 
+            and aps.applicationID = app.ID
+            and payment_collect_date < (select curdate())) as Past_Due_Interest,
+            (select (sum(payment_amount) + sum(interest_amount)) from application_schedules aps
+            where aps.status = 1 
+            and aps.applicationID = app.ID
+            and payment_collect_date < (select curdate())) as Loan_Arrears,
+            (select payment_amount
+            from schedule_history sh where sh.ID = 
+            (select max(ID) from schedule_history shy where shy.applicationID = app.ID)
+            and sh.status = 1) as Last_Payment_Amount,
+            (select sum(interest_amount) from application_schedules aps
+            where aps.status = 1 and app.status <> 0
+            and aps.applicationID = app.ID) as Due_Interest,
+            (select 
+            CASE 
+                WHEN(select sum(interest_amount) from application_schedules aps
+                    where aps.status = 1 and aps.payment_status = 0
+                    and aps.applicationID = app.ID
+                    and interest_collect_date < (select curdate())) is null THEN 0
+                ELSE (select sum(interest_amount) from application_schedules aps
+                    where aps.status = 1 and aps.payment_status = 0
+                    and aps.applicationID = app.ID
+                    and interest_collect_date < (select curdate()))
+            END) as Unpaid_Interest,
+            'N/A' as Collateral,
+            'N/A' as Collateral_Value,
+            'N/A' as IPPIS,
+            (select 
+            CASE
+                WHEN reschedule_amount is not null THEN 'Yes'
+                ELSE 'No'
+            END) as Is_Restructured,
+            (select 
+            CASE
+            WHEN (select count(*)
+            from schedule_history sh where 
+            sh.applicationID = app.ID and sh.status = 1) is null THEN 0
+            ELSE (select sum(payment_amount)
+            from schedule_history sh where 
+            sh.applicationID = app.ID and sh.status = 1)
+            END) as Paid_Principal,
+            (select 
+            CASE
+            WHEN (select count(*)
+            from schedule_history sh where 
+            sh.applicationID = app.ID and sh.status = 1) is null THEN 0
+            ELSE (select sum(interest_amount)
+            from schedule_history sh where 
+            sh.applicationID = app.ID and sh.status = 1)
+            END) as Paid_Interest,
+            (select
+            CASE 
+                WHEN status = 0 THEN 'Inactive'
+                WHEN status = 1 THEN 'Active'
+                WHEN status = 2 THEN 'Disbursed'
+                WHEN close_status = 1 THEN 'Closed'
+            END) as Status,
+            (select payment_collect_date
+            from application_schedules aps
+            where payment_status = 0 and aps.status = 1
+            and applicationID = app.ID
+            and payment_collect_date < (select curdate())
+            group by applicationID) as Past_Due_Date,
+            (select sh.date_created
+            from schedule_history sh where sh.ID = 
+            (select max(ID) from schedule_history shy where shy.applicationID = app.ID)
+            and sh.status = 1) as Last_Repayment_Date,
+            (select 
+            CASE 
+            when (select datediff(curdate(), payment_collect_date) 
+                    from application_schedules 
+                    where payment_status = 0 and applicationID = app.ID 
+                    and payment_collect_date < (select curdate())
+                    group by applicationID) is null then 0
+            else (select datediff(curdate(), payment_collect_date) 
+                    from application_schedules 
+                    where payment_status = 0 and applicationID = app.ID
+                    and payment_collect_date < (select curdate())
+                    group by applicationID)
+            END) as Days_OverDue,
+            (select sh.date_created
+            from schedule_history sh where sh.ID = 
+            (select max(ID) from schedule_history shy where shy.applicationID = app.ID)
+            and sh.status = 1) as Last_Payment_Date
+            
+        from applications app
+            
+`;
+
+    db.query(query, function (error, results, fields) {
+        if(error){
+            res.send({"status": 500, "error": error, "response": null});
+        } else {
+            res.send({"status": 200, "error": null, "response": results, "message": "Success!"});
+        }
     });
 });
 

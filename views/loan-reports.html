@@ -210,6 +210,9 @@
                                 <li class="nav-item">
                                     <a class="nav-link" id="trends" href="#trend-reports" role="tab" data-toggle="tab">Trends</a>
                                 </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="export-reports" href="#general-reports" role="tab" data-toggle="tab">General Reports</a>
+                                </li>
                             </ul>
 
                             <!-- Tab panes -->
@@ -1443,6 +1446,38 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div role="tabpanel" class="tab-pane fade" id="general-reports">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="col-sm-12" style="padding: 20px">
+                                                <div class="row" style="padding-bottom: 10px">
+                                                    <div class="col-sm-6">
+                                                        <button id="individual-borrowers" class="btn col-sm-12 write">Individual Borrowers <i class="fa fa-download"></i></button><div id="ind-bor"></div>
+                                                    </div>
+                                                    <div class="col-sm-6">
+                                                        <button id="corporate-borrowers" class="btn btn-block col-sm-12 write">Corporate Borrowers <i class="fa fa-download"></i></button><div id="corp-bor"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="row" style="padding-bottom: 10px">
+                                                    <div class="col-sm-6">
+                                                        <button id="prin-officers" class="btn btn-block col-sm-12 write">Principal Officers <i class="fa fa-download"></i></button><div id="prin-off"></div>
+                                                    </div>
+                                                    <div class="col-sm-6">
+                                                        <button id="credit-information" class="btn btn-block col-sm-12 write">Credit Information <i class="fa fa-download"></i></button><div id="cred-info"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <!--<div class="col-sm-6">-->
+                                                    <!--<button id="guarantors-information" class="btn btn-block col-sm-12">Guarantors Information <i class="fa fa-download"></i></button><div id="gua-info"></div>-->
+                                                    <!--</div>-->
+                                                    <div class="col-sm-6">
+                                                        <button id="ptf-lr" class="btn btn-block col-sm-12 write">Portfolio Loan Risk <i class="fa fa-download"></i></button><div id="pf-lr"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1513,6 +1548,7 @@
 <script src="js/loader.js"></script>
 
 <script src="js/notifications.js"></script>
+<script src="js/excelexportjs.js"></script>
 <script>
     jQuery(document).ready(function() {
         trends();
@@ -1712,6 +1748,27 @@
             "paging": true
         });
 
+    $(document).on('click', '#individual-borrowers', function(e){
+        loadIndividualBorrowersReport();
+    });
+
+    $(document).on('click', '#corporate-borrowers', function(e){
+        loadCorporateBorrowersReport();
+    });
+
+    $(document).on('click', '#prin-officers', function(e){
+        loadPrincipalOfficersReport();
+    });
+
+    $(document).on('click', '#credit-information', function(e){
+        loadCreditInformationReport();
+    });
+
+    $(document).on('click', '#ptf-lr', function(e){
+        loadPortfolioLoanRiskReport();
+    });
+
+
     $(document).on("click", "#payments", function (e){
         loadPayments();
         payments();
@@ -1905,6 +1962,27 @@
         if (w && w[0] && (parseInt(w[0]['editable']) !== 1)){
             $(".write").hide();
         }
+
+        if  ($.grep(perms, function(e){return e.module_name === 'indBorrowersReport';}) &&
+            ($.grep(perms, function(e){return e.module_name === 'indBorrowersReport';}))[0] &&
+            ($.grep(perms, function(e){return e.module_name === 'indBorrowersReport';}))[0]['read_only'] === '0')
+            $('#individual-borrowers').hide();
+        if ($.grep(perms, function(e){return e.module_name === 'corporateBorrowersReport';}) &&
+            ($.grep(perms, function(e){return e.module_name === 'corporateBorrowersReport';}))[0] &&
+            ($.grep(perms, function(e){return e.module_name === 'corporateBorrowersReport';}))[0]['read_only'] === '0')
+            $('#corporate-borrowers').hide();
+        if ($.grep(perms, function(e){return e.module_name === 'prinOfficersReport';}) &&
+            ($.grep(perms, function(e){return e.module_name === 'prinOfficersReport';}))[0] &&
+            ($.grep(perms, function(e){return e.module_name === 'prinOfficersReport';}))[0]['read_only'] === '0')
+            $('#prin-officers').hide();
+        if ($.grep(perms, function(e){return e.module_name === 'creditInformationReport';}) &&
+            ($.grep(perms, function(e){return e.module_name === 'creditInformationReport';}))[0] &&
+            ($.grep(perms, function(e){return e.module_name === 'creditInformationReport';}))[0]['read_only'] === '0')
+            $('#credit-information').hide();
+        if ($.grep(perms, function(e){return e.module_name === 'portAtRiskReport';}) &&
+            ($.grep(perms, function(e){return e.module_name === 'portAtRiskReport';}))[0] &&
+            ($.grep(perms, function(e){return e.module_name === 'portAtRiskReport';}))[0]['read_only'] === '0')
+            $('#ptf-lr').hide();
     }
 
     function padWithZeroes(n, width, z) {
@@ -1917,7 +1995,7 @@
         $.ajax({
             'url': 'user/report-cards/',
             'type': 'get',
-            'success': function (data) {
+            'success': function (data) { console.table(data);
                 populateCards(data.response);
             },
             'error': function (err) {
@@ -8003,6 +8081,174 @@
                     }
                 });
         }
+    }
+
+    function loadIndividualBorrowersReport(){
+        let url = 'user/individual-borrowers'
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                if (data.status === 200){
+                    $("#ind-bor").excelexportjs({
+                        containerid: "dvjson",
+                        datatype: 'json',
+                        dataset: data.response,
+                        worksheetName: "Individual Borrowers",
+                        columns: getColumns(data.response)
+                    });
+                }
+                else {
+                    return swal({
+                        "icon": "error",
+                        "text": 'Database Error'
+                    });
+                }
+            },
+            'error': function (err) {
+                swal('Error in Connection!', '', 'error')
+            }
+        });
+    }
+
+    function loadCorporateBorrowersReport(){
+        let url = 'user/corporate-borrowers'
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                if (data.status === 200){
+                    $("#corp-bor").excelexportjs({
+                        containerid: "dvjson",
+                        datatype: 'json',
+                        dataset: data.response,
+                        worksheetName: "Corporate Borrowers",
+                        columns: getColumns(data.response)
+                    });
+                }
+                else {
+                    return swal({
+                        "icon": "error",
+                        "text": 'Database Error'
+                    });
+                }
+            },
+            'error': function (err) {
+                swal('Error in Connection!', '', 'error')
+            }
+        });
+    }
+
+    function loadPrincipalOfficersReport(){
+        let url = 'user/principal-officers'
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                if (data.status === 200){
+                    $("#prin-off").excelexportjs({
+                        containerid: "dvjson",
+                        datatype: 'json',
+                        dataset: data.response,
+                        worksheetName: "Principal Officers",
+                        columns: getColumns(data.response)
+                    });
+                }
+                else {
+                    return swal({
+                        "icon": "error",
+                        "text": 'Database Error'
+                    });
+                }
+            },
+            'error': function (err) {
+                swal('Error in Connection!', '', 'error')
+            }
+        });
+    }
+
+    function loadCreditInformationReport(){
+        let url = 'user/credit-information'
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                if (data.status === 200){
+                    $("#cred-info").excelexportjs({
+                        containerid: "dvjson",
+                        datatype: 'json',
+                        dataset: data.response,
+                        worksheetName: "Credit Information",
+                        columns: getColumns(data.response)
+                    });
+                }
+                else {
+                    return swal({
+                        "icon": "error",
+                        "text": 'Database Error'
+                    });
+                }
+            },
+            'error': function (err) {
+                swal('Error in Connection!', '', 'error')
+            }
+        });
+    }
+
+    function loadGuarantorsInformationReport(){
+        let url = 'user/guarantors-information'
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                if (data.status === 200){
+                    $("#gua-info").excelexportjs({
+                        containerid: "dvjson",
+                        datatype: 'json',
+                        dataset: data.response,
+                        worksheetName: "Guarantors Information",
+                        columns: getColumns(data.response)
+                    });
+                }
+                else {
+                    return swal({
+                        "icon": "error",
+                        "text": 'Database Error'
+                    });
+                }
+            },
+            'error': function (err) {
+                swal('Error in Connection!', '', 'error')
+            }
+        });
+    }
+
+    function loadPortfolioLoanRiskReport(){
+        let url = 'user/portfolio-loan-risk'
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                if (data.status === 200){
+                    $("#pf-lr").excelexportjs({
+                        containerid: "dvjson",
+                        datatype: 'json',
+                        dataset: data.response,
+                        worksheetName: "Portfolio Loan Risk",
+                        columns: getColumns(data.response)
+                    });
+                }
+                else {
+                    return swal({
+                        "icon": "error",
+                        "text": 'Database Error'
+                    });
+                }
+            },
+            'error': function (err) {
+                swal('Error in Connection!', '', 'error')
+            }
+        });
     }
 
 </script>
