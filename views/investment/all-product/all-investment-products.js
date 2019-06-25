@@ -954,7 +954,7 @@ $('#product_req_table tbody').on('click', '.custom-control-input', function () {
         'success': function (data) {
             if (data.status === undefined) {
                 $('#wait').hide();
-                swal(`Approval criteria updated updated successfully!. ${(checkboxStatus===1)?'All role(s) must approve':'Either one of the role(s) must approve'} `, '', 'success');
+                swal(`Approval criteria updated successfully!. ${(checkboxStatus===1)?'All role(s) must approve':'Either one of the role(s) must approve'} `, '', 'success');
             } else {
                 $('#wait').hide();
                 swal('Oops! An error occurred while updating approval criteria', '', 'error');
@@ -1192,7 +1192,7 @@ function setPriority(id, priority) {
         'success': function (data) {
             if (data.status === undefined) {
                 $('#wait').hide();
-                swal(`Approval priority updated updated successfully`, '', 'success');
+                swal(`Approval priority updated successfully`, '', 'success');
                 table2.ajax.reload(null, false);
             } else {
                 $('#wait').hide();
@@ -1216,7 +1216,7 @@ function setReviewPriority(id, priority) {
         'success': function (data) {
             if (data.status === undefined) {
                 $('#wait').hide();
-                swal(`Review priority updated updated successfully`, '', 'success');
+                swal(`Review priority updated successfully`, '', 'success');
                 table2.ajax.reload(null, false);
             } else {
                 $('#wait').hide();
@@ -1240,7 +1240,7 @@ function setPostPriority(id, priority) {
         'success': function (data) {
             if (data.status === undefined) {
                 $('#wait').hide();
-                swal(`Post priority updated updated successfully`, '', 'success');
+                swal(`Post priority updated successfully`, '', 'success');
                 table2.ajax.reload(null, false);
             } else {
                 $('#wait').hide();

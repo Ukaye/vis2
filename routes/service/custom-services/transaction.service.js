@@ -682,7 +682,6 @@ router.post('/reviews', function (req, res, next) {
             }
         })
         .then(function (response) {
-            res.send(response.data);
             if (response.data.status === undefined) {
                 query = `Select 
                         (Select Count(*) as total_reviewed from investment_op_approvals where txnId = ${data.txnId} AND isReviewed = 1 AND method = 'REVIEW') as total_reviewed,
