@@ -587,8 +587,8 @@ router.post('/approves', function (req, res, next) {
                         query: query
                     }
                 }).then(counter => {
-                    if ((counter.data[0].total_approvedBy === counter.data[0].total_approved) || (counter.data[0].isOptional > 0) ||
-                        (counter.data[0].priorityTotal !== 0 && counter.data[0].priorityTotal === counter.data[0].priorityItemTotal)) {
+                    if (((counter.data[0].total_approvedBy === counter.data[0].total_approved) || (counter.data[0].isOptional > 0) ||
+                            (counter.data[0].priorityTotal !== 0 && counter.data[0].priorityTotal === counter.data[0].priorityItemTotal)) && data.status === '1') {
                         query = `UPDATE investment_txns SET approvalDone = ${1} WHERE ID =${data.txnId}`;
                         endpoint = `/core-service/get`;
                         url = `${HOST}${endpoint}`;
@@ -696,8 +696,8 @@ router.post('/reviews', function (req, res, next) {
                         query: query
                     }
                 }).then(counter => {
-                    if ((counter.data[0].total_reviewedBy === counter.data[0].total_reviewed) || (counter.data[0].isOptional > 0) ||
-                        (counter.data[0].priorityTotal !== 0 && counter.data[0].priorityTotal === counter.data[0].priorityItemTotal)) {
+                    if (((counter.data[0].total_reviewedBy === counter.data[0].total_reviewed) || (counter.data[0].isOptional > 0) ||
+                            (counter.data[0].priorityTotal !== 0 && counter.data[0].priorityTotal === counter.data[0].priorityItemTotal)) && data.status === '1') {
                         query = `UPDATE investment_txns SET reviewDone = ${1} WHERE ID =${data.txnId}`;
                         endpoint = `/core-service/get`;
                         url = `${HOST}${endpoint}`;
@@ -804,8 +804,8 @@ router.post('/posts', function (req, res, next) {
                         query: query
                     }
                 }).then(counter => {
-                    if ((counter.data[0].total_postedBy === counter.data[0].total_posted) || (counter.data[0].isOptional > 0) ||
-                        (counter.data[0].priorityTotal !== 0 && counter.data[0].priorityTotal === counter.data[0].priorityItemTotal)) {
+                    if (((counter.data[0].total_postedBy === counter.data[0].total_posted) || (counter.data[0].isOptional > 0) ||
+                            (counter.data[0].priorityTotal !== 0 && counter.data[0].priorityTotal === counter.data[0].priorityItemTotal)) && data.status === '1') {
                         query = (data.isWallet.toString() === '0') ?
                             `SELECT amount,is_credit,isApproved FROM investment_txns WHERE investmentId = ${data.investmentId}` :
                             `SELECT amount,is_credit,isApproved FROM investment_txns WHERE clientid = ${data.clientId} AND isWallet = 1`;

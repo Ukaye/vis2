@@ -626,7 +626,6 @@ router.get('/client-investments/:id', function (req, res, next) {
             query: query
         }
     }).then(response => {
-        console.log(response.data);
         let uniqueTxns = [];
         response.data.map(d => {
             let chk = uniqueTxns.filter(x => x.ID === d.ID);
