@@ -10,7 +10,8 @@
         $uploadCSV = $("#uploadCSV");
 
     function previewStatement(rows) {
-        let table = $('<table border="1" style="text-align: center; width: 100%;" />');
+        let skip = 0;
+            table = $('<table border="1" style="text-align: center; width: 100%;" />');
         for (let i = -1; i < rows.length; i++) {
             let cells,
                 cells_,
@@ -18,8 +19,10 @@
                 row = $("<tr />");
             if (i >= 0){
                 cells_ = CSVtoArray(rows[i]);
-                if (!cells_)
+                if (!cells_) {
+                    skip++;
                     continue;
+                }
             }
             if (i === -1) {
                 cells = ['POSTING DATE', 'VALUE DATE', 'CREDIT', 'DEBIT', 'BALANCE', 'DESCRIPTION'];
@@ -36,15 +39,15 @@
                     let cell = $("<td />");
                     if (i > 0) {
                         if (j === 0 || j === 1) {
-                            cell.html(`<input id="invoice-${i}-${j}" type="date" value="${formatDate(cells[j])}" />`);
+                            cell.html(`<input id="invoice-${i-skip}-${j}" type="date" value="${formatDate(cells[j])}" />`);
                         } else if (j === 2 || j === 3 || j === 4) {
-                            cell.html(`<span id="invoice-${i}-${j}">${numberToCurrencyformatter(cells[j])}</span>`);
+                            cell.html(`<span id="invoice-${i-skip}-${j}">${numberToCurrencyformatter(cells[j])}</span>`);
                         } else {
-                            cell.html(`<span id="invoice-${i}-${j}">${cells[j]}</span>`);
+                            cell.html(`<span id="invoice-${i-skip}-${j}">${cells[j]}</span>`);
                         }
                     } else {
                         if (i === 0) {
-                            let select = `<select id="invoice-${i}-${j}">`;
+                            let select = `<select id="invoice-0-${j}">`;
                             for (let k = 0; k < headers.length; k++) {
                                 headers[k] =  headers[k].trim();
                                 if (headers[k] === cells[j]) {
@@ -111,7 +114,7 @@
             switch (target_index) {
                 case '0':
                 case '1': {
-                    $invoice.val(source_value);
+                    $invoice.val(formatDate(source_value));
                     break;
                 }
                 case '2':
@@ -130,7 +133,7 @@
         }
     });
 
-    function init(settings) {
+    function init() {
         $uploadCSV.bind("click", function () {
             let regex = /^([a-zA-Z0-9\s_\\.\-:])+(.csv|.txt)$/;
             if (regex.test($csvUpload.val().toLowerCase())) {
