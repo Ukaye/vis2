@@ -241,7 +241,6 @@ router.post('/fees', function (req, res, next) {
                             grade.feeSettingsID = results[0]['ID'];
                             connection.query('INSERT INTO fee_grades SET ?', grade, function (error, result, fields) {
                                 if (error) {
-                                    console.log(error);
                                 }
                                 callback();
                             });

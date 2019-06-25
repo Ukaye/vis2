@@ -751,7 +751,7 @@ function setReviewRequirements(value) {
                                         <div class="form-group">
                                             <label class="form-control-label"><strong>${(element.role_name===null)?'Role Not Required':element.role_name}</strong></label>
                                             <div class="form-control-label">
-                                                <small>Amount: </small><small class="text-muted">${element.amount}</small>
+                                                <small>Amount: </small><small class="text-muted">${formater(element.amount.toString())}</small>
                                             </div>
                                             <div class="form-control-label">
                                                 <small>Verified By: </small><small class="text-muted">${(element.fullname===null)?'Not Specified':element.fullname}</small>
@@ -786,57 +786,63 @@ function setReviewRequirements(value) {
 
 function onExecutiveTransaction() {
     let _mRoleId = [];
-    let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === opsObj.operationId && status === 1);
-    if (mRoleId.length === 0) {
-        _mRoleId.push({
-            roles: "[]",
-            operationId: opsObj.operationId
-        });
-    } else {
-        _mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === opsObj.operationId && status === 1);
-    }
-    let investmentOps = {
-        amount: $("#input_amount").val(),
-        description: $("#input_description").val(),
-        is_credit: opsObj.is_credit,
-        isWithdrawal: (opsObj.operationId === '3') ? 1 : 0,
-        isDeposit: (opsObj.operationId === '1') ? 1 : 0,
-        isTransfer: (opsObj.operationId === '2') ? 1 : 0,
-        investmentId: (isWalletPage === 0) ? selectedInvestment.investmentId : '',
-        operationId: opsObj.operationId,
-        is_capital: 0,
-        isApproved: 0,
-        approvedBy: '',
-        createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
-        roleIds: _mRoleId,
-        productId: selectedInvestment.productId,
-        isWallet: isWalletPage,
-        clientId: sURLVariables,
-        txn_date: $('#input_txn_date').val()
-    };
+    if ($("#input_amount").val() !== '' &&
+        $("#input_amount").val() !== ' ' &&
+        $("#input_txn_date").val() !== '' &&
+        $("#input_txn_date").val() !== ' ') {
+        let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === opsObj.operationId && status === 1);
+        if (mRoleId.length === 0) {
+            _mRoleId.push({
+                roles: "[]",
+                operationId: opsObj.operationId
+            });
+        } else {
+            _mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === opsObj.operationId && status === 1);
+        }
+        let investmentOps = {
+            amount: $("#input_amount").val(),
+            description: $("#input_description").val(),
+            is_credit: opsObj.is_credit,
+            isWithdrawal: (opsObj.operationId === '3') ? 1 : 0,
+            isDeposit: (opsObj.operationId === '1') ? 1 : 0,
+            isTransfer: (opsObj.operationId === '2') ? 1 : 0,
+            investmentId: (isWalletPage === 0) ? selectedInvestment.investmentId : '',
+            operationId: opsObj.operationId,
+            is_capital: 0,
+            isApproved: 0,
+            approvedBy: '',
+            createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
+            roleIds: _mRoleId,
+            productId: selectedInvestment.productId,
+            isWallet: isWalletPage,
+            clientId: sURLVariables,
+            txn_date: $('#input_txn_date').val()
+        };
 
-
-    $.ajax({
-        url: `investment-txns/create`,
-        'type': 'post',
-        'data': investmentOps,
-        'success': function (data) {
-            if (data.status === undefined) {
-                $('#wait').hide();
-                $("#input_amount").val('');
-                $("#input_description").val('');
-                swal('Deposit transaction successfully!', '', 'success');
-                bindDataTable(selectedInvestment.investmentId, false);
-            } else {
+        $.ajax({
+            url: `investment-txns/create`,
+            'type': 'post',
+            'data': investmentOps,
+            'success': function (data) {
+                if (data.status === undefined) {
+                    $('#wait').hide();
+                    $("#input_amount").val('');
+                    $("#input_description").val('');
+                    swal('Deposit transaction successful!', '', 'success');
+                    bindDataTable(selectedInvestment.investmentId, false);
+                } else {
+                    $('#wait').hide();
+                    swal('Oops! An error occurred while executing deposit transaction', '', 'error');
+                }
+            },
+            'error': function (err) {
                 $('#wait').hide();
                 swal('Oops! An error occurred while executing deposit transaction', '', 'error');
             }
-        },
-        'error': function (err) {
-            $('#wait').hide();
-            swal('Oops! An error occurred while executing deposit transaction', '', 'error');
-        }
-    });
+        });
+    } else {
+        swal('Oops! Missing required field(s)', '', 'error');
+    }
 }
 
 // $('#bootstrap-data-table2 tbody').on('click', '.dropdown-item', function () {
@@ -1192,7 +1198,7 @@ function setApprovalRequirements(value) {
                                         <div class="form-group">
                                             <label class="form-control-label"><strong>${(element.role_name===null)?'Role Not Required':element.role_name}</strong></label>
                                             <div class="form-control-label">
-                                                <small>Amount: </small><small class="text-muted">${element.amount}</small>
+                                                <small>Amount: </small><small class="text-muted">${formater(element.amount.toString())}</small>
                                             </div>
                                             <div class="form-control-label">
                                                 <small>Verified By: </small><small class="text-muted">${(element.fullname===null)?'Not Specified':element.fullname}</small>
@@ -1244,7 +1250,7 @@ function setPostRequirements(value) {
                                     <div class="form-group">
                                         <label class="form-control-label"><strong>${(element.role_name===null)?'Role Not Required':element.role_name}</strong></label>
                                         <div class="form-control-label">
-                                            <small>Amount: </small><small class="text-muted">${element.amount}</small>
+                                            <small>Amount: </small><small class="text-muted">${formater(element.amount.toString())}</small>
                                         </div>
                                         <div class="form-control-label">
                                             <small>Verified By: </small><small class="text-muted">${(element.fullname===null)?'Not Specified':element.fullname}</small>
@@ -1336,9 +1342,7 @@ function onReviewed(value, approvedId, txnId, id) {
                 swal('Execution successful!', '', 'success');
                 $("#review_list_group").html('');
                 setReviewRequirements(data_row);
-                // bindDataTable(selectedInvestment.investmentId, false);
                 table.ajax.reload(null, false);
-                // location.reload();
             } else {
                 $('#wait').hide();
                 swal('Oops! An error occurred while executing action', '', 'error');
