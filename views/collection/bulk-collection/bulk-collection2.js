@@ -3,7 +3,9 @@ $(document).ready(function() {
     getInvoices();
 });
 
-let selectedInvoices = [],
+let allInvoices = [],
+    allPayments = [],
+    selectedInvoices = [],
     selectedPayments = [];
 
 function getInvoices(){
@@ -12,6 +14,7 @@ function getInvoices(){
         url: '/collection/invoices/due',
         success: function (data) {
             let response = data.response;
+            allInvoices = response;
             $.each(response, function (key, val) {
                 $('#invoices').append(`
                     <li id="invoice-${val.ID}" class="ui-state-default">
@@ -38,6 +41,7 @@ function getPayments(){
         url: '/collection/bulk_upload',
         success: function (data) {
             let response = data.response;
+            allPayments = response;
             $.each(response, function (key, val) {
                 let type,
                     amount;
@@ -193,4 +197,64 @@ function postPayment(overpayment) {
             notification('Oops! An error occurred while posting payment(s)', '', 'error');
         }
     });
+}
+
+function findMatch() {
+    $('#invoices').html('');
+    $('#payments').html('');
+    for (let i=0; i<allInvoices.length; i++) {
+        let invoice = allInvoices[i],
+            check = searchForKeywords(invoice);
+
+    }
+}
+
+function searchForKeywords(invoice) {
+    let phoneMatch = ($.grep(allPayments, (e) => {
+            let exp = new RegExp(invoice.phone, 'gi');
+            return e.description.match(exp);
+        }))[0],
+        firstnameMatch = ($.grep(allPayments, (e) => {
+            let exp = new RegExp(invoice.first_name, 'gi');
+            return e.description.match(exp);
+        }))[0],
+        middlenameMatch = ($.grep(allPayments, (e) => {
+            let exp = new RegExp(invoice.middle_name, 'gi');
+            return e.description.match(exp);
+        }))[0],
+        lastnameMatch = ($.grep(allPayments, (e) => {
+            let exp = new RegExp(invoice.last_name, 'gi');
+            return e.description.match(exp);
+        }))[0],
+        amountMatch = ($.grep(allPayments, (e) => {
+            let exp = new RegExp(invoice.amount, 'gi');
+            return e.description.match(exp);
+        }))[0];
+
+    let status = false,
+        result = {};
+    if (phoneMatch) {
+        status = true;
+        result.key = 'phone';
+        result.value = invoice.phone;
+    } else if (firstnameMatch) {
+        status = true;
+        result.key = 'first_name';
+        result.value = invoice.first_name;
+    } else if (middlenameMatch) {
+        status = true;
+        result.key = 'middle_name';
+        result.value = invoice.middle_name;
+    } else if (lastnameMatch) {
+        status = true;
+        result.key = 'last_name';
+        result.value = invoice.last_name;
+    } else if (amountMatch) {
+        status = true;
+        result.key = 'amount';
+        result.value = invoice.amount;
+    }
+    if (!status)
+        return false;
+    return result;
 }
