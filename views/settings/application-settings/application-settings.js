@@ -519,7 +519,7 @@ function addBadChequeReason() {
     });
 }
 
-function populateBadChequeReasons(data){
+function populateBadChequeReasons(data) {
     let $reasons = $("#reasons");
     $reasons.DataTable().clear();
     let reasons = [];
