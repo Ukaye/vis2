@@ -9,7 +9,7 @@ let selectedInvoices = [],
 function getInvoices(){
     $.ajax({
         type: 'GET',
-        url: '/user/collections/filter?&&type=overdue&&range=0',
+        url: '/collection/invoices/due',
         success: function (data) {
             let response = data.response;
             $.each(response, function (key, val) {
