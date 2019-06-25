@@ -840,12 +840,12 @@ function onRemoveItemReq(value) {
                     'success': function (data) {
                         if (data.status === undefined) {
                             $('#wait').hide();
-                            swal('Approval remove successfully!', '', 'success');
+                            swal('Approval role removed successfully!', '', 'success');
                             delete reqObject.ID;
                             getProductRequirement(reqObject.productId);
                         } else {
                             $('#wait').hide();
-                            swal('Oops! An error occurred while remove requirement', '', 'error');
+                            swal('Oops! An error occurred while removing role', '', 'error');
                         }
                     },
                     'error': function (err) {
@@ -870,22 +870,22 @@ function onRemoveItemReview(value) {
         .then((willDelete) => {
             if (willDelete) {
                 $.ajax({
-                    url: `investment-products/remove-requirements/${value}`,
+                    url: `investment-products/remove-reviews/${value}`,
                     'type': 'get',
                     'success': function (data) {
                         if (data.status === undefined) {
                             $('#wait').hide();
-                            swal('Approval remove successfully!', '', 'success');
+                            swal('Review role removed successfully!', '', 'success');
                             delete reqObject.ID;
-                            getProductRequirement(reqObject.productId);
+                            getProductReview(reqObject.productId);
                         } else {
                             $('#wait').hide();
-                            swal('Oops! An error occurred while remove requirement', '', 'error');
+                            swal('Oops! An error occurred while removing role', '', 'error');
                         }
                     },
                     'error': function (err) {
                         $('#wait').hide();
-                        swal('Oops! An error occurred while remove requirement', '', 'error');
+                        swal('Oops! An error occurred while removing role', '', 'error');
                     }
                 });
             } else {
@@ -910,17 +910,17 @@ function onRemoveItemPost(value) {
                     'success': function (data) {
                         if (data.status === undefined) {
                             $('#wait').hide();
-                            swal('Post role(s) remove successfully!', '', 'success');
+                            swal('Post role removed successfully!', '', 'success');
                             delete reqObject.ID;
-                            getProductRequirement(reqObject.productId);
+                            getProductPost(reqObject.productId);
                         } else {
                             $('#wait').hide();
-                            swal('Oops! An error occurred while remove Post role(s)', '', 'error');
+                            swal('Oops! An error occurred while removing role', '', 'error');
                         }
                     },
                     'error': function (err) {
                         $('#wait').hide();
-                        swal('Oops! An error occurred while remove Post role(s)', '', 'error');
+                        swal('Oops! An error occurred while removing role', '', 'error');
                     }
                 });
             } else {
@@ -937,7 +937,9 @@ $('#product_req_table_review tbody').on('click', '.dropdown-item', function () {
     selectedRow = table2.row($(this).parents('tr')).data();
 });
 
-
+$('#product_req_table_post tbody').on('click', '.dropdown-item', function () {
+    selectedRow = table2.row($(this).parents('tr')).data();
+});
 
 
 $('#product_req_table tbody').on('click', '.custom-control-input', function () {
@@ -968,10 +970,8 @@ let movedToItems = [];
 let movedFromItems = [];
 
 function onSelectedPariority(operationId) {
-    console.log("Enetr");
     movedToItems = [];
     movedFromItems = [];
-    console.log(roleObject);
     let operationRoles = JSON.parse(JSON.stringify(roleObject.filter(x => x.operationId === operationId.toString())[0]));
 
     movedFromItems = operationRoles.roles;
@@ -995,6 +995,8 @@ function onSelectedPariority(operationId) {
     });
 
 }
+
+//onSelectedPost
 
 function onSelectedReviewPariority(operationId) {
     movedToItems = [];
@@ -1023,7 +1025,7 @@ function onSelectedReviewPariority(operationId) {
 
 }
 
-function onSelectedReviewPost(operationId) {
+function onSelectedPostPariority(operationId) {
     movedToItems = [];
     movedFromItems = [];
     let operationRoles = JSON.parse(JSON.stringify(roleObject.filter(x => x.operationId === operationId.toString())[0]));
@@ -1037,14 +1039,14 @@ function onSelectedReviewPost(operationId) {
     $("#lstRolesPost_1").html('');
     movedFromItems.map(x => {
         $("#lstRolesPost_1").append(`
-            <button type="button" id="${x.id}" class="list-group-item list-group-item-action" onclick="onChooseReviewPariority(${x.id})">${x.name}</button>
+            <button type="button" id="${x.id}" class="list-group-item list-group-item-action" onclick="onChoosePostPariority(${x.id})">${x.name}</button>
         `);
     });
 
     $("#lstRolesPost_2").html('');
     movedToItems.map(x => {
         $("#lstRolesPost_2").append(`
-            <button type="button" id="${x.id}" class="list-group-item list-group-item-action" onclick="onRemoveReviewPariority(${x.id})">${x.name}</button>
+            <button type="button" id="${x.id}" class="list-group-item list-group-item-action" onclick="onRemovePostPariority(${x.id})">${x.name}</button>
         `);
     });
 
@@ -1078,7 +1080,6 @@ function onChooseReviewPariority(id) {
     item[0].name = item[0].name.replace(/'/g, '');
     movedToItems.push(item[0]);
     movedFromItems = movedFromItems.filter(x => x.id !== id);
-    console.log(movedFromItems, item, movedToItems, roleObject);
     $("#lstRolesReview_1").html('');
     movedFromItems.map(x => {
         $("#lstRolesReview_1").append(`
@@ -1114,7 +1115,6 @@ function onChoosePostPariority(id) {
             <button type="button" id="${x.id}" class="list-group-item list-group-item-action" onclick="onRemoveReviewPariority(${x.id})">${x.name}</button>
         `);
     });
-
     setPostPriority(selectedRow.ID, movedToItems);
 }
 
@@ -1214,7 +1214,6 @@ function setReviewPriority(id, priority) {
             priority: JSON.stringify(priority)
         },
         'success': function (data) {
-            console.log(data);
             if (data.status === undefined) {
                 $('#wait').hide();
                 swal(`Review priority updated updated successfully`, '', 'success');

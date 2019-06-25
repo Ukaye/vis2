@@ -7,6 +7,7 @@ let offset = 0;
 let isWalletPage = 1;
 let sPageURL = '';
 let sURLVariables = "";
+let selectedOpsRequirement = [];
 $(document).ready(function () {
     $('#bootstrap-data-table-export').DataTable();
     sPageURL = window.location.search.substring(1);
@@ -720,6 +721,7 @@ $("#input_amount").on("focusout", function (event) {
 });
 
 
+
 function setReviewRequirements(value) {
     let pbody = $("#transactionDetails");
     let tr = "";
@@ -735,6 +737,7 @@ function setReviewRequirements(value) {
         'type': 'get',
         'success': function (data) {
             if (data.length > 0) {
+                selectedOpsRequirement = data;
                 if (data.status === undefined) {
                     $('#viewReviewModalHeader').html(data[0].description);
                     $('#viewReviewModalHeader2').html(data[0].ref_no);
@@ -759,8 +762,8 @@ function setReviewRequirements(value) {
                                         </div>
                                     </div>
                                     <div class="form-group col-6" style="vertical-align: middle">
-                                        <button type="button" ${(element.isReviewed===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onReviewed(${1},${element.approvalId},${element.txnId})">Review</button>
-                                        <button type="button" ${(element.isReviewed===0)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onReviewed(${0},${element.approvalId},${element.txnId})">Deny</button>
+                                        <button type="button" ${(element.isReviewed===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onReviewed(${1},${element.approvalId},${element.txnId},${element.ID})">Review</button>
+                                        <button type="button" ${(element.isReviewed===0)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onReviewed(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
                                     </div>
                                 </div>
                             </li>`).trigger('change');
@@ -779,6 +782,7 @@ function setReviewRequirements(value) {
         }
     });
 }
+
 
 function onExecutiveTransaction() {
     let _mRoleId = [];
@@ -1173,6 +1177,7 @@ function setApprovalRequirements(value) {
         url: `investment-txns/get-txn-user-roles/${value.ID}?method='APPROVAL'&userId=${(JSON.parse(localStorage.getItem("user_obj"))).ID}`,
         'type': 'get',
         'success': function (data) {
+            selectedOpsRequirement = data;
             if (data.length > 0) {
                 if (data.status === undefined) {
                     $('#viewListApprovalModalHeader').html(data[0].description);
@@ -1198,8 +1203,8 @@ function setApprovalRequirements(value) {
                                         </div>
                                     </div>
                                     <div class="form-group col-6" style="vertical-align: middle">
-                                        <button type="button" ${(element.isApproved===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onApproved(${1},${element.approvalId},${element.txnId})">Approve</button>
-                                        <button type="button" ${(element.isApproved===0)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onApproved(${0},${element.approvalId},${element.txnId})">Deny</button>
+                                        <button type="button" ${(element.isApproved===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onApproved(${1},${element.approvalId},${element.txnId},${element.ID})">Approve</button>
+                                        <button type="button" ${(element.isApproved===0)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onApproved(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
                                     </div>
                                 </div>
                             </li>`).trigger('change');
@@ -1230,6 +1235,7 @@ function setPostRequirements(value) {
                 $('#viewPostModalHeader2').html(data[0].ref_no);
                 $('#wait').hide();
                 if (data.length > 0) {
+                    selectedOpsRequirement = data;
                     data.forEach(element => {
                         if (element.method === 'POST') {
                             $("#post_list_group").append(`<li class="list-group-item">
@@ -1249,8 +1255,8 @@ function setPostRequirements(value) {
                                     </div>
                                 </div>
                                 <div class="form-group col-6" style="vertical-align: middle">
-                                    <button type="button" ${(element.isPosted===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onPost(${1},${element.approvalId},${element.txnId})">Post</button>
-                                    <button type="button" ${(element.isPosted===0)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onPost(${0},${element.approvalId},${element.txnId})">Deny</button>
+                                    <button type="button" ${(element.isPosted===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onPost(${1},${element.approvalId},${element.txnId},${element.ID})">Post</button>
+                                    <button type="button" ${(element.isPosted===0)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onPost(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
                                 </div>
                             </div>
                         </li>`).trigger('change');
@@ -1271,7 +1277,8 @@ function onCloseApproval() {
     $("#role_list_group").html('');
 }
 
-function onApproved(value, approvedId, txnId) {
+function onApproved(value, approvedId, txnId, id) {
+    let priority = selectedOpsRequirement.find(x => x.ID === id).priority;
     let _data = {
         status: value,
         id: approvedId,
@@ -1279,7 +1286,8 @@ function onApproved(value, approvedId, txnId) {
         isCredit: data_row,
         amount: data_row.amount,
         balance: data_row.txnBalance,
-        userId: (JSON.parse(localStorage.getItem("user_obj"))).ID
+        userId: (JSON.parse(localStorage.getItem("user_obj"))).ID,
+        priority: priority
     }
     $.ajax({
         url: `investment-txns/approves`,
@@ -1305,7 +1313,9 @@ function onApproved(value, approvedId, txnId) {
     });
 }
 
-function onReviewed(value, approvedId, txnId) {
+function onReviewed(value, approvedId, txnId, id) {
+    let priority = selectedOpsRequirement.find(x => x.ID === id).priority;
+
     let _data = {
         status: value,
         id: approvedId,
@@ -1313,7 +1323,8 @@ function onReviewed(value, approvedId, txnId) {
         isCredit: data_row,
         amount: data_row.amount,
         balance: data_row.txnBalance,
-        userId: (JSON.parse(localStorage.getItem("user_obj"))).ID
+        userId: (JSON.parse(localStorage.getItem("user_obj"))).ID,
+        priority: `${priority}`
     }
     $.ajax({
         url: `investment-txns/reviews`,
@@ -1344,7 +1355,8 @@ function onReviewed(value, approvedId, txnId) {
 
 
 
-function onPost(value, approvedId, txnId) {
+function onPost(value, approvedId, txnId, id) {
+    let priority = selectedOpsRequirement.find(x => x.ID === id).priority;
     let _data = {
         status: value,
         id: approvedId,
@@ -1366,7 +1378,8 @@ function onPost(value, approvedId, txnId) {
         isMoveFundTransfer: data_row.isMoveFundTransfer,
         isWallet: data_row.isWallet,
         clientId: data_row.clientId,
-        isPaymentMadeByWallet: data_row.isPaymentMadeByWallet
+        isPaymentMadeByWallet: data_row.isPaymentMadeByWallet,
+        priority: priority
 
     }
     $.ajax({
