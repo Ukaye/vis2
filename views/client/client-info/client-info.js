@@ -6,7 +6,6 @@ $(document).ready(function () {
     loadInfo();
     loadActivities();
     bindInvestmentDataTable(application_id);
-    getBanks();
 });
 
 var myTable = $('#vehicles-table')
@@ -129,6 +128,7 @@ function loadInfo() {
         'success': function (data) {
             //                var details = JSON.parse(data);
             client_det = data;
+            getBanks();
             populateCards(client_det);
         },
         'error': function (err) {
@@ -488,7 +488,7 @@ function getBadChequeReasons() {
 function getBadCheques() {
     $.ajax({
         type: 'GET',
-        url: '/client/bad_cheque',
+        url: `/client/bad_cheque/${client_det[0]['ID']}`,
         success: function (response) {
             populateBadChequeReasons(response.response);
         }
@@ -498,12 +498,12 @@ function getBadCheques() {
 $("#cheque-form").submit(function (e) {
     e.preventDefault();
     let cheque = {};
-    cheque.name = $('#cheque-name').val();
+    cheque.clientID = client_det[0]['ID'];
     cheque.number = $('#cheque-no').val();
     cheque.bank = $('#cheque-bank').val();
     cheque.account = $('#cheque-account').val();
     cheque.reason = $('#cheque-reason').val();
-    if (!cheque.name || !cheque.number || cheque.bank === 'Select Bank' || !cheque.account || cheque.reason === 'Select Reason')
+    if (!cheque.clientID || !cheque.number || cheque.bank === 'Select Bank' || !cheque.account || cheque.reason === 'Select Reason')
         return notification('Kindly fill all required field(s)','','warning');
     cheque.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
 
@@ -541,7 +541,6 @@ function populateBadChequeReasons(data){
         data: cheques,
         buttons: [],
         columns: [
-            { data: "name" },
             { data: "number" },
             { data: "bank" },
             { data: "account" },
@@ -563,7 +562,7 @@ function removeBadChequeReason(id) {
             if (yes) {
                 $('#wait').show();
                 $.ajax({
-                    'url': '/client/bad_cheque/'+id,
+                    'url': `/client/bad_cheque/${id}`,
                     'type': 'delete',
                     'success': function (response) {
                         $('#wait').hide();
