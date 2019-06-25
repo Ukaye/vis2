@@ -2086,7 +2086,7 @@ users.get('/collections/filter', function(req, res, next) {
 });
 
 function collectionsQueryMiddleware(query, type, range, today, callback) {
-    switch (type){
+    switch (type) {
         case 'due': {
             query = query.concat(collectionDueRangeQuery(today, range));
             break;
