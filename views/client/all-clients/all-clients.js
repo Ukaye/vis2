@@ -671,20 +671,20 @@ function checkForEdit(){
     }
 }
 
-$("#phone").on("keyup", function () {
-    let val = $("#phone").val();
-    $("#phone").val(numbersOnly(val));
-});
-
-$("#bvn").on("keyup", function () {
-    let val = $("#bvn").val();
-    $("#bvn").val(numbersOnly(val));
-});
-
-$("#account").on("keyup", function () {
-    let val = $("#account").val();
-    $("#account").val(numbersOnly(val));
-});
+// $("#phone").on("keyup", function () {
+//     let val = $("#phone").val();
+//     $("#phone").val(numbersOnly(val));
+// });
+//
+// $("#bvn").on("keyup", function () {
+//     let val = $("#bvn").val();
+//     $("#bvn").val(numbersOnly(val));
+// });
+//
+// $("#account").on("keyup", function () {
+//     let val = $("#account").val();
+//     $("#account").val(numbersOnly(val));
+// });
 
 $("#years_add").on("keyup", function () {
     let val = $("#years_add").val();
@@ -713,7 +713,8 @@ function submitDetails(){
     obj.middle_name = $.trim($('#middle_name').val());
     obj.last_name = $.trim($('#last_name').val());
     obj.fullname = $('#first_name').val() + ' '+ $('#middle_name').val() + ' ' +$('#last_name').val();
-    obj.phone = numbersOnly($('#phone').val());
+    // obj.phone = numbersOnly($('#phone').val());
+    obj.phone = $('#phone').val();
     obj.address = $('#address').val();
     obj.email = $('#email').val();
     obj.gender = $('#gender').find('option:selected').attr('value');
@@ -721,8 +722,10 @@ function submitDetails(){
     obj.marital_status = $('#marital_status').find('option:selected').attr('value');
     obj.loan_officer = $('#loan_officer').find('option:selected').attr('id');
     obj.branch = $('#branch').find('option:selected').attr('id');
-    obj.bvn= numbersOnly($("#bvn").val());
-    obj.account= numbersOnly($("#account").val());
+    // obj.bvn= numbersOnly($("#bvn").val());
+    obj.bvn= $("#bvn").val();
+    // obj.account= numbersOnly($("#account").val());
+    obj.account= $("#account").val();
     obj.bank = $('#bank').find('option:selected').attr('id');
     obj.client_state = $('#client_state').find('option:selected').attr('id');
     obj.postcode = $("#postcode").val();
