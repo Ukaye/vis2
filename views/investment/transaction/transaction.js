@@ -328,6 +328,7 @@ function bindDataTable(id) {
             {
                 width: "auto",
                 "mRender": function (data, type, full) {
+                    console.log(full);
                     return `<div class="dropdown dropleft">
                         <i class="fa fa-ellipsis-v" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         </i> 

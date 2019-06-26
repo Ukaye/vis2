@@ -92,6 +92,9 @@ router.get('/get-products', function (req, res, next) {
 router.post('/requirements', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     var data = req.body
+    if (data.priority === '[]') { 
+        delete data.priority;
+    }
     data.createdDate = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `INSERT INTO investment_product_requirements SET ?`;
     let endpoint = `/core-service/post?query=${query}`;
@@ -339,6 +342,9 @@ router.post('/update-approval/:id', function (req, res, next) {
 router.post('/reviews', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     var data = req.body;
+    if (data.priority === '[]') {
+        delete data.priority;
+    }
     data.createdDate = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `INSERT INTO investment_product_reviews SET ?`;
     let endpoint = `/core-service/post?query=${query}`;
@@ -395,10 +401,12 @@ async function getProductReviewItems(HOST, search_string, order, offset, limit, 
                 query: query
             }
         });
+        console.log(response.data);
         let roles = [];
         if (response.data.length > 0) {
             for (let index = 0; index < response.data.length; index++) {
                 let x = response.data[index];
+                console.log(x.priority);
                 x.roles = [];
                 x.htmlTag = "";
                 x.roleId = JSON.parse(x.roleId);
@@ -435,6 +443,7 @@ router.get('/reviews/:id', function (req, res, next) {
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
     getProductReviewItems(HOST, search_string, order, offset, limit, req.params.id, draw).then(payload => {
+        console.log(payload);
         res.send(payload);
     }, err => {
         res.send(err);
@@ -608,6 +617,7 @@ router.get('/get-product-reviews/:id', function (req, res, next) {
 router.post('/update-review-priority/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.body
+    console.log(data);
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `UPDATE investment_product_reviews SET priority = '${data.priority}' , updatedDate = '${dt}' WHERE ID =${req.params.id}`;
     let endpoint = `/core-service/post?query=${query}`;
@@ -637,6 +647,9 @@ router.post('/update-review-priority/:id', function (req, res, next) {
 router.post('/posts', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     var data = req.body;
+    if (data.priority === '[]') {
+        delete data.priority;
+    }
     data.createdDate = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `INSERT INTO investment_product_posts SET ?`;
     let endpoint = `/core-service/post?query=${query}`;
