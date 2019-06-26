@@ -163,6 +163,10 @@ router.post('/create', function (req, res, next) {
                                             method: 'APPROVAL'
                                         };
 
+                                        if (invOps.priority === '[]') {
+                                            delete invOps.priority;
+                                        }
+
                                         query = `INSERT INTO investment_op_approvals SET ?`;
                                         endpoint = `/core-service/post?query=${query}`;
                                         url = `${HOST}${endpoint}`;
@@ -221,6 +225,10 @@ router.post('/create', function (req, res, next) {
                                             method: 'REVIEW'
                                         };
 
+                                        if (invOps.priority === '[]') {
+                                            delete invOps.priority;
+                                        }
+
                                         query = `INSERT INTO investment_op_approvals SET ?`;
                                         endpoint = `/core-service/post?query=${query}`;
                                         url = `${HOST}${endpoint}`;
@@ -277,6 +285,10 @@ router.post('/create', function (req, res, next) {
                                             priority: result.priority,
                                             method: 'POST'
                                         };
+
+                                        if (invOps.priority === '[]') {
+                                            delete invOps.priority;
+                                        }
 
                                         query = `INSERT INTO investment_op_approvals SET ?`;
                                         endpoint = `/core-service/post?query=${query}`;
@@ -577,7 +589,7 @@ router.post('/approves', function (req, res, next) {
                 query = `Select 
                         (Select Count(*) as total_approved from investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL' AND (isApproved = 1 && isCompleted =1)) as total_approved,
                         (Select Count(*) as isOptional from investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL' AND isAllRoles = 0) as isOptional,
-                        (Select Count(*) as priorityTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL' AND priority IS NOT NULL) as priorityTotal,
+                        (Select Count(*) as priorityTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL' AND priority IS NOT NULL AND priority != '[]') as priorityTotal,
                         (Select Count(*) as priorityItemTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL' AND priority = '${data.priority}') as priorityItemTotal,
                         (Select Count(*) as total_approvedBy from investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL') as total_approvedBy`;
                 endpoint = '/core-service/get';
@@ -682,6 +694,7 @@ router.post('/reviews', function (req, res, next) {
             }
         })
         .then(function (response) {
+
             if (response.data.status === undefined) {
                 query = `Select 
                         (Select Count(*) as total_reviewed from investment_op_approvals where txnId = ${data.txnId} AND (isReviewed = 1 || isCompleted = 1) AND method = 'REVIEW') as total_reviewed,
@@ -696,6 +709,7 @@ router.post('/reviews', function (req, res, next) {
                         query: query
                     }
                 }).then(counter => {
+                    console.log(counter.data);
                     if (((counter.data[0].total_reviewedBy === counter.data[0].total_reviewed) || (counter.data[0].isOptional > 0) ||
                             (counter.data[0].priorityTotal !== 0 && counter.data[0].priorityTotal === counter.data[0].priorityItemTotal)) && data.status === '1') {
                         query = `UPDATE investment_txns SET reviewDone = ${1} WHERE ID =${data.txnId}`;
@@ -794,7 +808,7 @@ router.post('/posts', function (req, res, next) {
                 query = `Select 
                 (Select Count(*) as total_posted from investment_op_approvals where txnId = ${data.txnId} AND (isPosted = 1 || isCompleted = 1) AND method = 'POST') as total_posted,
                 (Select Count(*) as isOptional from investment_op_approvals where txnId = ${data.txnId} AND isAllRoles = 0 AND method = 'POST') as isOptional,
-                (Select Count(*) as priorityTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'POST' AND priority IS NOT NULL) as priorityTotal,
+                (Select Count(*) as priorityTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'POST' AND priority IS NOT NULL AND priority != '[]') as priorityTotal,
                 (Select Count(*) as priorityItemTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'POST' AND priority = '${data.priority}') as priorityItemTotal,
                 (Select Count(*) as total_postedBy from investment_op_approvals where txnId = ${data.txnId} AND method = 'POST') as total_postedBy`;
                 endpoint = '/core-service/get';
