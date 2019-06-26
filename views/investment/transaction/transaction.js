@@ -272,7 +272,15 @@ function bindDataTable(id) {
         columns: [{
                 width: "auto",
                 "mRender": function (data, type, full) {
-                    return `<span class="badge badge-pill ${(full.isApproved===1)?'badge-primary':'badge-danger'}">${(full.isApproved===1)?'Approved':'Pending Approval'}</span>`;
+                    let strStatus = '';
+                    if (full.isApproved === 1 && full.postDone === 1) {
+                        strStatus = 'Approved';
+                    } else if (full.isApproved === 0 && full.postDone === 1) {
+                        strStatus = 'Denied';
+                    } else {
+                        strStatus = 'Pending Approval';
+                    }
+                    return `<span class="badge badge-pill ${(full.isApproved===1)?'badge-primary':'badge-danger'}">${strStatus}</span>`;
                 }
             },
             {
@@ -324,11 +332,11 @@ function bindDataTable(id) {
                         <i class="fa fa-ellipsis-v" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         </i> 
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        <button class="dropdown-item" id="dropdownItemDoc" data-toggle="modal" data-target="#viewListDocModal">Document</button>
+                        <button class="dropdown-item" id="dropdownItemDoc" data-toggle="modal" data-target="#viewListDocModal" ${(full.postDone === 0)?'':'disabled'}>Document</button>
                           <button class="dropdown-item" id="dropdownItemRevert" ${(full.postDone === 1 && full.is_capital === 0)?'':'disabled'}>Reverse</button>
-                          <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal">Review</button>
-                          <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(full.reviewDone === 1)?'':'disabled'}>Approval</button>
-                          <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal"${(full.reviewDone === 1 && full.approvalDone === 1)?'':'disabled'}>Post</button>
+                          <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal" ${(full.reviewDone === 0)?'':'disabled'}>Review</button>
+                          <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(full.reviewDone === 1)?'':'disabled'} ${(full.approvalDone === 0)?'':'disabled'}>Approval</button>
+                          <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal"${(full.reviewDone === 1 && full.approvalDone === 1)?'':'disabled'} ${(full.postDone === 0)?'':'disabled'}>Post</button>
                         </div>
                       </div>`;
 
@@ -471,7 +479,6 @@ function bindInterestDataTable() {
 //                     endDate: `${_dt2.getFullYear()}-${_dt2.getMonth()+1}-${_dt2.getDate()}`
 //                 },
 //                 success: function (data) {
-//                     console.log(data.data);
 //                     fnCallback(data)
 //                 }
 //             });
@@ -762,8 +769,8 @@ function setReviewRequirements(value) {
                                         </div>
                                     </div>
                                     <div class="form-group col-6" style="vertical-align: middle">
-                                        <button type="button" ${(element.isReviewed===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onReviewed(${1},${element.approvalId},${element.txnId},${element.ID})">Review</button>
-                                        <button type="button" ${(element.isReviewed===0)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onReviewed(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
+                                        <button type="button" ${(element.isCompleted===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onReviewed(${1},${element.approvalId},${element.txnId},${element.ID})">Review</button>
+                                        <button type="button" ${(element.isCompleted===1)?'disabled':''} ${(element.isReviewed===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onReviewed(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
                                     </div>
                                 </div>
                             </li>`).trigger('change');
@@ -1211,8 +1218,8 @@ function setApprovalRequirements(value) {
                                         </div>
                                     </div>
                                     <div class="form-group col-6" style="vertical-align: middle">
-                                        <button type="button" ${(element.isApproved===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onApproved(${1},${element.approvalId},${element.txnId},${element.ID})">Approve</button>
-                                        <button type="button" ${(element.isApproved===0)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onApproved(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
+                                        <button type="button" ${(element.isCompleted===1)?'disabled':''} ${(element.isApproved===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onApproved(${1},${element.approvalId},${element.txnId},${element.ID})">Approve</button>
+                                        <button type="button" ${(element.isCompleted===1)?'disabled':''} ${(element.isApproved===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onApproved(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
                                     </div>
                                 </div>
                             </li>`).trigger('change');
@@ -1263,8 +1270,8 @@ function setPostRequirements(value) {
                                     </div>
                                 </div>
                                 <div class="form-group col-6" style="vertical-align: middle">
-                                    <button type="button" ${(element.isPosted===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onPost(${1},${element.approvalId},${element.txnId},${element.ID})">Post</button>
-                                    <button type="button" ${(element.isPosted===0)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onPost(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
+                                    <button type="button" ${(element.isCompleted===1)?'disabled':''} ${(element.isPosted===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onPost(${1},${element.approvalId},${element.txnId},${element.ID})">Post</button>
+                                    <button type="button" ${(element.isCompleted===1)?'disabled':''} ${(element.isPosted===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onPost(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
                                 </div>
                             </div>
                         </li>`).trigger('change');
@@ -1617,7 +1624,6 @@ function onTransferToInvestments(amount, desc, is_credit, investmentId) {
 //             $('#wait').hide();
 //         }
 //     } catch (error) {
-//         console.log(error);
 //         $('#wait').hide();
 //         swal('Something went wrong while executing transfer operation', '', 'error');
 //     }

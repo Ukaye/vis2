@@ -21,7 +21,11 @@ function updateStatus(id, status) {
         'success': function (data) {
             if (data.status === 200) {
                 $('#wait').hide();
-                swal('Product activated/deactivated successfully', '', 'success');
+                if (status === 0) {
+                    swal('Product deactivated successfully', '', 'success');
+                } else {
+                    swal('Product activated successfully', '', 'success');
+                }
                 var url = "./all-investment-products";
                 $(location).attr('href', url);
             } else {
