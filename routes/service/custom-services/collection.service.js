@@ -202,4 +202,20 @@ router.get('/invoices/due', function(req, res, next) {
     });
 });
 
+router.delete('/bulk_upload/records/debit', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let payload = {},
+        query =  `UPDATE collection_bulk_uploads Set ? WHERE (credit - debit) < 0`,
+        endpoint = `/core-service/post?query=${query}`,
+        url = `${HOST}${endpoint}`;
+    payload.status = 0;
+    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+
+    db.query(query, payload, function (error, response) {
+        if (error)
+            return res.send({status: 500, error: error, response: null});
+        return res.send({status: 200, error: null, response: response});
+    });
+});
+
 module.exports = router;

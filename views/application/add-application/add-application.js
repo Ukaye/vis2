@@ -1,6 +1,5 @@
 (function( $ ) {
     jQuery(document).ready(function() {
-        getLoanPurposes();
         getWorkflows();
         getApplicationSettings();
     });
@@ -8,6 +7,27 @@
     let preapplication;
     const urlParams = new URLSearchParams(window.location.search);
     const preapplication_id = urlParams.get('id');
+    const client_type = urlParams.get('type');
+
+    let client_list = [],
+        $name = $('#name'),
+        $form = $('#step1'),
+        $user_list = $('#user-list'),
+        $client_type = $('#client_type');
+
+    if (preapplication_id) {
+        $client_type.val(client_type);
+        $client_type.prop('disabled', true);
+        if (client_type === 'corporate') {
+            getCorporates(function () {
+                getLoanPurposes();
+            });
+        } else {
+            getClients(function () {
+                getLoanPurposes();
+            });
+        }
+    }
 
     function getPreapplication(id) {
         $.ajax({
@@ -143,12 +163,7 @@
         $('#contribution-div').toggle();
     });
 
-    let client_list = [],
-        $name = $('#name'),
-        $form = $('#step1'),
-        $user_list = $('#user-list');
-
-    function getClients(){
+    function getClients(callback){
         $('#wait').show();
         $.ajax({
             type: 'get',
@@ -165,11 +180,12 @@
                 $name.select2();
                 $user_list.select2();
                 $form.show();
+                callback();
             }
         });
     }
 
-    function getCorporates(){
+    function getCorporates(callback){
         $('#wait').show();
         $.ajax({
             type: 'get',
@@ -186,6 +202,7 @@
                 $name.select2();
                 $user_list.select2();
                 $form.show();
+                callback();
             }
         });
     }
@@ -619,6 +636,7 @@
                     obj.repayment_date = $('#repayment-date').val();
                     obj.loan_purpose = $purposes.val();
                     obj.agentID = (JSON.parse(localStorage.getItem("user_obj"))).ID;
+                    obj.client_type = preapplication.client_type;
                     if (preapplication && preapplication.ID)
                         obj.preapplicationID = preapplication.ID;
                     if (!user || isNaN(obj.workflowID) || !obj.loan_amount || !obj.interest_rate || !obj.duration || $purposes.val() === '-- Choose Loan Purpose --')
@@ -699,7 +717,7 @@
                                 $('.upload-div').show();
                                 $('#proceed').show();
                             } else {
-                                window.location.href = `/add-application?id=${preapplication.ID}`;
+                                window.location.href = `/add-application?id=${preapplication.ID}&&type=${obj.client_type}`;
                             }
                         },
                         'error': function (err) {
@@ -951,6 +969,7 @@
         obj.tenor_type = $('#tenor_type').val();
         obj.loan_purpose = $('#loan_purposes').val();
         obj.loan_serviced = currencyToNumberformatter($('#loan_serviced').val());
+        obj.client_type = $client_type.val();
         if ($('#market_name').val())
             obj.market_name = $('#market_name').val();
         if ($('#market_leader_name').val())
@@ -1035,7 +1054,7 @@
     }
 
     /** Corporate Updates*/
-    $('#client_type').change(function (e) {
+    $client_type.change(function (e) {
         $form.hide();
         if (client_list.length > 0) {
             $user_list.select2('destroy');
@@ -1046,11 +1065,15 @@
         }
         switch (e.target.value) {
             case 'non_corporate': {
-                getClients();
+                getClients(function () {
+                    getLoanPurposes();
+                });
                 break;
             }
             case 'corporate': {
-                getCorporates();
+                getCorporates(function () {
+                    getLoanPurposes();
+                });
                 break;
             }
             default: {

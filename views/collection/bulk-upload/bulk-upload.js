@@ -10,8 +10,10 @@
         $uploadCSV = $("#uploadCSV");
 
     function previewStatement(rows) {
-        let skip = 0;
+        let skip = 0,
             table = $('<table border="1" style="text-align: center; width: 100%;" />');
+        statement = [];
+        statement_ = [];
         for (let i = -1; i < rows.length; i++) {
             let cells,
                 cells_,
@@ -89,6 +91,9 @@
                             invoice.description = cells[j];
                             break;
                         }
+                        default: {
+                            invoice[headers[j].replace(/[\W_]/g, '').toLowerCase()] = cells[j];
+                        }
                     }
                 }
             }
@@ -111,10 +116,6 @@
                 $invoice = $(`#invoice-${i+1}-${target_index}`),
                 source_value = transaction[Object.keys(transaction)[source_index]];
             statement_[i][Object.keys(transaction)[target_index]] = source_value;
-            console.log(transaction)
-            console.log(Object.keys(transaction))
-            console.log(source_index)
-            console.log(source_value)
             switch (target_index) {
                 case '0':
                 case '1': {
@@ -173,7 +174,7 @@
                         'data': obj,
                         'success': function (data) {
                             notification(data.response, '', 'success');
-                            window.location.reload();
+                            window.location.href = '/bulk-collection';
                         },
                         'error': function (err) {
                             console.log(err);
