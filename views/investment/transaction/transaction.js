@@ -895,6 +895,8 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
                                         investmentId: selectedInvestment.investmentId,
                                         operationId: _operationId,
                                         isCharge: 1,
+                                        isDeposit: (data_row.isDeposit === 1) ? 0 : 1,
+                                        isWithdrawal: (data_row.isWithdrawal === 1) ? 0 : 1,
                                         is_capital: 0,
                                         isApproved: 0,
                                         approvedBy: '',
