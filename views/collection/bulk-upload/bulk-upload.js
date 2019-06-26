@@ -92,7 +92,7 @@
                     }
                 }
             }
-            if (i>0 && cells.length === 6 && !$.isEmptyObject(invoice)) {
+            if (i>0 && cells.length >= 6 && !$.isEmptyObject(invoice)) {
                 statement.push(invoice);
             }
             table.append(row);
@@ -111,6 +111,10 @@
                 $invoice = $(`#invoice-${i+1}-${target_index}`),
                 source_value = transaction[Object.keys(transaction)[source_index]];
             statement_[i][Object.keys(transaction)[target_index]] = source_value;
+            console.log(transaction)
+            console.log(Object.keys(transaction))
+            console.log(source_index)
+            console.log(source_value)
             switch (target_index) {
                 case '0':
                 case '1': {

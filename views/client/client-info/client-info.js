@@ -449,11 +449,6 @@ $("#cheque-no").on("keyup", function (event) {
     $("#cheque-no").val(integerFormat(val));
 });
 
-$("#cheque-account").on("keyup", function (event) {
-    let val = $("#cheque-account").val();
-    $("#cheque-account").val(integerFormat(val));
-});
-
 let banks,
     reasons;
 
@@ -501,9 +496,9 @@ $("#cheque-form").submit(function (e) {
     cheque.clientID = client_det[0]['ID'];
     cheque.number = $('#cheque-no').val();
     cheque.bank = $('#cheque-bank').val();
-    cheque.account = $('#cheque-account').val();
+    cheque.date = $('#cheque-date').val();
     cheque.reason = $('#cheque-reason').val();
-    if (!cheque.clientID || !cheque.number || cheque.bank === 'Select Bank' || !cheque.account || cheque.reason === 'Select Reason')
+    if (!cheque.clientID || !cheque.number || cheque.bank === 'Select Bank' || !cheque.date || cheque.reason === 'Select Reason')
         return notification('Kindly fill all required field(s)','','warning');
     cheque.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
 
@@ -543,7 +538,7 @@ function populateBadChequeReasons(data){
         columns: [
             { data: "number" },
             { data: "bank" },
-            { data: "account" },
+            { data: "date" },
             { data: "reason" },
             { data: "actions" }
         ]
