@@ -564,7 +564,7 @@ router.post('/approves', function (req, res, next) {
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.body
-    let query = `UPDATE investment_op_approvals SET isApproved = ${data.status},isCompleted = ${data.status}, approvedBy=${data.userId}, updatedAt ='${dt.toString()}' WHERE ID =${data.id}`;
+    let query = `UPDATE investment_op_approvals SET isApproved = ${data.status},isCompleted = ${1}, approvedBy=${data.userId}, updatedAt ='${dt.toString()}' WHERE ID =${data.id}`;
     let endpoint = `/core-service/get`;
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -614,7 +614,7 @@ router.post('/approves', function (req, res, next) {
                                 });
                             });
                     } else {
-                        query = `UPDATE investment_txns SET approvalDone = ${0} WHERE ID =${data.txnId}`;
+                        query = `UPDATE investment_txns SET approvalDone = ${1} WHERE ID =${data.txnId}`;
                         endpoint = `/core-service/get`;
                         url = `${HOST}${endpoint}`;
                         axios.get(url, {
@@ -673,7 +673,7 @@ router.post('/reviews', function (req, res, next) {
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.body
-    let query = `UPDATE investment_op_approvals SET isReviewed = ${data.status}, reviewedBy=${data.userId},isCompleted = ${data.status}, updatedAt ='${dt.toString()}' WHERE ID =${data.id}`;
+    let query = `UPDATE investment_op_approvals SET isReviewed = ${data.status}, reviewedBy=${data.userId},isCompleted = ${1}, updatedAt ='${dt.toString()}' WHERE ID =${data.id}`;
     let endpoint = `/core-service/get`;
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -723,7 +723,7 @@ router.post('/reviews', function (req, res, next) {
                                 });
                             });
                     } else {
-                        query = `UPDATE investment_txns SET reviewDone = ${0} WHERE ID =${data.txnId}`;
+                        query = `UPDATE investment_txns SET reviewDone = ${1} WHERE ID =${data.txnId}`;
                         endpoint = `/core-service/get`;
                         url = `${HOST}${endpoint}`;
                         axios.get(url, {
@@ -782,7 +782,7 @@ router.post('/posts', function (req, res, next) {
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.body
-    let query = `UPDATE investment_op_approvals SET isPosted = ${data.status}, postedBy=${data.userId},isCompleted = ${data.status}, updatedAt ='${dt.toString()}' WHERE ID =${data.id}`;
+    let query = `UPDATE investment_op_approvals SET isPosted = ${data.status}, postedBy=${data.userId},isCompleted = ${1}, updatedAt ='${dt.toString()}' WHERE ID =${data.id}`;
     let endpoint = `/core-service/get`;
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -915,7 +915,7 @@ router.post('/posts', function (req, res, next) {
                                         bal = (data.status === 0) ? (total_bal + parseFloat(data.amount.split(',').join(''))) : total_bal;
                                     }
                                     if (data.isInvestmentTerminated.toString() === '0') {
-                                        query = `UPDATE investment_txns SET isApproved = ${0}, updated_date ='${dt.toString()}', postDone = ${0},
+                                        query = `UPDATE investment_txns SET isApproved = ${0}, updated_date ='${dt.toString()}', postDone = ${1},
                                         amount = ${ Math.round(data.amount.split(',').join('')).toFixed(2)} , balance ='${ Math.round(bal).toFixed(2)}'
                                         WHERE ID =${data.txnId}`;
                                         endpoint = `/core-service/get`;
