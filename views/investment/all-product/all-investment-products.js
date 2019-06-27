@@ -235,6 +235,7 @@ function bindDataTable() {
                     order: tableHeaders[aoData[2].value[0].column].query
                 },
                 success: function (data) {
+                    console.log(data);
                     fnCallback(data)
                 }
             });
@@ -615,6 +616,7 @@ function getProductReview(id) {
                     order: tableHeaders[aoData[2].value[0].column].query
                 },
                 success: function (data) {
+                    console.log(data);
                     roleObject = data.data;
                     fnCallback(data)
                 }
