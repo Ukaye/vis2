@@ -8,7 +8,9 @@ let allInvoices = [],
     matchedInvoices = [],
     matchedPayments = [],
     selectedInvoices = [],
-    selectedPayments = [];
+    selectedPayments = [],
+    unmatchedInvoices = [],
+    unmatchedPayments = [];
 
 function getInvoices(){
     $.ajax({
@@ -18,23 +20,27 @@ function getInvoices(){
             let response = data.response;
             allInvoices = response;
             $.each(response, function (key, val) {
-                $('#invoices').append(`
-                    <li id="invoice-${val.ID}" class="ui-state-default">
-                        <div class="row">
-                            <div class="col-lg-9">
-                                <p><strong>Name: </strong>${val.client}</p>
-                                <p><strong>Date: </strong>${val.payment_collect_date}</p>
-                                <p><strong>Amount: </strong>${numberToCurrencyformatter(val.payment_amount)} (${val.type})</p>
-                            </div>
-                            <div class="col-lg-3">
-                                <p><input class="form-control" type="checkbox" onclick="selectInvoice('${encodeURIComponent(JSON.stringify(val))}')" /></p>
-                                <p><a class="btn btn-primary btn-sm" href="/application?id=${val.applicationID}">View Loan</a></p>
-                            </div>
-                        </div>
-                    </li>`);
+                displayInvoices(val);
             });
         }
     });
+}
+
+function displayInvoices(val) {
+    $('#invoices').append(`
+        <li id="invoice-${val.ID}" class="ui-state-default">
+            <div class="row">
+                <div class="col-lg-9">
+                    <p><strong>Name: </strong>${val.client}</p>
+                    <p><strong>Date: </strong>${val.payment_collect_date}</p>
+                    <p><strong>Amount: </strong>${numberToCurrencyformatter(val.payment_amount)} (${val.type})</p>
+                </div>
+                <div class="col-lg-3">
+                    <p><input class="form-control" type="checkbox" onclick="selectInvoice('${encodeURIComponent(JSON.stringify(val))}')" /></p>
+                    <p><a class="btn btn-primary btn-sm" href="/application?id=${val.applicationID}">View Loan</a></p>
+                </div>
+            </div>
+        </li>`);
 }
 
 function getPayments(){
@@ -45,31 +51,35 @@ function getPayments(){
             let response = data.response;
             allPayments = response;
             $.each(response, function (key, val) {
-                let type,
-                    amount = val.credit - val.debit;
-                if (amount >= 0) {
-                    type = '<span class="badge badge-success">CREDIT</span>';
-                } else {
-                    type = '<span class="badge badge-danger">DEBIT</span>';
-                    amount = -amount;
-                }
-                $('#payments').append(`
-                    <li id="payment-${val.ID}" class="ui-state-default">
-                        <div class="row">
-                            <div class="col-lg-10">
-                                <p><strong>Amount: </strong>${numberToCurrencyformatter(amount)} ${type}</p>
-                                <p><strong>Date: </strong>${val.value_date}</p>
-                                <p><strong>Description: </strong>${val.description}</p>
-                            </div>
-                            <div class="col-lg-2">
-                                <p><input class="form-control" type="checkbox" onclick="selectPayment('${encodeURIComponent(JSON.stringify(val))}')" /></p>
-                                <p><a class="btn btn-danger btn-sm" onclick="removePayment('${encodeURIComponent(JSON.stringify(val))}')"><i class="fa fa-trash"></i></a></p>
-                            </div>
-                        </div>
-                    </li>`);
+                displayPayments(val);
             });
         }
     });
+}
+
+function displayPayments(val) {
+    let type,
+        amount = val.credit - val.debit;
+    if (amount >= 0) {
+        type = '<span class="badge badge-success">CREDIT</span>';
+    } else {
+        type = '<span class="badge badge-danger">DEBIT</span>';
+        amount = -amount;
+    }
+    $('#payments').append(`
+        <li id="payment-${val.ID}" class="ui-state-default">
+            <div class="row">
+                <div class="col-lg-10">
+                    <p><strong>Amount: </strong>${numberToCurrencyformatter(amount)} ${type}</p>
+                    <p><strong>Date: </strong>${val.value_date}</p>
+                    <p><strong>Description: </strong>${val.description}</p>
+                </div>
+                <div class="col-lg-2">
+                    <p><input class="form-control" type="checkbox" onclick="selectPayment('${encodeURIComponent(JSON.stringify(val))}')" /></p>
+                    <p><a class="btn btn-danger btn-sm" onclick="removePayment('${encodeURIComponent(JSON.stringify(val))}')"><i class="fa fa-trash"></i></a></p>
+                </div>
+            </div>
+        </li>`);
 }
 
 function selectInvoice(obj) {
@@ -209,16 +219,74 @@ function findMatch() {
     matchedPayments = [];
     selectedInvoices = [];
     selectedPayments = [];
+    unmatchedInvoices = [];
+    unmatchedPayments = [];
     for (let i=0; i<allInvoices.length; i++) {
         let invoice = allInvoices[i],
             check = searchForKeywords(invoice);
         if (check){
-            console.log(invoice)
-            console.log(check)
-            matchedInvoices.push(invoice);
-            matchedInvoices.push(invoice);
-        }
+            console.log(invoice);
+            console.log(check);
+            let type,
+                payment = check.payment,
+                checkMatchedInvoices = ($.grep(matchedInvoices, (e) => { return e.ID === invoice.ID }))[0],
+                checkMatchedPayments = ($.grep(matchedPayments, (e) => { return e.ID === payment.ID }))[0],
+                amount = payment.credit - payment.debit;
+            if (checkMatchedInvoices)
+                unmatchedInvoices.push(invoice);
+            if (checkMatchedPayments)
+                unmatchedPayments.push(allPayments[i]);
 
+            if (!checkMatchedInvoices && !checkMatchedPayments) {
+                if (amount >= 0) {
+                    type = '<span class="badge badge-success">CREDIT</span>';
+                } else {
+                    type = '<span class="badge badge-danger">DEBIT</span>';
+                    amount = -amount;
+                }
+                matchedInvoices.push(invoice);
+                matchedPayments.push(payment);
+                selectedInvoices.push(invoice);
+                selectedPayments.push(payment);
+                $('#invoices').append(`
+                    <li id="invoice-${invoice.ID}" class="ui-state-default">
+                        <div class="row">
+                            <div class="col-lg-9">
+                                <p><strong>Name: </strong>${invoice.client} <span class="label label-warning" style="float: right;">${check.value}</span></p>
+                                <p><strong>Date: </strong>${invoice.payment_collect_date}</p>
+                                <p><strong>Amount: </strong>${numberToCurrencyformatter(invoice.payment_amount)} (${invoice.type})</p>
+                            </div>
+                            <div class="col-lg-3">
+                                <p><input class="form-control" type="checkbox" onclick="selectInvoice('${encodeURIComponent(JSON.stringify(invoice))}')" checked /></p>
+                                <p><a class="btn btn-primary btn-sm" href="/application?id=${invoice.applicationID}">View Loan</a></p>
+                            </div>
+                        </div>
+                    </li>`);
+                $('#payments').append(`
+                    <li id="payment-${payment.ID}" class="ui-state-default">
+                        <div class="row">
+                            <div class="col-lg-10">
+                                <p><strong>Amount: </strong>${numberToCurrencyformatter(amount)} ${type} <span class="label label-warning" style="float: right;">${check.value}</span></p>
+                                <p><strong>Date: </strong>${payment.value_date}</p>
+                                <p><strong>Description: </strong>${payment.description}</p>
+                            </div>
+                            <div class="col-lg-2">
+                                <p><input class="form-control" type="checkbox" onclick="selectPayment('${encodeURIComponent(JSON.stringify(payment))}')" checked /></p>
+                                <p><a class="btn btn-danger btn-sm" onclick="removePayment('${encodeURIComponent(JSON.stringify(payment))}')"><i class="fa fa-trash"></i></a></p>
+                            </div>
+                        </div>
+                    </li>`);
+            }
+        } else {
+            unmatchedInvoices.push(invoice);
+            unmatchedPayments.push(allPayments[i]);
+        }
+    }
+    for (let i=0; i<unmatchedInvoices.length; i++) {
+        displayInvoices(unmatchedInvoices[i]);
+    }
+    for (let i=0; i<unmatchedPayments.length; i++) {
+        displayInvoices(unmatchedPayments[i]);
     }
 }
 

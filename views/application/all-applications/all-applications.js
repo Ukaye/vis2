@@ -51,7 +51,7 @@ function populateDataTable(data) {
         let table = [
             padWithZeroes(v.ID,9),
             v.loanCirrusID || 'N/A',
-            v.fullname,
+            (v.client_type === 'corporate')? v.corporate_name : v.fullname,
             v.phone,
             numberToCurrencyformatter(v.loan_amount),
             v.product || 'preapproved',
@@ -118,8 +118,13 @@ function openModal(id) {
         tbody = $("#application"),
         tr = "";
     tbody.empty();
+    if (data.client_type === 'corporate') {
+        data.fullname = data.corporate_name;
+        data.phone = data.corporate_phone;
+        data.email = data.corporate_email;
+    }
     if (data.fullname)
-        tr += "<tr><td>Fullname</td><td>"+data.fullname+"</td></tr>";
+        tr += "<tr><td>Name</td><td>"+data.fullname+"</td></tr>";
     if (data.phone)
         tr += "<tr><td>Phone Number</td><td>"+data.phone+"</td></tr>";
     if (data.email)
