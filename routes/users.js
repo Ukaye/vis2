@@ -1816,8 +1816,8 @@ users.get('/applications', function(req, res, next) {
         'a.workflowID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.loanCirrusID, a.reschedule_amount, w.current_stage, ' +
         '(SELECT product FROM preapplications WHERE ID = a.preapplicationID) AS product, ' +
         '(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status ' +
-        'FROM clients AS u, applications AS a, workflow_processes AS w, corporates AS c WHERE u.ID=a.userID AND a.status <> 0 AND c.ID=a.userID ' +
-        'AND w.ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=a.ID AND status=1) ';
+        'FROM clients AS u, workflow_processes AS w, applications AS a LEFT JOIN corporates AS c ON a.userID = c.ID ' +
+        'WHERE u.ID=a.userID AND a.status <> 0 AND w.ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=a.ID AND status=1) ';
     if (type){
         switch (type){
             case '1': {
@@ -1994,7 +1994,7 @@ users.get('/applications/:officerID', function(req, res, next) {
         "a.loan_amount, a.date_modified, a.comment, a.close_status, a.workflowID, a.loanCirrusID, a.reschedule_amount, w.current_stage," +
         '(SELECT product FROM preapplications WHERE ID = a.preapplicationID) AS product,' +
         "(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status " +
-        "FROM clients AS u, applications AS a, workflow_processes AS w, corporates AS c " +
+        "FROM clients AS u, workflow_processes AS w, applications AS a LEFT JOIN corporates AS c ON a.userID = c.ID " +
         "WHERE u.ID=a.userID AND a.status <> 0 AND w.ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=a.ID AND status=1) ",
         query2 = query.concat('AND loan_officer = '+id+' '),
         query3 = query.concat('AND (select supervisor from users where users.id = u.loan_officer) =  '+id+' ');
@@ -2196,7 +2196,7 @@ users.get('/applications/delete/:id', function(req, res, next) {
                 'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.client_type, ' +
                 'a.workflowID, a.loan_amount, a.date_modified, a.comment, a.loanCirrusID, a.reschedule_amount,' +
                 '(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status ' +
-                'FROM clients AS u, applications AS a, corporates AS c WHERE u.ID=a.userID AND a.status <> 0 ORDER BY a.ID desc';
+                'FROM clients AS u, applications AS a LEFT JOIN corporates AS c ON a.userID = c.ID WHERE u.ID=a.userID AND a.status <> 0 ORDER BY a.ID desc';
             db.query(query, function (error, results, fields) {
                 if(error){
                     res.send({"status": 500, "error": error, "response": null});
@@ -2254,7 +2254,7 @@ users.post('/applications/comment/:id', function(req, res, next) {
                 'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.client_type, ' +
                 'a.workflowID, a.loan_amount, a.date_modified, a.comment, a.loanCirrusID, a.reschedule_amount,' +
                 '(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status ' +
-                'FROM clients AS u, applications AS a, corporates AS c WHERE u.ID=a.userID AND a.status <> 0 ORDER BY a.ID desc';
+                'FROM clients AS u, applications AS a LEFT JOIN corporates AS c ON a.userID = c.ID WHERE u.ID=a.userID AND a.status <> 0 ORDER BY a.ID desc';
             db.query(query, function (error, results, fields) {
                 if(error){
                     res.send({"status": 500, "error": error, "response": null});
