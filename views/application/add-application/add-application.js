@@ -1,6 +1,5 @@
 (function( $ ) {
     jQuery(document).ready(function() {
-        getUsers();
         getWorkflows();
         getApplicationSettings();
     });
@@ -8,6 +7,27 @@
     let preapplication;
     const urlParams = new URLSearchParams(window.location.search);
     const preapplication_id = urlParams.get('id');
+    const client_type = urlParams.get('type');
+
+    let client_list = [],
+        $name = $('#name'),
+        $form = $('#step1'),
+        $user_list = $('#user-list'),
+        $client_type = $('#client_type');
+
+    if (preapplication_id) {
+        $client_type.val(client_type);
+        $client_type.prop('disabled', true);
+        if (client_type === 'corporate') {
+            getCorporates(function () {
+                getLoanPurposes();
+            });
+        } else {
+            getClients(function () {
+                getLoanPurposes();
+            });
+        }
+    }
 
     function getPreapplication(id) {
         $.ajax({
@@ -36,13 +56,13 @@
                     }
                 }
                 if (response.name && response.email) {
-                    $('#name').val($('#name').find(`option[name='${response.email}']`).val());
-                    $('#name').select2('destroy');
-                    $('#name').select2();
-                    $('#user-list').val($('#user-list').find(`option[name='${response.email}']`).val());
-                    $('#user-list').prop('disabled', true);
-                    $('#user-list').select2('destroy');
-                    $('#user-list').select2();
+                    $name.val($name.find(`option[name='${response.email}']`).val());
+                    $name.select2('destroy');
+                    $name.select2();
+                    $user_list.val($user_list.find(`option[name='${response.email}']`).val());
+                    $user_list.prop('disabled', true);
+                    $user_list.select2('destroy');
+                    $user_list.select2();
                 }
                 if (response.business_turnover)
                     $('#business_turnover').val(response.business_turnover);
@@ -143,18 +163,46 @@
         $('#contribution-div').toggle();
     });
 
-    function getUsers(){
+    function getClients(callback){
+        $('#wait').show();
         $.ajax({
-            type: "GET",
-            url: "/user/users-list-v2",
+            type: 'get',
+            url: '/user/users-list-v2',
             success: function (response) {
-                getLoanPurposes();
+                $('#wait').hide();
+                $name.append('<option selected="selected">-- Choose Client --</option>');
+                $user_list.append('<option selected="selected">-- Choose Client --</option>');
                 $.each(JSON.parse(response), function (key, val) {
-                    $("#name").append('<option name="'+val.email+'" value = "' + encodeURIComponent(JSON.stringify(val)) + '">' + val.fullname + ' &nbsp; (' + val.username + ')</option>');
-                    $("#user-list").append('<option name="'+val.email+'" value = "' + encodeURIComponent(JSON.stringify(val)) + '">' + val.fullname + ' &nbsp; (' + val.username + ')</option>');
+                    client_list.push(val);
+                    $name.append(`<option name="${val.email}" value ="${encodeURIComponent(JSON.stringify(val))}">${val.fullname} &nbsp; (${val.username})</option>`);
+                    $user_list.append(`<option name="${val.email}" value ="${encodeURIComponent(JSON.stringify(val))}">${val.fullname} &nbsp; (${val.username})</option>`);
                 });
-                $("#name").select2();
-                $("#user-list").select2();
+                $name.select2();
+                $user_list.select2();
+                $form.show();
+                callback();
+            }
+        });
+    }
+
+    function getCorporates(callback){
+        $('#wait').show();
+        $.ajax({
+            type: 'get',
+            url: '/client/corporates-v2/get',
+            success: function (response) {
+                $('#wait').hide();
+                $name.append('<option selected="selected">-- Choose Client --</option>');
+                $user_list.append('<option selected="selected">-- Choose Client --</option>');
+                $.each(response, function (key, val) {
+                    client_list.push(val);
+                    $name.append(`<option name="${val.email}" value ="${encodeURIComponent(JSON.stringify(val))}">${val.name} &nbsp; (${val.email})</option>`);
+                    $user_list.append(`<option name="${val.email}" value ="${encodeURIComponent(JSON.stringify(val))}">${val.name} &nbsp; (${val.email})</option>`);
+                });
+                $name.select2();
+                $user_list.select2();
+                $form.show();
+                callback();
             }
         });
     }
@@ -575,12 +623,12 @@
                     let obj = {},
                         schedule = validation.data,
                         $purposes = $('#purposes'),
-                        $user_list = $('#user-list'),
                         user = ($user_list.val() !== '-- Choose Client --')? JSON.parse(decodeURIComponent($user_list.val())) : false;
-                    if (user)
+                    if (user) {
                         obj.userID = user.ID;
                         obj.email = user.email;
-                        obj.username = user.username;
+                        obj.username = user.username || user.name;
+                    }
                     obj.workflowID = $('#workflows').val();
                     obj.loan_amount = $('#amount').val();
                     obj.interest_rate = $('#interest-rate').val();
@@ -588,6 +636,7 @@
                     obj.repayment_date = $('#repayment-date').val();
                     obj.loan_purpose = $purposes.val();
                     obj.agentID = (JSON.parse(localStorage.getItem("user_obj"))).ID;
+                    obj.client_type = preapplication.client_type;
                     if (preapplication && preapplication.ID)
                         obj.preapplicationID = preapplication.ID;
                     if (!user || isNaN(obj.workflowID) || !obj.loan_amount || !obj.interest_rate || !obj.duration || $purposes.val() === '-- Choose Loan Purpose --')
@@ -641,7 +690,7 @@
                         'data': obj,
                         'success': function (data) {
                             $('#wait').hide();
-                            $('#name').val('');
+                            $name.val('');
                             $('#market_name').val('');
                             $('#market_leader_name').val('');
                             $('#market_leader_phone').val('');
@@ -668,7 +717,7 @@
                                 $('.upload-div').show();
                                 $('#proceed').show();
                             } else {
-                                window.location.href = `/add-application?id=${preapplication.ID}`;
+                                window.location.href = `/add-application?id=${preapplication.ID}&&type=${obj.client_type}`;
                             }
                         },
                         'error': function (err) {
@@ -909,7 +958,7 @@
     function validateApplication(settings, callback) {
         let obj = {},
             contribution_status = $('input[name=contribution_status]:checked').val(),
-            user = ($('#name').val() !== '-- Choose Client --')? JSON.parse(decodeURIComponent($('#name').val())) : false;
+            user = ($name.val() !== '-- Choose Client --')? JSON.parse(decodeURIComponent($name.val())) : false;
         if (user)
             obj.userID = user.ID;
         obj.name = user.fullname;
@@ -920,6 +969,7 @@
         obj.tenor_type = $('#tenor_type').val();
         obj.loan_purpose = $('#loan_purposes').val();
         obj.loan_serviced = currencyToNumberformatter($('#loan_serviced').val());
+        obj.client_type = $client_type.val();
         if ($('#market_name').val())
             obj.market_name = $('#market_name').val();
         if ($('#market_leader_name').val())
@@ -1002,4 +1052,34 @@
         if (saveInitialApplication && saveInitialApplication['read_only'] === '0')
             $('#saveApplication').hide();
     }
+
+    /** Corporate Updates*/
+    $client_type.change(function (e) {
+        $form.hide();
+        if (client_list.length > 0) {
+            $user_list.select2('destroy');
+            $name.select2('destroy');
+            $user_list.html('');
+            $name.html('');
+            client_list = [];
+        }
+        switch (e.target.value) {
+            case 'non_corporate': {
+                getClients(function () {
+                    getLoanPurposes();
+                });
+                break;
+            }
+            case 'corporate': {
+                getCorporates(function () {
+                    getLoanPurposes();
+                });
+                break;
+            }
+            default: {
+                $form.hide();
+            }
+        }
+    });
+
 })(jQuery);

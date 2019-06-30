@@ -123,7 +123,8 @@ function bindDataTable() {
             {
                 width: "10%",
                 mRender: function (data, type, full) {
-                     return `<a class="btn btn-info btn-sm" href="/add-application?id=${full.ID}">View <i class="fa fa-eye"></i></a>`;
+                     return `<a class="btn btn-info btn-sm" href="/add-application?id=${full.ID}&&type=${full.client_type || 'non_corporate'}">
+                                View <i class="fa fa-eye"></i></a>`;
                 }
             }
         ]

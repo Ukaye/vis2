@@ -146,9 +146,13 @@ function loadApplication(user_id){
             application = data;
             getWorkflows(application);
             loadWorkflowState();
-
-            $('#client-id').text(padWithZeroes(application.userID,6));
-            $('#application-id').text(padWithZeroes(application.ID,9));
+            if (application.client_type === 'corporate') {
+                $('#client-id').text(padWithZeroes(application.contactID, 6));
+                $('#client-id-label').text('Contact ID#:');
+            } else {
+                $('#client-id').text(padWithZeroes(application.userID, 6));
+            }
+            $('#application-id').text(padWithZeroes(application.ID, 9));
             if (application.reschedule_amount){
                 $('#reschedule-info').show();
                 $('#reschedule-info').text('Reschedule Add-on amount is ₦'+(parseFloat(application.reschedule_amount)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')+
@@ -207,7 +211,11 @@ function loadApplication(user_id){
 }
 
 function goToClientProfile() {
-    window.location.href = '/client-info?id='+application.userID;
+    if (application.client_type === 'corporate'){
+        window.location.href = '/client-info?id='+application.contactID;
+    } else {
+        window.location.href = '/client-info?id='+application.userID;
+    }
 }
 
 function getWorkflows(data){
@@ -1410,9 +1418,7 @@ function initCSVUpload2(application, settings) {
         if (!schedule[0])
             return notification('Please preview the schedule to be uploaded.','','warning');
 
-        console.log(schedule)
         validateSchedule(schedule, function (validation) {
-            console.log(validation)
             if (validation.status){
                 if (loan_amount.round(2) < total_due_amount.round(2))
                     return notification('Total principal on the new schedule must be greater than Principal balance','','warning');
@@ -1518,7 +1524,7 @@ function initCSVUpload2(application, settings) {
                         'success': function (data) {
                             $csvLoader.hide();
                             notification('Reschedule approved successfully','','success');
-                            window.location.reload();
+                            // window.location.reload();
                         },
                         'error': function (err) {
                             $csvLoader.hide();

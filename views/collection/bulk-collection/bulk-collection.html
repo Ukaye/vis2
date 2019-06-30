@@ -108,18 +108,20 @@
                         <div class="card-header">
                             <strong>Process Bulk Collection</strong> <small> Payment Information</small>
                             <button class="btn btn-sm btn-success" onclick="validatePayment()" style="float: right;">POST PAYMENT</button>
+                            <button class="btn btn-sm btn-primary" onclick="findMatch()" style="float: right;">FIND MATCHES</button>
+                            <button class="btn btn-sm btn-danger" onclick="removeDebits()" style="float: right;">REMOVE DEBITS</button>
                         </div>
                         <div class="card-body card-block">
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <div class="alert alert-info" role="alert" data-original-title="" title="">View overdue invoices vs payment records below. You can also <strong>drag and drop</strong> to re-order.</div>
+                                    <div class="alert alert-info" role="alert" data-original-title="" title="">View due invoices vs unallocated payments below. You can also <strong>drag and drop</strong> to re-order.</div>
                                 </div>
                                 <div class="col-sm-6 todolist">
-                                    <h4>Overdue Invoices</h4>
+                                    <h4>Due Invoices</h4>
                                     <ul id="invoices" class="list-unstyled"></ul>
                                 </div>
                                 <div class="col-sm-6 todolist">
-                                    <h4>Payment Records</h4>
+                                    <h4>Unallocated Payments</h4>
                                     <ul id="payments" class="list-unstyled"></ul>
                                 </div>
                             </div>

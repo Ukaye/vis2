@@ -10,35 +10,46 @@
         $uploadCSV = $("#uploadCSV");
 
     function previewStatement(rows) {
-        let table = $('<table border=\'1\' style=\'text-align: center; width: 100%;\'/>');
+        let skip = 0,
+            table = $('<table border="1" style="text-align: center; width: 100%;" />');
+        statement = [];
+        statement_ = [];
         for (let i = -1; i < rows.length; i++) {
             let cells,
+                cells_,
                 invoice = {},
                 row = $("<tr />");
+            if (i >= 0){
+                cells_ = CSVtoArray(rows[i]);
+                if (!cells_) {
+                    skip++;
+                    continue;
+                }
+            }
             if (i === -1) {
                 cells = ['POSTING DATE', 'VALUE DATE', 'CREDIT', 'DEBIT', 'BALANCE', 'DESCRIPTION'];
             } else if (i === 0) {
-                headers = cells = rows[i].split(',');
+                headers = cells = cells_;
             } else {
-                cells = (rows[i].split(',').length > 7)? rows[i].split(',').slice(0, 7) : rows[i].split(',');
+                cells = (cells_.length > 7)? cells_.slice(0, 7) : cells_;
             }
             if (cells.join(' ').length > 10) {
                 for (let j = 0; j < cells.length; j++) {
                     cells[j] = (cells[j]) ? (cells[j]).trim() : cells[j];
-                    if (!cells[j])
+                    if (!cells[j] && cells[j] !== '')
                         continue;
                     let cell = $("<td />");
                     if (i > 0) {
                         if (j === 0 || j === 1) {
-                            cell.html(`<input id="invoice-${i}-${j}" type="date" value="${cells[j]}" />`);
+                            cell.html(`<input id="invoice-${i-skip}-${j}" type="date" value="${formatDate(cells[j])}" />`);
                         } else if (j === 2 || j === 3 || j === 4) {
-                            cell.html(`<span id="invoice-${i}-${j}">${numberToCurrencyformatter(cells[j])}</span>`);
+                            cell.html(`<span id="invoice-${i-skip}-${j}">${numberToCurrencyformatter(cells[j])}</span>`);
                         } else {
-                            cell.html(`<span id="invoice-${i}-${j}">${cells[j]}</span>`);
+                            cell.html(`<span id="invoice-${i-skip}-${j}">${cells[j]}</span>`);
                         }
                     } else {
                         if (i === 0) {
-                            let select = `<select id="invoice-${i}-${j}">`;
+                            let select = `<select id="invoice-0-${j}">`;
                             for (let k = 0; k < headers.length; k++) {
                                 headers[k] =  headers[k].trim();
                                 if (headers[k] === cells[j]) {
@@ -80,10 +91,13 @@
                             invoice.description = cells[j];
                             break;
                         }
+                        default: {
+                            invoice[headers[j].replace(/[\W_]/g, '').toLowerCase()] = cells[j];
+                        }
                     }
                 }
             }
-            if (i>0 && cells.length === 6 && !$.isEmptyObject(invoice)) {
+            if (i>0 && cells.length >= 6 && !$.isEmptyObject(invoice)) {
                 statement.push(invoice);
             }
             table.append(row);
@@ -105,7 +119,7 @@
             switch (target_index) {
                 case '0':
                 case '1': {
-                    $invoice.val(source_value);
+                    $invoice.val(formatDate(source_value));
                     break;
                 }
                 case '2':
@@ -124,7 +138,7 @@
         }
     });
 
-    function init(settings) {
+    function init() {
         $uploadCSV.bind("click", function () {
             let regex = /^([a-zA-Z0-9\s_\\.\-:])+(.csv|.txt)$/;
             if (regex.test($csvUpload.val().toLowerCase())) {
@@ -160,7 +174,7 @@
                         'data': obj,
                         'success': function (data) {
                             notification(data.response, '', 'success');
-                            window.location.reload();
+                            window.location.href = '/bulk-collection';
                         },
                         'error': function (err) {
                             console.log(err);

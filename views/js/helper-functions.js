@@ -184,3 +184,21 @@ function sumArrayObjects(array, key) {
         return parseFloat(a) + parseFloat(b[key]);
     }, 0);
 }
+
+function CSVtoArray(text) {
+    text = text.replace(/\\/g, '');
+    text = text.replace(/'/g, '');
+    let re_valid = /^\s*(?:'[^'\\]*(?:\\[\S\s][^'\\]*)*'|"[^"\\]*(?:\\[\S\s][^"\\]*)*"|[^,'"\s\\]*(?:\s+[^,'"\s\\]+)*)\s*(?:,\s*(?:'[^'\\]*(?:\\[\S\s][^'\\]*)*'|"[^"\\]*(?:\\[\S\s][^"\\]*)*"|[^,'"\s\\]*(?:\s+[^,'"\s\\]+)*)\s*)*$/;
+    let re_value = /(?!\s*$)\s*(?:'([^'\\]*(?:\\[\S\s][^'\\]*)*)'|"([^"\\]*(?:\\[\S\s][^"\\]*)*)"|([^,'"\s\\]*(?:\s+[^,'"\s\\]+)*))\s*(?:,|$)/g;
+    if (!re_valid.test(text)) return null;
+    let a = [];
+    text.replace(re_value,
+        function(m0, m1, m2, m3) {
+            if      (m1 !== undefined) a.push(m1.replace(/\\'/g, "'"));
+            else if (m2 !== undefined) a.push(m2.replace(/\\"/g, '"'));
+            else if (m3 !== undefined) a.push(m3);
+            return '';
+        });
+    if (/,\s*$/.test(text)) a.push('');
+    return a;
+}

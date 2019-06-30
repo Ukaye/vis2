@@ -1811,12 +1811,13 @@ users.get('/applications', function(req, res, next) {
         type = req.query.type;
     end = moment(end).add(1, 'days').format("YYYY-MM-DD");
 
-    let query = 'SELECT u.fullname, u.phone, u.email, u.address, a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, ' +
-        'a.workflowID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.loanCirrusID, a.reschedule_amount, w.current_stage,' +
-        '(SELECT product FROM preapplications WHERE ID = a.preapplicationID) AS product,' +
+    let query = 'SELECT u.fullname, u.phone, u.email, u.address, c.name corporate_name, c.email corporate_email, c.phone corporate_phone, c.address corporate_address, ' +
+        'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.client_type, ' +
+        'a.workflowID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.loanCirrusID, a.reschedule_amount, w.current_stage, ' +
+        '(SELECT product FROM preapplications WHERE ID = a.preapplicationID) AS product, ' +
         '(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status ' +
-        'FROM clients AS u, applications AS a, workflow_processes AS w WHERE u.ID=a.userID AND a.status <> 0 ' +
-        'AND w.ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=a.ID AND status=1) ';
+        'FROM clients AS u, workflow_processes AS w, applications AS a LEFT JOIN corporates AS c ON a.userID = c.ID ' +
+        'WHERE u.ID=a.userID AND a.status <> 0 AND w.ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=a.ID AND status=1) ';
     if (type){
         switch (type){
             case '1': {
@@ -1897,49 +1898,38 @@ users.get('/application-id/:id', function(req, res, next) {
     let obj = {},
         application_id = req.params.id,
         path = 'files/application-'+application_id+'/',
-        query = 'SELECT u.ID AS userID, u.fullname, u.phone, u.email, u.address, cast(u.loan_officer as unsigned) loan_officer, ' +
+        query = 'SELECT u.ID userID, u.fullname, u.phone, u.email, u.address, cast(u.loan_officer as unsigned) loan_officer, ' +
             'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.interest_rate, a.repayment_date, ' +
-            'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, ' +
+            'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, ' +
             '(SELECT l.supervisor FROM users l WHERE l.ID = u.loan_officer) AS supervisor, ' +
             '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
             'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
             'FROM clients AS u INNER JOIN applications AS a ON u.ID = a.userID LEFT JOIN remita_mandates r ' +
+            'ON (r.applicationID = a.ID AND r.status = 1) WHERE a.ID = ?',
+        query2 = 'SELECT u.ID userID, c.ID contactID, u.name fullname, u.phone, u.email, u.address, cast(c.loan_officer as unsigned) loan_officer, ' +
+            'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.interest_rate, a.repayment_date, ' +
+            'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, ' +
+            '(SELECT l.supervisor FROM users l WHERE l.ID = c.loan_officer) AS supervisor, ' +
+            '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
+            'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
+            'FROM corporates AS u INNER JOIN applications AS a ON u.ID = a.userID INNER JOIN clients AS c ON u.clientID=c.ID LEFT JOIN remita_mandates r ' +
             'ON (r.applicationID = a.ID AND r.status = 1) WHERE a.ID = ?';
     db.getConnection(function(err, connection) {
         if (err) throw err;
 
-        connection.query(query, [application_id], function (error, result, fields) {
-            if(error){
+        connection.query('SELECT client_type FROM applications WHERE ID = ?', [application_id], function (error, app, fields) {
+            if (error || !app[0]) {
                 res.send({"status": 500, "error": error, "response": null});
             } else {
-                result = (result[0])? result[0] : {};
-                if (!fs.existsSync(path)){
-                    result.files = {};
-                    connection.query('SELECT * FROM application_schedules WHERE applicationID=?', [application_id], function (error, schedule, fields) {
-                        if (error) {
-                            res.send({"status": 500, "error": error, "response": null});
-                        } else {
-                            result.schedule = schedule;
-                            connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', [application_id], function (error, payment_history, fields) {
-                                connection.release();
-                                if (error) {
-                                    res.send({"status": 500, "error": error, "response": null});
-                                } else {
-                                    result.payment_history = payment_history;
-                                    return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
-                                }
-                            });
-                        }
-                    });
-                } else {
-                    fs.readdir(path, function (err, files){
-                        async.forEach(files, function (file, callback){
-                            let filename = file.split('.')[0].split('_');
-                            filename.shift();
-                            obj[filename.join('_')] = path+file;
-                            callback();
-                        }, function(data){
-                            result.files = obj;
+                if (app[0]['client_type'] === 'corporate')
+                    query = query2;
+                connection.query(query, [application_id], function (error, result, fields) {
+                    if(error){
+                        res.send({"status": 500, "error": error, "response": null});
+                    } else {
+                        result = (result[0])? result[0] : {};
+                        if (!fs.existsSync(path)){
+                            result.files = {};
                             connection.query('SELECT * FROM application_schedules WHERE applicationID=?', [application_id], function (error, schedule, fields) {
                                 if (error) {
                                     res.send({"status": 500, "error": error, "response": null});
@@ -1956,9 +1946,36 @@ users.get('/application-id/:id', function(req, res, next) {
                                     });
                                 }
                             });
-                        });
-                    });
-                }
+                        } else {
+                            fs.readdir(path, function (err, files){
+                                async.forEach(files, function (file, callback){
+                                    let filename = file.split('.')[0].split('_');
+                                    filename.shift();
+                                    obj[filename.join('_')] = path+file;
+                                    callback();
+                                }, function(data){
+                                    result.files = obj;
+                                    connection.query('SELECT * FROM application_schedules WHERE applicationID=?', [application_id], function (error, schedule, fields) {
+                                        if (error) {
+                                            res.send({"status": 500, "error": error, "response": null});
+                                        } else {
+                                            result.schedule = schedule;
+                                            connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', [application_id], function (error, payment_history, fields) {
+                                                connection.release();
+                                                if (error) {
+                                                    res.send({"status": 500, "error": error, "response": null});
+                                                } else {
+                                                    result.payment_history = payment_history;
+                                                    return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
+                                                }
+                                            });
+                                        }
+                                    });
+                                });
+                            });
+                        }
+                    }
+                });
             }
         });
     });
@@ -1972,11 +1989,12 @@ users.get('/applications/:officerID', function(req, res, next) {
         id = req.params.officerID;
     end = moment(end).add(1, 'days').format("YYYY-MM-DD");
 
-	let query = "SELECT u.fullname, u.phone, u.email, u.address, a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, " +
+	let query = "SELECT u.fullname, u.phone, u.email, u.address, c.name corporate_name, c.email corporate_email, c.phone corporate_phone, c.address corporate_address, " +
+        "a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.client_type, " +
         "a.loan_amount, a.date_modified, a.comment, a.close_status, a.workflowID, a.loanCirrusID, a.reschedule_amount, w.current_stage," +
         '(SELECT product FROM preapplications WHERE ID = a.preapplicationID) AS product,' +
         "(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status " +
-        "FROM clients AS u, applications AS a, workflow_processes AS w " +
+        "FROM clients AS u, workflow_processes AS w, applications AS a LEFT JOIN corporates AS c ON a.userID = c.ID " +
         "WHERE u.ID=a.userID AND a.status <> 0 AND w.ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=a.ID AND status=1) ",
         query2 = query.concat('AND loan_officer = '+id+' '),
         query3 = query.concat('AND (select supervisor from users where users.id = u.loan_officer) =  '+id+' ');
@@ -2070,7 +2088,7 @@ users.get('/collections/filter', function(req, res, next) {
 });
 
 function collectionsQueryMiddleware(query, type, range, today, callback) {
-    switch (type){
+    switch (type) {
         case 'due': {
             query = query.concat(collectionDueRangeQuery(today, range));
             break;
@@ -2174,9 +2192,11 @@ users.get('/applications/delete/:id', function(req, res, next) {
         if(error){
             res.send({"status": 500, "error": error, "response": null});
         } else {
-            let query = 'SELECT u.fullname, u.phone, u.email, u.address, a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, ' +
+            let query = 'SELECT u.fullname, u.phone, u.email, u.address, c.name corporate_name, c.email corporate_email, c.phone corporate_phone, c.address corporate_address, ' +
+                'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.client_type, ' +
                 'a.workflowID, a.loan_amount, a.date_modified, a.comment, a.loanCirrusID, a.reschedule_amount,' +
-                '(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status FROM clients AS u, applications AS a WHERE u.ID=a.userID AND a.status <> 0 ORDER BY a.ID desc';
+                '(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status ' +
+                'FROM clients AS u, applications AS a LEFT JOIN corporates AS c ON a.userID = c.ID WHERE u.ID=a.userID AND a.status <> 0 ORDER BY a.ID desc';
             db.query(query, function (error, results, fields) {
                 if(error){
                     res.send({"status": 500, "error": error, "response": null});
@@ -2230,9 +2250,11 @@ users.post('/applications/comment/:id', function(req, res, next) {
         if(error){
             res.send({"status": 500, "error": error, "response": null});
         } else {
-            let query = 'SELECT u.fullname, u.phone, u.email, u.address, a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, ' +
+            let query = 'SELECT u.fullname, u.phone, u.email, u.address, c.name corporate_name, c.email corporate_email, c.phone corporate_phone, c.address corporate_address, ' +
+                'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.client_type, ' +
                 'a.workflowID, a.loan_amount, a.date_modified, a.comment, a.loanCirrusID, a.reschedule_amount,' +
-                '(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status FROM clients AS u, applications AS a WHERE u.ID=a.userID AND a.status <> 0 ORDER BY a.ID desc';
+                '(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status ' +
+                'FROM clients AS u, applications AS a LEFT JOIN corporates AS c ON a.userID = c.ID WHERE u.ID=a.userID AND a.status <> 0 ORDER BY a.ID desc';
             db.query(query, function (error, results, fields) {
                 if(error){
                     res.send({"status": 500, "error": error, "response": null});
@@ -2472,45 +2494,56 @@ users.post('/application/schedule/:id', function(req, res, next) {
 users.post('/application/approve-schedule/:id', function(req, res, next) {
     db.getConnection(function(err, connection) {
         if (err) throw err;
-        let reschedule_amount = req.body.reschedule_amount,
-            loan_amount_update = req.body.loan_amount_update,
-            date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-        connection.query('UPDATE applications SET loan_amount = ?, reschedule_amount = ?, date_modified = ? WHERE ID = ?', [loan_amount_update,reschedule_amount,date_modified,req.params.id], function (error, invoice, fields) {
-            if(error){
+
+        connection.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID 
+            FROM applications a, clients c WHERE a.ID=${req.params.id} AND a.userID=c.ID`, function (error, app, fields) {
+            if (error) {
                 res.send({"status": 500, "error": error, "response": null});
+            } else if (!app[0]) {
+                res.send({"status": 500, "error": "Application does not exist!", "response": null});
             } else {
-                connection.query('SELECT * FROM application_schedules WHERE applicationID = ? AND status = 1', [req.params.id], function (error, invoices, fields) {
+                let application = app[0],
+                    reschedule_amount = req.body.reschedule_amount,
+                    loan_amount_update = req.body.loan_amount_update,
+                    date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                connection.query('UPDATE applications SET loan_amount = ?, reschedule_amount = ?, date_modified = ? WHERE ID = ?', [loan_amount_update,reschedule_amount,date_modified,req.params.id], function (error, invoice, fields) {
                     if(error){
                         res.send({"status": 500, "error": error, "response": null});
                     } else {
-                        async.forEach(invoices, function (invoice, callback) {
-                            connection.query('UPDATE application_schedules SET status=0 WHERE ID = ?', [invoice.ID], function (error, response, fields) {
-                                callback();
-                            });
-                        }, function (data) {
-                            connection.query('SELECT * FROM application_schedules WHERE applicationID = ? AND status = 2', [req.params.id], function (error, new_schedule, fields) {
-                                if (error) {
-                                    res.send({"status": 500, "error": error, "response": null});
-                                } else {
-                                    let count = 0;
-                                    async.forEach(new_schedule, function (obj, callback2) {
-                                        connection.query('UPDATE application_schedules SET status=1, date_modified=? WHERE ID = ?', [date_modified,obj.ID], function (error, response, fields) {
-                                            if(!error)
-                                                count++;
-                                            callback2();
+                        connection.query('UPDATE application_schedules SET status=0 WHERE applicationID = ? AND status = 1', [req.params.id], function (error, response, fields) {
+                            if (error) {
+                                res.send({"status": 500, "error": error, "response": null});
+                            } else {
+                                connection.query('UPDATE application_schedules SET status=1, date_modified=? WHERE applicationID = ? AND status = 2', [date_modified,req.params.id], function (error, response, fields) {
+                                    if (error) {
+                                        res.send({"status": 500, "error": error, "response": null});
+                                    } else {
+                                        let disbursement = {
+                                            loan_id: application.ID,
+                                            amount: reschedule_amount,
+                                            client_id: application.clientID,
+                                            loan_officer: application.loan_officerID,
+                                            branch: application.branchID,
+                                            date_disbursed: date_modified,
+                                            status: 1,
+                                            date_created: date_modified
+                                        };
+                                        connection.query(`INSERT INTO disbursement_history SET ?`, disbursement, function (error, result, fields) {
+                                            if(error){
+                                                res.send({"status": 500, "error": error, "response": null});
+                                            } else {
+                                                let payload = {};
+                                                payload.category = 'Application';
+                                                payload.userid = req.cookies.timeout;
+                                                payload.description = 'Application Schedule Approved for Loan Application';
+                                                payload.affected = req.params.id;
+                                                notificationsService.log(req, payload);
+                                                res.send({"status": 200, "message": "Application schedule approved successfully!", "response": null});
+                                            }
                                         });
-                                    }, function (data) {
-                                        connection.release();
-                                        let payload = {}
-                                        payload.category = 'Application'
-                                        payload.userid = req.cookies.timeout
-                                        payload.description = 'Application Schedule Approved for Loan Application'
-                                        payload.affected = req.params.id
-                                        notificationsService.log(req, payload)
-                                        res.send({"status": 200, "message": "Application schedule approved with "+count+" invoices successfully!", "response": null});
-                                    });
-                                }
-                            });
+                                    }
+                                });
+                            }
                         });
                     }
                 });
@@ -2813,20 +2846,46 @@ Number.prototype.round = function(p) {
 };
 
 users.post('/application/disburse/:id', function(req, res, next) {
-    let data = req.body;
-    data.status = 2;
-    data.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.query('UPDATE applications SET ? WHERE ID = '+req.params.id, data, function (error, result, fields) {
-        if(error){
+    db.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID 
+        FROM applications a, clients c WHERE a.ID=${req.params.id} AND a.userID=c.ID`, function (error, app, fields) {
+        if (error) {
             res.send({"status": 500, "error": error, "response": null});
+        } else if (!app[0]) {
+            res.send({"status": 500, "error": "Application does not exist!", "response": null});
         } else {
-            let payload = {}
-            payload.category = 'Application'
-            payload.userid = req.cookies.timeout
-            payload.description = 'Loan Disbursed'
-            payload.affected = req.params.id
-            notificationsService.log(req, payload)
-            res.send({"status": 200, "message": "Loan disbursed successfully!"});
+            let data = req.body,
+                application = app[0];
+            data.status = 2;
+            data.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+            db.query(`UPDATE applications SET ? WHERE ID = ${req.params.id}`, data, function (error, result, fields) {
+                if(error){
+                    res.send({"status": 500, "error": error, "response": null});
+                } else {
+                    let disbursement = {
+                        loan_id: application.ID,
+                        amount: application.amount,
+                        client_id: application.clientID,
+                        loan_officer: application.loan_officerID,
+                        branch: application.branchID,
+                        date_disbursed: data.date_modified,
+                        status: 1,
+                        date_created: data.date_modified
+                    };
+                    db.query(`INSERT INTO disbursement_history SET ?`, disbursement, function (error, result, fields) {
+                        if(error){
+                            res.send({"status": 500, "error": error, "response": null});
+                        } else {
+                            let payload = {};
+                            payload.category = 'Application';
+                            payload.userid = req.cookies.timeout;
+                            payload.description = 'Loan Disbursed';
+                            payload.affected = req.params.id;
+                            notificationsService.log(req, payload);
+                            res.send({"status": 200, "message": "Loan disbursed successfully!"});
+                        }
+                    });
+                }
+            });
         }
     });
 });

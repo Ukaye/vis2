@@ -173,4 +173,49 @@ function overpaymentCheck(clientID, amount, callback) {
     }
 }
 
+router.get('/invoices/due', function(req, res, next) {
+    let today = moment().utcOffset('+0100').format('YYYY-MM-DD'),
+        query = "SELECT s.ID,c.fullname AS client, c.phone, c.first_name, c.middle_name, c.last_name, c.ID AS clientID, " +
+        "s.applicationID, s.status, s.payment_amount, s.payment_collect_date, s.payment_status, 'Principal' AS 'type' FROM application_schedules AS s, clients c " +
+        "WHERE s.status = 1 AND s.payment_status = 0 AND (select status from applications a where a.ID = s.applicationID) = 2 AND c.ID = (select userID from applications a where a.ID = s.applicationID) " +
+        "AND (select close_status from applications a where a.ID = s.applicationID) = 0 AND s.payment_amount > 0 AND TIMESTAMP(payment_collect_date) <= TIMESTAMP('"+today+"') ORDER BY ID desc";
+
+    db.query(query, function (error, results, fields) {
+        if(error) {
+            res.send({"status": 500, "error": error, "response": null});
+        } else {
+            query = "SELECT s.ID,c.fullname AS client, c.phone, c.first_name, c.middle_name, c.last_name, c.ID AS clientID, " +
+                "s.applicationID, s.status, s.interest_amount as payment_amount, s.interest_collect_date as payment_collect_date, s.payment_status, 'Interest' AS 'type' FROM application_schedules AS s, clients c " +
+                "WHERE s.status = 1 AND s.payment_status = 0 AND (select status from applications a where a.ID = s.applicationID) = 2 AND c.ID = (select userID from applications a where a.ID = s.applicationID) " +
+                "AND (select close_status from applications a where a.ID = s.applicationID) = 0 AND s.interest_amount > 0 AND TIMESTAMP(payment_collect_date) <= TIMESTAMP('"+today+"') ORDER BY ID desc";
+            let results_principal = results;
+            db.query(query, function (error, results2, fields) {
+                if(error) {
+                    res.send({"status": 500, "error": error, "response": null});
+                } else {
+                    let results_interest = results2,
+                        results = results_principal.concat(results_interest);
+                    return res.send({"status": 200, "message": "Due invoices fetched successfully!", "response": results});
+                }
+            });
+        }
+    });
+});
+
+router.delete('/bulk_upload/records/debit', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let payload = {},
+        query =  `UPDATE collection_bulk_uploads Set ? WHERE (credit - debit) < 0`,
+        endpoint = `/core-service/post?query=${query}`,
+        url = `${HOST}${endpoint}`;
+    payload.status = 0;
+    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+
+    db.query(query, payload, function (error, response) {
+        if (error)
+            return res.send({status: 500, error: error, response: null});
+        return res.send({status: 200, error: null, response: response});
+    });
+});
+
 module.exports = router;

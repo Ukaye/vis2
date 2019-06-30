@@ -7,6 +7,7 @@ let offset = 0;
 let isWalletPage = 1;
 let sPageURL = '';
 let sURLVariables = "";
+let selectedOpsRequirement = [];
 $(document).ready(function () {
     $('#bootstrap-data-table-export').DataTable();
     sPageURL = window.location.search.substring(1);
@@ -271,7 +272,15 @@ function bindDataTable(id) {
         columns: [{
                 width: "auto",
                 "mRender": function (data, type, full) {
-                    return `<span class="badge badge-pill ${(full.isApproved===1)?'badge-primary':'badge-danger'}">${(full.isApproved===1)?'Approved':'Pending Approval'}</span>`;
+                    let strStatus = '';
+                    if (full.isApproved === 1 && full.postDone === 1) {
+                        strStatus = 'Approved';
+                    } else if (full.isApproved === 0 && full.postDone === 1) {
+                        strStatus = 'Denied';
+                    } else {
+                        strStatus = 'Pending Approval';
+                    }
+                    return `<span class="badge badge-pill ${(full.isApproved===1)?'badge-primary':'badge-danger'}">${strStatus}</span>`;
                 }
             },
             {
@@ -323,11 +332,11 @@ function bindDataTable(id) {
                         <i class="fa fa-ellipsis-v" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         </i> 
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        <button class="dropdown-item" id="dropdownItemDoc" data-toggle="modal" data-target="#viewListDocModal">Document</button>
+                        <button class="dropdown-item" id="dropdownItemDoc" data-toggle="modal" data-target="#viewListDocModal" ${(full.postDone === 0)?'':'disabled'}>Document</button>
                           <button class="dropdown-item" id="dropdownItemRevert" ${(full.postDone === 1 && full.is_capital === 0)?'':'disabled'}>Reverse</button>
-                          <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal">Review</button>
-                          <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(full.reviewDone === 1)?'':'disabled'}>Approval</button>
-                          <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal"${(full.reviewDone === 1 && full.approvalDone === 1)?'':'disabled'}>Post</button>
+                          <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal" ${(full.reviewDone === 0)?'':'disabled'}>Review</button>
+                          <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(full.reviewDone === 1)?'':'disabled'} ${(full.approvalDone === 0)?'':'disabled'}>Approval</button>
+                          <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal"${(full.reviewDone === 1 && full.approvalDone === 1)?'':'disabled'} ${(full.postDone === 0)?'':'disabled'}>Post</button>
                         </div>
                       </div>`;
 
@@ -470,7 +479,6 @@ function bindInterestDataTable() {
 //                     endDate: `${_dt2.getFullYear()}-${_dt2.getMonth()+1}-${_dt2.getDate()}`
 //                 },
 //                 success: function (data) {
-//                     console.log(data.data);
 //                     fnCallback(data)
 //                 }
 //             });
@@ -720,6 +728,7 @@ $("#input_amount").on("focusout", function (event) {
 });
 
 
+
 function setReviewRequirements(value) {
     let pbody = $("#transactionDetails");
     let tr = "";
@@ -735,6 +744,7 @@ function setReviewRequirements(value) {
         'type': 'get',
         'success': function (data) {
             if (data.length > 0) {
+                selectedOpsRequirement = data;
                 if (data.status === undefined) {
                     $('#viewReviewModalHeader').html(data[0].description);
                     $('#viewReviewModalHeader2').html(data[0].ref_no);
@@ -748,7 +758,7 @@ function setReviewRequirements(value) {
                                         <div class="form-group">
                                             <label class="form-control-label"><strong>${(element.role_name===null)?'Role Not Required':element.role_name}</strong></label>
                                             <div class="form-control-label">
-                                                <small>Amount: </small><small class="text-muted">${element.amount}</small>
+                                                <small>Amount: </small><small class="text-muted">${formater(element.amount.toString())}</small>
                                             </div>
                                             <div class="form-control-label">
                                                 <small>Verified By: </small><small class="text-muted">${(element.fullname===null)?'Not Specified':element.fullname}</small>
@@ -759,8 +769,8 @@ function setReviewRequirements(value) {
                                         </div>
                                     </div>
                                     <div class="form-group col-6" style="vertical-align: middle">
-                                        <button type="button" ${(element.isReviewed===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onReviewed(${1},${element.approvalId},${element.txnId})">Review</button>
-                                        <button type="button" ${(element.isReviewed===0)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onReviewed(${0},${element.approvalId},${element.txnId})">Deny</button>
+                                        <button type="button" ${(element.isCompleted===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onReviewed(${1},${element.approvalId},${element.txnId},${element.ID})">Review</button>
+                                        <button type="button" ${(element.isCompleted===1)?'disabled':''} ${(element.isReviewed===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onReviewed(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
                                     </div>
                                 </div>
                             </li>`).trigger('change');
@@ -780,59 +790,66 @@ function setReviewRequirements(value) {
     });
 }
 
+
 function onExecutiveTransaction() {
     let _mRoleId = [];
-    let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === opsObj.operationId && status === 1);
-    if (mRoleId.length === 0) {
-        _mRoleId.push({
-            roles: "[]",
-            operationId: opsObj.operationId
-        });
-    } else {
-        _mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === opsObj.operationId && status === 1);
-    }
-    let investmentOps = {
-        amount: $("#input_amount").val(),
-        description: $("#input_description").val(),
-        is_credit: opsObj.is_credit,
-        isWithdrawal: (opsObj.operationId === '3') ? 1 : 0,
-        isDeposit: (opsObj.operationId === '1') ? 1 : 0,
-        isTransfer: (opsObj.operationId === '2') ? 1 : 0,
-        investmentId: (isWalletPage === 0) ? selectedInvestment.investmentId : '',
-        operationId: opsObj.operationId,
-        is_capital: 0,
-        isApproved: 0,
-        approvedBy: '',
-        createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
-        roleIds: _mRoleId,
-        productId: selectedInvestment.productId,
-        isWallet: isWalletPage,
-        clientId: sURLVariables,
-        txn_date: $('#input_txn_date').val()
-    };
+    if ($("#input_amount").val() !== '' &&
+        $("#input_amount").val() !== ' ' &&
+        $("#input_txn_date").val() !== '' &&
+        $("#input_txn_date").val() !== ' ') {
+        let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === opsObj.operationId && status === 1);
+        if (mRoleId.length === 0) {
+            _mRoleId.push({
+                roles: "[]",
+                operationId: opsObj.operationId
+            });
+        } else {
+            _mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === opsObj.operationId && status === 1);
+        }
+        let investmentOps = {
+            amount: $("#input_amount").val(),
+            description: $("#input_description").val(),
+            is_credit: opsObj.is_credit,
+            isWithdrawal: (opsObj.operationId === '3') ? 1 : 0,
+            isDeposit: (opsObj.operationId === '1') ? 1 : 0,
+            isTransfer: (opsObj.operationId === '2') ? 1 : 0,
+            investmentId: (isWalletPage === 0) ? selectedInvestment.investmentId : '',
+            operationId: opsObj.operationId,
+            is_capital: 0,
+            isApproved: 0,
+            approvedBy: '',
+            createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
+            roleIds: _mRoleId,
+            productId: selectedInvestment.productId,
+            isWallet: isWalletPage,
+            clientId: sURLVariables,
+            txn_date: $('#input_txn_date').val()
+        };
 
-
-    $.ajax({
-        url: `investment-txns/create`,
-        'type': 'post',
-        'data': investmentOps,
-        'success': function (data) {
-            if (data.status === undefined) {
-                $('#wait').hide();
-                $("#input_amount").val('');
-                $("#input_description").val('');
-                swal('Deposit transaction successfully!', '', 'success');
-                bindDataTable(selectedInvestment.investmentId, false);
-            } else {
+        $.ajax({
+            url: `investment-txns/create`,
+            'type': 'post',
+            'data': investmentOps,
+            'success': function (data) {
+                if (data.status === undefined) {
+                    $('#wait').hide();
+                    $("#input_amount").val('');
+                    $("#input_description").val('');
+                    swal('Deposit transaction successful!', '', 'success');
+                    bindDataTable(selectedInvestment.investmentId, false);
+                } else {
+                    $('#wait').hide();
+                    swal('Oops! An error occurred while executing deposit transaction', '', 'error');
+                }
+            },
+            'error': function (err) {
                 $('#wait').hide();
                 swal('Oops! An error occurred while executing deposit transaction', '', 'error');
             }
-        },
-        'error': function (err) {
-            $('#wait').hide();
-            swal('Oops! An error occurred while executing deposit transaction', '', 'error');
-        }
-    });
+        });
+    } else {
+        swal('Oops! Missing required field(s)', '', 'error');
+    }
 }
 
 // $('#bootstrap-data-table2 tbody').on('click', '.dropdown-item', function () {
@@ -885,6 +902,8 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
                                         investmentId: selectedInvestment.investmentId,
                                         operationId: _operationId,
                                         isCharge: 1,
+                                        isDeposit: (data_row.isDeposit === 1) ? 0 : 1,
+                                        isWithdrawal: (data_row.isWithdrawal === 1) ? 0 : 1,
                                         is_capital: 0,
                                         isApproved: 0,
                                         approvedBy: '',
@@ -1173,6 +1192,7 @@ function setApprovalRequirements(value) {
         url: `investment-txns/get-txn-user-roles/${value.ID}?method='APPROVAL'&userId=${(JSON.parse(localStorage.getItem("user_obj"))).ID}`,
         'type': 'get',
         'success': function (data) {
+            selectedOpsRequirement = data;
             if (data.length > 0) {
                 if (data.status === undefined) {
                     $('#viewListApprovalModalHeader').html(data[0].description);
@@ -1187,7 +1207,7 @@ function setApprovalRequirements(value) {
                                         <div class="form-group">
                                             <label class="form-control-label"><strong>${(element.role_name===null)?'Role Not Required':element.role_name}</strong></label>
                                             <div class="form-control-label">
-                                                <small>Amount: </small><small class="text-muted">${element.amount}</small>
+                                                <small>Amount: </small><small class="text-muted">${formater(element.amount.toString())}</small>
                                             </div>
                                             <div class="form-control-label">
                                                 <small>Verified By: </small><small class="text-muted">${(element.fullname===null)?'Not Specified':element.fullname}</small>
@@ -1198,8 +1218,8 @@ function setApprovalRequirements(value) {
                                         </div>
                                     </div>
                                     <div class="form-group col-6" style="vertical-align: middle">
-                                        <button type="button" ${(element.isApproved===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onApproved(${1},${element.approvalId},${element.txnId})">Approve</button>
-                                        <button type="button" ${(element.isApproved===0)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onApproved(${0},${element.approvalId},${element.txnId})">Deny</button>
+                                        <button type="button" ${(element.isCompleted===1)?'disabled':''} ${(element.isApproved===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onApproved(${1},${element.approvalId},${element.txnId},${element.ID})">Approve</button>
+                                        <button type="button" ${(element.isCompleted===1)?'disabled':''} ${(element.isApproved===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onApproved(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
                                     </div>
                                 </div>
                             </li>`).trigger('change');
@@ -1230,6 +1250,7 @@ function setPostRequirements(value) {
                 $('#viewPostModalHeader2').html(data[0].ref_no);
                 $('#wait').hide();
                 if (data.length > 0) {
+                    selectedOpsRequirement = data;
                     data.forEach(element => {
                         if (element.method === 'POST') {
                             $("#post_list_group").append(`<li class="list-group-item">
@@ -1238,7 +1259,7 @@ function setPostRequirements(value) {
                                     <div class="form-group">
                                         <label class="form-control-label"><strong>${(element.role_name===null)?'Role Not Required':element.role_name}</strong></label>
                                         <div class="form-control-label">
-                                            <small>Amount: </small><small class="text-muted">${element.amount}</small>
+                                            <small>Amount: </small><small class="text-muted">${formater(element.amount.toString())}</small>
                                         </div>
                                         <div class="form-control-label">
                                             <small>Verified By: </small><small class="text-muted">${(element.fullname===null)?'Not Specified':element.fullname}</small>
@@ -1249,8 +1270,8 @@ function setPostRequirements(value) {
                                     </div>
                                 </div>
                                 <div class="form-group col-6" style="vertical-align: middle">
-                                    <button type="button" ${(element.isPosted===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onPost(${1},${element.approvalId},${element.txnId})">Post</button>
-                                    <button type="button" ${(element.isPosted===0)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onPost(${0},${element.approvalId},${element.txnId})">Deny</button>
+                                    <button type="button" ${(element.isCompleted===1)?'disabled':''} ${(element.isPosted===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onPost(${1},${element.approvalId},${element.txnId},${element.ID})">Post</button>
+                                    <button type="button" ${(element.isCompleted===1)?'disabled':''} ${(element.isPosted===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onPost(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
                                 </div>
                             </div>
                         </li>`).trigger('change');
@@ -1271,7 +1292,8 @@ function onCloseApproval() {
     $("#role_list_group").html('');
 }
 
-function onApproved(value, approvedId, txnId) {
+function onApproved(value, approvedId, txnId, id) {
+    let priority = selectedOpsRequirement.find(x => x.ID === id).priority;
     let _data = {
         status: value,
         id: approvedId,
@@ -1279,7 +1301,8 @@ function onApproved(value, approvedId, txnId) {
         isCredit: data_row,
         amount: data_row.amount,
         balance: data_row.txnBalance,
-        userId: (JSON.parse(localStorage.getItem("user_obj"))).ID
+        userId: (JSON.parse(localStorage.getItem("user_obj"))).ID,
+        priority: priority
     }
     $.ajax({
         url: `investment-txns/approves`,
@@ -1305,7 +1328,9 @@ function onApproved(value, approvedId, txnId) {
     });
 }
 
-function onReviewed(value, approvedId, txnId) {
+function onReviewed(value, approvedId, txnId, id) {
+    let priority = selectedOpsRequirement.find(x => x.ID === id).priority;
+
     let _data = {
         status: value,
         id: approvedId,
@@ -1313,7 +1338,8 @@ function onReviewed(value, approvedId, txnId) {
         isCredit: data_row,
         amount: data_row.amount,
         balance: data_row.txnBalance,
-        userId: (JSON.parse(localStorage.getItem("user_obj"))).ID
+        userId: (JSON.parse(localStorage.getItem("user_obj"))).ID,
+        priority: priority
     }
     $.ajax({
         url: `investment-txns/reviews`,
@@ -1325,9 +1351,7 @@ function onReviewed(value, approvedId, txnId) {
                 swal('Execution successful!', '', 'success');
                 $("#review_list_group").html('');
                 setReviewRequirements(data_row);
-                // bindDataTable(selectedInvestment.investmentId, false);
                 table.ajax.reload(null, false);
-                // location.reload();
             } else {
                 $('#wait').hide();
                 swal('Oops! An error occurred while executing action', '', 'error');
@@ -1344,7 +1368,8 @@ function onReviewed(value, approvedId, txnId) {
 
 
 
-function onPost(value, approvedId, txnId) {
+function onPost(value, approvedId, txnId, id) {
+    let priority = selectedOpsRequirement.find(x => x.ID === id).priority;
     let _data = {
         status: value,
         id: approvedId,
@@ -1366,7 +1391,8 @@ function onPost(value, approvedId, txnId) {
         isMoveFundTransfer: data_row.isMoveFundTransfer,
         isWallet: data_row.isWallet,
         clientId: data_row.clientId,
-        isPaymentMadeByWallet: data_row.isPaymentMadeByWallet
+        isPaymentMadeByWallet: data_row.isPaymentMadeByWallet,
+        priority: priority
 
     }
     $.ajax({
@@ -1598,7 +1624,6 @@ function onTransferToInvestments(amount, desc, is_credit, investmentId) {
 //             $('#wait').hide();
 //         }
 //     } catch (error) {
-//         console.log(error);
 //         $('#wait').hide();
 //         swal('Something went wrong while executing transfer operation', '', 'error');
 //     }

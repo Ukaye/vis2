@@ -519,12 +519,16 @@ function addBadChequeReason() {
     });
 }
 
-function populateBadChequeReasons(data){
+function populateBadChequeReasons(data) {
     let $reasons = $("#reasons");
     $reasons.DataTable().clear();
     let reasons = [];
     $.each(data, function(k, v){
-        v.actions = '<button type="button" class="btn btn-danger" onclick="removeBadChequeReason('+v.ID+')"><i class="fa fa-remove"></i></button>';
+        if (v.type === 'default') {
+            v.actions = '<i class="fa fa-lg fa-lock"></i>';
+        } else {
+            v.actions = '<button type="button" class="btn btn-danger" onclick="removeBadChequeReason('+v.ID+')"><i class="fa fa-remove"></i></button>';
+        }
         reasons.push(v);
     });
     $reasons.DataTable({

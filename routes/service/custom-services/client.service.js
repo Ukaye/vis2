@@ -317,7 +317,7 @@ router.post('/bad_cheque', function (req, res, next) {
                 "response": null
             });
         } else {
-            db.query("SELECT * FROM bad_cheques WHERE status = 1", function (error, results, fields) {
+            db.query(`SELECT * FROM bad_cheques WHERE status = 1 AND clientID = ${data.clientID}`, function (error, results, fields) {
                 if (error) {
                     res.send({
                         "status": 500,
@@ -336,8 +336,8 @@ router.post('/bad_cheque', function (req, res, next) {
     });
 });
 
-router.get('/bad_cheque', function (req, res, next) {
-    db.query("SELECT * FROM bad_cheques WHERE status = 1", function (error, results, fields) {
+router.get('/bad_cheque/:clientID', function (req, res, next) {
+    db.query(`SELECT * FROM bad_cheques WHERE status = 1 AND clientID = ${req.params.clientID}`, function (error, results, fields) {
         if (error) {
             res.send({
                 "status": 500,
@@ -355,17 +355,23 @@ router.get('/bad_cheque', function (req, res, next) {
 });
 
 router.delete('/bad_cheque/:id', function (req, res, next) {
-    let query = "UPDATE bad_cheques SET status = 0, date_modified = ? WHERE ID = ? AND status = 1",
-        date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.query(query, [date_modified, req.params.id], function (error, results, fields) {
+    db.query(`SELECT * FROM bad_cheques WHERE status = 1 AND clientID = ${req.params.id}`, function (error, cheque, fields) {
         if (error) {
             res.send({
                 "status": 500,
                 "error": error,
                 "response": null
             });
+        } else if (!cheque[0]) {
+            res.send({
+                "status": 500,
+                "error": 'Cheque does not exist!',
+                "response": null
+            });
         } else {
-            db.query("SELECT * FROM bad_cheques WHERE status = 1", function (error, results, fields) {
+            let query = "UPDATE bad_cheques SET status = 0, date_modified = ? WHERE ID = ? AND status = 1",
+                date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+            db.query(query, [date_modified, req.params.id], function (error, results, fields) {
                 if (error) {
                     res.send({
                         "status": 500,
@@ -373,10 +379,20 @@ router.delete('/bad_cheque/:id', function (req, res, next) {
                         "response": null
                     });
                 } else {
-                    res.send({
-                        "status": 200,
-                        "message": "Bad cheque deleted successfully!",
-                        "response": results
+                    db.query(`SELECT * FROM bad_cheques WHERE status = 1 AND clientID = ${cheque[0]['clientID']}`, function (error, results, fields) {
+                        if (error) {
+                            res.send({
+                                "status": 500,
+                                "error": error,
+                                "response": null
+                            });
+                        } else {
+                            res.send({
+                                "status": 200,
+                                "message": "Bad cheque deleted successfully!",
+                                "response": results
+                            });
+                        }
                     });
                 }
             });
@@ -384,5 +400,18 @@ router.delete('/bad_cheque/:id', function (req, res, next) {
     });
 });
 
+router.get('/corporates-v2/get', function(req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let query = `SELECT ID, name, email, status, date_created from corporates WHERE status = 1 ORDER BY name asc`,
+        endpoint = '/core-service/get',
+        url = `${HOST}${endpoint}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        res.send(response['data'] || []);
+    });
+});
 
 module.exports = router;
