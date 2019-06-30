@@ -2494,45 +2494,56 @@ users.post('/application/schedule/:id', function(req, res, next) {
 users.post('/application/approve-schedule/:id', function(req, res, next) {
     db.getConnection(function(err, connection) {
         if (err) throw err;
-        let reschedule_amount = req.body.reschedule_amount,
-            loan_amount_update = req.body.loan_amount_update,
-            date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-        connection.query('UPDATE applications SET loan_amount = ?, reschedule_amount = ?, date_modified = ? WHERE ID = ?', [loan_amount_update,reschedule_amount,date_modified,req.params.id], function (error, invoice, fields) {
-            if(error){
+
+        connection.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID 
+            FROM applications a, clients c WHERE a.ID=${req.params.id} AND a.userID=c.ID`, function (error, app, fields) {
+            if (error) {
                 res.send({"status": 500, "error": error, "response": null});
+            } else if (!app[0]) {
+                res.send({"status": 500, "error": "Application does not exist!", "response": null});
             } else {
-                connection.query('SELECT * FROM application_schedules WHERE applicationID = ? AND status = 1', [req.params.id], function (error, invoices, fields) {
+                let application = app[0],
+                    reschedule_amount = req.body.reschedule_amount,
+                    loan_amount_update = req.body.loan_amount_update,
+                    date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                connection.query('UPDATE applications SET loan_amount = ?, reschedule_amount = ?, date_modified = ? WHERE ID = ?', [loan_amount_update,reschedule_amount,date_modified,req.params.id], function (error, invoice, fields) {
                     if(error){
                         res.send({"status": 500, "error": error, "response": null});
                     } else {
-                        async.forEach(invoices, function (invoice, callback) {
-                            connection.query('UPDATE application_schedules SET status=0 WHERE ID = ?', [invoice.ID], function (error, response, fields) {
-                                callback();
-                            });
-                        }, function (data) {
-                            connection.query('SELECT * FROM application_schedules WHERE applicationID = ? AND status = 2', [req.params.id], function (error, new_schedule, fields) {
-                                if (error) {
-                                    res.send({"status": 500, "error": error, "response": null});
-                                } else {
-                                    let count = 0;
-                                    async.forEach(new_schedule, function (obj, callback2) {
-                                        connection.query('UPDATE application_schedules SET status=1, date_modified=? WHERE ID = ?', [date_modified,obj.ID], function (error, response, fields) {
-                                            if(!error)
-                                                count++;
-                                            callback2();
+                        connection.query('UPDATE application_schedules SET status=0 WHERE applicationID = ? AND status = 1', [req.params.id], function (error, response, fields) {
+                            if (error) {
+                                res.send({"status": 500, "error": error, "response": null});
+                            } else {
+                                connection.query('UPDATE application_schedules SET status=1, date_modified=? WHERE applicationID = ? AND status = 2', [date_modified,req.params.id], function (error, response, fields) {
+                                    if (error) {
+                                        res.send({"status": 500, "error": error, "response": null});
+                                    } else {
+                                        let disbursement = {
+                                            loan_id: application.ID,
+                                            amount: reschedule_amount,
+                                            client_id: application.clientID,
+                                            loan_officer: application.loan_officerID,
+                                            branch: application.branchID,
+                                            date_disbursed: date_modified,
+                                            status: 1,
+                                            date_created: date_modified
+                                        };
+                                        connection.query(`INSERT INTO disbursement_history SET ?`, disbursement, function (error, result, fields) {
+                                            if(error){
+                                                res.send({"status": 500, "error": error, "response": null});
+                                            } else {
+                                                let payload = {};
+                                                payload.category = 'Application';
+                                                payload.userid = req.cookies.timeout;
+                                                payload.description = 'Application Schedule Approved for Loan Application';
+                                                payload.affected = req.params.id;
+                                                notificationsService.log(req, payload);
+                                                res.send({"status": 200, "message": "Application schedule approved successfully!", "response": null});
+                                            }
                                         });
-                                    }, function (data) {
-                                        connection.release();
-                                        let payload = {}
-                                        payload.category = 'Application'
-                                        payload.userid = req.cookies.timeout
-                                        payload.description = 'Application Schedule Approved for Loan Application'
-                                        payload.affected = req.params.id
-                                        notificationsService.log(req, payload)
-                                        res.send({"status": 200, "message": "Application schedule approved with "+count+" invoices successfully!", "response": null});
-                                    });
-                                }
-                            });
+                                    }
+                                });
+                            }
                         });
                     }
                 });
@@ -2842,8 +2853,8 @@ users.post('/application/disburse/:id', function(req, res, next) {
         } else if (!app[0]) {
             res.send({"status": 500, "error": "Application does not exist!", "response": null});
         } else {
-            let application = app[0];
-            let data = req.body;
+            let data = req.body,
+                application = app[0];
             data.status = 2;
             data.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
             db.query(`UPDATE applications SET ? WHERE ID = ${req.params.id}`, data, function (error, result, fields) {

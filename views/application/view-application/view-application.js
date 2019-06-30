@@ -1418,9 +1418,7 @@ function initCSVUpload2(application, settings) {
         if (!schedule[0])
             return notification('Please preview the schedule to be uploaded.','','warning');
 
-        console.log(schedule)
         validateSchedule(schedule, function (validation) {
-            console.log(validation)
             if (validation.status){
                 if (loan_amount.round(2) < total_due_amount.round(2))
                     return notification('Total principal on the new schedule must be greater than Principal balance','','warning');
@@ -1526,7 +1524,7 @@ function initCSVUpload2(application, settings) {
                         'success': function (data) {
                             $csvLoader.hide();
                             notification('Reschedule approved successfully','','success');
-                            window.location.reload();
+                            // window.location.reload();
                         },
                         'error': function (err) {
                             $csvLoader.hide();
