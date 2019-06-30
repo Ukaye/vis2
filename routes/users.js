@@ -123,6 +123,64 @@ users.get('/update-request-client', function(req, res) {
     });
 });
 
+users.get('/update-confirm-payment', function(req, res) {
+    let count=0,
+        errors = [];
+    db.getConnection(function(err, connection) {
+        connection.query('SELECT * FROM schedule_history', function (error, payments, field) {
+            if (error || !payments) {
+                res.send({"status": 500, "error": error, "response": null});
+            } else {
+                async.forEach(payments, function (payment, callback) {
+                    console.log(payment.ID);
+                    connection.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID 
+                        FROM applications a, clients c WHERE a.ID=${payment.applicationID} AND a.userID=c.ID`, function (error, app, fields) {
+                        if (error) {
+                            console.log(error);
+                            errors.push(payment);
+                            callback();
+                        } else if (app[0]) {
+                            let invoice = {},
+                                application = app[0];
+                            invoice.clientID = application.clientID;
+                            invoice.loan_officerID = application.loan_officerID;
+                            invoice.branchID = application.branchID;
+                            if (payment.payment_amount > 0 && payment.interest_amount > 0) {
+                                invoice.type = 'multiple';
+                            } else {
+                                if (payment.payment_amount > 0) {
+                                    invoice.type = 'principal';
+                                } else if (payment.interest_amount > 0) {
+                                    invoice.type = 'interest';
+                                } else if (payment.fees_amount > 0) {
+                                    invoice.type = 'fees';
+                                } else if (payment.penalty_amount > 0) {
+                                    invoice.type = 'penalty';
+                                }
+                            }
+                            connection.query(`UPDATE schedule_history SET ? WHERE ID = ${payment.ID}`, invoice, function (err, result, fields) {
+                                if (err) {
+                                    console.log(err);
+                                    errors.push(payment);
+                                } else {
+                                    count++;
+                                }
+                                callback();
+                            })
+                        } else {
+                            console.log('No Application found for '+payment.ID);
+                            callback();
+                        }
+                    });
+                }, function (data) {
+                    connection.release();
+                    res.json({count: count, errors: errors})
+                });
+            }
+        });
+    });
+});
+
 /* User Authentication */
 users.post('/login', function(req, res) {
     let user = {},
