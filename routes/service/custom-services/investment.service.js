@@ -81,6 +81,10 @@ router.post('/create', function (req, res, next) {
                                             method: 'APPROVAL'
                                         };
 
+                                        if (invOps.priority === '[]') {
+                                            delete invOps.priority;
+                                        }
+
                                         query = `INSERT INTO investment_op_approvals SET ?`;
                                         endpoint = `/core-service/post?query=${query}`;
                                         url = `${HOST}${endpoint}`;
@@ -135,6 +139,11 @@ router.post('/create', function (req, res, next) {
                                             priority: result.priority,
                                             method: 'REVIEW'
                                         };
+
+                                        if (invOps.priority === '[]') {
+                                            delete invOps.priority;
+                                        }
+
                                         query = `INSERT INTO investment_op_approvals SET ?`;
                                         endpoint = `/core-service/post?query=${query}`;
                                         url = `${HOST}${endpoint}`;
@@ -189,6 +198,12 @@ router.post('/create', function (req, res, next) {
                                             priority: result.priority,
                                             method: 'POST'
                                         };
+
+
+                                        if (invOps.priority === '[]') {
+                                            delete invOps.priority;
+                                        }
+
                                         query = `INSERT INTO investment_op_approvals SET ?`;
                                         endpoint = `/core-service/post?query=${query}`;
                                         url = `${HOST}${endpoint}`;
@@ -294,6 +309,10 @@ router.post('/create', function (req, res, next) {
                                                                 method: 'APPROVAL'
                                                             };
 
+                                                            if (invOps.priority === '[]') {
+                                                                delete invOps.priority;
+                                                            }
+
                                                             query = `INSERT INTO investment_op_approvals SET ?`;
                                                             endpoint = `/core-service/post?query=${query}`;
                                                             url = `${HOST}${endpoint}`;
@@ -350,6 +369,12 @@ router.post('/create', function (req, res, next) {
                                                                 priority: result.priority,
                                                                 method: 'REVIEW'
                                                             };
+
+
+                                                            if (invOps.priority === '[]') {
+                                                                delete invOps.priority;
+                                                            }
+
                                                             query = `INSERT INTO investment_op_approvals SET ?`;
                                                             endpoint = `/core-service/post?query=${query}`;
                                                             url = `${HOST}${endpoint}`;
@@ -405,6 +430,11 @@ router.post('/create', function (req, res, next) {
                                                                 priority: result.priority,
                                                                 method: 'POST'
                                                             };
+
+                                                            if (invOps.priority === '[]') {
+                                                                delete invOps.priority;
+                                                            }
+
                                                             query = `INSERT INTO investment_op_approvals SET ?`;
                                                             endpoint = `/core-service/post?query=${query}`;
                                                             url = `${HOST}${endpoint}`;
