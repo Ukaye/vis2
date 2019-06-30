@@ -2835,20 +2835,46 @@ Number.prototype.round = function(p) {
 };
 
 users.post('/application/disburse/:id', function(req, res, next) {
-    let data = req.body;
-    data.status = 2;
-    data.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.query('UPDATE applications SET ? WHERE ID = '+req.params.id, data, function (error, result, fields) {
-        if(error){
+    db.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID 
+        FROM applications a, clients c WHERE a.ID=${req.params.id} AND a.userID=c.ID`, function (error, app, fields) {
+        if (error) {
             res.send({"status": 500, "error": error, "response": null});
+        } else if (!app[0]) {
+            res.send({"status": 500, "error": "Application does not exist!", "response": null});
         } else {
-            let payload = {}
-            payload.category = 'Application'
-            payload.userid = req.cookies.timeout
-            payload.description = 'Loan Disbursed'
-            payload.affected = req.params.id
-            notificationsService.log(req, payload)
-            res.send({"status": 200, "message": "Loan disbursed successfully!"});
+            let application = app[0];
+            let data = req.body;
+            data.status = 2;
+            data.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+            db.query(`UPDATE applications SET ? WHERE ID = ${req.params.id}`, data, function (error, result, fields) {
+                if(error){
+                    res.send({"status": 500, "error": error, "response": null});
+                } else {
+                    let disbursement = {
+                        loan_id: application.ID,
+                        amount: application.amount,
+                        client_id: application.clientID,
+                        loan_officer: application.loan_officerID,
+                        branch: application.branchID,
+                        date_disbursed: data.date_modified,
+                        status: 1,
+                        date_created: data.date_modified
+                    };
+                    db.query(`INSERT INTO disbursement_history SET ?`, disbursement, function (error, result, fields) {
+                        if(error){
+                            res.send({"status": 500, "error": error, "response": null});
+                        } else {
+                            let payload = {};
+                            payload.category = 'Application';
+                            payload.userid = req.cookies.timeout;
+                            payload.description = 'Loan Disbursed';
+                            payload.affected = req.params.id;
+                            notificationsService.log(req, payload);
+                            res.send({"status": 200, "message": "Loan disbursed successfully!"});
+                        }
+                    });
+                }
+            });
         }
     });
 });
