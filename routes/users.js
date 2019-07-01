@@ -123,6 +123,64 @@ users.get('/update-request-client', function(req, res) {
     });
 });
 
+users.get('/update-confirm-payment', function(req, res) {
+    let count=0,
+        errors = [];
+    db.getConnection(function(err, connection) {
+        connection.query('SELECT * FROM schedule_history', function (error, payments, field) {
+            if (error || !payments) {
+                res.send({"status": 500, "error": error, "response": null});
+            } else {
+                async.forEach(payments, function (payment, callback) {
+                    console.log(payment.ID);
+                    connection.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID 
+                        FROM applications a, clients c WHERE a.ID=${payment.applicationID} AND a.userID=c.ID`, function (error, app, fields) {
+                        if (error) {
+                            console.log(error);
+                            errors.push(payment);
+                            callback();
+                        } else if (app[0]) {
+                            let invoice = {},
+                                application = app[0];
+                            invoice.clientID = application.clientID;
+                            invoice.loan_officerID = application.loan_officerID;
+                            invoice.branchID = application.branchID;
+                            if (payment.payment_amount > 0 && payment.interest_amount > 0) {
+                                invoice.type = 'multiple';
+                            } else {
+                                if (payment.payment_amount > 0) {
+                                    invoice.type = 'principal';
+                                } else if (payment.interest_amount > 0) {
+                                    invoice.type = 'interest';
+                                } else if (payment.fees_amount > 0) {
+                                    invoice.type = 'fees';
+                                } else if (payment.penalty_amount > 0) {
+                                    invoice.type = 'penalty';
+                                }
+                            }
+                            connection.query(`UPDATE schedule_history SET ? WHERE ID = ${payment.ID}`, invoice, function (err, result, fields) {
+                                if (err) {
+                                    console.log(err);
+                                    errors.push(payment);
+                                } else {
+                                    count++;
+                                }
+                                callback();
+                            })
+                        } else {
+                            console.log('No Application found for '+payment.ID);
+                            callback();
+                        }
+                    });
+                }, function (data) {
+                    connection.release();
+                    res.json({count: count, errors: errors})
+                });
+            }
+        });
+    });
+});
+
 /* User Authentication */
 users.post('/login', function(req, res) {
     let user = {},
@@ -2740,37 +2798,63 @@ users.get('/application/schedule-history/write-off/:id', function(req, res, next
 });
 
 users.post('/application/confirm-payment/:id/:application_id/:agent_id', function(req, res, next) {
-    let data = req.body,
-        postData = Object.assign({},req.body);
-    postData.payment_status = 1;
-    delete postData.payment_source;
-    delete postData.payment_date;
-    db.query('UPDATE application_schedules SET ? WHERE ID = '+req.params.id, postData, function (error, invoice, fields) {
-        if(error){
+    db.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID 
+        FROM applications a, clients c WHERE a.ID=${req.params.application_id} AND a.userID=c.ID`, function (error, app, fields) {
+        if (error) {
             res.send({"status": 500, "error": error, "response": null});
+        } else if (!app[0]) {
+            res.send({"status": 500, "error": "Application does not exist!", "response": null});
         } else {
-            let invoice = {};
-            invoice.invoiceID = req.params.id;
-            invoice.agentID = req.params.agent_id;
-            invoice.applicationID = req.params.application_id;
-            invoice.payment_amount = data.actual_payment_amount;
-            invoice.interest_amount = data.actual_interest_amount;
-            invoice.fees_amount = data.actual_fees_amount;
-            invoice.penalty_amount = data.actual_penalty_amount;
-            invoice.payment_source = data.payment_source;
-            invoice.payment_date = data.payment_date;
-            invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-            db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response, fields) {
+            let data = req.body,
+                application = app[0],
+                postData = Object.assign({},req.body);
+            postData.payment_status = 1;
+            delete postData.payment_source;
+            delete postData.payment_date;
+            db.query('UPDATE application_schedules SET ? WHERE ID = '+req.params.id, postData, function (error, invoice, fields) {
                 if(error){
                     res.send({"status": 500, "error": error, "response": null});
                 } else {
-                    let payload = {}
-                    payload.category = 'Application'
-                    payload.userid = req.cookies.timeout
-                    payload.description = 'Loan Application Payment Confirmed'
-                    payload.affected = req.params.application_id
-                    notificationsService.log(req, payload)
-                    res.send({"status": 200, "message": "Invoice Payment confirmed successfully!"});
+                    let invoice = {};
+                    invoice.invoiceID = req.params.id;
+                    invoice.agentID = req.params.agent_id;
+                    invoice.applicationID = req.params.application_id;
+                    invoice.payment_amount = data.actual_payment_amount;
+                    invoice.interest_amount = data.actual_interest_amount;
+                    invoice.fees_amount = data.actual_fees_amount;
+                    invoice.penalty_amount = data.actual_penalty_amount;
+                    invoice.payment_source = data.payment_source;
+                    invoice.payment_date = data.payment_date;
+                    invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                    invoice.clientID = application.clientID;
+                    invoice.loan_officerID = application.loan_officerID;
+                    invoice.branchID = application.branchID;
+                    if (invoice.payment_amount > 0 && invoice.interest_amount > 0) {
+                        invoice.type = 'multiple';
+                    } else {
+                        if (invoice.payment_amount > 0) {
+                            invoice.type = 'principal';
+                        } else if (invoice.interest_amount > 0) {
+                            invoice.type = 'interest';
+                        } else if (invoice.fees_amount > 0) {
+                            invoice.type = 'fees';
+                        } else if (invoice.penalty_amount > 0) {
+                            invoice.type = 'penalty';
+                        }
+                    }
+                    db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response, fields) {
+                        if(error){
+                            res.send({"status": 500, "error": error, "response": null});
+                        } else {
+                            let payload = {};
+                            payload.category = 'Application';
+                            payload.userid = req.cookies.timeout;
+                            payload.description = 'Loan Application Payment Confirmed';
+                            payload.affected = req.params.application_id;
+                            notificationsService.log(req, payload);
+                            res.send({"status": 200, "message": "Invoice Payment confirmed successfully!"});
+                        }
+                    });
                 }
             });
         }
