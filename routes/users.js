@@ -780,16 +780,17 @@ users.delete('/targets-list/delete/:id', function(req, res, next) {
 users.get('/committals/user/disbursement/:userID/:targetID', function(req, res, next) {
     let start = req.query.start,
         end = req.query.end,
-        query = 'SELECT count(*) count, sum(a.loan_amount) total FROM applications AS a, (SELECT ID client_id FROM clients WHERE loan_officer = ? AND status = 1) AS c,' +
-            '(SELECT p.start,p.end FROM periods p WHERE p.ID = (SELECT period FROM targets WHERE status = 1 AND ID = ?)) AS ranges WHERE a.userID = c.client_id AND a.status = 2',
-        query2 = 'SELECT *, a.loan_amount amount, a.disbursement_channel channel, a.disbursement_date date, (SELECT cls.fullname FROM clients cls WHERE cls.ID = a.userID AND cls.status = 1) AS client FROM applications AS a, (SELECT ID client_id FROM clients WHERE loan_officer = ? AND status = 1) AS c,' +
-            '(SELECT p.start,p.end FROM periods p WHERE p.ID = (SELECT period FROM targets WHERE status = 1 AND ID = ?)) AS ranges WHERE a.userID = c.client_id AND a.status = 2';
+        query = 'SELECT count(*) count, sum(d.amount) total FROM disbursement_history d, (SELECT ID client_id FROM clients WHERE loan_officer = ? AND status = 1) AS c, ' +
+            '(SELECT p.start,p.end FROM periods p WHERE p.ID = (SELECT period FROM targets WHERE status = 1 AND ID = ?)) AS ranges WHERE d.client_id = c.client_id',
+        query2 = 'SELECT d.amount, a.disbursement_channel channel, a.duration, d.date_disbursed date, c.fullname client FROM disbursement_history d, applications AS a, ' +
+            '(SELECT ID client_id, fullname FROM clients WHERE loan_officer = ? AND status = 1) AS c, ' +
+            '(SELECT p.start,p.end FROM periods p WHERE p.ID = (SELECT period FROM targets WHERE status = 1 AND ID = ?)) AS ranges WHERE d.client_id = c.client_id AND d.loan_id = a.ID';
     if (start && end){
-        query = query.concat(' AND TIMESTAMP(a.disbursement_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
-        query2 = query2.concat(' AND TIMESTAMP(a.disbursement_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
+        query = query.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
+        query2 = query2.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
     } else {
-        query = query.concat(' AND TIMESTAMP(a.disbursement_date) BETWEEN TIMESTAMP(ranges.start) AND TIMESTAMP(ranges.end)');
-        query2 = query2.concat(' AND TIMESTAMP(a.disbursement_date) BETWEEN TIMESTAMP(ranges.start) AND TIMESTAMP(ranges.end)');
+        query = query.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP(ranges.start) AND TIMESTAMP(ranges.end)');
+        query2 = query2.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP(ranges.start) AND TIMESTAMP(ranges.end)');
     }
     db.query(query, [req.params.userID,req.params.targetID], function (error, aggregate, fields) {
         if(error){
@@ -843,11 +844,11 @@ users.get('/committals/user/interest/:userID/:targetID', function(req, res, next
 users.get('/committals/user/disbursement/:id', function(req, res, next) {
     let start = req.query.start,
         end = req.query.end,
-        query = 'SELECT count(*) count, sum(a.loan_amount) total FROM applications AS a, (SELECT ID client_id FROM clients WHERE loan_officer = ? AND status = 1) AS c WHERE a.userID = c.client_id AND a.status = 2',
-        query2 = 'SELECT *, a.loan_amount amount, a.disbursement_channel channel, a.disbursement_date date, (SELECT cls.fullname FROM clients cls WHERE cls.ID = a.userID AND cls.status = 1) AS client FROM applications AS a, (SELECT ID client_id FROM clients WHERE loan_officer = ? AND status = 1) AS c WHERE a.userID = c.client_id AND a.status = 2';
+        query = 'SELECT count(*) count, sum(d.amount) total FROM disbursement_history d WHERE d.loan_officer = ?',
+        query2 = 'SELECT d.amount, a.disbursement_channel channel, a.duration, d.date_disbursed date, c.fullname client FROM disbursement_history d, applications a, clients c WHERE d.loan_officer = ? AND d.loan_id = a.ID AND d.client_id = c.ID';
     if (start && end){
-        query = query.concat(' AND TIMESTAMP(a.disbursement_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
-        query2 = query2.concat(' AND TIMESTAMP(a.disbursement_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
+        query = query.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
+        query2 = query2.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
     }
     db.query(query, [req.params.id], function (error, aggregate, fields) {
         if(error){
@@ -898,13 +899,15 @@ users.get('/committals/user/interest/:id', function(req, res, next) {
 users.get('/committals/team/disbursement/:id', function(req, res, next) {
     let start = req.query.start,
         end = req.query.end,
-        query = 'SELECT count(*) count, sum(a.loan_amount) total FROM applications AS a, (SELECT cl.ID client_id FROM clients AS cl, (SELECT memberID user_id FROM team_members WHERE teamID = ? AND status = 1) AS t ' +
-        'WHERE cl.loan_officer = t.user_id AND cl.status = 1) AS c WHERE a.userID = c.client_id AND a.status = 2',
-        query2 = 'SELECT *, a.loan_amount amount, a.disbursement_channel channel, a.disbursement_date date, (SELECT cls.fullname FROM clients cls WHERE cls.ID = a.userID AND cls.status = 1) AS client FROM applications AS a, (SELECT cl.ID client_id FROM clients AS cl, (SELECT memberID user_id FROM team_members WHERE teamID = ? AND status = 1) AS t WHERE cl.loan_officer = t.user_id AND cl.status = 1) AS c ' +
-            'WHERE a.userID = c.client_id AND a.status = 2';
+        query = 'SELECT count(*) count, sum(d.amount) total FROM disbursement_history d, ' +
+            '(SELECT cl.ID client_id FROM clients AS cl, (SELECT memberID user_id FROM team_members WHERE teamID = 3 AND status = 1) AS t WHERE cl.loan_officer = t.user_id AND cl.status = 1) AS c ' +
+            'WHERE d.client_id = c.client_id',
+        query2 = 'SELECT d.amount, a.disbursement_channel channel, a.duration, d.date_disbursed date, c.fullname client FROM disbursement_history d, applications a, ' +
+            '(SELECT cl.ID client_id, cl.fullname FROM clients AS cl, (SELECT memberID user_id FROM team_members WHERE teamID = ? AND status = 1) AS t WHERE cl.loan_officer = t.user_id AND cl.status = 1) AS c ' +
+            'WHERE d.client_id = c.client_id AND d.loan_id = a.ID';
     if (start && end){
-        query = query.concat(' AND TIMESTAMP(a.disbursement_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
-        query2 = query2.concat(' AND TIMESTAMP(a.disbursement_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
+        query = query.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
+        query2 = query2.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
     }
     db.query(query, [req.params.id], function (error, aggregate, fields) {
         if(error){
@@ -955,18 +958,18 @@ users.get('/committals/team/interest/:id', function(req, res, next) {
 users.get('/committals/disbursement/:id', function(req, res, next) {
     let start = req.query.start,
         end = req.query.end,
-        query = 'SELECT *, cast(a.loan_amount as unsigned) amount, a.disbursement_channel channel, a.disbursement_date date, (SELECT cls.fullname FROM clients cls WHERE cls.ID = a.userID AND cls.status = 1) AS client ' +
-            'FROM applications AS a, (SELECT ID client_id FROM clients WHERE loan_officer in (SELECT t.userID FROM user_targets t WHERE t.status = 1 AND t.user_type = "user" AND t.targetID = ?) AND status = 1) AS c, ' +
-            '(SELECT p.start,p.end FROM periods p WHERE p.ID = (SELECT period FROM targets WHERE status = 1 AND ID = ?)) AS ranges WHERE a.userID = c.client_id AND a.status = 2',
-        query2 = 'SELECT *, cast(a.loan_amount as unsigned) amount, a.disbursement_channel channel, a.disbursement_date date, (SELECT cls.fullname FROM clients cls WHERE cls.ID = a.userID AND cls.status = 1) AS client FROM applications AS a, ' +
-            '(SELECT cl.ID client_id FROM clients AS cl, (SELECT memberID user_id FROM team_members WHERE status = 1 AND teamID in (SELECT t.userID FROM user_targets t WHERE t.status = 1 AND t.user_type = "team" AND t.targetID = ?)) AS t WHERE cl.loan_officer = t.user_id AND cl.status = 1) AS c, ' +
-            '(SELECT p.start,p.end FROM periods p WHERE p.ID = (SELECT period FROM targets WHERE status = 1 AND ID = ?)) AS ranges WHERE a.userID = c.client_id AND a.status = 2';
+        query = 'SELECT d.ID, cast(d.amount as unsigned) amount, a.disbursement_channel channel, d.date_disbursed date, c.fullname client FROM disbursement_history d, applications a, ' +
+            '(SELECT ID client_id, fullname FROM clients WHERE loan_officer in (SELECT t.userID FROM user_targets t WHERE t.status = 1 AND t.user_type = "user" AND t.targetID = ?) AND status = 1) AS c, ' +
+            '(SELECT p.start,p.end FROM periods p WHERE p.ID = (SELECT period FROM targets WHERE status = 1 AND ID = ?)) AS ranges WHERE d.loan_id = a.ID AND d.client_id = c.client_id',
+        query2 = 'SELECT d.ID, cast(d.amount as unsigned) amount, a.disbursement_channel channel, d.date_disbursed date, c.fullname client FROM disbursement_history d, applications a, ' +
+            '(SELECT cl.ID client_id, cl.fullname FROM clients AS cl, (SELECT memberID user_id FROM team_members WHERE status = 1 AND teamID in (SELECT t.userID FROM user_targets t WHERE t.status = 1 AND t.user_type = "team" AND t.targetID = ?)) AS t WHERE cl.loan_officer = t.user_id AND cl.status = 1) AS c, ' +
+            '(SELECT p.start,p.end FROM periods p WHERE p.ID = (SELECT period FROM targets WHERE status = 1 AND ID = ?)) AS ranges WHERE d.loan_id = a.ID AND d.client_id = c.client_id';
     if (start && end){
-        query = query.concat(' AND TIMESTAMP(a.disbursement_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
-        query2 = query2.concat(' AND TIMESTAMP(a.disbursement_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
+        query = query.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
+        query2 = query2.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
     } else {
-        query = query.concat(' AND TIMESTAMP(a.disbursement_date) BETWEEN TIMESTAMP(ranges.start) AND TIMESTAMP(ranges.end)');
-        query2 = query2.concat(' AND TIMESTAMP(a.disbursement_date) BETWEEN TIMESTAMP(ranges.start) AND TIMESTAMP(ranges.end)');
+        query = query.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP(ranges.start) AND TIMESTAMP(ranges.end)');
+        query2 = query2.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP(ranges.start) AND TIMESTAMP(ranges.end)');
     }
     db.query(query, [req.params.id,req.params.id], function (error, result_user, fields) {
         if(error){
