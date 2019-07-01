@@ -220,16 +220,6 @@
                                 <div role="tabpanel" class="tab-pane fade active show in" id="intelliboard">
                                     <div class="card">
                                         <div class="card-body">
-                                            <div>
-                                            <div class="row" style="padding: 20px">
-                                                <div class="col-sm-6">
-                                                    <button id="disburse-button" class="btn btn-primary col-sm-12">All Disbursed</button>
-                                                </div>
-                                                <div class="col-sm-6">
-                                                    <button id="reschedule-button" class="btn btn-block col-sm-12">Rescheduled Loans</button>
-                                                </div>
-                                            </div>
-                                            </div>
                                             <div class="row">
                                                 <div id="disbursement-div" class="col-sm-12" >
                                                     <div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">
@@ -2380,6 +2370,78 @@
         }
     }
 
+//    $("#filterdisbursements").submit(function (e) {
+//        e.preventDefault();
+//
+//        let start = $("#startDate").val(),
+//            end = $("#endDate").val(),
+//            type = $("#type-filter").val(),
+//            officer = $('#filter-officers').find('option:selected').attr('id'),
+//            url = '/user/disbursements/filter?start='+formatDate(start)+'&&end='+formatDate(end);
+//        let urlAn;
+//        if (start && end && officer==0){
+//            urlAn = 'user/analytics?t=disbursements&&start='+formatDate(start)+'&&end='+formatDate(end);
+//            url = '/user/disbursements/filter?start='+formatDate(start)+'&&end='+formatDate(end);
+//        }
+//        if ((!start || !end) && officer==0 ) {
+//            return loadDisbursed();
+//        }
+//        if (officer != 0){
+//            url = url.concat('&&officer='+officer);
+//            urlAn = 'user/analytics?t=disbursements&&start='+formatDate(start)+'&&end='+formatDate(end)+'&&officer='+officer;
+//        }
+//        let d=[];
+//        $.ajax({
+//            'url': url,
+//            'type': 'get',
+//            'success': function (data) {
+//                let applications = data.response;
+//                results = applications;
+//                populateDisbursed(applications);
+//            },
+//            'error': function (err) {
+//                console.log(err);
+//            }
+//        });
+////        $.ajax({
+////            'url': urlAn,
+////            'type': 'get',
+////            'success': function (data) {
+//////                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
+////                jQuery.each(data.response, function(k, v){
+////                    if (v.name)
+////                        d.push({label: v.name , value: v.amount_disbursed}, );
+////                    if (v.DisburseYearMonth)
+////                        d.push({label: v.DisburseMonth , value: v.AmountDisbursed}, );
+////
+////                });
+////                var chartConfigs = {
+////                    type: 'column2d', // The chart type
+////                    width: '100%', // Width of the chart
+////                    height: '400', // Height of the chart
+////                    dataFormat: 'json', // Data type
+////                    dataSource: {
+////                        // Chart Configuration
+////                        "chart": {
+////                            "caption": "Disbursements by Loan Officer(s)",
+//////                            "subCaption": "In MMbbl = One Million barrels",
+////                            "xAxisName": "Loan Officers",
+////                            "yAxisName": "Amount Disbursed (Naira)",
+////                            "numberSuffix": " Naira",
+////                            "theme": "fusion",
+////                        },
+////                        // Chart Data
+////                        "data": d
+////                    }
+////                };
+////                $("#chart-container").insertFusionCharts(chartConfigs);
+////            },
+////            'error': function (err) {
+////                swal('Error in Connection!','','error')
+////            }
+////        });
+//    });
+
     $("#filterdisbursements").submit(function (e) {
         e.preventDefault();
 
@@ -2387,11 +2449,11 @@
             end = $("#endDate").val(),
             type = $("#type-filter").val(),
             officer = $('#filter-officers').find('option:selected').attr('id'),
-            url = '/user/disbursements/filter?start='+formatDate(start)+'&&end='+formatDate(end);
+            url = '/user/disbursements-new/filter?start='+formatDate(start)+'&&end='+formatDate(end);
         let urlAn;
         if (start && end && officer==0){
             urlAn = 'user/analytics?t=disbursements&&start='+formatDate(start)+'&&end='+formatDate(end);
-            url = '/user/disbursements/filter?start='+formatDate(start)+'&&end='+formatDate(end);
+            url = '/user/disbursements-new/filter?start='+formatDate(start)+'&&end='+formatDate(end);
         }
         if ((!start || !end) && officer==0 ) {
             return loadDisbursed();
