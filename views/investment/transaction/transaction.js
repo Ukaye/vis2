@@ -19,7 +19,7 @@ $(document).ready(function () {
             controlVisibility();
             bindDataTable(sURLVariables);
             let currentDate = new Date();
-            let _cmax = `${currentDate.getUTCFullYear()}-${pad(currentDate.getMonth()+1)}-${pad(currentDate.getDate())}`;
+            let _cmax = `${currentDate.getUTCFullYear()}-${pad(currentDate.getMonth() + 1)}-${pad(currentDate.getDate())}`;
             $('#input_txn_date').attr('max', _cmax);
         }
     }
@@ -154,7 +154,7 @@ function getMaturedMonths() {
                 if (data.length > 0) {
                     $("#maturedInterestMonths").html('');
                     data.forEach(element => {
-                        $("#maturedInterestMonths").append(`<button class="dropdown-item"  onclick="onComputeInterest({day:${element.day},month:${element.month},year:${element.year}})">${element.month+'/'+element.year}</button>`).trigger('change');
+                        $("#maturedInterestMonths").append(`<button class="dropdown-item"  onclick="onComputeInterest({day:${element.day},month:${element.month},year:${element.year}})">${element.month + '/' + element.year}</button>`).trigger('change');
                     });
                 }
             }
@@ -181,34 +181,34 @@ function bindDataTable(id) {
             //     offset = aoData[3].value;
             // }
             let tableHeaders = [{
-                    name: "txn_date",
-                    query: `ORDER BY STR_TO_DATE(v.created_date, '%Y-%m-%d') ${aoData[2].value[0].dir}`
-                },
-                {
-                    name: "txn_date",
-                    query: `ORDER BY STR_TO_DATE(v.txn_date, '%Y-%m-%d') ${aoData[2].value[0].dir}`
-                },
-                {
-                    name: "ref_no",
-                    query: `ORDER BY v.ref_no ${aoData[2].value[0].dir}`
-                },
-                {
-                    name: "description",
-                    query: `ORDER BY v.description ${aoData[2].value[0].dir}`
-                },
-                {
-                    name: "amount",
-                    query: `ORDER BY amount ${aoData[2].value[0].dir}`
-                }, {
-                    name: "amount",
-                    query: `ORDER BY v.amount ${aoData[2].value[0].dir}`
-                }, {
-                    name: "balance",
-                    query: `ORDER BY v.balance ${aoData[2].value[0].dir}`
-                }, {
-                    name: "action",
-                    query: ``
-                }
+                name: "txn_date",
+                query: `ORDER BY STR_TO_DATE(v.created_date, '%Y-%m-%d') ${aoData[2].value[0].dir}`
+            },
+            {
+                name: "txn_date",
+                query: `ORDER BY STR_TO_DATE(v.txn_date, '%Y-%m-%d') ${aoData[2].value[0].dir}`
+            },
+            {
+                name: "ref_no",
+                query: `ORDER BY v.ref_no ${aoData[2].value[0].dir}`
+            },
+            {
+                name: "description",
+                query: `ORDER BY v.description ${aoData[2].value[0].dir}`
+            },
+            {
+                name: "amount",
+                query: `ORDER BY amount ${aoData[2].value[0].dir}`
+            }, {
+                name: "amount",
+                query: `ORDER BY v.amount ${aoData[2].value[0].dir}`
+            }, {
+                name: "balance",
+                query: `ORDER BY v.balance ${aoData[2].value[0].dir}`
+            }, {
+                name: "action",
+                query: ``
+            }
             ];
             $.ajax({
                 dataType: 'json',
@@ -256,92 +256,92 @@ function bindDataTable(id) {
             });
         },
         aoColumnDefs: [{
-                sClass: "numericCol",
-                aTargets: [5]
-            },
+            sClass: "numericCol",
+            aTargets: [5]
+        },
 
-            {
-                sClass: "numericCol",
-                aTargets: [7]
-            },
-            {
-                className: "text-center",
-                aTargets: [8]
-            }
+        {
+            sClass: "numericCol",
+            aTargets: [7]
+        },
+        {
+            className: "text-center",
+            aTargets: [8]
+        }
         ],
         columns: [{
-                width: "auto",
-                "mRender": function (data, type, full) {
-                    let strStatus = '';
-                    if (full.isApproved === 1 && full.postDone === 1) {
-                        strStatus = 'Approved';
-                    } else if (full.isApproved === 0 && full.postDone === 1) {
-                        strStatus = 'Denied';
-                    } else {
-                        strStatus = 'Pending Approval';
-                    }
-                    return `<span class="badge badge-pill ${(full.isApproved===1)?'badge-primary':'badge-danger'}">${strStatus}</span>`;
+            width: "auto",
+            "mRender": function (data, type, full) {
+                let strStatus = '';
+                if (full.isApproved === 1 && full.postDone === 1) {
+                    strStatus = 'Approved';
+                } else if (full.isDeny === 1) {
+                    strStatus = 'Denied';
+                } else {
+                    strStatus = 'Pending Approval';
                 }
-            },
-            {
-                width: "auto",
-                data: "created_date"
-            },
-            {
-                width: "auto",
-                data: "txn_date"
-            },
-            {
-                data: "ref_no",
-                width: "auto"
-            },
-            {
-                data: "description",
-                width: "auto"
-            },
-            {
-                width: "auto",
-                "mRender": function (data, type, full) {
-                    let _amount = full.amount.split(',').join('');
-                    return `<span style="color:green">${(full.is_credit === 1) ? 
-                        (formater(_amount).includes('.')?formater(_amount): formater(_amount)+'.00') : ""}</span>`;
+                return `<span class="badge badge-pill ${(full.isApproved === 1) ? 'badge-primary' : 'badge-danger'}">${strStatus}</span>`;
+            }
+        },
+        {
+            width: "auto",
+            data: "created_date"
+        },
+        {
+            width: "auto",
+            data: "txn_date"
+        },
+        {
+            data: "ref_no",
+            width: "auto"
+        },
+        {
+            data: "description",
+            width: "auto"
+        },
+        {
+            width: "auto",
+            "mRender": function (data, type, full) {
+                let _amount = full.amount.split(',').join('');
+                return `<span style="color:green">${(full.is_credit === 1) ?
+                    (formater(_amount).includes('.') ? formater(_amount) : formater(_amount) + '.00') : ""}</span>`;
+            }
+        }, {
+            width: "auto",
+            "mRender": function (data, type, full) {
+                return `<span style="color:red;float: right">${(full.is_credit === 0) ?
+                    (formater(full.amount.split(',').join('')).includes('.') ? formater(full.amount.split(',').join('')) :
+                        formater(full.amount.split(',').join('')) + '.00') : ""}</span>`;
+            }
+        },
+        {
+            width: "auto",
+            "mRender": function (data, type, full) {
+                let sign = '';
+                if (full.txnBalance.toString().includes('-')) {
+                    sign = '-';
                 }
-            }, {
-                width: "auto",
-                "mRender": function (data, type, full) {
-                    return `<span style="color:red;float: right">${(full.is_credit === 0) ? 
-                        (formater(full.amount.split(',').join('')).includes('.')?formater(full.amount.split(',').join('')):
-                        formater(full.amount.split(',').join(''))+'.00') : ""}</span>`;
-                }
-            },
-            {
-                width: "auto",
-                "mRender": function (data, type, full) {
-                    let sign = '';
-                    if (full.txnBalance.toString().includes('-')) {
-                        sign = '-';
-                    }
-                    return `<span><strong>${sign}${(formater(full.txnBalance.split(',').join('')).includes('.')?formater(full.txnBalance.split(',').join('')):
-                        formater(full.txnBalance.split(',').join(''))+'.00')}</strong></span>`;
-                }
-            },
-            {
-                width: "auto",
-                "mRender": function (data, type, full) {
-                    return `<div class="dropdown dropleft">
+                return `<span><strong>${sign}${(formater(full.txnBalance.split(',').join('')).includes('.') ? formater(full.txnBalance.split(',').join('')) :
+                    formater(full.txnBalance.split(',').join('')) + '.00')}</strong></span>`;
+            }
+        },
+        {
+            width: "auto",
+            "mRender": function (data, type, full) {
+                return `<div class="dropdown dropleft">
                         <i class="fa fa-ellipsis-v" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         </i> 
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        <button class="dropdown-item" id="dropdownItemDoc" data-toggle="modal" data-target="#viewListDocModal" ${(full.postDone === 0)?'':'disabled'}>Document</button>
-                          <button class="dropdown-item" id="dropdownItemRevert" ${(full.postDone === 1 && full.is_capital === 0)?'':'disabled'}>Reverse</button>
-                          <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal" ${(full.reviewDone === 0)?'':'disabled'}>Review</button>
-                          <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(full.reviewDone === 1)?'':'disabled'} ${(full.approvalDone === 0)?'':'disabled'}>Approval</button>
-                          <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal"${(full.reviewDone === 1 && full.approvalDone === 1)?'':'disabled'} ${(full.postDone === 0)?'':'disabled'}>Post</button>
+                        <button class="dropdown-item" id="dropdownItemDoc" data-toggle="modal" data-target="#viewListDocModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Document</button>
+                          <button class="dropdown-item" id="dropdownItemRevert" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 1 && full.is_capital === 0) ? '' : 'disabled'}>Reverse</button>
+                          <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 0) ? '' : 'disabled'}>Review</button>
+                          <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1) ? '' : 'disabled'} ${(full.approvalDone === 0) ? '' : 'disabled'}>Approval</button>
+                          <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1 && full.approvalDone === 1) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Post</button>
                         </div>
                       </div>`;
 
-                }
             }
+        }
 
         ]
     });
@@ -387,13 +387,13 @@ function bindInterestDataTable() {
             //     offset = aoData[3].value;
             // }
             let tableHeaders = [{
-                    name: "interestDate",
-                    query: `ORDER BY STR_TO_DATE(interestDate, '%Y-%m-%d') ${aoData[2].value[0].dir}`
-                },
-                {
-                    name: "amount",
-                    query: `ORDER BY amount ${aoData[2].value[0].dir}`
-                }
+                name: "interestDate",
+                query: `ORDER BY STR_TO_DATE(interestDate, '%Y-%m-%d') ${aoData[2].value[0].dir}`
+            },
+            {
+                name: "amount",
+                query: `ORDER BY amount ${aoData[2].value[0].dir}`
+            }
             ];
             $.ajax({
                 dataType: 'json',
@@ -416,18 +416,18 @@ function bindInterestDataTable() {
             aTargets: [1]
         }],
         columns: [{
-                width: "auto",
-                "mRender": function (data, type, full) {
-                    let st = new Date(full.interestDate);
-                    return `Balance as @${st.toDateString()} <strong>${formater(full.balance)}</strong>`;
-                }
-            },
-            {
-                width: "auto",
-                "mRender": function (data, type, full) {
-                    return formater(full.amount);
-                }
+            width: "auto",
+            "mRender": function (data, type, full) {
+                let st = new Date(full.interestDate);
+                return `Balance as @${st.toDateString()} <strong>${formater(full.balance)}</strong>`;
             }
+        },
+        {
+            width: "auto",
+            "mRender": function (data, type, full) {
+                return formater(full.amount);
+            }
+        }
         ]
     });
 }
@@ -549,7 +549,7 @@ $("#idChkForceTerminate").on('change',
         $('#notice_date').val('');
         if (status) {
             let date = new Date();
-            let minDate = `${date.getUTCFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`;
+            let minDate = `${date.getUTCFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
             $('#notice_date').attr('min', minDate);
             $('#notice_date').val(date).trigger('change');
         } else {
@@ -582,12 +582,12 @@ function getConfigItems() {
 
 function onTerminateInvest() {
     swal({
-            title: "Are you sure?",
-            text: "Once terminated, you will not be able to reverse this transaction!",
-            icon: "warning",
-            buttons: true,
-            dangerMode: true,
-        })
+        title: "Are you sure?",
+        text: "Once terminated, you will not be able to reverse this transaction!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+    })
         .then((willDelete) => {
             if (willDelete) {
                 let _mRoleId = [];
@@ -648,7 +648,7 @@ function onTerminateInvest() {
         });
 }
 
-$(document).ready(function () {});
+$(document).ready(function () { });
 
 function onOpenMode(name, operationId, is_credit) {
     if (name === 'Transfer') {
@@ -756,12 +756,12 @@ function setReviewRequirements(value) {
                                 <div class="row">
                                     <div class="form-group col-6">
                                         <div class="form-group">
-                                            <label class="form-control-label"><strong>${(element.role_name===null)?'Role Not Required':element.role_name}</strong></label>
+                                            <label class="form-control-label"><strong>${(element.role_name === null) ? 'Role Not Required' : element.role_name}</strong></label>
                                             <div class="form-control-label">
                                                 <small>Amount: </small><small class="text-muted">${formater(element.amount.toString())}</small>
                                             </div>
                                             <div class="form-control-label">
-                                                <small>Verified By: </small><small class="text-muted">${(element.fullname===null)?'Not Specified':element.fullname}</small>
+                                                <small>Verified By: </small><small class="text-muted">${(element.fullname === null) ? 'Not Specified' : element.fullname}</small>
                                             </div>
                                             <div class="form-control-label">
                                                 <small>Dated: </small><small class="text-muted">${element.txn_date}</small>
@@ -769,8 +769,8 @@ function setReviewRequirements(value) {
                                         </div>
                                     </div>
                                     <div class="form-group col-6" style="vertical-align: middle">
-                                        <button type="button" ${(element.isCompleted===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onReviewed(${1},${element.approvalId},${element.txnId},${element.ID})">Review</button>
-                                        <button type="button" ${(element.isCompleted===1)?'disabled':''} ${(element.isReviewed===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onReviewed(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
+                                        <button type="button" ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isReviewed === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''} class="btn btn-success btn-sm" onclick="onReviewed(${1},${element.approvalId},${element.txnId},${element.ID})">Review</button>
+                                        <button type="button" ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isReviewed === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''} class="btn btn-danger btn-sm" onclick="onReviewed(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
                                     </div>
                                 </div>
                             </li>`).trigger('change');
@@ -796,7 +796,9 @@ function onExecutiveTransaction() {
     if ($("#input_amount").val() !== '' &&
         $("#input_amount").val() !== ' ' &&
         $("#input_txn_date").val() !== '' &&
-        $("#input_txn_date").val() !== ' ') {
+        $("#input_txn_date").val() !== ' ' &&
+        $("#input_description").val() !== '' &&
+        $("#input_description").val() !== ' ') {
         let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === opsObj.operationId && status === 1);
         if (mRoleId.length === 0) {
             _mRoleId.push({
@@ -879,12 +881,12 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
                         let _mRoleId = [];
                         let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === _operationId && status === 1);
                         swal({
-                                title: "Are you sure?",
-                                text: "You want to reverse this transaction!",
-                                icon: "warning",
-                                buttons: true,
-                                dangerMode: true,
-                            })
+                            title: "Are you sure?",
+                            text: "You want to reverse this transaction!",
+                            icon: "warning",
+                            buttons: true,
+                            dangerMode: true,
+                        })
                             .then((willDelete) => {
                                 if (willDelete) {
                                     if (mRoleId.length === 0) {
@@ -992,7 +994,7 @@ function getProductDocRequirements(verify) {
                     ${statusHtml}
                     </td>
                     <td>
-                        <button type="button" class="btn btn-primary btn-sm" onclick="onAddDoc(${element.id},${element.status},${element.docRequirementId},${element.txnId})">${(element.status.toString()==='1')?'Update':'Add'} File</button>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="onAddDoc(${element.id},${element.status},${element.docRequirementId},${element.txnId})">${(element.status.toString() === '1') ? 'Update' : 'Add'} File</button>
                     </td>
                 </tr>`).trigger('change');
                     }
@@ -1014,10 +1016,10 @@ function getProductDocRequirements(verify) {
                                     <small>File Name: </small><small class="text-muted">${element.name}</small>
                                 </div>
                                 <div class="form-control-label">
-                                ${(element.status.toString()==='1')?
-                                `<a href="/files${element.filePath}" class="badge badge-light">View File</a>`
-                                :
-                                `<a class="badge badge-light">File Not Found</a>`}                                
+                                ${(element.status.toString() === '1') ?
+                            `<a href="/files${element.filePath}" class="badge badge-light">View File</a>`
+                            :
+                            `<a class="badge badge-light">File Not Found</a>`}                                
                                 </div>
                             </div>
                         </div>
@@ -1205,12 +1207,12 @@ function setApprovalRequirements(value) {
                                 <div class="row">
                                     <div class="form-group col-6">
                                         <div class="form-group">
-                                            <label class="form-control-label"><strong>${(element.role_name===null)?'Role Not Required':element.role_name}</strong></label>
+                                            <label class="form-control-label"><strong>${(element.role_name === null) ? 'Role Not Required' : element.role_name}</strong></label>
                                             <div class="form-control-label">
                                                 <small>Amount: </small><small class="text-muted">${formater(element.amount.toString())}</small>
                                             </div>
                                             <div class="form-control-label">
-                                                <small>Verified By: </small><small class="text-muted">${(element.fullname===null)?'Not Specified':element.fullname}</small>
+                                                <small>Verified By: </small><small class="text-muted">${(element.fullname === null) ? 'Not Specified' : element.fullname}</small>
                                             </div>
                                             <div class="form-control-label">
                                                 <small>Dated: </small><small class="text-muted">${element.txn_date}</small>
@@ -1218,8 +1220,8 @@ function setApprovalRequirements(value) {
                                         </div>
                                     </div>
                                     <div class="form-group col-6" style="vertical-align: middle">
-                                        <button type="button" ${(element.isCompleted===1)?'disabled':''} ${(element.isApproved===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onApproved(${1},${element.approvalId},${element.txnId},${element.ID})">Approve</button>
-                                        <button type="button" ${(element.isCompleted===1)?'disabled':''} ${(element.isApproved===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onApproved(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
+                                        <button type="button" ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isApproved === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''} class="btn btn-success btn-sm" onclick="onApproved(${1},${element.approvalId},${element.txnId},${element.ID})">Approve</button>
+                                        <button type="button" ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isApproved === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''} class="btn btn-danger btn-sm" onclick="onApproved(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
                                     </div>
                                 </div>
                             </li>`).trigger('change');
@@ -1257,12 +1259,12 @@ function setPostRequirements(value) {
                             <div class="row">
                                 <div class="form-group col-6">
                                     <div class="form-group">
-                                        <label class="form-control-label"><strong>${(element.role_name===null)?'Role Not Required':element.role_name}</strong></label>
+                                        <label class="form-control-label"><strong>${(element.role_name === null) ? 'Role Not Required' : element.role_name}</strong></label>
                                         <div class="form-control-label">
                                             <small>Amount: </small><small class="text-muted">${formater(element.amount.toString())}</small>
                                         </div>
                                         <div class="form-control-label">
-                                            <small>Verified By: </small><small class="text-muted">${(element.fullname===null)?'Not Specified':element.fullname}</small>
+                                            <small>Verified By: </small><small class="text-muted">${(element.fullname === null) ? 'Not Specified' : element.fullname}</small>
                                         </div>
                                         <div class="form-control-label">
                                             <small>Dated: </small><small class="text-muted">${element.txn_date}</small>
@@ -1270,8 +1272,8 @@ function setPostRequirements(value) {
                                     </div>
                                 </div>
                                 <div class="form-group col-6" style="vertical-align: middle">
-                                    <button type="button" ${(element.isCompleted===1)?'disabled':''} ${(element.isPosted===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-success btn-sm" onclick="onPost(${1},${element.approvalId},${element.txnId},${element.ID})">Post</button>
-                                    <button type="button" ${(element.isCompleted===1)?'disabled':''} ${(element.isPosted===1)?'disabled':''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled':''} class="btn btn-danger btn-sm" onclick="onPost(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
+                                    <button type="button" ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isPosted === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''} class="btn btn-success btn-sm" onclick="onPost(${1},${element.approvalId},${element.txnId},${element.ID})">Post</button>
+                                    <button type="button" ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isPosted === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''} class="btn btn-danger btn-sm" onclick="onPost(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
                                 </div>
                             </div>
                         </li>`).trigger('change');

@@ -636,8 +636,8 @@ router.get('/client-investments/:id', function (req, res, next) {
     let search_string = req.query.search_string.toUpperCase();
     let query = `SELECT 
     (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} ORDER BY ID DESC LIMIT 1) as balance,
-    v.ID,v.ref_no,c.fullname,v.description,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName,
-    v.approvalDone,v.reviewDone,v.created_date,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,
+    v.ID,v.ref_no,c.fullname,v.description,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName, v.isDeny,
+    v.approvalDone,v.reviewDone,v.created_date,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.updated_date,
     i.clientId,v.isMoveFundTransfer,v.isWallet,v.isWithdrawal,isDeposit,v.isDocUploaded,p.canTerminate,i.isPaymentMadeByWallet,p.acct_allows_withdrawal,
     v.is_capital,v.investmentId,i.isTerminated, i.isMatured, v.isReversedTxn,v.isInvestmentTerminated,v.expectedTerminationDate,
     i.code as acctNo, v.isTransfer, v.beneficialInvestmentId FROM investment_txns v
