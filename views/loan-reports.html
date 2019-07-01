@@ -3669,7 +3669,7 @@
         let urlAn = '/user/analytics?t=disbursements&&';
         let start = $("#startDate").val(),
             end = $("#endDate").val(),
-            url = '/user/disbursements/filter?',
+            url = '/user/disbursements-new/filter?',
             d=[], agent;
         if (start && end){
             url = url.concat('start='+formatDate(start)+'&&end='+formatDate(end)+'&&');
