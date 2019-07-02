@@ -355,7 +355,7 @@ router.get('/bad_cheque/:clientID', function (req, res, next) {
 });
 
 router.delete('/bad_cheque/:id', function (req, res, next) {
-    db.query(`SELECT * FROM bad_cheques WHERE status = 1 AND clientID = ${req.params.id}`, function (error, cheque, fields) {
+    db.query(`SELECT * FROM bad_cheques WHERE status = 1 AND ID = ${req.params.id}`, function (error, cheque, fields) {
         if (error) {
             res.send({
                 "status": 500,

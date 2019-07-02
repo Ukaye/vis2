@@ -219,6 +219,8 @@ function openCommissionModal(owner) {
             let accelerator_threshold = (parseFloat(accelerator_threshold_rate)/100) * parseFloat(target_value),
                 threshold = (parseFloat(threshold_rate)/100) * parseFloat(target_value),
                 progress = (parseFloat(data.total)/parseFloat(target_value)) * 100;
+            console.log(data.total)
+            console.log(threshold)
             if (parseFloat(data.total) >= threshold){
                 if ((accelerator !== 'null') &&
                     (accelerator_type !== 'null') &&
