@@ -626,7 +626,7 @@ router.post('/approves', function (req, res, next) {
                                 });
                             });
                     } else {
-                        query = `UPDATE investment_txns SET approvalDone = ${1}, isDeny = ${1} WHERE ID =${data.txnId}`;
+                        query = `UPDATE investment_txns SET approvalDone = ${0}, isDeny = ${1} WHERE ID =${data.txnId}`;
                         endpoint = `/core-service/get`;
                         url = `${HOST}${endpoint}`;
                         axios.get(url, {
@@ -736,7 +736,8 @@ router.post('/reviews', function (req, res, next) {
                                 });
                             });
                     } else {
-                        query = `UPDATE investment_txns SET reviewDone = ${1}, isDeny = ${1} WHERE ID =${data.txnId}`;
+
+                        query = `UPDATE investment_txns SET reviewDone = ${0}, isDeny = ${1} WHERE ID =${data.txnId}`;
                         endpoint = `/core-service/get`;
                         url = `${HOST}${endpoint}`;
                         axios.get(url, {
@@ -928,7 +929,7 @@ router.post('/posts', function (req, res, next) {
                                         bal = (data.status === 0) ? (total_bal + parseFloat(data.amount.split(',').join(''))) : total_bal;
                                     }
                                     if (data.isInvestmentTerminated.toString() === '0') {
-                                        query = `UPDATE investment_txns SET isApproved = ${0}, updated_date ='${dt.toString()}', postDone = ${1}, isDeny = ${1},
+                                        query = `UPDATE investment_txns SET isApproved = ${0}, updated_date ='${dt.toString()}', postDone = ${0}, isDeny = ${1},
                                         amount = ${ Math.round(data.amount.split(',').join('')).toFixed(2)} , balance ='${ Math.round(bal).toFixed(2)}'
                                         WHERE ID =${data.txnId}`;
                                         endpoint = `/core-service/get`;
