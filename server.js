@@ -124,12 +124,13 @@ app.post('/login', function (req, res) {
                                 modules = modules.concat(mods);
                                 user.modules = modules;
                                 user.tenant = process.env.TENANT;
-                                let payload = {}
-                                payload.category = 'Authentication'
-                                payload.userid = user.ID
-                                payload.description = 'New User Login'
-                                payload.affected = user.ID
-                                notificationsService.log(req, payload)
+                                user.environment = process.env.STATUS;
+                                let payload = {};
+                                payload.category = 'Authentication';
+                                payload.userid = user.ID;
+                                payload.description = 'New User Login';
+                                payload.affected = user.ID;
+                                notificationsService.log(req, payload);
                                 res.send({
                                     "status": 200,
                                     "response": user

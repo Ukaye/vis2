@@ -44,7 +44,7 @@
                         $('#setupMandate').hide();
                         $('#remitaDirectDebit').show();
                         $('#acceptApplication').show();
-                        displayAuthParams(JSON.parse(preapproved_loan.authParams));
+                        if (preapproved_loan.authParams) displayAuthParams(JSON.parse(preapproved_loan.authParams));
                         localStorage.remitaTransRef = preapproved_loan.remitaTransRef;
                         if (bank.authorization === 'FORM') {
                             generateMandateForm(preapproved_loan);
@@ -212,7 +212,7 @@
         })
             .then((yes) => {
                 if (yes) {
-                    notification('You would receive an OTP from your bank to proceed!', '', 'warning');
+                    if (bank.authorization === 'OTP') notification('You would receive an OTP from your bank to proceed!', '', 'warning');
                     let start = preapproved_loan.schedule[0]['payment_collect_date'],
                         end = preapproved_loan.schedule[preapproved_loan.schedule.length-1]['payment_collect_date'];
                     if (start === end) {
