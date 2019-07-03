@@ -36,7 +36,7 @@ router.post('/create', function (req, res, next) {
         axios.post(url, _data)
             .then(function (response) {
                 let inv_txn = {
-                    txn_date: dt,
+                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                     description: "Opening Capital",
                     amount: parseFloat(data.amount.split(',').join('')),
                     is_credit: 1,
@@ -59,10 +59,10 @@ router.post('/create', function (req, res, next) {
                         endpoint = "/core-service/get";
                         url = `${HOST}${endpoint}`;
                         axios.get(url, {
-                                params: {
-                                    query: query
-                                }
-                            })
+                            params: {
+                                query: query
+                            }
+                        })
                             .then(function (response2) {
                                 if (response2.data.length > 0) {
                                     let result = response2.data[0];
@@ -90,7 +90,7 @@ router.post('/create', function (req, res, next) {
                                         url = `${HOST}${endpoint}`;
                                         try {
                                             axios.post(url, invOps);
-                                        } catch (error) {}
+                                        } catch (error) { }
 
                                     });
                                 } else {
@@ -109,19 +109,19 @@ router.post('/create', function (req, res, next) {
                                     url = `${HOST}${endpoint}`;
                                     try {
                                         axios.post(url, invOps);
-                                    } catch (error) {}
+                                    } catch (error) { }
                                 }
                             })
-                            .catch(function (error) {});
+                            .catch(function (error) { });
                         query = `SELECT * FROM investment_product_reviews
                             WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
                         endpoint = "/core-service/get";
                         url = `${HOST}${endpoint}`;
                         axios.get(url, {
-                                params: {
-                                    query: query
-                                }
-                            })
+                            params: {
+                                query: query
+                            }
+                        })
                             .then(function (response2) {
                                 if (response2.data.length > 0) {
                                     let result = response2.data[0];
@@ -149,7 +149,7 @@ router.post('/create', function (req, res, next) {
                                         url = `${HOST}${endpoint}`;
                                         try {
                                             axios.post(url, invOps);
-                                        } catch (error) {}
+                                        } catch (error) { }
 
                                     });
                                 } else {
@@ -168,19 +168,19 @@ router.post('/create', function (req, res, next) {
                                     url = `${HOST}${endpoint}`;
                                     try {
                                         axios.post(url, invOps);
-                                    } catch (error) {}
+                                    } catch (error) { }
                                 }
                             })
-                            .catch(function (error) {});
+                            .catch(function (error) { });
                         query = `SELECT * FROM investment_product_posts
                             WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
                         endpoint = "/core-service/get";
                         url = `${HOST}${endpoint}`;
                         axios.get(url, {
-                                params: {
-                                    query: query
-                                }
-                            })
+                            params: {
+                                query: query
+                            }
+                        })
                             .then(function (response2) {
                                 if (response2.data.length > 0) {
                                     let result = response2.data[0];
@@ -209,7 +209,7 @@ router.post('/create', function (req, res, next) {
                                         url = `${HOST}${endpoint}`;
                                         try {
                                             axios.post(url, invOps);
-                                        } catch (error) {}
+                                        } catch (error) { }
 
                                     });
                                 } else {
@@ -228,10 +228,10 @@ router.post('/create', function (req, res, next) {
                                     url = `${HOST}${endpoint}`;
                                     try {
                                         axios.post(url, invOps);
-                                    } catch (error) {}
+                                    } catch (error) { }
                                 }
                             })
-                            .catch(function (error) {});
+                            .catch(function (error) { });
 
                         setDocRequirement(HOST, data, response_.data.insertId);
                         if (data.selectedProduct.interest_disbursement_time.toString() === 'Up-Front') {
@@ -287,10 +287,10 @@ router.post('/create', function (req, res, next) {
                                             endpoint = "/core-service/get";
                                             url = `${HOST}${endpoint}`;
                                             axios.get(url, {
-                                                    params: {
-                                                        query: query
-                                                    }
-                                                })
+                                                params: {
+                                                    query: query
+                                                }
+                                            })
                                                 .then(function (response2) {
                                                     if (response2.data.length > 0) {
                                                         let result = response2.data[0];
@@ -318,7 +318,7 @@ router.post('/create', function (req, res, next) {
                                                             url = `${HOST}${endpoint}`;
                                                             try {
                                                                 axios.post(url, invOps);
-                                                            } catch (error) {}
+                                                            } catch (error) { }
 
                                                         });
                                                     } else {
@@ -337,10 +337,10 @@ router.post('/create', function (req, res, next) {
                                                         url = `${HOST}${endpoint}`;
                                                         try {
                                                             axios.post(url, invOps);
-                                                        } catch (error) {}
+                                                        } catch (error) { }
                                                     }
                                                 })
-                                                .catch(function (error) {});
+                                                .catch(function (error) { });
 
 
                                             query = `SELECT * FROM investment_product_reviews
@@ -348,10 +348,10 @@ router.post('/create', function (req, res, next) {
                                             endpoint = "/core-service/get";
                                             url = `${HOST}${endpoint}`;
                                             axios.get(url, {
-                                                    params: {
-                                                        query: query
-                                                    }
-                                                })
+                                                params: {
+                                                    query: query
+                                                }
+                                            })
                                                 .then(function (response2) {
                                                     if (response2.data.length > 0) {
                                                         let result = response2.data[0];
@@ -380,7 +380,7 @@ router.post('/create', function (req, res, next) {
                                                             url = `${HOST}${endpoint}`;
                                                             try {
                                                                 axios.post(url, invOps);
-                                                            } catch (error) {}
+                                                            } catch (error) { }
 
                                                         });
                                                     } else {
@@ -399,20 +399,20 @@ router.post('/create', function (req, res, next) {
                                                         url = `${HOST}${endpoint}`;
                                                         try {
                                                             axios.post(url, invOps);
-                                                        } catch (error) {}
+                                                        } catch (error) { }
                                                     }
                                                 })
-                                                .catch(function (error) {});
+                                                .catch(function (error) { });
 
                                             query = `SELECT * FROM investment_product_posts
                                     WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
                                             endpoint = "/core-service/get";
                                             url = `${HOST}${endpoint}`;
                                             axios.get(url, {
-                                                    params: {
-                                                        query: query
-                                                    }
-                                                })
+                                                params: {
+                                                    query: query
+                                                }
+                                            })
                                                 .then(function (response2) {
                                                     if (response2.data.length > 0) {
                                                         let result = response2.data[0];
@@ -440,7 +440,7 @@ router.post('/create', function (req, res, next) {
                                                             url = `${HOST}${endpoint}`;
                                                             try {
                                                                 axios.post(url, invOps);
-                                                            } catch (error) {}
+                                                            } catch (error) { }
 
                                                         });
                                                     } else {
@@ -459,13 +459,13 @@ router.post('/create', function (req, res, next) {
                                                         url = `${HOST}${endpoint}`;
                                                         try {
                                                             axios.post(url, invOps);
-                                                        } catch (error) {}
+                                                        } catch (error) { }
                                                     }
                                                 })
-                                                .catch(function (error) {});
-                                        }, err => {});
+                                                .catch(function (error) { });
+                                        }, err => { });
                                 }
-                            }, err => {});
+                            }, err => { });
                         }
                         res.send({});
                     }, err => {
@@ -510,14 +510,14 @@ router.post('/create', function (req, res, next) {
 
 function setDocRequirement(HOST, data, txnId) {
     let query = `SELECT * FROM investment_doc_requirement
-                WHERE productId = ${data.productId} AND operationId = ${1}`;
+                WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
     let endpoint = "/core-service/get";
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
-            params: {
-                query: query
-            }
-        })
+        params: {
+            query: query
+        }
+    })
         .then(function (response2) {
             if (response2.data.length > 0) {
                 response2.data.map((item, index) => {
@@ -530,12 +530,13 @@ function setDocRequirement(HOST, data, txnId) {
                     endpoint = `/core-service/post?query=${query}`;
                     url = `${HOST}${endpoint}`;
                     try {
-                        axios.post(url, doc).then(p => {});
-                    } catch (error) {}
+                        axios.post(url, doc).then(p => {
+                        });
+                    } catch (error) { }
                 })
             }
         })
-        .catch(function (error) {});
+        .catch(function (error) { });
 }
 
 
@@ -827,17 +828,17 @@ router.post('/upload-file/:id/:item/:sub', function (req, res) {
         fileName = name + '.' + extension;
     extension = extension.toLowerCase();
     fs.stat(`files/${req.params.item}/`, function (err) {
-        if (!err) {} else if (err.code === 'ENOENT') {
+        if (!err) { } else if (err.code === 'ENOENT') {
             try {
                 fs.mkdirSync(`./files/${req.params.item}/`);
-            } catch (error) {}
+            } catch (error) { }
 
         }
         fs.stat(`files/${req.params.item}/${req.params.sub}/`, function (err_) {
-            if (!err_) {} else if (err_.code === 'ENOENT') {
+            if (!err_) { } else if (err_.code === 'ENOENT') {
                 try {
                     fs.mkdirSync(`./files/${req.params.item}/${req.params.sub}/`);
-                } catch (error_) {}
+                } catch (error_) { }
 
             }
             fs.stat(`files/${req.params.item}/${req.params.sub}/${req.params.id}.${extension}`, function (err) {
