@@ -283,8 +283,11 @@
     }
 
     $("#acceptApplication").click(function () {
-        if (bank.authorization === 'OTP' && !getAuthValues().status)
-            return notification('Kindly fill all required field(s)!', '', 'warning');
+        if (bank.authorization === 'OTP') {
+            if (!getAuthValues().status) {
+                return notification('Kindly fill all required field(s)!', '', 'warning');
+            }
+        }
         if (!localStorage.remitaTransRef)
             return notification('Kindly setup direct debit mandate to proceed!', '', 'warning');
         if (!preapproved_loan.bank || !preapproved_loan.email || !preapproved_loan.phone || !preapproved_loan.account
@@ -299,19 +302,20 @@
         })
             .then((yes) => {
                 if (yes) {
+                    let  payload = {
+                        email: preapproved_loan.email,
+                        fullname: preapproved_loan.client,
+                        authorization: bank.authorization,
+                        created_by: preapproved_loan.created_by,
+                        workflow_id: preapproved_loan.workflowID,
+                        remitaTransRef: localStorage.remitaTransRef,
+                        application_id: preapproved_loan.applicationID
+                    };
+                    if (bank.authorization === 'OTP') payload.authParams = getAuthValues().data;
                     $.ajax({
                         'url': `/preapproved-loan/offer/accept/${preapproved_loan.ID}`,
                         'type': 'post',
-                        'data': {
-                            authParams: getAuthValues().data,
-                            email: preapproved_loan.email,
-                            fullname: preapproved_loan.client,
-                            authorization: bank.authorization,
-                            created_by: preapproved_loan.created_by,
-                            workflow_id: preapproved_loan.workflowID,
-                            remitaTransRef: localStorage.remitaTransRef,
-                            application_id: preapproved_loan.applicationID
-                        },
+                        'data': payload,
                         'success': function (data) {
                             if (data.status !== 500){
                                 notification('Loan accepted successfully','','success');
