@@ -3558,10 +3558,10 @@
                 var duedate = new Date(v.duedate);
 //                if ((Math.round((now.getTime() - duedate.getTime())/(oneDay))) > 90){
                 let validpayment = amount_paid[v.applicationID];
-                total += parseFloat(v.principal - validpayment);
+                total += (v.principal - validpayment) ? parseFloat(v.principal - validpayment) : 0;
                 v.id = '<a href="/application?id='+v.applicationID+'">'+padWithZeroes(parseInt(v.applicationID), 6)+'</a>';
-                v.amount = formatter.format(parseFloat(v.principal));
-                v.owed = formatter.format(parseFloat(v.principal - validpayment));
+                v.amount = (v.principal) ? formatter.format(parseFloat(v.principal)) : formatter.format(0);
+                v.owed = (v.principal - validpayment) ? formatter.format(parseFloat(v.principal - validpayment)) : formatter.format(0);
                 deta.push(v);
                 if (i === num - 1) {
                     $('#bad-loans-table').DataTable({
