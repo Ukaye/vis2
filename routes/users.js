@@ -871,11 +871,11 @@ users.get('/committals/user/disbursement/:id', function(req, res, next) {
 users.get('/committals/user/interest/:id', function(req, res, next) {
     let start = req.query.start,
         end = req.query.end,
-        query = 'SELECT count(*) count, sum(s.interest_amount) total FROM schedule_history AS s, (SELECT ID application_id FROM applications AS a, (SELECT ID client_id FROM clients WHERE loan_officer = ? AND status = 1) AS c ' +
-        'WHERE a.userID = c.client_id AND a.status = 2) AS apps WHERE s.applicationID = apps.application_id AND s.status = 1 AND s.interest_amount > 0',
-        query2 = 'SELECT *, s.interest_amount amount, s.payment_source channel, s.payment_date date, (SELECT userID FROM applications WHERE ID = s.applicationID) AS userID, (SELECT fullname FROM clients where ID = userID) AS client ' +
-            'FROM schedule_history AS s, (SELECT ID application_id, duration FROM applications AS a, (SELECT ID client_id FROM clients WHERE loan_officer = ? AND status = 1) AS c ' +
-            'WHERE a.userID = c.client_id AND a.status = 2) AS apps WHERE s.applicationID = apps.application_id AND s.status = 1 AND s.interest_amount > 0';
+        query = 'SELECT count(*) count, sum(s.interest_amount) total FROM schedule_history AS s, applications a ' +
+            'WHERE s.applicationID = a.ID AND s.status = 1 AND s.interest_amount > 0',
+        query2 = 'SELECT s.interest_amount amount, s.payment_source channel, s.payment_date date, s.clientID userID, c.fullname client, a.ID application_id, a.duration ' +
+            'FROM schedule_history s, applications a, clients c ' +
+            'WHERE s.applicationID = a.ID AND s.clientID = c.ID AND s.loan_officerID = ? AND s.status = 1 AND s.interest_amount > 0';
     if (start && end){
         query = query.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
         query2 = query2.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
@@ -930,11 +930,12 @@ users.get('/committals/team/disbursement/:id', function(req, res, next) {
 users.get('/committals/team/interest/:id', function(req, res, next) {
     let start = req.query.start,
         end = req.query.end,
-        query = 'SELECT count(*) count, sum(s.interest_amount) total FROM schedule_history AS s, (SELECT ID application_id FROM applications AS a, (SELECT cl.ID client_id FROM clients AS cl, (SELECT memberID user_id FROM team_members WHERE teamID = ? AND status = 1) AS t WHERE cl.loan_officer = t.user_id AND cl.status = 1) AS c WHERE a.userID = c.client_id AND a.status = 2) AS apps ' +
-        'WHERE s.applicationID = apps.application_id AND s.status = 1 AND s.interest_amount > 0',
-        query2 = 'SELECT *, s.interest_amount amount, s.payment_source channel, s.payment_date date, (SELECT userID FROM applications WHERE ID = s.applicationID) AS userID, (SELECT fullname FROM clients where ID = userID) AS client ' +
-            'FROM schedule_history AS s, (SELECT ID application_id, duration FROM applications AS a, (SELECT cl.ID client_id FROM clients AS cl, (SELECT memberID user_id FROM team_members WHERE teamID = ? AND status = 1) AS t WHERE cl.loan_officer = t.user_id AND cl.status = 1) AS c WHERE a.userID = c.client_id AND a.status = 2) AS apps ' +
-            'WHERE s.applicationID = apps.application_id AND s.status = 1 AND s.interest_amount > 0';
+        query = 'SELECT count(*) count, sum(s.interest_amount) total FROM schedule_history AS s, ' +
+            '(SELECT ID application_id FROM applications AS a, (SELECT cl.ID client_id FROM clients AS cl, (SELECT memberID user_id FROM team_members WHERE teamID = ? AND status = 1) AS t WHERE cl.loan_officer = t.user_id AND cl.status = 1) AS c WHERE a.userID = c.client_id AND a.status = 2) AS apps ' +
+            'WHERE s.applicationID = apps.application_id AND s.status = 1 AND s.interest_amount > 0',
+        query2 = 'SELECT s.interest_amount amount, s.payment_source channel, s.payment_date date, s.clientID userID, c.fullname client, apps.application_id, apps.duration ' +
+            'FROM schedule_history s, clients c, (SELECT ID application_id, duration FROM applications AS a, (SELECT cl.ID client_id FROM clients AS cl, (SELECT memberID user_id FROM team_members WHERE teamID = ? AND status = 1) AS t WHERE cl.loan_officer = t.user_id AND cl.status = 1) AS c WHERE a.userID = c.client_id AND a.status = 2) AS apps ' +
+            'WHERE s.applicationID = apps.application_id AND s.clientID = c.ID AND s.status = 1 AND s.interest_amount > 0';
     if (start && end){
         query = query.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
         query2 = query2.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
@@ -994,14 +995,15 @@ users.get('/committals/disbursement/:id', function(req, res, next) {
 users.get('/committals/interest/:id', function(req, res, next) {
     let start = req.query.start,
         end = req.query.end,
-        query = 'SELECT *, cast(s.interest_amount as unsigned) amount, s.payment_source channel, s.payment_date date, (SELECT userID FROM applications WHERE ID = s.applicationID) AS userID, (SELECT fullname FROM clients where ID = userID) AS client ' +
-            'FROM schedule_history AS s, (SELECT ID application_id, duration FROM applications AS a, ' +
-            '(SELECT ID client_id FROM clients WHERE loan_officer in (SELECT t.userID FROM user_targets t WHERE t.status = 1 AND t.user_type = "user" AND t.targetID = ?) AND status = 1) AS c WHERE a.userID = c.client_id AND a.status = 2) AS apps, ' +
-            '(SELECT p.start,p.end FROM periods p WHERE p.ID = (SELECT period FROM targets WHERE status = 1 AND ID = ?)) AS ranges WHERE s.applicationID = apps.application_id AND s.status = 1 AND s.interest_amount > 0',
-        query2 = 'SELECT *, cast(s.interest_amount as unsigned) amount, s.payment_source channel, s.payment_date date, (SELECT userID FROM applications WHERE ID = s.applicationID) AS userID, (SELECT fullname FROM clients where ID = userID) AS client ' +
-            'FROM schedule_history AS s, (SELECT ID application_id, duration FROM applications AS a, ' +
-            '(SELECT cl.ID client_id FROM clients AS cl, (SELECT memberID user_id FROM team_members WHERE status = 1 AND teamID in (SELECT t.userID FROM user_targets t WHERE t.status = 1 AND t.user_type = "team" AND t.targetID = ?)) AS t WHERE cl.loan_officer = t.user_id AND cl.status = 1) AS c WHERE a.userID = c.client_id AND a.status = 2) AS apps, ' +
-            '(SELECT p.start,p.end FROM periods p WHERE p.ID = (SELECT period FROM targets WHERE status = 1 AND ID = ?)) AS ranges WHERE s.applicationID = apps.application_id AND s.status = 1 AND s.interest_amount > 0';
+        query = 'SELECT cast(s.interest_amount as unsigned) amount, s.payment_source channel, s.payment_date date, c.fullname client, apps.application_id, apps.duration ' +
+            'FROM schedule_history AS s, clients c, ' +
+            '(SELECT ID application_id, duration FROM applications AS a, (SELECT ID client_id FROM clients WHERE loan_officer in (SELECT t.userID FROM user_targets t WHERE t.status = 1 AND t.user_type = "user" AND t.targetID = ?) AND status = 1) AS c WHERE a.userID = c.client_id AND a.status = 2) AS apps, ' +
+            '(SELECT p.start,p.end FROM periods p WHERE p.ID = (SELECT period FROM targets WHERE status = 1 AND ID = ?)) AS ranges WHERE s.applicationID = apps.application_id AND s.clientID = c.ID AND s.status = 1 AND s.interest_amount > 0',
+        query2 = 'SELECT cast(s.interest_amount as unsigned) amount, s.payment_source channel, s.payment_date date, c.fullname client, apps.application_id, apps.duration ' +
+            'FROM schedule_history AS s, clients c, ' +
+            '(SELECT ID application_id, duration FROM applications AS a, (SELECT cl.ID client_id FROM clients AS cl, (SELECT memberID user_id FROM team_members WHERE status = 1 AND teamID in (SELECT t.userID FROM user_targets t WHERE t.status = 1 AND t.user_type = "team" AND t.targetID = ?)) AS t ' +
+                'WHERE cl.loan_officer = t.user_id AND cl.status = 1) AS c WHERE a.userID = c.client_id AND a.status = 2) AS apps, ' +
+            '(SELECT p.start,p.end FROM periods p WHERE p.ID = (SELECT period FROM targets WHERE status = 1 AND ID = ?)) AS ranges WHERE s.applicationID = apps.application_id AND s.clientID = c.ID AND s.status = 1 AND s.interest_amount > 0';
     if (start && end){
         query = query.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
         query2 = query2.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
@@ -2955,7 +2957,7 @@ users.post('/application/disburse/:id', function(req, res, next) {
                         client_id: application.clientID,
                         loan_officer: application.loan_officerID,
                         branch: application.branchID,
-                        date_disbursed: data.date_modified,
+                        date_disbursed: data.disbursement_date,
                         status: 1,
                         date_created: data.date_modified
                     };
