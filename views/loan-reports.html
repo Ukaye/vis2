@@ -179,6 +179,9 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="row">
+                                    &nbsp; &nbsp; &nbsp; <button style="float: right;" onclick="refresh()" class="btn btn-default pull-right"><i class="fa fa-refresh"></i> Refresh Cards</button>
+                                </div>
                             </div>
                         </div>
                         <div class="col-sm-12">
@@ -257,7 +260,7 @@
                                                     <div class="card">
                                                         <div class="card-header">
                                                             <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
-                                                                <strong>Disbursements</strong>
+                                                                <strong role="button" onclick="refreshDisbursements()" >Disbursements &nbsp; &nbsp;&nbsp; &nbsp; <a href="#" title="Click to refresh table"><i class="fa fa-refresh"></i></a></strong>
                                                                 <span style="float: right">Total: <span id="total-disbursements"></span></span>
                                                             </div>
                                                             <div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">
@@ -283,7 +286,7 @@
                                                                         <!--<option value="4">Pending Disbursal</option>-->
                                                                         <!--<option value="5">Active</option>-->
                                                                         <!--<option value="6">Closed</option>-->
-                                                                        </select>
+                                                                        </select>&nbsp;&nbsp;
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -1641,8 +1644,8 @@
         getLoanClasses();
         getBranches();
         loadInfo();
+        loadAvgCards();
         disbursed();
-        initDisbursedGLP();
         loadDisbursed();
         var today = new Date().toISOString().split('T')[0];
         document.getElementsByName("filteraggprointend")[0].setAttribute('min', today);
@@ -1676,6 +1679,9 @@
             "aoColumns": [
                 { "bSortable": false }, { "bSortable": true },
                 null, null, { "bSortable": true },
+            ],
+            "buttons": [
+                'copy', 'csv', 'excel', 'pdf', 'print'
             ],
             "aaSorting": [],
 //            "bSearchable": false,
@@ -2088,16 +2094,57 @@
         $('#loan-per').html(data["avg_loan_per_officers"]);
     }
 
-    function initDisbursedGLP(){
+//    function initDisbursedGLP(){
+//        $.ajax({
+//            'url': 'user/disbursements/filter',
+//            'type': 'get',
+//            'success': function (data) {
+//                if (data.status === 200) {
+//                    let disbursed = $.extend(true, {}, data.response),
+//                        glp = $.extend(true, {}, data.response);
+////                    populateDisbursed(disbursed);
+//                    populateGLP(glp);
+//                } else {
+//                    swal({"icon": "error", "text": 'Database Error'});
+//                }
+//            },
+//            'error': function (err) {
+//                swal('Error in Connection!','','error')
+//            }
+//        });
+//    }
+    function loadAvgCards(){
+        if (localStorage.getItem('avg_loan_balance') && localStorage.getItem('avg_disbursed')){
+            $('#avg-loan-balance').html(formatter.format(localStorage.getItem('avg_loan_balance')));
+            $('#avg-loan-disbursed').html(formatter.format(localStorage.getItem('avg_disbursed')));
+        }
+        else {
+            $.ajax({
+                'url': 'user/disbursements/filter',
+                'type': 'get',
+                'success': function (data) {
+                    if (data.status === 200) {
+                        let glp = $.extend(true, {}, data.response);
+                        populateAvgCards(glp);
+                    } else {
+                        swal({"icon": "error", "text": 'Database Error'});
+                    }
+                },
+                'error': function (err) {
+                    swal('Error in Connection!','','error')
+                }
+            });
+        }
+    }
+
+    function reloadAvgCards(){
         $.ajax({
             'url': 'user/disbursements/filter',
             'type': 'get',
             'success': function (data) {
                 if (data.status === 200) {
-                    let disbursed = $.extend(true, {}, data.response),
-                        glp = $.extend(true, {}, data.response);
-//                    populateDisbursed(disbursed);
-                    populateGLP(glp);
+                    let glp = $.extend(true, {}, data.response);
+                    populateAvgCards(glp);
                 } else {
                     swal({"icon": "error", "text": 'Database Error'});
                 }
@@ -2109,6 +2156,43 @@
     }
 
     function loadDisbursed(){
+        if (localStorage.getItem('disbursed')){
+            $('#disbursed-table').DataTable({
+                dom: 'Blfrtip',
+                bDestroy: true,
+                data: JSON.parse(localStorage.getItem('disbursed')),
+                search: {search: ' '},
+                buttons: [
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ],
+                columns: [
+                    { data: "id" },
+                    { data: "fullname" },
+                    { data: "principal" },
+                    { data: "date" }
+                ]
+            });
+            $('#total-disbursements').html(formatter.format(localStorage.getItem('total-disbursements')));
+        } else {
+            let start = $("#startDate").val(),
+                end = $("#endDate").val(),
+                url;
+            url = (start === "" || start === null || end === "" || end === null ) ? 'user/disbursements-new/filter' : 'user/disbursements-new/filter?start='+formatDate(start)+'&&end='+formatDate(end)
+
+            $.ajax({
+                'url': url,
+                'type': 'get',
+                'success': function (data) {
+                    (data.status === 200) ? populateDisbursed(data.response) :  swal({"icon": "error", "text": 'Database Error'})
+                },
+                'error': function (err) {
+                    swal('Error in Connection!','','error')
+                }
+            });
+        }
+    }
+
+    function reloadDisbursed(){
         let start = $("#startDate").val(),
             end = $("#endDate").val(),
             url;
@@ -2263,21 +2347,23 @@
                 }
 
                 $('#disbursed-table').DataTable({
-                        dom: 'Blfrtip',
-                        bDestroy: true,
-                        data: processed_data,
-                        search: {search: ' '},
-                        buttons: [
-                            'copy', 'csv', 'excel', 'pdf', 'print'
-                        ],
-                        columns: [
-                            { data: "id" },
-                            { data: "fullname" },
-                            { data: "principal" },
-                            { data: "date" }
-                        ]
-                    });
+                    dom: 'Blfrtip',
+                    bDestroy: true,
+                    data: processed_data,
+                    search: {search: ' '},
+                    buttons: [
+                        'copy', 'csv', 'excel', 'pdf', 'print'
+                    ],
+                    columns: [
+                        { data: "id" },
+                        { data: "fullname" },
+                        { data: "principal" },
+                        { data: "date" }
+                    ]
+                });
             }
+            localStorage.setItem('disbursed', JSON.stringify(processed_data));
+            localStorage.setItem('total-disbursements', total);
             $('#total-disbursements').html(formatter.format(total));
         }
     }
@@ -2368,6 +2454,57 @@
             $('#avg-loan-balance').html(formatter.format((num_all === 0) ? 0: totalbalance/num_all));
             $('#avg-loan-disbursed').html(formatter.format((num_all === 0) ? 0: total/num_all));
         }
+    }
+
+    function populateAvgCards(dets){
+        if (dets.length === 0){
+            $('#avg-loan-balance').html(formatter.format(0));
+            $('#avg-loan-disbursed').html(formatter.format(0));
+        }else{
+            let processed_data = [];
+            var total = 0; var totalglp = 0; var totalbalance = 0; var num_all = 0; var num_paid = 0; var pay = 0; var loa = 0;
+            var totalhere = 0;
+            const delimit = (dets.without_pay.length > dets.with_payments.length)? dets.without_pay.length : dets.with_payments.length;
+            const limit = (dets.with_invalid_payments.length > delimit)? dets.with_invalid_payments.length : delimit;
+            for (let i=0; i<limit; i++){
+                let v = {};
+                v = dets.without_pay[i];
+                if (v){
+                    total+= (v.loan_amount) ? parseFloat(v.loan_amount) : 0;
+                    totalbalance += (v.loan_amount) ? parseFloat(v.loan_amount) : 0
+                    num_all++;
+                }
+
+                v = {};
+                v = dets.with_payments[i];
+                if (v){
+                    num_paid++;
+                    total += (v.loan_amount) ? parseFloat(v.loan_amount) : 0;
+                    totalbalance += (v.paid) ? ((v.invalid_payment === null) ? parseFloat(v.balance) :  v.loan_amount - (parseFloat(v.paid) - parseFloat(v.invalid_payment))) : 0;
+                }
+
+                v={}
+                v = dets.with_invalid_payments[i];
+                if (v){
+                    num_all++;
+                    total += (v.loan_amount) ? parseFloat(v.loan_amount) : 0;
+                    totalbalance += parseFloat(v.loan_amount);
+                }
+            }
+            localStorage.setItem('avg_loan_balance', (num_all === 0) ? 0: totalbalance/num_all);
+            localStorage.setItem('avg_disbursed', (num_all === 0) ? 0: total/num_all);
+            $('#avg-loan-balance').html(formatter.format((num_all === 0) ? 0: totalbalance/num_all));
+            $('#avg-loan-disbursed').html(formatter.format((num_all === 0) ? 0: total/num_all));
+        }
+    }
+
+    function refreshDisbursements(){
+        reloadDisbursed();
+    }
+
+    function refresh(){
+        loadInfo();
+        reloadAvgCards();
     }
 
 //    $("#filterdisbursements").submit(function (e) {
