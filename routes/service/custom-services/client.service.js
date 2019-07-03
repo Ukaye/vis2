@@ -61,9 +61,7 @@ router.post('/mandate/setup', function (req, res, next) {
                 mandateId: setup_response.mandateId,
                 requestId: setup_response.requestId
             };
-            console.log(setup_response)
             helperFunctions.authorizeMandate(authorize_payload, authorization, function (authorization_response) {
-                console.log(authorization_response)
                 if (authorization_response && authorization_response.remitaTransRef) {
                     payload.authParams = JSON.stringify(authorization_response.authParams);
                     payload.remitaTransRef = authorization_response.remitaTransRef;
@@ -77,6 +75,7 @@ router.post('/mandate/setup', function (req, res, next) {
                             query: `SELECT * FROM remita_mandates WHERE applicationID = ${application_id}`
                         }
                     }).then(remita_mandate => {
+                        console.log(remita_mandate)
                         if (remita_mandate.data[0]) {
                             query = `UPDATE remita_mandates Set ? WHERE ID = ${remita_mandate.data[0]['ID']}`;
                         }
