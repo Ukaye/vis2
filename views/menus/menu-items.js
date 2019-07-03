@@ -109,9 +109,9 @@ function includeHTML() {
     check();
     read_write();
     loadMenus();
-    let tenant = JSON.parse(localStorage.user_obj).tenant || 'Finratus';
-    document.title = `${tenant} ${(location.pathname.replace(/[^a-zA-Z0-9]/g,' ')).trim()}`;
-    $('#left-panel').find('a.navbar-brand:first').text(tenant);
+    const TENANT = JSON.parse(localStorage.user_obj).tenant || 'Finratus';
+    document.title = `${TENANT} ${(location.pathname.replace(/[^a-zA-Z0-9]/g,' ')).trim()}`;
+    $('#left-panel').find('a.navbar-brand:first').text(TENANT);
 }
 
 function logout() {
