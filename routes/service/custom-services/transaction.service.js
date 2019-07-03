@@ -350,7 +350,7 @@ router.post('/create', function (req, res, next) {
 
 function setDocRequirement(HOST, data, txnId) {
     let query = `SELECT * FROM investment_doc_requirement
-                WHERE productId = ${data.productId} AND operationId = ${data.operationId}`;
+                WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
     let endpoint = "/core-service/get";
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -383,7 +383,7 @@ router.get('/verify-doc-uploads', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.query;
     let query = `Select 
-    (Select Count(*) as total_doc_required from investment_doc_requirement where productId = ${data.productId} AND operationId = ${data.operationId}) as total_doc_required,
+    (Select Count(*) as total_doc_required from investment_doc_requirement where productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1) as total_doc_required,
     (Select Count(*) as total_uploaded from investment_txn_doc_requirements where txnId = ${data.txnId} AND isReplaced = 0 AND status = 1) as total_uploaded`;
     let endpoint = `/core-service/get`;
     let url = `${HOST}${endpoint}`;
@@ -626,7 +626,7 @@ router.post('/approves', function (req, res, next) {
                                 });
                             });
                     } else {
-                        query = `UPDATE investment_txns SET approvalDone = ${0}, isDeny = ${1} WHERE ID =${data.txnId}`;
+                        query = `UPDATE investment_txns SET approvalDone = ${0}, isDeny = ${data.isDeny} WHERE ID =${data.txnId}`;
                         endpoint = `/core-service/get`;
                         url = `${HOST}${endpoint}`;
                         axios.get(url, {
@@ -736,8 +736,7 @@ router.post('/reviews', function (req, res, next) {
                                 });
                             });
                     } else {
-
-                        query = `UPDATE investment_txns SET reviewDone = ${0}, isDeny = ${1} WHERE ID =${data.txnId}`;
+                        query = `UPDATE investment_txns SET reviewDone = ${0}, isDeny = ${data.isDeny} WHERE ID =${data.txnId}`;
                         endpoint = `/core-service/get`;
                         url = `${HOST}${endpoint}`;
                         axios.get(url, {
@@ -929,7 +928,7 @@ router.post('/posts', function (req, res, next) {
                                         bal = (data.status === 0) ? (total_bal + parseFloat(data.amount.split(',').join(''))) : total_bal;
                                     }
                                     if (data.isInvestmentTerminated.toString() === '0') {
-                                        query = `UPDATE investment_txns SET isApproved = ${0}, updated_date ='${dt.toString()}', postDone = ${0}, isDeny = ${1},
+                                        query = `UPDATE investment_txns SET isApproved = ${0}, updated_date ='${dt.toString()}', postDone = ${0}, isDeny = ${data.isDeny},
                                         amount = ${ Math.round(data.amount.split(',').join('')).toFixed(2)} , balance ='${ Math.round(bal).toFixed(2)}'
                                         WHERE ID =${data.txnId}`;
                                         endpoint = `/core-service/get`;

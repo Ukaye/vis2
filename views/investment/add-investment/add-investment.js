@@ -113,7 +113,7 @@ $("#investment_amount").on("focusout", function (event) {
         let amt_max = selectedValue.investment_max.split(',').join('');
         if (parseFloat(amount) < parseFloat(amt_min) || parseFloat(amount) > parseFloat(amt_max)) {
             $("#investment_amount").val("");
-            $("#amount_info_error").html(" - Amount can not be below or above configured investment value");
+            swal('Amount can not be below or above configured investment value','','error');
         } else {
             $("#amount_info_error").html("");
         }
@@ -210,7 +210,7 @@ $("#btn_save_product").on("click", function (event) {
                             '', 'error');
                     } else {
                         $('#wait').hide();
-                        swal('Investment created successfully!', '', 'success');
+                        swal('Account created successfully!', '', 'success');
                         var url = "./all-investments";
                         $(location).attr('href', url);
                         $('input').val("");
@@ -231,7 +231,6 @@ $("#btn_save_product").on("click", function (event) {
             'type': 'post',
             'data': data,
             'success': function (data) {
-                console.log(data);
                 if (data.error) {
                     $('#wait').hide();
                     swal('Oops! An error occurred while creating Investment; Required field(s) missing',
