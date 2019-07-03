@@ -1,6 +1,5 @@
 function getBaseUrl() {
-    const ENVIRONMENT = JSON.parse(localStorage.user_obj).environment;
-    if (ENVIRONMENT === 'production') {
+    if (location.hostname === 'x3.loanratus.com') {
         return 'https://login.remita.net/remita/ecomm/mandate';
     } else {
         return 'http://www.remitademo.net/remita/ecomm/mandate';
