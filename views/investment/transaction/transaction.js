@@ -88,6 +88,7 @@ $("#chk_own_accounts").on('change',
         if (status) {
             products = [];
             $('#chk_investment_accounts').attr('checked', false);
+            $('#chk_client_wallet').attr('checked', false);
             decideListOfAccounts(0);
         }
     });
@@ -98,8 +99,19 @@ $("#chk_investment_accounts").on('change',
         let status = $('#chk_investment_accounts').is(':checked');
         if (status) {
             products = [];
+            $('#chk_client_wallet').attr('checked', false);
             $('#chk_own_accounts').attr('checked', false);
             decideListOfAccounts(1);
+        }
+    });
+
+$("#chk_client_wallet").on('change',
+    function () {
+        let status = $('#chk_client_wallet').is(':checked');
+        if (status) {
+            products = [];
+            $('#chk_own_accounts').attr('checked', false);
+            $('#chk_investment_accounts').attr('checked', false);
         }
     });
 
@@ -223,7 +235,7 @@ function bindDataTable(id) {
                 },
                 success: function (data) {
                     if (data.data.length > 0) {
-                        selectedInvestment = data.data[0];
+                        selectedInvestment = data.data[data.data.length - 1];
                         if (selectedInvestment.canTerminate.toString() === '0') {
                             $('#btnTerminateInvestment').attr('disabled', true);
                         }
@@ -652,12 +664,12 @@ $(document).ready(function () { });
 
 function onOpenMode(name, operationId, is_credit) {
     if (name === 'Transfer') {
-        $("#chk_own_accounts").attr('checked', false);
-        $("#chk_own_accounts").attr('hidden', true);
-        $("#chk_client_wallet").attr('hidden', true);
+        // $("#chk_own_accounts").attr('checked', false);
+        // $("#chk_own_accounts").attr('hidden', true);
+        // $("#chk_client_wallet").attr('hidden', true);
 
-        $("#lbl_chk_own_accounts").attr('hidden', true);
-        $("#lbl_chk_client_wallet").attr('hidden', true);
+        // $("#lbl_chk_own_accounts").attr('hidden', true);
+        // $("#lbl_chk_client_wallet").attr('hidden', true);
     }
     selectedInvestment._operationId = operationId;
     selectedInvestment._is_credit = is_credit;
@@ -666,6 +678,7 @@ function onOpenMode(name, operationId, is_credit) {
     $("#viewOperationModalHeader").html(name + " Operation");
     $("#btnTransaction").html(name);
     $("#role_list_group").empty();
+
     $.ajax({
         url: `investment-txns/get-product-configs/${selectedInvestment.investmentId}`,
         'type': 'get',
@@ -679,10 +692,8 @@ function onOpenMode(name, operationId, is_credit) {
                 let hint = '';
                 if (operationId === '1') {
                     hint = `Min.: ${product_config.investment_min} - Max.: ${product_config.investment_max}`;
-                } else if (operationId === '2') {
+                } else if (operationId === '3') {
                     hint = `Max. withdrawal#: ${product_config.freq_withdrawal} - Over.: ${product_config.withdrawal_freq_duration}`
-                } else {
-
                 }
                 $("#spanAmountRange").html(hint);
                 $("#btnTransaction").attr('disabled', false);
@@ -769,8 +780,8 @@ function setReviewRequirements(value) {
                                         </div>
                                     </div>
                                     <div class="form-group col-6" style="vertical-align: middle">
-                                        <button type="button" ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isReviewed === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''} class="btn btn-success btn-sm" onclick="onReviewed(${1},${element.approvalId},${element.txnId},${element.ID})">Review</button>
-                                        <button type="button" ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isReviewed === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''} class="btn btn-danger btn-sm" onclick="onReviewed(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
+                                        <button type="button" ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isReviewed === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''} class="btn btn-success btn-sm" onclick="onReviewed(${1},${element.approvalId},${element.txnId},${element.ID},0)">Review</button>
+                                        <button type="button" ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isReviewed === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''} class="btn btn-danger btn-sm" onclick="onReviewed(${0},${element.approvalId},${element.txnId},${element.ID},1)">Deny</button>
                                     </div>
                                 </div>
                             </li>`).trigger('change');
@@ -793,6 +804,12 @@ function setReviewRequirements(value) {
 
 function onExecutiveTransaction() {
     let _mRoleId = [];
+    let mAmount_ = $("#input_amount").val().toString().split(',').join('');
+    if (parseFloat(selectedInvestment.balance.toString()) < parseFloat(mAmount_) && opsObj.operationId !== '1') {
+        swal('Insufficent account balance for this transaction', '', 'error');
+        return;
+    }
+
     if ($("#input_amount").val() !== '' &&
         $("#input_amount").val() !== ' ' &&
         $("#input_txn_date").val() !== '' &&
@@ -837,7 +854,7 @@ function onExecutiveTransaction() {
                     $('#wait').hide();
                     $("#input_amount").val('');
                     $("#input_description").val('');
-                    swal('Deposit transaction successful!', '', 'success');
+                    swal(`${(investmentOps.isDeposit === 1) ? 'Deposit' : 'Withdrawal'} transaction successful!`, '', 'success');
                     bindDataTable(selectedInvestment.investmentId, false);
                 } else {
                     $('#wait').hide();
@@ -852,6 +869,10 @@ function onExecutiveTransaction() {
     } else {
         swal('Oops! Missing required field(s)', '', 'error');
     }
+}
+
+function onCreateNewAcct() {
+    window.open(`/add-investments`);
 }
 
 // $('#bootstrap-data-table2 tbody').on('click', '.dropdown-item', function () {
@@ -978,16 +999,18 @@ function getProductDocRequirements(verify) {
             let uploadItemData = [];
             response.forEach(element => {
                 if (verify === 0) {
-                    let item = uploadItemData.filter(x => x.txnId === element.txnId);
-                    if (item.length === 0) {
-                        uploadItemData.push(element);
-                        let statusHtml = '';
-                        if (element.status.toString() === '1') {
-                            statusHtml = `<span style="color:Green"><strong>UPLOADED</strong></span>`
-                        } else {
-                            statusHtml = `<span style="color:Red"><strong>NOT FOUND</strong></span>`
-                        }
-                        $("#tbodyDocs").append(`<tr>
+                    // let item = uploadItemData.filter(x => x.txnId === element.txnId);
+                    // if (item.length === 0) {
+                    //     uploadItemData.push(element);
+
+                    // }
+                    let statusHtml = '';
+                    if (element.status.toString() === '1') {
+                        statusHtml = `<span style="color:Green"><strong>UPLOADED</strong></span>`
+                    } else {
+                        statusHtml = `<span style="color:Red"><strong>NOT FOUND</strong></span>`
+                    }
+                    $("#tbodyDocs").append(`<tr>
                     <td><span>${element.name}</span></td>
                     <td><input id="id_file_${element.id}" class="image admin-img" type="file" tabindex="6"></td>
                     <td>
@@ -997,7 +1020,7 @@ function getProductDocRequirements(verify) {
                         <button type="button" class="btn btn-primary btn-sm" onclick="onAddDoc(${element.id},${element.status},${element.docRequirementId},${element.txnId})">${(element.status.toString() === '1') ? 'Update' : 'Add'} File</button>
                     </td>
                 </tr>`).trigger('change');
-                    }
+
                     if (element.status.toString() === '1') {
                         $("#tbodyUploadedDocs").append(`<tr>
                         <td><span>${element.name} (<a href="/files${element.filePath}" class="badge badge-light">View File</a>)</span></td>
@@ -1220,8 +1243,8 @@ function setApprovalRequirements(value) {
                                         </div>
                                     </div>
                                     <div class="form-group col-6" style="vertical-align: middle">
-                                        <button type="button" ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isApproved === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''} class="btn btn-success btn-sm" onclick="onApproved(${1},${element.approvalId},${element.txnId},${element.ID})">Approve</button>
-                                        <button type="button" ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isApproved === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''} class="btn btn-danger btn-sm" onclick="onApproved(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
+                                        <button type="button" ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isApproved === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''} class="btn btn-success btn-sm" onclick="onApproved(${1},${element.approvalId},${element.txnId},${element.ID},0)">Approve</button>
+                                        <button type="button" ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isApproved === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''} class="btn btn-danger btn-sm" onclick="onApproved(${0},${element.approvalId},${element.txnId},${element.ID},1)">Deny</button>
                                     </div>
                                 </div>
                             </li>`).trigger('change');
@@ -1272,8 +1295,8 @@ function setPostRequirements(value) {
                                     </div>
                                 </div>
                                 <div class="form-group col-6" style="vertical-align: middle">
-                                    <button type="button" ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isPosted === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''} class="btn btn-success btn-sm" onclick="onPost(${1},${element.approvalId},${element.txnId},${element.ID})">Post</button>
-                                    <button type="button" ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isPosted === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''} class="btn btn-danger btn-sm" onclick="onPost(${0},${element.approvalId},${element.txnId},${element.ID})">Deny</button>
+                                    <button type="button" ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isPosted === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''} class="btn btn-success btn-sm" onclick="onPost(${1},${element.approvalId},${element.txnId},${element.ID},0)">Post</button>
+                                    <button type="button" ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isPosted === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''} class="btn btn-danger btn-sm" onclick="onPost(${0},${element.approvalId},${element.txnId},${element.ID},1)">Deny</button>
                                 </div>
                             </div>
                         </li>`).trigger('change');
@@ -1294,7 +1317,7 @@ function onCloseApproval() {
     $("#role_list_group").html('');
 }
 
-function onApproved(value, approvedId, txnId, id) {
+function onApproved(value, approvedId, txnId, id, isDeny) {
     let priority = selectedOpsRequirement.find(x => x.ID === id).priority;
     let _data = {
         status: value,
@@ -1304,7 +1327,8 @@ function onApproved(value, approvedId, txnId, id) {
         amount: data_row.amount,
         balance: data_row.txnBalance,
         userId: (JSON.parse(localStorage.getItem("user_obj"))).ID,
-        priority: priority
+        priority: priority,
+        isDeny: isDeny
     }
     $.ajax({
         url: `investment-txns/approves`,
@@ -1313,7 +1337,7 @@ function onApproved(value, approvedId, txnId, id) {
         'success': function (data) {
             if (data.status === undefined) {
                 $('#wait').hide();
-                swal('Execution successful!', '', 'success');
+                swal('Approve successful!', '', 'success');
                 $("#role_list_group").html('');
                 setApprovalRequirements(data_row);
                 // bindDataTable(selectedInvestment.investmentId, false);
@@ -1330,7 +1354,7 @@ function onApproved(value, approvedId, txnId, id) {
     });
 }
 
-function onReviewed(value, approvedId, txnId, id) {
+function onReviewed(value, approvedId, txnId, id, isDeny) {
     let priority = selectedOpsRequirement.find(x => x.ID === id).priority;
 
     let _data = {
@@ -1341,7 +1365,8 @@ function onReviewed(value, approvedId, txnId, id) {
         amount: data_row.amount,
         balance: data_row.txnBalance,
         userId: (JSON.parse(localStorage.getItem("user_obj"))).ID,
-        priority: priority
+        priority: priority,
+        isDeny: isDeny
     }
     $.ajax({
         url: `investment-txns/reviews`,
@@ -1350,7 +1375,7 @@ function onReviewed(value, approvedId, txnId, id) {
         'success': function (data) {
             if (data.status === undefined) {
                 $('#wait').hide();
-                swal('Execution successful!', '', 'success');
+                swal('Review successful!', '', 'success');
                 $("#review_list_group").html('');
                 setReviewRequirements(data_row);
                 table.ajax.reload(null, false);
@@ -1370,7 +1395,7 @@ function onReviewed(value, approvedId, txnId, id) {
 
 
 
-function onPost(value, approvedId, txnId, id) {
+function onPost(value, approvedId, txnId, id, isDeny) {
     let priority = selectedOpsRequirement.find(x => x.ID === id).priority;
     let _data = {
         status: value,
@@ -1394,7 +1419,8 @@ function onPost(value, approvedId, txnId, id) {
         isWallet: data_row.isWallet,
         clientId: data_row.clientId,
         isPaymentMadeByWallet: data_row.isPaymentMadeByWallet,
-        priority: priority
+        priority: priority,
+        isDeny: isDeny
 
     }
     $.ajax({
@@ -1404,7 +1430,7 @@ function onPost(value, approvedId, txnId, id) {
         'success': function (data) {
             if (data.status === undefined) {
                 $('#wait').hide();
-                swal('Execution successful!', '', 'success');
+                swal('Post successful!', '', 'success');
                 $("#post_list_group").html('');
                 setPostRequirements(data_row);
                 // bindDataTable(selectedInvestment.investmentId, false);
@@ -1483,9 +1509,10 @@ function onFundWalletOperation() {
         createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
         roleIds: _mRoleId,
         beneficialInvestmentId: selectedInvestment.investmentId,
-        productId: selectedInvestment.productId
+        productId: selectedInvestment.productId,
+        isWallet: isWalletPage,
+        clientId: sURLVariables
     };
-
     $.ajax({
         url: `investment-txns/create`,
         'type': 'post',
@@ -1506,10 +1533,18 @@ function onFundWalletOperation() {
 
 
 function onTransferOperation() {
+    let amount = $("#input_transfer_amount").val();
+    let mAmount_ = amount.toString().split(',').join('');
+    if (parseFloat(selectedInvestment.balance.toString()) < parseFloat(mAmount_)) {
+        swal('Insufficent balance', '', 'error');
+        return;
+    }
+
+
+
     if ($('#chk_client_wallet').is(':checked') === true) {
         onFundWalletOperation();
     } else {
-        let amount = $("#input_transfer_amount").val();
         let desc = $("#input_transfer_description").val();
         selectedAccount = products.find(x => x.ID.toString() === $("#list_accounts").val());
         let _mRoleId = [];
@@ -1549,6 +1584,12 @@ function onTransferOperation() {
                 $('#wait').hide();
                 swal('Transfer operation completed successfully', '', 'success');
                 $(".input").val('');
+                $("#input_transfer_amount").val('');
+                $("#chk_own_accounts").attr('checked', false);
+                $("#chk_investment_accounts").attr('checked', false);
+                $("#chk_client_wallet").attr('checked', false);
+                $("#list_accounts").val(null).trigger('change');
+                $("#input_transfer_description").val('');
             },
             'error': function (err) {
                 $('#wait').hide();
