@@ -21,23 +21,12 @@
     <link rel="stylesheet" href="assets/scss/style.css">
     <link rel="stylesheet" href="assets/css/lib/chosen/chosen.min.css">
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,800' rel='stylesheet' type='text/css'>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
     <script src="assets/js/vendor/jquery-2.1.4.min.js"></script>
     <style type="text/css">
-        .select2-container{
-            width: 90% !important;
-        }
-        .select2-selection{
-            height: 100% !important;
-            border: 1px solid #ced4da !important;
-            border-radius: .25rem !important;
-            color: #495057 !important;
-        }
         .pb-0{
             text-align: center;
         }
-        .alert-success, .alert-success p {color: #155724;}
         table{width: 100%;}
         table th{text-align: center;}
         .danger {
@@ -45,9 +34,14 @@
         }
         iframe {
             width: 100%;
-            min-height: 2300px;
+            min-height: 1500px;
             border: none;
             margin-bottom: 30px;
+        }
+        #viewMandate {
+            float: right;
+            display: none;
+            overflow: hidden;
         }
     </style>
 </head>
@@ -179,6 +173,7 @@
                                         <button id="setupMandate" class="btn btn-lg btn-primary">Proceed <i class="fa fa-forward"></i></button>
                                         <button id="acceptApplication" class="btn btn-lg btn-success">Accept <i class="fa fa-check"></i></button>
                                         <button id="declineApplication" class="btn btn-lg btn-danger">Decline <i class="fa fa-remove"></i></button>
+                                        <a id="viewMandate" class="btn btn-lg btn-warning" href="" target="_blank">View Mandate <i class="fa fa-eye"></i></a>
                                     </div>
                                 </div>
                             </div>
