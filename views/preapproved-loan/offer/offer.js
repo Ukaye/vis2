@@ -8,11 +8,18 @@
     });
 
     const urlParams = new URLSearchParams(window.location.search);
+    const application_id = urlParams.get('i');
     const user_id = urlParams.get('t');
     let bank,
         banks,
         payment_amount,
         preapproved_loan = {};
+
+    if (application_id) {
+        $('#setupMandate').remove();
+        $('#acceptApplication').remove();
+        $('#declineApplication').remove();
+    }
 
     function getPreapprovedLoan() {
         $.ajax({
@@ -85,7 +92,7 @@
         $viewMandate.attr('href', form_url);
         $('#remitaDirectDebit').find('.setup-content').html(`
             <div class="col-sm-12">
-                <iframe scrolling="no" src="${form_url}" id="mandate_form" name="mandate_form"></iframe>
+                <!--<iframe scrolling="no" src="${form_url}" id="mandate_form" name="mandate_form"></iframe>-->
                 <p class="danger"><em>Click on the "View Mandate" button to access complete mandate form information.</em></p>
                 <p class="danger"><strong><em>Kindly read through the mandate form, print, and take to your bank for activation.</em></strong></p>
                 <p class="danger">Please note this is a Direct Debit Mandate, NOT a Payment RRR. Kindly verify the account and activate.</p>

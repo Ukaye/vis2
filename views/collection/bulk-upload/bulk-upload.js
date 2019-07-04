@@ -1,13 +1,46 @@
 (function( $ ) {
     jQuery(document).ready(function() {
-        init();
+        getAccounts();
     });
+
+    function getAccounts(){
+        $.ajax({
+            type: 'GET',
+            url: '/collection/collection_bank',
+            success: function (data) {
+                $.each(data.response, function (key, val) {
+                    $('#account').append(`<option value="${val.ID}">${val.account}</option>`);
+                });
+            }
+        });
+    }
+
     let headers,
         statement = [],
         statement_ = [],
         $dvCSV = $("#dvCSV"),
-        $csvUpload = $("#csvUpload"),
-        $uploadCSV = $("#uploadCSV");
+        $csvUpload = $("#csvUpload");
+
+    $csvUpload.change(function (){
+        $('#wait').show();
+        let regex = /^([a-zA-Z0-9\s_\\.\-:])+(.csv|.txt)$/;
+        if (regex.test($csvUpload.val().toLowerCase())) {
+            if (typeof (FileReader) !== 'undefined') {
+                let reader = new FileReader();
+                reader.onload = function (e) {
+                    let rows = e.target.result.split("\n");
+                    previewStatement(rows);
+                };
+                reader.readAsText($csvUpload[0].files[0]);
+            } else {
+                $('#wait').hide();
+                return notification('This browser does not support HTML5.','','warning');
+            }
+        } else {
+            $('#wait').hide();
+            return notification('Please select a valid CSV file.','Note that symbols and special characters are not allowed in the filename!','warning');
+        }
+    });
 
     function previewStatement(rows) {
         let skip = 0,
@@ -104,6 +137,7 @@
         }
         $dvCSV.html('');
         $dvCSV.append(table);
+        $('#wait').hide();
     }
 
     $('body').delegate('select[id^="invoice-0-"]', 'change', function(e) {
@@ -138,56 +172,44 @@
         }
     });
 
-    function init() {
-        $uploadCSV.bind("click", function () {
-            let regex = /^([a-zA-Z0-9\s_\\.\-:])+(.csv|.txt)$/;
-            if (regex.test($csvUpload.val().toLowerCase())) {
-                if (typeof (FileReader) !== 'undefined') {
-                    let reader = new FileReader();
-                    reader.onload = function (e) {
-                        let rows = e.target.result.split("\n");
-                        previewStatement(rows);
-                    };
-                    reader.readAsText($csvUpload[0].files[0]);
-                } else {
-                    return notification('This browser does not support HTML5.','','warning');
-                }
-            } else {
-                return notification('Please select a valid CSV file.','Note that symbols and special characters are not allowed in the filename!','warning');
-            }
-        });
-
-        $("#saveBulkUpload").click(function () {
-            let statementX = (statement_.length === 0)? $.extend(true, [], statement) : statement_;
-            if (!statementX[0])
-                return notification('Please upload a valid CSV file.','','warning');
-            validateStatement(statementX, function (validation) {
-                if (validation.status){
-                    let obj = {};
-                    obj.statement = validation.data;
-                    obj.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
-
-                    $('#wait').show();
-                    $.ajax({
-                        'url': '/collection/bulk_upload',
-                        'type': 'post',
-                        'data': obj,
-                        'success': function (data) {
+    $("#saveBulkUpload").click(function () {
+        let payload = {},
+            statementX = (statement_.length === 0)? $.extend(true, [], statement) : statement_;
+        payload.account = $('#account').val();
+        payload.start = $('#startDate').val();
+        payload.end = $('#endDate').val();
+        payload.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
+        if (!payload.account || !payload.start || !payload.end) return notification('Kindly fill all required field(s)!','','warning');
+        if (!statementX[0]) return notification('Please upload a valid CSV file.','','warning');
+        validateStatement(statementX, function (validation) {
+            if (validation.status){
+                payload.statement = validation.data;
+                $('#wait').show();
+                $.ajax({
+                    'url': '/collection/bulk_upload',
+                    'type': 'post',
+                    'data': payload,
+                    'success': function (data) {
+                        $('#wait').hide();
+                        if (data.status === 200) {
                             notification(data.response, '', 'success');
                             window.location.href = '/bulk-collection';
-                        },
-                        'error': function (err) {
-                            console.log(err);
-                            $('#wait').hide();
-                            notification('No internet connection', '', 'error');
+                        } else {
+                            console.log(data.error);
+                            notification(data.error, '', 'error');
                         }
-                    });
-                } else {
-                    notification('There are error(s) in the uploaded statement!', '', 'warning');
-                }
-            });
+                    },
+                    'error': function (err) {
+                        console.log(err);
+                        $('#wait').hide();
+                        notification('No internet connection', '', 'error');
+                    }
+                });
+            } else {
+                notification('There are error(s) in the uploaded statement!', '', 'warning');
+            }
         });
-    }
+    });
 
     function validateStatement(statement, callback) {
         let errors = [],
