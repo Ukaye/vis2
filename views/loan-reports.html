@@ -2228,103 +2228,103 @@
         });
     }
 
-    function populateDisbursed(dets){
-        $("#disbursed-table").dataTable().fnClearTable();
-        if (dets.length === 0){
-            $("#disbursed-table").dataTable().fnClearTable();
-        }else{
-            var total = 0; var totalglp = 0; var totalbalance = 0; var num_all = 0; var num_paid = 0; var pay = 0; var loa = 0;
-            let d = []; let processed_data = [];
-            var totalhere = 0;
-            const delimit = (dets.without_pay.length > dets.with_payments.length)? dets.without_pay.length : dets.with_payments.length;
-            const limit = (dets.with_invalid_payments.length > delimit)? dets.with_invalid_payments.length : delimit;
-            for (let i=0; i<limit; i++){
-                let v = {};
-                v = dets.without_pay[i];
-                if (v){
-                    let nopay = [];
-                    amount_paid[v.ID] = 0;
-                    totalhere += parseFloat(v.loan_amount);
-                    total+= (v.loan_amount) ? parseFloat(v.loan_amount) : 0
-                    totalglp += (v.loan_amount) ? parseFloat(v.loan_amount) : 0
-                    totalbalance += (v.loan_amount) ? parseFloat(v.loan_amount) : 0
-                    num_all++;
-                    v.id = padWithZeroes(parseInt(v.ID),6);
-                    v.balance = formatter.format(parseFloat(v.loan_amount));
-                    v.principal = formatter.format(parseFloat(v.loan_amount));
-                    if (v.reschedule_amount)
-                        v.date_ = formatDate(v.date_modified.split(' ')[0]);
-                    else
-                        v.date_ = formatDate(v.disbursement_date);
-                    processed_data.push(v);
-                }
-
-                v = {};
-                v = dets.with_payments[i];
-                if (v){
-                    amount_paid[v.applicationID] = v.valid_payment;
-                    loa += v.loan_amount;
-                    num_all++;
-                    num_paid++;
-                    total += (v.loan_amount) ? parseFloat(v.loan_amount) : 0
-                    pay+=v.valid_payment;
-                    totalbalance += (v.paid) ? ((v.invalid_payment === null) ? parseFloat(v.balance) :  v.loan_amount - (parseFloat(v.paid) - parseFloat(v.invalid_payment))) : 0;
-                    v.id = padWithZeroes(parseInt(v.applicationID),6);
-                    v.balance = formatter.format(parseFloat((v.loan_amount - v.valid_payment) < 0 ? 0 : v.loan_amount - v.valid_payment));
-                    v.principal = formatter.format(parseFloat(v.loan_amount));
-                    if (v.reschedule_amount)
-                        v.date_ = formatDate(v.date_modified.split(' ')[0]);
-                    else
-                        v.date_ = formatDate(v.date);
-                    processed_data.push(v);
-                }
-
-                v={}
-                v = dets.with_invalid_payments[i];
-                if (v){
-                    amount_paid[v.applicationID] = v.valid_payment;
-                    loa += v.loan_amount;
-                    num_all++;
-                    num_paid++;
-                    total += (v.loan_amount) ? parseFloat(v.loan_amount) : 0
-                    pay+=v.valid_payment;
+//    function populateDisbursed(dets){
+//        $("#disbursed-table").dataTable().fnClearTable();
+//        if (dets.length === 0){
+//            $("#disbursed-table").dataTable().fnClearTable();
+//        }else{
+//            var total = 0; var totalglp = 0; var totalbalance = 0; var num_all = 0; var num_paid = 0; var pay = 0; var loa = 0;
+//            let d = []; let processed_data = [];
+//            var totalhere = 0;
+//            const delimit = (dets.without_pay.length > dets.with_payments.length)? dets.without_pay.length : dets.with_payments.length;
+//            const limit = (dets.with_invalid_payments.length > delimit)? dets.with_invalid_payments.length : delimit;
+//            for (let i=0; i<limit; i++){
+//                let v = {};
+//                v = dets.without_pay[i];
+//                if (v){
+//                    let nopay = [];
+//                    amount_paid[v.ID] = 0;
+//                    totalhere += parseFloat(v.loan_amount);
+//                    total+= (v.loan_amount) ? parseFloat(v.loan_amount) : 0
+//                    totalglp += (v.loan_amount) ? parseFloat(v.loan_amount) : 0
+//                    totalbalance += (v.loan_amount) ? parseFloat(v.loan_amount) : 0
+//                    num_all++;
+//                    v.id = padWithZeroes(parseInt(v.ID),6);
+//                    v.balance = formatter.format(parseFloat(v.loan_amount));
+//                    v.principal = formatter.format(parseFloat(v.loan_amount));
+//                    if (v.reschedule_amount)
+//                        v.date_ = formatDate(v.date_modified.split(' ')[0]);
+//                    else
+//                        v.date_ = formatDate(v.disbursement_date);
+//                    processed_data.push(v);
+//                }
+//
+//                v = {};
+//                v = dets.with_payments[i];
+//                if (v){
+//                    amount_paid[v.applicationID] = v.valid_payment;
+//                    loa += v.loan_amount;
+//                    num_all++;
+//                    num_paid++;
+//                    total += (v.loan_amount) ? parseFloat(v.loan_amount) : 0
+//                    pay+=v.valid_payment;
 //                    totalbalance += (v.paid) ? ((v.invalid_payment === null) ? parseFloat(v.balance) :  v.loan_amount - (parseFloat(v.paid) - parseFloat(v.invalid_payment))) : 0;
-                    totalbalance += parseFloat(v.loan_amount);
-                    v.id = padWithZeroes(parseInt(v.applicationID),6);
-                    v.balance = formatter.format(parseFloat(v.loan_amount));
-                    v.principal = formatter.format(parseFloat(v.loan_amount));
-                    if (v.reschedule_amount)
-                        v.date_ = formatDate(v.date_modified.split(' ')[0]);
-                    else
-                        v.date_ = formatDate(v.date);
-                    processed_data.push(v);
-                }
-
-                if (i === limit-1){
-                    $('#disbursed-table').DataTable({
-                        dom: 'Blfrtip',
-                        bDestroy: true,
-                        data: processed_data,
-                        search: {search: ' '},
-                        buttons: [
-                            'copy', 'csv', 'excel', 'pdf', 'print'
-                        ],
-                        columns: [
-                            { data: "id" },
-                            { data: "fullname" },
-                            { data: "principal" },
-//                            { data: "balance" },
-                            { data: "date_" }
-                        ]
-                    });
-                }
-            }
-            $('#total-disbursements').html(formatter.format(total));
-//            $('#glp').html(formatter.format(totalglp));
-//            $('#avg-loan-balance').html(formatter.format((num_all === 0) ? 0: totalbalance/num_all));
-//            $('#avg-loan-disbursed').html(formatter.format((num_all === 0) ? 0: total/num_all));
-        }
-    }
+//                    v.id = padWithZeroes(parseInt(v.applicationID),6);
+//                    v.balance = formatter.format(parseFloat((v.loan_amount - v.valid_payment) < 0 ? 0 : v.loan_amount - v.valid_payment));
+//                    v.principal = formatter.format(parseFloat(v.loan_amount));
+//                    if (v.reschedule_amount)
+//                        v.date_ = formatDate(v.date_modified.split(' ')[0]);
+//                    else
+//                        v.date_ = formatDate(v.date);
+//                    processed_data.push(v);
+//                }
+//
+//                v={}
+//                v = dets.with_invalid_payments[i];
+//                if (v){
+//                    amount_paid[v.applicationID] = v.valid_payment;
+//                    loa += v.loan_amount;
+//                    num_all++;
+//                    num_paid++;
+//                    total += (v.loan_amount) ? parseFloat(v.loan_amount) : 0
+//                    pay+=v.valid_payment;
+////                    totalbalance += (v.paid) ? ((v.invalid_payment === null) ? parseFloat(v.balance) :  v.loan_amount - (parseFloat(v.paid) - parseFloat(v.invalid_payment))) : 0;
+//                    totalbalance += parseFloat(v.loan_amount);
+//                    v.id = padWithZeroes(parseInt(v.applicationID),6);
+//                    v.balance = formatter.format(parseFloat(v.loan_amount));
+//                    v.principal = formatter.format(parseFloat(v.loan_amount));
+//                    if (v.reschedule_amount)
+//                        v.date_ = formatDate(v.date_modified.split(' ')[0]);
+//                    else
+//                        v.date_ = formatDate(v.date);
+//                    processed_data.push(v);
+//                }
+//
+//                if (i === limit-1){
+//                    $('#disbursed-table').DataTable({
+//                        dom: 'Blfrtip',
+//                        bDestroy: true,
+//                        data: processed_data,
+//                        search: {search: ' '},
+//                        buttons: [
+//                            'copy', 'csv', 'excel', 'pdf', 'print'
+//                        ],
+//                        columns: [
+//                            { data: "id" },
+//                            { data: "fullname" },
+//                            { data: "principal" },
+////                            { data: "balance" },
+//                            { data: "date_" }
+//                        ]
+//                    });
+//                }
+//            }
+//            $('#total-disbursements').html(formatter.format(total));
+////            $('#glp').html(formatter.format(totalglp));
+////            $('#avg-loan-balance').html(formatter.format((num_all === 0) ? 0: totalbalance/num_all));
+////            $('#avg-loan-disbursed').html(formatter.format((num_all === 0) ? 0: total/num_all));
+//        }
+//    }
 
     function populateDisbursed(dets){
         $("#disbursed-table").dataTable().fnClearTable();
