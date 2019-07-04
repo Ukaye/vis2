@@ -79,10 +79,14 @@
     }
 
     function generateMandateForm(data) {
-        let form_url = `${getBaseUrl()}/form/${data.merchantId}/${data.remita_hash}/${data.mandateId}/${data.requestId}/rest.reg`;
+        let $viewMandate = $('#viewMandate'),
+            form_url = `${getBaseUrl()}/form/${data.merchantId}/${data.remita_hash}/${data.mandateId}/${data.requestId}/rest.reg`;
+        $viewMandate.show();
+        $viewMandate.attr('href', form_url);
         $('#remitaDirectDebit').find('.setup-content').html(`
             <div class="col-sm-12">
-                <iframe src="${form_url}" id="mandate_form" name="mandate_form"></iframe>
+                <iframe scrolling="no" src="${form_url}" id="mandate_form" name="mandate_form"></iframe>
+                <p class="danger"><em>Click on the "View Mandate" button to access complete mandate form information.</em></p>
                 <p class="danger"><strong><em>Kindly read through the mandate form, print, and take to your bank for activation.</em></strong></p>
                 <p class="danger">Please note this is a Direct Debit Mandate, NOT a Payment RRR. Kindly verify the account and activate.</p>
             </div>
@@ -279,10 +283,10 @@
     }
 
     $("#acceptApplication").click(function () {
+        if (bank.authorization === 'OTP' && !getAuthValues().status)
+            return notification('Kindly fill all required field(s)!', '', 'warning');
         if (!localStorage.remitaTransRef)
             return notification('Kindly setup direct debit mandate to proceed!', '', 'warning');
-        if (!getAuthValues().status)
-            return notification('Kindly fill all required field(s)!', '', 'warning');
         if (!preapproved_loan.bank || !preapproved_loan.email || !preapproved_loan.phone || !preapproved_loan.account
                 || !preapproved_loan.client || !preapproved_loan.loan_amount || !payment_amount)
             return notification('Contact your loan officer to verify your profile!', '', 'warning');
