@@ -1644,9 +1644,10 @@
         getLoanClasses();
         getBranches();
         loadInfo();
-        loadAvgCards();
+//        loadAvgCards();
         disbursed();
         loadDisbursed();
+        initDisbursedGLP();
         var today = new Date().toISOString().split('T')[0];
         document.getElementsByName("filteraggprointend")[0].setAttribute('min', today);
         document.getElementsByName("filteraggprointstart")[0].setAttribute('min', today);
@@ -2094,25 +2095,26 @@
         $('#loan-per').html(data["avg_loan_per_officers"]);
     }
 
-//    function initDisbursedGLP(){
-//        $.ajax({
-//            'url': 'user/disbursements/filter',
-//            'type': 'get',
-//            'success': function (data) {
-//                if (data.status === 200) {
-//                    let disbursed = $.extend(true, {}, data.response),
-//                        glp = $.extend(true, {}, data.response);
-////                    populateDisbursed(disbursed);
-//                    populateGLP(glp);
-//                } else {
-//                    swal({"icon": "error", "text": 'Database Error'});
-//                }
-//            },
-//            'error': function (err) {
-//                swal('Error in Connection!','','error')
-//            }
-//        });
-//    }
+    function initDisbursedGLP(){
+        $.ajax({
+            'url': 'user/disbursements/filter',
+            'type': 'get',
+            'success': function (data) {
+                if (data.status === 200) {
+                    let disbursed = $.extend(true, {}, data.response),
+                        glp = $.extend(true, {}, data.response);
+//                    populateDisbursed(disbursed);
+                    populateGLP(glp);
+                } else {
+                    swal({"icon": "error", "text": 'Database Error'});
+                }
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
+    }
+
     function loadAvgCards(){
         if (localStorage.getItem('avg_loan_balance') && localStorage.getItem('avg_disbursed')){
             $('#avg-loan-balance').html(formatter.format(localStorage.getItem('avg_loan_balance')));
@@ -2328,9 +2330,7 @@
 
     function populateDisbursed(dets){
         $("#disbursed-table").dataTable().fnClearTable();
-        if (dets.length === 0){
-            $("#disbursed-table").dataTable().fnClearTable();
-        }else{
+        if (dets.length > 0){
             var total = 0; var totalglp = 0; var totalbalance = 0; var num_all = 0; var num_paid = 0; var pay = 0; var loa = 0;
             let d = []; let processed_data = [];
             var totalhere = 0;
@@ -2345,23 +2345,23 @@
                     v.principal = (v.loan_amount) ? formatter.format(parseFloat(v.loan_amount)) : 0;
                     processed_data.push(v);
                 }
-
-                $('#disbursed-table').DataTable({
-                    dom: 'Blfrtip',
-                    bDestroy: true,
-                    data: processed_data,
-                    search: {search: ' '},
-                    buttons: [
-                        'copy', 'csv', 'excel', 'pdf', 'print'
-                    ],
-                    columns: [
-                        { data: "id" },
-                        { data: "fullname" },
-                        { data: "principal" },
-                        { data: "date" }
-                    ]
-                });
             }
+
+            $('#disbursed-table').DataTable({
+                dom: 'Blfrtip',
+                bDestroy: true,
+                data: processed_data,
+                search: {search: ' '},
+                buttons: [
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ],
+                columns: [
+                    { data: "id" },
+                    { data: "fullname" },
+                    { data: "principal" },
+                    { data: "date" }
+                ]
+            });
             localStorage.setItem('disbursed', JSON.stringify(processed_data));
             localStorage.setItem('total-disbursements', total);
             $('#total-disbursements').html(formatter.format(total));
@@ -2382,6 +2382,7 @@
                 let v = {};
                 v = dets.without_pay[i];
                 if (v){
+                    amount_paid[v.ID] = 0;
                     totalhere += parseFloat(v.loan_amount);
                     total+= (v.loan_amount) ? parseFloat(v.loan_amount) : 0
                     totalglp += (v.loan_amount) ? parseFloat(v.loan_amount) : 0
@@ -2397,6 +2398,7 @@
                 v = {};
                 v = dets.with_payments[i];
                 if (v){
+                    amount_paid[v.applicationID] = v.valid_payment;
                     loa += v.loan_amount;
                     num_all++;
                     num_paid++;

@@ -140,18 +140,28 @@ function getInvestmentProducts(id) {
                 $('#minimum_bal_penalty_amount').val(product_obj.minimum_bal_charges);
                 $('#opt_on_minimum_bal_penalty_amount').val((product_obj.minimum_bal_charges_opt ===
                     null) ? $(
-                    '#opt_on_minimum_bal_penalty_amount').val() : product_obj.minimum_bal_charges_opt);
+                        '#opt_on_minimum_bal_penalty_amount').val() : product_obj.minimum_bal_charges_opt);
 
                 $('#charge_interest_on_withdrawal').val(product_obj.interest_forfeit_charge);
                 $('#opt_on_charge_interest_on_withdrawal').val((product_obj.interest_forfeit_charge_opt ===
                     null) ? $(
-                    '#opt_on_charge_interest_on_withdrawal').val() : product_obj.interest_forfeit_charge_opt);
+                        '#opt_on_charge_interest_on_withdrawal').val() : product_obj.interest_forfeit_charge_opt);
 
                 $('#opt_on_freq_charge').val((product_obj.withdrawal_freq_fees_opt ===
                     null) ? $(
-                    '#opt_on_freq_charge').val() : product_obj.withdrawal_freq_fees_opt);
+                        '#opt_on_freq_charge').val() : product_obj.withdrawal_freq_fees_opt);
                 $('#acct_allows_withdrawal').attr('checked', ((product_obj.acct_allows_withdrawal) ?
                     true : false));
+
+                console.log(product_obj.acct_allows_withdrawal);
+                if (product_obj.acct_allows_withdrawal === 1) {
+                    $('#withdrawal_conditions_value').attr("disabled", false);
+                    $('#chk_enforce_count').attr("disabled", false);
+                    $('#withdrawal_charge_duration').attr("disabled", false);
+                    $('#withdrawal_charge_freq').attr("disabled", false);
+                    $('#opt_on_freq_charge').attr("disabled", false);
+                }
+
                 $('#inv_moves_wallet').attr('checked', ((product_obj.inv_moves_wallet) ?
                     true : false));
                 $('#interest_moves_wallet').attr('checked', ((product_obj.interest_moves_wallet) ?
