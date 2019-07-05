@@ -200,6 +200,9 @@
                         }
                     },
                     'error': function (err) {
+                        if (err && err.statusText === 'Payload Too Large')
+                            return notification('The file size is too large!',
+                                'Kindly truncate unnecessary data or separate file into multiple batches', 'error');
                         console.log(err);
                         $('#wait').hide();
                         notification('No internet connection', '', 'error');
