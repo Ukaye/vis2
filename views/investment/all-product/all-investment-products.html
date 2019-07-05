@@ -180,8 +180,7 @@
                                 </div>
                                 <div class="col-sm-3">
                                     <div class="pull-right">
-                                        <a href="/add-investment-products" class="btn btn-primary"><i
-                                                class="fa fa-plus"></i>
+                                        <a href="/add-investment-products" class="btn btn-primary"><i class="fa fa-plus"></i>
                                             New
                                             Product</a>
                                     </div>
@@ -223,11 +222,11 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="viewRequirementModalHeader"></h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                            aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <div class="row" style="margin-bottom: 15px;">
+                        <small class="col-lg-12"><span>Operation: </span><span id="spanAmountRange"></span><span class="text-danger">*</span></small>
                         <div class="col-lg-12">
                             <select id="list_operations" class="form-control" required="required">
                                 <option value="" disabled selected>-- Select Operation --</option>
@@ -238,6 +237,7 @@
                         </div>
                     </div>
                     <div class="row" style="margin-bottom: 15px;">
+                        <small class="col-lg-12"><span>Role: </span><span id="spanAmountRange"></span><span class="text-danger">*</span></small>
                         <div class="col-lg-12">
                             <select id="list_user_roles" class="form-control" multiple="multiple" required="required">
                             </select>
@@ -245,8 +245,8 @@
                     </div>
                     <div class="row" style="margin-bottom: 15px;">
                         <div class="col-lg-12">
-                            <button type="button" id="btn_requirement" class="btn btn-success pull-right"
-                                style="width: 100%;" onclick="ceateRequirement()">Set Approval
+                            <button type="button" id="btn_requirement" class="btn btn-success pull-right" style="width: 100%;"
+                                onclick="ceateRequirement()">Set Approval
                                 Requirement</button>
                         </div>
                     </div>
@@ -268,8 +268,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal"
-                        onclick="onCloseDialog()">Close</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal" onclick="onCloseDialog()">Close</button>
                 </div>
             </div>
         </div>
@@ -281,8 +280,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="viewDocHeader">Add Document Requirement</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                            aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <div class="row">
@@ -341,8 +339,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="viewPariorityHeader">Approval Priority</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                            aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
 
@@ -371,11 +368,11 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="viewReviewModalHeader"></h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                            aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <div class="row" style="margin-bottom: 15px;">
+                        <small class="col-lg-12"><span>Operation: </span><span id="spanAmountRange"></span><span class="text-danger">*</span></small>
                         <div class="col-lg-12">
                             <select id="list_operations_review" class="form-control" required="required">
                                 <option value="" disabled selected>-- Select Operation --</option>
@@ -386,6 +383,7 @@
                         </div>
                     </div>
                     <div class="row" style="margin-bottom: 15px;">
+                        <small class="col-lg-12"><span>Role: </span><span id="spanAmountRange"></span><span class="text-danger">*</span></small>
                         <div class="col-lg-12">
                             <select id="list_review_roles" class="form-control" multiple="multiple" required="required">
                             </select>
@@ -393,8 +391,8 @@
                     </div>
                     <div class="row" style="margin-bottom: 15px;">
                         <div class="col-lg-12">
-                            <button type="button" id="btn_review" class="btn btn-success pull-right"
-                                style="width: 100%;" onclick="ceateReview()">Set
+                            <button type="button" id="btn_review" class="btn btn-success pull-right" style="width: 100%;"
+                                onclick="ceateReview()">Set
                                 Reviewer Requirement</button>
                         </div>
                     </div>
@@ -416,8 +414,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal"
-                        onclick="onCloseDialog()">Close</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal" onclick="onCloseDialog()">Close</button>
                 </div>
             </div>
         </div>
@@ -430,21 +427,18 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="viewPariorityReviewHeader">Reviewer Priority</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                            aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
 
                     <div class="col-6">
                         <div><strong><span>Required Role(s)</span></strong></div>
-                        <div class="list-group" style="border: 1px solid gray;border-radius: 5px;"
-                            id="lstRolesReview_1">
+                        <div class="list-group" style="border: 1px solid gray;border-radius: 5px;" id="lstRolesReview_1">
                         </div>
                     </div>
                     <div class="col-6">
                         <div><strong><span>Prioritized Role(s)</span></strong></div>
-                        <div class="list-group" style="border: 1px solid gray;border-radius: 5px;"
-                            id="lstRolesReview_2">
+                        <div class="list-group" style="border: 1px solid gray;border-radius: 5px;" id="lstRolesReview_2">
                             No Item Moved
                         </div>
                     </div>
@@ -463,11 +457,11 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="viewPostModalHeader"></h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                            aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <div class="row" style="margin-bottom: 15px;">
+                        <small class="col-lg-12"><span>Operation: </span><span id="spanAmountRange"></span><span class="text-danger">*</span></small>
                         <div class="col-lg-12">
                             <select id="list_operations_post" class="form-control" required="required">
                                 <option value="" disabled selected>-- Select Operation --</option>
@@ -478,6 +472,7 @@
                         </div>
                     </div>
                     <div class="row" style="margin-bottom: 15px;">
+                        <small class="col-lg-12"><span>Role: </span><span id="spanAmountRange"></span><span class="text-danger">*</span></small>
                         <div class="col-lg-12">
                             <select id="list_post_roles" class="form-control" multiple="multiple" required="required">
                             </select>
@@ -507,8 +502,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal"
-                        onclick="onCloseDialog()">Close</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal" onclick="onCloseDialog()">Close</button>
                 </div>
             </div>
         </div>
@@ -520,8 +514,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="viewPariorityPostHeader">Post Priority</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                            aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
 

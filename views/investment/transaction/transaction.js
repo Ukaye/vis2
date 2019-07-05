@@ -662,7 +662,30 @@ function onTerminateInvest() {
 
 $(document).ready(function () { });
 
-function onOpenMode(name, operationId, is_credit) {
+function getClientAccountBalance() {
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: `/investment-txns/client-wallet-balance/${data_row.clientId}`,
+            'type': 'get',
+            'success': function (data) {
+                clientBalance = (data[0] !== undefined) ? data[0].balance : 0.00;
+                $('#wait').hide();
+                if (data.status === undefined) {
+                    resolve(data[0]);
+                } else {
+                    resolve({ balance: 0.00 });
+                }
+            },
+            'error': function (err) {
+                $('#wait').hide();
+                reject(err);
+            }
+        });
+    });
+}
+
+async function onOpenMode(name, operationId, is_credit) {
+
     if (name === 'Transfer') {
         // $("#chk_own_accounts").attr('checked', false);
         // $("#chk_own_accounts").attr('hidden', true);
@@ -670,7 +693,23 @@ function onOpenMode(name, operationId, is_credit) {
 
         // $("#lbl_chk_own_accounts").attr('hidden', true);
         // $("#lbl_chk_client_wallet").attr('hidden', true);
+        $('#opt_payment_made_by').attr('disabled', true);
+    } else if (name === 'Withdraw') {
+        $('#opt_payment_made_by').attr('disabled', true);
+    } else if (name === 'Deposit') {
+        $('#opt_payment_made_by').attr('disabled', false);
+        $('#opt_payment_made_by').html('');
+        const _acctBal = await getClientAccountBalance();
+        let sign = '';
+        if (_acctBal.balance.toString().includes('-')) {
+            sign = '-';
+        }
+        $('<option/>').val('1').html(`Wallet <strong>(₦${sign}${formater(_acctBal.balance.toString())})</strong>`).appendTo(
+            '#opt_payment_made_by');
+        $('<option/>').val('0').html(`Cash`).appendTo(
+            '#opt_payment_made_by');
     }
+
     selectedInvestment._operationId = operationId;
     selectedInvestment._is_credit = is_credit;
     opsObj.is_credit = is_credit;
@@ -723,7 +762,7 @@ $("#input_amount").on("keyup", function (event) {
 });
 
 $("#input_amount").on("focusout", function (event) {
-    if (selectedInvestment._is_credit === 1) {
+    if (selectedInvestment._is_credit.toString() === '1') {
         let min = parseFloat(product_config.investment_min.split(',').join(''));
         let max = parseFloat(product_config.investment_max.split(',').join(''));
         let val = "";
@@ -842,7 +881,8 @@ function onExecutiveTransaction() {
             productId: selectedInvestment.productId,
             isWallet: isWalletPage,
             clientId: sURLVariables,
-            txn_date: $('#input_txn_date').val()
+            txn_date: $('#input_txn_date').val(),
+            isPaymentMadeByWallet: $('#opt_payment_made_by').val()
         };
 
         $.ajax({
@@ -1420,8 +1460,8 @@ function onPost(value, approvedId, txnId, id, isDeny) {
         clientId: data_row.clientId,
         isPaymentMadeByWallet: data_row.isPaymentMadeByWallet,
         priority: priority,
-        isDeny: isDeny
-
+        isDeny: isDeny,
+        isPaymentMadeByWallet: data_row.isPaymentMadeByWallet
     }
     $.ajax({
         url: `investment-txns/posts`,

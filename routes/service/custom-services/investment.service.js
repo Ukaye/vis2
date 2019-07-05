@@ -46,7 +46,8 @@ router.post('/create', function (req, res, next) {
                     is_capital: 1,
                     createdBy: data.createdBy,
                     ref_no: dt_,
-                    investmentId: response.data.insertId
+                    investmentId: response.data.insertId,
+                    isPaymentMadeByWallet: data.isPaymentMadeByWallet
                 };
 
                 query = `INSERT INTO investment_txns SET ?`;
@@ -640,7 +641,7 @@ router.get('/client-investments/:id', function (req, res, next) {
     v.ID,v.ref_no,c.fullname,v.description,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName, v.isDeny,
     v.approvalDone,v.reviewDone,v.created_date,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.updated_date,
     i.clientId,v.isMoveFundTransfer,v.isWallet,v.isWithdrawal,isDeposit,v.isDocUploaded,p.canTerminate,i.isPaymentMadeByWallet,p.acct_allows_withdrawal,
-    v.is_capital,v.investmentId,i.isTerminated, i.isMatured, v.isReversedTxn,v.isInvestmentTerminated,v.expectedTerminationDate,
+    v.is_capital,v.investmentId,i.isTerminated, i.isMatured, v.isReversedTxn,v.isInvestmentTerminated,v.expectedTerminationDate,v.isPaymentMadeByWallet,
     i.code as acctNo, v.isTransfer, v.beneficialInvestmentId FROM investment_txns v
     left join investments i on v.investmentId = i.ID
     left join clients c on i.clientId = c.ID
