@@ -1,4 +1,7 @@
 function formater(value) {
+    if(value === '0')
+        return '0.00';
+
     var _n = value.split(".");
     var _n2 = (_n[1] !== undefined) ? _n[0] + "." + _n[1] : _n[0];
     var n = _n2.split(".");
