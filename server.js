@@ -568,6 +568,13 @@ app.get('/bulk-collection', requireLogin, function (req, res) {
 });
 
 
+app.get('/collection-banks', requireLogin, function (req, res) {
+    res.sendFile('collection/collection-banks/collection-banks.html', {
+        root: __dirname + '/views'
+    });
+});
+
+
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
     res.status(404);

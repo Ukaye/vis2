@@ -25,7 +25,7 @@
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
     <style type="text/css">
         .todolist {
-            background-color:#FFF;
+            background-color: transparent;
         }
         .todolist p {
             margin: 5px 0;
@@ -63,6 +63,17 @@
         a:hover {
             text-decoration: underline !important;
             cursor: pointer !important;
+        }
+        .invoice-match:before {
+            position: absolute;
+            margin-top: 20px;
+            right: -15px;
+            display: inline-block;
+            border-top: 24px solid transparent;
+            border-left: 30px solid #ccc;
+            border-right: 0 solid #ccc;
+            border-bottom: 24px solid transparent;
+            content: " ";
         }
     </style>
 </head>

@@ -1,5 +1,4 @@
 $(document).ready(function() {
-    getPayments();
     getInvoices();
 });
 
@@ -13,12 +12,14 @@ let allInvoices = [],
     unmatchedPayments = [];
 
 function getInvoices(){
+    $('#wait').show();
     $.ajax({
         type: 'GET',
         url: '/collection/invoices/due',
         success: function (data) {
             let response = data.response;
             allInvoices = response;
+            getPayments();
             $.each(response, function (key, val) {
                 displayInvoices(val);
             });
@@ -50,6 +51,7 @@ function getPayments(){
         success: function (data) {
             let response = data.response;
             allPayments = response;
+            $('#wait').hide();
             $.each(response, function (key, val) {
                 displayPayments(val);
             });
@@ -217,26 +219,19 @@ function findMatch() {
     $('#payments').html('');
     matchedInvoices = [];
     matchedPayments = [];
-    selectedInvoices = [];
-    selectedPayments = [];
     unmatchedInvoices = [];
-    unmatchedPayments = [];
+    unmatchedPayments = allPayments;
     for (let i=0; i<allInvoices.length; i++) {
         let invoice = allInvoices[i],
             check = searchForKeywords(invoice);
-        if (check){
-            console.log(invoice);
-            console.log(check);
+        if (!check) {
+            unmatchedInvoices.push(invoice);
+        } else {
             let type,
                 payment = check.payment,
                 checkMatchedInvoices = ($.grep(matchedInvoices, (e) => { return e.ID === invoice.ID }))[0],
                 checkMatchedPayments = ($.grep(matchedPayments, (e) => { return e.ID === payment.ID }))[0],
                 amount = payment.credit - payment.debit;
-            if (checkMatchedInvoices)
-                unmatchedInvoices.push(invoice);
-            if (checkMatchedPayments)
-                unmatchedPayments.push(allPayments[i]);
-
             if (!checkMatchedInvoices && !checkMatchedPayments) {
                 if (amount >= 0) {
                     type = '<span class="badge badge-success">CREDIT</span>';
@@ -246,47 +241,46 @@ function findMatch() {
                 }
                 matchedInvoices.push(invoice);
                 matchedPayments.push(payment);
-                selectedInvoices.push(invoice);
-                selectedPayments.push(payment);
+                unmatchedPayments.splice(unmatchedPayments.findIndex((e) => { return e.ID === payment.ID; }), 1);
                 $('#invoices').append(`
-                    <li id="invoice-${invoice.ID}" class="ui-state-default">
+                    <li id="invoice-${invoice.ID}" class="ui-state-default invoice-match">
                         <div class="row">
                             <div class="col-lg-9">
-                                <p><strong>Name: </strong>${invoice.client} <span class="label label-warning" style="float: right;">${check.value}</span></p>
+                                <p><strong>Name: </strong>${invoice.client} <span class="badge badge-warning" style="float: right;">
+                                    <i class="fa fa-link"></i> ${check.value}</span></p>
                                 <p><strong>Date: </strong>${invoice.payment_collect_date}</p>
                                 <p><strong>Amount: </strong>${numberToCurrencyformatter(invoice.payment_amount)} (${invoice.type})</p>
                             </div>
                             <div class="col-lg-3">
-                                <p><input class="form-control" type="checkbox" onclick="selectInvoice('${encodeURIComponent(JSON.stringify(invoice))}')" checked /></p>
+                                <p><input class="form-control" type="checkbox" onclick="selectInvoice('${encodeURIComponent(JSON.stringify(invoice))}')" /></p>
                                 <p><a class="btn btn-primary btn-sm" href="/application?id=${invoice.applicationID}">View Loan</a></p>
                             </div>
                         </div>
                     </li>`);
                 $('#payments').append(`
-                    <li id="payment-${payment.ID}" class="ui-state-default">
+                    <li id="payment-${payment.ID}" class="ui-state-default payment-match">
                         <div class="row">
                             <div class="col-lg-10">
-                                <p><strong>Amount: </strong>${numberToCurrencyformatter(amount)} ${type} <span class="label label-warning" style="float: right;">${check.value}</span></p>
+                                <p><strong>Amount: </strong>${numberToCurrencyformatter(amount)} ${type} <span class="badge badge-warning" style="float: right;">
+                                    <i class="fa fa-link"></i> ${check.value}</span></p>
                                 <p><strong>Date: </strong>${payment.value_date}</p>
                                 <p><strong>Description: </strong>${payment.description}</p>
                             </div>
                             <div class="col-lg-2">
-                                <p><input class="form-control" type="checkbox" onclick="selectPayment('${encodeURIComponent(JSON.stringify(payment))}')" checked /></p>
-                                <p><a class="btn btn-danger btn-sm" onclick="removePayment('${encodeURIComponent(JSON.stringify(payment))}')"><i class="fa fa-trash"></i></a></p>
+                                <p><input class="form-control" type="checkbox" onclick="selectPayment('${encodeURIComponent(JSON.stringify(payment))}')" /></p>
+                                <p><a class="btn btn-danger btn-sm" onclick="removePayment('${encodeURIComponent(JSON.stringify(payment))}')">
+                                    <i class="fa fa-trash"></i></a></p>
                             </div>
                         </div>
                     </li>`);
             }
-        } else {
-            unmatchedInvoices.push(invoice);
-            unmatchedPayments.push(allPayments[i]);
         }
     }
     for (let i=0; i<unmatchedInvoices.length; i++) {
         displayInvoices(unmatchedInvoices[i]);
     }
     for (let i=0; i<unmatchedPayments.length; i++) {
-        displayInvoices(unmatchedPayments[i]);
+        displayPayments(unmatchedPayments[i]);
     }
 }
 
