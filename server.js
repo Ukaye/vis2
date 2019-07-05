@@ -59,11 +59,17 @@ let app = express(),
 
 app.engine('html', require('ejs').renderFile);
 app.set('view engine', 'html');
+app.use(bodyParser.json({
+    limit: '50mb',
+    extended: true,
+    parameterLimit: 1000000
+}));
 app.use(bodyParser.urlencoded({
-    extended: true
+    limit: '50mb',
+    extended: true,
+    parameterLimit: 1000000
 }));
 app.use(express.static(__dirname + '/views'));
-app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(fileUpload());
 app.use(cors());
