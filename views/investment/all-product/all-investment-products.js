@@ -410,7 +410,7 @@ function ceateReview() {
                 'type': 'post',
                 'data': reqObject,
                 'success': function (data) {
-                    $("#btn_review").html('Set Post Requirement');
+                    $("#btn_review").html('Set Reviewer Requirement');
                     if (data.status === undefined) {
                         $('#wait').hide();
                         // $("#list_review_roles").val(null).trigger('change');
