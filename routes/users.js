@@ -286,6 +286,7 @@ users.post('/new-client', function(req, res, next) {
                     }
                     connection.query(query,postData, function (error, re, fields) {
                         if(error){
+                            console.log(error);
                             res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
                         } else {
                             connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function(err, re, fields) {
@@ -7443,6 +7444,15 @@ users.get('/interest-receivable-trends', function(req, res, next){
             res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
         }
     });
+});
+
+///// Treasury Management
+users.get('/investment-figures', function(req, res, next){
+    let query = '';
+});
+
+users.get('/loan-figures', function(req, res, next){
+
 });
 
 /////// Loan Classification

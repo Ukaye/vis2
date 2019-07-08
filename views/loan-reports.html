@@ -1644,10 +1644,10 @@
         getLoanClasses();
         getBranches();
         loadInfo();
-//        loadAvgCards();
+        reloadAvgCards();
         disbursed();
         loadDisbursed();
-        initDisbursedGLP();
+//        initDisbursedGLP();
         var today = new Date().toISOString().split('T')[0];
         document.getElementsByName("filteraggprointend")[0].setAttribute('min', today);
         document.getElementsByName("filteraggprointstart")[0].setAttribute('min', today);
@@ -2382,7 +2382,7 @@
                 let v = {};
                 v = dets.without_pay[i];
                 if (v){
-                    amount_paid[v.ID] = 0;
+//                    amount_paid[v.ID] = 0;
                     totalhere += parseFloat(v.loan_amount);
                     total+= (v.loan_amount) ? parseFloat(v.loan_amount) : 0
                     totalglp += (v.loan_amount) ? parseFloat(v.loan_amount) : 0
@@ -2398,7 +2398,7 @@
                 v = {};
                 v = dets.with_payments[i];
                 if (v){
-                    amount_paid[v.applicationID] = v.valid_payment;
+//                    amount_paid[v.applicationID] = v.valid_payment;
                     loa += v.loan_amount;
                     num_all++;
                     num_paid++;
@@ -2419,7 +2419,7 @@
                 v={}
                 v = dets.with_invalid_payments[i];
                 if (v){
-                    amount_paid[v.applicationID] = v.valid_payment;
+//                    amount_paid[v.applicationID] = v.valid_payment;
                     loa += v.loan_amount;
                     num_all++;
                     num_paid++;
@@ -2472,6 +2472,7 @@
                 let v = {};
                 v = dets.without_pay[i];
                 if (v){
+                    amount_paid[v.ID] = 0;
                     total+= (v.loan_amount) ? parseFloat(v.loan_amount) : 0;
                     totalbalance += (v.loan_amount) ? parseFloat(v.loan_amount) : 0
                     num_all++;
@@ -2480,6 +2481,7 @@
                 v = {};
                 v = dets.with_payments[i];
                 if (v){
+                    amount_paid[v.applicationID] = v.valid_payment;
                     num_paid++;
                     total += (v.loan_amount) ? parseFloat(v.loan_amount) : 0;
                     totalbalance += (v.paid) ? ((v.invalid_payment === null) ? parseFloat(v.balance) :  v.loan_amount - (parseFloat(v.paid) - parseFloat(v.invalid_payment))) : 0;
@@ -2488,6 +2490,7 @@
                 v={}
                 v = dets.with_invalid_payments[i];
                 if (v){
+                    amount_paid[v.applicationID] = v.valid_payment;
                     num_all++;
                     total += (v.loan_amount) ? parseFloat(v.loan_amount) : 0;
                     totalbalance += parseFloat(v.loan_amount);
