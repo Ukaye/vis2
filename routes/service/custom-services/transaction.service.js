@@ -877,7 +877,6 @@ router.post('/posts', function (req, res, next) {
                                             }, errrrr => {
                                                 res.send(errrrr);
                                             });
-
                                         }
                                         res.send(response.data);
                                     }, err => {
@@ -1676,6 +1675,8 @@ function debitWalletTxns(HOST, data) {
             }, err => {
                 reject(err);
             })
+        } else {
+            resolve({});
         }
     });
 }
@@ -2607,7 +2608,7 @@ router.get('/client-wallets/:id', function (req, res, next) {
     let search_string = req.query.search_string.toUpperCase();
     let query = `SELECT 
     (Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id} ORDER BY ID DESC LIMIT 1) as balance,
-    v.ID,v.ref_no,c.fullname,v.description,v.created_date,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName, v.isDeny,
+    v.ID,v.ref_no,c.fullname,v.description,v.created_date,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName, v.isDeny,v.isPaymentMadeByWallet,
     v.approvalDone,v.reviewDone,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.isInvestmentTerminated,p.acct_allows_withdrawal,
     i.clientId,p.canTerminate,v.is_capital,v.investmentId,i.isTerminated,v.isWallet, v.updated_date, i.isMatured FROM investment_txns v 
     left join investments i on v.investmentId = i.ID

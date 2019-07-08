@@ -1706,7 +1706,7 @@ function checkForExistingMandate(data) {
                 $('#isActive').text(mandate.remita.isActive || 'N/A');
                 $('#remitaTransRef').text(mandate.remitaTransRef || 'N/A');
                 $('#registrationDate').text(mandate.remita.registrationDate || 'N/A');
-                $('#mandateLink').val(`${HOST}/offer?t=${encodeURIComponent(mandate.hash)}`);
+                $('#mandateLink').val(`${HOST}/offer?t=${encodeURIComponent(mandate.hash)}&i=${application_id}`);
             } else {
                 let today = new Date(),
                     date1 = new Date(data.schedule[0]['payment_collect_date']),

@@ -289,6 +289,8 @@ router.post('/create', function (req, res, next) {
                         data.contact = response_['data'][0]['contact'];
                         data.amount = helperFunctions.numberToCurrencyFormatter(postData.loan_amount);
                         data.offer_url = `${HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}`;
+                        if (req.body.applicationID)
+                            data.offer_url = data.offer_url.concat(`&i=${req.body.applicationID}`);
                         let mailOptions = {
                             from: process.env.TENANT+' <noreply@finratus.com>',
                             to: req.body.email,

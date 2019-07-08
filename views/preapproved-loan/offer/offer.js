@@ -8,11 +8,18 @@
     });
 
     const urlParams = new URLSearchParams(window.location.search);
+    const application_id = urlParams.get('i');
     const user_id = urlParams.get('t');
     let bank,
         banks,
         payment_amount,
         preapproved_loan = {};
+
+    if (application_id) {
+        $('#setupMandate').remove();
+        $('#acceptApplication').remove();
+        $('#declineApplication').remove();
+    }
 
     function getPreapprovedLoan() {
         $.ajax({
@@ -85,7 +92,7 @@
         $viewMandate.attr('href', form_url);
         $('#remitaDirectDebit').find('.setup-content').html(`
             <div class="col-sm-12">
-                <iframe scrolling="no" src="${form_url}" id="mandate_form" name="mandate_form"></iframe>
+                <!--<iframe scrolling="no" src="${form_url}" id="mandate_form" name="mandate_form"></iframe>-->
                 <p class="danger"><em>Click on the "View Mandate" button to access complete mandate form information.</em></p>
                 <p class="danger"><strong><em>Kindly read through the mandate form, print, and take to your bank for activation.</em></strong></p>
                 <p class="danger">Please note this is a Direct Debit Mandate, NOT a Payment RRR. Kindly verify the account and activate.</p>
@@ -283,8 +290,11 @@
     }
 
     $("#acceptApplication").click(function () {
-        if (bank.authorization === 'OTP' && !getAuthValues().status)
-            return notification('Kindly fill all required field(s)!', '', 'warning');
+        if (bank.authorization === 'OTP') {
+            if (!getAuthValues().status) {
+                return notification('Kindly fill all required field(s)!', '', 'warning');
+            }
+        }
         if (!localStorage.remitaTransRef)
             return notification('Kindly setup direct debit mandate to proceed!', '', 'warning');
         if (!preapproved_loan.bank || !preapproved_loan.email || !preapproved_loan.phone || !preapproved_loan.account
@@ -299,19 +309,20 @@
         })
             .then((yes) => {
                 if (yes) {
+                    let  payload = {
+                        email: preapproved_loan.email,
+                        fullname: preapproved_loan.client,
+                        authorization: bank.authorization,
+                        created_by: preapproved_loan.created_by,
+                        workflow_id: preapproved_loan.workflowID,
+                        remitaTransRef: localStorage.remitaTransRef,
+                        application_id: preapproved_loan.applicationID
+                    };
+                    if (bank.authorization === 'OTP') payload.authParams = getAuthValues().data;
                     $.ajax({
                         'url': `/preapproved-loan/offer/accept/${preapproved_loan.ID}`,
                         'type': 'post',
-                        'data': {
-                            authParams: getAuthValues().data,
-                            email: preapproved_loan.email,
-                            fullname: preapproved_loan.client,
-                            authorization: bank.authorization,
-                            created_by: preapproved_loan.created_by,
-                            workflow_id: preapproved_loan.workflowID,
-                            remitaTransRef: localStorage.remitaTransRef,
-                            application_id: preapproved_loan.applicationID
-                        },
+                        'data': payload,
                         'success': function (data) {
                             if (data.status !== 500){
                                 notification('Loan accepted successfully','','success');
