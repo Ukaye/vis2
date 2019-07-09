@@ -16,10 +16,20 @@
     }
 
     let headers,
+        cr_dr = false,
         statement = [],
         statement_ = [],
+        $cr_dr = $('#cr_dr'),
         $dvCSV = $("#dvCSV"),
         $csvUpload = $("#csvUpload");
+
+    $cr_dr.change((e) => {
+        cr_dr = $cr_dr.is(':checked');
+        statement = [];
+        statement_ = [];
+        $dvCSV.html('');
+        $csvUpload.val('');
+    });
 
     $csvUpload.change(function (){
         $('#wait').show();
@@ -67,15 +77,21 @@
                 cells = (cells_.length > 7)? cells_.slice(0, 7) : cells_;
             }
             if (cells.join(' ').length > 10) {
+                if (i >= 0 && cr_dr) cells.splice(3, 0, '');
                 for (let j = 0; j < cells.length; j++) {
                     cells[j] = (cells[j]) ? (cells[j]).trim() : cells[j];
                     if (!cells[j] && cells[j] !== '')
                         continue;
-                    let cell = $("<td />");
+                    let cell = $(`<td class="${ (j === 3 && cr_dr)? 'disabled':'' }" />`);
                     if (i > 0) {
                         if (j === 0 || j === 1) {
                             cell.html(`<input id="invoice-${i-skip}-${j}" type="date" value="${formatDate(cells[j])}" />`);
                         } else if (j === 2 || j === 3 || j === 4) {
+                            let credit = currencyToNumberformatter(cells[j]);
+                            if (cr_dr && j === 2 && credit < 0) {
+                                cells[3] = (-cells[2]).toString();
+                                cells[2] = '';
+                            }
                             cell.html(`<span id="invoice-${i-skip}-${j}">${numberToCurrencyformatter(cells[j])}</span>`);
                         } else {
                             cell.html(`<span id="invoice-${i-skip}-${j}">${cells[j]}</span>`);
@@ -85,13 +101,15 @@
                             let select = `<select id="invoice-0-${j}">`;
                             for (let k = 0; k < headers.length; k++) {
                                 headers[k] =  headers[k].trim();
-                                if (headers[k] === cells[j]) {
-                                    select = select.concat(`<option value="${headers[k]}" selected="selected">${headers[k]}</option>`);
-                                } else {
-                                    select = select.concat(`<option value="${headers[k]}">${headers[k]}</option>`);
+                                if (headers[k]) {
+                                    if (headers[k] === cells[j]) {
+                                        select = select.concat(`<option value="${headers[k]}" selected="selected">${headers[k]}</option>`);
+                                    } else {
+                                        select = select.concat(`<option value="${headers[k]}">${headers[k]}</option>`);
+                                    }
                                 }
                             }
-                            select = select.concat('</select>');
+                            select = (j === 3 && cr_dr)? '':select.concat('</select>');
                             cell.html(select);
                         } else {
                             cell.html(cells[j]);
@@ -184,6 +202,7 @@
         validateStatement(statementX, function (validation) {
             if (validation.status){
                 payload.statement = validation.data;
+                return console.log(payload.statement)
                 $('#wait').show();
                 $.ajax({
                     'url': '/collection/bulk_upload',

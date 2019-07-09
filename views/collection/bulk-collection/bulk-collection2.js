@@ -1,6 +1,24 @@
 $(document).ready(function() {
     getInvoices();
+    getStatements();
 });
+
+function getStatements(){
+    $.ajax({
+        type: 'GET',
+        url: '/collection/bulk_upload/history',
+        success: function (data) {
+            $.each(data.response, function (key, val) {
+                $('#statement').append(`<option value="${val.ID}">${val.account} (${val.start} to ${val.end})</option>`);
+            });
+        }
+    });
+}
+
+$('#statement').change((e) => {
+    getPayments(e.target.value);
+});
+
 
 let allInvoices = [],
     allPayments = [],
@@ -18,6 +36,9 @@ function getInvoices(){
         success: function (data) {
             let response = data.response;
             allInvoices = response;
+            $('#invoices').html('');
+            unmatchedInvoices = [];
+            selectedInvoices = [];
             getPayments();
             $.each(response, function (key, val) {
                 displayInvoice(val);
@@ -43,13 +64,18 @@ function displayInvoice(val) {
         </li>`);
 }
 
-function getPayments(){
+function getPayments(id){
+    let url = '/collection/bulk_upload';
+    if (id && id !== '0') url = url.concat(`?history=${id}`);
     $.ajax({
         type: 'GET',
-        url: '/collection/bulk_upload',
+        url: url,
         success: function (data) {
             let response = data.response;
             allPayments = response;
+            $('#payments').html('');
+            unmatchedPayments = [];
+            selectedPayments = [];
             $('#wait').hide();
             $.each(response, function (key, val) {
                 displayPayment(val);

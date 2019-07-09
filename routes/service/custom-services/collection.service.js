@@ -81,9 +81,11 @@ router.post('/bulk_upload', function (req, res, next) {
 
 router.get('/bulk_upload', function(req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let	query = `SELECT * FROM collection_bulk_uploads WHERE status = 1`,
+    let	filter = req.query.history,
+        query = `SELECT * FROM collection_bulk_uploads WHERE status = 1`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
+    if (filter) query = query.concat(` AND bulk_uploadID = ${filter}`);
 
     axios.get(url, {
         params: {
@@ -211,6 +213,25 @@ function overpaymentCheck(clientID, amount, callback) {
         callback();
     }
 }
+
+router.get('/bulk_upload/history', function(req, res) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let	query = `SELECT h.*, b.account FROM collection_bulk_upload_history h, collection_banks b WHERE h.collection_bankID = b.ID AND h.status = 1`,
+        endpoint = '/core-service/get',
+        url = `${HOST}${endpoint}`;
+
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        return res.send({
+            status: 200,
+            error: null,
+            response: response.data
+        });
+    });
+});
 
 router.get('/invoices/due', function(req, res, next) {
     let today = moment().utcOffset('+0100').format('YYYY-MM-DD'),
