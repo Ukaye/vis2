@@ -1731,416 +1731,419 @@ function fundDestination(HOST, data) {
 
 async function setcharges(data, HOST, isReversal) {
     if (data.isInvestmentTerminated === '1' || data.isTransfer === '1') {
-        fundBeneficialAccount(data, HOST).then(p => { }, err___ => {  })
+        const fundBene = await fundBeneficialAccount(data, HOST);
+        return fundBene;
     } else {
-        let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-        let refId = moment().utcOffset('+0100').format('x');
-        query = `SELECT t.*,p.*,v.description,v.amount as txnAmount, v.balance as txnBalance, v.is_credit,
-        v.isInterest,p.freq_withdrawal, p.withdrawal_freq_duration, p.withdrawal_fees, p.withdrawal_freq_fees_opt
-        FROM investments t left join investment_products p on p.ID = t.productId
-        left join investment_txns v on v.investmentId = t.ID
-        WHERE t.ID = ${data.investmentId} AND v.ID = ${data.txnId}`;
-        let endpoint = `/core-service/get`;
-        url = `${HOST}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(response_product => {
-            //Charge for deposit
-            if (response_product.data[0].isInterest.toString() === '0') {
-                if (data.isCredit.toString() === '1') {
+        return new Promise((resolve, reject) => {
+            let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+            let refId = moment().utcOffset('+0100').format('x');
+            query = `SELECT t.*,p.*,v.description,v.amount as txnAmount, v.balance as txnBalance, v.is_credit,
+            v.isInterest,p.freq_withdrawal, p.withdrawal_freq_duration, p.withdrawal_fees, p.withdrawal_freq_fees_opt
+            FROM investments t left join investment_products p on p.ID = t.productId
+            left join investment_txns v on v.investmentId = t.ID
+            WHERE t.ID = ${data.investmentId} AND v.ID = ${data.txnId}`;
+            let endpoint = `/core-service/get`;
+            url = `${HOST}${endpoint}`;
+            axios.get(url, {
+                params: {
+                    query: query
+                }
+            }).then(response_product => {
+                //Charge for deposit
+                if (response_product.data[0].isInterest.toString() === '0') {
+                    if (data.isCredit.toString() === '1') {
 
-                    let chargeForDeposit = response_product.data.filter(x => x.saving_fees !== '0' && x.saving_fees !== '');
-                    if (chargeForDeposit.length > 0) {
-                        let total = parseFloat(chargeForDeposit[chargeForDeposit.length - 1].txnBalance.split(',').join(''))
-                        const chargedCost = (chargeForDeposit[0].saving_charge_opt === 'Fixed') ? parseFloat(chargeForDeposit[0].saving_fees.split(',').join('')) : ((parseFloat(chargeForDeposit[0].saving_fees.split(',').join('')) / 100) * parseFloat(data.amount.split(',').join('')));
-                        let inv_txn = {
-                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
-                            description: (isReversal === false) ? 'Charge: ' + chargeForDeposit[0].description : `Reverse: ${chargeForDeposit[0].description}`,
-                            amount: Math.round(chargedCost).toFixed(2),
-                            is_credit: 0,
-                            isCharge: 1,
-                            created_date: dt,
-                            balance: (isReversal === false) ? Math.round(total - chargedCost).toFixed(2) : Math.round(total + chargedCost).toFixed(2),
-                            is_capital: 0,
-                            isApproved: 1,
-                            postDone: 1,
-                            reviewDone: 1,
-                            approvalDone: 1,
-                            ref_no: (isReversal === false) ? refId : `${chargeForDeposit[0].ref_no}-R`,
-                            updated_date: dt,
-                            investmentId: data.investmentId,
-                            createdBy: data.createdBy
-                        };
+                        let chargeForDeposit = response_product.data.filter(x => x.saving_fees !== '0' && x.saving_fees !== '');
+                        if (chargeForDeposit.length > 0) {
+                            let total = parseFloat(chargeForDeposit[chargeForDeposit.length - 1].txnBalance.split(',').join(''))
+                            const chargedCost = (chargeForDeposit[0].saving_charge_opt === 'Fixed') ? parseFloat(chargeForDeposit[0].saving_fees.split(',').join('')) : ((parseFloat(chargeForDeposit[0].saving_fees.split(',').join('')) / 100) * parseFloat(data.amount.split(',').join('')));
+                            let inv_txn = {
+                                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                description: (isReversal === false) ? 'Charge: ' + chargeForDeposit[0].description : `Reverse: ${chargeForDeposit[0].description}`,
+                                amount: Math.round(chargedCost).toFixed(2),
+                                is_credit: 0,
+                                isCharge: 1,
+                                created_date: dt,
+                                balance: (isReversal === false) ? Math.round(total - chargedCost).toFixed(2) : Math.round(total + chargedCost).toFixed(2),
+                                is_capital: 0,
+                                isApproved: 1,
+                                postDone: 1,
+                                reviewDone: 1,
+                                approvalDone: 1,
+                                ref_no: (isReversal === false) ? refId : `${chargeForDeposit[0].ref_no}-R`,
+                                updated_date: dt,
+                                investmentId: data.investmentId,
+                                createdBy: data.createdBy
+                            };
 
-                        query = `INSERT INTO investment_txns SET ?`;
-                        endpoint = `/core-service/post?query=${query}`;
-                        let url = `${HOST}${endpoint}`;
-                        axios.post(url, inv_txn)
-                            .then(function (payload) {
-                                if (payload.data.status === undefined) {
-                                    if (isReversal === false) {
-                                        let txnAmount2 = Math.round(chargedCost).toFixed(2);
-                                        let txnBal = Math.round(total - chargedCost).toFixed(2);
+                            query = `INSERT INTO investment_txns SET ?`;
+                            endpoint = `/core-service/post?query=${query}`;
+                            let url = `${HOST}${endpoint}`;
+                            axios.post(url, inv_txn)
+                                .then(function (payload) {
+                                    if (payload.data.status === undefined) {
+                                        if (isReversal === false) {
+                                            let txnAmount2 = Math.round(chargedCost).toFixed(2);
+                                            let txnBal = Math.round(total - chargedCost).toFixed(2);
+                                            deductVatTax(HOST, data, txnAmount2, inv_txn, txnBal).then(result => {
+                                                resolve(result);
+                                            }, err => {
+                                                resolve({});
+                                            });
+                                        }
+
+                                    }
+                                }, err => {
+                                    resolve({});
+                                });
+                        }
+
+                    } else {
+                        let getInvestBalance = response_product.data[response_product.data.length - 1];
+                        let chargedCostMinBal = (getInvestBalance.minimum_bal_charges_opt === 'Fixed') ? parseFloat(getInvestBalance.minimum_bal_charges.split(',').join('')) : ((parseFloat(getInvestBalance.minimum_bal_charges.split(',').join('')) / 100) * parseFloat(getInvestBalance.txnBalance.split(',').join('')));
+                        if (parseFloat(getInvestBalance.txnBalance.split(',').join('')) - parseFloat(getInvestBalance.txnAmount.split(',').join('')) < parseFloat(getInvestBalance.minimum_bal.split(',').join(''))) {
+                            refId = moment().utcOffset('+0100').format('x');
+                            let inv_txn = {
+                                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                description: 'Charge: ' + getInvestBalance.description,
+                                amount: Math.round(chargedCostMinBal).toFixed(2),
+                                is_credit: 0,
+                                created_date: dt,
+                                balance: Math.round(getInvestBalance.txnBalance - chargedCostMinBal).toFixed(2),
+                                is_capital: 0,
+                                isCharge: 1,
+                                isApproved: 1,
+                                postDone: 1,
+                                reviewDone: 1,
+                                approvalDone: 1,
+                                ref_no: refId,
+                                updated_date: dt,
+                                investmentId: data.investmentId,
+                                createdBy: data.createdBy
+                            };
+                            query = `INSERT INTO investment_txns SET ?`;
+                            endpoint = `/core-service/post?query=${query}`;
+                            let url = `${HOST}${endpoint}`;
+                            axios.post(url, inv_txn)
+                                .then(function (payload) {
+                                    if (payload.data.status === undefined) {
+                                        let txnAmount2 = Math.round(chargedCostMinBal).toFixed(2);
+                                        let txnBal = Math.round(getInvestBalance.txnBalance - chargedCostMinBal).toFixed(2);
                                         deductVatTax(HOST, data, txnAmount2, inv_txn, txnBal).then(result => {
-                                            return result;
+                                            resolve(result);
                                         }, err => {
-                                            return {};
+                                            resolve({});
                                         });
                                     }
+                                }, err => { });
+                        }
 
+                        let currentDate = new Date();
+                        let formatedDate = `${currentDate.getUTCFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}`;
+                        if (response_product.data[0].withdrawal_freq_duration === 'Daily') {
+                            query = `SELECT * FROM investment_txns WHERE 
+                                STR_TO_DATE(updated_date, '%Y-%m-%d') = '${formatedDate}' 
+                                AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
+                            axios.get(url, {
+                                params: {
+                                    query: query
                                 }
-                            }, err => {
-                                return {};
+                            }).then(response_product_ => {
+                                if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)) {
+                                    let _getInvestBalance = response_product.data[response_product.data.length - 1];
+                                    let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
+                                        parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
+                                        ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
+                                            parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
+                                    if (parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join('')) >
+                                        parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
+                                        refId = moment().utcOffset('+0100').format('x');
+                                        let inv_txn = {
+                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                            description: 'Charge: Exceeding the total number of daily withdrawal',
+                                            amount: Math.round(_chargedCostMinBal).toFixed(2),
+                                            is_credit: 0,
+                                            created_date: dt,
+                                            balance: Math.round(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2),
+                                            is_capital: 0,
+                                            isCharge: 1,
+                                            isApproved: 1,
+                                            postDone: 1,
+                                            reviewDone: 1,
+                                            approvalDone: 1,
+                                            ref_no: refId,
+                                            updated_date: dt,
+                                            investmentId: data.investmentId,
+                                            createdBy: data.createdBy
+                                        };
+
+                                        query = `INSERT INTO investment_txns SET ?`;
+                                        endpoint = `/core-service/post?query=${query}`;
+                                        let url = `${HOST}${endpoint}`;
+                                        axios.post(url, inv_txn)
+                                            .then(function (payload) {
+                                                if (payload.data.status === undefined) {
+                                                    let txnAmount2 = Math.round(_chargedCostMinBal).toFixed(2);
+                                                    let txnBal = Math.round(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
+                                                    deductVatTax(HOST, data, txnAmount2, inv_txn, txnBal).then(result => {
+                                                        resolve(result);
+                                                    }, err => {
+                                                        resolve({});
+                                                    });
+                                                }
+                                            }, err => { });
+                                    }
+                                }
                             });
-                    }
+                        } else if (response_product.data[0].withdrawal_freq_duration === 'Weekly') {
 
-                } else {
-                    let getInvestBalance = response_product.data[response_product.data.length - 1];
-                    let chargedCostMinBal = (getInvestBalance.minimum_bal_charges_opt === 'Fixed') ? parseFloat(getInvestBalance.minimum_bal_charges.split(',').join('')) : ((parseFloat(getInvestBalance.minimum_bal_charges.split(',').join('')) / 100) * parseFloat(getInvestBalance.txnBalance.split(',').join('')));
-                    if (parseFloat(getInvestBalance.txnBalance.split(',').join('')) - parseFloat(getInvestBalance.txnAmount.split(',').join('')) < parseFloat(getInvestBalance.minimum_bal.split(',').join(''))) {
-                        refId = moment().utcOffset('+0100').format('x');
-                        let inv_txn = {
-                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
-                            description: 'Charge: ' + getInvestBalance.description,
-                            amount: Math.round(chargedCostMinBal).toFixed(2),
-                            is_credit: 0,
-                            created_date: dt,
-                            balance: Math.round(getInvestBalance.txnBalance - chargedCostMinBal).toFixed(2),
-                            is_capital: 0,
-                            isCharge: 1,
-                            isApproved: 1,
-                            postDone: 1,
-                            reviewDone: 1,
-                            approvalDone: 1,
-                            ref_no: refId,
-                            updated_date: dt,
-                            investmentId: data.investmentId,
-                            createdBy: data.createdBy
-                        };
-                        query = `INSERT INTO investment_txns SET ?`;
-                        endpoint = `/core-service/post?query=${query}`;
-                        let url = `${HOST}${endpoint}`;
-                        axios.post(url, inv_txn)
-                            .then(function (payload) {
-                                if (payload.data.status === undefined) {
-                                    let txnAmount2 = Math.round(chargedCostMinBal).toFixed(2);
-                                    let txnBal = Math.round(getInvestBalance.txnBalance - chargedCostMinBal).toFixed(2);
-                                    deductVatTax(HOST, data, txnAmount2, inv_txn, txnBal).then(result => {
-                                        return result;
-                                    }, err => {
-                                        return {};
-                                    });
+                            let weekStartDate = startOfWeek(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()));
+                            let endOfTheWeek = endOfWeek(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()));
+                            query = `SELECT * FROM investment_txns v WHERE 
+                                STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${weekStartDate}' 
+                                AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${endOfTheWeek}' 
+                                AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
+                            axios.get(url, {
+                                params: {
+                                    query: query
                                 }
-                            }, err => { });
-                    }
+                            }).then(response_product_ => {
+                                if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)) {
+                                    let _getInvestBalance = response_product.data[response_product.data.length - 1];
+                                    let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
+                                        parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
+                                        ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
+                                            parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
+                                    if (parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join('')) >
+                                        parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
+                                        refId = moment().utcOffset('+0100').format('x');
+                                        let inv_txn = {
+                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                            description: 'Charge: Exceeding the total number of weekly withdrawal',
+                                            amount: Math.round(_chargedCostMinBal).toFixed(2),
+                                            is_credit: 0,
+                                            created_date: dt,
+                                            balance: Math.round(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2),
+                                            is_capital: 0,
+                                            isCharge: 1,
+                                            isApproved: 1,
+                                            postDone: 1,
+                                            reviewDone: 1,
+                                            approvalDone: 1,
+                                            ref_no: refId,
+                                            updated_date: dt,
+                                            investmentId: data.investmentId,
+                                            createdBy: data.createdBy
+                                        };
 
-                    let currentDate = new Date();
-                    let formatedDate = `${currentDate.getUTCFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}`;
-                    if (response_product.data[0].withdrawal_freq_duration === 'Daily') {
-                        query = `SELECT * FROM investment_txns WHERE 
-                            STR_TO_DATE(updated_date, '%Y-%m-%d') = '${formatedDate}' 
-                            AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
-                        axios.get(url, {
-                            params: {
-                                query: query
-                            }
-                        }).then(response_product_ => {
-                            if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)) {
-                                let _getInvestBalance = response_product.data[response_product.data.length - 1];
-                                let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
-                                    parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
-                                    ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
-                                        parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
-                                if (parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join('')) >
-                                    parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
-                                    refId = moment().utcOffset('+0100').format('x');
-                                    let inv_txn = {
-                                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
-                                        description: 'Charge: Exceeding the total number of daily withdrawal',
-                                        amount: Math.round(_chargedCostMinBal).toFixed(2),
-                                        is_credit: 0,
-                                        created_date: dt,
-                                        balance: Math.round(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2),
-                                        is_capital: 0,
-                                        isCharge: 1,
-                                        isApproved: 1,
-                                        postDone: 1,
-                                        reviewDone: 1,
-                                        approvalDone: 1,
-                                        ref_no: refId,
-                                        updated_date: dt,
-                                        investmentId: data.investmentId,
-                                        createdBy: data.createdBy
-                                    };
-
-                                    query = `INSERT INTO investment_txns SET ?`;
-                                    endpoint = `/core-service/post?query=${query}`;
-                                    let url = `${HOST}${endpoint}`;
-                                    axios.post(url, inv_txn)
-                                        .then(function (payload) {
-                                            if (payload.data.status === undefined) {
-                                                let txnAmount2 = Math.round(_chargedCostMinBal).toFixed(2);
-                                                let txnBal = Math.round(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
-                                                deductVatTax(HOST, data, txnAmount2, inv_txn, txnBal).then(result => {
-                                                    return result;
-                                                }, err => {
-                                                    return {};
-                                                });
-                                            }
-                                        }, err => { });
+                                        query = `INSERT INTO investment_txns SET ?`;
+                                        endpoint = `/core-service/post?query=${query}`;
+                                        let url = `${HOST}${endpoint}`;
+                                        axios.post(url, inv_txn)
+                                            .then(function (payload) {
+                                                if (payload.data.status === undefined) {
+                                                    let txnAmount2 = Math.round(_chargedCostMinBal).toFixed(2);
+                                                    let txnBal = Math.round(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
+                                                    deductVatTax(HOST, data, txnAmount2, inv_txn, txnBal).then(result => {
+                                                        resolve(result);
+                                                    }, err => {
+                                                        resolve({});
+                                                    });
+                                                }
+                                            }, err => { });
+                                    }
                                 }
-                            }
-                        });
-                    } else if (response_product.data[0].withdrawal_freq_duration === 'Weekly') {
+                            });
+                        } else if (response_product.data[0].withdrawal_freq_duration === 'Monthly') {
+                            let monthStartDate = startOfMonth(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()));
+                            let endOfTheMonth = endOfMonth(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()));
 
-                        let weekStartDate = startOfWeek(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()));
-                        let endOfTheWeek = endOfWeek(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()));
-                        query = `SELECT * FROM investment_txns v WHERE 
-                            STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${weekStartDate}' 
-                            AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${endOfTheWeek}' 
-                            AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
-                        axios.get(url, {
-                            params: {
-                                query: query
-                            }
-                        }).then(response_product_ => {
-                            if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)) {
-                                let _getInvestBalance = response_product.data[response_product.data.length - 1];
-                                let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
-                                    parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
-                                    ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
-                                        parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
-                                if (parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join('')) >
-                                    parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
-                                    refId = moment().utcOffset('+0100').format('x');
-                                    let inv_txn = {
-                                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
-                                        description: 'Charge: Exceeding the total number of weekly withdrawal',
-                                        amount: Math.round(_chargedCostMinBal).toFixed(2),
-                                        is_credit: 0,
-                                        created_date: dt,
-                                        balance: Math.round(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2),
-                                        is_capital: 0,
-                                        isCharge: 1,
-                                        isApproved: 1,
-                                        postDone: 1,
-                                        reviewDone: 1,
-                                        approvalDone: 1,
-                                        ref_no: refId,
-                                        updated_date: dt,
-                                        investmentId: data.investmentId,
-                                        createdBy: data.createdBy
-                                    };
-
-                                    query = `INSERT INTO investment_txns SET ?`;
-                                    endpoint = `/core-service/post?query=${query}`;
-                                    let url = `${HOST}${endpoint}`;
-                                    axios.post(url, inv_txn)
-                                        .then(function (payload) {
-                                            if (payload.data.status === undefined) {
-                                                let txnAmount2 = Math.round(_chargedCostMinBal).toFixed(2);
-                                                let txnBal = Math.round(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
-                                                deductVatTax(HOST, data, txnAmount2, inv_txn, txnBal).then(result => {
-                                                    return result;
-                                                }, err => {
-                                                    return {};
-                                                });
-                                            }
-                                        }, err => { });
+                            query = `SELECT * FROM investment_txns v WHERE 
+                                STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${monthStartDate}' 
+                                AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${endOfTheMonth}' 
+                                AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
+                            let endpoint = `/core-service/get`;
+                            url = `${HOST}${endpoint}`;
+                            axios.get(url, {
+                                params: {
+                                    query: query
                                 }
-                            }
-                        });
-                    } else if (response_product.data[0].withdrawal_freq_duration === 'Monthly') {
-                        let monthStartDate = startOfMonth(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()));
-                        let endOfTheMonth = endOfMonth(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()));
+                            }).then(response_product_ => {
+                                if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)) {
+                                    let _getInvestBalance = response_product.data[response_product.data.length - 1];
+                                    let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
+                                        parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
+                                        ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
+                                            parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
+                                    if (parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join('')) >
+                                        parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
+                                        refId = moment().utcOffset('+0100').format('x');
+                                        let inv_txn = {
+                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                            description: 'Charge: Exceeding the total number of monthly withdrawal',
+                                            amount: Math.round(_chargedCostMinBal).toFixed(2),
+                                            is_credit: 0,
+                                            created_date: dt,
+                                            balance: Math.round(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2),
+                                            is_capital: 0,
+                                            isCharge: 1,
+                                            isApproved: 1,
+                                            postDone: 1,
+                                            reviewDone: 1,
+                                            approvalDone: 1,
+                                            ref_no: refId,
+                                            updated_date: dt,
+                                            investmentId: data.investmentId,
+                                            createdBy: data.createdBy
+                                        };
 
-                        query = `SELECT * FROM investment_txns v WHERE 
-                            STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${monthStartDate}' 
-                            AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${endOfTheMonth}' 
-                            AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
-                        let endpoint = `/core-service/get`;
-                        url = `${HOST}${endpoint}`;
-                        axios.get(url, {
-                            params: {
-                                query: query
-                            }
-                        }).then(response_product_ => {
-                            if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)) {
-                                let _getInvestBalance = response_product.data[response_product.data.length - 1];
-                                let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
-                                    parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
-                                    ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
-                                        parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
-                                if (parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join('')) >
-                                    parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
-                                    refId = moment().utcOffset('+0100').format('x');
-                                    let inv_txn = {
-                                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
-                                        description: 'Charge: Exceeding the total number of monthly withdrawal',
-                                        amount: Math.round(_chargedCostMinBal).toFixed(2),
-                                        is_credit: 0,
-                                        created_date: dt,
-                                        balance: Math.round(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2),
-                                        is_capital: 0,
-                                        isCharge: 1,
-                                        isApproved: 1,
-                                        postDone: 1,
-                                        reviewDone: 1,
-                                        approvalDone: 1,
-                                        ref_no: refId,
-                                        updated_date: dt,
-                                        investmentId: data.investmentId,
-                                        createdBy: data.createdBy
-                                    };
-
-                                    query = `INSERT INTO investment_txns SET ?`;
-                                    endpoint = `/core-service/post?query=${query}`;
-                                    let url = `${HOST}${endpoint}`;
-                                    axios.post(url, inv_txn)
-                                        .then(function (payload) {
-                                            if (payload.data.status === undefined) {
-                                                let txnAmount2 = Math.round(_chargedCostMinBal).toFixed(2);
-                                                let txnBal = Math.round(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
-                                                deductVatTax(HOST, data, txnAmount2, inv_txn, txnBal).then(result => {
-                                                    return result;
-                                                }, err => {
-                                                    return {};
-                                                });
-                                            }
-                                        }, err => { });
+                                        query = `INSERT INTO investment_txns SET ?`;
+                                        endpoint = `/core-service/post?query=${query}`;
+                                        let url = `${HOST}${endpoint}`;
+                                        axios.post(url, inv_txn)
+                                            .then(function (payload) {
+                                                if (payload.data.status === undefined) {
+                                                    let txnAmount2 = Math.round(_chargedCostMinBal).toFixed(2);
+                                                    let txnBal = Math.round(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
+                                                    deductVatTax(HOST, data, txnAmount2, inv_txn, txnBal).then(result => {
+                                                        resolve(result);
+                                                    }, err => {
+                                                        resolve({});
+                                                    });
+                                                }
+                                            }, err => { });
+                                    }
                                 }
-                            }
-                        });
-                    } else if (response_product.data[0].withdrawal_freq_duration === 'Quaterly') {
-                        let quaterStartDate = startOfQuarter(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()))
-                        let endOfTheMonth = endOfQuarter(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()));
+                            });
+                        } else if (response_product.data[0].withdrawal_freq_duration === 'Quaterly') {
+                            let quaterStartDate = startOfQuarter(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()))
+                            let endOfTheMonth = endOfQuarter(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()));
 
-                        query = `SELECT * FROM investment_txns v WHERE 
-                            STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${quaterStartDate}' 
-                            AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${endOfTheMonth}' 
-                            AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
-                        let endpoint = `/core-service/get`;
-                        url = `${HOST}${endpoint}`;
-                        axios.get(url, {
-                            params: {
-                                query: query
-                            }
-                        }).then(response_product_ => {
-                            if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)) {
-                                let _getInvestBalance = response_product.data[response_product.data.length - 1];
-                                let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
-                                    parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
-                                    ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
-                                        parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
-                                if (parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join('')) >
-                                    parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
-                                    refId = moment().utcOffset('+0100').format('x');
-                                    let inv_txn = {
-                                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
-                                        description: 'Charge: Exceeding the total number of quaterly withdrawal',
-                                        amount: Math.round(_chargedCostMinBal).toFixed(2),
-                                        is_credit: 0,
-                                        created_date: dt,
-                                        balance: Math.round(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2),
-                                        is_capital: 0,
-                                        isCharge: 1,
-                                        isApproved: 1,
-                                        postDone: 1,
-                                        reviewDone: 1,
-                                        approvalDone: 1,
-                                        ref_no: refId,
-                                        updated_date: dt,
-                                        investmentId: data.investmentId,
-                                        createdBy: data.createdBy
-                                    };
-
-                                    query = `INSERT INTO investment_txns SET ?`;
-                                    endpoint = `/core-service/post?query=${query}`;
-                                    let url = `${HOST}${endpoint}`;
-                                    axios.post(url, inv_txn)
-                                        .then(function (payload) {
-                                            if (payload.data.status === undefined) {
-                                                let txnAmount2 = Math.round(_chargedCostMinBal).toFixed(2);
-                                                let txnBal = Math.round(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
-                                                deductVatTax(HOST, data, txnAmount2, inv_txn, txnBal).then(result => {
-                                                    return result;
-                                                }, err => {
-                                                    return {};
-                                                });
-                                            }
-                                        }, err => { });
+                            query = `SELECT * FROM investment_txns v WHERE 
+                                STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${quaterStartDate}' 
+                                AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${endOfTheMonth}' 
+                                AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
+                            let endpoint = `/core-service/get`;
+                            url = `${HOST}${endpoint}`;
+                            axios.get(url, {
+                                params: {
+                                    query: query
                                 }
-                            }
-                        });
+                            }).then(response_product_ => {
+                                if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)) {
+                                    let _getInvestBalance = response_product.data[response_product.data.length - 1];
+                                    let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
+                                        parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
+                                        ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
+                                            parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
+                                    if (parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join('')) >
+                                        parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
+                                        refId = moment().utcOffset('+0100').format('x');
+                                        let inv_txn = {
+                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                            description: 'Charge: Exceeding the total number of quaterly withdrawal',
+                                            amount: Math.round(_chargedCostMinBal).toFixed(2),
+                                            is_credit: 0,
+                                            created_date: dt,
+                                            balance: Math.round(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2),
+                                            is_capital: 0,
+                                            isCharge: 1,
+                                            isApproved: 1,
+                                            postDone: 1,
+                                            reviewDone: 1,
+                                            approvalDone: 1,
+                                            ref_no: refId,
+                                            updated_date: dt,
+                                            investmentId: data.investmentId,
+                                            createdBy: data.createdBy
+                                        };
 
-                    } else if (response_product.data[0].withdrawal_freq_duration === 'Yearly') {
-                        //endOfYear
-                        let beginOfTheMonth = new Date(currentDate.getUTCFullYear(), 1, 1);
-                        let endOfTheMonth = endOfYear(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()));
-
-                        query = `SELECT * FROM investment_txns v WHERE 
-                            STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${beginOfTheMonth}' 
-                            AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${endOfTheMonth}' 
-                            AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
-                        let endpoint = `/core-service/get`;
-                        url = `${HOST}${endpoint}`;
-                        axios.get(url, {
-                            params: {
-                                query: query
-                            }
-                        }).then(response_product_ => {
-                            if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)) {
-                                let _getInvestBalance = response_product.data[response_product.data.length - 1];
-                                let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
-                                    parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
-                                    ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
-                                        parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
-                                if (parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join('')) >
-                                    parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
-                                    refId = moment().utcOffset('+0100').format('x');
-                                    let inv_txn = {
-                                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
-                                        description: 'CHARGE: EXCEEDING THE TOTAL NUMBER OF WITHDRAWAL',
-                                        amount: Math.round(_chargedCostMinBal).toFixed(2),
-                                        is_credit: 0,
-                                        created_date: dt,
-                                        balance: Math.round(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2),
-                                        is_capital: 0,
-                                        isCharge: 1,
-                                        isApproved: 1,
-                                        postDone: 1,
-                                        reviewDone: 1,
-                                        approvalDone: 1,
-                                        ref_no: refId,
-                                        updated_date: dt,
-                                        investmentId: data.investmentId,
-                                        createdBy: data.createdBy
-                                    };
-
-                                    query = `INSERT INTO investment_txns SET ?`;
-                                    endpoint = `/core-service/post?query=${query}`;
-                                    let url = `${HOST}${endpoint}`;
-                                    axios.post(url, inv_txn)
-                                        .then(function (payload) {
-                                            if (payload.data.status === undefined) {
-                                                let txnAmount2 = Math.round(_chargedCostMinBal).toFixed(2);
-                                                let txnBal = Math.round(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
-                                                deductVatTax(HOST, data, txnAmount2, inv_txn, txnBal).then(result => {
-                                                    return result;
-                                                }, err => {
-                                                    return {};
-                                                });
-                                            }
-                                        }, err => { });
+                                        query = `INSERT INTO investment_txns SET ?`;
+                                        endpoint = `/core-service/post?query=${query}`;
+                                        let url = `${HOST}${endpoint}`;
+                                        axios.post(url, inv_txn)
+                                            .then(function (payload) {
+                                                if (payload.data.status === undefined) {
+                                                    let txnAmount2 = Math.round(_chargedCostMinBal).toFixed(2);
+                                                    let txnBal = Math.round(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
+                                                    deductVatTax(HOST, data, txnAmount2, inv_txn, txnBal).then(result => {
+                                                        resolve(result);
+                                                    }, err => {
+                                                        resolve({});
+                                                    });
+                                                }
+                                            }, err => { });
+                                    }
                                 }
-                            }
-                        });
+                            });
+
+                        } else if (response_product.data[0].withdrawal_freq_duration === 'Yearly') {
+                            //endOfYear
+                            let beginOfTheMonth = new Date(currentDate.getUTCFullYear(), 1, 1);
+                            let endOfTheMonth = endOfYear(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()));
+
+                            query = `SELECT * FROM investment_txns v WHERE 
+                                STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${beginOfTheMonth}' 
+                                AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${endOfTheMonth}' 
+                                AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
+                            let endpoint = `/core-service/get`;
+                            url = `${HOST}${endpoint}`;
+                            axios.get(url, {
+                                params: {
+                                    query: query
+                                }
+                            }).then(response_product_ => {
+                                if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)) {
+                                    let _getInvestBalance = response_product.data[response_product.data.length - 1];
+                                    let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
+                                        parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
+                                        ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
+                                            parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
+                                    if (parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join('')) >
+                                        parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
+                                        refId = moment().utcOffset('+0100').format('x');
+                                        let inv_txn = {
+                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                            description: 'CHARGE: EXCEEDING THE TOTAL NUMBER OF WITHDRAWAL',
+                                            amount: Math.round(_chargedCostMinBal).toFixed(2),
+                                            is_credit: 0,
+                                            created_date: dt,
+                                            balance: Math.round(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2),
+                                            is_capital: 0,
+                                            isCharge: 1,
+                                            isApproved: 1,
+                                            postDone: 1,
+                                            reviewDone: 1,
+                                            approvalDone: 1,
+                                            ref_no: refId,
+                                            updated_date: dt,
+                                            investmentId: data.investmentId,
+                                            createdBy: data.createdBy
+                                        };
+
+                                        query = `INSERT INTO investment_txns SET ?`;
+                                        endpoint = `/core-service/post?query=${query}`;
+                                        let url = `${HOST}${endpoint}`;
+                                        axios.post(url, inv_txn)
+                                            .then(function (payload) {
+                                                if (payload.data.status === undefined) {
+                                                    let txnAmount2 = Math.round(_chargedCostMinBal).toFixed(2);
+                                                    let txnBal = Math.round(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
+                                                    deductVatTax(HOST, data, txnAmount2, inv_txn, txnBal).then(result => {
+                                                        resolve(result);
+                                                    }, err => {
+                                                        resolve({});
+                                                    });
+                                                }
+                                            }, err => { });
+                                    }
+                                }
+                            });
+                        }
                     }
                 }
-            }
-        }, err => { });
+            }, err => { });
+        });
     }
 }
 

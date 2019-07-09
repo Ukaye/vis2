@@ -184,7 +184,6 @@ function getExistingConfigs() {
             }
         },
         'error': function (err) {
-            console.log(err);
             $('#wait').hide();
         }
     });
@@ -235,7 +234,7 @@ function upload(parentFolder, folderName, file, imgId) {
         data: formData,
         processData: false,
         contentType: false,
-        success: function (response) {},
+        success: function (response) { },
         error: function () {
             swal('Failed', `Error! Uploading to ${folderName}, ${error}`, 'error');
         }
@@ -286,7 +285,7 @@ function saveOrganisationData() {
 
     if ($('#file-upload-stamp')[0].files[0] !== undefined) {
         imgId = `${dt.getFullYear()}${dt.getMonth()}${dt.getDate()}${dt.getHours()}${dt.getMinutes()}${dt.getSeconds()}${dt.getMilliseconds()}`;
-        let ext_ = $('#file-upload-logo')[0].files[0].type.split('/')[1];
+        let ext_ = $('#file-upload-stamp')[0].files[0].type.split('/')[1];
         ext_ = (ext_ === 'jpeg') ? 'jpg' : ext_;
         stampPath = `/organisations/stamps/${imgId}.${ext_}`;
         upload('organisations', 'stamps', $('#file-upload-stamp')[0].files[0], imgId);
@@ -294,7 +293,7 @@ function saveOrganisationData() {
 
     if ($('#file-upload-signature')[0].files[0] !== undefined) {
         imgId = `${dt.getFullYear()}${dt.getMonth()}${dt.getDate()}${dt.getHours()}${dt.getMinutes()}${dt.getSeconds()}${dt.getMilliseconds()}`;
-        let ext_ = $('#file-upload-logo')[0].files[0].type.split('/')[1];
+        let ext_ = $('#file-upload-signature')[0].files[0].type.split('/')[1];
         ext_ = (ext_ === 'jpeg') ? 'jpg' : ext_;
         signaturePath = `/organisations/signatures/${imgId}.${ext_}`;
         upload('organisations', 'signatures', $('#file-upload-signature')[0].files[0], imgId);
@@ -322,7 +321,7 @@ function saveOrganisationData() {
         // vatProductId: $('#investment_product_vat').on('select2:select').val(),
         transferValue: $('#idTransferCharge').val(),
         transferChargeMethod: $('#idTransferMethod').val()
-    }
+    };
 
     $.ajax({
         'url': '/investment-service/create-configs',
