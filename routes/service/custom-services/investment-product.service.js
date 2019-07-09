@@ -27,6 +27,26 @@ router.get('/all', function (req, res, next) {
         });
 });
 
+router.get('/validate-code/:code', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let query = `SELECT count(*) as counter FROM investment_products WHERE code = '${req.params.code.toUpperCase()}'`;
+    const endpoint = "/core-service/get";
+    const url = `${HOST}${endpoint}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    })
+        .then(function (response) {
+            res.send(response.data[0]);
+        }, err => {
+            res.send(err);
+        })
+        .catch(function (error) {
+            res.send(error);
+        });
+});
+
 router.get('/roles', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;

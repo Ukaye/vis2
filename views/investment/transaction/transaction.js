@@ -101,6 +101,7 @@ $("#chk_investment_accounts").on('change',
             products = [];
             $('#chk_client_wallet').attr('checked', false);
             $('#chk_own_accounts').attr('checked', false);
+            $('#list_accounts').attr('disabled', false);
             decideListOfAccounts(1);
         }
     });
@@ -108,10 +109,11 @@ $("#chk_investment_accounts").on('change',
 $("#chk_client_wallet").on('change',
     function () {
         let status = $('#chk_client_wallet').is(':checked');
-        if (status) {
+        if (status === true) {
             products = [];
             $('#chk_own_accounts').attr('checked', false);
             $('#chk_investment_accounts').attr('checked', false);
+            $('#list_accounts').attr('disabled', true);
         }
     });
 
@@ -257,7 +259,9 @@ function bindDataTable(id) {
                         if (data.data[data.data.length - 1].balance.includes('-')) {
                             sign = '-';
                         }
-                        $("#inv_bal_amount").html(`${sign}₦${formater(data.data[data.data.length - 1].balance)}`);
+                        let total_balance_ = Math.round(data.data[data.data.length - 1].balance.split(',').join('')).toFixed(2);
+
+                        $("#inv_bal_amount").html(`${sign}₦${formater(total_balance_.toString())}`);
 
                     } else {
                         $("#client_name").html(sPageURL.split('=')[2].split('%20').join(''));
@@ -1550,8 +1554,7 @@ function onFundWalletOperation() {
         roleIds: _mRoleId,
         beneficialInvestmentId: selectedInvestment.investmentId,
         productId: selectedInvestment.productId,
-        isWallet: isWalletPage,
-        clientId: sURLVariables
+        isWallet: isWalletPage
     };
     $.ajax({
         url: `investment-txns/create`,
@@ -1560,7 +1563,13 @@ function onFundWalletOperation() {
         'success': function (data) {
             $('#wait').hide();
             swal('Transfer operation completed successfully', '', 'success');
-            $(".input").val('');
+            $("#input_transfer_amount").val('');
+            $("#input_transfer_description").val('');
+            $("#chk_own_accounts").attr('checked', false);
+            $("#chk_investment_accounts").attr('checked', false);
+            $("#chk_client_wallet").attr('checked', false);
+            $("#list_accounts").val(null).trigger('change');
+            table.ajax.reload(null, false);
         },
         'error': function (err) {
             $('#wait').hide();
@@ -1613,9 +1622,8 @@ function onTransferOperation() {
             beneficialInvestmentId: selectedAccount.ID,
             productId: selectedInvestment.productId,
             isWallet: isWalletPage,
-            clientId: sURLVariables
+            clientId: (isWalletPage === 1) ? sURLVariables : selectedAccount.clientId
         };
-
         $.ajax({
             url: `investment-txns/create`,
             'type': 'post',
@@ -1623,13 +1631,13 @@ function onTransferOperation() {
             'success': function (data) {
                 $('#wait').hide();
                 swal('Transfer operation completed successfully', '', 'success');
-                $(".input").val('');
                 $("#input_transfer_amount").val('');
+                $("#input_transfer_description").val('');
                 $("#chk_own_accounts").attr('checked', false);
                 $("#chk_investment_accounts").attr('checked', false);
                 $("#chk_client_wallet").attr('checked', false);
                 $("#list_accounts").val(null).trigger('change');
-                $("#input_transfer_description").val('');
+                table.ajax.reload(null, false);
             },
             'error': function (err) {
                 $('#wait').hide();
