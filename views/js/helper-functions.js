@@ -39,12 +39,12 @@ function numbersOnly(value) {
     return value;
 };
 
-function notification(title,text,type) {
+function notification(title, text, type, delay) {
     return swal({
         title: title,
         text: text,
         icon: type,
-        timer: 1000
+        timer: delay || 1000
     });
 }
 

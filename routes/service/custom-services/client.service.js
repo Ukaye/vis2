@@ -75,7 +75,6 @@ router.post('/mandate/setup', function (req, res, next) {
                             query: `SELECT * FROM remita_mandates WHERE applicationID = ${application_id}`
                         }
                     }).then(remita_mandate => {
-                        console.log(remita_mandate)
                         if (remita_mandate.data[0]) {
                             query = `UPDATE remita_mandates Set ? WHERE ID = ${remita_mandate.data[0]['ID']}`;
                         }

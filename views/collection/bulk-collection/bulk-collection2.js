@@ -5,7 +5,6 @@ $(document).ready(function() {
 let allInvoices = [],
     allPayments = [],
     matchedInvoices = [],
-    matchedPayments = [],
     selectedInvoices = [],
     selectedPayments = [],
     unmatchedInvoices = [],
@@ -21,13 +20,13 @@ function getInvoices(){
             allInvoices = response;
             getPayments();
             $.each(response, function (key, val) {
-                displayInvoices(val);
+                displayInvoice(val);
             });
         }
     });
 }
 
-function displayInvoices(val) {
+function displayInvoice(val) {
     $('#invoices').append(`
         <li id="invoice-${val.ID}" class="ui-state-default">
             <div class="row">
@@ -53,15 +52,15 @@ function getPayments(){
             allPayments = response;
             $('#wait').hide();
             $.each(response, function (key, val) {
-                displayPayments(val);
+                displayPayment(val);
             });
         }
     });
 }
 
-function displayPayments(val) {
+function displayPayment(val) {
     let type,
-        amount = val.credit - val.debit;
+        amount = currencyToNumberformatter(val.credit) - currencyToNumberformatter(val.debit);
     if (amount >= 0) {
         type = '<span class="badge badge-success">CREDIT</span>';
     } else {
@@ -215,99 +214,124 @@ function postPayment(overpayment) {
 }
 
 function findMatch() {
-    $('#invoices').html('');
-    $('#payments').html('');
-    matchedInvoices = [];
-    matchedPayments = [];
-    unmatchedInvoices = [];
-    unmatchedPayments = allPayments;
-    for (let i=0; i<allInvoices.length; i++) {
-        let invoice = allInvoices[i],
-            check = searchForKeywords(invoice);
-        if (!check) {
-            unmatchedInvoices.push(invoice);
-        } else {
-            let type,
-                payment = check.payment,
-                checkMatchedInvoices = ($.grep(matchedInvoices, (e) => { return e.ID === invoice.ID }))[0],
-                checkMatchedPayments = ($.grep(matchedPayments, (e) => { return e.ID === payment.ID }))[0],
-                amount = payment.credit - payment.debit;
-            if (!checkMatchedInvoices && !checkMatchedPayments) {
-                if (amount >= 0) {
-                    type = '<span class="badge badge-success">CREDIT</span>';
-                } else {
-                    type = '<span class="badge badge-danger">DEBIT</span>';
-                    amount = -amount;
+    swal({
+        title: "Are you sure?",
+        text: "Kindly relax, this might take a while",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true
+    })
+        .then((yes) => {
+            if (yes) {
+                $('#invoices').html('');
+                $('#payments').html('');
+                matchedInvoices = [];
+                unmatchedInvoices = [];
+                unmatchedPayments = allPayments;
+                $('#wait').show();
+                for (let i=0; i<allInvoices.length; i++) {
+                    let invoice = allInvoices[i],
+                        check = searchForKeywords(invoice);
+                    if (!check) {
+                        unmatchedInvoices.push(invoice);
+                    } else {
+                        let type,
+                            payment = check.payment,
+                            checkMatchedInvoices = ($.grep(matchedInvoices, (e) => { return e.ID === invoice.ID }))[0],
+                            amount = currencyToNumberformatter(payment.credit) - currencyToNumberformatter(payment.debit);
+                        if (!checkMatchedInvoices) {
+                            if (amount >= 0) {
+                                type = '<span class="badge badge-success">CREDIT</span>';
+                            } else {
+                                type = '<span class="badge badge-danger">DEBIT</span>';
+                                amount = -amount;
+                            }
+                            matchedInvoices.push(invoice);
+                            unmatchedPayments.splice(unmatchedPayments.findIndex((e) => { return e.ID === payment.ID; }), 1);
+                            $('#invoices').append(`
+                                <li id="invoice-${invoice.ID}" class="ui-state-default invoice-match">
+                                    <div class="row">
+                                        <div class="col-lg-9">
+                                            <p><strong>Name: </strong>${invoice.client} <span class="badge badge-warning" style="float: right;">
+                                                <i class="fa fa-link"></i> ${check.value}</span></p>
+                                            <p><strong>Date: </strong>${invoice.payment_collect_date}</p>
+                                            <p><strong>Amount: </strong>${numberToCurrencyformatter(invoice.payment_amount)} (${invoice.type})</p>
+                                        </div>
+                                        <div class="col-lg-3">
+                                            <p><input class="form-control" type="checkbox" onclick="selectInvoice('${encodeURIComponent(JSON.stringify(invoice))}')" /></p>
+                                            <p><a class="btn btn-primary btn-sm" href="/application?id=${invoice.applicationID}">View Loan</a></p>
+                                        </div>
+                                    </div>
+                                </li>`);
+                            $('#payments').append(`
+                                <li id="payment-${payment.ID}" class="ui-state-default payment-match">
+                                    <div class="row">
+                                        <div class="col-lg-10">
+                                            <p><strong>Amount: </strong>${numberToCurrencyformatter(amount)} ${type} <span class="badge badge-warning" style="float: right;">
+                                                <i class="fa fa-link"></i> ${check.value}</span></p>
+                                            <p><strong>Date: </strong>${payment.value_date}</p>
+                                            <p><strong>Description: </strong>${payment.description}</p>
+                                        </div>
+                                        <div class="col-lg-2">
+                                            <p><input class="form-control" type="checkbox" onclick="selectPayment('${encodeURIComponent(JSON.stringify(payment))}')" /></p>
+                                            <p><a class="btn btn-danger btn-sm" onclick="removePayment('${encodeURIComponent(JSON.stringify(payment))}')">
+                                                <i class="fa fa-trash"></i></a></p>
+                                        </div>
+                                    </div>
+                                </li>`);
+                        }
+                    }
                 }
-                matchedInvoices.push(invoice);
-                matchedPayments.push(payment);
-                unmatchedPayments.splice(unmatchedPayments.findIndex((e) => { return e.ID === payment.ID; }), 1);
-                $('#invoices').append(`
-                    <li id="invoice-${invoice.ID}" class="ui-state-default invoice-match">
-                        <div class="row">
-                            <div class="col-lg-9">
-                                <p><strong>Name: </strong>${invoice.client} <span class="badge badge-warning" style="float: right;">
-                                    <i class="fa fa-link"></i> ${check.value}</span></p>
-                                <p><strong>Date: </strong>${invoice.payment_collect_date}</p>
-                                <p><strong>Amount: </strong>${numberToCurrencyformatter(invoice.payment_amount)} (${invoice.type})</p>
-                            </div>
-                            <div class="col-lg-3">
-                                <p><input class="form-control" type="checkbox" onclick="selectInvoice('${encodeURIComponent(JSON.stringify(invoice))}')" /></p>
-                                <p><a class="btn btn-primary btn-sm" href="/application?id=${invoice.applicationID}">View Loan</a></p>
-                            </div>
-                        </div>
-                    </li>`);
-                $('#payments').append(`
-                    <li id="payment-${payment.ID}" class="ui-state-default payment-match">
-                        <div class="row">
-                            <div class="col-lg-10">
-                                <p><strong>Amount: </strong>${numberToCurrencyformatter(amount)} ${type} <span class="badge badge-warning" style="float: right;">
-                                    <i class="fa fa-link"></i> ${check.value}</span></p>
-                                <p><strong>Date: </strong>${payment.value_date}</p>
-                                <p><strong>Description: </strong>${payment.description}</p>
-                            </div>
-                            <div class="col-lg-2">
-                                <p><input class="form-control" type="checkbox" onclick="selectPayment('${encodeURIComponent(JSON.stringify(payment))}')" /></p>
-                                <p><a class="btn btn-danger btn-sm" onclick="removePayment('${encodeURIComponent(JSON.stringify(payment))}')">
-                                    <i class="fa fa-trash"></i></a></p>
-                            </div>
-                        </div>
-                    </li>`);
+                if (matchedInvoices.length === 0) notification('No match found!', '', 'warning');
+                for (let i=0; i<unmatchedInvoices.length; i++) {
+                    displayInvoice(unmatchedInvoices[i]);
+                }
+                for (let i=0; i<unmatchedPayments.length; i++) {
+                    displayPayment(unmatchedPayments[i]);
+                }
+                $('#wait').hide();
             }
-        }
-    }
-    for (let i=0; i<unmatchedInvoices.length; i++) {
-        displayInvoices(unmatchedInvoices[i]);
-    }
-    for (let i=0; i<unmatchedPayments.length; i++) {
-        displayPayments(unmatchedPayments[i]);
-    }
+        });
 }
 
 function searchForKeywords(invoice) {
     let phoneMatch = ($.grep(allPayments, (e) => {
-            let exp = new RegExp(invoice.phone, 'gi');
-            return e.description.match(exp);
+            if (!invoice.phone) return false;
+            let desc = e.description.toLowerCase(),
+                exp = new RegExp(invoice.phone, 'gi'),
+                exp_ = new RegExp(invoice.phone.substr(4, invoice.phone.length), 'gi');
+            return desc.match(exp) || desc.match(exp_);
         }))[0],
         firstnameMatch = ($.grep(allPayments, (e) => {
             if (!invoice.first_name) return false;
-            let exp = new RegExp(invoice.first_name.toLowerCase(), 'gi');
-            return e.description.toLowerCase().match(exp);
+            let desc = e.description.toLowerCase(),
+                exp = new RegExp(invoice.first_name.toLowerCase(), 'gi'),
+                exp_ = new RegExp(invoice.first_name.toLowerCase().substr(0, 4), 'gi'),
+                exp__ = new RegExp(invoice.first_name.toLowerCase().substr(invoice.first_name.length - 4), 'gi');
+            return desc.match(exp) || desc.match(exp_) || desc.match(exp__);
         }))[0],
         middlenameMatch = ($.grep(allPayments, (e) => {
             if (!invoice.middle_name) return false;
-            let exp = new RegExp(invoice.middle_name.toLowerCase(), 'gi');
-            return e.description.toLowerCase().match(exp);
+            let desc = e.description.toLowerCase(),
+                exp = new RegExp(invoice.middle_name.toLowerCase(), 'gi'),
+                exp_ = new RegExp(invoice.middle_name.toLowerCase().substr(0, 4), 'gi'),
+                exp__ = new RegExp(invoice.middle_name.toLowerCase().substr(invoice.middle_name.length - 4), 'gi');
+            return desc.match(exp) || desc.match(exp_) || desc.match(exp__);
         }))[0],
         lastnameMatch = ($.grep(allPayments, (e) => {
             if (!invoice.last_name) return false;
-            let exp = new RegExp(invoice.last_name.toLowerCase(), 'gi');
-            return e.description.toLowerCase().match(exp);
+            let desc = e.description.toLowerCase(),
+                exp = new RegExp(invoice.last_name.toLowerCase(), 'gi'),
+                exp_ = new RegExp(invoice.last_name.toLowerCase().substr(0, 4), 'gi'),
+                exp__ = new RegExp(invoice.last_name.toLowerCase().substr(invoice.last_name.length - 4), 'gi');
+            return desc.match(exp) || desc.match(exp_) || desc.match(exp__);
         }))[0],
         amountMatch = ($.grep(allPayments, (e) => {
             if (!invoice.payment_amount) return false;
-            let exp = new RegExp(invoice.payment_amount, 'gi');
-            return e.credit.match(exp);
+            let invoice_amt = currencyToNumberformatter(e.credit).toString(),
+                payment_amt = currencyToNumberformatter(invoice.payment_amount).toString(),
+                exp = new RegExp(payment_amt, 'gi');
+            return invoice_amt.match(exp);
         }))[0];
 
     let status = false,
