@@ -178,7 +178,7 @@ $("#investment_date_start").on("change", function (event) {
             $("#duration_info").html(`Min.: ${pad(min_date.getDate())}-${pad(min_date.getMonth())}-${min_date.getUTCFullYear()} Max.: ${pad(max_date.getDate())}-${pad(max_date.getMonth())}-${max_date.getUTCFullYear()}`);
         }
     } else {
-        swal('Please select investment product', '', 'error');
+        swal('Please select product', '', 'error');
         $('#investment_mature_date').attr('disabled', true);
     }
 });
@@ -237,7 +237,7 @@ $("#btn_save_product").on("click", function (event) {
                         '', 'error');
                 } else {
                     $('#wait').hide();
-                    swal('Investment created successfully!', '', 'success');
+                    swal('Account created successfully!', '', 'success');
                     var url = "./all-investments";
                     $(location).attr('href', url);
                     $('input').val("");
