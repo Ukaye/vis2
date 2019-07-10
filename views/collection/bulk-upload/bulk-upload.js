@@ -105,7 +105,8 @@
                     let cell = $(`<td class="${ (j === 3 && cr_dr)? 'disabled':'' }" />`);
                     if (i > 0) {
                         if (j === 0 || j === 1) {
-                            cell.html(`<input id="invoice-${i-skip}-${j}" type="date" value="${formatDate(cells[j])}" />`);
+                            cell.html(`<i class="sn">${(j === 0)? i+'.':''}</i>
+                                <input id="invoice-${i-skip}-${j}" type="date" value="${formatDate(cells[j])}" />`);
                         } else if (j === 2 || j === 3 || j === 4) {
                             let credit = currencyToNumberformatter(cells[2]);
                             if (cr_dr && credit < 0) {
