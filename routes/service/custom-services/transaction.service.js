@@ -104,11 +104,10 @@ router.post('/create', function (req, res, next) {
                     }
                 });
             } //data.isPaymentMadeByWallet.toString() === '1'
-
             let formatedDate = new Date(dt);
             let inv_txn = {
                 txn_date: (data.txn_date !== undefined) ? data.txn_date : moment().utcOffset('+0100').format('YYYY-MM-DD'),
-                description: (data.isPaymentMadeByWallet !== undefined && data.isPaymentMadeByWallet === '1') ? 'Opening balance from wallet' : data.description,
+                description: (data.isPaymentMadeByWallet !== undefined && data.isPaymentMadeByWallet === '1' && data.is_capital === '1') ? 'Opening balance from wallet' : data.description,
                 amount: Math.round(data.amount.split(',').join('')).toFixed(2),
                 is_credit: data.is_credit,
                 created_date: dt,
@@ -128,7 +127,8 @@ router.post('/create', function (req, res, next) {
                 isInvestmentTerminated: data.isInvestmentTerminated,
                 isForceTerminate: data.isForceTerminate,
                 expectedTerminationDate: data.expectedTerminationDate,
-                isWallet: data.isWallet
+                isWallet: data.isWallet,
+                isPaymentMadeByWallet: (data.isWallet === '1') ? null : data.isPaymentMadeByWallet
             };
             query = `INSERT INTO investment_txns SET ?`;
             endpoint = `/core-service/post?query=${query}`;
@@ -137,7 +137,7 @@ router.post('/create', function (req, res, next) {
                 .then(function (_response) {
                     if (_response.data.status === undefined) {
                         query = `SELECT * FROM investment_product_requirements
-                            WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
+                            WHERE productId = ${data.productId} AND operationId = ${(data.isWallet === '0') ? data.operationId : 0} AND status = 1`;
                         endpoint = "/core-service/get";
                         url = `${HOST}${endpoint}`;
                         axios.get(url, {
@@ -201,7 +201,7 @@ router.post('/create', function (req, res, next) {
 
 
                         query = `SELECT * FROM investment_product_reviews
-                            WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
+                            WHERE productId = ${data.productId} AND operationId = ${(data.isWallet === '0') ? data.operationId : 0} AND status = 1`;
                         endpoint = "/core-service/get";
                         url = `${HOST}${endpoint}`;
                         axios.get(url, {
@@ -262,7 +262,7 @@ router.post('/create', function (req, res, next) {
                             });
 
                         query = `SELECT * FROM investment_product_posts
-                            WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
+                            WHERE productId = ${data.productId} AND operationId = ${(data.isWallet === '0') ? data.operationId : 0} AND status = 1`;
                         endpoint = "/core-service/get";
                         url = `${HOST}${endpoint}`;
                         axios.get(url, {
@@ -2655,6 +2655,7 @@ router.get('/client-wallets/:id', function (req, res, next) {
     let offset = req.query.offset;
     let draw = req.query.draw;
     let order = req.query.order;
+    //ORDER BY STR_TO_DATE(v.created_date, '%Y-%m-%d') ${aoData[2].value[0].dir}
     let search_string = req.query.search_string.toUpperCase();
     let query = `SELECT 
     (Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id} ORDER BY ID DESC LIMIT 1) as balance,
@@ -2665,7 +2666,7 @@ router.get('/client-wallets/:id', function (req, res, next) {
     left join clients c on i.clientId = c.ID
     left join users u on u.ID = v.createdBy
     left join investment_products p on i.productId = p.ID
-    WHERE v.isWallet = 1 AND v.clientId = ${req.params.id} ORDER BY ID DESC LIMIT ${limit} OFFSET ${offset}`;
+    WHERE v.isWallet = 1 AND v.clientId = ${req.params.id} ORDER BY v.updated_date DESC LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     var data = [];
