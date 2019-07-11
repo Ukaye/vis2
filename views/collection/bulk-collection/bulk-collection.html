@@ -17,7 +17,6 @@
     <link rel="stylesheet" href="assets/css/themify-icons.css">
     <link rel="stylesheet" href="assets/css/flag-icon.min.css">
     <link rel="stylesheet" href="assets/css/cs-skin-elastic.css">
-    <link rel="stylesheet" href="assets/css/lib/datatable/dataTables.bootstrap.min.css">
     <link rel="stylesheet" href="assets/scss/style.css">
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,800' rel='stylesheet' type='text/css'>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
@@ -54,7 +53,7 @@
             -moz-box-shadow: 0 5px 5px -3px #777;
             box-shadow: 0 5px 5px -3px #777;
             margin-bottom: 5px;
-            max-height: 95px;
+            height: 95px;
             overflow-y: auto;
         }
         li.ui-state-default:hover {
@@ -75,9 +74,14 @@
             border-bottom: 24px solid transparent;
             content: " ";
         }
+        .ui-state-empty {
+            padding: 0 15px;
+            margin-bottom: 5px;
+            height: 95px;
+        }
     </style>
 </head>
-<body>
+<body class="open">
 <script src="../../menus/menu-items.js"></script>
 <script type="text/javascript" src="../../collection/bulk-collection/bulk-collection1.js"></script>
 <!-- Left Panel -->
@@ -118,9 +122,16 @@
                     <div class="card">
                         <div class="card-header">
                             <strong>Process Bulk Collection</strong> <small> Payment Information</small>
-                            <button class="btn btn-sm btn-success" onclick="validatePayment()" style="float: right;">POST PAYMENT</button>
-                            <button class="btn btn-sm btn-primary" onclick="findMatch()" style="float: right;">FIND MATCHES</button>
-                            <button class="btn btn-sm btn-danger" onclick="removeDebits()" style="float: right;">REMOVE ALL DEBITS</button>
+                            <div class="dropdown" style="float: right;">
+                                <button class="btn btn-sm btn-success" onclick="validatePayment()" style="float: right;">POST PAYMENT</button>
+                                <button class="btn btn-sm btn-primary dropdown-toggle" type="button" id="dropdownMenuButton"
+                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> MORE ACTIONS </button>
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                    <a href="#" class="write dropdown-item" onclick="findMatches()"> FIND MATCHES</a>
+                                    <a href="#" class="write dropdown-item" onclick="findReversals()"> FIND REVERSALS</a>
+                                    <a href="#" class="write dropdown-item" onclick="removeDebits()"> REMOVE ALL DEBITS</a>
+                                </div>
+                            </div>
                         </div>
                         <div class="card-body card-block">
                             <div class="row">

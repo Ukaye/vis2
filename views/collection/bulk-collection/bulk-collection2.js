@@ -23,6 +23,7 @@ $('#statement').change((e) => {
 let allInvoices = [],
     allPayments = [],
     matchedInvoices = [],
+    matchedPayments = [],
     selectedInvoices = [],
     selectedPayments = [],
     unmatchedInvoices = [],
@@ -239,7 +240,7 @@ function postPayment(overpayment) {
     });
 }
 
-function findMatch() {
+function findMatches() {
     swal({
         title: "Are you sure?",
         text: "Kindly relax, this might take a while",
@@ -424,4 +425,96 @@ function removeDebits() {
                 });
             }
         });
+}
+
+function findReversals() {
+    swal({
+        title: "Are you sure?",
+        text: "Kindly relax, this might take a while",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true
+    })
+        .then((yes) => {
+            if (yes) {
+                $('#invoices').html('');
+                $('#payments').html('');
+                matchedPayments = [];
+                unmatchedPayments = [];
+                $('#wait').show();
+                for (let i=0; i<allPayments.length; i++) {
+                    let check = searchForReversal(allPayments[i]);
+                    if (!check) {
+                        if (allPayments[i]['reversal']) {
+                            displayReversal(allPayments[i]);
+                        } else {
+                            unmatchedPayments.push(allPayments[i]);
+                        }
+                    } else {
+                        displayReversal(allPayments[i]);
+                        displayReversal(check.payment);
+                    }
+                }
+                if (matchedPayments.length === 0) notification('No reversals found!', '', 'warning');
+                for (let i=0; i<allInvoices.length; i++) {
+                    displayInvoice(allInvoices[i]);
+                }
+                for (let i=0; i<unmatchedPayments.length; i++) {
+                    displayPayment(unmatchedPayments[i]);
+                }
+                $('#wait').hide();
+            }
+        });
+}
+
+function searchForReversal(payment) {
+    let amountMatch = ($.grep(allPayments, (e) => {
+            if (!payment.credit && !payment.debit) return false;
+            let debit_amt = currencyToNumberformatter(e.debit).toString(),
+                credit_amt = currencyToNumberformatter(e.credit).toString(),
+                debit_amt_ = currencyToNumberformatter(payment.debit).toString(),
+                credit_amt_ = currencyToNumberformatter(payment.credit).toString();
+            return (credit_amt === debit_amt_ && credit_amt > 0) || (debit_amt === credit_amt_ && debit_amt > 0);
+        }))[0];
+    let status = false,
+        result = {};
+    if (amountMatch) {
+        status = true;
+        result.payment = amountMatch;
+    }
+    if (!status)
+        return false;
+    return result;
+}
+
+function displayReversal(payment) {
+    let type,
+        checkMatchedPayments = ($.grep(matchedPayments, (e) => { return e.ID === payment.ID }))[0],
+        amount = currencyToNumberformatter(payment.credit) - currencyToNumberformatter(payment.debit);
+    if (!checkMatchedPayments) {
+        if (amount >= 0) {
+            type = '<span class="badge badge-success">CREDIT</span>';
+        } else {
+            type = '<span class="badge badge-danger">DEBIT</span>';
+            amount = -amount;
+        }
+        matchedPayments.push(payment);
+        allPayments.splice(allPayments.findIndex((e) => { return e.ID === payment.ID; }), 1);
+        $('#invoices').append('<li class="ui-state-empty"></li>');
+        $('#payments').append(`
+            <li id="payment-${payment.ID}" class="ui-state-default payment-match">
+                <div class="row">
+                    <div class="col-lg-10">
+                        <p><strong>Amount: </strong>${numberToCurrencyformatter(amount)} ${type}</p>
+                        <p><strong>Date: </strong>${payment.value_date}</p>
+                        <p><strong>Description: </strong>${payment.description}</p>
+                    </div>
+                    <div class="col-lg-2">
+                        <p><input class="form-control" type="checkbox" onclick="selectPayment('${encodeURIComponent(JSON.stringify(payment))}')" /></p>
+                        <p><a class="btn btn-danger btn-sm" onclick="removePayment('${encodeURIComponent(JSON.stringify(payment))}')">
+                            <i class="fa fa-trash"></i></a></p>
+                    </div>
+                </div>
+            </li>`);
+    }
 }
