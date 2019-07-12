@@ -128,7 +128,7 @@ router.post('/create', function (req, res, next) {
                 isForceTerminate: data.isForceTerminate,
                 expectedTerminationDate: data.expectedTerminationDate,
                 isWallet: data.isWallet,
-                isPaymentMadeByWallet: (data.isWallet === '1') ? null : data.isPaymentMadeByWallet
+                isPaymentMadeByWallet: (data.isWallet === '1') ? 0 : data.isPaymentMadeByWallet
             };
             query = `INSERT INTO investment_txns SET ?`;
             endpoint = `/core-service/post?query=${query}`;
@@ -1026,7 +1026,6 @@ async function fundBeneficialAccount(data, HOST) {
         let endpoint = "/core-service/get";
         let url = `${HOST}${endpoint}`;
         let refId = moment().utcOffset('+0100').format('x');
-
         axios.get(url, {
             params: {
                 query: query
@@ -2659,14 +2658,15 @@ router.get('/client-wallets/:id', function (req, res, next) {
     let search_string = req.query.search_string.toUpperCase();
     let query = `SELECT 
     (Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id} ORDER BY ID DESC LIMIT 1) as balance,
-    v.ID,v.ref_no,c.fullname,v.description,v.created_date,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName, v.isDeny,v.isPaymentMadeByWallet,
+    v.ID,v.ref_no,c.fullname,v.description,v.created_date,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName,
+    v.isDeny,v.isPaymentMadeByWallet,v.isReversedTxn,v.isTransfer,v.isMoveFundTransfer,v.beneficialInvestmentId,
     v.approvalDone,v.reviewDone,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.isInvestmentTerminated,p.acct_allows_withdrawal,
     i.clientId,p.canTerminate,v.is_capital,v.investmentId,i.isTerminated,v.isWallet, v.updated_date, i.isMatured FROM investment_txns v 
-    left join investments i on v.investmentId = i.ID
+    left join investments i on v.investmentId = i.ID 
     left join clients c on i.clientId = c.ID
     left join users u on u.ID = v.createdBy
     left join investment_products p on i.productId = p.ID
-    WHERE v.isWallet = 1 AND v.clientId = ${req.params.id} ORDER BY v.updated_date DESC LIMIT ${limit} OFFSET ${offset}`;
+    WHERE v.isWallet = 1 AND v.clientId = ${req.params.id} ORDER BY v.ID LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     var data = [];
@@ -2708,7 +2708,11 @@ router.get('/client-wallets/:id', function (req, res, next) {
                 query: query
             }
         }).then(payload => {
-            query = `SELECT count(*) as recordsTotal FROM investment_txns WHERE clientId = ${req.params.id}`;
+            query = `Select 
+            (Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY updated_date DESC LIMIT 1) as txnCurrentBalance,
+            (SELECT count(*) as recordsTotal FROM investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id}) as recordsTotal`;
+
+            // query = `SELECT count(*) as recordsTotal FROM investment_txns WHERE clientId = ${req.params.id}`;
             endpoint = '/core-service/get';
             url = `${HOST}${endpoint}`;
             axios.get(url, {
@@ -2716,8 +2720,10 @@ router.get('/client-wallets/:id', function (req, res, next) {
                     query: query
                 }
             }).then(payload2 => {
+
                 res.send({
                     draw: draw,
+                    txnCurrentBalance: payload2.data[0].txnCurrentBalance,
                     recordsTotal: payload2.data[0].recordsTotal,
                     recordsFiltered: payload.data[0].recordsFiltered,
                     data: (uniqueTxns === undefined) ? [] : uniqueTxns
@@ -2729,7 +2735,7 @@ router.get('/client-wallets/:id', function (req, res, next) {
 
 router.get('/client-wallet-balance/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query = `Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id} ORDER BY ID DESC LIMIT 1`;
+    let query = `Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY updated_date DESC LIMIT 1`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
 
@@ -2761,7 +2767,7 @@ router.get('/investment-accounts/:id', function (req, res, next) {
         query = `SELECT v.ID,v.code,v.clientId,c.fullname AS name,v.productId, p.name as productName FROM investments v 
         left join clients c on v.clientId = c.ID 
         left join investment_products p on p.ID = v.productId
-        WHERE v.ID != ${parseInt(req.query.excludedItem)} AND c.ID != ${req.query.clientId} AND upper(v.code) LIKE "${search_string}%" AND upper(c.fullname) 
+        WHERE c.ID != ${req.query.clientId} AND upper(v.code) LIKE "${search_string}%" AND upper(c.fullname) 
         LIKE "${search_string}%" AND upper(p.name) LIKE "${search_string}%" ORDER BY v.ID desc LIMIT ${limit} OFFSET ${page}`;
     }
     const endpoint = "/core-service/get";
