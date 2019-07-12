@@ -120,7 +120,7 @@
                             <strong>Process Bulk Collection</strong> <small> Payment Information</small>
                             <button class="btn btn-sm btn-success" onclick="validatePayment()" style="float: right;">POST PAYMENT</button>
                             <button class="btn btn-sm btn-primary" onclick="findMatch()" style="float: right;">FIND MATCHES</button>
-                            <button class="btn btn-sm btn-danger" onclick="removeDebits()" style="float: right;">REMOVE DEBITS</button>
+                            <button class="btn btn-sm btn-danger" onclick="removeDebits()" style="float: right;">REMOVE ALL DEBITS</button>
                         </div>
                         <div class="card-body card-block">
                             <div class="row">
@@ -132,7 +132,16 @@
                                     <ul id="invoices" class="list-unstyled"></ul>
                                 </div>
                                 <div class="col-sm-6 todolist">
-                                    <h4>Unallocated Payments</h4>
+                                    <div class="row">
+                                        <div class="col-lg-6">
+                                            <h4>Unallocated Payments</h4>
+                                        </div>
+                                        <div class="col-lg-6">
+                                            <select id="statement" class="form-control" title="Statement">
+                                                <option selected="selected" value="0">All</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                     <ul id="payments" class="list-unstyled"></ul>
                                 </div>
                             </div>

@@ -4,10 +4,12 @@
     });
 
     function getAccounts(){
+        $('#wait').show();
         $.ajax({
             type: 'GET',
             url: '/collection/collection_bank',
             success: function (data) {
+                $('#wait').hide();
                 $.each(data.response, function (key, val) {
                     $('#account').append(`<option value="${val.ID}">${val.account}</option>`);
                 });
@@ -16,10 +18,38 @@
     }
 
     let headers,
+        cr_dr = false,
         statement = [],
         statement_ = [],
+        nve_cr_rvsl = false,
+        $cr_dr = $('#cr_dr'),
         $dvCSV = $("#dvCSV"),
-        $csvUpload = $("#csvUpload");
+        $csvUpload = $("#csvUpload"),
+        $nve_cr_rvsl = $('#nve_cr_rvsl');
+
+    $cr_dr.change((e) => {
+        statement = [];
+        statement_ = [];
+        $dvCSV.html('');
+        $csvUpload.val('');
+        cr_dr = $cr_dr.is(':checked');
+        if ($cr_dr.is(':checked')) {
+            nve_cr_rvsl = false;
+            $nve_cr_rvsl.prop('checked', false);
+        }
+    });
+
+    $nve_cr_rvsl.change((e) => {
+        statement = [];
+        statement_ = [];
+        $dvCSV.html('');
+        $csvUpload.val('');
+        nve_cr_rvsl = $nve_cr_rvsl.is(':checked');
+        if ($nve_cr_rvsl.is(':checked')) {
+            cr_dr = false;
+            $cr_dr.prop('checked', false);
+        }
+    });
 
     $csvUpload.change(function (){
         $('#wait').show();
@@ -67,16 +97,25 @@
                 cells = (cells_.length > 7)? cells_.slice(0, 7) : cells_;
             }
             if (cells.join(' ').length > 10) {
+                if (i >= 0 && cr_dr) cells.splice(3, 0, '');
                 for (let j = 0; j < cells.length; j++) {
                     cells[j] = (cells[j]) ? (cells[j]).trim() : cells[j];
                     if (!cells[j] && cells[j] !== '')
                         continue;
-                    let cell = $("<td />");
+                    let cell = $(`<td class="${ (j === 3 && cr_dr)? 'disabled':'' }" />`);
                     if (i > 0) {
                         if (j === 0 || j === 1) {
-                            cell.html(`<input id="invoice-${i-skip}-${j}" type="date" value="${formatDate(cells[j])}" />`);
+                            cell.html(`<i class="sn">${(j === 0)? i+'.':''}</i>
+                                <input id="invoice-${i-skip}-${j}" type="date" value="${formatDate(cells[j])}" />`);
                         } else if (j === 2 || j === 3 || j === 4) {
-                            cell.html(`<span id="invoice-${i-skip}-${j}">${numberToCurrencyformatter(cells[j])}</span>`);
+                            let credit = currencyToNumberformatter(cells[2]);
+                            if (cr_dr && credit < 0) {
+                                if (j === 2) cell.html(`<span id="invoice-${i-skip}-2"></span>`);
+                                if (j === 3) cell.html(`<span id="invoice-${i-skip}-3">${numberToCurrencyformatter(cells[2])}</span>`);
+                                if (j === 4) cell.html(`<span id="invoice-${i-skip}-4">${numberToCurrencyformatter(cells[4])}</span>`);
+                            } else {
+                                cell.html(`<span id="invoice-${i-skip}-${j}">${numberToCurrencyformatter(cells[j])}</span>`);
+                            }
                         } else {
                             cell.html(`<span id="invoice-${i-skip}-${j}">${cells[j]}</span>`);
                         }
@@ -85,13 +124,15 @@
                             let select = `<select id="invoice-0-${j}">`;
                             for (let k = 0; k < headers.length; k++) {
                                 headers[k] =  headers[k].trim();
-                                if (headers[k] === cells[j]) {
-                                    select = select.concat(`<option value="${headers[k]}" selected="selected">${headers[k]}</option>`);
-                                } else {
-                                    select = select.concat(`<option value="${headers[k]}">${headers[k]}</option>`);
+                                if (headers[k]) {
+                                    if (headers[k] === cells[j]) {
+                                        select = select.concat(`<option value="${headers[k]}" selected="selected">${headers[k]}</option>`);
+                                    } else {
+                                        select = select.concat(`<option value="${headers[k]}">${headers[k]}</option>`);
+                                    }
                                 }
                             }
-                            select = select.concat('</select>');
+                            select = (j === 3 && cr_dr)? '':select.concat('</select>');
                             cell.html(select);
                         } else {
                             cell.html(cells[j]);
@@ -150,24 +191,23 @@
                 $invoice = $(`#invoice-${i+1}-${target_index}`),
                 source_value = transaction[Object.keys(transaction)[source_index]];
             statement_[i][Object.keys(transaction)[target_index]] = source_value;
-            switch (target_index) {
-                case '0':
-                case '1': {
-                    $invoice.val(formatDate(source_value));
-                    break;
-                }
-                case '2':
-                case '3':
-                case '4': {
-                    if (!isNaN(source_value)) {
-                        $invoice.text(numberToCurrencyformatter(source_value));
-                        break;
+            if (target_index === '0' || target_index === '1') {
+                $invoice.val(formatDate(source_value));
+            } else if (target_index === '2' || target_index === '3' || target_index === '4') {
+                let credit = currencyToNumberformatter(source_value);
+                if (target_index === '2') {
+                    if (cr_dr && credit < 0) {
+                        $(`#invoice-${i+1}-2`).text('');
+                        $(`#invoice-${i+1}-3`).text(numberToCurrencyformatter(source_value));
+                    } else {
+                        $(`#invoice-${i+1}-2`).text(numberToCurrencyformatter(source_value));
+                        $(`#invoice-${i+1}-3`).text('');
                     }
+                } else {
+                    $invoice.text(numberToCurrencyformatter(source_value));
                 }
-                default: {
-                    $invoice.text(source_value);
-                    break;
-                }
+            } else {
+                $invoice.text(source_value);
             }
         }
     });
@@ -250,6 +290,11 @@
                 $col3.removeClass('invalid');
                 invoice.credit = (isNaN(c))? 0 : c;
                 invoice.debit = (isNaN(d))? 0 : d;
+                if (nve_cr_rvsl && invoice.credit < 0) invoice.reversal = true;
+                if (cr_dr && invoice.credit < 0) {
+                    invoice.debit = -invoice.credit;
+                    invoice.credit = 0;
+                }
             } else {
                 $col2.addClass('invalid');
                 $col3.addClass('invalid');

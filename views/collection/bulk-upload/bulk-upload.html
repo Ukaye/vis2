@@ -42,9 +42,16 @@
         #csvUpload {
             width: 100%;
         }
+        td.disabled {
+            background-color: #efefef !important;
+        }
+        i.sn {
+            position: absolute;
+            left: 0px;
+        }
     </style>
 </head>
-<body>
+<body class="open">
 <!-- Left Panel -->
 <aside id="left-panel" class="left-panel" include-html="/includes/sidebar.html"></aside><!-- /#left-panel -->
 <!-- Left Panel -->
@@ -90,7 +97,7 @@
                             <div class="row">
                                 <div class="col-sm-3">
                                     <label for="account">Account<strong style="color:red"> *</strong></label>
-                                    <select id="account" class="form-control" title="Account">
+                                    <select id="account" class="form-control">
                                         <option selected="selected">Select Account</option>
                                     </select>
                                 </div>
@@ -107,9 +114,21 @@
                                     <input type="file" id="csvUpload" style="display: inline-block"/>
                                 </div>
                             </div>
+                            <div class="row" style="margin-top: 5px;">
+                                <div class="col-lg-3">
+                                    <label>
+                                        <input id="cr_dr" type="checkbox"> Credit & Debit Together
+                                    </label>
+                                </div>
+                                <div id="nve_cr_rvsl_div" class="col-lg-3">
+                                    <label>
+                                        <input id="nve_cr_rvsl" type="checkbox"> -ve Credit is Reversal
+                                    </label>
+                                </div>
+                            </div>
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <div id="dvCSV" style="margin: 30px 0;"></div>
+                                    <div id="dvCSV" style="margin: 30px 15px;"></div>
                                 </div>
                             </div>
                         </div>
