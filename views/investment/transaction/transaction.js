@@ -720,41 +720,31 @@ async function onOpenMode(name, operationId, is_credit) {
     selectedInvestment._is_credit = is_credit;
     opsObj.is_credit = is_credit;
     opsObj.operationId = operationId;
+    
+    $("#viewOperationModalHeader").html(name + " Operation");
+    $("#btnTransaction").html(name);
+    $("#role_list_group").empty();
 
-    if (isWalletPage === 0) {
-        $("#viewOperationModalHeader").html(name + " Operation");
-        $("#btnTransaction").html(name);
-        $("#role_list_group").empty();
-
-        $.ajax({
-            url: `investment-txns/get-product-configs/${selectedInvestment.investmentId}`,
-            'type': 'get',
-            'success': function (data) {
-                product_config = data[0];
-                if (data.status === undefined) {
-                    $('#wait').hide();
-                    $("#input_amount").attr('disabled', false);
-                    $("#input_description").attr('disabled', false);
-                    $("#input_txn_date").attr('disabled', false);
-                    let hint = '';
-                    if (operationId === '1') {
-                        hint = `Min.: ${product_config.investment_min} - Max.: ${product_config.investment_max}`;
-                    } else if (operationId === '3') {
-                        hint = `Max. withdrawal#: ${product_config.freq_withdrawal} - Over.: ${product_config.withdrawal_freq_duration}`
-                    }
-                    $("#spanAmountRange").html(hint);
-                    $("#btnTransaction").attr('disabled', false);
-
-                } else {
-                    $('#wait').hide();
-                    $("#input_amount").attr('disabled', true);
-                    $("#btnTransaction").attr('disabled', true);
-                    $("#input_description").attr('disabled', true);
-                    $("#input_txn_date").attr('disabled', true);
-                    swal('Oops! An error occurred while initiating deposit dialog', '', 'error');
+    $.ajax({
+        url: `investment-txns/get-product-configs/${selectedInvestment.investmentId}`,
+        'type': 'get',
+        'success': function (data) {
+            product_config = data[0];
+            if (data.status === undefined) {
+                $('#wait').hide();
+                $("#input_amount").attr('disabled', false);
+                $("#input_description").attr('disabled', false);
+                $("#input_txn_date").attr('disabled', false);
+                let hint = '';
+                if (operationId === '1') {
+                    hint = `Min.: ${product_config.investment_min} - Max.: ${product_config.investment_max}`;
+                } else if (operationId === '3') {
+                    hint = `Max. withdrawal#: ${product_config.freq_withdrawal} - Over.: ${product_config.withdrawal_freq_duration}`
                 }
-            },
-            'error': function (err) {
+                $("#spanAmountRange").html(hint);
+                $("#btnTransaction").attr('disabled', false);
+
+            } else {
                 $('#wait').hide();
                 $("#input_amount").attr('disabled', true);
                 $("#btnTransaction").attr('disabled', true);
@@ -762,8 +752,16 @@ async function onOpenMode(name, operationId, is_credit) {
                 $("#input_txn_date").attr('disabled', true);
                 swal('Oops! An error occurred while initiating deposit dialog', '', 'error');
             }
-        });
-    }
+        },
+        'error': function (err) {
+            $('#wait').hide();
+            $("#input_amount").attr('disabled', true);
+            $("#btnTransaction").attr('disabled', true);
+            $("#input_description").attr('disabled', true);
+            $("#input_txn_date").attr('disabled', true);
+            swal('Oops! An error occurred while initiating deposit dialog', '', 'error');
+        }
+    });
 }
 $("#input_amount").on("keyup", function (event) {
     let val = $("#input_amount").val();

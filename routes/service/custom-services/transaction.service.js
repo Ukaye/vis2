@@ -2695,12 +2695,9 @@ router.get('/client-wallets/:id', function (req, res, next) {
                 });
             }
         });
-        query = `SELECT count(*) as recordsFiltered FROM investment_txns v 
-    left join investments i on v.investmentId = i.ID
-    left join clients c on i.clientId = c.ID 
-    left join investment_products p on i.productId = p.ID
-    WHERE v.clientId = ${req.params.id}
-    AND (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%")`;
+        query = `SELECT count(*) as recordsFiltered FROM investment_txns 
+        WHERE isWallet = 1 AND clientId = ${req.params.id}
+        AND (upper(description) LIKE "${search_string}%" OR upper(ref_no) LIKE "${search_string}%")`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {
