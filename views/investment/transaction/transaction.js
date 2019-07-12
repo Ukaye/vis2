@@ -43,7 +43,7 @@ function decideListOfAccounts(id) {
                     limit: 10,
                     page: params.page,
                     search_string: params.term,
-                    clientId: selectedInvestment.clientId,
+                    clientId: (isWalletPage === 1) ? sURLVariables : selectedInvestment.clientId,
                     excludedItem: selectedInvestment.investmentId
                 };
             },
@@ -256,10 +256,10 @@ function bindDataTable(id) {
                         $("#inv_name").html(`${data.data[0].name} (${data.data[0].code})`);
                         $("#inv_acct_no").html(`${data.data[0].acctNo}`);
                         let sign = '';
-                        if (data.data[data.data.length - 1].balance.includes('-')) {
+                        if (data.txnCurrentBalance.includes('-')) {
                             sign = '-';
                         }
-                        let total_balance_ = Math.round(data.data[data.data.length - 1].balance.split(',').join('')).toFixed(2);
+                        let total_balance_ = Math.round(data.txnCurrentBalance.split(',').join('')).toFixed(2);
 
                         $("#inv_bal_amount").html(`${sign}₦${formater(total_balance_.toString())}`);
 
@@ -693,10 +693,12 @@ async function onOpenMode(name, operationId, is_credit) {
     if (name === 'Transfer') {
         // $("#chk_own_accounts").attr('checked', false);
         // $("#chk_own_accounts").attr('hidden', true);
-        // $("#chk_client_wallet").attr('hidden', true);
-
         // $("#lbl_chk_own_accounts").attr('hidden', true);
-        // $("#lbl_chk_client_wallet").attr('hidden', true);
+
+        if (isWalletPage === 1) {
+            $("#chk_client_wallet").attr('hidden', true);
+            $("#lbl_chk_client_wallet").attr('hidden', true);
+        }
         $('#opt_payment_made_by').attr('disabled', true);
     } else if (name === 'Withdraw') {
         $('#opt_payment_made_by').attr('disabled', true);
@@ -718,30 +720,41 @@ async function onOpenMode(name, operationId, is_credit) {
     selectedInvestment._is_credit = is_credit;
     opsObj.is_credit = is_credit;
     opsObj.operationId = operationId;
-    $("#viewOperationModalHeader").html(name + " Operation");
-    $("#btnTransaction").html(name);
-    $("#role_list_group").empty();
 
-    $.ajax({
-        url: `investment-txns/get-product-configs/${selectedInvestment.investmentId}`,
-        'type': 'get',
-        'success': function (data) {
-            product_config = data[0];
-            if (data.status === undefined) {
-                $('#wait').hide();
-                $("#input_amount").attr('disabled', false);
-                $("#input_description").attr('disabled', false);
-                $("#input_txn_date").attr('disabled', false);
-                let hint = '';
-                if (operationId === '1') {
-                    hint = `Min.: ${product_config.investment_min} - Max.: ${product_config.investment_max}`;
-                } else if (operationId === '3') {
-                    hint = `Max. withdrawal#: ${product_config.freq_withdrawal} - Over.: ${product_config.withdrawal_freq_duration}`
+    if (isWalletPage === 0) {
+        $("#viewOperationModalHeader").html(name + " Operation");
+        $("#btnTransaction").html(name);
+        $("#role_list_group").empty();
+
+        $.ajax({
+            url: `investment-txns/get-product-configs/${selectedInvestment.investmentId}`,
+            'type': 'get',
+            'success': function (data) {
+                product_config = data[0];
+                if (data.status === undefined) {
+                    $('#wait').hide();
+                    $("#input_amount").attr('disabled', false);
+                    $("#input_description").attr('disabled', false);
+                    $("#input_txn_date").attr('disabled', false);
+                    let hint = '';
+                    if (operationId === '1') {
+                        hint = `Min.: ${product_config.investment_min} - Max.: ${product_config.investment_max}`;
+                    } else if (operationId === '3') {
+                        hint = `Max. withdrawal#: ${product_config.freq_withdrawal} - Over.: ${product_config.withdrawal_freq_duration}`
+                    }
+                    $("#spanAmountRange").html(hint);
+                    $("#btnTransaction").attr('disabled', false);
+
+                } else {
+                    $('#wait').hide();
+                    $("#input_amount").attr('disabled', true);
+                    $("#btnTransaction").attr('disabled', true);
+                    $("#input_description").attr('disabled', true);
+                    $("#input_txn_date").attr('disabled', true);
+                    swal('Oops! An error occurred while initiating deposit dialog', '', 'error');
                 }
-                $("#spanAmountRange").html(hint);
-                $("#btnTransaction").attr('disabled', false);
-
-            } else {
+            },
+            'error': function (err) {
                 $('#wait').hide();
                 $("#input_amount").attr('disabled', true);
                 $("#btnTransaction").attr('disabled', true);
@@ -749,16 +762,8 @@ async function onOpenMode(name, operationId, is_credit) {
                 $("#input_txn_date").attr('disabled', true);
                 swal('Oops! An error occurred while initiating deposit dialog', '', 'error');
             }
-        },
-        'error': function (err) {
-            $('#wait').hide();
-            $("#input_amount").attr('disabled', true);
-            $("#btnTransaction").attr('disabled', true);
-            $("#input_description").attr('disabled', true);
-            $("#input_txn_date").attr('disabled', true);
-            swal('Oops! An error occurred while initiating deposit dialog', '', 'error');
-        }
-    });
+        });
+    }
 }
 $("#input_amount").on("keyup", function (event) {
     let val = $("#input_amount").val();
@@ -1468,7 +1473,6 @@ function onPost(value, approvedId, txnId, id, isDeny) {
         isDeny: isDeny,
         isPaymentMadeByWallet: data_row.isPaymentMadeByWallet
     }
-
     $.ajax({
         url: `investment-txns/posts`,
         'type': 'post',
@@ -1610,7 +1614,7 @@ function onTransferOperation() {
         }
         let investmentOps = {
             amount: amount,
-            description: `TRANSFER BETWEEN CLIENTS ACCOUNT; TRANSFER FROM : ${selectedInvestment.acctNo}(${selectedInvestment.fullname}) TO ${selectedAccount.code}(${selectedAccount.name})`,
+            description: `TRANSFER BETWEEN CLIENTS ACCOUNT; TRANSFER FROM : ${(isWalletPage === 1) ? sPageURL.split('=')[2].replace('%20', ' ') : selectedInvestment.acctNo(selectedInvestment.fullname)} TO ${selectedAccount.code}(${selectedAccount.name})`,
             investmentId: (isWalletPage === 0) ? selectedInvestment.investmentId : '',
             is_credit: 0,
             operationId: 2,
