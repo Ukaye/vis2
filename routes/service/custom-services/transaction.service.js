@@ -2717,14 +2717,14 @@ router.get('/client-wallets/:id', function (req, res, next) {
                     query: query
                 }
             }).then(payload2 => {
-
                 res.send({
                     draw: draw,
-                    txnCurrentBalance: payload2.data[0].txnCurrentBalance,
+                    txnCurrentBalance: (payload2.data[0].txnCurrentBalance === '') ? 0 : payload2.data[0].txnCurrentBalance,
                     recordsTotal: payload2.data[0].recordsTotal,
                     recordsFiltered: payload.data[0].recordsFiltered,
                     data: (uniqueTxns === undefined) ? [] : uniqueTxns
                 });
+            }, err => {
             });
         });
     });
