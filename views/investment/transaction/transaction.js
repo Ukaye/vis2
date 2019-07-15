@@ -8,6 +8,7 @@ let isWalletPage = 1;
 let sPageURL = '';
 let sURLVariables = "";
 let selectedOpsRequirement = [];
+let clientWalletBalance = 0;
 $(document).ready(function () {
     $('#bootstrap-data-table-export').DataTable();
     sPageURL = window.location.search.substring(1);
@@ -252,19 +253,21 @@ function bindDataTable(id) {
                             $('#btnTerminateInvestment').attr('disabled', true);
                             $('#btnInvestmentStatement').attr('disabled', true);
                         }
-                        $("#client_name").html((isWalletPage === 1) ? sPageURL.split('=')[2].replace('%20', ' ') : data.data[0].fullname);
+                        $("#client_name").html((isWalletPage === 1) ? sPageURL.split('=')[2].split('%20').join(' ') : data.data[0].fullname);
                         $("#inv_name").html(`${data.data[0].name} (${data.data[0].code})`);
                         $("#inv_acct_no").html(`${data.data[0].acctNo}`);
+                        selectedInvestment.txnCurrentBalance = data.txnCurrentBalance;
                         let sign = '';
                         if (data.txnCurrentBalance.includes('-')) {
                             sign = '-';
+                            selectedInvestment.txnCurrentBalance = '-' + data.txnCurrentBalance;
                         }
                         let total_balance_ = Math.round(data.txnCurrentBalance.split(',').join('')).toFixed(2);
 
                         $("#inv_bal_amount").html(`${sign}₦${formater(total_balance_.toString())}`);
 
                     } else {
-                        $("#client_name").html(sPageURL.split('=')[2].replace('%20', ' '));
+                        $("#client_name").html(sPageURL.split('=')[2].split('%20').join(' '));// replace('%20', ' '));
                         $("#inv_bal_amount").html(`₦0.00`);
                     }
                     fnCallback(data)
@@ -672,7 +675,6 @@ function getClientAccountBalance() {
             url: `/investment-txns/client-wallet-balance/${selectedInvestment.clientId}`,
             'type': 'get',
             'success': function (data) {
-                clientBalance = (data[0] !== undefined) ? data[0].balance : 0.00;
                 $('#wait').hide();
                 if (data.status === undefined) {
                     resolve(data[0]);
@@ -706,7 +708,9 @@ async function onOpenMode(name, operationId, is_credit) {
         $('#opt_payment_made_by').attr('disabled', false);
         $('#opt_payment_made_by').html('');
         const _acctBal = await getClientAccountBalance();
+        clientWalletBalance = _acctBal.balance;
         let sign = '';
+        _acctBal.balance = (_acctBal.balance === undefined || _acctBal.balance === '') ? 0.00 : _acctBal.balance;
         if (_acctBal.balance.toString().includes('-')) {
             sign = '-';
         }
@@ -720,7 +724,7 @@ async function onOpenMode(name, operationId, is_credit) {
     selectedInvestment._is_credit = is_credit;
     opsObj.is_credit = is_credit;
     opsObj.operationId = operationId;
-    
+
     $("#viewOperationModalHeader").html(name + " Operation");
     $("#btnTransaction").html(name);
     $("#role_list_group").empty();
@@ -851,7 +855,10 @@ function setReviewRequirements(value) {
 function onExecutiveTransaction() {
     let _mRoleId = [];
     let mAmount_ = $("#input_amount").val().toString().split(',').join('');
-    if (parseFloat(selectedInvestment.balance.toString()) < parseFloat(mAmount_) && opsObj.operationId !== '1') {
+    if (parseFloat(clientWalletBalance.toString()) < parseFloat(mAmount_) && opsObj.operationId === '1' && $('#opt_payment_made_by').val() === '1') {
+        swal('Insufficent wallet balance for this transaction', '', 'error');
+        return;
+    } else if (parseFloat(selectedInvestment.txnCurrentBalance.toString()) < parseFloat(mAmount_) && opsObj.operationId !== '1') {
         swal('Insufficent account balance for this transaction', '', 'error');
         return;
     }
@@ -1612,7 +1619,7 @@ function onTransferOperation() {
         }
         let investmentOps = {
             amount: amount,
-            description: `TRANSFER BETWEEN CLIENTS ACCOUNT; TRANSFER FROM : ${(isWalletPage === 1) ? sPageURL.split('=')[2].replace('%20', ' ') : selectedInvestment.acctNo(selectedInvestment.fullname)} TO ${selectedAccount.code}(${selectedAccount.name})`,
+            description: `TRANSFER BETWEEN CLIENTS ACCOUNT; TRANSFER FROM : ${(isWalletPage === 1) ? sPageURL.split('=')[2].split('%20').join(' ') : selectedInvestment.acctNo(selectedInvestment.fullname)} TO ${selectedAccount.code}(${selectedAccount.name})`,
             investmentId: (isWalletPage === 0) ? selectedInvestment.investmentId : '',
             is_credit: 0,
             operationId: 2,
