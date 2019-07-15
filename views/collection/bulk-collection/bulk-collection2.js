@@ -215,6 +215,8 @@ function validatePayment() {
 }
 
 function postPayment(overpayment) {
+    let totalInvoice = sumArrayObjects(selectedInvoices, 'payment_amount');
+
     $('#wait').show();
     $.ajax({
         'url': '/collection/bulk_upload/confirm-payment',
@@ -231,8 +233,20 @@ function postPayment(overpayment) {
                 selectedInvoices.splice(selectedInvoices.findIndex((e) => { return e.ID === selectedInvoices[i]['ID']; }), 1);
             }
             for (let i=0; i<selectedPayments.length; i++) {
-                $(`#payment-${selectedPayments[i]['ID']}`).remove();
-                selectedPayments.splice(selectedPayments.findIndex((e) => { return e.ID === selectedPayments[i]['ID']; }), 1);
+                if (overpayment > 0) {
+                    window.location.reload();
+                    // $(`#payment-${selectedPayments[i]['ID']} small`).html(`
+                    //         <strong>Allocated: </strong>${numberToCurrencyformatter(totalInvoice)}
+                    //         <strong>Unallocated: </strong>${numberToCurrencyformatter(overpayment)}`);
+                    // let payment_update = selectedPayments[i];
+                    // payment_update.allocated = totalInvoice;
+                    // payment_update.unallocated = overpayment;
+                    // selectedPayments.splice(selectedPayments.findIndex((e) => { return e.ID === payment_update.ID; }), 0, payment_update);
+                    // allPayments.splice(allPayments.findIndex((e) => { return e.ID === payment_update.ID; }), 0, payment_update);
+                } else {
+                    $(`#payment-${selectedPayments[i]['ID']}`).remove();
+                    selectedPayments.splice(selectedPayments.findIndex((e) => { return e.ID === selectedPayments[i]['ID']; }), 1);
+                }
             }
             $('#wait').hide();
             notification(data.response, '', 'success');

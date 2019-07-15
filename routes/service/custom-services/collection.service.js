@@ -85,10 +85,10 @@ router.get('/bulk_upload', function(req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let	filter = req.query.history,
         allocated = 'SELECT SUM(h.payment_amount + h.interest_amount + h.fees_amount + h.penalty_amount) ' +
-            'FROM schedule_history h WHERE h.collection_bulk_uploadID = ID',
+            'FROM schedule_history h WHERE h.collection_bulk_uploadID = c.ID',
         allocated_ = `CASE WHEN (${allocated}) IS NULL THEN 0 ELSE (${allocated}) END`,
-        query = `SELECT *, ${allocated_} allocated, (credit - ${allocated_}) unallocated FROM collection_bulk_uploads WHERE 
-            (status = ${enums.COLLECTION_BULK_UPLOAD.STATUS.NO_PAYMENT} OR status = ${enums.COLLECTION_BULK_UPLOAD.STATUS.PART_PAYMENT})`,
+        query = `SELECT c.*, ${allocated_} allocated, (c.credit - ${allocated_}) unallocated FROM collection_bulk_uploads c WHERE 
+            (c.status = ${enums.COLLECTION_BULK_UPLOAD.STATUS.NO_PAYMENT} OR c.status = ${enums.COLLECTION_BULK_UPLOAD.STATUS.PART_PAYMENT})`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
     if (filter) query = query.concat(` AND bulk_upload_historyID = ${filter}`);
