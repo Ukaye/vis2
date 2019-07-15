@@ -98,7 +98,10 @@ function displayPayment(val) {
         <li id="payment-${val.ID}" class="ui-state-default">
             <div class="row">
                 <div class="col-lg-10">
-                    <p><strong>Amount: </strong>${numberToCurrencyformatter(amount)} ${type}</p>
+                    <p><strong>Amount: </strong>${numberToCurrencyformatter(amount)} ${type}
+                        <small class="text-muted"><strong>Allocated: </strong>${numberToCurrencyformatter(val.allocated)} 
+                            <strong>Unallocated: </strong>${numberToCurrencyformatter(val.unallocated)}
+                        </small></p>
                     <p><strong>Date: </strong>${val.value_date}</p>
                     <p><strong>Description: </strong>${val.description}</p>
                 </div>
@@ -189,13 +192,14 @@ function validatePayment() {
         return notification('No payment has been selected yet!', '', 'warning');
 
     let totalInvoice = sumArrayObjects(selectedInvoices, 'payment_amount'),
-        totalPayment = sumArrayObjects(selectedPayments, 'credit'),
+        totalPayment = sumArrayObjects(selectedPayments, 'unallocated'),
         overpayment = (totalPayment - totalInvoice).round(2);
 
     if (overpayment > 0) {
         swal({
             title: 'Are you sure?',
-            text: `Overpayment of ₦${numberToCurrencyformatter(overpayment)} would be saved to escrow`,
+            // text: `Overpayment of ₦${numberToCurrencyformatter(overpayment)} would be saved to escrow`,
+            text: `₦${numberToCurrencyformatter(overpayment)} will remain unallocated`,
             icon:  'warning',
             buttons: true,
             dangerMode: true
@@ -322,14 +326,15 @@ function findMatches() {
 }
 
 function searchForKeywords(invoice) {
-    let phoneMatch = ($.grep(allPayments, (e) => {
+    let allPayments_ = $.grep(allPayments, (e) => { return e.allocated === 0 });
+    let phoneMatch = ($.grep(allPayments_, (e) => {
             if (!invoice.phone) return false;
             let desc = e.description.toLowerCase(),
                 exp = new RegExp(invoice.phone, 'gi'),
                 exp_ = new RegExp(invoice.phone.substr(4, invoice.phone.length), 'gi');
             return desc.match(exp) || desc.match(exp_);
         }))[0],
-        firstnameMatch = ($.grep(allPayments, (e) => {
+        firstnameMatch = ($.grep(allPayments_, (e) => {
             if (!invoice.first_name) return false;
             let desc = e.description.toLowerCase(),
                 exp = new RegExp(invoice.first_name.toLowerCase(), 'gi'),
@@ -337,7 +342,7 @@ function searchForKeywords(invoice) {
                 exp__ = new RegExp(invoice.first_name.toLowerCase().substr(invoice.first_name.length - 4), 'gi');
             return desc.match(exp) || desc.match(exp_) || desc.match(exp__);
         }))[0],
-        middlenameMatch = ($.grep(allPayments, (e) => {
+        middlenameMatch = ($.grep(allPayments_, (e) => {
             if (!invoice.middle_name) return false;
             let desc = e.description.toLowerCase(),
                 exp = new RegExp(invoice.middle_name.toLowerCase(), 'gi'),
@@ -345,7 +350,7 @@ function searchForKeywords(invoice) {
                 exp__ = new RegExp(invoice.middle_name.toLowerCase().substr(invoice.middle_name.length - 4), 'gi');
             return desc.match(exp) || desc.match(exp_) || desc.match(exp__);
         }))[0],
-        lastnameMatch = ($.grep(allPayments, (e) => {
+        lastnameMatch = ($.grep(allPayments_, (e) => {
             if (!invoice.last_name) return false;
             let desc = e.description.toLowerCase(),
                 exp = new RegExp(invoice.last_name.toLowerCase(), 'gi'),
@@ -353,7 +358,7 @@ function searchForKeywords(invoice) {
                 exp__ = new RegExp(invoice.last_name.toLowerCase().substr(invoice.last_name.length - 4), 'gi');
             return desc.match(exp) || desc.match(exp_) || desc.match(exp__);
         }))[0],
-        amountMatch = ($.grep(allPayments, (e) => {
+        amountMatch = ($.grep(allPayments_, (e) => {
             if (!invoice.payment_amount) return false;
             let invoice_amt = currencyToNumberformatter(e.credit).toString(),
                 payment_amt = currencyToNumberformatter(invoice.payment_amount).toString(),
@@ -468,7 +473,8 @@ function findReversals() {
 }
 
 function searchForReversal(payment) {
-    let amountMatch = ($.grep(allPayments, (e) => {
+    let allPayments_ = $.grep(allPayments, (e) => { return e.allocated === 0 });
+    let amountMatch = ($.grep(allPayments_, (e) => {
             if (!payment.credit && !payment.debit) return false;
             let debit_amt = currencyToNumberformatter(e.debit).toString(),
                 credit_amt = currencyToNumberformatter(e.credit).toString(),
