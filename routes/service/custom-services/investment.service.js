@@ -691,7 +691,10 @@ router.get('/client-investments/:id', function (req, res, next) {
                 query: query
             }
         }).then(payload => {
-            query = `SELECT count(*) as recordsTotal FROM investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id}`;
+            query = `Select 
+            (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY updated_date DESC LIMIT 1) as txnCurrentBalance,
+            (SELECT count(*) as recordsTotal FROM investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id}) as recordsTotal`;
+
             endpoint = '/core-service/get';
             url = `${HOST}${endpoint}`;
             axios.get(url, {
@@ -701,6 +704,7 @@ router.get('/client-investments/:id', function (req, res, next) {
             }).then(payload2 => {
                 res.send({
                     draw: draw,
+                    txnCurrentBalance: payload2.data[0].txnCurrentBalance,
                     recordsTotal: payload2.data[0].recordsTotal,
                     recordsFiltered: payload.data[0].recordsFiltered,
                     data: (uniqueTxns === undefined) ? [] : uniqueTxns

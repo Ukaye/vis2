@@ -43,7 +43,7 @@ function decideListOfAccounts(id) {
                     limit: 10,
                     page: params.page,
                     search_string: params.term,
-                    clientId: selectedInvestment.clientId,
+                    clientId: (isWalletPage === 1) ? sURLVariables : selectedInvestment.clientId,
                     excludedItem: selectedInvestment.investmentId
                 };
             },
@@ -237,11 +237,11 @@ function bindDataTable(id) {
                 },
                 success: function (data) {
                     if (data.data.length > 0) {
-                        selectedInvestment = data.data[data.data.length - 1];
-                        if (selectedInvestment.canTerminate.toString() === '0') {
+                        selectedInvestment = (isWalletPage === 1) ? data.data[0] : data.data[data.data.length - 1];
+                        if (selectedInvestment.canTerminate === 0 || selectedInvestment.canTerminate === null) {
                             $('#btnTerminateInvestment').attr('disabled', true);
                         }
-                        if (selectedInvestment.acct_allows_withdrawal.toString() === '0') {
+                        if ((selectedInvestment.acct_allows_withdrawal === 0 || selectedInvestment.acct_allows_withdrawal === null) && isWalletPage === 0) {
                             $('#btnTransfer').attr('disabled', true);
                             $('#btnWithdrawal').attr('disabled', true);
                         }
@@ -252,19 +252,19 @@ function bindDataTable(id) {
                             $('#btnTerminateInvestment').attr('disabled', true);
                             $('#btnInvestmentStatement').attr('disabled', true);
                         }
-                        $("#client_name").html(data.data[0].fullname);
+                        $("#client_name").html((isWalletPage === 1) ? sPageURL.split('=')[2].replace('%20', ' ') : data.data[0].fullname);
                         $("#inv_name").html(`${data.data[0].name} (${data.data[0].code})`);
                         $("#inv_acct_no").html(`${data.data[0].acctNo}`);
                         let sign = '';
-                        if (data.data[data.data.length - 1].balance.includes('-')) {
+                        if (data.txnCurrentBalance.includes('-')) {
                             sign = '-';
                         }
-                        let total_balance_ = Math.round(data.data[data.data.length - 1].balance.split(',').join('')).toFixed(2);
+                        let total_balance_ = Math.round(data.txnCurrentBalance.split(',').join('')).toFixed(2);
 
                         $("#inv_bal_amount").html(`${sign}₦${formater(total_balance_.toString())}`);
 
                     } else {
-                        $("#client_name").html(sPageURL.split('=')[2].split('%20').join(''));
+                        $("#client_name").html(sPageURL.split('=')[2].replace('%20', ' '));
                         $("#inv_bal_amount").html(`₦0.00`);
                     }
                     fnCallback(data)
@@ -349,7 +349,7 @@ function bindDataTable(id) {
                         </i> 
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         <button class="dropdown-item" id="dropdownItemDoc" data-toggle="modal" data-target="#viewListDocModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Document</button>
-                          <button class="dropdown-item" id="dropdownItemRevert" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 1 && full.is_capital === 0) ? '' : 'disabled'}>Reverse</button>
+                          <button class="dropdown-item" id="dropdownItemRevert" ${(full.isWallet === 1 || full.isTransfer === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 1 && full.is_capital === 0) ? '' : 'disabled'}>Reverse</button>
                           <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 0) ? '' : 'disabled'}>Review</button>
                           <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1) ? '' : 'disabled'} ${(full.approvalDone === 0) ? '' : 'disabled'}>Approval</button>
                           <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1 && full.approvalDone === 1) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Post</button>
@@ -669,7 +669,7 @@ $(document).ready(function () { });
 function getClientAccountBalance() {
     return new Promise((resolve, reject) => {
         $.ajax({
-            url: `/investment-txns/client-wallet-balance/${data_row.clientId}`,
+            url: `/investment-txns/client-wallet-balance/${selectedInvestment.clientId}`,
             'type': 'get',
             'success': function (data) {
                 clientBalance = (data[0] !== undefined) ? data[0].balance : 0.00;
@@ -693,10 +693,12 @@ async function onOpenMode(name, operationId, is_credit) {
     if (name === 'Transfer') {
         // $("#chk_own_accounts").attr('checked', false);
         // $("#chk_own_accounts").attr('hidden', true);
-        // $("#chk_client_wallet").attr('hidden', true);
-
         // $("#lbl_chk_own_accounts").attr('hidden', true);
-        // $("#lbl_chk_client_wallet").attr('hidden', true);
+
+        if (isWalletPage === 1) {
+            $("#chk_client_wallet").attr('hidden', true);
+            $("#lbl_chk_client_wallet").attr('hidden', true);
+        }
         $('#opt_payment_made_by').attr('disabled', true);
     } else if (name === 'Withdraw') {
         $('#opt_payment_made_by').attr('disabled', true);
@@ -718,6 +720,7 @@ async function onOpenMode(name, operationId, is_credit) {
     selectedInvestment._is_credit = is_credit;
     opsObj.is_credit = is_credit;
     opsObj.operationId = operationId;
+    
     $("#viewOperationModalHeader").html(name + " Operation");
     $("#btnTransaction").html(name);
     $("#role_list_group").empty();
@@ -888,7 +891,7 @@ function onExecutiveTransaction() {
             txn_date: $('#input_txn_date').val(),
             isPaymentMadeByWallet: $('#opt_payment_made_by').val()
         };
-
+        investmentOps.clientId = (investmentOps.isPaymentMadeByWallet === 1) ? selectedInvestment.clientId : sURLVariables;
         $.ajax({
             url: `investment-txns/create`,
             'type': 'post',
@@ -899,7 +902,8 @@ function onExecutiveTransaction() {
                     $("#input_amount").val('');
                     $("#input_description").val('');
                     swal(`${(investmentOps.isDeposit === 1) ? 'Deposit' : 'Withdrawal'} transaction successful!`, '', 'success');
-                    bindDataTable(selectedInvestment.investmentId, false);
+                    // bindDataTable(selectedInvestment.investmentId, false);
+                    table.ajax.reload(null, false);
                 } else {
                     $('#wait').hide();
                     swal('Oops! An error occurred while executing deposit transaction', '', 'error');
@@ -1461,7 +1465,7 @@ function onPost(value, approvedId, txnId, id, isDeny) {
         created_date: data_row.created_date,
         isMoveFundTransfer: data_row.isMoveFundTransfer,
         isWallet: data_row.isWallet,
-        clientId: data_row.clientId,
+        clientId: (isWalletPage === 1) ? sURLVariables : data_row.clientId,
         isPaymentMadeByWallet: data_row.isPaymentMadeByWallet,
         priority: priority,
         isDeny: isDeny,
@@ -1608,7 +1612,7 @@ function onTransferOperation() {
         }
         let investmentOps = {
             amount: amount,
-            description: `TRANSFER BETWEEN CLIENTS ACCOUNT; TRANSFER FROM : ${selectedInvestment.acctNo}(${selectedInvestment.fullname}) TO ${selectedAccount.code}(${selectedAccount.name})`,
+            description: `TRANSFER BETWEEN CLIENTS ACCOUNT; TRANSFER FROM : ${(isWalletPage === 1) ? sPageURL.split('=')[2].replace('%20', ' ') : selectedInvestment.acctNo(selectedInvestment.fullname)} TO ${selectedAccount.code}(${selectedAccount.name})`,
             investmentId: (isWalletPage === 0) ? selectedInvestment.investmentId : '',
             is_credit: 0,
             operationId: 2,
