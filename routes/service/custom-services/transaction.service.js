@@ -128,7 +128,7 @@ router.post('/create', function (req, res, next) {
                 isForceTerminate: data.isForceTerminate,
                 expectedTerminationDate: data.expectedTerminationDate,
                 isWallet: data.isWallet,
-                isPaymentMadeByWallet: (data.isWallet === '1') ? 0 : data.isPaymentMadeByWallet
+                isPaymentMadeByWallet: (data.isWallet === '1') ? 0 : ((data.isPaymentMadeByWallet === '') ? 0 : data.isPaymentMadeByWallet)
             };
             query = `INSERT INTO investment_txns SET ?`;
             endpoint = `/core-service/post?query=${query}`;
@@ -2741,6 +2741,9 @@ router.get('/client-wallet-balance/:id', function (req, res, next) {
             query: query
         }
     }).then(response => {
+        if (response.data.length === 0) {
+            response.data = [{ balance: 0.00 }];
+        }
         res.send(response.data);
     }, err => {
         res.send(err);
