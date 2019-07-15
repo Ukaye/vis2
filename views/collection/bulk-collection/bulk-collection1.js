@@ -5,4 +5,5 @@ jQuery(document).ready(function($){
     $payments.sortable();
     $invoices.disableSelection();
     $payments.disableSelection();
+    $('.dropdown-toggle').dropdown();
 });

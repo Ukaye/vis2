@@ -5,6 +5,7 @@ const
     db = require('../../../db'),
     express = require('express'),
     router = express.Router(),
+    enums = require('../../../enums'),
     notificationsService = require('../../notifications-service');
 
 router.post('/bulk_upload', function (req, res, next) {
@@ -51,8 +52,9 @@ router.post('/bulk_upload', function (req, res, next) {
                                 });
                             } else {
                                 async.forEach(statement, function (record, callback) {
-                                    record.bulk_uploadID = history_id[0]['ID'];
+                                    record.bulk_upload_historyID = history_id[0]['ID'];
                                     record.created_by = req.body.created_by;
+                                    record.status = enums.COLLECTION_BULK_UPLOAD.STATUS.NO_PAYMENT;
                                     record.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                                     connection.query(query, record, function (error, response) {
                                         if (error) {
@@ -82,10 +84,14 @@ router.post('/bulk_upload', function (req, res, next) {
 router.get('/bulk_upload', function(req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let	filter = req.query.history,
-        query = `SELECT * FROM collection_bulk_uploads WHERE status = 1`,
+        allocated = 'SELECT SUM(h.payment_amount + h.interest_amount + h.fees_amount + h.penalty_amount) ' +
+            'FROM schedule_history h WHERE h.collection_bulk_uploadID = c.ID',
+        allocated_ = `CASE WHEN (${allocated}) IS NULL THEN 0 ELSE (${allocated}) END`,
+        query = `SELECT c.*, ${allocated_} allocated, (c.credit - ${allocated_}) unallocated FROM collection_bulk_uploads c WHERE 
+            (c.status = ${enums.COLLECTION_BULK_UPLOAD.STATUS.NO_PAYMENT} OR c.status = ${enums.COLLECTION_BULK_UPLOAD.STATUS.PART_PAYMENT})`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
-    if (filter) query = query.concat(` AND bulk_uploadID = ${filter}`);
+    if (filter) query = query.concat(` AND bulk_upload_historyID = ${filter}`);
 
     axios.get(url, {
         params: {
@@ -107,7 +113,7 @@ router.delete('/bulk_upload/record/:id', function (req, res, next) {
         query =  `UPDATE collection_bulk_uploads Set ? WHERE ID = ${id}`,
         endpoint = `/core-service/post?query=${query}`,
         url = `${HOST}${endpoint}`;
-    payload.status = 0;
+    payload.status = enums.COLLECTION_BULK_UPLOAD.STATUS.INACTIVE;
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
     db.query(query, payload, function (error, response) {
@@ -124,77 +130,78 @@ router.post('/bulk_upload/confirm-payment', function(req, res, next) {
         created_by = req.body.created_by,
         overpayment = req.body.overpayment;
 
-    overpaymentCheck(invoices[0]['clientID'], overpayment, function () {
-        db.getConnection(function(err, connection) {
-            if (err) throw err;
+    // overpaymentCheck(invoices[0]['clientID'], overpayment, function () {
+    db.getConnection(function(err, connection) {
+        if (err) throw err;
 
-            async.forEach(invoices, function (invoice, callback) {
-                async.forEach(payments, function (payment, callback_) {
-                    let update = {
-                        actual_payment_amount: '0',
-                        actual_interest_amount: '0',
-                        actual_fees_amount: '0',
-                        actual_penalty_amount: '0',
-                        payment_status: 1
-                    };
-                    if (invoice.type === 'Principal')
-                        update.actual_payment_amount = parseFloat(invoice.payment_amount);
-                    if (invoice.type === 'Interest')
-                        update.actual_interest_amount = parseFloat(invoice.payment_amount);
-                    connection.query('UPDATE application_schedules SET ? WHERE ID = ' + invoice.ID, update, function (error, result, fields) {
-                        if (error) {
-                            console.log(error);
-                            callback_();
-                        } else {
-                            let record = {};
-                            record.invoiceID = invoice.ID;
-                            record.agentID = created_by;
-                            record.applicationID = invoice.applicationID;
-                            record.payment_amount = update.actual_payment_amount;
-                            record.interest_amount = update.actual_interest_amount;
-                            record.fees_amount = update.actual_fees_amount;
-                            record.penalty_amount = update.actual_penalty_amount;
-                            record.payment_source = 'cash';
-                            record.payment_date = payment.value_date;
-                            record.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                            connection.query('INSERT INTO schedule_history SET ?', record, function (error, response, fields) {
-                                if (error) {
-                                    console.log(error);
+        async.forEach(invoices, function (invoice, callback) {
+            async.forEach(payments, function (payment, callback_) {
+                let update = {
+                    actual_payment_amount: '0',
+                    actual_interest_amount: '0',
+                    actual_fees_amount: '0',
+                    actual_penalty_amount: '0',
+                    payment_status: 1
+                };
+                if (invoice.type === 'Principal')
+                    update.actual_payment_amount = parseFloat(invoice.payment_amount);
+                if (invoice.type === 'Interest')
+                    update.actual_interest_amount = parseFloat(invoice.payment_amount);
+                connection.query('UPDATE application_schedules SET ? WHERE ID = ' + invoice.ID, update, function (error, result, fields) {
+                    if (error) {
+                        console.log(error);
+                        callback_();
+                    } else {
+                        let record = {};
+                        record.invoiceID = invoice.ID;
+                        record.agentID = created_by;
+                        record.applicationID = invoice.applicationID;
+                        record.payment_amount = update.actual_payment_amount;
+                        record.interest_amount = update.actual_interest_amount;
+                        record.fees_amount = update.actual_fees_amount;
+                        record.penalty_amount = update.actual_penalty_amount;
+                        record.payment_source = 'cash';
+                        record.payment_date = payment.value_date;
+                        record.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                        record.collection_bulk_uploadID = payment.ID;
+                        connection.query('INSERT INTO schedule_history SET ?', record, function (error, response, fields) {
+                            if (error) {
+                                console.log(error);
+                                callback_();
+                            } else {
+                                count++;
+                                let payload = {};
+                                payload.category = 'Application';
+                                payload.userid = req.cookies.timeout;
+                                payload.description = 'Loan Application Payment Confirmed';
+                                payload.affected = invoice.applicationID;
+                                notificationsService.log(req, payload);
+
+                                let update2 = {};
+                                update2.status = (overpayment > 0)? enums.COLLECTION_BULK_UPLOAD.STATUS.PART_PAYMENT : enums.COLLECTION_BULK_UPLOAD.STATUS.FULL_PAYMENT;
+                                update2.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                                db.query(`UPDATE collection_bulk_uploads Set ? WHERE ID = ${payment.ID}`, update2, function (error, response2) {
+                                    if (error)
+                                        console.log(error);
                                     callback_();
-                                } else {
-                                    count++;
-                                    let payload = {};
-                                    payload.category = 'Application';
-                                    payload.userid = req.cookies.timeout;
-                                    payload.description = 'Loan Application Payment Confirmed';
-                                    payload.affected = invoice.applicationID;
-                                    notificationsService.log(req, payload);
-
-                                    let update2 = {};
-                                    update2.status = 0;
-                                    update2.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                                    db.query(`UPDATE collection_bulk_uploads Set ? WHERE ID = ${payment.ID}`, update2, function (error, response2) {
-                                        if (error)
-                                            console.log(error);
-                                        callback_();
-                                    });
-                                }
-                            });
-                        }
-                    });
-                }, function (data) {
-                    callback();
+                                });
+                            }
+                        });
+                    }
                 });
             }, function (data) {
-                connection.release();
-                return res.send({
-                    status: 200,
-                    error: null,
-                    response: `${count} payment(s) posted successfully.`
-                });
+                callback();
+            });
+        }, function (data) {
+            connection.release();
+            return res.send({
+                status: 200,
+                error: null,
+                response: `${count} payment(s) posted successfully.`
             });
         });
     });
+    // });
 });
 
 function overpaymentCheck(clientID, amount, callback) {
@@ -268,7 +275,7 @@ router.delete('/bulk_upload/records/debit', function (req, res, next) {
         query =  `UPDATE collection_bulk_uploads Set ? WHERE (credit - debit) < 0`,
         endpoint = `/core-service/post?query=${query}`,
         url = `${HOST}${endpoint}`;
-    payload.status = 0;
+    payload.status = enums.COLLECTION_BULK_UPLOAD.STATUS.INACTIVE;
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
     db.query(query, payload, function (error, response) {

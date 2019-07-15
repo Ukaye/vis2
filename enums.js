@@ -9,4 +9,13 @@ enums.PREAPPLICATION = {
     }
 };
 
+enums.COLLECTION_BULK_UPLOAD = {
+    STATUS: {
+        INACTIVE: 0,
+        NO_PAYMENT: 1,
+        PART_PAYMENT: 2,
+        FULL_PAYMENT: 3
+    }
+};
+
 module.exports = enums;
