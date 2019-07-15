@@ -704,7 +704,7 @@ router.get('/client-investments/:id', function (req, res, next) {
             }).then(payload2 => {
                 res.send({
                     draw: draw,
-                    txnCurrentBalance: payload2.data[0].txnCurrentBalance,
+                    txnCurrentBalance: (payload2.data[0].txnCurrentBalance === null) ? '' : payload2.data[0].txnCurrentBalance,
                     recordsTotal: payload2.data[0].recordsTotal,
                     recordsFiltered: payload.data[0].recordsFiltered,
                     data: (uniqueTxns === undefined) ? [] : uniqueTxns
