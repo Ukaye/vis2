@@ -237,6 +237,7 @@ function bindDataTable(id) {
                     order: tableHeaders[aoData[2].value[0].column].query
                 },
                 success: function (data) {
+                    console.log(data);
                     if (data.data.length > 0) {
                         selectedInvestment = (isWalletPage === 1) ? data.data[0] : data.data[data.data.length - 1];
                         if (selectedInvestment.canTerminate === 0 || selectedInvestment.canTerminate === null) {

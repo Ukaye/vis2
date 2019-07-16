@@ -19,6 +19,7 @@ const differenceInCalendarMonths = require('date-fns/difference_in_calendar_mont
 const differenceInCalendarYears = require('date-fns/difference_in_calendar_years');
 const addMonths = require('date-fns/add_months');
 const isSameMonth = require('date-fns/is_same_month');
+var differenceInCalendarDays = require('date-fns/difference_in_calendar_days');
 
 //re.role_name as review_role_name,po.role_name as post_role_name,
 // left join user_roles re on a.roleId = re.id
@@ -1139,6 +1140,51 @@ function computeCurrentBalance(investmentId, HOST) {
             resolve(0);
         });
     });
+}
+
+function upFrontInterest(data,HOST) {
+    if (data.interest_disbursement_time.toString() === 'Up-Front') {
+        return new Promise((resolve, reject) => {
+            let T = differenceInCalendarDays(
+                new Date(data.investment_mature_date.toString()),
+                new Date(data.investment_start_date.toString())
+            );
+            let interestInDays = T / 365;
+            let SI = (parseFloat(data.amount.split(',').join('')) * parseFloat(data.interest_rate.split(',').join('')) * interestInDays) / 100;
+            let total = parseFloat(computeInterest.txnBalance.split(',').join(''))
+            let _inv_txn = {
+                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                description: 'Total Up-Front interest',
+                amount: SI,
+                is_credit: 1,
+                created_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                balance: total,
+                is_capital: 0,
+                ref_no: moment().utcOffset('+0100').format('x'),
+                updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                investmentId: data.investmentId,
+                createdBy: data.createdBy,
+                clientId: data.clientId,
+                isWallet: (data.interest_moves_wallet.toString() === '1') ? 1 : 0,
+                isInterest: 1,
+                isApproved: 1,
+                postDone: 1,
+                reviewDone: 1,
+                approvalDone: 1,
+            };
+            let query = `INSERT INTO investment_txns SET ?`;
+            let endpoint = `/core-service/post?query=${query}`;
+            let url = `${HOST}${endpoint}`;
+            axios.post(url, _inv_txn)
+                .then(function (_payload_) {
+                    resolve({});
+                }, err => {
+                    reject(err);
+                });
+        });
+    } else {
+        return {};
+    }
 }
 
 
@@ -2706,7 +2752,7 @@ router.get('/client-wallets/:id', function (req, res, next) {
             }
         }).then(payload => {
             query = `Select 
-            (Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY updated_date DESC LIMIT 1) as txnCurrentBalance,
+            (Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%l:%i %p') DESC LIMIT 1) as txnCurrentBalance,
             (SELECT count(*) as recordsTotal FROM investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id}) as recordsTotal`;
 
             // query = `SELECT count(*) as recordsTotal FROM investment_txns WHERE clientId = ${req.params.id}`;
