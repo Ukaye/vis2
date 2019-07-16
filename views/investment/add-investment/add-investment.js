@@ -5,7 +5,7 @@ let clientBalance = 0;
 $(document).ready(function () {
     component_initializer();
     let currentDate = new Date();
-    let _cmax = `${currentDate.getUTCFullYear()}-${pad(currentDate.getMonth()+1)}-${pad(currentDate.getDate())}`;
+    let _cmax = `${currentDate.getUTCFullYear()}-${pad(currentDate.getMonth() + 1)}-${pad(currentDate.getDate())}`;
     $('#investment_date_start').attr('max', _cmax);
 });
 var productsControl = {};
@@ -113,7 +113,7 @@ $("#investment_amount").on("focusout", function (event) {
         let amt_max = selectedValue.investment_max.split(',').join('');
         if (parseFloat(amount) < parseFloat(amt_min) || parseFloat(amount) > parseFloat(amt_max)) {
             $("#investment_amount").val("");
-            swal('Amount can not be below or above configured investment value','','error');
+            swal('Amount can not be below or above configured investment value', '', 'error');
         } else {
             $("#amount_info_error").html("");
         }
@@ -129,7 +129,7 @@ $("#investment_product").on("change", function (event) {
     const selectedID = $("#investment_product").val();
     let selectedValue = products.find(x => x.ID.toString() === selectedID.toString());
     if (selectedValue !== undefined) {
-        $("#amount_info").html(`Min.: ${(selectedValue.investment_min === '')? 'N/A' : selectedValue.investment_min} Max.:${(selectedValue.investment_max === '')? 'N/A' :selectedValue.investment_max}`);
+        $("#amount_info").html(`Min.: ${(selectedValue.investment_min === '') ? 'N/A' : selectedValue.investment_min} Max.:${(selectedValue.investment_max === '') ? 'N/A' : selectedValue.investment_max}`);
         let start_with = $("#investment_date_start").val();
 
         let min_date = new Date(start_with);
@@ -282,16 +282,17 @@ $('#client').on("select2:selecting", function (e) {
             url: `/investment-txns/client-wallet-balance/${_id}`,
             'type': 'get',
             'success': function (data) {
-                clientBalance = (data[0] !== undefined) ? data[0].balance : 0.00;
+                clientBalance = data[0].balance.toString();
+                console.log(data);
                 $('#opt_payment_made_by').html('');
                 if (data.status === undefined) {
                     $('#wait').hide();
                     if (data.length > 0) {
                         let sign = '';
-                        if (data[0].balance.toString().includes('-')) {
+                        if (clientBalance.toString().includes('-')) {
                             sign = '-';
                         }
-                        $('<option/>').val('1').html(`Wallet <strong>(₦${sign}${formater(data[0].balance)})</strong>`).appendTo(
+                        $('<option/>').val('1').html(`Wallet <strong>(₦${sign}${formater(clientBalance)})</strong>`).appendTo(
                             '#opt_payment_made_by');
                         $('<option/>').val('0').html(`Cash`).appendTo(
                             '#opt_payment_made_by');

@@ -708,6 +708,7 @@ async function onOpenMode(name, operationId, is_credit) {
         $('#opt_payment_made_by').attr('disabled', false);
         $('#opt_payment_made_by').html('');
         const _acctBal = await getClientAccountBalance();
+        console.log(_acctBal);
         clientWalletBalance = _acctBal.balance;
         let sign = '';
         _acctBal.balance = (_acctBal.balance === undefined || _acctBal.balance === '') ? 0.00 : _acctBal.balance;
