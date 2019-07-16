@@ -197,6 +197,13 @@ $("#btn_save_product").on("click", function (event) {
         createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
         isPaymentMadeByWallet: $('#opt_payment_made_by').val()
     };
+
+    if (selectedValue.interest_disbursement_time === 'Up-Front') {
+        if (data.investment_start_date === '' && data.investment_mature_date === '') {
+            swal('Oops! Product configured for Up-Front interest, Investment Start and Maturity date is required', '', 'error');
+            return;
+        }
+    }
     if (data.isPaymentMadeByWallet === '1') {
         if (parseFloat(data.amount.toString()) <= parseFloat(clientBalance.toString())) {
             $.ajax({
@@ -224,6 +231,7 @@ $("#btn_save_product").on("click", function (event) {
             });
         } else {
             swal('Oops! Clent has insufficient wallet balance', '', 'error');
+            return;
         }
     } else {
         $.ajax({
@@ -283,7 +291,6 @@ $('#client').on("select2:selecting", function (e) {
             'type': 'get',
             'success': function (data) {
                 clientBalance = data[0].balance.toString();
-                console.log(data);
                 $('#opt_payment_made_by').html('');
                 if (data.status === undefined) {
                     $('#wait').hide();
