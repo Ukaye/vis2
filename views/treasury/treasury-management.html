@@ -177,7 +177,7 @@
         <div class="col-sm-4">
             <div class="page-header float-left">
                 <div class="page-title">
-                    <h1>Client Information</h1>
+                    <h1>Treasury </h1>
                 </div>
             </div>
         </div>
@@ -186,8 +186,7 @@
                 <div class="page-title">
                     <ol class="breadcrumb text-right">
                         <li><a href="#">Dashboard</a></li>
-                        <li><a href="#">Clients</a></li>
-                        <li class="active">All Clients</li>
+                        <li><a href="#">Treasury</a></li>
                     </ol>
                 </div>
             </div>
@@ -203,65 +202,98 @@
                         <div class="col-sm-12">
                             <div class="card" style="border-color: transparent">
                                 <div class="row">
-                                    <div id="pic" class="col-sm-2" style="padding-right: 0px">
-
+                                    <div id="pic" class="col-sm-2" style="text-align: center; border: none; background-color: #f0f0f0; padding-top: 5px">
+                                        <div class="row" style="text-align: center">
+                                            <div class="col-sm-12 form-group" style="display: inline-block; width:100%">
+                                                <select id="period" style="display: inline-block; border: none; width: 100%" onchange="changePeriod(this)">
+                                                    <option value="1">Today</option>
+                                                    <option value="2">This Week</option>
+                                                    <option value="3">This Month</option>
+                                                </select>
+                                                <br/><br/>
+                                                <div class="col-xs-3" style="padding-left: 2px">
+                                                    <!--<button class="btn" style="background-color:transparent; border: none"><i class="fa fa-arrow-left"></i></button>-->
+                                                </div>
+                                                <div class="col-sm-6" style="text-align: center">
+                                                    <h5 style="display: inline-block">Date</h5>
+                                                </div>
+                                                <div class="col-sm-3">
+                                                    <!--<button class="btn" style="background-color:transparent; border: none"><i class="fa fa-arrow-right"></i></button>-->
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-12" >
+                                            <!--<div class="col-sm-2">-->
+                                            <!--<button class="btn" style=" border: none"><i class="fa fa-arrow-left"></i></button>-->
+                                            <!--</div>-->
+                                            <!--<div class="col-sm-6">-->
+                                            <!--<h5 style="display: inline-block">Date</h5>-->
+                                            <!--</div>-->
+                                            <!--<div class="col-sm-3">-->
+                                            <!--<button class="btn" style=" border: none"><i class="fa fa-arrow-right"></i></button>-->
+                                            <!--</div>-->
+                                        </div>
                                     </div>
-                                    <div class="col-sm-8" style="padding: 15px 0 0 15px;">
+                                    <div class="col-sm-7" style="padding: 15px 0 0 15px;">
                                         <div class="col-sm-12">
                                             <div class="col-sm-6">
-                                                <strong id="fullname"></strong><br />
-                                                <strong>Client ID#: </strong><span id="client_id"></span><br />
-                                                <i class="fa fa-phone"></i><span id="phone"></span>&nbsp;|&nbsp;<i
-                                                    class="fa fa-envelope"></i><span id="email"></span><br />
-                                                <strong>Loan Officer: </strong><span id="loan_officer"></span><br />
-                                                <strong>Branch: </strong><span id="branch"></span><br />
-                                                <a href="#" style="text-decoration: underline;" data-toggle="modal"
-                                                   data-target="#escrowHistory" onclick="escrowHistory()">Escrow
-                                                    Balance:
-                                                    ₦<span class="escrow-balance"></span></a>
-                                                <a style="text-decoration: underline;"
-                                                   onclick="onViewWalletBalance()">View Wallet Balance<span
-                                                        class="escrow-balance"></span></a>
+                                                <h3 id="">Investments & Savings</h3><hr />
+                                                <strong>Pay - Outs: </strong><span id="payouts"></span><br />
+                                                <strong>Interests Received: </strong><span id="interests"></span><br />
                                             </div>
                                             <div class="col-sm-6">
-                                                <br />
-                                                <strong>Total Loans Taken: </strong><span
-                                                    id="total_loans"></span><br />
-                                                <strong>Total Loan Balance: </strong><span
-                                                    id="total_balance"></span><br />
-                                                <strong>Total Interest Paid: </strong><span
-                                                    id="total_interest"></span>
-                                                <strong></strong><br />
+                                                <h3 id="">Loans</h3><hr />
+                                                <strong>Predicted Disbursements: </strong><span id="disbursements"></span><br />
+                                                <strong>Receivables: </strong><span id="receivables"></span><br />
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-sm-2" style="padding-top: 40px">
-                                        <button onclick="newApplication()" class="btn btn-success"><i
-                                                class="fa fa-plus"></i>
-                                            New Application</button><br /><br />
-                                        <button onclick="editUser()" class="btn btn-primary"><i class="fa fa-pencil"
-                                                                                                width="80"></i> Edit Client </button>
+                                    <div class="col-sm-3" style="padding: 15px 0 0 15px;">
+                                        <div class="col-sm-12">
+                                            <h3 id="">Aggregate</h3><hr />
+                                            <strong>Total Inflow: </strong><span id="total_ins"></span><br />
+                                            <strong>Total Outflow: </strong><span id="total_outs"></span><br />
+                                        </div>
                                     </div>
+                                </div><br/>
+                                <div class="row">
+                                    <div class="col-sm-2"></div>
+                                    <div class="col-sm-7" style="padding: 15px 0 0 15px;">
+                                        <div class="col-sm-12">
+                                            <div class="col-sm-8">
+                                                <div class="form-group">
+                                                    <!--<strong><label class="form-control-label">Role Name</label>-->
+                                                    <div class="input-group">
+                                                        <!--<div class="input-group-addon"><i class="fa fa-user"></i></div>-->
+                                                        <label class="form-control-label"><strong>Other Expenses: </strong></label>&nbsp;&nbsp;
+                                                        <input id="role" type="number" class="form-control" required="required">
+                                                    </div>
+                                                </div>
+                                                <!--<div class="form-group">-->
+                                                    <!--<span id="submit-error" style="padding-left:50px; text-align: center"></span><button type="button" class="btn btn-primary pull-right write" onclick="validate()"><i class="fa fa-save"></i> Save</button>-->
+                                                <!--</div>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-3"></div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-sm-12">
+                        <div class="col-sm-12" id="payouts-div">
                             <div class="card">
                                 <div class="card-header">
-                                    <h4 class="widget-title lighter smaller"><strong>Applications</strong> <span
-                                            id="no_of_applications"></span></h4>
+                                    <h4 class="widget-title lighter smaller"><strong>Investment Pay-Outs</strong></h4>
                                 </div>
 
                                 <div class="card-body">
                                     <div class="widget-main padding-8">
                                         <div>
-                                            <table id="loan-table" class="table table-striped table-bordered">
+                                            <table id="payouts-table" class="table table-striped table-bordered">
                                                 <thead>
                                                 <tr>
-                                                    <th>Loan Amount</th>
+                                                    <th>Investment ID</th>
+                                                    <th>Amount</th>
                                                     <th>Date Created</th>
-                                                    <th>Status</th>
-                                                    <th></th>
                                                 </tr>
                                                 </thead>
 
@@ -273,45 +305,25 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-sm-12">
+                        <div class="col-sm-12" id="interests-div">
                             <div class="card">
                                 <div class="card-header">
-                                    <h4 class="widget-title lighter smaller"><strong>Bad Cheques</strong></h4>
+                                    <h4 class="widget-title lighter smaller"><strong>Interests on Investments</strong></h4>
                                 </div>
+
                                 <div class="card-body">
                                     <div class="widget-main padding-8">
-                                        <form id="cheque-form" class="form-inline">
-                                            <div class="form-group">
-                                                <input id="cheque-no" type="text" class="form-control" title="Cheque Number" placeholder="Cheque Number" >
-                                            </div>
-                                            <div class="form-group">
-                                                <select id="cheque-bank" class="form-control" title="Cheque Bank">
-                                                    <option selected="selected">Select Bank</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-group">
-                                                <input id="cheque-date" type="date"  class="form-control" title="Cheque Date" placeholder="Cheque Date" >
-                                            </div>
-                                            <div class="form-group">
-                                                <select id="cheque-reason" class="form-control" title="Cheque Reason">
-                                                    <option selected="selected">Select Reason</option>
-                                                </select>
-                                            </div>
-                                            <button type="submit" class="btn btn-success">Add Cheque</button>
-                                        </form>
-                                        <hr>
                                         <div>
-                                            <table id="bad-cheques" class="table table-striped table-bordered">
+                                            <table id="interests-table" class="table table-striped table-bordered">
                                                 <thead>
                                                 <tr>
-                                                    <th>Cheque No</th>
-                                                    <th>Bank</th>
-                                                    <th>Date</th>
-                                                    <th>Reason</th>
-                                                    <th>Action</th>
+                                                    <th>Investment ID</th>
+                                                    <th>Amount</th>
+                                                    <th>Date Created</th>
                                                 </tr>
                                                 </thead>
-                                                <tbody>
+
+                                                <tbody id="">
                                                 </tbody>
                                             </table>
                                         </div>
@@ -319,49 +331,27 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-sm-12">
+                        <div class="col-sm-12" id="receivables-div">
                             <div class="card">
                                 <div class="card-header">
-                                    <h4 class="widget-title lighter smaller"><strong>Activities</strong> <span
-                                            id="no_of_activities"></span></h4>
+                                    <h4 class="widget-title lighter smaller"><strong>Loan Receivables</strong></h4>
                                 </div>
 
-                                <div id="feed" class="card-body">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-12">
-                            <div class="col-sm-4">
-                                <div class="card">
-                                    <div class="card-header"><strong>Personal Information</strong></div>
-                                    <div class="card-body">
-                                        <div width="100%">
-                                            <table class="table table-striped table-bordered">
-                                                <tbody id="personal"></tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-sm-4">
-                                <div class="card">
-                                    <div class="card-header"><strong>Employment Information</strong></div>
-                                    <div class="card-body">
-                                        <div width="100%">
-                                            <table class="table table-striped table-bordered">
-                                                <tbody id="employment"></tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-sm-4">
-                                <div class="card">
-                                    <div class="card-header"><strong>Reference Information</strong></div>
-                                    <div class="card-body">
-                                        <div width="100%">
-                                            <table class="table table-striped table-bordered">
-                                                <tbody id="reference"></tbody>
+                                <div class="card-body">
+                                    <div class="widget-main padding-8">
+                                        <div>
+                                            <table id="receivables-table" class="table table-striped table-bordered">
+                                                <thead>
+                                                <tr>
+                                                    <th>Loan ID</th>
+                                                    <th>Principal </th>
+                                                    <th>Interest </th>
+                                                    <th>Date Created</th>
+                                                </tr>
+                                                </thead>
+
+                                                <tbody id="">
+                                                </tbody>
                                             </table>
                                         </div>
                                     </div>
@@ -375,7 +365,7 @@
 
         </div><!-- .animated -->
         <div id="wait" style=";width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;">
-            <img src='spinner.gif' width="100" height="100" style="background-color: transparent" /></div>
+            <img src='/spinner.gif' width="100" height="100" style="background-color: transparent" /></div>
     </div><!-- .content -->
 
     <div class="modal fade" id="escrowHistory" tabindex="-1" role="dialog" aria-labelledby="escrowHistoryLabel">
@@ -411,28 +401,7 @@
 
 
 <!--<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>-->
-<!-- Begin emoji-picker JavaScript -->
-<script src="../assets/lib/js/config.js"></script>
-<script src="../assets/lib/js/util.js"></script>
-<script src="../assets/lib/js/jquery.emojiarea.js"></script>
-<script src="../assets/lib/js/emoji-picker.js"></script>
-<!-- End emoji-picker JavaScript -->
-<script>
-    $(function() {
-        // Initializes and creates emoji set from sprite sheet
-        window.emojiPicker = new EmojiPicker({
-            emojiable_selector: '[data-emojiable=true]',
-            assetsPath: '/assets/lib/img/',
-            popupButtonClasses: 'fa fa-smile-o'
-        });
-        // Finds all elements with `emojiable_selector` and converts them to rich emoji input fields
-        // You may want to delay this step if you have dynamically created input fields that appear later in the loading process
-        // It can be called as many times as necessary; previously converted input fields will not be converted again
-        window.emojiPicker.discover();
-    });
-</script>
 
-<script src="treasury-management.js"></script>
 <script src="../assets/js/popper.min.js"></script>
 <script src="../assets/js/plugins.js"></script>
 <!--<script src="assets/js/main.js"></script>-->
@@ -442,18 +411,19 @@
 <script src="../js/notifications.js"></script>
 <script src="../js/jquery.timeago.js" type="text/javascript"></script>
 <div>
-    <!--<script src="assets/js/lib/data-table/datatables.min.js"></script>-->
-    <!--<script src="assets/js/lib/data-table/dataTables.bootstrap.min.js"></script>-->
-    <!--<script src="assets/js/lib/data-table/dataTables.buttons.min.js"></script>-->
-    <!--<script src="assets/js/lib/data-table/buttons.bootstrap.min.js"></script>-->
-    <!--<script src="assets/js/lib/data-table/jszip.min.js"></script>-->
-    <!--<script src="assets/js/lib/data-table/pdfmake.min.js"></script>-->
-    <!--<script src="assets/js/lib/data-table/vfs_fonts.js"></script>-->
-    <!--<script src="assets/js/lib/data-table/buttons.html5.min.js"></script>-->
-    <!--<script src="assets/js/lib/data-table/buttons.print.min.js"></script>-->
-    <!--<script src="assets/js/lib/data-table/buttons.colVis.min.js"></script>-->
-    <!--<script src="assets/js/lib/data-table/datatables-init.js"></script>-->
-    <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>-->
+    <script src="../assets/js/lib/data-table/datatables.min.js"></script>
+    <script src="../assets/js/lib/data-table/dataTables.bootstrap.min.js"></script>
+    <script src="../assets/js/lib/data-table/dataTables.buttons.min.js"></script>
+    <script src="../assets/js/lib/data-table/buttons.bootstrap.min.js"></script>
+    <script src="../assets/js/lib/data-table/jszip.min.js"></script>
+    <script src="../assets/js/lib/data-table/pdfmake.min.js"></script>
+    <script src="../assets/js/lib/data-table/vfs_fonts.js"></script>
+    <script src="../assets/js/lib/data-table/buttons.html5.min.js"></script>
+    <script src="../assets/js/lib/data-table/buttons.print.min.js"></script>
+    <script src="../assets/js/lib/data-table/buttons.colVis.min.js"></script>
+    <script src="../assets/js/lib/data-table/datatables-init.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
+    <script src="../treasury/treasury-management.js"></script>
 </div>
 <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css" rel="stylesheet" />
 <script>
