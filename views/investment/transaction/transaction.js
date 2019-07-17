@@ -237,7 +237,6 @@ function bindDataTable(id) {
                     order: tableHeaders[aoData[2].value[0].column].query
                 },
                 success: function (data) {
-                    console.log(data);
                     if (data.data.length > 0) {
                         selectedInvestment = (isWalletPage === 1) ? data.data[0] : data.data[data.data.length - 1];
                         if (selectedInvestment.canTerminate === 0 || selectedInvestment.canTerminate === null) {
@@ -704,12 +703,12 @@ async function onOpenMode(name, operationId, is_credit) {
         }
         $('#opt_payment_made_by').attr('disabled', true);
     } else if (name === 'Withdraw') {
+        $('#opt_payment_made_by').html('');
         $('#opt_payment_made_by').attr('disabled', true);
     } else if (name === 'Deposit') {
         $('#opt_payment_made_by').attr('disabled', false);
         $('#opt_payment_made_by').html('');
         const _acctBal = await getClientAccountBalance();
-        console.log(_acctBal);
         clientWalletBalance = _acctBal.balance;
         let sign = '';
         _acctBal.balance = (_acctBal.balance === undefined || _acctBal.balance === '') ? 0.00 : _acctBal.balance;
@@ -1478,7 +1477,13 @@ function onPost(value, approvedId, txnId, id, isDeny) {
         isPaymentMadeByWallet: data_row.isPaymentMadeByWallet,
         priority: priority,
         isDeny: isDeny,
-        isPaymentMadeByWallet: data_row.isPaymentMadeByWallet
+        isPaymentMadeByWallet: data_row.isPaymentMadeByWallet,
+        interest_disbursement_time: data_row.interest_disbursement_time,
+        interest_moves_wallet: data_row.interest_moves_wallet,
+        is_capital: data_row.is_capital,
+        investment_mature_date: data_row.investment_mature_date,
+        investment_start_date: data_row.investment_start_date,
+        interest_rate: data_row.interest_rate
     }
     $.ajax({
         url: `investment-txns/posts`,
