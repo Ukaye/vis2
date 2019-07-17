@@ -8,6 +8,7 @@ let isWalletPage = 1;
 let sPageURL = '';
 let sURLVariables = "";
 let selectedOpsRequirement = [];
+let clientWalletBalance = 0;
 $(document).ready(function () {
     $('#bootstrap-data-table-export').DataTable();
     sPageURL = window.location.search.substring(1);
@@ -43,7 +44,7 @@ function decideListOfAccounts(id) {
                     limit: 10,
                     page: params.page,
                     search_string: params.term,
-                    clientId: selectedInvestment.clientId,
+                    clientId: (isWalletPage === 1) ? sURLVariables : selectedInvestment.clientId,
                     excludedItem: selectedInvestment.investmentId
                 };
             },
@@ -101,6 +102,7 @@ $("#chk_investment_accounts").on('change',
             products = [];
             $('#chk_client_wallet').attr('checked', false);
             $('#chk_own_accounts').attr('checked', false);
+            $('#list_accounts').attr('disabled', false);
             decideListOfAccounts(1);
         }
     });
@@ -108,10 +110,11 @@ $("#chk_investment_accounts").on('change',
 $("#chk_client_wallet").on('change',
     function () {
         let status = $('#chk_client_wallet').is(':checked');
-        if (status) {
+        if (status === true) {
             products = [];
             $('#chk_own_accounts').attr('checked', false);
             $('#chk_investment_accounts').attr('checked', false);
+            $('#list_accounts').attr('disabled', true);
         }
     });
 
@@ -235,11 +238,11 @@ function bindDataTable(id) {
                 },
                 success: function (data) {
                     if (data.data.length > 0) {
-                        selectedInvestment = data.data[data.data.length - 1];
-                        if (selectedInvestment.canTerminate.toString() === '0') {
+                        selectedInvestment = (isWalletPage === 1) ? data.data[0] : data.data[data.data.length - 1];
+                        if (selectedInvestment.canTerminate === 0 || selectedInvestment.canTerminate === null) {
                             $('#btnTerminateInvestment').attr('disabled', true);
                         }
-                        if (selectedInvestment.acct_allows_withdrawal.toString() === '0') {
+                        if ((selectedInvestment.acct_allows_withdrawal === 0 || selectedInvestment.acct_allows_withdrawal === null) && isWalletPage === 0) {
                             $('#btnTransfer').attr('disabled', true);
                             $('#btnWithdrawal').attr('disabled', true);
                         }
@@ -250,17 +253,21 @@ function bindDataTable(id) {
                             $('#btnTerminateInvestment').attr('disabled', true);
                             $('#btnInvestmentStatement').attr('disabled', true);
                         }
-                        $("#client_name").html(data.data[0].fullname);
+                        $("#client_name").html((isWalletPage === 1) ? sPageURL.split('=')[2].split('%20').join(' ') : data.data[0].fullname);
                         $("#inv_name").html(`${data.data[0].name} (${data.data[0].code})`);
                         $("#inv_acct_no").html(`${data.data[0].acctNo}`);
+                        selectedInvestment.txnCurrentBalance = data.txnCurrentBalance;
                         let sign = '';
-                        if (data.data[data.data.length - 1].balance.includes('-')) {
+                        if (data.txnCurrentBalance.includes('-')) {
                             sign = '-';
+                            selectedInvestment.txnCurrentBalance = '-' + data.txnCurrentBalance;
                         }
-                        $("#inv_bal_amount").html(`${sign}₦${formater(data.data[data.data.length - 1].balance)}`);
+                        let total_balance_ = Math.round(data.txnCurrentBalance.split(',').join('')).toFixed(2);
+
+                        $("#inv_bal_amount").html(`${sign}₦${formater(total_balance_.toString())}`);
 
                     } else {
-                        $("#client_name").html(sPageURL.split('=')[2].split('%20').join(''));
+                        $("#client_name").html(sPageURL.split('=')[2].split('%20').join(' '));// replace('%20', ' '));
                         $("#inv_bal_amount").html(`₦0.00`);
                     }
                     fnCallback(data)
@@ -345,7 +352,7 @@ function bindDataTable(id) {
                         </i> 
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         <button class="dropdown-item" id="dropdownItemDoc" data-toggle="modal" data-target="#viewListDocModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Document</button>
-                          <button class="dropdown-item" id="dropdownItemRevert" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 1 && full.is_capital === 0) ? '' : 'disabled'}>Reverse</button>
+                          <button class="dropdown-item" id="dropdownItemRevert" ${(full.isWallet === 1 || full.isTransfer === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 1 && full.is_capital === 0) ? '' : 'disabled'}>Reverse</button>
                           <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 0) ? '' : 'disabled'}>Review</button>
                           <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1) ? '' : 'disabled'} ${(full.approvalDone === 0) ? '' : 'disabled'}>Approval</button>
                           <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1 && full.approvalDone === 1) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Post</button>
@@ -665,10 +672,9 @@ $(document).ready(function () { });
 function getClientAccountBalance() {
     return new Promise((resolve, reject) => {
         $.ajax({
-            url: `/investment-txns/client-wallet-balance/${data_row.clientId}`,
+            url: `/investment-txns/client-wallet-balance/${selectedInvestment.clientId}`,
             'type': 'get',
             'success': function (data) {
-                clientBalance = (data[0] !== undefined) ? data[0].balance : 0.00;
                 $('#wait').hide();
                 if (data.status === undefined) {
                     resolve(data[0]);
@@ -689,18 +695,23 @@ async function onOpenMode(name, operationId, is_credit) {
     if (name === 'Transfer') {
         // $("#chk_own_accounts").attr('checked', false);
         // $("#chk_own_accounts").attr('hidden', true);
-        // $("#chk_client_wallet").attr('hidden', true);
-
         // $("#lbl_chk_own_accounts").attr('hidden', true);
-        // $("#lbl_chk_client_wallet").attr('hidden', true);
+
+        if (isWalletPage === 1) {
+            $("#chk_client_wallet").attr('hidden', true);
+            $("#lbl_chk_client_wallet").attr('hidden', true);
+        }
         $('#opt_payment_made_by').attr('disabled', true);
     } else if (name === 'Withdraw') {
+        $('#opt_payment_made_by').html('');
         $('#opt_payment_made_by').attr('disabled', true);
     } else if (name === 'Deposit') {
         $('#opt_payment_made_by').attr('disabled', false);
         $('#opt_payment_made_by').html('');
         const _acctBal = await getClientAccountBalance();
+        clientWalletBalance = _acctBal.balance;
         let sign = '';
+        _acctBal.balance = (_acctBal.balance === undefined || _acctBal.balance === '') ? 0.00 : _acctBal.balance;
         if (_acctBal.balance.toString().includes('-')) {
             sign = '-';
         }
@@ -714,6 +725,7 @@ async function onOpenMode(name, operationId, is_credit) {
     selectedInvestment._is_credit = is_credit;
     opsObj.is_credit = is_credit;
     opsObj.operationId = operationId;
+
     $("#viewOperationModalHeader").html(name + " Operation");
     $("#btnTransaction").html(name);
     $("#role_list_group").empty();
@@ -844,7 +856,10 @@ function setReviewRequirements(value) {
 function onExecutiveTransaction() {
     let _mRoleId = [];
     let mAmount_ = $("#input_amount").val().toString().split(',').join('');
-    if (parseFloat(selectedInvestment.balance.toString()) < parseFloat(mAmount_) && opsObj.operationId !== '1') {
+    if (parseFloat(clientWalletBalance.toString()) < parseFloat(mAmount_) && opsObj.operationId === '1' && $('#opt_payment_made_by').val() === '1') {
+        swal('Insufficent wallet balance for this transaction', '', 'error');
+        return;
+    } else if (parseFloat(selectedInvestment.txnCurrentBalance.toString()) < parseFloat(mAmount_) && opsObj.operationId !== '1') {
         swal('Insufficent account balance for this transaction', '', 'error');
         return;
     }
@@ -884,7 +899,7 @@ function onExecutiveTransaction() {
             txn_date: $('#input_txn_date').val(),
             isPaymentMadeByWallet: $('#opt_payment_made_by').val()
         };
-
+        investmentOps.clientId = (investmentOps.isPaymentMadeByWallet === 1) ? selectedInvestment.clientId : sURLVariables;
         $.ajax({
             url: `investment-txns/create`,
             'type': 'post',
@@ -895,7 +910,8 @@ function onExecutiveTransaction() {
                     $("#input_amount").val('');
                     $("#input_description").val('');
                     swal(`${(investmentOps.isDeposit === 1) ? 'Deposit' : 'Withdrawal'} transaction successful!`, '', 'success');
-                    bindDataTable(selectedInvestment.investmentId, false);
+                    // bindDataTable(selectedInvestment.investmentId, false);
+                    table.ajax.reload(null, false);
                 } else {
                     $('#wait').hide();
                     swal('Oops! An error occurred while executing deposit transaction', '', 'error');
@@ -1457,11 +1473,17 @@ function onPost(value, approvedId, txnId, id, isDeny) {
         created_date: data_row.created_date,
         isMoveFundTransfer: data_row.isMoveFundTransfer,
         isWallet: data_row.isWallet,
-        clientId: data_row.clientId,
+        clientId: (isWalletPage === 1) ? sURLVariables : data_row.clientId,
         isPaymentMadeByWallet: data_row.isPaymentMadeByWallet,
         priority: priority,
         isDeny: isDeny,
-        isPaymentMadeByWallet: data_row.isPaymentMadeByWallet
+        isPaymentMadeByWallet: data_row.isPaymentMadeByWallet,
+        interest_disbursement_time: data_row.interest_disbursement_time,
+        interest_moves_wallet: data_row.interest_moves_wallet,
+        is_capital: data_row.is_capital,
+        investment_mature_date: data_row.investment_mature_date,
+        investment_start_date: data_row.investment_start_date,
+        interest_rate: data_row.interest_rate
     }
     $.ajax({
         url: `investment-txns/posts`,
@@ -1550,8 +1572,7 @@ function onFundWalletOperation() {
         roleIds: _mRoleId,
         beneficialInvestmentId: selectedInvestment.investmentId,
         productId: selectedInvestment.productId,
-        isWallet: isWalletPage,
-        clientId: sURLVariables
+        isWallet: isWalletPage
     };
     $.ajax({
         url: `investment-txns/create`,
@@ -1560,7 +1581,13 @@ function onFundWalletOperation() {
         'success': function (data) {
             $('#wait').hide();
             swal('Transfer operation completed successfully', '', 'success');
-            $(".input").val('');
+            $("#input_transfer_amount").val('');
+            $("#input_transfer_description").val('');
+            $("#chk_own_accounts").attr('checked', false);
+            $("#chk_investment_accounts").attr('checked', false);
+            $("#chk_client_wallet").attr('checked', false);
+            $("#list_accounts").val(null).trigger('change');
+            table.ajax.reload(null, false);
         },
         'error': function (err) {
             $('#wait').hide();
@@ -1599,7 +1626,7 @@ function onTransferOperation() {
         }
         let investmentOps = {
             amount: amount,
-            description: `TRANSFER BETWEEN CLIENTS ACCOUNT; TRANSFER FROM : ${selectedInvestment.acctNo}(${selectedInvestment.fullname}) TO ${selectedAccount.code}(${selectedAccount.name})`,
+            description: `TRANSFER BETWEEN CLIENTS ACCOUNT; TRANSFER FROM : ${(isWalletPage === 1) ? sPageURL.split('=')[2].split('%20').join(' ') : selectedInvestment.acctNo(selectedInvestment.fullname)} TO ${selectedAccount.code}(${selectedAccount.name})`,
             investmentId: (isWalletPage === 0) ? selectedInvestment.investmentId : '',
             is_credit: 0,
             operationId: 2,
@@ -1613,9 +1640,8 @@ function onTransferOperation() {
             beneficialInvestmentId: selectedAccount.ID,
             productId: selectedInvestment.productId,
             isWallet: isWalletPage,
-            clientId: sURLVariables
+            clientId: (isWalletPage === 1) ? sURLVariables : selectedAccount.clientId
         };
-
         $.ajax({
             url: `investment-txns/create`,
             'type': 'post',
@@ -1623,13 +1649,13 @@ function onTransferOperation() {
             'success': function (data) {
                 $('#wait').hide();
                 swal('Transfer operation completed successfully', '', 'success');
-                $(".input").val('');
                 $("#input_transfer_amount").val('');
+                $("#input_transfer_description").val('');
                 $("#chk_own_accounts").attr('checked', false);
                 $("#chk_investment_accounts").attr('checked', false);
                 $("#chk_client_wallet").attr('checked', false);
                 $("#list_accounts").val(null).trigger('change');
-                $("#input_transfer_description").val('');
+                table.ajax.reload(null, false);
             },
             'error': function (err) {
                 $('#wait').hide();

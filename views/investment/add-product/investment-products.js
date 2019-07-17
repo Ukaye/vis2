@@ -113,6 +113,23 @@ $('#product_code').keypress(function (e) {
     }
 });
 
+$("#product_code").on("focusout", function (event) {
+    let _code = $("#product_code").val();
+    if (_code !== '') {
+        $.ajax({
+            type: "GET",
+            url: `investment-products/validate-code/${_code}`,
+            success: function (data) {
+                $('#wait').hide();
+                if (data.counter > 0) {
+                    swal('Oops! Product code identifier exist, please enter another code', '', 'error');
+                    $("#product_code").val('')
+                }
+            }
+        });
+    }
+});
+
 function getInvestmentProducts(id) {
     $.ajax({
         type: "GET",

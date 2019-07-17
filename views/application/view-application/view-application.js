@@ -1709,8 +1709,9 @@ function checkForExistingMandate(data) {
                 $('#mandateLink').val(`${HOST}/offer?t=${encodeURIComponent(mandate.hash)}&i=${application_id}`);
             } else {
                 let today = new Date(),
-                    date1 = new Date(data.schedule[0]['payment_collect_date']),
-                    date2 = new Date(data.schedule[0]['interest_collect_date']);
+                    schedule = $.grep(data.schedule, (e) => { return e.status === 1 }),
+                    date1 = new Date(schedule[0]['payment_collect_date']),
+                    date2 = new Date(schedule[0]['interest_collect_date']);
                 today.setHours(0,0,0,0);
                 if (date1 < today || date2 < today) {
                     $('#setupDirectDebit').hide();

@@ -16,7 +16,6 @@
         preapproved_loan = {};
 
     if (application_id) {
-        $('#setupMandate').remove();
         $('#acceptApplication').remove();
         $('#declineApplication').remove();
     }

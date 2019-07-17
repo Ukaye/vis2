@@ -28,7 +28,7 @@ function numberToCurrencyformatter(value) {
 function currencyToNumberformatter(value) {
     if (!value && isNaN(value))
         return value;
-    return parseFloat(value.replace(/,/g, ''));
+    return Number(value.replace(/[^0-9.-]+/g, ''));
 }
 
 function numbersOnly(value) {
@@ -37,7 +37,7 @@ function numbersOnly(value) {
     if (value.constructor === 'String'.constructor)
         value = parseFloat(value);
     return value;
-};
+}
 
 function notification(title, text, type, delay) {
     return swal({
