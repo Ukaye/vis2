@@ -102,7 +102,10 @@ $(document).on('click', '#receivables-button', function(e){
 });
 
 $('#expenses').keyup(function () {
-    validation();
+    let exp = parseFloat($('#expenses').val());
+    let new_outs = total_outs + exp;
+    $('#total_outs').html(formatter.format(new_outs));
+
 });
 
 function padWithZeroes(n, width, z) {
