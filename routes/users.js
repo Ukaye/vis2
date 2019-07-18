@@ -7469,12 +7469,12 @@ users.get('/investment-figures', function(req, res, next){
                 select (
                     (select case when sum(b.amount) is null then 0 else sum(b.amount) end 
                     from investments a inner join investment_txns b on a.id = b.investmentid
-                    where b.is_Credit = 1 and isInterest = 1 and a.investment_mature_date <> ''
+                    where b.is_Credit = 1 and isInterest = 1 and isReversedTxn = 0 and a.investment_mature_date <> ''
                     and a.investment_mature_date = curdate())
                     -
                     (select case when sum(b.amount) is null then 0 else sum(b.amount) end
                     from investments a inner join investment_txns b on a.id = b.investmentid
-                    where b.is_Credit = 0 and isInterest = 1 and a.investment_mature_date <> ''
+                    where b.is_Credit = 0 and isInterest = 1 and isReversedTxn = 0 and a.investment_mature_date <> ''
                     and a.investment_mature_date = curdate())
                 ) as amount
                 `;
@@ -7497,12 +7497,12 @@ users.get('/investment-figures', function(req, res, next){
                 select (
                     (select case when sum(b.amount) is null then 0 else sum(b.amount) end  
                     from investments a inner join investment_txns b on a.id = b.investmentid
-                    where b.is_Credit = 1 and isInterest = 1 and a.investment_mature_date <> ''
+                    where b.is_Credit = 1 and isInterest = 1 and isReversedTxn = 0 and a.investment_mature_date <> ''
                     and a.investment_mature_date = ${day})
                     -
                     (select sum(b.amount)
                     from investments a inner join investment_txns b on a.id = b.investmentid
-                    where b.is_Credit = 0 and isInterest = 1 and a.investment_mature_date <> ''
+                    where b.is_Credit = 0 and isInterest = 1 and isReversedTxn = 0 and a.investment_mature_date <> ''
                     and a.investment_mature_date = ${day})
                 ) as amount
                 `;
@@ -7526,12 +7526,12 @@ users.get('/investment-figures', function(req, res, next){
                 select (
                     (select case when sum(b.amount) is null then 0 else sum(b.amount) end 
                     from investments a inner join investment_txns b on a.id = b.investmentid
-                    where b.is_Credit = 1 and isInterest = 1 and a.investment_mature_date <> ''
+                    where b.is_Credit = 1 and isInterest = 1 and isReversedTxn = 0 and a.investment_mature_date <> ''
                     and a.investment_mature_date = ${day})
                     -
                     (select case when sum(b.amount) is null then 0 else sum(b.amount) end
                     from investments a inner join investment_txns b on a.id = b.investmentid
-                    where b.is_Credit = 0 and isInterest = 1 and a.investment_mature_date <> ''
+                    where b.is_Credit = 0 and isInterest = 1 and isReversedTxn = 0 and a.investment_mature_date <> ''
                     and a.investment_mature_date = ${day})
                 ) as amount
                         `;
@@ -7555,12 +7555,12 @@ users.get('/investment-figures', function(req, res, next){
                 select (
                     (select case when sum(b.amount) is null then 0 else sum(b.amount) end  
                     from investments a inner join investment_txns b on a.id = b.investmentid
-                    where b.is_Credit = 1 and isInterest = 1 and a.investment_mature_date <> ''
+                    where b.is_Credit = 1 and isInterest = 1 and isReversedTxn = 0 and a.investment_mature_date <> ''
                     and yearweek(a.investment_mature_date) = yearweek(${day}))
                     -
                     (select case when sum(b.amount) is null then 0 else sum(b.amount) end
                     from investments a inner join investment_txns b on a.id = b.investmentid
-                    where b.is_Credit = 0 and isInterest = 1 and a.investment_mature_date <> ''
+                    where b.is_Credit = 0 and isInterest = 1 and isReversedTxn = 0 and a.investment_mature_date <> ''
                     and yearweek(a.investment_mature_date) = yearweek(${day}))
                 ) as amount
                 `;
@@ -7584,12 +7584,12 @@ users.get('/investment-figures', function(req, res, next){
                 select (
                     (select case when sum(b.amount) is null then 0 else sum(b.amount) end  
                     from investments a inner join investment_txns b on a.id = b.investmentid
-                    where b.is_Credit = 1 and isInterest = 1 and a.investment_mature_date <> ''
+                    where b.is_Credit = 1 and isInterest = 1 and isReversedTxn = 0 and a.investment_mature_date <> ''
                     and extract(year_month from a.investment_mature_date) = extract(year_month from ${day}))
                     -
                     (select case when sum(b.amount) is null then 0 else sum(b.amount) end
                     from investments a inner join investment_txns b on a.id = b.investmentid
-                    where b.is_Credit = 0 and isInterest = 1 and a.investment_mature_date <> ''
+                    where b.is_Credit = 0 and isInterest = 1 and isReversedTxn = 0 and a.investment_mature_date <> ''
                     and extract(year_month from a.investment_mature_date) = extract(year_month from ${day}))
                 ) as amount
                 `;
@@ -7690,7 +7690,7 @@ users.get('/loan-figures', function(req, res, next){
                 and status = 1 and extract(year_month from payment_collect_date) = extract(year_month from ${day})
                 `;
     }
-    let response = {}; console.log(interestQuery); console.log(principalQuery)
+    let response = {};
     db.query(principalQuery, function(error, results, fields){
         if (error){
             res.send({"status": 500, "error": error, "response": null});
@@ -7806,6 +7806,165 @@ users.get('/predicted-loan-figures', function(req, res, next){
                 as average
                 `;
     }
+    db.query(principalQuery, function(error, results, fields){
+        if (error){
+            res.send({"status": 500, "error": error, "response": null});
+        }
+        else {
+            res.send({"status": 200, "error": null, "response": "Success", 'message': results});
+        }
+    });
+});
+
+users.get('/investment-payouts', function(req, res, next){
+    let period = req.query.period,
+        day = req.query.day,
+        capitalQuery, interestQuery;
+    let today = moment().utcOffset('+0100').format('YYYY-MM-DD');
+    capitalQuery = `
+                select id, (select fullname from clients where clients.id = a.clientId) client, a.amount, investment_mature_date
+                from investments a
+                where a.investment_mature_date <> ''
+                and investment_mature_date = curdate()
+                `;
+    if (period && period == '1'){
+        day = "'"+day+"'";
+        capitalQuery = `
+                select id, (select fullname from clients where clients.id = a.clientId) client, a.amount, investment_mature_date
+                from investments a
+                where a.investment_mature_date <> ''
+                and investment_mature_date = curdate()
+                `;
+    }
+    if (period && period == '2'){
+        day = "'"+day+"'";
+        capitalQuery = `
+                select id, (select fullname from clients where clients.id = a.clientId) client, a.amount, investment_mature_date
+                from investments a
+                where a.investment_mature_date <> ''
+                and yearweek(a.investment_mature_date) = yearweek(curdate()) 
+                `;
+    }
+    if (period && period == '3'){
+        day = "'"+day+"'";
+        capitalQuery = `
+                select id, (select fullname from clients where clients.id = a.clientId) client, a.amount, investment_mature_date
+                from investments a
+                where a.investment_mature_date <> ''
+                and extract(year_month from a.investment_mature_date) = extract(year_month from curdate())
+                `;
+    }
+    db.query(capitalQuery, function(error, results, fields){
+        if (error){
+            res.send({"status": 500, "error": error, "response": null});
+        }
+        else {
+            res.send({"status": 200, "error": null, "response": "Success", 'message': results});
+        }
+    });
+});
+
+users.get('/investment-interests', function(req, res, next){
+    let period = req.query.period,
+        day = req.query.day,
+        capitalQuery, interestQuery;
+    let today = moment().utcOffset('+0100').format('YYYY-MM-DD');
+    capitalQuery = `
+                select investmentid, (select fullname from clients where clients.id = clientId) client, sum(amount) amount, clientId,
+                (select investment_mature_date from investments where investments.id = investmentid) investment_mature_date 
+                from investment_txns where 
+                isInterest =1 and is_credit = 1 and isReversedTxn = 0
+                and (select investment_mature_date from investments i where i.id = investmentid) = curdate()
+                group by investmentid
+                `;
+    if (period && period == '1'){
+        day = "'"+day+"'";
+        capitalQuery = `
+                select investmentid, (select fullname from clients where clients.id = clientId) client, sum(amount) amount, clientId,
+                (select investment_mature_date from investments where investments.id = investmentid) investment_mature_date
+                from investment_txns where 
+                isInterest =1 and is_credit = 1 and isReversedTxn = 0
+                and (select investment_mature_date from investments i where i.id = investmentid) = curdate()
+                group by investmentid
+                `;
+    }
+    if (period && period == '2'){
+        day = "'"+day+"'";
+        capitalQuery = `
+                select investmentid, (select fullname from clients where clients.id = clientId) client, sum(amount) amount, 
+                (select investment_mature_date from investments where investments.id = investmentid) investment_mature_date
+                from investment_txns where 
+                isInterest =1 and is_credit = 1 and isReversedTxn = 0
+                and (select yearweek(investment_mature_date) from investments i where i.id = investmentid) = yearweek(curdate())
+                group by investmentid
+                `;
+    }
+    if (period && period == '3'){
+        day = "'"+day+"'";
+        capitalQuery = `
+                select investmentid, (select fullname from clients where clients.id = clientId) client, sum(amount) amount, 
+                (select investment_mature_date from investments where investments.id = investmentid) investment_mature_date
+                from investment_txns where 
+                isInterest =1 and is_credit = 1 and isReversedTxn = 0
+                and (select extract(year_month from investment_mature_date) from investments i where i.id = investmentid) = extract(year_month from curdate())
+                group by investmentid
+                `;
+    }console.log(capitalQuery)
+    db.query(capitalQuery, function(error, results, fields){
+        if (error){
+            res.send({"status": 500, "error": error, "response": null});
+        }
+        else {
+            res.send({"status": 200, "error": null, "response": "Success", 'message': results});
+        }
+    });
+});
+
+users.get('/loan-receivables', function(req, res, next){
+    let period = req.query.period,
+        day = req.query.day,
+        principalQuery, interestQuery;
+    principalQuery = `
+                select applicationID, (select fullname from clients c where c.id = (select userid from applications a where a.id = applicationID)) client, payment_amount, interest_amount, payment_collect_date
+                from application_schedules sh
+                where applicationID in (select ID from applications where status = 2)
+                and status = 1 and payment_collect_date = curdate()
+                group by applicationID
+                `;
+    if (period && period== '1'){
+        day = "'"+day+"'";
+        principalQuery = `
+                select applicationID, (select fullname from clients c where c.id = (select userid from applications a where a.id = applicationID)) client, payment_amount, interest_amount, payment_collect_date
+                from application_schedules sh
+                where applicationID in (select ID from applications where status = 2)
+                and status = 1 and payment_collect_date = curdate()
+                group by applicationID
+                `;
+    }
+
+    if (period && period== '2'){
+        day = "'"+day+"'";
+        principalQuery = `
+                select applicationID, (select fullname from clients c where c.id = (select userid from applications a where a.id = applicationID)) client, payment_amount, interest_amount, payment_collect_date
+                from application_schedules sh
+                where applicationID in (select ID from applications where status = 2)
+                and status = 1 and yearweek(payment_collect_date) = yearweek(curdate())
+                group by applicationID
+                `;
+    }
+
+    if (period && period == '3'){
+        day = "'"+day+"'";
+        principalQuery = `
+                select applicationID, (select fullname from clients c where c.id = (select userid from applications a where a.id = applicationID)) client, payment_amount, interest_amount, payment_collect_date
+                from application_schedules sh
+                where applicationID in (select ID from applications where status = 2)
+                and status = 1 and extract(year_month from payment_collect_date) = extract(year_month from curdate())
+                group by applicationID
+                `;
+    }
+
+    let response = {};
     db.query(principalQuery, function(error, results, fields){
         if (error){
             res.send({"status": 500, "error": error, "response": null});

@@ -3,8 +3,8 @@ const application_id = urlParams.get('id');
 var tableData = {};
 $(document).ready(function () {
     loadInvestments();
-    loadLoans();
-    loadPredictedDisbursements();
+    // loadLoans();
+    // loadPredictedDisbursements();
 });
 
 var myTable = $('#payouts-table')
@@ -14,7 +14,7 @@ var myTable = $('#payouts-table')
             "bSortable": true
         }, {
             "bSortable": false
-        }
+        }, null, null
             //null, null, null, { "bSortable": false },
         ],
         "aaSorting": [],
@@ -24,7 +24,7 @@ var myTable = $('#payouts-table')
         }
     });
 
-var myTable2 = $('#loan-table')
+var myTable2 = $('#interests-table')
     .DataTable({
         bAutoWidth: true,
         "aoColumns": [{
@@ -47,9 +47,62 @@ var myTable2 = $('#loan-table')
         "paging": true
     });
 
+var myTable3 = $('#receivables-table')
+    .DataTable({
+        bAutoWidth: true,
+        "aoColumns": [{
+            "bSortable": true
+        },
+            null, {
+                "bSortable": false
+            }, {
+                "bSortable": false
+            }, null
+            // , null, { "bSortable": false },
+        ],
+        "aaSorting": [],
+        "bFilter": true,
+        "bSearchable": false,
+        // "bInfo" : false,
+        select: {
+            style: 'multi'
+        },
+        "paging": true
+    });
+
 const formatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'NGN'
+});
+
+$(document).on('click', '#agg-button', function(e){
+    aggregate();
+    $('#agg-reveal').slideDown();
+});
+
+$(document).on('click', '#payouts-button', function(e){
+    loadPayouts($('#period').val());
+    $('#payouts-div').show();
+    $('#interests-div').hide();
+    $('#receivables-div').hide();
+});
+
+$(document).on('click', '#interests-button', function(e){
+    loadInterests($('#period').val());
+    $('#payouts-div').hide();
+    $('#interests-div').show();
+    $('#receivables-div').hide();
+});
+
+$(document).on('click', '#receivables-button', function(e){
+    loadReceivables($('#period').val());
+    $('#payouts-div').hide();
+    $('#interests-div').hide();
+    $('#receivables-div').show();
+});
+
+$('#expenses').keyup(function () {
+    validation();
 });
 
 function padWithZeroes(n, width, z) {
@@ -60,21 +113,27 @@ function padWithZeroes(n, width, z) {
 
 function changePeriod(period){
     let p = period.value;
-    reloadLoans(p);
     reloadInvestments(p);
-    reloadPredictedDisbursements(p);
+    // reloadLoans(p);
+    // reloadPredictedDisbursements(p);
 }
 
-let payouts, interests, receivables, pred_disbursements, total_ins, total_outs;
-function loadLoans() {
+let payouts, interests, receivables, pred_disbursements, total_ins = 0, total_outs = 0;
+function loadInvestments(){
     $.ajax({
-        'url': '/user/loan-figures/' ,
+        'url': '/user/investment-figures/' ,
         'type': 'get',
         'data': {},
         'success': function (data) {
-            receivables = data.message.capital[0].due;
-            total_ins
-            $('#receivables').html(formatter.format(data.message.capital[0].due));
+            if (data.message){
+                payouts = parseFloat(data.message.capital[0].amount);
+                total_outs += payouts;
+                interests = parseFloat(data.message.interests[0].amount);
+                total_ins += interests;
+                $('#payouts').html(formatter.format(data.message.capital[0].amount));
+                $('#interests').html(formatter.format(data.message.interests[0].amount));
+            }
+            loadLoans();
         },
         'error': function (err) {
             swal('Oops! An error occurred while retrieving details.');
@@ -82,16 +141,18 @@ function loadLoans() {
     });
 }
 
-function loadInvestments(){
+function loadLoans() {
     $.ajax({
-        'url': '/user/investment-figures/' ,
+        'url': '/user/loan-figures/' ,
         'type': 'get',
         'data': {},
         'success': function (data) {
-            payouts = data.message.capital[0].amount;
-            interests = data.message.interests[0].amount;
-            $('#payouts').html(formatter.format(data.message.capital[0].amount));
-            $('#interests').html(formatter.format(data.message.interests[0].amount));
+            if (data.message){
+                receivables = parseFloat(data.message.capital[0].due) === NaN ? 0 :parseFloat(data.message.capital[0].due);
+                total_ins += receivables;
+                $('#receivables').html(formatter.format(data.message.capital[0].due));
+            }
+            loadPredictedDisbursements();
         },
         'error': function (err) {
             swal('Oops! An error occurred while retrieving details.');
@@ -105,8 +166,12 @@ function loadPredictedDisbursements(){
         'type': 'get',
         'data': {},
         'success': function (data) {
-            pred_disbursements = data.message[0].average === 'No Previous History For This Date' ? 0 : data.message[0].average;
-            $('#disbursements').html(data.message[0].average === 'No Previous History For This Date' ? 'No Previous History For This Date' : formatter.format(data.message[0].average));
+            if (data.message){
+                pred_disbursements = data.message[0].average === 'No Previous History For This Date' ? 0 : parseFloat(data.message[0].average);
+                total_outs += data.message[0].average === 'No Previous History For This Date' ? 0 : payouts;
+                $('#disbursements').html(data.message[0].average === 'No Previous History For This Date' ? 'No Previous History For This Date' : formatter.format(data.message[0].average));
+            }
+            aggregate();
         },
         'error': function (err) {
             swal('Oops! An error occurred while retrieving details.');
@@ -115,16 +180,29 @@ function loadPredictedDisbursements(){
 }
 
 function aggregate(){
-
+    console.log(payouts)
+    $('#total_ins').html(total_ins);
+    $('#total_outs').html(total_outs);
 }
 
-function reloadLoans(period) {
+function reloadInvestments(period){
+    total_ins = 0; total_outs = 0; payouts = 0; interests = 0;
     $.ajax({
-        'url': '/user/loan-figures?period='+period ,
+        'url': '/user/investment-figures?period='+period ,
         'type': 'get',
         'data': {},
         'success': function (data) {
-            $('#disbursements').html(formatter.format(data.message[0].average));
+            if (data.message){
+                payouts = parseFloat(data.message.capital[0].amount);
+                total_outs += payouts;
+                interests = parseFloat(data.message.interests[0].amount);
+                total_ins += interests;
+                console.log(total_ins);
+                console.log(total_outs);
+                $('#payouts').html(formatter.format(data.message.capital[0].amount));
+                $('#interests').html(formatter.format(data.message.interests[0].amount));
+            }
+            reloadLoans(period);
         },
         'error': function (err) {
             swal('Oops! An error occurred while retrieving details.');
@@ -132,13 +210,21 @@ function reloadLoans(period) {
     });
 }
 
-function reloadInvestments(period){
+function reloadLoans(period) {
+    receivables = 0;
     $.ajax({
-        'url': '/user/investment-figures?period='+period ,
+        'url': '/user/loan-figures?period='+period ,
         'type': 'get',
         'data': {},
         'success': function (data) {
-            $('#payouts').html(formatter.format(data.message[0].average));
+            if (data.message){
+                receivables = isNaN(parseFloat(data.message.capital[0].due)) ? 0 :parseFloat(data.message.capital[0].due);
+                total_ins += receivables;
+                console.log(total_ins);
+                console.log(total_outs);
+                $('#receivables').html(formatter.format(data.message.capital[0].due));
+            }
+            reloadPredictedDisbursements(period);
         },
         'error': function (err) {
             swal('Oops! An error occurred while retrieving details.');
@@ -147,17 +233,177 @@ function reloadInvestments(period){
 }
 
 function reloadPredictedDisbursements(period){
+    pred_disbursements = 0;
     $.ajax({
         'url': '/user/predicted-loan-figures?period='+period ,
         'type': 'get',
         'data': {},
         'success': function (data) {
-            $('#disbursements').html(formatter.format(data.message[0].average));
+            if (data.message){
+                pred_disbursements = data.message[0].average === 'No Previous History For This Date' ? 0 : parseFloat(data.message[0].average);
+                total_outs += data.message[0].average === 'No Previous History For This Date' ? 0 : pred_disbursements;
+                console.log(total_ins);
+                console.log(total_outs);
+                $('#disbursements').html(data.message[0].average === 'No Previous History For This Date' ? 'No Previous History For This Date' : formatter.format(data.message[0].average));
+            }
+            $('#total_ins').html(total_ins);
+            $('#total_outs').html(total_outs);
         },
         'error': function (err) {
             swal('Oops! An error occurred while retrieving details.');
         }
     });
+}
+
+function loadPayouts(period){
+    let url;
+    if (!period)
+        url = '/user/investment-payouts/';
+    else
+        url = '/user/investment-payouts?period='+period;
+    $.ajax({
+        'url': url,
+        'type': 'get',
+        'data': {},
+        'success': function (data) {
+            populatePayoutsTable(data.message);
+        },
+        'error': function (err) {
+            //alert ('Error');
+            console.log(err);
+        }
+    });
+}
+
+function populatePayoutsTable(dets) {
+    if (dets.length === 0) {
+        $("#loan-table").dataTable().fnClearTable();
+    } else {
+        let data = [];
+        jQuery.each(dets, function (k, v) {
+            console.log(v);
+            v.investid = padWithZeroes(v.id, 6);
+            v.amt = formatter.format(v.amount);
+            data.push(v);
+        });
+        $('#payouts-table').DataTable({
+            dom: 'Blfrtip',
+            bDestroy: true,
+            data: data,
+            search: {search: ' '},
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ],
+            columns: [
+                { data: "investid" },
+                { data: "client" },
+                { data: "amt" },
+                { data: "interest" },
+                { data: "investment_mature_date" }
+            ]
+        });
+    }
+}
+
+function loadInterests(period){
+    let url;
+    if (!period)
+        url = '/user/investment-interests/';
+    else
+        url = '/user/investment-interests?period='+period;
+    $.ajax({
+        'url': url,
+        'type': 'get',
+        'data': {},
+        'success': function (data) {
+            populateInterestsTable(data.message);
+        },
+        'error': function (err) {
+            //alert ('Error');
+            console.log(err);
+        }
+    });
+}
+
+function populateInterestsTable(dets) {
+    if (dets.length === 0) {
+        $("#interests-table").dataTable().fnClearTable();
+    } else {
+        let data = [];
+        jQuery.each(dets, function (k, v) {
+            console.log(v);
+            v.investid = padWithZeroes(v.investmentid, 6);
+            v.amt = formatter.format(v.amount);
+            data.push(v);
+        });
+        $('#interests-table').DataTable({
+            dom: 'Blfrtip',
+            bDestroy: true,
+            data: data,
+            search: {search: ' '},
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ],
+            columns: [
+                { data: "investid" },
+                { data: "client" },
+                { data: "amt" },
+                { data: "investment_mature_date" }
+            ]
+        });
+    }
+}
+
+function loadReceivables(period){
+    let url;
+    if (!period)
+        url = '/user/loan-receivables/';
+    else
+        url = '/user/loan-receivables?period='+period;
+    $.ajax({
+        'url': url,
+        'type': 'get',
+        'data': {},
+        'success': function (data) {
+            populateReceivablesTable(data.message);
+        },
+        'error': function (err) {
+            //alert ('Error');
+            console.log(err);
+        }
+    });
+}
+
+function populateReceivablesTable(dets) {
+    if (dets.length === 0) {
+        $("#loan-table").dataTable().fnClearTable();
+    } else {
+        let data = [];
+        jQuery.each(dets, function (k, v) {
+            console.log(v);
+            v.id = padWithZeroes(v.applicationID, 6);
+            v.principal = formatter.format(v.payment_amount);
+            v.interest = formatter.format(v.interest_amount);
+            data.push(v);
+            // $("#loan-table").dataTable().fnAddData([formatter.format(v.loan_amount), (v.date_created), stat, view]);
+        });
+        $('#receivables-table').DataTable({
+            dom: 'Blfrtip',
+            bDestroy: true,
+            data: data,
+            search: {search: ' '},
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf', 'print'
+            ],
+            columns: [
+                { data: "id" },
+                { data: "client" },
+                { data: "principal" },
+                { data: "interest" },
+                { data: "payment_collect_date" }
+            ]
+        });
+    }
 }
 
 let client_det;
