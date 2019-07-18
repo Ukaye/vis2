@@ -7014,7 +7014,7 @@ users.get('/demographic-interest-report', function(req, res, next){
         query,
         year = req.query.year,
         frequency = req.query.frequency;
-    payload = {}; console.log(year)
+    payload = {};
     if (filter === 'Gender'){
         query = `select sum(interest_amount) amount, 
                     (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender 
@@ -7448,11 +7448,372 @@ users.get('/interest-receivable-trends', function(req, res, next){
 
 ///// Treasury Management
 users.get('/investment-figures', function(req, res, next){
-    let query = '';
+    let period = req.query.period,
+        day = req.query.day,
+        capitalQuery, interestQuery;
+    let today = moment().utcOffset('+0100').format('YYYY-MM-DD');
+    capitalQuery = `
+                select (
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end 
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 1 and a.investment_mature_date <> ''
+                    and a.investment_mature_date = curdate())
+                    -
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 0 and a.investment_mature_date <> ''
+                    and a.investment_mature_date = curdate())
+                ) as amount
+                `;
+    interestQuery = `
+                select (
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end 
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 1 and isInterest = 1 and a.investment_mature_date <> ''
+                    and a.investment_mature_date = curdate())
+                    -
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 0 and isInterest = 1 and a.investment_mature_date <> ''
+                    and a.investment_mature_date = curdate())
+                ) as amount
+                `;
+    if (day && day!== ''){
+        day = "'"+day+"'";
+        capitalQuery = `
+                select (
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end  
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 1 and a.investment_mature_date <> ''
+                    and a.investment_mature_date = ${day})
+                    -
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 0 and a.investment_mature_date <> ''
+                    and a.investment_mature_date = ${day})
+                ) as amount
+                `;
+        interestQuery = `
+                select (
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end  
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 1 and isInterest = 1 and a.investment_mature_date <> ''
+                    and a.investment_mature_date = ${day})
+                    -
+                    (select sum(b.amount)
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 0 and isInterest = 1 and a.investment_mature_date <> ''
+                    and a.investment_mature_date = ${day})
+                ) as amount
+                `;
+    }
+    if (day && day!== '' && period && period == '1'){ //daily
+        day = "'"+day+"'";
+        capitalQuery = `
+                select (
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end  
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 1 and a.investment_mature_date <> ''
+                    and a.investment_mature_date = ${day})
+                    -
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 0 and a.investment_mature_date <> ''
+                    and a.investment_mature_date = ${day})
+                ) as amount
+                `;
+        interestQuery = `
+                select (
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end 
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 1 and isInterest = 1 and a.investment_mature_date <> ''
+                    and a.investment_mature_date = ${day})
+                    -
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 0 and isInterest = 1 and a.investment_mature_date <> ''
+                    and a.investment_mature_date = ${day})
+                ) as amount
+                        `;
+    }
+    if (day && day!== '' && period && period == '2'){ //weekly
+        day = "'"+day+"'";
+        capitalQuery = `
+                select (
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end 
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 1 and a.investment_mature_date <> ''
+                    and yearweek(a.investment_mature_date) = yearweek(${day}))
+                    -
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 0 and a.investment_mature_date <> ''
+                    and yearweek(a.investment_mature_date) = yearweek(${day}))
+                ) as amount
+                `;
+        interestQuery = `
+                select (
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end  
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 1 and isInterest = 1 and a.investment_mature_date <> ''
+                    and yearweek(a.investment_mature_date) = yearweek(${day}))
+                    -
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 0 and isInterest = 1 and a.investment_mature_date <> ''
+                    and yearweek(a.investment_mature_date) = yearweek(${day}))
+                ) as amount
+                `;
+    }
+    if (day && day!== '' && period && period == '3'){ //monthly
+        day = "'"+day+"'";
+        capitalQuery = `
+                select (
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end  
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 1 and a.investment_mature_date <> ''
+                    and extract(year_month from a.investment_mature_date) = extract(year_month from ${day}))
+                    -
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 0 and a.investment_mature_date <> ''
+                    and extract(year_month from a.investment_mature_date) = extract(year_month from ${day}))
+                ) as amount
+                `;
+        interestQuery = `
+                select (
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end  
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 1 and isInterest = 1 and a.investment_mature_date <> ''
+                    and extract(year_month from a.investment_mature_date) = extract(year_month from ${day}))
+                    -
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 0 and isInterest = 1 and a.investment_mature_date <> ''
+                    and extract(year_month from a.investment_mature_date) = extract(year_month from ${day}))
+                ) as amount
+                `;
+    }
+    let response = {};
+    db.query(capitalQuery, function(error, results, fields){
+        if (error){
+            res.send({"status": 500, "error": error, "response": null});
+        }
+        else {
+            response.capital = results;
+            db.query(interestQuery, function(error, results, fields){
+                if (error){
+                    res.send({"status": 500, "error": error, "response": null});
+                }
+                else {
+                    response.interests = results;
+                    res.send({"status": 200, "error": null, "response": "Success", 'message': response});
+                }
+            });
+        }
+    });
 });
 
 users.get('/loan-figures', function(req, res, next){
+    let period = req.query.period,
+        day = req.query.day,
+        principalQuery, interestQuery;
+    principalQuery = `
+                select sum(payment_amount+interest_amount) as due
+                from application_schedules sh
+                where applicationID in (select ID from applications where status = 2)
+                and status = 1 and payment_collect_date = curdate()
+                `;
+    interestQuery = `
+                select sum(interest_amount) as due
+                from application_schedules sh
+                where applicationID in (select ID from applications where status = 2)
+                and status = 1 and payment_collect_date = curdate()
+                `;
+    if (day && day!== ''){
+        day = "'"+day+"'";
+        principalQuery = `
+                select sum(payment_amount+interest_amount) as due
+                from application_schedules sh
+                where applicationID in (select ID from applications where status = 2)
+                and status = 1 and payment_collect_date = ${day}
+                `;
+        interestQuery = `
+                select sum(interest_amount) as due
+                from application_schedules sh
+                where applicationID in (select ID from applications where status = 2)
+                and status = 1 and payment_collect_date = ${day}
+                `;
+    }
+    if (day && day!== '' && period && period == '1'){ //daily
+        day = "'"+day+"'";
+        principalQuery = `
+                select sum(payment_amount+interest_amount) as due
+                from application_schedules sh
+                where applicationID in (select ID from applications where status = 2)
+                and status = 1 and payment_collect_date = ${day}
+                `;
+        interestQuery = `
+                select sum(interest_amount) as due
+                from application_schedules sh
+                where applicationID in (select ID from applications where status = 2)
+                and status = 1 and payment_collect_date = ${day}
+                `;
+    }
+    if (day && day!== '' && period && period == '2'){ //weekly
+        day = "'"+day+"'";
+        principalQuery = `
+                select sum(payment_amount+interest_amount) as due
+                from application_schedules sh
+                where applicationID in (select ID from applications where status = 2)
+                and status = 1 and yearweek(payment_collect_date) = yearweek(${day})
+                `;
+        interestQuery = `
+                select sum(interest_amount) as due
+                from application_schedules sh
+                where applicationID in (select ID from applications where status = 2)
+                and status = 1 and yearweek(payment_collect_date) = yearweek(${day})
+                `;
+    }
+    if (day && day!== '' && period && period == '3'){ //monthly
+        day = "'"+day+"'";
+        principalQuery = `
+                select sum(payment_amount+interest_amount) as due
+                from application_schedules sh
+                where applicationID in (select ID from applications where status = 2)
+                and status = 1 and extract(year_month from payment_collect_date) = extract(year_month from ${day})
+                `;
+        interestQuery = `
+                select sum(interest_amount) as due
+                from application_schedules sh
+                where applicationID in (select ID from applications where status = 2)
+                and status = 1 and extract(year_month from payment_collect_date) = extract(year_month from ${day})
+                `;
+    }
+    let response = {}; console.log(interestQuery); console.log(principalQuery)
+    db.query(principalQuery, function(error, results, fields){
+        if (error){
+            res.send({"status": 500, "error": error, "response": null});
+        }
+        else {
+            response.capital = results;
+            db.query(interestQuery, function(error, results, fields){
+                if (error){
+                    res.send({"status": 500, "error": error, "response": null});
+                }
+                else {
+                    response.interests = results;
+                    res.send({"status": 200, "error": null, "response": "Success", 'message': response});
+                }
+            });
+        }
+    });
+});
 
+users.get('/predicted-loan-figures', function(req, res, next){
+    let period = req.query.period,
+        day = req.query.day,
+        principalQuery, interestQuery;
+    day = "'"+day+"'";
+    principalQuery = `
+                select 
+                    case 
+                        when (select count(*)
+                            from disbursement_history 
+                            where day(date_disbursed) = day(curdate())) = 0 then 'No Previous History For This Date'
+                        else (select sum(amount)
+                            from disbursement_history 
+                            where day(date_disbursed) = day(curdate()))    
+                            /
+                            (select count(*)
+                            from disbursement_history 
+                            where day(date_disbursed) = day(curdate()))
+                    end
+                as average
+                `;
+    if (day && day!== ''){
+        principalQuery = `
+                select 
+                    case 
+                        when (select count(*)
+                            from disbursement_history 
+                            where day(date_disbursed) = day(${day})) = 0 then 'No Previous History For This Date'
+                        else (select sum(amount)
+                            from disbursement_history 
+                            where day(date_disbursed) = day(${day}))    
+                            /
+                            (select count(*)
+                            from disbursement_history 
+                            where day(date_disbursed) = day(${day}))
+                    end
+                as average
+                `;
+    }
+    if (day && day!== '' && period && period == '1'){ //daily
+        principalQuery = `
+                select 
+                    case 
+                        when (select count(*)
+                            from disbursement_history 
+                            where day(date_disbursed) = day(${day})) = 0 then 'No Previous History For This Date'
+                        else (select sum(amount)
+                            from disbursement_history 
+                            where day(date_disbursed) = day(${day}))    
+                            /
+                            (select count(*)
+                            from disbursement_history 
+                            where day(date_disbursed) = day(${day}))
+                    end
+                as average
+                `;
+    }
+    if (period && period == '2'){ //weekly
+        principalQuery = `
+                select 
+                    case 
+                        when (select count(Distinct concat(FLOOR((DAYOFMONTH(date_disbursed) - 1) / 7) + 1, month(date_disbursed)))
+                                from disbursement_history 
+                                where (FLOOR((DAYOFMONTH(date_disbursed) - 1) / 7) + 1) = (FLOOR((DAYOFMONTH(curdate()) - 1) / 7) + 1)
+                               ) = 0 then 'No Previous History For This Week'
+                        else ((select sum(amount)
+                                from disbursement_history 
+                                where (FLOOR((DAYOFMONTH(date_disbursed) - 1) / 7) + 1) = (FLOOR((DAYOFMONTH(curdate()) - 1) / 7) + 1) )
+                                /
+                                (select count(Distinct concat(FLOOR((DAYOFMONTH(date_disbursed) - 1) / 7) + 1, month(date_disbursed)))
+                                from disbursement_history 
+                                where (FLOOR((DAYOFMONTH(date_disbursed) - 1) / 7) + 1) = (FLOOR((DAYOFMONTH(curdate()) - 1) / 7) + 1)))
+                    end
+                as average
+                `;
+    }
+    if (period && period == '3'){ //monthly
+        principalQuery = `
+                select 
+                    case 
+                        when (select count(Distinct concat(month(date_disbursed), year(date_disbursed)))
+                                from disbursement_history 
+                                where month(date_disbursed) = month(curdate())
+                               ) = 0 then 'No Previous History For This Week'
+                        else ((select sum(amount)
+                                from disbursement_history 
+                                where month(date_disbursed) = month(curdate()))
+                                /
+                                (select count(Distinct concat(month(date_disbursed), year(date_disbursed)))
+                                from disbursement_history 
+                                where month(date_disbursed) = month(curdate())
+                               ))
+                    end
+                as average
+                `;
+    }
+    db.query(principalQuery, function(error, results, fields){
+        if (error){
+            res.send({"status": 500, "error": error, "response": null});
+        }
+        else {
+            res.send({"status": 200, "error": null, "response": "Success", 'message': results});
+        }
+    });
 });
 
 /////// Loan Classification

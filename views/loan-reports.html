@@ -2343,6 +2343,7 @@
                     v.id = padWithZeroes(parseInt(v.applicationID),6);
                     v.balance = formatter.format(parseFloat((v.loan_amount - v.valid_payment) < 0 ? 0 : v.loan_amount - v.valid_payment));
                     v.principal = (v.loan_amount) ? formatter.format(parseFloat(v.loan_amount)) : 0;
+                    v.f_date = v.date.split(' ')[0];
                     processed_data.push(v);
                 }
             }
@@ -2359,7 +2360,7 @@
                     { data: "id" },
                     { data: "fullname" },
                     { data: "principal" },
-                    { data: "date" }
+                    { data: "f_date" }
                 ]
             });
             localStorage.setItem('disbursed', JSON.stringify(processed_data));

@@ -26,7 +26,7 @@ function validateFields(){
         if ($('#description').val() == "" || $('#description').val() == null || $('#min-days').val() == "" || $('#min-days').val() == null || $('#max-days').val() == "" || $('#max-days').val() == null) {
             return swal('Empty field(s)!', 'All fields are required.', 'warning');
         } else {
-            if ($('#min-days').val() > $('#max-days').val()) {
+            if (parseFloat($('#min-days').val()) > parseFloat($('#max-days').val())) {
                 return swal('Disallowed', 'Minimum cannot be greater than Maximum.', 'warning');
             }
             saveNewClassification();
