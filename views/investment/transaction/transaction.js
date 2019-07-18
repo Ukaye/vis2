@@ -1607,8 +1607,6 @@ function onTransferOperation() {
         return;
     }
 
-
-
     if ($('#chk_client_wallet').is(':checked') === true) {
         onFundWalletOperation();
     } else {
@@ -1624,9 +1622,10 @@ function onTransferOperation() {
         } else {
             _mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === 2 && status === 1);
         }
+        console.log(selectedInvestment.acctNo, selectedInvestment.fullname);
         let investmentOps = {
             amount: amount,
-            description: `TRANSFER BETWEEN CLIENTS ACCOUNT; TRANSFER FROM : ${(isWalletPage === 1) ? sPageURL.split('=')[2].split('%20').join(' ') : selectedInvestment.acctNo(selectedInvestment.fullname)} TO ${selectedAccount.code}(${selectedAccount.name})`,
+            description: `TRANSFER BETWEEN CLIENTS ACCOUNT; TRANSFER FROM : ${(isWalletPage === 1) ? sPageURL.split('=')[2].split('%20').join(' ') : `${selectedInvestment.acctNo} (${selectedInvestment.fullname})`} TO ${selectedAccount.code}(${selectedAccount.name})`,
             investmentId: (isWalletPage === 0) ? selectedInvestment.investmentId : '',
             is_credit: 0,
             operationId: 2,
@@ -1647,6 +1646,7 @@ function onTransferOperation() {
             'type': 'post',
             'data': investmentOps,
             'success': function (data) {
+                console.log(data);
                 $('#wait').hide();
                 swal('Transfer operation completed successfully', '', 'success');
                 $("#input_transfer_amount").val('');
