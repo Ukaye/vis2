@@ -8,12 +8,40 @@ const
     enums = require('../../../enums'),
     notificationsService = require('../../notifications-service');
 
+router.post('/bulk_upload/validate', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let data = {},
+        query = 'SELECT * FROM collection_bulk_upload_history WHERE status = 1 AND collection_bankID = ? AND ' +
+            '(TIMESTAMP(?) BETWEEN TIMESTAMP(start) AND TIMESTAMP(end) OR TIMESTAMP(?) BETWEEN TIMESTAMP(start) AND TIMESTAMP(end))',
+        endpoint = `/core-service/post?query=${query}`,
+        url = `${HOST}${endpoint}`;
+
+    data.collection_bankID = req.body.account;
+    data.start = req.body.start;
+    data.end = req.body.end;
+    db.query(query, [data.collection_bankID,data.start,data.end], function (error, history_obj, fields) {
+        if(history_obj && history_obj[0]) {
+            res.send({
+                "status": 500,
+                "error": "Similar statement already uploaded!",
+                "response": history_obj
+            });
+        } else {
+            return res.send({
+                status: 200,
+                error: null,
+                response: `Statement is valid.`
+            });
+        }
+    });
+});
+
 router.post('/bulk_upload', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let count = 0,
         data = {},
         statement = req.body.statement,
-        query =  'INSERT INTO collection_bulk_uploads Set ?',
+        query = 'INSERT INTO collection_bulk_uploads Set ?',
         endpoint = `/core-service/post?query=${query}`,
         url = `${HOST}${endpoint}`;
 
@@ -25,17 +53,15 @@ router.post('/bulk_upload', function (req, res, next) {
     db.getConnection(function(err, connection) {
         if (err) throw err;
 
-        connection.query("SELECT * FROM collection_bulk_upload_history WHERE status = 1 AND collection_bankID = ? AND " +
-            "(TIMESTAMP(?) BETWEEN TIMESTAMP(start) AND TIMESTAMP(end) OR TIMESTAMP(?) BETWEEN TIMESTAMP(start) AND TIMESTAMP(end))",
-            [data.collection_bankID,data.start,data.end], function (error, history_obj, fields) {
-            if(history_obj && history_obj[0]) {
+        connection.query('INSERT INTO collection_bulk_upload_history SET ?', data, function (error, result, fields) {
+            if (error) {
                 res.send({
                     "status": 500,
-                    "error": "Similar statement already uploaded!",
-                    "response": history_obj
+                    "error": error,
+                    "response": null
                 });
             } else {
-                connection.query('INSERT INTO collection_bulk_upload_history SET ?', data, function (error, result, fields) {
+                connection.query('SELECT MAX(ID) AS ID from collection_bulk_upload_history', function (err, history_id, fields) {
                     if (error) {
                         res.send({
                             "status": 500,
@@ -43,37 +69,27 @@ router.post('/bulk_upload', function (req, res, next) {
                             "response": null
                         });
                     } else {
-                        connection.query('SELECT MAX(ID) AS ID from collection_bulk_upload_history', function (err, history_id, fields) {
-                            if (error) {
-                                res.send({
-                                    "status": 500,
-                                    "error": error,
-                                    "response": null
-                                });
-                            } else {
-                                async.forEach(statement, function (record, callback) {
-                                    record.bulk_upload_historyID = history_id[0]['ID'];
-                                    record.created_by = req.body.created_by;
-                                    record.status = enums.COLLECTION_BULK_UPLOAD.STATUS.NO_PAYMENT;
-                                    record.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                                    connection.query(query, record, function (error, response) {
-                                        if (error) {
-                                            console.log(error);
-                                        } else {
-                                            count++;
-                                        }
-                                        callback();
-                                    });
-                                }, function (data) {
-                                    connection.release();
-                                    return res.send({
-                                        status: 200,
-                                        error: null,
-                                        response: `Statement with ${count} record(s) saved successfully.`
-                                    });
-                                })
-                            }
-                        });
+                        async.forEach(statement, function (record, callback) {
+                            record.bulk_upload_historyID = history_id[0]['ID'];
+                            record.created_by = req.body.created_by;
+                            record.status = enums.COLLECTION_BULK_UPLOAD.STATUS.NO_PAYMENT;
+                            record.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                            connection.query(query, record, function (error, response) {
+                                if (error) {
+                                    console.log(error);
+                                } else {
+                                    count++;
+                                }
+                                callback();
+                            });
+                        }, function (data) {
+                            connection.release();
+                            return res.send({
+                                status: 200,
+                                error: null,
+                                response: `Statement with ${count} record(s) saved successfully.`
+                            });
+                        })
                     }
                 });
             }
@@ -120,6 +136,34 @@ router.delete('/bulk_upload/record/:id', function (req, res, next) {
         if (error)
             return res.send({status: 500, error: error, response: null});
         return res.send({status: 200, error: null, response: response});
+    });
+});
+
+router.delete('/bulk_upload/records', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let count = 0,
+        payload = {},
+        records = req.body.records;
+    payload.status = enums.COLLECTION_BULK_UPLOAD.STATUS.INACTIVE;
+    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+
+    db.getConnection(function(err, connection) {
+        if (err) throw err;
+
+        async.forEach(records, function (record, callback) {
+            let query =  `UPDATE collection_bulk_uploads Set ? WHERE ID = ${record.ID}`;
+            connection.query(query, payload, function (error, response) {
+                if (error){
+                    console.log(error);
+                } else {
+                    count++;
+                }
+                callback();
+            });
+        }, function (data) {
+            connection.release();
+            return res.send({status: 200, error: null, response: `${count} record(s) removed successfully!`});
+        })
     });
 });
 
@@ -288,11 +332,12 @@ router.delete('/bulk_upload/records/debit', function (req, res, next) {
 router.post('/collection_bank', function (req, res, next) {
     let data = req.body;
     data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.query('SELECT * FROM collection_banks WHERE account = ? AND status = 1', [data.account], function (error, collection_banks, fields) {
+    db.query('SELECT * FROM collection_banks WHERE (name = ? OR account = ?) AND status = 1', [data.name, data.account],
+        function (error, collection_banks, fields) {
         if (collection_banks && collection_banks[0]) {
             res.send({
                 "status": 500,
-                "error": data.account+" has already been added!",
+                "error": `${data.name} (${data.account}) has already been added!`,
                 "response": collection_banks[0]
             });
         } else {

@@ -55,7 +55,7 @@ function displayInvoice(val) {
                 <div class="col-lg-9">
                     <p><strong>Name: </strong>${val.client}</p>
                     <p><strong>Date: </strong>${val.payment_collect_date}</p>
-                    <p><strong>Amount: </strong>${numberToCurrencyformatter(val.payment_amount)} (${val.type})</p>
+                    <p><strong>Amount: </strong>${numberToCurrencyFormatter_(val.payment_amount)} (${val.type})</p>
                 </div>
                 <div class="col-lg-3">
                     <p><input class="form-control" type="checkbox" onclick="selectInvoice('${encodeURIComponent(JSON.stringify(val))}')" /></p>
@@ -98,9 +98,9 @@ function displayPayment(val) {
         <li id="payment-${val.ID}" class="ui-state-default">
             <div class="row">
                 <div class="col-lg-10">
-                    <p><strong>Amount: </strong>${numberToCurrencyformatter(amount)} ${type}
-                        <small class="text-muted"><strong>Allocated: </strong>${numberToCurrencyformatter(val.allocated)} 
-                            <strong>Unallocated: </strong>${numberToCurrencyformatter(val.unallocated)}
+                    <p><strong>Amount: </strong>${numberToCurrencyFormatter_(amount)} ${type}
+                        <small class="text-muted"><strong>Allocated: </strong>${numberToCurrencyFormatter_(val.allocated)} 
+                            <strong>Unallocated: </strong>${numberToCurrencyFormatter_(val.unallocated)}
                         </small></p>
                     <p><strong>Date: </strong>${val.value_date}</p>
                     <p><strong>Description: </strong>${val.description}</p>
@@ -198,8 +198,8 @@ function validatePayment() {
     if (overpayment > 0) {
         swal({
             title: 'Are you sure?',
-            // text: `Overpayment of ₦${numberToCurrencyformatter(overpayment)} would be saved to escrow`,
-            text: `₦${numberToCurrencyformatter(overpayment)} will remain unallocated`,
+            // text: `Overpayment of ₦${numberToCurrencyFormatter_(overpayment)} would be saved to escrow`,
+            text: `₦${numberToCurrencyFormatter_(overpayment)} will remain unallocated`,
             icon:  'warning',
             buttons: true,
             dangerMode: true
@@ -236,8 +236,8 @@ function postPayment(overpayment) {
                 if (overpayment > 0) {
                     window.location.reload();
                     // $(`#payment-${selectedPayments[i]['ID']} small`).html(`
-                    //         <strong>Allocated: </strong>${numberToCurrencyformatter(totalInvoice)}
-                    //         <strong>Unallocated: </strong>${numberToCurrencyformatter(overpayment)}`);
+                    //         <strong>Allocated: </strong>${numberToCurrencyFormatter_(totalInvoice)}
+                    //         <strong>Unallocated: </strong>${numberToCurrencyFormatter_(overpayment)}`);
                     // let payment_update = selectedPayments[i];
                     // payment_update.allocated = totalInvoice;
                     // payment_update.unallocated = overpayment;
@@ -300,7 +300,7 @@ function findMatches() {
                                             <p><strong>Name: </strong>${invoice.client} <span class="badge badge-warning" style="float: right;">
                                                 <i class="fa fa-link"></i> ${check.value}</span></p>
                                             <p><strong>Date: </strong>${invoice.payment_collect_date}</p>
-                                            <p><strong>Amount: </strong>${numberToCurrencyformatter(invoice.payment_amount)} (${invoice.type})</p>
+                                            <p><strong>Amount: </strong>${numberToCurrencyFormatter_(invoice.payment_amount)} (${invoice.type})</p>
                                         </div>
                                         <div class="col-lg-3">
                                             <p><input class="form-control" type="checkbox" onclick="selectInvoice('${encodeURIComponent(JSON.stringify(invoice))}')" /></p>
@@ -312,7 +312,7 @@ function findMatches() {
                                 <li id="payment-${payment.ID}" class="ui-state-default payment-match">
                                     <div class="row">
                                         <div class="col-lg-10">
-                                            <p><strong>Amount: </strong>${numberToCurrencyformatter(amount)} ${type} <span class="badge badge-warning" style="float: right;">
+                                            <p><strong>Amount: </strong>${numberToCurrencyFormatter_(amount)} ${type} <span class="badge badge-warning" style="float: right;">
                                                 <i class="fa fa-link"></i> ${check.value}</span></p>
                                             <p><strong>Date: </strong>${payment.value_date}</p>
                                             <p><strong>Description: </strong>${payment.description}</p>
@@ -525,7 +525,7 @@ function displayReversal(payment) {
             <li id="payment-${payment.ID}" class="ui-state-default payment-match">
                 <div class="row">
                     <div class="col-lg-10">
-                        <p><strong>Amount: </strong>${numberToCurrencyformatter(amount)} ${type}</p>
+                        <p><strong>Amount: </strong>${numberToCurrencyFormatter_(amount)} ${type}</p>
                         <p><strong>Date: </strong>${payment.value_date}</p>
                         <p><strong>Description: </strong>${payment.description}</p>
                     </div>
@@ -537,4 +537,50 @@ function displayReversal(payment) {
                 </div>
             </li>`);
     }
+}
+
+$('#selectPayments').change((e) => {
+    let $paymentCheckboxes = $('li[id^="payment-"]').find('input[type="checkbox"]');
+    if ($('#selectPayments').is(':checked')) {
+        selectedPayments = allPayments;
+        $paymentCheckboxes.prop('checked', true);
+    } else {
+        selectedPayments = [];
+        $paymentCheckboxes.prop('checked', false);
+    }
+});
+
+function removePayments() {
+    if (!selectedPayments[0]) return notification('No payment has been selected!', '', 'warning');
+    swal({
+        title: "Are you sure?",
+        text: "Once removed, this process is not reversible!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true
+    })
+        .then((yes) => {
+            if (yes) {
+                $('#wait').show();
+                $.ajax({
+                    'url': `/collection/bulk_upload/records`,
+                    'type': 'delete',
+                    'data': {records: selectedPayments},
+                    'success': function (data) {
+                        $('#wait').hide();
+                        if (data.status === 200) {
+                            notification(data.response, '', 'success');
+                            window.location.reload();
+                        } else {
+                            console.log(data.error);
+                            notification(data.error, '', 'error');
+                        }
+                    },
+                    'error': function (err) {
+                        console.log(err);
+                        notification('No internet connection', '', 'error');
+                    }
+                });
+            }
+        });
 }
