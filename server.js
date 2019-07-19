@@ -578,6 +578,12 @@ app.get('/treasuries', requireLogin, function (req, res) {
     });
 });
 
+app.get('/expenses', requireLogin, function (req, res) {
+    res.sendFile('treasury/expenses.html', {
+        root: __dirname + '/views'
+    });
+});
+
 
 app.get('/collection-banks', requireLogin, function (req, res) {
     res.sendFile('collection/collection-banks/collection-banks.html', {
