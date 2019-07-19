@@ -572,8 +572,14 @@ app.get('/bulk-collection', requireLogin, function (req, res) {
     });
 });
 
-app.get('/treasury', requireLogin, function (req, res) {
+app.get('/treasuries', requireLogin, function (req, res) {
     res.sendFile('treasury/treasury-management.html', {
+        root: __dirname + '/views'
+    });
+});
+
+app.get('/expenses', requireLogin, function (req, res) {
+    res.sendFile('treasury/expenses.html', {
         root: __dirname + '/views'
     });
 });

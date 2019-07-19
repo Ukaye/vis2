@@ -19,6 +19,7 @@ const differenceInCalendarMonths = require('date-fns/difference_in_calendar_mont
 const differenceInCalendarYears = require('date-fns/difference_in_calendar_years');
 const addMonths = require('date-fns/add_months');
 const isSameMonth = require('date-fns/is_same_month');
+var differenceInCalendarDays = require('date-fns/difference_in_calendar_days');
 
 //re.role_name as review_role_name,po.role_name as post_role_name,
 // left join user_roles re on a.roleId = re.id
@@ -128,7 +129,7 @@ router.post('/create', function (req, res, next) {
                 isForceTerminate: data.isForceTerminate,
                 expectedTerminationDate: data.expectedTerminationDate,
                 isWallet: data.isWallet,
-                isPaymentMadeByWallet: (data.isWallet === '1') ? 0 : data.isPaymentMadeByWallet
+                isPaymentMadeByWallet: (data.isWallet === '1') ? 0 : ((data.isPaymentMadeByWallet === '') ? 0 : data.isPaymentMadeByWallet)
             };
             query = `INSERT INTO investment_txns SET ?`;
             endpoint = `/core-service/post?query=${query}`;
@@ -864,10 +865,12 @@ router.post('/posts', function (req, res, next) {
                                     .then(function (response_) {
                                         if (data.isReversedTxn === '0') {
                                             debitWalletTxns(HOST, data).then(payld => {
-                                                setcharges(data, HOST, false).then(payload => {
-                                                    res.send(response.data);
-                                                }, err => {
-                                                    res.send(err);
+                                                upFrontInterest(data, HOST).then(_payload_ => {
+                                                    setcharges(data, HOST, false).then(payload => {
+                                                        res.send(response.data);
+                                                    }, err => {
+                                                        res.send(err);
+                                                    });
                                                 });
                                             }, errrrr => {
                                                 res.send(errrrr);
@@ -1139,6 +1142,81 @@ function computeCurrentBalance(investmentId, HOST) {
             resolve(0);
         });
     });
+}
+
+function computeTotalBalance(data, HOST) {
+    return new Promise((resolve, reject) => {
+        let query = `Select 
+        (Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${data.clientId} 
+            AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%l:%i %p') DESC LIMIT 1) as currentWalletBalance,
+        (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${data.investmentId} 
+            AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%l:%i %p') DESC LIMIT 1) as currentAcctBalance`;
+        let endpoint = '/core-service/get';
+        let url = `${HOST}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(payload2 => {
+            resolve(payload2.data[0]);
+        }, err => {
+            resolve({});
+        });
+    });
+}
+
+
+async function upFrontInterest(data, HOST) {
+    if (data.interest_disbursement_time.toString() === 'Up-Front' && data.is_capital.toString() === '1') {
+        let totalAmt = await computeTotalBalance(data, HOST);
+        return new Promise((resolve, reject) => {
+            let T = differenceInCalendarDays(
+                new Date(data.investment_mature_date.toString()),
+                new Date(data.investment_start_date.toString())
+            );
+            let interestInDays = T / 365;
+            let SI = (parseFloat(data.amount.split(',').join('')) * parseFloat(data.interest_rate.split(',').join('')) * interestInDays) / 100;
+            let total = 0;
+            if (data.interest_moves_wallet.toString() === '1') {
+                const val = parseFloat(Math.round(parseFloat(totalAmt.currentWalletBalance.toString())).toFixed(2));
+                total = val + SI;
+            } else {
+                const val = parseFloat(Math.round(parseFloat(totalAmt.currentAcctBalance.toString())).toFixed(2));
+                total = val + SI;
+            }
+            let _inv_txn = {
+                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                description: 'Total Up-Front interest',
+                amount: Math.round(SI).toFixed(2),
+                is_credit: 1,
+                created_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                balance: Math.round(total).toFixed(2),
+                is_capital: 0,
+                ref_no: moment().utcOffset('+0100').format('x'),
+                updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                investmentId: data.investmentId,
+                createdBy: data.createdBy,
+                clientId: data.clientId,
+                isWallet: (data.interest_moves_wallet.toString() === '1') ? 1 : 0,
+                isInterest: 1,
+                isApproved: 1,
+                postDone: 1,
+                reviewDone: 1,
+                approvalDone: 1,
+            };
+            let query = `INSERT INTO investment_txns SET ?`;
+            let endpoint = `/core-service/post?query=${query}`;
+            let url = `${HOST}${endpoint}`;
+            axios.post(url, _inv_txn)
+                .then(function (_payload_) {
+                    resolve({});
+                }, err => {
+                    reject(err);
+                });
+        });
+    } else {
+        return {};
+    }
 }
 
 
@@ -2659,8 +2737,9 @@ router.get('/client-wallets/:id', function (req, res, next) {
     let query = `SELECT 
     (Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id} ORDER BY ID DESC LIMIT 1) as balance,
     v.ID,v.ref_no,c.fullname,v.description,v.created_date,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName,
-    v.isDeny,v.isPaymentMadeByWallet,v.isReversedTxn,v.isTransfer,v.isMoveFundTransfer,v.beneficialInvestmentId,
-    v.approvalDone,v.reviewDone,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.isInvestmentTerminated,p.acct_allows_withdrawal,
+    v.isDeny,v.isPaymentMadeByWallet,v.isReversedTxn,v.isTransfer,v.isMoveFundTransfer,v.beneficialInvestmentId,p.interest_disbursement_time,p.interest_moves_wallet,
+    v.approvalDone,v.reviewDone,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.isInvestmentTerminated,
+    p.acct_allows_withdrawal,i.investment_mature_date,p.interest_rate,
     i.clientId,p.canTerminate,v.is_capital,v.investmentId,i.isTerminated,v.isWallet, v.updated_date, i.isMatured FROM investment_txns v 
     left join investments i on v.investmentId = i.ID 
     left join clients c on i.clientId = c.ID
@@ -2706,7 +2785,7 @@ router.get('/client-wallets/:id', function (req, res, next) {
             }
         }).then(payload => {
             query = `Select 
-            (Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY updated_date DESC LIMIT 1) as txnCurrentBalance,
+            (Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%l:%i %p') DESC LIMIT 1) as txnCurrentBalance,
             (SELECT count(*) as recordsTotal FROM investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id}) as recordsTotal`;
 
             // query = `SELECT count(*) as recordsTotal FROM investment_txns WHERE clientId = ${req.params.id}`;
@@ -2732,7 +2811,7 @@ router.get('/client-wallets/:id', function (req, res, next) {
 
 router.get('/client-wallet-balance/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query = `Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY updated_date DESC LIMIT 1`;
+    let query = `Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%l:%i %p') DESC LIMIT 1`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
 
@@ -2741,6 +2820,9 @@ router.get('/client-wallet-balance/:id', function (req, res, next) {
             query: query
         }
     }).then(response => {
+        if (response.data.length === 0) {
+            response.data = [{ balance: 0.00 }];
+        }
         res.send(response.data);
     }, err => {
         res.send(err);
