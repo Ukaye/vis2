@@ -285,4 +285,10 @@ functions.numberToCurrencyFormatter = function (value) {
     return value.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
 };
 
+functions.currencyToNumberFormatter = function (value) {
+    if (!value && isNaN(value))
+        return value;
+    return Number(value.replace(/[^0-9.-]+/g, ''));
+};
+
 module.exports = functions;

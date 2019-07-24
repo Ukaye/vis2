@@ -197,17 +197,23 @@ function removePayment(obj) {
         });
 }
 
+let totalInvoice = 0,
+    totalPayment = 0,
+    overpayment = 0;
 function validatePayment() {
     if (selectedInvoices.length < 1)
         return notification('No invoice has been selected yet!', '', 'warning');
     if (selectedPayments.length < 1)
         return notification('No payment has been selected yet!', '', 'warning');
 
-    let totalInvoice = sumArrayObjects(selectedInvoices, 'payment_amount'),
-        totalPayment = sumArrayObjects(selectedPayments, 'unallocated'),
-        overpayment = (totalPayment - totalInvoice).round(2);
+    totalInvoice = sumArrayObjects(selectedInvoices, 'payment_amount');
+    totalPayment = sumArrayObjects(selectedPayments, 'unallocated');
+    overpayment = (totalPayment - totalInvoice).round(2);
 
-    if (overpayment > 0 && selectedInvoices.length === 1) {
+    if (selectedInvoices.length > 1 && overpayment < 0)
+        return notification('Part payment is not allowed on multiple invoices!', '', 'warning');
+
+    if (selectedInvoices.length === 1 && overpayment > 0) {
         swal({
             title: 'Are you sure?',
             text: `Overpayment of ₦${numberToCurrencyFormatter_(overpayment)} would be saved to escrow`,
@@ -217,7 +223,7 @@ function validatePayment() {
         })
             .then((yes) => {
                 if (yes) {
-                    postPayment(overpayment, true);
+                    postPayment(true);
                 } else {
                     swal({
                         title: 'Are you sure?',
@@ -228,17 +234,17 @@ function validatePayment() {
                     })
                         .then((yes) => {
                             if (yes) {
-                                postPayment(overpayment);
+                                postPayment();
                             }
                         });
                 }
             });
     } else {
-        postPayment(overpayment);
+        postPayment();
     }
 }
 
-function postPayment(overpayment, escrow) {
+function postPayment(escrow) {
     $('#wait').show();
     $.ajax({
         'url': '/collection/bulk_upload/confirm-payment',
@@ -248,14 +254,15 @@ function postPayment(overpayment, escrow) {
             overpayment: overpayment,
             invoices: selectedInvoices,
             payments: selectedPayments,
+            total_invoice: totalInvoice,
+            total_payment: totalPayment,
             created_by: (JSON.parse(localStorage.getItem('user_obj')))['ID']
         },
         'success': function (data) {
-            if (overpayment > 0 && selectedInvoices.length === 1) {
-                $('#wait').hide();
-                notification(data.response, '', 'success');
-                return window.location.reload();
-            }
+            $('#wait').hide();
+            notification(data.response, '', 'success');
+            return window.location.reload();
+            // if (overpayment > 0 && selectedInvoices.length === 1)
             const invoice_count = selectedInvoices.length,
                 payment_count = selectedPayments.length;
             for (let i=0; i<invoice_count; i++) {
@@ -309,7 +316,7 @@ function findMatches() {
                     if (!check) {
                         unmatchedInvoices.push(invoice);
                     } else {
-                        let type,
+                        let type, status,
                             payment = check.payment,
                             checkMatchedInvoices = ($.grep(matchedInvoices, (e) => { return e.ID === invoice.ID }))[0],
                             amount = currencyToNumberformatter(payment.credit) - currencyToNumberformatter(payment.debit);
@@ -320,6 +327,16 @@ function findMatches() {
                                 type = '<span class="badge badge-danger">DEBIT</span>';
                                 amount = -amount;
                             }
+                            switch (invoice.payment_status) {
+                                case 0: {
+                                    status = '<span class="badge badge-danger">Not Paid</span>';
+                                    break;
+                                }
+                                case 1: {
+                                    status = '<span class="badge badge-warning">Part Paid</span>';
+                                    break;
+                                }
+                            }
                             matchedInvoices.push(invoice);
                             unmatchedPayments.splice(unmatchedPayments.findIndex((e) => { return e.ID === payment.ID; }), 1);
                             $('#invoices').append(`
@@ -328,7 +345,7 @@ function findMatches() {
                                         <div class="col-lg-9">
                                             <p><strong>Name: </strong>${invoice.client} <span class="badge badge-warning" style="float: right;">
                                                 <i class="fa fa-link"></i> ${check.value}</span></p>
-                                            <p><strong>Date: </strong>${invoice.payment_collect_date}</p>
+                                            <p><strong>Date: </strong>${invoice.payment_collect_date} ${status}</p>
                                             <p><strong>Amount: </strong>${numberToCurrencyFormatter_(invoice.payment_amount)} (${invoice.type})</p>
                                         </div>
                                         <div class="col-lg-3">
