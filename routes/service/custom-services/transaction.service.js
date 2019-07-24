@@ -805,8 +805,8 @@ router.post('/posts', function (req, res, next) {
                     let total_bal = 0;
                     computeTotalBalance(data, HOST).then(totalBalance_ => {
                         total_bal = (data.isWallet.toString() === '1') ? totalBalance_.currentWalletBalance : totalBalance_.currentAcctBalance;
-                        let bal = (data.isCredit.toString() === '1') ? (total_bal + parseFloat(data.amount.split(',').join(''))) :
-                            (total_bal - parseFloat(data.amount.split(',').join('')))
+                        let bal = (data.isCredit.toString() === '1') ? (parseFloat(total_bal.toString()) + parseFloat(data.amount.split(',').join(''))) :
+                            (parseFloat(total_bal.toString()) - parseFloat(data.amount.split(',').join('')));
                         if (data.isInvestmentTerminated.toString() === '0') {
                             query = `UPDATE investment_txns SET isApproved = ${data.status}, 
                                     updated_date ='${dt.toString()}', createdBy = ${data.userId},postDone = ${data.status},
@@ -831,6 +831,8 @@ router.post('/posts', function (req, res, next) {
                                             });
                                         }, errrr => {
                                         });
+                                    } else {
+                                        res.send(response_.data);
                                     }
                                 }, err => {
                                     res.send({
@@ -1128,7 +1130,6 @@ async function upFrontInterest(data, HOST) {
                 .then(function (_payload_) {
                     resolve({});
                 }, err => {
-                    console.log(err);
                     reject(err);
                 });
         });

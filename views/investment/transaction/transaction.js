@@ -385,7 +385,7 @@ function bindDataTable(id) {
                         </i> 
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         <button class="dropdown-item" id="dropdownItemDoc" data-toggle="modal" data-target="#viewListDocModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Document</button>
-                          <button class="dropdown-item" id="dropdownItemRevert" ${(full.isWallet === 1 || full.isTransfer === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 1 && full.is_capital === 0) ? '' : 'disabled'}>Reverse</button>
+                          <button class="dropdown-item" id="dropdownItemRevert" ${(selectedInvestment.maturityDays === true) ? 'disabled' : ''} ${(full.isWallet === 1 || full.isTransfer === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 1 && full.is_capital === 0) ? '' : 'disabled'}>Reverse</button>
                           <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 0) ? '' : 'disabled'}>Review</button>
                           <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1) ? '' : 'disabled'} ${(full.approvalDone === 0) ? '' : 'disabled'}>Approval</button>
                           <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1 && full.approvalDone === 1) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Post</button>
@@ -1030,13 +1030,15 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
                                         isReversedTxn: 1,
                                         ref_no: data_row.ref_no,
                                         parentTxnId: data_row.ID,
-                                        isWallet: data_row.isWallet
+                                        isWallet: data_row.isWallet,
+                                        clientId: data_row.clientId
                                     };
                                     $.ajax({
                                         url: `investment-txns/create`,
                                         'type': 'post',
                                         'data': investmentOps,
                                         'success': function (data) {
+                                            console.log(data);
                                             if (data.status === undefined) {
                                                 $('#wait').hide();
                                                 $("#input_amount").val('');
@@ -1050,6 +1052,7 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
                                             }
                                         },
                                         'error': function (err) {
+                                            console.log(err);
                                             $('#wait').hide();
                                             swal('Oops! An error occurred while executing reversal transaction', '', 'error');
                                         }
