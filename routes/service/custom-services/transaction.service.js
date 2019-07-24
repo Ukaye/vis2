@@ -822,18 +822,16 @@ router.post('/posts', function (req, res, next) {
                                 .then(function (response_) {
                                     if (data.isReversedTxn === '0') {
                                         debitWalletTxns(HOST, data).then(payld => {
-                                            upFrontInterest(data, HOST).then(_payload_ => {
+                                            upFrontInterest(data, HOST).then(payld2 => {
                                                 setcharges(data, HOST, false).then(payload => {
                                                     res.send(response.data);
                                                 }, err => {
-                                                    res.send(err);
                                                 });
+                                            }, __err => {
                                             });
-                                        }, errrrr => {
-                                            res.send(errrrr);
+                                        }, errrr => {
                                         });
                                     }
-                                    res.send(response.data);
                                 }, err => {
                                     res.send({
                                         status: 500,
@@ -1130,6 +1128,7 @@ async function upFrontInterest(data, HOST) {
                 .then(function (_payload_) {
                     resolve({});
                 }, err => {
+                    console.log(err);
                     reject(err);
                 });
         });
