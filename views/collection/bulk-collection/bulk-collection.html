@@ -79,6 +79,10 @@
             margin-bottom: 5px;
             height: 95px;
         }
+        .card-body {
+            max-height: 520px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body class="open">
@@ -130,6 +134,7 @@
                                     <a href="#" class="write dropdown-item" onclick="findMatches()"> FIND MATCHES</a>
                                     <a href="#" class="write dropdown-item" onclick="findReversals()"> FIND REVERSALS</a>
                                     <a href="#" class="write dropdown-item" onclick="removeDebits()"> REMOVE ALL DEBITS</a>
+                                    <a href="#" class="write dropdown-item" onclick="removePayments()"> REMOVE SELECTED PAYMENTS</a>
                                 </div>
                             </div>
                         </div>
@@ -144,13 +149,16 @@
                                 </div>
                                 <div class="col-sm-6 todolist">
                                     <div class="row">
-                                        <div class="col-lg-6">
+                                        <div class="col-lg-5">
                                             <h4>Unallocated Payments</h4>
                                         </div>
                                         <div class="col-lg-6">
                                             <select id="statement" class="form-control" title="Statement">
                                                 <option selected="selected" value="0">All</option>
                                             </select>
+                                        </div>
+                                        <div class="col-lg-1">
+                                            <input id="selectPayments" class="form-control" type="checkbox" />
                                         </div>
                                     </div>
                                     <ul id="payments" class="list-unstyled"></ul>

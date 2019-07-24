@@ -37,9 +37,10 @@ function getCollectionBanks(){
 
 function addCollectionBank() {
     let payload = {};
+    payload.name = $('#name').val();
     payload.account = $('#account').val();
     payload.bank = $('#bank').val();
-    if (!payload.account || payload.bank === 'Select Bank')
+    if (!payload.name || !payload.account || payload.bank === 'Select Bank')
         return notification('Kindly fill all required field(s)','','warning');
     payload.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
     $('#wait').show();
@@ -76,6 +77,7 @@ function populateCollectionBanks(data){
         data: tableData,
         buttons: [],
         columns: [
+            { data: "name" },
             { data: "account" },
             { data: "bank" },
             { data: "actions" }

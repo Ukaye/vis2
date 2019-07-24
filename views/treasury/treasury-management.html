@@ -202,84 +202,105 @@
                         <div class="col-sm-12">
                             <div class="card" style="border-color: transparent">
                                 <div class="row">
-                                    <div id="pic" class="col-sm-2" style="text-align: center; border: none; background-color: #f0f0f0; padding-top: 5px">
-                                        <div class="row" style="text-align: center">
-                                            <div class="col-sm-12 form-group" style="display: inline-block; width:100%">
-                                                <select id="period" style="display: inline-block; border: none; width: 100%" onchange="changePeriod(this)">
-                                                    <option value="1">Today</option>
-                                                    <option value="2">This Week</option>
-                                                    <option value="3">This Month</option>
-                                                </select>
-                                                <br/><br/>
-                                                <div class="col-xs-3" style="padding-left: 2px">
-                                                    <!--<button class="btn" style="background-color:transparent; border: none"><i class="fa fa-arrow-left"></i></button>-->
-                                                </div>
-                                                <div class="col-sm-6" style="text-align: center">
-                                                    <h5 style="display: inline-block">Date</h5>
-                                                </div>
-                                                <div class="col-sm-3">
-                                                    <!--<button class="btn" style="background-color:transparent; border: none"><i class="fa fa-arrow-right"></i></button>-->
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-sm-12" >
-                                            <!--<div class="col-sm-2">-->
-                                            <!--<button class="btn" style=" border: none"><i class="fa fa-arrow-left"></i></button>-->
-                                            <!--</div>-->
-                                            <!--<div class="col-sm-6">-->
-                                            <!--<h5 style="display: inline-block">Date</h5>-->
-                                            <!--</div>-->
-                                            <!--<div class="col-sm-3">-->
-                                            <!--<button class="btn" style=" border: none"><i class="fa fa-arrow-right"></i></button>-->
-                                            <!--</div>-->
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-7" style="padding: 15px 0 0 15px;">
+                                    <div class="col-sm-8" style="padding: 15px 0 0 15px;">
                                         <div class="col-sm-12">
-                                            <div class="col-sm-6">
-                                                <h3 id="">Investments & Savings</h3><hr />
-                                                <strong>Pay - Outs: </strong><span id="payouts"></span><br />
-                                                <strong>Interests Received: </strong><span id="interests"></span><br />
-                                            </div>
-                                            <div class="col-sm-6">
-                                                <h3 id="">Loans</h3><hr />
-                                                <strong>Predicted Disbursements: </strong><span id="disbursements"></span><br />
-                                                <strong>Receivables: </strong><span id="receivables"></span><br />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-3" style="padding: 15px 0 0 15px;">
-                                        <div class="col-sm-12">
-                                            <h3 id="">Aggregate</h3><hr />
-                                            <strong>Total Inflow: </strong><span id="total_ins"></span><br />
-                                            <strong>Total Outflow: </strong><span id="total_outs"></span><br />
-                                        </div>
-                                    </div>
-                                </div><br/>
-                                <div class="row">
-                                    <div class="col-sm-2"></div>
-                                    <div class="col-sm-7" style="padding: 15px 0 0 15px;">
-                                        <div class="col-sm-12">
-                                            <div class="col-sm-8">
+                                            <div class="col-sm-12">
                                                 <div class="form-group">
-                                                    <!--<strong><label class="form-control-label">Role Name</label>-->
                                                     <div class="input-group">
-                                                        <!--<div class="input-group-addon"><i class="fa fa-user"></i></div>-->
-                                                        <label class="form-control-label"><strong>Other Expenses: </strong></label>&nbsp;&nbsp;
-                                                        <input id="role" type="number" class="form-control" required="required">
+                                                        <label class="form-control-label"><strong>Period: </strong></label>&nbsp;&nbsp;
+                                                        <select id="period" class="form-control" onchange="changePeriod(this)">
+                                                            <option value="1">Today</option>
+                                                            <option value="2">This Week</option>
+                                                            <option value="3">This Month</option>
+                                                        </select>
                                                     </div>
                                                 </div>
-                                                <!--<div class="form-group">-->
-                                                    <!--<span id="submit-error" style="padding-left:50px; text-align: center"></span><button type="button" class="btn btn-primary pull-right write" onclick="validate()"><i class="fa fa-save"></i> Save</button>-->
-                                                <!--</div>-->
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="col-sm-3"></div>
+                                    </div><hr/>
                                 </div>
-                            </div>
+                                <div>
+                                <!--<div class="row">-->
+                                    <!--&lt;!&ndash;<div id="pic" class="col-sm-2" style="text-align: center; border: none; background-color: #f0f0f0; padding-top: 5px">&ndash;&gt;-->
+                                        <!--&lt;!&ndash;<div class="row" style="text-align: center">&ndash;&gt;-->
+                                            <!--&lt;!&ndash;<div class="col-sm-12 form-group" style="display: inline-block; width:100%">&ndash;&gt;-->
+                                                <!--&lt;!&ndash;<select id="period" style="display: inline-block; border: none; width: 100%" onchange="changePeriod(this)">&ndash;&gt;-->
+                                                    <!--&lt;!&ndash;<option value="1">Today</option>&ndash;&gt;-->
+                                                    <!--&lt;!&ndash;<option value="2">This Week</option>&ndash;&gt;-->
+                                                    <!--&lt;!&ndash;<option value="3">This Month</option>&ndash;&gt;-->
+                                                <!--&lt;!&ndash;</select>&ndash;&gt;-->
+                                                <!--&lt;!&ndash;<br/><br/>&ndash;&gt;-->
+                                                <!--&lt;!&ndash;<div class="col-xs-3" style="padding-left: 2px">&ndash;&gt;-->
+                                                    <!--&lt;!&ndash;&lt;!&ndash;<button class="btn" style="background-color:transparent; border: none"><i class="fa fa-arrow-left"></i></button>&ndash;&gt;&ndash;&gt;-->
+                                                <!--&lt;!&ndash;</div>&ndash;&gt;-->
+                                                <!--&lt;!&ndash;<div class="col-sm-6" style="text-align: center">&ndash;&gt;-->
+                                                    <!--&lt;!&ndash;<h5 style="display: inline-block">Date</h5>&ndash;&gt;-->
+                                                <!--&lt;!&ndash;</div>&ndash;&gt;-->
+                                                <!--&lt;!&ndash;<div class="col-sm-3">&ndash;&gt;-->
+                                                    <!--&lt;!&ndash;&lt;!&ndash;<button class="btn" style="background-color:transparent; border: none"><i class="fa fa-arrow-right"></i></button>&ndash;&gt;&ndash;&gt;-->
+                                                <!--&lt;!&ndash;</div>&ndash;&gt;-->
+                                            <!--&lt;!&ndash;</div>&ndash;&gt;-->
+                                        <!--&lt;!&ndash;</div>&ndash;&gt;-->
+                                        <!--&lt;!&ndash;<div class="col-sm-12" >&ndash;&gt;-->
+                                            <!--&lt;!&ndash;&lt;!&ndash;<div class="col-sm-2">&ndash;&gt;&ndash;&gt;-->
+                                            <!--&lt;!&ndash;&lt;!&ndash;<button class="btn" style=" border: none"><i class="fa fa-arrow-left"></i></button>&ndash;&gt;&ndash;&gt;-->
+                                            <!--&lt;!&ndash;&lt;!&ndash;</div>&ndash;&gt;&ndash;&gt;-->
+                                            <!--&lt;!&ndash;&lt;!&ndash;<div class="col-sm-6">&ndash;&gt;&ndash;&gt;-->
+                                            <!--&lt;!&ndash;&lt;!&ndash;<h5 style="display: inline-block">Date</h5>&ndash;&gt;&ndash;&gt;-->
+                                            <!--&lt;!&ndash;&lt;!&ndash;</div>&ndash;&gt;&ndash;&gt;-->
+                                            <!--&lt;!&ndash;&lt;!&ndash;<div class="col-sm-3">&ndash;&gt;&ndash;&gt;-->
+                                            <!--&lt;!&ndash;&lt;!&ndash;<button class="btn" style=" border: none"><i class="fa fa-arrow-right"></i></button>&ndash;&gt;&ndash;&gt;-->
+                                            <!--&lt;!&ndash;&lt;!&ndash;</div>&ndash;&gt;&ndash;&gt;-->
+                                        <!--&lt;!&ndash;</div>&ndash;&gt;-->
+                                    <!--&lt;!&ndash;</div>&ndash;&gt;-->
+                                    <!--<div class="col-sm-8" style="padding: 15px 0 0 15px;">-->
+                                        <!--<div class="col-sm-12">-->
+                                            <!--<div class="col-sm-6">-->
+                                                <!--<h3 id="">Investments & Savings</h3><hr />-->
+                                                <!--<a id="payouts-button" href="#" ><strong>Pay - Outs: </strong></a><span id="payouts"></span><br />-->
+                                                <!--<a id="interests-button" href="#" ><strong>Interests: </strong></a><span id="interests"></span><br />-->
+                                            <!--</div>-->
+                                            <!--<div class="col-sm-6">-->
+                                                <!--<h3 id="">Loans</h3><hr />-->
+                                                <!--<strong>Predicted Disbursements: </strong><span id="disbursements"></span><br />-->
+                                                <!--<a id="receivables-button" href="#" ><strong>Receivables: </strong></a><span id="receivables"></span><br />-->
+                                            <!--</div>-->
+                                        <!--</div>-->
+                                    <!--</div>-->
+                                    <!--<div class="col-sm-4" style="padding: 15px 0 0 15px;">-->
+                                        <!--<div class="col-sm-12">-->
+                                            <!--<h3 role="button" id="agg-button">Aggregate</h3><hr />-->
+                                            <!--<div id="agg-reveal" >-->
+                                                <!--<strong>Total Inflow: </strong><span id="total_ins"></span><br />-->
+                                                <!--<strong>Total Outflow: </strong><span id="total_outs"></span><br />-->
+                                            <!--</div>-->
+                                        <!--</div>-->
+                                    <!--</div>-->
+                                <!--</div><br/>-->
+                                <!--<div class="row">-->
+                                    <!--<div class="col-sm-8" style="padding: 15px 0 0 15px;">-->
+                                        <!--<div class="col-sm-12">-->
+                                            <!--<div class="col-sm-8">-->
+                                                <!--<div class="form-group">-->
+                                                    <!--&lt;!&ndash;<strong><label class="form-control-label">Role Name</label>&ndash;&gt;-->
+                                                    <!--<div class="input-group">-->
+                                                        <!--&lt;!&ndash;<div class="input-group-addon"><i class="fa fa-user"></i></div>&ndash;&gt;-->
+                                                        <!--<label class="form-control-label"><strong>Other Expenses: </strong></label>&nbsp;&nbsp;-->
+                                                        <!--<input id="expenses" type="number" class="form-control" required="required">-->
+                                                    <!--</div>-->
+                                                <!--</div>-->
+                                                <!--&lt;!&ndash;<div class="form-group">&ndash;&gt;-->
+                                                    <!--&lt;!&ndash;<span id="submit-error" style="padding-left:50px; text-align: center"></span><button type="button" class="btn btn-primary pull-right write" onclick="validate()"><i class="fa fa-save"></i> Save</button>&ndash;&gt;-->
+                                                <!--&lt;!&ndash;</div>&ndash;&gt;-->
+                                            <!--</div>-->
+                                        <!--</div>-->
+                                    <!--</div>-->
+                                    <!--<div class="col-sm-3"></div>-->
+                                <!--</div>-->
+                                </div>
                         </div>
-                        <div class="col-sm-12" id="payouts-div">
+                        </div>
+                        <div class="col-sm-12" id="payouts-div" style="display: none">
                             <div class="card">
                                 <div class="card-header">
                                     <h4 class="widget-title lighter smaller"><strong>Investment Pay-Outs</strong></h4>
@@ -292,6 +313,7 @@
                                                 <thead>
                                                 <tr>
                                                     <th>Investment ID</th>
+                                                    <th>Client</th>
                                                     <th>Amount</th>
                                                     <th>Date Created</th>
                                                 </tr>
@@ -305,7 +327,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-sm-12" id="interests-div">
+                        <div class="col-sm-12" id="interests-div"  style="display: none">
                             <div class="card">
                                 <div class="card-header">
                                     <h4 class="widget-title lighter smaller"><strong>Interests on Investments</strong></h4>
@@ -318,6 +340,7 @@
                                                 <thead>
                                                 <tr>
                                                     <th>Investment ID</th>
+                                                    <th>Client</th>
                                                     <th>Amount</th>
                                                     <th>Date Created</th>
                                                 </tr>
@@ -331,7 +354,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-sm-12" id="receivables-div">
+                        <div class="col-sm-12" id="receivables-div" style="display: none">
                             <div class="card">
                                 <div class="card-header">
                                     <h4 class="widget-title lighter smaller"><strong>Loan Receivables</strong></h4>
@@ -344,9 +367,10 @@
                                                 <thead>
                                                 <tr>
                                                     <th>Loan ID</th>
+                                                    <th>Client</th>
                                                     <th>Principal </th>
                                                     <th>Interest </th>
-                                                    <th>Date Created</th>
+                                                    <th>Date Expected</th>
                                                 </tr>
                                                 </thead>
 
@@ -358,6 +382,108 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="col-sm-12" >
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4 class="widget-title lighter smaller"><strong>Income</strong></h4>
+                                </div>
+
+                                <div class="card-body">
+                                    <div class="widget-main padding-8">
+                                        <div>
+                                            <table id="income-table" class="table table-striped table-bordered">
+                                                <thead>
+                                                <tr>
+                                                    <th>Item</th>
+                                                    <th>Amount</th>
+                                                </tr>
+                                                </thead>
+
+                                                <tbody id="">
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-12" >
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4 class="widget-title lighter smaller"><strong>Expenses</strong></h4>
+                                </div>
+
+                                <div class="card-body">
+                                    <div class="widget-main padding-8">
+                                        <div>
+                                            <table id="expenses-table" class="table table-striped table-bordered">
+                                                <thead>
+                                                <tr>
+                                                    <th>Item</th>
+                                                    <th>Amount</th>
+                                                </tr>
+                                                </thead>
+
+                                                <tbody id="">
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4 class="widget-title lighter smaller"><strong>Aggregate</strong></h4>
+                                </div>
+
+                                <div class="card-body">
+                                    <div class="widget-main padding-8">
+                                        <div>
+                                            <table id="aggregates-table" class="table table-striped table-bordered">
+                                                <thead>
+                                                <tr>
+                                                    <th>Item</th>
+                                                    <th>Amount</th>
+                                                </tr>
+                                                </thead>
+
+                                                <tbody id="">
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4 class="widget-title lighter smaller"><strong>Results</strong></h4>
+                                </div>
+
+                                <div class="card-body">
+                                    <div class="widget-main padding-8">
+                                        <div>
+                                            <table id="results-table" class="table table-striped table-bordered">
+                                                <thead>
+                                                <tr>
+                                                    <th>Item</th>
+                                                    <th>Amount</th>
+                                                </tr>
+                                                </thead>
+
+                                                <tbody id="">
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -365,7 +491,7 @@
 
         </div><!-- .animated -->
         <div id="wait" style=";width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;">
-            <img src='/spinner.gif' width="100" height="100" style="background-color: transparent" /></div>
+            <!--<img src='/spinner.gif' width="100" height="100" style="background-color: transparent" /></div>-->
     </div><!-- .content -->
 
     <div class="modal fade" id="escrowHistory" tabindex="-1" role="dialog" aria-labelledby="escrowHistoryLabel">

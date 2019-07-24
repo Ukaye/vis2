@@ -50,12 +50,12 @@ function getInvoices(){
 
 function displayInvoice(val) {
     $('#invoices').append(`
-        <li id="invoice-${val.ID}" class="ui-state-default">
+        <li id="invoice-${val.type}-${val.ID}" class="ui-state-default">
             <div class="row">
                 <div class="col-lg-9">
                     <p><strong>Name: </strong>${val.client}</p>
                     <p><strong>Date: </strong>${val.payment_collect_date}</p>
-                    <p><strong>Amount: </strong>${numberToCurrencyformatter(val.payment_amount)} (${val.type})</p>
+                    <p><strong>Amount: </strong>${numberToCurrencyFormatter_(val.payment_amount)} (${val.type})</p>
                 </div>
                 <div class="col-lg-3">
                     <p><input class="form-control" type="checkbox" onclick="selectInvoice('${encodeURIComponent(JSON.stringify(val))}')" /></p>
@@ -98,11 +98,11 @@ function displayPayment(val) {
         <li id="payment-${val.ID}" class="ui-state-default">
             <div class="row">
                 <div class="col-lg-10">
-                    <p><strong>Amount: </strong>${numberToCurrencyformatter(amount)} ${type}
-                        <small class="text-muted"><strong>Allocated: </strong>${numberToCurrencyformatter(val.allocated)} 
-                            <strong>Unallocated: </strong>${numberToCurrencyformatter(val.unallocated)}
+                    <p><strong>Amount: </strong>${numberToCurrencyFormatter_(amount)}
+                        <small class="text-muted"><strong>Allocated: </strong>${numberToCurrencyFormatter_(val.allocated)} 
+                            <strong>Unallocated: </strong>${numberToCurrencyFormatter_(val.unallocated)}
                         </small></p>
-                    <p><strong>Date: </strong>${val.value_date}</p>
+                    <p><strong>Date: </strong>${val.value_date} ${type}</p>
                     <p><strong>Description: </strong>${val.description}</p>
                 </div>
                 <div class="col-lg-2">
@@ -115,7 +115,7 @@ function displayPayment(val) {
 
 function selectInvoice(obj) {
     let invoice = JSON.parse(decodeURIComponent(obj)),
-        $checkbox = $(`#invoice-${invoice.ID}`).find('input[type="checkbox"]');
+        $checkbox = $(`#invoice-${invoice.type}-${invoice.ID}`).find('input[type="checkbox"]');
     if ($checkbox.is(':checked')) {
         if (selectedPayments.length <= 1) {
             selectedInvoices.push(invoice);
@@ -126,6 +126,7 @@ function selectInvoice(obj) {
                 $checkbox.prop('checked', false);
                 return notification('Invoice has already been selected for multiple payments!', '', 'warning');
             }
+            console.log(selectedInvoices)
         }
     } else {
         selectedInvoices.splice(selectedInvoices.findIndex((e) => { return e.ID === invoice.ID; }), 1);
@@ -195,18 +196,30 @@ function validatePayment() {
         totalPayment = sumArrayObjects(selectedPayments, 'unallocated'),
         overpayment = (totalPayment - totalInvoice).round(2);
 
-    if (overpayment > 0) {
+    if (overpayment > 0 && selectedInvoices.length === 1) {
         swal({
             title: 'Are you sure?',
-            // text: `Overpayment of ₦${numberToCurrencyformatter(overpayment)} would be saved to escrow`,
-            text: `₦${numberToCurrencyformatter(overpayment)} will remain unallocated`,
+            text: `Overpayment of ₦${numberToCurrencyFormatter_(overpayment)} would be saved to escrow`,
             icon:  'warning',
             buttons: true,
             dangerMode: true
         })
             .then((yes) => {
                 if (yes) {
-                    postPayment(overpayment);
+                    postPayment(overpayment, true);
+                } else {
+                    swal({
+                        title: 'Are you sure?',
+                        text: `₦${numberToCurrencyFormatter_(overpayment)} will remain unallocated`,
+                        icon:  'warning',
+                        buttons: true,
+                        dangerMode: true
+                    })
+                        .then((yes) => {
+                            if (yes) {
+                                postPayment(overpayment);
+                            }
+                        });
                 }
             });
     } else {
@@ -214,39 +227,44 @@ function validatePayment() {
     }
 }
 
-function postPayment(overpayment) {
-    let totalInvoice = sumArrayObjects(selectedInvoices, 'payment_amount');
-
+function postPayment(overpayment, escrow) {
     $('#wait').show();
     $.ajax({
         'url': '/collection/bulk_upload/confirm-payment',
         'type': 'post',
         'data': {
+            escrow: escrow,
             overpayment: overpayment,
             invoices: selectedInvoices,
             payments: selectedPayments,
             created_by: (JSON.parse(localStorage.getItem('user_obj')))['ID']
         },
         'success': function (data) {
-            for (let i=0; i<selectedInvoices.length; i++) {
-                $(`#invoice-${selectedInvoices[i]['ID']}`).remove();
-                selectedInvoices.splice(selectedInvoices.findIndex((e) => { return e.ID === selectedInvoices[i]['ID']; }), 1);
+            if (overpayment > 0 && selectedInvoices.length === 1) {
+                $('#wait').hide();
+                notification(data.response, '', 'success');
+                return window.location.reload();
             }
-            for (let i=0; i<selectedPayments.length; i++) {
-                if (overpayment > 0) {
-                    window.location.reload();
-                    // $(`#payment-${selectedPayments[i]['ID']} small`).html(`
-                    //         <strong>Allocated: </strong>${numberToCurrencyformatter(totalInvoice)}
-                    //         <strong>Unallocated: </strong>${numberToCurrencyformatter(overpayment)}`);
-                    // let payment_update = selectedPayments[i];
-                    // payment_update.allocated = totalInvoice;
-                    // payment_update.unallocated = overpayment;
-                    // selectedPayments.splice(selectedPayments.findIndex((e) => { return e.ID === payment_update.ID; }), 0, payment_update);
-                    // allPayments.splice(allPayments.findIndex((e) => { return e.ID === payment_update.ID; }), 0, payment_update);
-                } else {
-                    $(`#payment-${selectedPayments[i]['ID']}`).remove();
-                    selectedPayments.splice(selectedPayments.findIndex((e) => { return e.ID === selectedPayments[i]['ID']; }), 1);
-                }
+            const invoice_count = selectedInvoices.length,
+                payment_count = selectedPayments.length;
+            for (let i=0; i<invoice_count; i++) {
+                let inv = selectedInvoices[0];
+                $(`#invoice-${inv['type']}-${inv['ID']}`).remove();
+                selectedInvoices.splice(selectedInvoices.findIndex((e) => { return e.ID === inv['ID']; }), 1);
+            }
+            for (let i=0; i<payment_count; i++) {
+                // $(`#payment-${selectedPayments[i]['ID']} small`).html(`
+                //         <strong>Allocated: </strong>${numberToCurrencyFormatter_(totalInvoice)}
+                //         <strong>Unallocated: </strong>${numberToCurrencyFormatter_(overpayment)}`);
+                // let payment_update = selectedPayments[i];
+                // payment_update.allocated = totalInvoice;
+                // payment_update.unallocated = overpayment;
+                // selectedPayments.splice(selectedPayments.findIndex((e) => { return e.ID === payment_update.ID; }), 0, payment_update);
+                // allPayments.splice(allPayments.findIndex((e) => { return e.ID === payment_update.ID; }), 0, payment_update);
+
+                let pay = selectedPayments[0];
+                $(`#payment-${pay['ID']}`).remove();
+                selectedPayments.splice(selectedPayments.findIndex((e) => { return e.ID === pay['ID']; }), 1);
             }
             $('#wait').hide();
             notification(data.response, '', 'success');
@@ -294,13 +312,13 @@ function findMatches() {
                             matchedInvoices.push(invoice);
                             unmatchedPayments.splice(unmatchedPayments.findIndex((e) => { return e.ID === payment.ID; }), 1);
                             $('#invoices').append(`
-                                <li id="invoice-${invoice.ID}" class="ui-state-default invoice-match">
+                                <li id="invoice-${invoice.type}-${invoice.ID}" class="ui-state-default invoice-match">
                                     <div class="row">
                                         <div class="col-lg-9">
                                             <p><strong>Name: </strong>${invoice.client} <span class="badge badge-warning" style="float: right;">
                                                 <i class="fa fa-link"></i> ${check.value}</span></p>
                                             <p><strong>Date: </strong>${invoice.payment_collect_date}</p>
-                                            <p><strong>Amount: </strong>${numberToCurrencyformatter(invoice.payment_amount)} (${invoice.type})</p>
+                                            <p><strong>Amount: </strong>${numberToCurrencyFormatter_(invoice.payment_amount)} (${invoice.type})</p>
                                         </div>
                                         <div class="col-lg-3">
                                             <p><input class="form-control" type="checkbox" onclick="selectInvoice('${encodeURIComponent(JSON.stringify(invoice))}')" /></p>
@@ -312,9 +330,9 @@ function findMatches() {
                                 <li id="payment-${payment.ID}" class="ui-state-default payment-match">
                                     <div class="row">
                                         <div class="col-lg-10">
-                                            <p><strong>Amount: </strong>${numberToCurrencyformatter(amount)} ${type} <span class="badge badge-warning" style="float: right;">
+                                            <p><strong>Amount: </strong>${numberToCurrencyFormatter_(amount)} <span class="badge badge-warning" style="float: right;">
                                                 <i class="fa fa-link"></i> ${check.value}</span></p>
-                                            <p><strong>Date: </strong>${payment.value_date}</p>
+                                            <p><strong>Date: </strong>${payment.value_date} ${type}</p>
                                             <p><strong>Description: </strong>${payment.description}</p>
                                         </div>
                                         <div class="col-lg-2">
@@ -525,8 +543,8 @@ function displayReversal(payment) {
             <li id="payment-${payment.ID}" class="ui-state-default payment-match">
                 <div class="row">
                     <div class="col-lg-10">
-                        <p><strong>Amount: </strong>${numberToCurrencyformatter(amount)} ${type}</p>
-                        <p><strong>Date: </strong>${payment.value_date}</p>
+                        <p><strong>Amount: </strong>${numberToCurrencyFormatter_(amount)}</p>
+                        <p><strong>Date: </strong>${payment.value_date} ${type}</p>
                         <p><strong>Description: </strong>${payment.description}</p>
                     </div>
                     <div class="col-lg-2">
@@ -537,4 +555,50 @@ function displayReversal(payment) {
                 </div>
             </li>`);
     }
+}
+
+$('#selectPayments').change((e) => {
+    let $paymentCheckboxes = $('li[id^="payment-"]').find('input[type="checkbox"]');
+    if ($('#selectPayments').is(':checked')) {
+        selectedPayments = allPayments;
+        $paymentCheckboxes.prop('checked', true);
+    } else {
+        selectedPayments = [];
+        $paymentCheckboxes.prop('checked', false);
+    }
+});
+
+function removePayments() {
+    if (!selectedPayments[0]) return notification('No payment has been selected!', '', 'warning');
+    swal({
+        title: "Are you sure?",
+        text: "Once removed, this process is not reversible!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true
+    })
+        .then((yes) => {
+            if (yes) {
+                $('#wait').show();
+                $.ajax({
+                    'url': `/collection/bulk_upload/records`,
+                    'type': 'delete',
+                    'data': {records: selectedPayments},
+                    'success': function (data) {
+                        $('#wait').hide();
+                        if (data.status === 200) {
+                            notification(data.response, '', 'success');
+                            window.location.reload();
+                        } else {
+                            console.log(data.error);
+                            notification(data.error, '', 'error');
+                        }
+                    },
+                    'error': function (err) {
+                        console.log(err);
+                        notification('No internet connection', '', 'error');
+                    }
+                });
+            }
+        });
 }

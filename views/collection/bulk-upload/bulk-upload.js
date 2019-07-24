@@ -11,7 +11,7 @@
             success: function (data) {
                 $('#wait').hide();
                 $.each(data.response, function (key, val) {
-                    $('#account').append(`<option value="${val.ID}">${val.account}</option>`);
+                    $('#account').append(`<option value="${val.ID}">${val.name} (${val.account})</option>`);
                 });
             }
         });
@@ -21,11 +21,14 @@
         cr_dr = false,
         statement = [],
         statement_ = [],
+        dateType = 'hourly',
         nve_cr_rvsl = false,
+        $date = $('#date'),
         $cr_dr = $('#cr_dr'),
         $dvCSV = $("#dvCSV"),
         $csvUpload = $("#csvUpload"),
-        $nve_cr_rvsl = $('#nve_cr_rvsl');
+        $nve_cr_rvsl = $('#nve_cr_rvsl'),
+        $dateType = $('input[name=dateType]');
 
     $cr_dr.change((e) => {
         statement = [];
@@ -49,6 +52,33 @@
             cr_dr = false;
             $cr_dr.prop('checked', false);
         }
+    });
+
+    $dateType.change((e) => {
+        statement = [];
+        statement_ = [];
+        $dvCSV.html('');
+        $csvUpload.val('');
+        $('#date').val('');
+        $('#endDate').val('');
+        $('#startDate').val('');
+        dateType = $('input[name=dateType]:checked').val();
+        switch (dateType) {
+            case 'hourly': {
+                $('.hourly-date-type').show();
+                $('.daily-date-type').hide();
+                break;
+            }
+            case 'daily': {
+                $('.hourly-date-type').hide();
+                $('.daily-date-type').show();
+                break;
+            }
+        }
+    });
+
+    $date.change((e) => {
+        $csvUpload.trigger('change');
     });
 
     $csvUpload.change(function (){
@@ -105,8 +135,10 @@
                     let cell = $(`<td class="${ (j === 3 && cr_dr)? 'disabled':'' }" />`);
                     if (i > 0) {
                         if (j === 0 || j === 1) {
+                            cells[j] = (dateType === 'hourly')? $date.val() : cells[j];
                             cell.html(`<i class="sn">${(j === 0)? i+'.':''}</i>
-                                <input id="invoice-${i-skip}-${j}" type="date" value="${formatDate(cells[j])}" />`);
+                                <input id="invoice-${i-skip}-${j}" type="date" value="${formatDate(cells[j])}" 
+                                    disabled="${(dateType === 'hourly')? 'disabled':''}" />`);
                         } else if (j === 2 || j === 3 || j === 4) {
                             let credit = currencyToNumberformatter(cells[2]);
                             if (cr_dr && credit < 0) {
@@ -219,35 +251,51 @@
         payload.start = $('#startDate').val();
         payload.end = $('#endDate').val();
         payload.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
-        if (!payload.account || !payload.start || !payload.end) return notification('Kindly fill all required field(s)!','','warning');
+        if (!payload.account) return notification('Kindly fill all required field(s)!','','warning');
+        if (dateType === 'hourly') {
+            if (!$date.val()) return notification('Kindly fill all required field(s)!','','warning');
+            payload.start = `${$date.val()} ${processTimeInput($('#startTime').val())}`;
+            payload.end = `${$date.val()} ${processTimeInput($('#endTime').val())}`;
+        } else if (dateType === 'daily') {
+            if (!payload.start || !payload.end) return notification('Kindly fill all required field(s)!','','warning');
+            payload.start = `${payload.start} ${processTimeInput('00:00')}`;
+            payload.end = `${payload.end} ${processTimeInput('23:59')}`;
+        }
         if (!statementX[0]) return notification('Please upload a valid CSV file.','','warning');
-        validateStatement(statementX, function (validation) {
+        validateStatement(statementX, (validation) => {
             if (validation.status){
                 payload.statement = validation.data;
-                $('#wait').show();
-                $.ajax({
-                    'url': '/collection/bulk_upload',
-                    'type': 'post',
-                    'data': payload,
-                    'success': function (data) {
-                        $('#wait').hide();
-                        if (data.status === 200) {
-                            notification(data.response, '', 'success');
-                            window.location.href = '/bulk-collection';
-                        } else {
-                            console.log(data.error);
-                            notification(data.error, '', 'error');
-                        }
-                    },
-                    'error': function (err) {
-                        if (err && err.statusText === 'Payload Too Large')
-                            return notification('The file size is too large!',
-                                'Kindly truncate unnecessary data or separate file into multiple batches', 'error', 5000);
-                        console.log(err);
-                        $('#wait').hide();
-                        notification('No internet connection', '', 'error');
+                validateStatement_(payload, (response) => {
+                    if (response.status === 200) {
+                        $('#wait').show();
+                        $.ajax({
+                            'url': '/collection/bulk_upload',
+                            'type': 'post',
+                            'data': payload,
+                            'success': function (data) {
+                                $('#wait').hide();
+                                if (data.status === 200) {
+                                    notification(data.response, '', 'success');
+                                    window.location.href = '/bulk-collection';
+                                } else {
+                                    console.log(data.error);
+                                    notification(data.error, '', 'error');
+                                }
+                            },
+                            'error': function (err) {
+                                if (err && err.statusText === 'Payload Too Large')
+                                    return notification('The file size is too large!',
+                                        'Kindly truncate unnecessary data or separate file into multiple batches', 'error', 5000);
+                                console.log(err);
+                                $('#wait').hide();
+                                notification('No internet connection', '', 'error');
+                            }
+                        })
+                    } else {
+                        console.log(response.error);
+                        notification(response.error, '', 'error');
                     }
-                });
+                })
             } else {
                 notification('There are error(s) in the uploaded statement!', '', 'warning');
             }
@@ -322,6 +370,43 @@
         } else {
             callback({status: true, data: validated_statement});
         }
+    }
+
+    function validateStatement_(payload, callback) {
+        $('#wait').show();
+        $.ajax({
+            'url': '/collection/bulk_upload/validate',
+            'type': 'post',
+            'data': payload,
+            'success': function (data) {
+                $('#wait').hide();
+                callback(data);
+            },
+            'error': function (err) {
+                console.log(err);
+                $('#wait').hide();
+                callback(err);
+            }
+        })
+    }
+
+    function processTimeInput(time) {
+        let timeSplit = time.split(':'),
+            hours,
+            minutes,
+            meridian;
+        hours = timeSplit[0];
+        minutes = timeSplit[1];
+        if (hours > 12) {
+            meridian = 'pm';
+            hours -= 12;
+        } else if (hours < 12) {
+            meridian = 'am';
+            if (hours === 0) hours = 12;
+        } else {
+            meridian = 'pm';
+        }
+        return `${hours}:${minutes}:00 ${meridian}`;
     }
 
 })(jQuery);

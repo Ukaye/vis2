@@ -136,8 +136,92 @@ function read_write(){
     }
 }
 
-function edit(role, name){
-    $('#selectedName').html(': '+name);
+// function edit(role, name){
+//     $('#selectedName').html(': '+name);
+// }
+let class_id;
+function edit(id){
+    class_id = id;
+    $('#submit-classification').hide();
+    $('#submit-edit').show();
+    $.ajax({
+        'url': '/user/class-dets/'+id,
+        'type': 'get',
+        'success': function (data) {
+            $('#wait').hide();
+            $('#description').val(data[0].description);
+            numbersOnly($('#min-days').val(data[0].min_days));
+            if (data[0].un_max === '1'){
+                numbersOnly($('#max-days').val(''));
+                $('#max-days').attr('disabled', 'disabled');
+                $('#un-max').prop('checked', true);
+            }
+            else {
+                $('#max-days').prop('checked', false);
+                $('#max-days').attr('disabled', false);
+                numbersOnly($('#max-days').val(data[0].max_days));
+            }
+        },
+        'error': function (err) {
+            $('#wait').hide();
+            swal('Oops! An error occurred while retrieving details.');
+        }
+    });
+}
+
+$("#submit-edit").click(function () {
+    validateEdit(class_id);
+});
+
+function validateEdit(id){
+    if (!($('#un-max').prop('checked'))) {
+        if ($('#description').val() == "" || $('#description').val() == null || $('#min-days').val() == "" || $('#min-days').val() == null || $('#max-days').val() == "" || $('#max-days').val() == null) {
+            return swal('Empty field(s)!', 'All fields are required.', 'warning');
+        } else {
+            if (parseFloat($('#min-days').val()) > parseFloat($('#max-days').val())) {
+                return swal('Disallowed', 'Minimum cannot be greater than Maximum.', 'warning');
+            }
+            submitEditDetails(id);
+        }
+    } else {
+        if ($('#description').val() == "" || $('#description').val() == null || $('#min-days').val() == "" || $('#min-days').val() == null) {
+            return swal('Empty field(s)!', 'Description and Minimum Days Fields are required.', 'warning');
+        } else {
+            submitEditDetails(id);
+        }
+    }
+}
+
+function submitEditDetails(id){
+    var obj = {};
+    obj.description = $('#description').val();
+    obj.min_days = numbersOnly($('#min-days').val());
+    obj.max_days = ($('#un-max').prop('checked')) ? 0 : numbersOnly($('#max-days').val());
+    obj.un_max = ($('#un-max').prop('checked')) ? 1 : 0;
+    let test={};
+    $.ajax({
+        'url': '/user/edit-classification/'+id,
+        'type': 'post',
+        'data': obj,
+        'success': function (data) {
+            $.each(JSON.parse(data), function (key, val) {
+                test[key] = val;
+            });
+            if(test.response === null){
+                swal('Error!', "Action could not be completed! Please try again", 'error');
+            }
+            else{
+                swal('Success!', "Loan Classification Updated!", 'success');
+                $('#submit-classification').show();
+                $('#submit-edit').hide();
+                getClassifications();
+            }
+            window.location.href = "./loan-classification-settings";
+        },
+        'error': function (err) {
+            swal('Error!', 'No Internet Connection.', 'error');
+        }
+    });
 }
 
 let glob={};
@@ -148,11 +232,11 @@ function getClassifications(){
         url: "/user/classification-types-full/",
         data: '{}',
         success: function (response) {
-            // role.empty().append('<option selected="selected" id="0">-- Choose User Role --</option>');
             glob = JSON.parse(response);
             $("#role-table").dataTable().fnClearTable();
             $.each(JSON.parse(response), function (key, val) {
                 let actions, max_days;
+                actions = '<button onclick="edit('+val.id+')" class="btn btn-primary"><i class="fa fa-pencil" width="80"></i></button>'
                 if (val.status === "1"){
                     var disable = '<button name="'+val.id+'" onclick="confirm('+val.id+')" class="write btn btn-danger "><i class="fa fa-trash"></i> Disable Classification</button>'
                 }
@@ -165,14 +249,12 @@ function getClassifications(){
                 else {
                     max_days = val.max_days;
                 }
+                let buttons = disable + '&nbsp; &nbsp;' + actions;
                 $('#role-table').dataTable().fnAddData( [
                     val.description,
                     val.min_days,
                     max_days,
-                    disable
-                    // "Make",
-                    // "Make",
-                    // action
+                    buttons
                 ]);
             });
         }
@@ -247,7 +329,7 @@ function enableClassification(id){
                 swal("Failed!", 'Unable to submit request', 'error');
             }
             else{
-                swal("Activity Enabled Successfully!", '', 'success');
+                swal("Loan Classification Re - Enabled Successfully!", '', 'success');
                 getClassifications();
             }
         },
