@@ -1065,7 +1065,7 @@ function initLoanSummary(total_prinicipal) {
             amount = (amount - parseFloat(payment.payment_amount)).round(2);
             if (count === payment_history.length){
                 total_due_amount = amount;
-                $('#total-due-text').text('₦'+amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
+                $('#total-due-text').text(`₦${numberToCurrencyformatter(amount)}`);
             }
         });
         $('#last-payment-text').text(((payment_history[0]['date_created']).split(' '))[0]);

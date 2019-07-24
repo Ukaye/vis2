@@ -9,7 +9,7 @@ function getStatements(){
         url: '/collection/bulk_upload/history',
         success: function (data) {
             $.each(data.response, function (key, val) {
-                $('#statement').append(`<option value="${val.ID}">${val.account} (${val.start} to ${val.end})</option>`);
+                $('#statement').append(`<option value="${val.ID}">${val.name} (${val.start} to ${val.end})</option>`);
             });
         }
     });
@@ -49,12 +49,23 @@ function getInvoices(){
 }
 
 function displayInvoice(val) {
+    let status;
+    switch (val.payment_status) {
+        case 0: {
+            status = '<span class="badge badge-danger">Not Paid</span>';
+            break;
+        }
+        case 1: {
+            status = '<span class="badge badge-warning">Part Paid</span>';
+            break;
+        }
+    }
     $('#invoices').append(`
         <li id="invoice-${val.type}-${val.ID}" class="ui-state-default">
             <div class="row">
                 <div class="col-lg-9">
                     <p><strong>Name: </strong>${val.client}</p>
-                    <p><strong>Date: </strong>${val.payment_collect_date}</p>
+                    <p><strong>Date: </strong>${val.payment_collect_date} ${status}</p>
                     <p><strong>Amount: </strong>${numberToCurrencyFormatter_(val.payment_amount)} (${val.type})</p>
                 </div>
                 <div class="col-lg-3">

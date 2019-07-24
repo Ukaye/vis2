@@ -273,7 +273,7 @@ function overpaymentCheck(clientID, paymentID, amount, escrow, callback) {
 
 router.get('/bulk_upload/history', function(req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let	query = `SELECT h.*, b.account FROM collection_bulk_upload_history h, collection_banks b WHERE h.collection_bankID = b.ID AND h.status = 1`,
+    let	query = `SELECT h.*, b.name FROM collection_bulk_upload_history h, collection_banks b WHERE h.collection_bankID = b.ID AND h.status = 1`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
 
@@ -293,8 +293,9 @@ router.get('/bulk_upload/history', function(req, res) {
 router.get('/invoices/due', function(req, res, next) {
     let today = moment().utcOffset('+0100').format('YYYY-MM-DD'),
         query = "SELECT s.ID,c.fullname AS client, c.phone, c.first_name, c.middle_name, c.last_name, c.ID AS clientID, " +
-        "s.applicationID, s.status, s.payment_amount, s.payment_collect_date, s.payment_status, 'Principal' AS 'type' FROM application_schedules AS s, clients c " +
-        "WHERE s.status = 1 AND s.payment_status = 0 AND (select status from applications a where a.ID = s.applicationID) = 2 AND c.ID = (select userID from applications a where a.ID = s.applicationID) " +
+        "s.applicationID, s.status, s.payment_collect_date, s.payment_status, 'Principal' AS 'type', " +
+        "(payment_amount - (SELECT COALESCE(SUM(p.payment_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)) payment_amount FROM application_schedules AS s, clients c " +
+        "WHERE s.status = 1 AND ((payment_amount - (SELECT COALESCE(SUM(p.payment_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)) > 0) = 1 AND c.ID = (select userID from applications a where a.ID = s.applicationID) " +
         "AND (select close_status from applications a where a.ID = s.applicationID) = 0 AND s.payment_amount > 0 AND TIMESTAMP(payment_collect_date) <= TIMESTAMP('"+today+"') ORDER BY ID desc";
 
     db.query(query, function (error, results, fields) {
@@ -302,9 +303,10 @@ router.get('/invoices/due', function(req, res, next) {
             res.send({"status": 500, "error": error, "response": null});
         } else {
             query = "SELECT s.ID,c.fullname AS client, c.phone, c.first_name, c.middle_name, c.last_name, c.ID AS clientID, " +
-                "s.applicationID, s.status, s.interest_amount as payment_amount, s.interest_collect_date as payment_collect_date, s.payment_status, 'Interest' AS 'type' FROM application_schedules AS s, clients c " +
-                "WHERE s.status = 1 AND s.payment_status = 0 AND (select status from applications a where a.ID = s.applicationID) = 2 AND c.ID = (select userID from applications a where a.ID = s.applicationID) " +
-                "AND (select close_status from applications a where a.ID = s.applicationID) = 0 AND s.interest_amount > 0 AND TIMESTAMP(payment_collect_date) <= TIMESTAMP('"+today+"') ORDER BY ID desc";
+                "s.applicationID, s.status, s.interest_collect_date as payment_collect_date, s.payment_status, 'Interest' AS 'type', " +
+                "(interest_amount - (SELECT COALESCE(SUM(p.interest_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)) payment_amount FROM application_schedules AS s, clients c " +
+                "WHERE s.status = 1 AND ((interest_amount - (SELECT COALESCE(SUM(p.interest_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)) > 0) = 1 AND c.ID = (select userID from applications a where a.ID = s.applicationID) " +
+                "AND (select close_status from applications a where a.ID = s.applicationID) = 0 AND s.interest_amount > 0 AND TIMESTAMP(interest_collect_date) <= TIMESTAMP('"+today+"') ORDER BY ID desc";
             let results_principal = results;
             db.query(query, function (error, results2, fields) {
                 if(error) {
