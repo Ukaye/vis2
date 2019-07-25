@@ -1069,7 +1069,7 @@ function computeTotalBalance(data, HOST) {
         let query = `Select 
         (Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${data.clientId} 
             AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1) as currentWalletBalance,
-        (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${data.investmentId} 
+        (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${(data.investmentId === '') ? 0 : data.investmentId} 
             AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1) as currentAcctBalance`;
         let endpoint = '/core-service/get';
         let url = `${HOST}${endpoint}`;
@@ -1735,7 +1735,7 @@ async function setcharges(data, HOST, isReversal) {
         return fundBene;
     } else {
         return new Promise((resolve, reject) => {
-            if (data.isInvestmentMatured.toString() === '0') {
+            if (data.isInvestmentMatured.toString() === '0' && data.investmentId !== '') {
                 let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                 let refId = moment().utcOffset('+0100').format('x');
                 query = `SELECT t.*,p.*,v.description,v.amount as txnAmount, v.balance as txnBalance, v.is_credit,
@@ -1750,7 +1750,6 @@ async function setcharges(data, HOST, isReversal) {
                         query: query
                     }
                 }).then(response_product => {
-                    //Charge for deposit
                     if (response_product.data[0].isInterest.toString() === '0') {
                         if (data.isCredit.toString() === '1') {
 
@@ -1801,7 +1800,10 @@ async function setcharges(data, HOST, isReversal) {
 
                         } else {
                             let getInvestBalance = response_product.data[response_product.data.length - 1];
-                            let chargedCostMinBal = (getInvestBalance.minimum_bal_charges_opt === 'Fixed') ? parseFloat(getInvestBalance.minimum_bal_charges.split(',').join('')) : ((parseFloat(getInvestBalance.minimum_bal_charges.split(',').join('')) / 100) * parseFloat(getInvestBalance.txnBalance.split(',').join('')));
+                            getInvestBalance.minimum_bal_charges = (getInvestBalance.minimum_bal_charges === '') ? '0' : getInvestBalance.minimum_bal_charges;
+                            let chargedCostMinBal = (getInvestBalance.minimum_bal_charges_opt === 'Fixed')
+                                ? parseFloat(getInvestBalance.minimum_bal_charges.split(',').join(''))
+                                : ((parseFloat(getInvestBalance.minimum_bal_charges.split(',').join('')) / 100) * parseFloat(getInvestBalance.txnBalance.split(',').join('')));
                             if (parseFloat(getInvestBalance.txnBalance.split(',').join('')) - parseFloat(getInvestBalance.txnAmount.split(',').join('')) < parseFloat(getInvestBalance.minimum_bal.split(',').join(''))) {
                                 refId = moment().utcOffset('+0100').format('x');
                                 let inv_txn = {
@@ -2165,16 +2167,16 @@ function deductVatTax(HOST, data, _amount, txn, balance) {
             }).then(response => {
                 if (response.data.status === undefined) {
                     let configData = response.data[0];
-                    let configAmount = (configData.withHoldingTaxChargeMethod == 'Fixed') ? configData.withHoldingTax : (configData.withHoldingTax * parseFloat(Math.round(_amount).toFixed(2))) / 100;
+                    let configAmount = (configData.vatChargeMethod === 'Fixed') ? configData.withHoldingTax : (parseFloat(configData.withHoldingTax.toString()) * parseFloat(_amount.toString())) / 100;
                     let _refId = moment().utcOffset('+0100').format('x');
-                    let _mBalance = balance - configAmount;
+                    let _mBalance = Math.round(parseFloat(balance)).toFixed(2) - parseFloat(configAmount);
                     let inv_txn = {
                         txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                         description: `VAT ON CHARGE TRANSACTION WITH REF.: <strong>${txn.ref_no}</strong>`,
-                        amount: Math.round(configAmount).toFixed(2),
+                        amount: parseFloat(configAmount),
                         is_credit: 0,
                         created_date: dt,
-                        balance: Math.round(_mBalance).toFixed(2),
+                        balance: Math.round(parseFloat(_mBalance)).toFixed(2),
                         is_capital: 0,
                         isCharge: 1,
                         isApproved: 1,
@@ -2615,7 +2617,7 @@ async function deductWithHoldingTax(HOST, data, _amount, total, bal_, clientId, 
     }).then(response => {
         if (response.data.status === undefined) {
             let configData = response.data[0];
-            let configAmount = (configData.vatChargeMethod == 'Fixed') ? configData.vat : (configData.vat * (total + parseFloat(Math.round(_amount).toFixed(2)))) / 100;
+            let configAmount = (configData.withHoldingTaxChargeMethod == 'Fixed') ? configData.vat : (configData.vat * (total + parseFloat(Math.round(_amount).toFixed(2)))) / 100;
             let refId = moment().utcOffset('+0100').format('x');
             let inv_txn = {
                 txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
@@ -2761,13 +2763,13 @@ router.get('/investment-accounts/:id', function (req, res, next) {
         query = `SELECT v.ID,v.code,v.clientId,c.fullname AS name,v.productId, p.name as productName FROM investments v 
         left join clients c on v.clientId = c.ID 
         left join investment_products p on p.ID = v.productId
-        WHERE v.ID != ${parseInt(req.query.excludedItem)} AND c.ID = ${req.query.clientId} AND upper(v.code) LIKE "${search_string}%" AND upper(c.fullname) 
+        WHERE v.isMatured = 0 AND v.isTerminated = 0 AND v.ID != ${parseInt(req.query.excludedItem)} AND c.ID = ${req.query.clientId} AND upper(v.code) LIKE "${search_string}%" AND upper(c.fullname) 
         LIKE "${search_string}%" AND upper(p.name) LIKE "${search_string}%" ORDER BY v.ID desc LIMIT ${limit} OFFSET ${page}`;
     } else {
         query = `SELECT v.ID,v.code,v.clientId,c.fullname AS name,v.productId, p.name as productName FROM investments v 
         left join clients c on v.clientId = c.ID 
         left join investment_products p on p.ID = v.productId
-        WHERE c.ID != ${req.query.clientId} AND upper(v.code) LIKE "${search_string}%" AND upper(c.fullname) 
+        WHERE v.isMatured = 0 AND v.isTerminated = 0 AND c.ID != ${req.query.clientId} AND upper(v.code) LIKE "${search_string}%" AND upper(c.fullname) 
         LIKE "${search_string}%" AND upper(p.name) LIKE "${search_string}%" ORDER BY v.ID desc LIMIT ${limit} OFFSET ${page}`;
     }
     const endpoint = "/core-service/get";

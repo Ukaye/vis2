@@ -474,14 +474,35 @@ router.get('/client-investments/:id', function (req, res, next) {
                 const formatedCurrentDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDay())
                 const maturityDate = new Date(uniqueTxns[0].investment_mature_date);
                 const formatedMaturityDate = new Date(maturityDate.getFullYear(), maturityDate.getMonth(), maturityDate.getDay())
-                res.send({
-                    draw: draw,
-                    maturityDays: (formatedMaturityDate <= formatedCurrentDate),
-                    txnCurrentBalance: (payload2.data[0].txnCurrentBalance === null) ? '' : payload2.data[0].txnCurrentBalance,
-                    recordsTotal: payload2.data[0].recordsTotal,
-                    recordsFiltered: payload.data[0].recordsFiltered,
-                    data: (uniqueTxns === undefined) ? [] : uniqueTxns
-                });
+                if (formatedMaturityDate <= formatedCurrentDate) {
+                    query = `UPDATE investments SET isMatured = 1 WHERE ID = ${req.params.id}`;
+                    endpoint = '/core-service/get';
+                    url = `${HOST}${endpoint}`;
+                    axios.get(url, {
+                        params: {
+                            query: query
+                        }
+                    }).then(respons_e => {
+                        res.send({
+                            draw: draw,
+                            maturityDays: true,
+                            txnCurrentBalance: (payload2.data[0].txnCurrentBalance === null) ? '' : payload2.data[0].txnCurrentBalance,
+                            recordsTotal: payload2.data[0].recordsTotal,
+                            recordsFiltered: payload.data[0].recordsFiltered,
+                            data: (uniqueTxns === undefined) ? [] : uniqueTxns
+                        });
+                    }, err => {
+                    })
+                } else {
+                    res.send({
+                        draw: draw,
+                        maturityDays: false,
+                        txnCurrentBalance: (payload2.data[0].txnCurrentBalance === null) ? '' : payload2.data[0].txnCurrentBalance,
+                        recordsTotal: payload2.data[0].recordsTotal,
+                        recordsFiltered: payload.data[0].recordsFiltered,
+                        data: (uniqueTxns === undefined) ? [] : uniqueTxns
+                    });
+                }
             });
         });
     });
