@@ -266,34 +266,21 @@
             if (validation.status){
                 payload.statement = validation.data;
                 validateStatement_(payload, (response) => {
-                    if (response.status === 200) {
-                        $('#wait').show();
-                        $.ajax({
-                            'url': '/collection/bulk_upload',
-                            'type': 'post',
-                            'data': payload,
-                            'success': function (data) {
-                                $('#wait').hide();
-                                if (data.status === 200) {
-                                    notification(data.response, '', 'success');
-                                    window.location.href = '/bulk-collection';
-                                } else {
-                                    console.log(data.error);
-                                    notification(data.error, '', 'error');
-                                }
-                            },
-                            'error': function (err) {
-                                if (err && err.statusText === 'Payload Too Large')
-                                    return notification('The file size is too large!',
-                                        'Kindly truncate unnecessary data or separate file into multiple batches', 'error', 5000);
-                                console.log(err);
-                                $('#wait').hide();
-                                notification('No internet connection', '', 'error');
-                            }
+                    if (response.status !== 200) {
+                        swal({
+                            title: "Are you sure?",
+                            text: response.error,
+                            icon: "warning",
+                            buttons: true,
+                            dangerMode: true
                         })
+                            .then((yes) => {
+                                if (yes) {
+                                    uploadStatement(payload);
+                                }
+                            });
                     } else {
-                        console.log(response.error);
-                        notification(response.error, '', 'error');
+                        uploadStatement(payload);
                     }
                 })
             } else {
@@ -386,6 +373,33 @@
                 console.log(err);
                 $('#wait').hide();
                 callback(err);
+            }
+        })
+    }
+
+    function uploadStatement(payload) {
+        $('#wait').show();
+        $.ajax({
+            'url': '/collection/bulk_upload',
+            'type': 'post',
+            'data': payload,
+            'success': function (data) {
+                $('#wait').hide();
+                if (data.status === 200) {
+                    notification(data.response, '', 'success');
+                    window.location.href = '/bulk-collection';
+                } else {
+                    console.log(data.error);
+                    notification(data.error, '', 'error');
+                }
+            },
+            'error': function (err) {
+                if (err && err.statusText === 'Payload Too Large')
+                    return notification('The file size is too large!',
+                        'Kindly truncate unnecessary data or separate file into multiple batches', 'error', 5000);
+                console.log(err);
+                $('#wait').hide();
+                notification('No internet connection', '', 'error');
             }
         })
     }

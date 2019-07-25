@@ -7,6 +7,7 @@ const
     express = require('express'),
     router = express.Router(),
     enums = require('../../../enums'),
+    helperFunctions = require('../../../helper-functions'),
     notificationsService = require('../../notifications-service');
 
 router.post('/bulk_upload/validate', function (req, res, next) {
@@ -182,63 +183,55 @@ router.post('/bulk_upload/confirm-payment', function(req, res, next) {
         db.getConnection(function(err, connection) {
             if (err) throw err;
 
+            let payment_history = {
+              index: 0,
+              balance: payments[0]['unallocated']
+            };
             async.forEach(invoices, function (invoice, callback) {
-                async.forEach(payments, function (payment, callback_) {
-                    let update = {
-                        actual_payment_amount: '0',
-                        actual_interest_amount: '0',
-                        actual_fees_amount: '0',
-                        actual_penalty_amount: '0',
-                        payment_status: 1
-                    };
-                    if (invoice.type === 'Principal')
-                        update.actual_payment_amount = parseFloat(invoice.payment_amount);
-                    if (invoice.type === 'Interest')
-                        update.actual_interest_amount = parseFloat(invoice.payment_amount);
-                    connection.query(`UPDATE application_schedules SET ? WHERE ID = ${invoice.ID}`, update, function (error, result, fields) {
-                        if (error) {
-                            console.log(error);
-                            callback_();
-                        } else {
-                            let record = {};
-                            record.invoiceID = invoice.ID;
-                            record.agentID = created_by;
-                            record.applicationID = invoice.applicationID;
-                            record.payment_amount = update.actual_payment_amount;
-                            record.interest_amount = update.actual_interest_amount;
-                            record.fees_amount = update.actual_fees_amount;
-                            record.penalty_amount = update.actual_penalty_amount;
-                            record.payment_source = 'cash';
-                            record.payment_date = payment.value_date;
-                            record.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                            record.collection_bulk_uploadID = payment.ID;
-                            connection.query('INSERT INTO schedule_history SET ?', record, function (error, response, fields) {
-                                if (error) {
-                                    console.log(error);
-                                    callback_();
-                                } else {
-                                    count++;
-                                    let payload = {};
-                                    payload.category = 'Application';
-                                    payload.userid = req.cookies.timeout;
-                                    payload.description = 'Loan Application Payment Confirmed';
-                                    payload.affected = invoice.applicationID;
-                                    notificationsService.log(req, payload);
-
-                                    let update2 = {};
-                                    update2.status = (!escrow && overpayment > 0 && invoices.length === 1)?
-                                        enums.COLLECTION_BULK_UPLOAD.STATUS.PART_PAYMENT : enums.COLLECTION_BULK_UPLOAD.STATUS.FULL_PAYMENT;
-                                    update2.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                                    db.query(`UPDATE collection_bulk_uploads Set ? WHERE ID = ${payment.ID}`, update2, function (error, response2) {
-                                        if (error)
-                                            console.log(error);
-                                        callback_();
-                                    });
-                                }
-                            });
-                        }
-                    });
-                }, function (data) {
+                let records = [],
+                    invoice_amount = invoice.payment_amount;
+                do {
+                    let amount = 0,
+                        record = {},
+                        update = {
+                            actual_payment_amount: '0',
+                            actual_interest_amount: '0',
+                            actual_fees_amount: '0',
+                            actual_penalty_amount: '0',
+                            payment_status: 1
+                        };
+                    if (payment_history.index >= payments.length) break;
+                    let payment = payments[payment_history['index']];
+                    if (invoice_amount >= payment_history.balance) {
+                        amount = payment_history.balance;
+                        invoice_amount -= amount;
+                        record.status = 'full';
+                        payment_history.balance = payments[payment_history['index']]['unallocated'];
+                        payment_history.index = payment_history.index + 1;
+                    } else {
+                        amount = invoice_amount;
+                        invoice_amount = 0;
+                        payment_history.balance -= amount;
+                        record.status = 'part';
+                    }
+                    if (invoice.type === 'Principal') update.actual_payment_amount = amount;
+                    if (invoice.type === 'Interest') update.actual_interest_amount = amount;
+                    record.invoiceID = invoice.ID;
+                    record.agentID = created_by;
+                    record.applicationID = invoice.applicationID;
+                    record.payment_amount = update.actual_payment_amount;
+                    record.interest_amount = update.actual_interest_amount;
+                    record.fees_amount = update.actual_fees_amount;
+                    record.penalty_amount = update.actual_penalty_amount;
+                    record.payment_source = 'cash';
+                    record.payment_date = payment.value_date;
+                    record.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                    record.collection_bulk_uploadID = payment.ID;
+                    records.push({record: record, update: update});
+                }
+                while (invoice_amount > 0);
+                postPayment(records, connection, req, escrow, overpayment, function (response) {
+                    count += response;
                     callback();
                 });
             }, function (data) {
@@ -271,9 +264,51 @@ function overpaymentCheck(clientID, paymentID, amount, escrow, callback) {
     }
 }
 
+function postPayment(records, connection, req, escrow, overpayment, callback) {
+    let count = 0;
+    async.forEach(records, function (record_, callback_) {
+        let record = record_.record;
+        connection.query(`UPDATE application_schedules SET ? WHERE ID = ${record.invoiceID}`, record_.update, function (error, result, fields) {
+            if (error) {
+                console.log(error);
+                callback_();
+            } else {
+                let status = record.status;
+                delete record.status;
+                connection.query('INSERT INTO schedule_history SET ?', record, function (error, response, fields) {
+                    if (error) {
+                        console.log(error);
+                        callback_();
+                    } else {
+                        count++;
+                        let payload = {};
+                        payload.category = 'Application';
+                        payload.userid = req.cookies.timeout;
+                        payload.description = 'Loan Application Payment Confirmed';
+                        payload.affected = record.applicationID;
+                        notificationsService.log(req, payload);
+
+                        let update2 = {};
+                        update2.status = (!escrow && overpayment > 0 && status === 'part')?
+                            enums.COLLECTION_BULK_UPLOAD.STATUS.PART_PAYMENT : enums.COLLECTION_BULK_UPLOAD.STATUS.FULL_PAYMENT;
+                        update2.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                        connection.query(`UPDATE collection_bulk_uploads Set ? WHERE ID = ${record.collection_bulk_uploadID}`, update2, function (error, response2) {
+                            if (error)
+                                console.log(error);
+                            callback_();
+                        });
+                    }
+                });
+            }
+        });
+    }, function (data) {
+        callback(count);
+    })
+}
+
 router.get('/bulk_upload/history', function(req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let	query = `SELECT h.*, b.account FROM collection_bulk_upload_history h, collection_banks b WHERE h.collection_bankID = b.ID AND h.status = 1`,
+    let	query = `SELECT h.*, b.name FROM collection_bulk_upload_history h, collection_banks b WHERE h.collection_bankID = b.ID AND h.status = 1`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
 
@@ -293,8 +328,9 @@ router.get('/bulk_upload/history', function(req, res) {
 router.get('/invoices/due', function(req, res, next) {
     let today = moment().utcOffset('+0100').format('YYYY-MM-DD'),
         query = "SELECT s.ID,c.fullname AS client, c.phone, c.first_name, c.middle_name, c.last_name, c.ID AS clientID, " +
-        "s.applicationID, s.status, s.payment_amount, s.payment_collect_date, s.payment_status, 'Principal' AS 'type' FROM application_schedules AS s, clients c " +
-        "WHERE s.status = 1 AND s.payment_status = 0 AND (select status from applications a where a.ID = s.applicationID) = 2 AND c.ID = (select userID from applications a where a.ID = s.applicationID) " +
+        "s.applicationID, s.status, s.payment_collect_date, s.payment_status, 'Principal' AS 'type', " +
+        "(payment_amount - (SELECT COALESCE(SUM(p.payment_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)) payment_amount FROM application_schedules AS s, clients c " +
+        "WHERE s.status = 1 AND ((payment_amount - (SELECT COALESCE(SUM(p.payment_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)) > 0) = 1 AND c.ID = (select userID from applications a where a.ID = s.applicationID) " +
         "AND (select close_status from applications a where a.ID = s.applicationID) = 0 AND s.payment_amount > 0 AND TIMESTAMP(payment_collect_date) <= TIMESTAMP('"+today+"') ORDER BY ID desc";
 
     db.query(query, function (error, results, fields) {
@@ -302,9 +338,10 @@ router.get('/invoices/due', function(req, res, next) {
             res.send({"status": 500, "error": error, "response": null});
         } else {
             query = "SELECT s.ID,c.fullname AS client, c.phone, c.first_name, c.middle_name, c.last_name, c.ID AS clientID, " +
-                "s.applicationID, s.status, s.interest_amount as payment_amount, s.interest_collect_date as payment_collect_date, s.payment_status, 'Interest' AS 'type' FROM application_schedules AS s, clients c " +
-                "WHERE s.status = 1 AND s.payment_status = 0 AND (select status from applications a where a.ID = s.applicationID) = 2 AND c.ID = (select userID from applications a where a.ID = s.applicationID) " +
-                "AND (select close_status from applications a where a.ID = s.applicationID) = 0 AND s.interest_amount > 0 AND TIMESTAMP(payment_collect_date) <= TIMESTAMP('"+today+"') ORDER BY ID desc";
+                "s.applicationID, s.status, s.interest_collect_date as payment_collect_date, s.payment_status, 'Interest' AS 'type', " +
+                "(interest_amount - (SELECT COALESCE(SUM(p.interest_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)) payment_amount FROM application_schedules AS s, clients c " +
+                "WHERE s.status = 1 AND ((interest_amount - (SELECT COALESCE(SUM(p.interest_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)) > 0) = 1 AND c.ID = (select userID from applications a where a.ID = s.applicationID) " +
+                "AND (select close_status from applications a where a.ID = s.applicationID) = 0 AND s.interest_amount > 0 AND TIMESTAMP(interest_collect_date) <= TIMESTAMP('"+today+"') ORDER BY ID desc";
             let results_principal = results;
             db.query(query, function (error, results2, fields) {
                 if(error) {
