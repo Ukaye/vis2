@@ -9,6 +9,7 @@ let sPageURL = '';
 let sURLVariables = "";
 let selectedOpsRequirement = [];
 let clientWalletBalance = 0;
+let maturityAlert = 0;
 $(document).ready(function () {
     $('#bootstrap-data-table-export').DataTable();
     sPageURL = window.location.search.substring(1);
@@ -76,6 +77,35 @@ function decideListOfAccounts(id) {
             cache: true
         }
     });
+}
+
+function getInvestmentMaturity() {
+    if (isWalletPage === 0) {
+        if (selectedInvestment.maturityDays === true) {
+            if (maturityAlert === 0) {
+                swal({
+                    title: "Investment Matured",
+                    text: "Investment activities could not longer be executed on this account, you could only moved fund to client's wallet or account",
+                    icon: "warning"
+                }).then((result_) => {
+                    $('#btnTransfer').attr('disabled', false);
+                    $('#btnWithdrawal').attr('disabled', false);
+                    $('#btnDeposit').attr('disabled', true);
+                    $('#btnCompInterestInvestment').attr('disabled', true);
+                    $('#btnTerminateInvestment').attr('disabled', true);
+                    $('#chk_investment_accounts').attr('disabled', true);
+                    $('#chk_own_accounts').attr('checked', false);
+                    $('#chk_own_accounts').attr('disabled', true);
+                    $('#chk_client_wallet').attr('checked', true);
+                    $('#list_accounts').attr('disabled', true);
+                    const finalTotalBalance = formater(selectedInvestment.txnCurrentBalance.split(',').join(''));
+                    $('#input_transfer_amount').val(finalTotalBalance);
+                    $('#input_amount').val(finalTotalBalance);
+                    maturityAlert = 1;
+                });
+            }
+        }
+    }
 }
 
 function bindWalletTransaction() {
@@ -192,9 +222,6 @@ function bindDataTable(id) {
             'copy', 'csv', 'excel', 'pdf', 'print'
         ],
         fnServerData: function (sSource, aoData, fnCallback) {
-            // if (isInitialLoad) {
-            //     offset = aoData[3].value;
-            // }
             let tableHeaders = [{
                 name: "txn_date",
                 query: `ORDER BY STR_TO_DATE(v.created_date, '%Y-%m-%d') ${aoData[2].value[0].dir}`
@@ -251,12 +278,13 @@ function bindDataTable(id) {
                             $('#btnDeposit').attr('disabled', true);
                             $('#btnCompInterestInvestment').attr('disabled', true);
                             $('#btnTerminateInvestment').attr('disabled', true);
-                            $('#btnInvestmentStatement').attr('disabled', true);
+                            // $('#btnInvestmentStatement').attr('disabled', true);
                         }
                         $("#client_name").html((isWalletPage === 1) ? sPageURL.split('=')[2].split('%20').join(' ') : data.data[0].fullname);
                         $("#inv_name").html(`${data.data[0].name} (${data.data[0].code})`);
                         $("#inv_acct_no").html(`${data.data[0].acctNo}`);
                         selectedInvestment.txnCurrentBalance = data.txnCurrentBalance;
+                        selectedInvestment.maturityDays = data.maturityDays;
                         let sign = '';
                         if (data.txnCurrentBalance.includes('-')) {
                             sign = '-';
@@ -266,12 +294,17 @@ function bindDataTable(id) {
 
                         $("#inv_bal_amount").html(`${sign}₦${formater(total_balance_.toString())}`);
 
+                        if (data.data[0].interest_disbursement_time === 'Up-Front') {
+                            $('#btnComputeInterest').attr('hidden', true);
+                        }
+                        getInvestmentMaturity();
                     } else {
                         $("#client_name").html(sPageURL.split('=')[2].split('%20').join(' '));// replace('%20', ' '));
                         $("#inv_bal_amount").html(`₦0.00`);
                     }
                     fnCallback(data)
-                }
+                },
+
             });
         },
         aoColumnDefs: [{
@@ -352,7 +385,7 @@ function bindDataTable(id) {
                         </i> 
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         <button class="dropdown-item" id="dropdownItemDoc" data-toggle="modal" data-target="#viewListDocModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Document</button>
-                          <button class="dropdown-item" id="dropdownItemRevert" ${(full.isWallet === 1 || full.isTransfer === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 1 && full.is_capital === 0) ? '' : 'disabled'}>Reverse</button>
+                          <button class="dropdown-item" id="dropdownItemRevert" ${(selectedInvestment.maturityDays === true) ? 'disabled' : ''} ${(full.isWallet === 1 || full.isTransfer === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 1 && full.is_capital === 0) ? '' : 'disabled'}>Reverse</button>
                           <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 0) ? '' : 'disabled'}>Review</button>
                           <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1) ? '' : 'disabled'} ${(full.approvalDone === 0) ? '' : 'disabled'}>Approval</button>
                           <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1 && full.approvalDone === 1) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Post</button>
@@ -634,6 +667,7 @@ function onTerminateInvest() {
                     isTerminated: 1,
                     isInvestmentTerminated: 1,
                     approvedBy: '',
+                    isWallet: 0,
                     createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
                     roleIds: _mRoleId,
                     productId: selectedInvestment.productId,
@@ -862,6 +896,9 @@ function onExecutiveTransaction() {
     } else if (parseFloat(selectedInvestment.txnCurrentBalance.toString()) < parseFloat(mAmount_) && opsObj.operationId !== '1') {
         swal('Insufficent account balance for this transaction', '', 'error');
         return;
+    } else if (parseFloat(mAmount_) === 0) {
+        swal('Invalid amount', '', 'error');
+        return;
     }
 
     if ($("#input_amount").val() !== '' &&
@@ -897,7 +934,8 @@ function onExecutiveTransaction() {
             isWallet: isWalletPage,
             clientId: sURLVariables,
             txn_date: $('#input_txn_date').val(),
-            isPaymentMadeByWallet: $('#opt_payment_made_by').val()
+            isPaymentMadeByWallet: $('#opt_payment_made_by').val(),
+            isInvestmentMatured: (selectedInvestment.maturityDays === true) ? 1 : 0
         };
         investmentOps.clientId = (investmentOps.isPaymentMadeByWallet === 1) ? selectedInvestment.clientId : sURLVariables;
         $.ajax({
@@ -992,13 +1030,15 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
                                         isReversedTxn: 1,
                                         ref_no: data_row.ref_no,
                                         parentTxnId: data_row.ID,
-                                        isWallet: data_row.isWallet
+                                        isWallet: data_row.isWallet,
+                                        clientId: data_row.clientId
                                     };
                                     $.ajax({
                                         url: `investment-txns/create`,
                                         'type': 'post',
                                         'data': investmentOps,
                                         'success': function (data) {
+                                            console.log(data);
                                             if (data.status === undefined) {
                                                 $('#wait').hide();
                                                 $("#input_amount").val('');
@@ -1012,6 +1052,7 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
                                             }
                                         },
                                         'error': function (err) {
+                                            console.log(err);
                                             $('#wait').hide();
                                             swal('Oops! An error occurred while executing reversal transaction', '', 'error');
                                         }
@@ -1469,6 +1510,7 @@ function onPost(value, approvedId, txnId, id, isDeny) {
         isReversedTxn: data_row.isReversedTxn,
         refId: data_row.ref_no,
         isInvestmentTerminated: data_row.isInvestmentTerminated,
+        isForceTerminate: data_row.isForceTerminate,
         expectedTerminationDate: data_row.expectedTerminationDate,
         created_date: data_row.created_date,
         isMoveFundTransfer: data_row.isMoveFundTransfer,
@@ -1483,7 +1525,8 @@ function onPost(value, approvedId, txnId, id, isDeny) {
         is_capital: data_row.is_capital,
         investment_mature_date: data_row.investment_mature_date,
         investment_start_date: data_row.investment_start_date,
-        interest_rate: data_row.interest_rate
+        interest_rate: data_row.interest_rate,
+        isInvestmentMatured: data_row.isInvestmentMatured
     }
     $.ajax({
         url: `investment-txns/posts`,
@@ -1572,7 +1615,8 @@ function onFundWalletOperation() {
         roleIds: _mRoleId,
         beneficialInvestmentId: selectedInvestment.investmentId,
         productId: selectedInvestment.productId,
-        isWallet: isWalletPage
+        isWallet: isWalletPage,
+        isInvestmentMatured: (selectedInvestment.maturityDays === true) ? 1 : 0
     };
     $.ajax({
         url: `investment-txns/create`,
@@ -1605,7 +1649,12 @@ function onTransferOperation() {
     if (parseFloat(selectedInvestment.balance.toString()) < parseFloat(mAmount_)) {
         swal('Insufficent balance', '', 'error');
         return;
+    } else if (parseFloat(amount) === 0) {
+        swal('Invalid amount', '', 'error');
+        return;
     }
+
+
 
     if ($('#chk_client_wallet').is(':checked') === true) {
         onFundWalletOperation();
@@ -1622,7 +1671,6 @@ function onTransferOperation() {
         } else {
             _mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === 2 && status === 1);
         }
-        console.log(selectedInvestment.acctNo, selectedInvestment.fullname);
         let investmentOps = {
             amount: amount,
             description: `TRANSFER BETWEEN CLIENTS ACCOUNT; TRANSFER FROM : ${(isWalletPage === 1) ? sPageURL.split('=')[2].split('%20').join(' ') : `${selectedInvestment.acctNo} (${selectedInvestment.fullname})`} TO ${selectedAccount.code}(${selectedAccount.name})`,
@@ -1646,7 +1694,6 @@ function onTransferOperation() {
             'type': 'post',
             'data': investmentOps,
             'success': function (data) {
-                console.log(data);
                 $('#wait').hide();
                 swal('Transfer operation completed successfully', '', 'success');
                 $("#input_transfer_amount").val('');

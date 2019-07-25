@@ -408,8 +408,8 @@ router.get('/client-investments/:id', function (req, res, next) {
     v.ID,v.ref_no,c.fullname,v.description,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName, v.isDeny,
     v.approvalDone,v.reviewDone,v.created_date,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.updated_date,
     i.clientId,v.isMoveFundTransfer,v.isWallet,v.isWithdrawal,isDeposit,v.isDocUploaded,p.canTerminate,i.isPaymentMadeByWallet,p.acct_allows_withdrawal,
-    v.is_capital,v.investmentId,i.isTerminated, i.isMatured, v.isReversedTxn,v.isInvestmentTerminated,v.expectedTerminationDate,
-    v.isPaymentMadeByWallet,p.interest_disbursement_time,p.interest_moves_wallet,i.investment_mature_date,p.interest_rate,
+    v.is_capital,v.investmentId,i.isTerminated,i.isMatured,v.isForceTerminate,v.isReversedTxn,v.isInvestmentTerminated,v.expectedTerminationDate,
+    v.isPaymentMadeByWallet,p.interest_disbursement_time,p.interest_moves_wallet,i.investment_mature_date,p.interest_rate,v.isInvestmentMatured,
     i.code as acctNo, v.isTransfer, v.beneficialInvestmentId FROM investment_txns v
     left join investments i on v.investmentId = i.ID
     left join clients c on i.clientId = c.ID
@@ -460,7 +460,7 @@ router.get('/client-investments/:id', function (req, res, next) {
             }
         }).then(payload => {
             query = `Select 
-            (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%l:%i %p') DESC LIMIT 1) as txnCurrentBalance,
+            (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1) as txnCurrentBalance,
             (SELECT count(*) as recordsTotal FROM investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id}) as recordsTotal`;
 
             endpoint = '/core-service/get';
@@ -470,8 +470,13 @@ router.get('/client-investments/:id', function (req, res, next) {
                     query: query
                 }
             }).then(payload2 => {
+                const currentDate = new Date();
+                const formatedCurrentDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDay())
+                const maturityDate = new Date(uniqueTxns[0].investment_mature_date);
+                const formatedMaturityDate = new Date(maturityDate.getFullYear(), maturityDate.getMonth(), maturityDate.getDay())
                 res.send({
                     draw: draw,
+                    maturityDays: (formatedMaturityDate <= formatedCurrentDate),
                     txnCurrentBalance: (payload2.data[0].txnCurrentBalance === null) ? '' : payload2.data[0].txnCurrentBalance,
                     recordsTotal: payload2.data[0].recordsTotal,
                     recordsFiltered: payload.data[0].recordsFiltered,
