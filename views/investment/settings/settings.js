@@ -330,16 +330,16 @@ function saveOrganisationData() {
         'success': function (data) {
             if (data.error) {
                 $('#wait').hide();
-                swal('Oops! An error occurred while creating Investment settings; Required field(s) missing',
+                swal('Oops! An error occurred while creating settings; Required field(s) missing',
                     '', 'error');
             } else {
                 $('#wait').hide();
-                swal('Investment settings saved successfully!', '', 'success');
+                swal('Settings saved successfully!', '', 'success');
             }
         },
         'error': function (err) {
             $('#wait').hide();
-            swal('Oops! An error occurred while saving Investment settings ', '', 'error');
+            swal('Oops! An error occurred while saving settings ', '', 'error');
         }
     });
 }
