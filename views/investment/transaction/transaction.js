@@ -273,7 +273,7 @@ function bindDataTable(id) {
                             $('#btnTransfer').attr('disabled', true);
                             $('#btnWithdrawal').attr('disabled', true);
                         }
-                        if (selectedInvestment.isMatured === 1 || selectedInvestment.isTerminated === 1) {
+                        if ((selectedInvestment.isMatured === 1 || selectedInvestment.isTerminated === 1) && isWalletPage === 0) {
                             $('#btnWithdrawal').attr('disabled', true);
                             $('#btnDeposit').attr('disabled', true);
                             $('#btnCompInterestInvestment').attr('disabled', true);
