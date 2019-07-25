@@ -105,7 +105,7 @@ function displayPayment(val) {
         type = '<span class="badge badge-danger">DEBIT</span>';
         amount = -amount;
     }
-    $('#payments').append(`
+    $('#payments').append(`    
         <li id="payment-${val.ID}" class="ui-state-default">
             <div class="row">
                 <div class="col-lg-10">
