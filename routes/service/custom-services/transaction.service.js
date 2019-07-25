@@ -805,6 +805,7 @@ router.post('/posts', function (req, res, next) {
                     let total_bal = 0;
                     computeTotalBalance(data, HOST).then(totalBalance_ => {
                         total_bal = (data.isWallet.toString() === '1') ? totalBalance_.currentWalletBalance : totalBalance_.currentAcctBalance;
+                        total_bal = (total_bal === null) ? 0 : total_bal;
                         let bal = (data.isCredit.toString() === '1') ? (parseFloat(total_bal.toString()) + parseFloat(data.amount.split(',').join(''))) :
                             (parseFloat(total_bal.toString()) - parseFloat(data.amount.split(',').join('')));
                         if (data.isInvestmentTerminated.toString() === '0') {
