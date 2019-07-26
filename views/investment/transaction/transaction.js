@@ -82,12 +82,10 @@ function decideListOfAccounts(id) {
 function getInvestmentMaturity() {
     if (isWalletPage === 0) {
         if (selectedInvestment.maturityDays === true) {
-            if (maturityAlert === 0) {
-                swal({
-                    title: "Investment Matured",
-                    text: "Investment activities could not longer be executed on this account, you could only moved fund to client's wallet or account",
-                    icon: "warning"
-                }).then((result_) => {
+            const cBal = parseInt(selectedInvestment.txnCurrentBalance.toString().split(',').join(''));
+            if (cBal !== 0) {
+                if (maturityAlert === 0) {
+
                     $('#btnTransfer').attr('disabled', false);
                     $('#btnWithdrawal').attr('disabled', false);
                     $('#btnDeposit').attr('disabled', true);
@@ -102,7 +100,60 @@ function getInvestmentMaturity() {
                     $('#input_transfer_amount').val(finalTotalBalance);
                     $('#input_amount').val(finalTotalBalance);
                     maturityAlert = 1;
-                });
+
+                    swal({
+                        title: "Investment Matured",
+                        text: (selectedInvestment.inv_moves_wallet === 0) ?
+                            "Investment activities could not longer be executed on this account, you could only moved fund to client's wallet or account"
+                            : "FUND TRANSACTION TO CLIENT'S WALLET INITIATED PLEASE COMPLETE THE APPROVAL STAGE",
+                        icon: (selectedInvestment.inv_moves_wallet === 0) ? "warning" : "success"
+                    });
+
+                    if (selectedInvestment.inv_moves_wallet === 1) {
+                        let _mRoleId = [];
+                        let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === 2 && status === 1);
+                        if (mRoleId.length === 0) {
+                            _mRoleId.push({
+                                roles: "[]",
+                                operationId: 2
+                            });
+                        } else {
+                            _mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === 2 && status === 1);
+                        }
+                        let investmentOps = {
+                            amount: selectedInvestment.txnCurrentBalance,
+                            description: `MOVE FUND FROM INVESTMENT ACCT. TO CLIENT'S WALLET`,
+                            investmentId: selectedInvestment.investmentId,
+                            is_credit: 0,
+                            operationId: 2,
+                            isCharge: 0,
+                            is_capital: 0,
+                            isApproved: 0,
+                            isMoveFundTransfer: 1,
+                            approvedBy: '',
+                            isTransfer: 1,
+                            clientId: selectedInvestment.clientId,
+                            createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
+                            roleIds: _mRoleId,
+                            beneficialInvestmentId: selectedInvestment.investmentId,
+                            productId: selectedInvestment.productId,
+                            isWallet: isWalletPage,
+                            isInvestmentMatured: (selectedInvestment.maturityDays === true) ? 1 : 0
+                        };
+                        $.ajax({
+                            url: `investment-txns/create`,
+                            'type': 'post',
+                            'data': investmentOps,
+                            'success': function (data) {
+                                $('#wait').hide();
+                                table.ajax.reload(null, false);
+                            },
+                            'error': function (err) {
+                                $('#wait').hide();
+                            }
+                        });
+                    }
+                }
             }
         }
     }
@@ -299,8 +350,10 @@ function bindDataTable(id) {
                         }
                         getInvestmentMaturity();
                     } else {
-                        $("#client_name").html(sPageURL.split('=')[2].split('%20').join(' '));// replace('%20', ' '));
-                        $("#inv_bal_amount").html(`₦0.00`);
+                        if (sPageURL.split('=')[2] !== undefined) {
+                            $("#client_name").html(sPageURL.split('=')[2].split('%20').join(' '));// replace('%20', ' '));
+                            $("#inv_bal_amount").html(`₦0.00`);
+                        }
                     }
                     fnCallback(data)
                 },
@@ -789,7 +842,7 @@ async function onOpenMode(name, operationId, is_credit) {
                 $("#btnTransaction").attr('disabled', true);
                 $("#input_description").attr('disabled', true);
                 $("#input_txn_date").attr('disabled', true);
-                swal('Oops! An error occurred while initiating deposit dialog', '', 'error');
+                swal('Oops! An error occurred while initiating deposit dialog, please refresh your this page', '', 'error');
             }
         },
         'error': function (err) {
@@ -798,7 +851,7 @@ async function onOpenMode(name, operationId, is_credit) {
             $("#btnTransaction").attr('disabled', true);
             $("#input_description").attr('disabled', true);
             $("#input_txn_date").attr('disabled', true);
-            swal('Oops! An error occurred while initiating deposit dialog', '', 'error');
+            swal('Oops! An error occurred while initiating deposit dialog, please refresh your this page', '', 'error');
         }
     });
 }
@@ -1038,7 +1091,6 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
                                         'type': 'post',
                                         'data': investmentOps,
                                         'success': function (data) {
-                                            console.log(data);
                                             if (data.status === undefined) {
                                                 $('#wait').hide();
                                                 $("#input_amount").val('');
@@ -1052,7 +1104,6 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
                                             }
                                         },
                                         'error': function (err) {
-                                            console.log(err);
                                             $('#wait').hide();
                                             swal('Oops! An error occurred while executing reversal transaction', '', 'error');
                                         }
@@ -1415,6 +1466,16 @@ function onCloseApproval() {
 }
 
 function onApproved(value, approvedId, txnId, id, isDeny) {
+
+    if (data_row.is_credit === 0) {
+        const _mAmt = data_row.amount.toString().split(',').join('');
+        const _mBal = data_row.txnBalance.toString().split(',').join('');
+        if (parseFloat(_mAmt) > parseFloat(_mBal)) {
+            swal(`Oops! Client's has insufficient balance to carry out this transaction`, '', 'error');
+            return;
+        }
+    }
+
     let priority = selectedOpsRequirement.find(x => x.ID === id).priority;
     let _data = {
         status: value,
@@ -1453,12 +1514,21 @@ function onApproved(value, approvedId, txnId, id, isDeny) {
 
 function onReviewed(value, approvedId, txnId, id, isDeny) {
     let priority = selectedOpsRequirement.find(x => x.ID === id).priority;
+    if (data_row.is_credit === 0) {
+        const _mAmt = data_row.amount.toString().split(',').join('');
+        const _mBal = data_row.txnBalance.toString().split(',').join('');
+        if (parseFloat(_mAmt) > parseFloat(_mBal)) {
+            swal(`Oops! Client's has insufficient balance to carry out this transaction`, '', 'error');
+            return;
+        }
+    }
+
 
     let _data = {
         status: value,
         id: approvedId,
         txnId: txnId,
-        isCredit: data_row,
+        isCredit: data_row.is_credit,
         amount: data_row.amount,
         balance: data_row.txnBalance,
         userId: (JSON.parse(localStorage.getItem("user_obj"))).ID,
@@ -1493,6 +1563,17 @@ function onReviewed(value, approvedId, txnId, id, isDeny) {
 
 
 function onPost(value, approvedId, txnId, id, isDeny) {
+
+    if (data_row.is_credit === 0) {
+        const _mAmt = data_row.amount.toString().split(',').join('');
+        const _mBal = data_row.txnBalance.toString().split(',').join('');
+        if (parseFloat(_mAmt) > parseFloat(_mBal)) {
+            swal(`Oops! Client's has insufficient balance to carry out this transaction`, '', 'error');
+            return;
+        }
+    }
+
+
     let priority = selectedOpsRequirement.find(x => x.ID === id).priority;
     let _data = {
         status: value,

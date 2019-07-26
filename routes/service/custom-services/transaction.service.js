@@ -974,70 +974,51 @@ router.post('/transfer-fund-wallet', function (req, res, next) {
 
 async function fundBeneficialAccount(data, HOST) {
     if (data.isTransfer === '1') {
-        let query = '';
-        if (data.isMoveFundTransfer.toString() === '1') {
-            query = `SELECT amount,is_credit FROM investment_txns 
-        WHERE clientId = ${data.clientId} AND isApproved = 1 AND isWallet = 1`;
-        } else {
-            query = `SELECT amount,is_credit FROM investment_txns 
-            WHERE investmentId = ${data.beneficialInvestmentId} AND isApproved = 1`;
-        }
+        const computedBalanceAmt = await computeTotalBalance(data, HOST);
         let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-        let endpoint = "/core-service/get";
-        let url = `${HOST}${endpoint}`;
         let refId = moment().utcOffset('+0100').format('x');
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        })
-            .then(function (response_bal) {
-                let total_bal = 0;
-                if (response_bal.data.length > 0) {
-                    response_bal.data.map(x => {
-                        let _x = x.amount.split(',').join('');
-                        if (x.is_credit.toString() === '1') {
-                            total_bal += (isNaN(parseFloat(_x))) ? 0 : parseFloat(_x);
-                        } else {
-                            total_bal -= (isNaN(parseFloat(_x))) ? 0 : parseFloat(_x);
-                        }
-                    });
-                }
-                let inv_txn = {
-                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
-                    description: data.description,
-                    amount: data.amount,
-                    is_credit: 1,
-                    isCharge: 0,
-                    created_date: dt,
-                    balance: total_bal + parseFloat(data.amount.toString().split(',').join('')),
-                    is_capital: 0,
-                    isApproved: 1,
-                    postDone: 1,
-                    reviewDone: 1,
-                    approvalDone: 1,
-                    ref_no: refId,
-                    updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-                    clientId: data.clientId,
-                    isWallet: data.isMoveFundTransfer,
-                    investmentId: data.beneficialInvestmentId,
-                    createdBy: data.userId
-                };
 
-                query = `INSERT INTO investment_txns SET ?`;
-                endpoint = `/core-service/post?query=${query}`;
-                let url = `${HOST}${endpoint}`;
-                axios.post(url, inv_txn)
-                    .then(function (payload) {
-                        if (payload.data.status === undefined) {
-                            //Charge for Transfer
-                            let result = deductTransferCharge(data, HOST, data.amount);
-                            return result;
-                        }
+        let total_bal = (data.isMoveFundTransfer.toString() === '1') ? computedBalanceAmt.currentWalletBalance : computedBalanceAmt.currentAcctBalance;
+        total_bal = parseFloat(total_bal.toString().split(',').join(''));
+        let ooo = parseFloat(data.amount.toString().split(',').join(''));
+        let inv_txn = {
+            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+            description: data.description,
+            amount: data.amount,
+            is_credit: 1,
+            isCharge: 0,
+            created_date: dt,
+            balance: total_bal + parseFloat(data.amount.toString().split(',').join('')),
+            is_capital: 0,
+            isApproved: 1,
+            postDone: 1,
+            reviewDone: 1,
+            approvalDone: 1,
+            ref_no: refId,
+            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+            clientId: data.clientId,
+            isWallet: data.isMoveFundTransfer,
+            investmentId: data.beneficialInvestmentId,
+            createdBy: data.userId
+        };
+
+        let query = `INSERT INTO investment_txns SET ?`;
+        let endpoint = `/core-service/post?query=${query}`;
+        let url = `${HOST}${endpoint}`;
+        axios.post(url, inv_txn)
+            .then(function (payload) {
+                if (payload.data.status === undefined) {
+                    //Charge for Transfer
+                    deductTransferCharge(data, HOST, data.amount).then(result => {
+                        return result;
                     }, err => {
                         return {};
                     });
+                }
+            }, err => {
+                return {};
             });
+
     } else if (data.isInvestmentTerminated === '1') {
         const _u_ = await chargeForceTerminate(data, HOST);
         let result = await reverseEarlierInterest(data, HOST);
@@ -1066,10 +1047,14 @@ function computeCurrentBalance(investmentId, HOST) {
 
 function computeTotalBalance(data, HOST) {
     return new Promise((resolve, reject) => {
+        let id = (data.investmentId === '') ? data.beneficialInvestmentId : data.investmentId;
+        if (id === undefined || id === '') {
+            id = 0;
+        }
         let query = `Select 
         (Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${data.clientId} 
             AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1) as currentWalletBalance,
-        (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${(data.investmentId === '') ? 0 : data.investmentId} 
+        (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${id} 
             AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1) as currentAcctBalance`;
         let endpoint = '/core-service/get';
         let url = `${HOST}${endpoint}`;
@@ -1143,48 +1128,55 @@ async function upFrontInterest(data, HOST) {
 async function deductTransferCharge(data, HOST, amount) {
     if (data.isInvestmentMatured.toString() === '0') {
         let currentBalance = await computeCurrentBalance(data.investmentId, HOST);
-        let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-        let query = `SELECT * FROM investment_config ORDER BY ID DESC LIMIT 1`;
-        let endpoint = '/core-service/get';
-        let url = `${HOST}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(response => {
-            if (response.data.status === undefined) {
-                let configData = response.data[0];
-                let configAmount = (configData.transferChargeMethod == 'Fixed') ? configData.transferValue : (configData.transferValue * parseFloat(Math.round(amount).toFixed(2))) / 100;
-                let _refId = moment().utcOffset('+0100').format('x');
-                let balTransfer = currentBalance - configAmount;
-                let inv_txn = {
-                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
-                    description: `FUND TRANSFER CHARGE ON REF.: <strong>${data.refId}</strong>`,
-                    amount: configAmount,
-                    is_credit: 0,
-                    created_date: dt,
-                    balance: parseFloat(Math.round(balTransfer).toFixed(2)),
-                    is_capital: 0,
-                    isCharge: 1,
-                    isApproved: 1,
-                    postDone: 1,
-                    reviewDone: 1,
-                    investmentId: data.investmentId,
-                    approvalDone: 1,
-                    ref_no: _refId,
-                    updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-                    createdBy: data.createdBy
-                };
-                setInvestmentTxns(HOST, inv_txn).then(payload => {
-                    deductVatTax(HOST, data, amount, inv_txn, balTransfer).then(payload_1 => {
-                        return payload_1;
-                    }, err_1 => { })
-
-                }, err => { });
-            }
-        }, err => {
-            return {};
-        })
+        return new Promise((resolve, reject) => {
+            let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+            let query = `SELECT * FROM investment_config ORDER BY ID DESC LIMIT 1`;
+            let endpoint = '/core-service/get';
+            let url = `${HOST}${endpoint}`;
+            axios.get(url, {
+                params: {
+                    query: query
+                }
+            }).then(response => {
+                if (response.data.status === undefined) {
+                    let configData = response.data[0];
+                    let configAmount = (configData.transferChargeMethod == 'Fixed') ? configData.transferValue : (configData.transferValue * parseFloat(Math.round(amount).toFixed(2))) / 100;
+                    let _refId = moment().utcOffset('+0100').format('x');
+                    let balTransfer = currentBalance - configAmount;
+                    let inv_txn = {
+                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                        description: `FUND TRANSFER CHARGE ON REF.: <strong>${data.refId}</strong>`,
+                        amount: configAmount,
+                        is_credit: 0,
+                        created_date: dt,
+                        balance: parseFloat(Math.round(balTransfer).toFixed(2)),
+                        is_capital: 0,
+                        isCharge: 1,
+                        isApproved: 1,
+                        postDone: 1,
+                        reviewDone: 1,
+                        investmentId: data.investmentId,
+                        approvalDone: 1,
+                        ref_no: _refId,
+                        updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                        createdBy: data.createdBy
+                    };
+                    setInvestmentTxns(HOST, inv_txn).then(payload => {
+                        deductVatTax(HOST, data, amount, inv_txn, balTransfer).then(payload_1 => {
+                            resolve({});
+                        }, err_1 => {
+                            resolve({});
+                        });
+                    }, err => {
+                        resolve({});
+                    });
+                } else {
+                    return {};
+                }
+            }, err => {
+                return {};
+            })
+        });
     } else {
         return {};
     }
@@ -1775,7 +1767,6 @@ async function setcharges(data, HOST, isReversal) {
                                     investmentId: data.investmentId,
                                     createdBy: data.createdBy
                                 };
-
                                 query = `INSERT INTO investment_txns SET ?`;
                                 endpoint = `/core-service/post?query=${query}`;
                                 let url = `${HOST}${endpoint}`;
@@ -1804,7 +1795,7 @@ async function setcharges(data, HOST, isReversal) {
                             let chargedCostMinBal = (getInvestBalance.minimum_bal_charges_opt === 'Fixed')
                                 ? parseFloat(getInvestBalance.minimum_bal_charges.split(',').join(''))
                                 : ((parseFloat(getInvestBalance.minimum_bal_charges.split(',').join('')) / 100) * parseFloat(getInvestBalance.txnBalance.split(',').join('')));
-                            if (parseFloat(getInvestBalance.txnBalance.split(',').join('')) - parseFloat(getInvestBalance.txnAmount.split(',').join('')) < parseFloat(getInvestBalance.minimum_bal.split(',').join(''))) {
+                            if ((parseFloat(getInvestBalance.txnBalance.split(',').join('')) - parseFloat(getInvestBalance.txnAmount.split(',').join(''))) < parseFloat(getInvestBalance.minimum_bal.split(',').join(''))) {
                                 refId = moment().utcOffset('+0100').format('x');
                                 let inv_txn = {
                                     txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
@@ -1852,13 +1843,13 @@ async function setcharges(data, HOST, isReversal) {
                                         query: query
                                     }
                                 }).then(response_product_ => {
-                                    if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)) {
+                                    if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal) && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
                                         let _getInvestBalance = response_product.data[response_product.data.length - 1];
                                         let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
                                             parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
                                             ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
                                                 parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
-                                        if (parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join('')) >
+                                        if ((parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join(''))) >
                                             parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
                                             refId = moment().utcOffset('+0100').format('x');
                                             let inv_txn = {
@@ -1895,7 +1886,11 @@ async function setcharges(data, HOST, isReversal) {
                                                         });
                                                     }
                                                 }, err => { });
+                                        } else {
+                                            resolve({});
                                         }
+                                    } else {
+                                        resolve({});
                                     }
                                 });
                             } else if (response_product.data[0].withdrawal_freq_duration === 'Weekly') {
@@ -1911,13 +1906,13 @@ async function setcharges(data, HOST, isReversal) {
                                         query: query
                                     }
                                 }).then(response_product_ => {
-                                    if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)) {
+                                    if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal) && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
                                         let _getInvestBalance = response_product.data[response_product.data.length - 1];
                                         let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
                                             parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
                                             ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
                                                 parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
-                                        if (parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join('')) >
+                                        if ((parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join(''))) >
                                             parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
                                             refId = moment().utcOffset('+0100').format('x');
                                             let inv_txn = {
@@ -1954,7 +1949,11 @@ async function setcharges(data, HOST, isReversal) {
                                                         });
                                                     }
                                                 }, err => { });
+                                        } else {
+                                            resolve({});
                                         }
+                                    } else {
+                                        resolve({});
                                     }
                                 });
                             } else if (response_product.data[0].withdrawal_freq_duration === 'Monthly') {
@@ -1972,13 +1971,13 @@ async function setcharges(data, HOST, isReversal) {
                                         query: query
                                     }
                                 }).then(response_product_ => {
-                                    if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)) {
+                                    if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal) && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
                                         let _getInvestBalance = response_product.data[response_product.data.length - 1];
                                         let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
                                             parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
                                             ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
                                                 parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
-                                        if (parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join('')) >
+                                        if ((parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join(''))) >
                                             parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
                                             refId = moment().utcOffset('+0100').format('x');
                                             let inv_txn = {
@@ -2015,7 +2014,11 @@ async function setcharges(data, HOST, isReversal) {
                                                         });
                                                     }
                                                 }, err => { });
+                                        } else {
+                                            resolve({});
                                         }
+                                    } else {
+                                        resolve({});
                                     }
                                 });
                             } else if (response_product.data[0].withdrawal_freq_duration === 'Quaterly') {
@@ -2033,13 +2036,13 @@ async function setcharges(data, HOST, isReversal) {
                                         query: query
                                     }
                                 }).then(response_product_ => {
-                                    if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)) {
+                                    if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal) && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
                                         let _getInvestBalance = response_product.data[response_product.data.length - 1];
                                         let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
                                             parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
                                             ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
                                                 parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
-                                        if (parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join('')) >
+                                        if ((parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join(''))) >
                                             parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
                                             refId = moment().utcOffset('+0100').format('x');
                                             let inv_txn = {
@@ -2076,7 +2079,11 @@ async function setcharges(data, HOST, isReversal) {
                                                         });
                                                     }
                                                 }, err => { });
+                                        } else {
+                                            resolve({});
                                         }
+                                    } else {
+                                        resolve({});
                                     }
                                 });
 
@@ -2096,13 +2103,13 @@ async function setcharges(data, HOST, isReversal) {
                                         query: query
                                     }
                                 }).then(response_product_ => {
-                                    if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)) {
+                                    if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal) && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
                                         let _getInvestBalance = response_product.data[response_product.data.length - 1];
                                         let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
                                             parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
                                             ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
                                                 parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
-                                        if (parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join('')) >
+                                        if ((parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join(''))) >
                                             parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
                                             refId = moment().utcOffset('+0100').format('x');
                                             let inv_txn = {
@@ -2139,7 +2146,11 @@ async function setcharges(data, HOST, isReversal) {
                                                         });
                                                     }
                                                 }, err => { });
+                                        } else {
+                                            resolve({});
                                         }
+                                    } else {
+                                        resolve({});
                                     }
                                 });
                             }
@@ -2662,7 +2673,7 @@ router.get('/client-wallets/:id', function (req, res, next) {
     v.ID,v.ref_no,c.fullname,v.description,v.created_date,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName,
     v.isDeny,v.isPaymentMadeByWallet,v.isReversedTxn,v.isTransfer,v.isMoveFundTransfer,v.beneficialInvestmentId,p.interest_disbursement_time,p.interest_moves_wallet,
     v.approvalDone,v.reviewDone,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.isInvestmentTerminated,
-    p.acct_allows_withdrawal,i.investment_mature_date,p.interest_rate,v.isForceTerminate,v.isInvestmentMatured,
+    p.acct_allows_withdrawal,i.investment_mature_date,p.interest_rate,v.isForceTerminate,v.isInvestmentMatured,p.inv_moves_wallet,
     i.clientId,p.canTerminate,v.is_capital,v.investmentId,i.isTerminated,v.isWallet, v.updated_date, i.isMatured FROM investment_txns v 
     left join investments i on v.investmentId = i.ID 
     left join clients c on i.clientId = c.ID

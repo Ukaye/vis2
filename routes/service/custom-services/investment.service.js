@@ -408,7 +408,7 @@ router.get('/client-investments/:id', function (req, res, next) {
     v.ID,v.ref_no,c.fullname,v.description,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName, v.isDeny,
     v.approvalDone,v.reviewDone,v.created_date,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.updated_date,
     i.clientId,v.isMoveFundTransfer,v.isWallet,v.isWithdrawal,isDeposit,v.isDocUploaded,p.canTerminate,i.isPaymentMadeByWallet,p.acct_allows_withdrawal,
-    v.is_capital,v.investmentId,i.isTerminated,i.isMatured,v.isForceTerminate,v.isReversedTxn,v.isInvestmentTerminated,v.expectedTerminationDate,
+    v.is_capital,v.investmentId,i.isTerminated,i.isMatured,v.isForceTerminate,v.isReversedTxn,v.isInvestmentTerminated,v.expectedTerminationDate,p.inv_moves_wallet,
     v.isPaymentMadeByWallet,p.interest_disbursement_time,p.interest_moves_wallet,i.investment_mature_date,p.interest_rate,v.isInvestmentMatured,
     i.code as acctNo, v.isTransfer, v.beneficialInvestmentId FROM investment_txns v
     left join investments i on v.investmentId = i.ID
@@ -417,7 +417,6 @@ router.get('/client-investments/:id', function (req, res, next) {
     left join investment_products p on i.productId = p.ID
     WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id} 
     AND (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%") LIMIT ${limit} OFFSET ${offset}`;
-
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     var data = [];
@@ -470,29 +469,40 @@ router.get('/client-investments/:id', function (req, res, next) {
                     query: query
                 }
             }).then(payload2 => {
-                const currentDate = new Date();
-                const formatedCurrentDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDay())
-                const maturityDate = new Date(uniqueTxns[0].investment_mature_date);
-                const formatedMaturityDate = new Date(maturityDate.getFullYear(), maturityDate.getMonth(), maturityDate.getDay())
-                if (formatedMaturityDate <= formatedCurrentDate) {
-                    query = `UPDATE investments SET isMatured = 1 WHERE ID = ${req.params.id}`;
-                    endpoint = '/core-service/get';
-                    url = `${HOST}${endpoint}`;
-                    axios.get(url, {
-                        params: {
-                            query: query
-                        }
-                    }).then(respons_e => {
+                if (uniqueTxns.length > 0) {
+                    const currentDate = new Date();
+                    const formatedCurrentDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDay())
+                    const maturityDate = new Date(uniqueTxns[0].investment_mature_date);
+                    const formatedMaturityDate = new Date(maturityDate.getFullYear(), maturityDate.getMonth(), maturityDate.getDay())
+                    if (formatedMaturityDate <= formatedCurrentDate) {
+                        query = `UPDATE investments SET isMatured = 1 WHERE ID = ${req.params.id}`;
+                        endpoint = '/core-service/get';
+                        url = `${HOST}${endpoint}`;
+                        axios.get(url, {
+                            params: {
+                                query: query
+                            }
+                        }).then(respons_e => {
+                            res.send({
+                                draw: draw,
+                                maturityDays: true,
+                                txnCurrentBalance: (payload2.data[0].txnCurrentBalance === null) ? '' : payload2.data[0].txnCurrentBalance,
+                                recordsTotal: payload2.data[0].recordsTotal,
+                                recordsFiltered: payload.data[0].recordsFiltered,
+                                data: (uniqueTxns === undefined) ? [] : uniqueTxns
+                            });
+                        }, err => {
+                        })
+                    } else {
                         res.send({
                             draw: draw,
-                            maturityDays: true,
+                            maturityDays: false,
                             txnCurrentBalance: (payload2.data[0].txnCurrentBalance === null) ? '' : payload2.data[0].txnCurrentBalance,
                             recordsTotal: payload2.data[0].recordsTotal,
                             recordsFiltered: payload.data[0].recordsFiltered,
                             data: (uniqueTxns === undefined) ? [] : uniqueTxns
                         });
-                    }, err => {
-                    })
+                    }
                 } else {
                     res.send({
                         draw: draw,
