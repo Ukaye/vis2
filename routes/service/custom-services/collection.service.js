@@ -185,11 +185,11 @@ router.post('/bulk_upload/confirm-payment', function(req, res, next) {
 
             let payment_history = {
               index: 0,
-              balance: payments[0]['unallocated']
+              balance: helperFunctions.currencyToNumberFormatter(payments[0]['unallocated'])
             };
             async.forEach(invoices, function (invoice, callback) {
                 let records = [],
-                    invoice_amount = invoice.payment_amount;
+                    invoice_amount = helperFunctions.currencyToNumberFormatter(invoice.payment_amount);
                 do {
                     let amount = 0,
                         record = {},
@@ -206,8 +206,6 @@ router.post('/bulk_upload/confirm-payment', function(req, res, next) {
                         amount = payment_history.balance;
                         invoice_amount -= amount;
                         record.status = 'full';
-                        payment_history.balance = payments[payment_history['index']]['unallocated'];
-                        payment_history.index = payment_history.index + 1;
                     } else {
                         amount = invoice_amount;
                         invoice_amount = 0;
@@ -228,6 +226,13 @@ router.post('/bulk_upload/confirm-payment', function(req, res, next) {
                     record.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                     record.collection_bulk_uploadID = payment.ID;
                     records.push({record: record, update: update});
+
+                    if (invoice_amount >= payment_history.balance && payment_history.index < payments.length - 1) {
+                        payment_history.index = payment_history.index + 1;
+                        payment_history.balance = helperFunctions.currencyToNumberFormatter(payments[payment_history['index']]['unallocated']);
+                    } else {
+                        break;
+                    }
                 }
                 while (invoice_amount > 0);
                 postPayment(records, connection, req, escrow, overpayment, function (response) {
