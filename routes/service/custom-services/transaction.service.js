@@ -81,7 +81,7 @@ router.post('/create', function (req, res, next) {
     var data = req.body
     const dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let refId = moment().utcOffset('+0100').format('x');
-    computeTotalBalance(data, HOST).then(totalBalance_ => {
+    computeTotalBalance(data.clientId, data.investmentId, HOST).then(totalBalance_ => {
         let total = (data.isWallet.toString() === '1') ? totalBalance_.currentWalletBalance : totalBalance_.currentAcctBalance;
         let inv_txn = {
             txn_date: (data.txn_date !== undefined) ? data.txn_date : moment().utcOffset('+0100').format('YYYY-MM-DD'),
@@ -803,7 +803,7 @@ router.post('/posts', function (req, res, next) {
                 if (((counter.data[0].total_postedBy === counter.data[0].total_posted) || (counter.data[0].isOptional > 0) ||
                     (counter.data[0].priorityTotal !== 0 && counter.data[0].priorityTotal === counter.data[0].priorityItemTotal)) && data.status === '1') {
                     let total_bal = 0;
-                    computeTotalBalance(data, HOST).then(totalBalance_ => {
+                    computeTotalBalance(data.clientId, data.investmentId, HOST).then(totalBalance_ => {
                         total_bal = (data.isWallet.toString() === '1') ? totalBalance_.currentWalletBalance : totalBalance_.currentAcctBalance;
                         total_bal = (total_bal === null) ? 0 : total_bal;
                         let bal = (data.isCredit.toString() === '1') ? (parseFloat(total_bal.toString()) + parseFloat(data.amount.split(',').join(''))) :
@@ -974,11 +974,15 @@ router.post('/transfer-fund-wallet', function (req, res, next) {
 
 async function fundBeneficialAccount(data, HOST) {
     if (data.isTransfer === '1') {
-        const computedBalanceAmt = await computeTotalBalance(data, HOST);
+        const computedBalanceAmt = await computeTotalBalance(data.clientId, data.beneficialInvestmentId, HOST);
+        console.log('--------------------------data-----------------------');
+        console.log(data);
+        console.log('--------------------------computedBalanceAmt-----------------------');
+        console.log(computedBalanceAmt)
         let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
         let refId = moment().utcOffset('+0100').format('x');
 
-        let total_bal = (data.isMoveFundTransfer.toString() === '1') ? computedBalanceAmt.currentAcctBalance : computedBalanceAmt.currentWalletBalance;
+        let total_bal = (data.isMoveFundTransfer.toString() === '1') ? computedBalanceAmt.currentWalletBalance : computedBalanceAmt.currentAcctBalance;
         total_bal = parseFloat(total_bal.toString().split(',').join(''));
         let ooo = parseFloat(data.amount.toString().split(',').join(''));
         let inv_txn = {
@@ -1045,18 +1049,15 @@ function computeCurrentBalance(investmentId, HOST) {
     });
 }
 
-function computeTotalBalance(data, HOST) {
+function computeTotalBalance(clientId, investmentId, HOST) {
     return new Promise((resolve, reject) => {
-        let id = (data.investmentId === '') ? data.beneficialInvestmentId : data.investmentId;
-        if (id === undefined || id === '') {
-            id = 0;
-        }
         let query = `Select 
-        (Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${data.clientId} 
+        (Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${clientId} 
             AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1) as currentWalletBalance,
-        (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${id} 
+        (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${(investmentId === '' || investmentId === undefined || investmentId === null) ? 0 : investmentId} 
             AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1) as currentAcctBalance`;
         let endpoint = '/core-service/get';
+        console.log(query);
         let url = `${HOST}${endpoint}`;
         axios.get(url, {
             params: {
@@ -1073,7 +1074,7 @@ function computeTotalBalance(data, HOST) {
 
 async function upFrontInterest(data, HOST) {
     if (data.interest_disbursement_time.toString() === 'Up-Front' && data.is_capital.toString() === '1') {
-        let totalAmt = await computeTotalBalance(data, HOST);
+        let totalAmt = await computeTotalBalance(data.clientId,data.investmentId, HOST);
         return new Promise((resolve, reject) => {
             let T = differenceInCalendarDays(
                 new Date(data.investment_mature_date.toString()),
@@ -1461,7 +1462,7 @@ async function reverseEarlierInterest(data, HOST) {
 
                                                     setInvestmentTxns(HOST, inv_txn).then(function (_res_ponse_) {
                                                         refId = moment().utcOffset('+0100').format('x');
-                                                        computeTotalBalance(data, HOST).then(__balance => {
+                                                        computeTotalBalance(data.clientId, data.investmentId, HOST).then(__balance => {
                                                             const wBalance = parseFloat((__balance.currentWalletBalance === null) ? 0 : Math.round(__balance.currentWalletBalance.split(',').join('')).toFixed(2));
                                                             const wResult = parseFloat(Math.round(result).toFixed(2));
                                                             inv_txn = {
