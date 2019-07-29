@@ -986,8 +986,9 @@ async function fundBeneficialAccount(data, HOST) {
         let refId = moment().utcOffset('+0100').format('x');
 
         let total_bal = (data.isMoveFundTransfer.toString() === '1') ? computedBalanceAmt.currentWalletBalance : computedBalanceAmt.currentAcctBalance;
+        total_bal = (total_bal === null)? '0' : total_bal;
         total_bal = parseFloat(total_bal.toString().split(',').join(''));
-        let ooo = parseFloat(data.amount.toString().split(',').join(''));
+
         let inv_txn = {
             txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
             description: data.description,
