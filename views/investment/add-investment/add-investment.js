@@ -299,7 +299,8 @@ $('#client').on("select2:selecting", function (e) {
                         if (clientBalance.toString().includes('-')) {
                             sign = '-';
                         }
-                        $('<option/>').val('1').html(`Wallet <strong>(₦${sign}${formater(clientBalance)})</strong>`).appendTo(
+                        let _clientBalance = Number(clientBalance).toFixed(2);
+                        $('<option/>').val('1').html(`Wallet <strong>(₦${sign}${formater(_clientBalance)})</strong>`).appendTo(
                             '#opt_payment_made_by');
                         $('<option/>').val('0').html(`Cash`).appendTo(
                             '#opt_payment_made_by');
