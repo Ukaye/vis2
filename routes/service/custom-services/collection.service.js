@@ -334,6 +334,7 @@ router.get('/invoices/due', function(req, res, next) {
     let today = moment().utcOffset('+0100').format('YYYY-MM-DD'),
         query = "SELECT s.ID,c.fullname AS client, c.phone, c.first_name, c.middle_name, c.last_name, c.ID AS clientID, " +
         "s.applicationID, s.status, s.payment_collect_date, s.payment_status, 'Principal' AS 'type', " +
+        "payment_amount invoice_amount, (SELECT COALESCE(SUM(p.payment_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1) total_paid, " +
         "(payment_amount - (SELECT COALESCE(SUM(p.payment_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)) payment_amount FROM application_schedules AS s, clients c " +
         "WHERE s.status = 1 AND ((payment_amount - (SELECT COALESCE(SUM(p.payment_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)) > 0) = 1 AND c.ID = (select userID from applications a where a.ID = s.applicationID) " +
         "AND (select close_status from applications a where a.ID = s.applicationID) = 0 AND s.payment_amount > 0 AND TIMESTAMP(payment_collect_date) <= TIMESTAMP('"+today+"') ORDER BY ID desc";
@@ -344,6 +345,7 @@ router.get('/invoices/due', function(req, res, next) {
         } else {
             query = "SELECT s.ID,c.fullname AS client, c.phone, c.first_name, c.middle_name, c.last_name, c.ID AS clientID, " +
                 "s.applicationID, s.status, s.interest_collect_date as payment_collect_date, s.payment_status, 'Interest' AS 'type', " +
+                "interest_amount invoice_amount, (SELECT COALESCE(SUM(p.interest_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1) total_paid, " +
                 "(interest_amount - (SELECT COALESCE(SUM(p.interest_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)) payment_amount FROM application_schedules AS s, clients c " +
                 "WHERE s.status = 1 AND ((interest_amount - (SELECT COALESCE(SUM(p.interest_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)) > 0) = 1 AND c.ID = (select userID from applications a where a.ID = s.applicationID) " +
                 "AND (select close_status from applications a where a.ID = s.applicationID) = 0 AND s.interest_amount > 0 AND TIMESTAMP(interest_collect_date) <= TIMESTAMP('"+today+"') ORDER BY ID desc";

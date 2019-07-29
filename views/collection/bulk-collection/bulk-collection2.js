@@ -65,8 +65,11 @@ function displayInvoice(val) {
             <div class="row">
                 <div class="col-lg-9">
                     <p><strong>Name: </strong>${val.client}</p>
-                    <p><strong>Date: </strong>${val.payment_collect_date} ${status}</p>
-                    <p><strong>Amount: </strong>${numberToCurrencyFormatter_(val.payment_amount)} (${val.type})</p>
+                    <p><strong>Date: </strong>${val.payment_collect_date} (${val.type}) ${status}</p>
+                    <p><strong>Balance: </strong>${numberToCurrencyFormatter_(val.payment_amount)}
+                        <small class="text-muted"><strong>Invoice Amt: </strong>${numberToCurrencyFormatter_(val.invoice_amount)} 
+                            <strong>Total Paid: </strong>${numberToCurrencyFormatter_(val.total_paid)}
+                        </small></p>
                 </div>
                 <div class="col-lg-3">
                     <p><input class="form-control" type="checkbox" onclick="selectInvoice('${encodeURIComponent(JSON.stringify(val))}')" /></p>
@@ -421,7 +424,7 @@ function searchForKeywords(invoice) {
         amountMatch = ($.grep(allPayments_, (e) => {
             if (!invoice.payment_amount) return false;
             let invoice_amt = currencyToNumberformatter(e.credit).toString(),
-                payment_amt = currencyToNumberformatter(invoice.payment_amount).toString(),
+                payment_amt = invoice.payment_amount.toString(),
                 exp = new RegExp(payment_amt, 'gi');
             return invoice_amt.match(exp);
         }))[0];
