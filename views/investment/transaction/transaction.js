@@ -108,50 +108,51 @@ function getInvestmentMaturity() {
                             : "FUND TRANSACTION TO CLIENT'S WALLET INITIATED PLEASE COMPLETE THE APPROVAL STAGE",
                         icon: (selectedInvestment.inv_moves_wallet === 0) ? "warning" : "success"
                     });
-
-                    if (selectedInvestment.inv_moves_wallet === 1) {
-                        let _mRoleId = [];
-                        let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === 2 && status === 1);
-                        if (mRoleId.length === 0) {
-                            _mRoleId.push({
-                                roles: "[]",
-                                operationId: 2
-                            });
-                        } else {
-                            _mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === 2 && status === 1);
-                        }
-                        let investmentOps = {
-                            amount: selectedInvestment.txnCurrentBalance,
-                            description: `MOVE FUND FROM INVESTMENT ACCT. TO CLIENT'S WALLET`,
-                            investmentId: selectedInvestment.investmentId,
-                            is_credit: 0,
-                            operationId: 2,
-                            isCharge: 0,
-                            is_capital: 0,
-                            isApproved: 0,
-                            isMoveFundTransfer: 1,
-                            approvedBy: '',
-                            isTransfer: 1,
-                            clientId: selectedInvestment.clientId,
-                            createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
-                            roleIds: _mRoleId,
-                            beneficialInvestmentId: selectedInvestment.investmentId,
-                            productId: selectedInvestment.productId,
-                            isWallet: isWalletPage,
-                            isInvestmentMatured: (selectedInvestment.maturityDays === true) ? 1 : 0
-                        };
-                        $.ajax({
-                            url: `investment-txns/create`,
-                            'type': 'post',
-                            'data': investmentOps,
-                            'success': function (data) {
-                                $('#wait').hide();
-                                table.ajax.reload(null, false);
-                            },
-                            'error': function (err) {
-                                $('#wait').hide();
+                    if (selectedInvestment.isLastMaturedTxnExist === 0) {
+                        if (selectedInvestment.inv_moves_wallet === 1) {
+                            let _mRoleId = [];
+                            let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === 2 && status === 1);
+                            if (mRoleId.length === 0) {
+                                _mRoleId.push({
+                                    roles: "[]",
+                                    operationId: 2
+                                });
+                            } else {
+                                _mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === 2 && status === 1);
                             }
-                        });
+                            let investmentOps = {
+                                amount: selectedInvestment.txnCurrentBalance,
+                                description: `MOVE FUND FROM INVESTMENT ACCT. TO CLIENT'S WALLET`,
+                                investmentId: selectedInvestment.investmentId,
+                                is_credit: 0,
+                                operationId: 2,
+                                isCharge: 0,
+                                is_capital: 0,
+                                isApproved: 0,
+                                isMoveFundTransfer: 1,
+                                approvedBy: '',
+                                isTransfer: 1,
+                                clientId: selectedInvestment.clientId,
+                                createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
+                                roleIds: _mRoleId,
+                                beneficialInvestmentId: selectedInvestment.investmentId,
+                                productId: selectedInvestment.productId,
+                                isWallet: isWalletPage,
+                                isInvestmentMatured: (selectedInvestment.maturityDays === true) ? 1 : 0
+                            };
+                            $.ajax({
+                                url: `investment-txns/create`,
+                                'type': 'post',
+                                'data': investmentOps,
+                                'success': function (data) {
+                                    $('#wait').hide();
+                                    table.ajax.reload(null, false);
+                                },
+                                'error': function (err) {
+                                    $('#wait').hide();
+                                }
+                            });
+                        }
                     }
                 }
             }
@@ -335,13 +336,14 @@ function bindDataTable(id) {
                         $("#inv_name").html(`${data.data[0].name} (${data.data[0].code})`);
                         $("#inv_acct_no").html(`${data.data[0].acctNo}`);
                         selectedInvestment.txnCurrentBalance = data.txnCurrentBalance;
+                        selectedInvestment.isLastMaturedTxnExist = data.isLastMaturedTxnExist;
                         selectedInvestment.maturityDays = data.maturityDays;
                         let sign = '';
                         if (data.txnCurrentBalance.includes('-')) {
                             sign = '-';
                             selectedInvestment.txnCurrentBalance = '-' + data.txnCurrentBalance;
                         }
-                        let total_balance_ = Math.round(data.txnCurrentBalance.split(',').join('')).toFixed(2);
+                        let total_balance_ = Number(data.txnCurrentBalance.split(',').join('')).toFixed(2);
 
                         $("#inv_bal_amount").html(`${sign}₦${formater(total_balance_.toString())}`);
 
@@ -437,18 +439,15 @@ function bindDataTable(id) {
                         <i class="fa fa-ellipsis-v" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         </i> 
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        <button class="dropdown-item" id="dropdownItemDoc" data-toggle="modal" data-target="#viewListDocModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Document</button>
-                          <button class="dropdown-item" id="dropdownItemRevert" ${(selectedInvestment.maturityDays === true) ? 'disabled' : ''} ${(full.isWallet === 1 || full.isTransfer === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 1 && full.is_capital === 0) ? '' : 'disabled'}>Reverse</button>
-                          <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 0) ? '' : 'disabled'}>Review</button>
-                          <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1) ? '' : 'disabled'} ${(full.approvalDone === 0) ? '' : 'disabled'}>Approval</button>
-                          <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1 && full.approvalDone === 1) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Post</button>
+                        <button class="dropdown-item" id="dropdownItemDoc" data-toggle="modal" data-target="#viewListDocModal">Document</button>
+                          <button class="dropdown-item" id="dropdownItemRevert" ${(selectedInvestment.maturityDays === true) ? 'disabled' : ''} ${(full.isWallet === 1 || full.isTransfer === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 1 && full.is_capital === 0) ? '' : 'disabled'} ${(selectedInvestment.isClosed === 1) ? 'disabled' : ''}>Reverse</button>
+                          <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal" ${(selectedInvestment.isClosed === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 0) ? '' : 'disabled'}>Review</button>
+                          <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(selectedInvestment.isClosed === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1) ? '' : 'disabled'} ${(full.approvalDone === 0) ? '' : 'disabled'}>Approval</button>
+                          <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal" ${(selectedInvestment.isClosed === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1 && full.approvalDone === 1) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Post</button>
                         </div>
                       </div>`;
-
             }
-        }
-
-        ]
+        }]
     });
 }
 let interestTable = {};
@@ -725,7 +724,8 @@ function onTerminateInvest() {
                     roleIds: _mRoleId,
                     productId: selectedInvestment.productId,
                     isForceTerminate: ($('#idChkForceTerminate').is(':checked') === true) ? 1 : 0,
-                    expectedTerminationDate: ($('#notice_date').val() === '') ? date.toLocaleString() : $('#notice_date').val()
+                    expectedTerminationDate: ($('#notice_date').val() === '') ? date.toLocaleString() : $('#notice_date').val(),
+                    clientId: selectedInvestment.clientId
                 };
                 $.ajax({
                     url: `investment-txns/create`,
@@ -737,7 +737,8 @@ function onTerminateInvest() {
                             $("#input_amount").val('');
                             $("#input_description").val('');
                             swal('Investment terminate successful!', '', 'success');
-                            bindDataTable(selectedInvestment.investmentId, false);
+                            // bindDataTable(selectedInvestment.investmentId, false);
+                            table.ajax.reload(null, false);
                         } else {
                             $('#wait').hide();
                             swal('Oops! An error occurred while executing terminating investment', '', 'error');
@@ -1160,12 +1161,12 @@ function getProductDocRequirements(verify) {
                     }
                     $("#tbodyDocs").append(`<tr>
                     <td><span>${element.name}</span></td>
-                    <td><input id="id_file_${element.id}" class="image admin-img" type="file" tabindex="6"></td>
+                    <td><input id="id_file_${element.id}" ${(data_row.isApproved === 1) ? 'disabled' : ''} ${(selectedInvestment.isClosed === 1) ? 'disabled' : ''} class="image admin-img" type="file" tabindex="6"></td>
                     <td>
                     ${statusHtml}
                     </td>
                     <td>
-                        <button type="button" class="btn btn-primary btn-sm" onclick="onAddDoc(${element.id},${element.status},${element.docRequirementId},${element.txnId})">${(element.status.toString() === '1') ? 'Update' : 'Add'} File</button>
+                        <button type="button" class="btn btn-primary btn-sm" ${(data_row.isApproved === 1) ? 'disabled' : ''} ${(selectedInvestment.isClosed === 1) ? 'disabled' : ''} onclick="onAddDoc(${element.id},${element.status},${element.docRequirementId},${element.txnId})">${(element.status.toString() === '1') ? 'Update' : 'Add'} File</button>
                     </td>
                 </tr>`).trigger('change');
 

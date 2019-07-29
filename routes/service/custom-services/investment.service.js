@@ -409,7 +409,7 @@ router.get('/client-investments/:id', function (req, res, next) {
     v.approvalDone,v.reviewDone,v.created_date,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.updated_date,
     i.clientId,v.isMoveFundTransfer,v.isWallet,v.isWithdrawal,isDeposit,v.isDocUploaded,p.canTerminate,i.isPaymentMadeByWallet,p.acct_allows_withdrawal,
     v.is_capital,v.investmentId,i.isTerminated,i.isMatured,v.isForceTerminate,v.isReversedTxn,v.isInvestmentTerminated,v.expectedTerminationDate,p.inv_moves_wallet,
-    v.isPaymentMadeByWallet,p.interest_disbursement_time,p.interest_moves_wallet,i.investment_mature_date,p.interest_rate,v.isInvestmentMatured,
+    v.isPaymentMadeByWallet,p.interest_disbursement_time,p.interest_moves_wallet,i.investment_mature_date,p.interest_rate,v.isInvestmentMatured,i.isClosed,
     i.code as acctNo, v.isTransfer, v.beneficialInvestmentId FROM investment_txns v
     left join investments i on v.investmentId = i.ID
     left join clients c on i.clientId = c.ID
@@ -460,7 +460,8 @@ router.get('/client-investments/:id', function (req, res, next) {
         }).then(payload => {
             query = `Select 
             (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1) as txnCurrentBalance,
-            (SELECT count(*) as recordsTotal FROM investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id}) as recordsTotal`;
+            (SELECT count(*) as recordsTotal FROM investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id}) as recordsTotal,
+            (SELECT count(*) as maturedInventmentTxn FROM investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} AND isInvestmentMatured = 1) as maturedInventmentTxn`;
 
             endpoint = '/core-service/get';
             url = `${HOST}${endpoint}`;
@@ -487,6 +488,7 @@ router.get('/client-investments/:id', function (req, res, next) {
                                 draw: draw,
                                 maturityDays: true,
                                 txnCurrentBalance: (payload2.data[0].txnCurrentBalance === null) ? '' : payload2.data[0].txnCurrentBalance,
+                                isLastMaturedTxnExist: (payload2.data[0].maturedInventmentTxn > 0) ? 1 : 0,
                                 recordsTotal: payload2.data[0].recordsTotal,
                                 recordsFiltered: payload.data[0].recordsFiltered,
                                 data: (uniqueTxns === undefined) ? [] : uniqueTxns
@@ -498,6 +500,7 @@ router.get('/client-investments/:id', function (req, res, next) {
                             draw: draw,
                             maturityDays: false,
                             txnCurrentBalance: (payload2.data[0].txnCurrentBalance === null) ? '' : payload2.data[0].txnCurrentBalance,
+                            isLastMaturedTxnExist: (payload2.data[0].maturedInventmentTxn > 0) ? 1 : 0,
                             recordsTotal: payload2.data[0].recordsTotal,
                             recordsFiltered: payload.data[0].recordsFiltered,
                             data: (uniqueTxns === undefined) ? [] : uniqueTxns
