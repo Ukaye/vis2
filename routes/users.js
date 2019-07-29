@@ -7457,8 +7457,8 @@ users.get('/interest-receivable-trends', function(req, res, next){
 });
 
 ///// Treasury Management
-users.get('/expenses', function(req, res, next){
-    let capitalQuery, interestQuery, expensesQuery, disbursementQuery, period = req.query.period;
+users.get('/treasury/expenses', function(req, res, next){
+    let capitalQuery, interestQuery, expensesQuery, disbursementQuery, period = req.query.period, start = req.query.start, end = req.query.end;
     capitalQuery = `
                 select (
                     (select case when sum(b.amount) is null then 0 else sum(b.amount) end 
@@ -7500,6 +7500,50 @@ users.get('/expenses', function(req, res, next){
                                     where day(date_disbursed) = day(curdate()))
                             end
                         as average`;
+    if (period && period === '0'){
+        capitalQuery = `
+                select (
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end 
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 1 and a.investment_mature_date <> ''
+                    and timestamp(a.investment_mature_date) between timestamp("${start}") and timestamp("${end}"))
+                    -
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 0 and a.investment_mature_date <> ''
+                    and timestamp(a.investment_mature_date) between timestamp("${start}") and timestamp("${end}"))
+                ) as amount
+                `;
+        interestQuery = `
+                select (
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end 
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 1 and isInterest = 1 and isReversedTxn = 0 and a.investment_mature_date <> ''
+                    and timestamp(a.investment_mature_date) between timestamp("${start}") and timestamp("${end}"))
+                    -
+                    (select case when sum(b.amount) is null then 0 else sum(b.amount) end
+                    from investments a inner join investment_txns b on a.id = b.investmentid
+                    where b.is_Credit = 0 and isInterest = 1 and isReversedTxn = 0 and a.investment_mature_date <> ''
+                    and timestamp(a.investment_mature_date) between timestamp("${start}") and timestamp("${end}"))
+                ) as amount
+                `;
+        expensesQuery = `select * from expenses where status = 1 
+                    and timestamp(date_of_spend) between timestamp("${start}") and timestamp("${end}")`;
+        disbursementQuery = `select 
+                            case 
+                                when (select count(*)
+                                    from disbursement_history 
+                                    where day(date_disbursed) between day("${start}") and day("${end}")) = 0 then 'No Previous History For This Date'
+                                else (select sum(amount)
+                                    from disbursement_history 
+                                    where day(date_disbursed) between day("${start}") and day("${end}"))
+                                    /
+                                    (select count(*)
+                                    from disbursement_history 
+                                    where day(date_disbursed) between day("${start}") and day("${end}"))
+                            end
+                        as average`;
+    }
     if (period && period === '1'){
         capitalQuery = `
                 select (
@@ -7670,8 +7714,8 @@ users.get('/expenses', function(req, res, next){
     });
 });
 
-users.get('/income', function(req, res, next){
-    let principalQuery, interestQuery, period = req.query.period;
+users.get('/treasury/income', function(req, res, next){
+    let principalQuery, interestQuery, period = req.query.period, start = req.query.start, end = req.query.end;
     principalQuery = `
                 select sum(payment_amount) as due
                 from application_schedules sh
@@ -7684,6 +7728,20 @@ users.get('/income', function(req, res, next){
                 where applicationID in (select ID from applications where status = 2)
                 and status = 1 and payment_collect_date = curdate()
                 `;
+    if (period && period === '0'){
+        principalQuery = `
+                select sum(payment_amount) as due
+                from application_schedules sh
+                where applicationID in (select ID from applications where status = 2)
+                and status = 1 and timestamp(payment_collect_date) between timestamp("${start}") and timestamp("${end}")
+                `;
+        interestQuery = `
+                select sum(interest_amount) as due
+                from application_schedules sh
+                where applicationID in (select ID from applications where status = 2)
+                and status = 1 and timestamp(payment_collect_date) between timestamp("${start}") and timestamp("${end}")
+                `;
+    }
     if (period && period === '1'){
         principalQuery = `
                 select sum(payment_amount) as due
