@@ -66,14 +66,14 @@
     <!-- Header-->
 
     <div class="breadcrumbs">
-        <div class="col-sm-4">
+        <div class="col-lg-4">
             <div class="page-header float-left">
                 <div class="page-title">
                     <h1>Bulk Upload</h1>
                 </div>
             </div>
         </div>
-        <div class="col-sm-8">
+        <div class="col-lg-8">
             <div class="page-header float-right">
                 <div class="page-title">
                     <ol class="breadcrumb text-right">
@@ -96,35 +96,51 @@
                 </div>
                 <div class="card-body card-block">
                     <div class="row">
-                        <div class="col-sm-12">
+                        <div class="col-lg-12">
                             <div class="row">
-                                <div class="col-sm-3">
-                                    <label for="account">Account<strong style="color:red"> *</strong></label>
+                                <div class="col-lg-3">
+                                    <label for="account" style="display: block; margin-bottom: 0;">
+                                        <div class="row">
+                                            <div class="col-lg-5">
+                                                Account<strong style="color:red"> *</strong>
+                                            </div>
+                                            <div class="col-lg-7">
+                                                <div class="input-group">
+                                                    <div class="radio">
+                                                        <label><input type="radio" name="dateType" value="hourly" checked> Hourly</label>
+                                                    </div>
+                                                    <div class="radio">
+                                                        <label><input type="radio" name="dateType" value="daily"> Daily</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </label>
                                     <select id="account" class="form-control">
                                         <option selected="selected">Select Account</option>
                                     </select>
                                 </div>
-                                <div class="col-sm-2 hourly-date-type">
+                                <div class="col-lg-2 hourly-date-type">
                                     <label for="date">Date<strong style="color:red"> *</strong></label>
                                     <input type="date" class="form-control" id="date" placeholder="Date">
                                 </div>
-                                <div class="col-sm-2 hourly-date-type">
+                                <div class="col-lg-2 hourly-date-type">
                                     <label for="startTime">Start Time<strong style="color:red"> *</strong></label>
                                     <input type="time" class="form-control" id="startTime" placeholder="Start Time" value="00:00">
                                 </div>
-                                <div class="col-sm-2 hourly-date-type">
+                                <div class="col-lg-2 hourly-date-type">
                                     <label for="endTime">End Time<strong style="color:red"> *</strong></label>
                                     <input type="time" class="form-control" id="endTime" placeholder="End Time" value="23:59">
                                 </div>
-                                <div class="col-sm-3 daily-date-type" style="display: none;">
+                                <div class="col-lg-3 daily-date-type" style="display: none;">
                                     <label for="startDate">Start date<strong style="color:red"> *</strong></label>
                                     <input type="date" class="form-control" id="startDate" placeholder="Start date">
                                 </div>
-                                <div class="col-sm-3 daily-date-type" style="display: none;">
+                                <div class="col-lg-3 daily-date-type" style="display: none;">
                                     <label for="endDate">End date<strong style="color:red"> *</strong></label>
                                     <input type="date" class="form-control" id="endDate" placeholder="End date">
                                 </div>
-                                <div class="col-sm-3">
+                                <div class="col-lg-3">
                                     <label for="csvUpload">Statement<strong style="color:red"> *</strong></label>
                                     <input type="file" id="csvUpload" style="display: inline-block"/>
                                 </div>
@@ -140,19 +156,9 @@
                                         <input id="nve_cr_rvsl" type="checkbox"> -ve Credit is Reversal
                                     </label>
                                 </div>
-                                <div class="col-lg-3">
-                                    <div class="input-group">
-                                        <div class="radio">
-                                            <label><input type="radio" name="dateType" value="hourly" checked> Hourly</label>
-                                        </div>
-                                        <div class="radio">
-                                            <label><input type="radio" name="dateType" value="daily"> Daily</label>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                             <div class="row">
-                                <div class="col-sm-12">
+                                <div class="col-lg-12">
                                     <div id="dvCSV" style="margin: 30px 15px;"></div>
                                 </div>
                             </div>

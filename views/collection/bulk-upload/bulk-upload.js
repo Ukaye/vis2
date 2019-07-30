@@ -267,7 +267,6 @@
         validateStatement(statementX, (validation) => {
             if (validation.status){
                 payload.statement = validation.data;
-                return console.log(validation.data)
                 validateStatement_(payload, (response) => {
                     if (response.status !== 200) {
                         swal({
