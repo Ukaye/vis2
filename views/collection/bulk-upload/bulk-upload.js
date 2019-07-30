@@ -30,6 +30,8 @@
         $nve_cr_rvsl = $('#nve_cr_rvsl'),
         $dateType = $('input[name=dateType]');
 
+    $date.val(new Date().toDateInputValue());
+
     $cr_dr.change((e) => {
         statement = [];
         statement_ = [];
@@ -132,7 +134,7 @@
                     cells[j] = (cells[j]) ? (cells[j]).trim() : cells[j];
                     if (!cells[j] && cells[j] !== '')
                         continue;
-                    let cell = $(`<td class="${ (j === 3 && cr_dr)? 'disabled':'' }" />`);
+                    let cell = $(`<td class="${ ((j < 2 && dateType === 'hourly') || (j === 3 && cr_dr))? 'disabled':'' }" />`);
                     if (i > 0) {
                         if (j === 0 || j === 1) {
                             cells[j] = (dateType === 'hourly')? $date.val() : cells[j];
@@ -164,7 +166,7 @@
                                     }
                                 }
                             }
-                            select = (j === 3 && cr_dr)? '':select.concat('</select>');
+                            select = ((j < 2 && dateType === 'hourly') || (j === 3 && cr_dr))? '':select.concat('</select>');
                             cell.html(select);
                         } else {
                             cell.html(cells[j]);
@@ -265,6 +267,7 @@
         validateStatement(statementX, (validation) => {
             if (validation.status){
                 payload.statement = validation.data;
+                return console.log(validation.data)
                 validateStatement_(payload, (response) => {
                     if (response.status !== 200) {
                         swal({
@@ -340,8 +343,8 @@
                 $col4.removeClass('invalid');
                 invoice.balance = e;
             } else {
-                $col4.addClass('invalid');
-                errors.push(e+' is not a valid date');
+                // $col4.addClass('invalid');
+                // errors.push(e+' is not a valid date');
             }
             if (f) {
                 $col5.removeClass('invalid');
