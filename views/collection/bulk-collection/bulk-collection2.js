@@ -116,7 +116,7 @@ function displayPayment(val) {
                         <small class="text-muted"><strong>Allocated: </strong>${numberToCurrencyFormatter_(val.allocated)} 
                             <strong>Unallocated: </strong>${numberToCurrencyFormatter_(val.unallocated)}
                         </small></p>
-                    <p><strong>Date: </strong>${val.value_date} ${type}</p>
+                    <p><strong>Date: </strong>${val.value_date} ${type} ${(val.reversal === 'true')? '(Reversal)':''}</p>
                     <p><strong>Description: </strong>${val.description}</p>
                 </div>
                 <div class="col-lg-2">
@@ -140,7 +140,6 @@ function selectInvoice(obj) {
                 $checkbox.prop('checked', false);
                 return notification('Invoice has already been selected for multiple payments!', '', 'warning');
             }
-            console.log(selectedInvoices)
         }
     } else {
         selectedInvoices.splice(selectedInvoices.findIndex((e) => { return e.ID === invoice.ID; }), 1);
@@ -348,8 +347,11 @@ function findMatches() {
                                         <div class="col-lg-9">
                                             <p><strong>Name: </strong>${invoice.client} <span class="badge badge-warning" style="float: right;">
                                                 <i class="fa fa-link"></i> ${check.value}</span></p>
-                                            <p><strong>Date: </strong>${invoice.payment_collect_date} ${status}</p>
-                                            <p><strong>Amount: </strong>${numberToCurrencyFormatter_(invoice.payment_amount)} (${invoice.type})</p>
+                                            <p><strong>Date: </strong>${invoice.payment_collect_date} (${invoice.type}) ${status}</p>
+                                            <p><strong>Balance: </strong>${numberToCurrencyFormatter_(invoice.payment_amount)}
+                                                <small class="text-muted"><strong>Invoice Amt: </strong>${numberToCurrencyFormatter_(invoice.invoice_amount)} 
+                                                    <strong>Total Paid: </strong>${numberToCurrencyFormatter_(invoice.total_paid)}
+                                                </small></p>
                                         </div>
                                         <div class="col-lg-3">
                                             <p><input class="form-control" type="checkbox" onclick="selectInvoice('${encodeURIComponent(JSON.stringify(invoice))}')" /></p>
@@ -363,7 +365,7 @@ function findMatches() {
                                         <div class="col-lg-10">
                                             <p><strong>Amount: </strong>${numberToCurrencyFormatter_(amount)} <span class="badge badge-warning" style="float: right;">
                                                 <i class="fa fa-link"></i> ${check.value}</span></p>
-                                            <p><strong>Date: </strong>${payment.value_date} ${type}</p>
+                                            <p><strong>Date: </strong>${payment.value_date} ${type} ${(payment.reversal === 'true')? '(Reversal)':''}</p>
                                             <p><strong>Description: </strong>${payment.description}</p>
                                         </div>
                                         <div class="col-lg-2">
@@ -454,7 +456,7 @@ function searchForKeywords(invoice) {
     } else if (amountMatch) {
         status = true;
         result.key = 'amount';
-        result.value = invoice.payment_amount;
+        result.value = numberToCurrencyformatter(invoice.payment_amount);
         result.payment = amountMatch;
     }
     if (!status)
@@ -510,16 +512,19 @@ function findReversals() {
                 matchedPayments = [];
                 unmatchedPayments = [];
                 $('#wait').show();
-                for (let i=0; i<allPayments.length; i++) {
-                    let check = searchForReversal(allPayments[i]);
+                const payments = $.extend(true, [], allPayments);
+                for (let i=0; i<payments.length; i++) {
+                    if (($.grep(matchedPayments, (e) => { return e.ID === payments[i]['ID'] }))[0]) continue;
+                    if (($.grep(unmatchedPayments, (e) => { return e.ID === payments[i]['ID'] }))[0]) continue;
+                    let check = searchForReversal(payments[i]);
                     if (!check) {
-                        if (allPayments[i]['reversal']) {
-                            displayReversal(allPayments[i]);
+                        if (payments[i]['reversal']) {
+                            displayReversal(payments[i]);
                         } else {
-                            unmatchedPayments.push(allPayments[i]);
+                            unmatchedPayments.push(payments[i]);
                         }
                     } else {
-                        displayReversal(allPayments[i]);
+                        displayReversal(payments[i]);
                         displayReversal(check.payment);
                     }
                 }
@@ -543,7 +548,8 @@ function searchForReversal(payment) {
                 credit_amt = currencyToNumberformatter(e.credit).toString(),
                 debit_amt_ = currencyToNumberformatter(payment.debit).toString(),
                 credit_amt_ = currencyToNumberformatter(payment.credit).toString();
-            return (credit_amt === debit_amt_ && credit_amt > 0) || (debit_amt === credit_amt_ && debit_amt > 0);
+            return (credit_amt == debit_amt_ && credit_amt > 0) || (debit_amt == credit_amt_ && debit_amt > 0) ||
+                (credit_amt == (-1 * credit_amt_) && Math.abs(credit_amt) > 0) || (debit_amt == (-1 * debit_amt_) && Math.abs(debit_amt) > 0);
         }))[0];
     let status = false,
         result = {};
@@ -575,7 +581,7 @@ function displayReversal(payment) {
                 <div class="row">
                     <div class="col-lg-10">
                         <p><strong>Amount: </strong>${numberToCurrencyFormatter_(amount)}</p>
-                        <p><strong>Date: </strong>${payment.value_date} ${type}</p>
+                        <p><strong>Date: </strong>${payment.value_date} ${type} ${(payment.reversal === 'true')? '(Reversal)':''}</p>
                         <p><strong>Description: </strong>${payment.description}</p>
                     </div>
                     <div class="col-lg-2">
