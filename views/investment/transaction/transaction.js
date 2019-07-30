@@ -339,6 +339,7 @@ function bindDataTable(id) {
                         selectedInvestment.isLastMaturedTxnExist = data.isLastMaturedTxnExist;
                         selectedInvestment.maturityDays = data.maturityDays;
                         let sign = '';
+                        data.txnCurrentBalance = (data.txnCurrentBalance === null) ? '0.00' : data.txnCurrentBalance;
                         if (data.txnCurrentBalance.includes('-')) {
                             sign = '-';
                             selectedInvestment.txnCurrentBalance = '-' + data.txnCurrentBalance;
