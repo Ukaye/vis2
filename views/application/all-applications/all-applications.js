@@ -268,16 +268,3 @@ function filterType(type) {
         }
     });
 }
-
-function processDate(date) {
-    let separator;
-    if (date.indexOf('-') > -1){
-        separator = '-';
-    } else if (date.indexOf('/') > -1){
-        separator = '/';
-    } else {
-        return date;
-    }
-    let date_array = date.split(separator);
-    return date_array[0]+'-'+date_array[1]+'-'+date_array[2];
-}
