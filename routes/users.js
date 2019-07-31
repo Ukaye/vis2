@@ -873,7 +873,7 @@ users.get('/committals/user/interest/:id', function(req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         query = 'SELECT count(*) count, sum(s.interest_amount) total FROM schedule_history AS s, applications a ' +
-            'WHERE s.applicationID = a.ID AND s.status = 1 AND s.interest_amount > 0',
+            'WHERE s.applicationID = a.ID AND s.loan_officerID = ? AND s.status = 1 AND s.interest_amount > 0',
         query2 = 'SELECT s.interest_amount amount, s.payment_source channel, s.payment_date date, s.clientID userID, c.fullname client, a.ID application_id, a.duration ' +
             'FROM schedule_history s, applications a, clients c ' +
             'WHERE s.applicationID = a.ID AND s.clientID = c.ID AND s.loan_officerID = ? AND s.status = 1 AND s.interest_amount > 0';
@@ -3675,7 +3675,7 @@ users.get('/overdues/', function(req, res, next) {
         '(select loan_amount from applications where applications.ID = applicationID) as principal,\n' +
         'sum(payment_amount) as amount_due, sum(interest_amount) as interest_due\n' +
         'from application_schedules\n' +
-        'where payment_status = 1 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0 \n' +
+        'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0 \n' +
         'and payment_collect_date < (select curdate()) ';
     group = 'group by applicationID';
     query = queryPart.concat(group);
