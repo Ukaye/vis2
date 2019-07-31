@@ -208,6 +208,7 @@ function CSVtoArray(text) {
 }
 
 function numberToCurrencyFormatter_(number) {
+    if (!number || number === null) return number;
     return numberToCurrencyformatter(number.round(2));
 }
 
