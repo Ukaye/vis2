@@ -290,6 +290,7 @@ $('#client').on("select2:selecting", function (e) {
             url: `/investment-txns/client-wallet-balance/${_id}`,
             'type': 'get',
             'success': function (data) {
+                console.log(data);
                 clientBalance = data[0].balance.toString();
                 $('#opt_payment_made_by').html('');
                 if (data.status === undefined) {
