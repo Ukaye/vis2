@@ -62,7 +62,7 @@ Number.prototype.roundTo = function(n) {
 
 Number.prototype.round = function(p) {
     p = p || 10;
-    return parseFloat(this).toFixed(p);
+    return parseFloat(parseFloat(this).toFixed(p));
 };
 
 String.prototype.round = function(p) {
@@ -208,6 +208,7 @@ function CSVtoArray(text) {
 }
 
 function numberToCurrencyFormatter_(number) {
+    if (!number || number === null) return number;
     return numberToCurrencyformatter(number.round(2));
 }
 

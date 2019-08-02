@@ -200,16 +200,16 @@ router.post('/bulk_upload/confirm-payment', function(req, res, next) {
                             actual_penalty_amount: '0',
                             payment_status: 1
                         };
-                    if (payment_history.index >= payments.length) break;
                     let payment = payments[payment_history['index']];
                     if (invoice_amount >= payment_history.balance) {
                         amount = payment_history.balance;
                         invoice_amount -= amount;
+                        payment_history.balance = 0;
                         record.status = 'full';
                     } else {
                         amount = invoice_amount;
-                        invoice_amount = 0;
                         payment_history.balance -= amount;
+                        invoice_amount = 0;
                         record.status = 'part';
                     }
                     if (invoice.type === 'Principal') update.actual_payment_amount = amount;
@@ -227,15 +227,14 @@ router.post('/bulk_upload/confirm-payment', function(req, res, next) {
                     record.collection_bulk_uploadID = payment.ID;
                     records.push({record: record, update: update});
 
-                    if (invoice_amount >= payment_history.balance && payment_history.index < payments.length - 1) {
+                    if (payment_history.index >= payments.length - 1) break;
+                    if (invoice_amount > payment_history.balance) {
                         payment_history.index = payment_history.index + 1;
                         payment_history.balance = helperFunctions.currencyToNumberFormatter(payments[payment_history['index']]['unallocated']);
-                    } else {
-                        break;
                     }
                 }
                 while (invoice_amount > 0);
-                postPayment(records, connection, req, escrow, overpayment, function (response) {
+                postPayment(records, connection, req, escrow, function (response) {
                     count += response;
                     callback();
                 });
@@ -269,7 +268,7 @@ function overpaymentCheck(clientID, paymentID, amount, escrow, callback) {
     }
 }
 
-function postPayment(records, connection, req, escrow, overpayment, callback) {
+function postPayment(records, connection, req, escrow, callback) {
     let count = 0;
     async.forEach(records, function (record_, callback_) {
         let record = record_.record;
@@ -294,8 +293,9 @@ function postPayment(records, connection, req, escrow, overpayment, callback) {
                         notificationsService.log(req, payload);
 
                         let update2 = {};
-                        update2.status = (!escrow && overpayment > 0 && status === 'part')?
-                            enums.COLLECTION_BULK_UPLOAD.STATUS.PART_PAYMENT : enums.COLLECTION_BULK_UPLOAD.STATUS.FULL_PAYMENT;
+                        update2.status = (status === 'part')? enums.COLLECTION_BULK_UPLOAD.STATUS.PART_PAYMENT :
+                            enums.COLLECTION_BULK_UPLOAD.STATUS.FULL_PAYMENT;
+                        if (escrow) update2.status = enums.COLLECTION_BULK_UPLOAD.STATUS.FULL_PAYMENT;
                         update2.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                         connection.query(`UPDATE collection_bulk_uploads Set ? WHERE ID = ${record.collection_bulk_uploadID}`, update2, function (error, response2) {
                             if (error)

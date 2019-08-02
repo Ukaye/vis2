@@ -575,8 +575,14 @@
                                             break;
                                         }
                                         case 2: {
-                                            if (i > 1)
+                                            if (i > 1) {
+                                                console.log(cells)
+                                                console.log(loan_amount)
+                                                console.log(parseFloat(cells[j]))
+                                                console.log(loan_amount + parseFloat(cells[j]))
                                                 loan_amount = (loan_amount + parseFloat(cells[j])).round(2);
+                                                console.log(loan_amount)
+                                            }
                                             invoice.payment_amount = cells[j];
                                             break;
                                         }
