@@ -351,6 +351,10 @@ function bindDataTable(id) {
                         if (data.data[0].interest_disbursement_time === 'Up-Front') {
                             $('#btnComputeInterest').attr('hidden', true);
                         }
+
+                        if (data.data[0].investment_mature_date === '' || data.data[0].investment_mature_date === null) {
+                            $('#btnTerminateInvestment').attr('hidden', true);
+                        }
                         getInvestmentMaturity();
                     } else {
                         if (sPageURL.split('=')[2] !== undefined) {
@@ -441,10 +445,10 @@ function bindDataTable(id) {
                         </i> 
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         <button class="dropdown-item" id="dropdownItemDoc" data-toggle="modal" data-target="#viewListDocModal">Document</button>
-                          <button class="dropdown-item" id="dropdownItemRevert" ${(selectedInvestment.maturityDays === true) ? 'disabled' : ''} ${(full.isWallet === 1 || full.isTransfer === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 1 && full.is_capital === 0) ? '' : 'disabled'} ${(selectedInvestment.isClosed === 1) ? 'disabled' : ''}>Reverse</button>
-                          <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal" ${(selectedInvestment.isClosed === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 0) ? '' : 'disabled'}>Review</button>
-                          <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(selectedInvestment.isClosed === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1) ? '' : 'disabled'} ${(full.approvalDone === 0) ? '' : 'disabled'}>Approval</button>
-                          <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal" ${(selectedInvestment.isClosed === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1 && full.approvalDone === 1) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Post</button>
+                          <button class="dropdown-item" id="dropdownItemRevert" ${(selectedInvestment.maturityDays === true) ? 'disabled' : ''} ${(full.isWallet === 1 || full.isTransfer === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 1 && full.is_capital === 0) ? '' : 'disabled'}>Reverse</button>
+                          <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 0) ? '' : 'disabled'}>Review</button>
+                          <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1) ? '' : 'disabled'} ${(full.approvalDone === 0) ? '' : 'disabled'}>Approval</button>
+                          <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1 && full.approvalDone === 1) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Post</button>
                         </div>
                       </div>`;
             }
