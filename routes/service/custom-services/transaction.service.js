@@ -824,12 +824,12 @@ router.post('/posts', function (req, res, next) {
                                         .then(function (response_) {
                                             if (data.isReversedTxn === '0') {
                                                 debitWalletTxns(HOST, data).then(payld => {
-                                                    upFrontInterest(data, HOST).then(payld2 => {
-                                                        setcharges(data, HOST, false).then(payload => {
+                                                    setcharges(data, HOST, false).then(payload => {
+                                                        upFrontInterest(data, HOST).then(payld2 => {
                                                             res.send(response.data);
-                                                        }, err => {
+                                                        }, __err => {
                                                         });
-                                                    }, __err => {
+                                                    }, err => {
                                                     });
                                                 }, errrr => {
                                                 });
@@ -1156,49 +1156,55 @@ function updateTerminatedOrMaturedInvestment(investmentId, HOST) {
 
 async function upFrontInterest(data, HOST) {
     if (data.interest_disbursement_time.toString() === 'Up-Front' && data.is_capital.toString() === '1') {
-        let totalAmt = await computeTotalBalance(data.clientId, data.investmentId, HOST);
         return new Promise((resolve, reject) => {
-            let T = differenceInCalendarDays(
-                new Date(data.investment_mature_date.toString()),
-                new Date(data.investment_start_date.toString())
-            );
-            let interestInDays = T / 365;
-            let SI = (parseFloat(data.amount.split(',').join('')) * parseFloat(data.interest_rate.split(',').join('')) * interestInDays) / 100;
-            let total = 0;
-            if (data.interest_moves_wallet.toString() === '1') {
-                total = totalAmt.currentWalletBalance + SI;
-            } else {
-                total = totalAmt.currentAcctBalance + SI;
-            }
-            let _inv_txn = {
-                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
-                description: 'Total Up-Front interest',
-                amount: Number(SI).toFixed(2),
-                is_credit: 1,
-                created_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
-                balance: Number(total).toFixed(2),
-                is_capital: 0,
-                ref_no: moment().utcOffset('+0100').format('x'),
-                updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-                investmentId: data.investmentId,
-                createdBy: data.createdBy,
-                clientId: data.clientId,
-                isWallet: (data.interest_moves_wallet.toString() === '1') ? 1 : 0,
-                isInterest: 1,
-                isApproved: 1,
-                postDone: 1,
-                reviewDone: 1,
-                approvalDone: 1,
-            };
-            let query = `INSERT INTO investment_txns SET ?`;
-            let endpoint = `/core-service/post?query=${query}`;
-            let url = `${HOST}${endpoint}`;
-            axios.post(url, _inv_txn)
-                .then(function (_payload_) {
-                    resolve({});
-                }, err => {
-                    reject(err);
-                });
+            computeTotalBalance(data.clientId, data.investmentId, HOST).then(totalAmt => {
+                let T = differenceInCalendarDays(
+                    new Date(data.investment_mature_date.toString()),
+                    new Date(data.investment_start_date.toString())
+                );
+                T = T + 1;
+                let daysInYear = 365;
+                if (isLeapYear(new Date())) {
+                    daysInYear = 366;
+                }
+                let _time_ = 1 / daysInYear;
+                let SI = T * (totalAmt.currentAcctBalance * parseFloat(data.interest_rate.split(',').join('')) * _time_) / 100;
+                let total = 0;
+                if (data.interest_moves_wallet.toString() === '1') {
+                    total = totalAmt.currentWalletBalance + SI;
+                } else {
+                    total = totalAmt.currentAcctBalance + SI;
+                }
+                let _inv_txn = {
+                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                    description: 'Total Up-Front interest',
+                    amount: Number(SI).toFixed(2),
+                    is_credit: 1,
+                    created_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                    balance: Number(total).toFixed(2),
+                    is_capital: 0,
+                    ref_no: moment().utcOffset('+0100').format('x'),
+                    updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                    investmentId: data.investmentId,
+                    createdBy: data.createdBy,
+                    clientId: data.clientId,
+                    isWallet: (data.interest_moves_wallet.toString() === '1') ? 1 : 0,
+                    isInterest: 1,
+                    isApproved: 1,
+                    postDone: 1,
+                    reviewDone: 1,
+                    approvalDone: 1,
+                };
+                let query = `INSERT INTO investment_txns SET ?`;
+                let endpoint = `/core-service/post?query=${query}`;
+                let url = `${HOST}${endpoint}`;
+                axios.post(url, _inv_txn)
+                    .then(function (_payload_) {
+                        resolve({});
+                    }, err => {
+                        reject(err);
+                    });
+            });
         });
     } else {
         return {};
