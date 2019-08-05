@@ -171,7 +171,8 @@ $("#investment_date_start").on("change", function (event) {
         max_date.setMonth((max_date.getMonth() + 1) + parseInt(selectedValue.max_term));
 
         let _min = `${min_date.getUTCFullYear()}-${pad(min_date.getMonth())}-${pad(min_date.getDate())}`;
-        let _max = `${max_date.getUTCFullYear()}-${pad(max_date.getMonth())}-${pad(max_date.getDate())}`;
+        let day_max_date = max_date.getDate() - 1;
+        let _max = `${max_date.getUTCFullYear()}-${pad(max_date.getMonth())}-${pad(day_max_date)}`;
         $('#investment_mature_date').attr('min', _min);
         $('#investment_mature_date').attr('max', _max);
         if (!isNaN(min_date.getDate()) && !isNaN(max_date.getDate())) {
