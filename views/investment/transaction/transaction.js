@@ -330,7 +330,7 @@ function bindDataTable(id) {
                             $('#btnDeposit').attr('disabled', true);
                             $('#btnCompInterestInvestment').attr('disabled', true);
                             $('#btnTerminateInvestment').attr('disabled', true);
-                            // $('#btnInvestmentStatement').attr('disabled', true);
+                            $('#btnInvestmentStatement').attr('disabled', true);
                         }
                         $("#client_name").html((isWalletPage === 1) ? sPageURL.split('=')[2].split('%20').join(' ') : data.data[0].fullname);
                         $("#inv_name").html(`${data.data[0].name} (${data.data[0].code})`);
