@@ -472,10 +472,8 @@ router.get('/client-investments/:id', function (req, res, next) {
             }).then(payload2 => {
                 if (uniqueTxns.length > 0) {
                     const currentDate = new Date();
-                    const formatedCurrentDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDay())
                     const maturityDate = new Date(uniqueTxns[0].investment_mature_date);
-                    const formatedMaturityDate = new Date(maturityDate.getFullYear(), maturityDate.getMonth(), maturityDate.getDay())
-                    if (formatedMaturityDate <= formatedCurrentDate) {
+                    if (maturityDate <= currentDate) {
                         query = `UPDATE investments SET isMatured = 1 WHERE ID = ${req.params.id}`;
                         endpoint = '/core-service/get';
                         url = `${HOST}${endpoint}`;

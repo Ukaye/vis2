@@ -22,9 +22,6 @@ var freq_withdrawal = [{
         value: 'Quaterly'
     },
     {
-        value: 'Half-Yearly'
-    },
-    {
         value: 'Yearly'
     }
 ];

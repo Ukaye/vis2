@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const router = express.Router();
 const moment = require('moment');
+const addMonths = require('date-fns/add_months');
 
 //Get Investment Product
 router.get('/all', function (req, res, next) {
@@ -930,6 +931,13 @@ router.post('/create-docs', function (req, res, next) {
                 response: null
             });
         });
+});
+
+router.post('/get-maturity-dates', function (req, res, next) {
+    let data = req.body;
+    const result1 = addMonths(new Date(data.year, data.month, data.day), data.min);
+    const result2 = addMonths(new Date(data.year, data.month, data.day), data.max);
+    res.send({ min: result1, max: result2 });
 });
 
 router.get('/get-doc-requirements/:id', function (req, res, next) {
