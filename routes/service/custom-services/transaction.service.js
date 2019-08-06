@@ -1507,13 +1507,14 @@ function reverseEarlierInterest(data, HOST) {
                                         dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                                         let configData = _getProductConfigInterests;
                                         let configAmount = (configData.interest_forfeit_charge_opt == 'Fixed') ? configData.interest_forfeit_charge : (configData.interest_forfeit_charge * parseFloat(Number(totalInvestedAmount + interestAmount).toFixed(2))) / 100;
+                                        let sumBalance = (totalInvestedAmount + interestAmount) - configAmount;
                                         let inv_txn = {
                                             txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                             description: `CHARGE ON TERMINATION OF INVESTMENT`,
                                             amount: configAmount,
                                             is_credit: 0,
                                             created_date: dt,
-                                            balance: (totalInvestedAmount + interestAmount) - configAmount,
+                                            balance: Number(sumBalance).toFixed(2),
                                             is_capital: 0,
                                             isCharge: 1,
                                             isApproved: 1,
@@ -1628,13 +1629,14 @@ function reverseEarlierInterest(data, HOST) {
                         let configData = _getProductConfigInterests;
                         configData.interest_forfeit_charge = (configData.interest_forfeit_charge !== null && configData.interest_forfeit_charge !== '') ? parseFloat(configData.interest_forfeit_charge.toString()) : 0;
                         let configAmount = (configData.interest_forfeit_charge_opt === 'Fixed') ? configData.interest_forfeit_charge : (configData.interest_forfeit_charge * _computeCurrentBalance) / 100;
+                        let sumBalance2 = _computeCurrentBalance - configAmount;
                         let inv_txn = {
                             txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                             description: `CHARGE ON TERMINATION OF INVESTMENT`,
                             amount: configAmount,
                             is_credit: 0,
                             created_date: dt,
-                            balance: _computeCurrentBalance - configAmount,
+                            balance: Number(sumBalance2).toFixed(2),
                             is_capital: 0,
                             isCharge: 1,
                             isApproved: 1,
