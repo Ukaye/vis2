@@ -162,7 +162,8 @@ function getInvestmentMaturity() {
 
 function bindWalletTransaction() {
     let url = `./investment-transactions?clientId=${selectedInvestment.clientId}&clientName=${selectedInvestment.fullname}`;
-    $(location).attr('href', url);
+    // $(location).attr('href', url);
+    window.open(url);
 }
 
 $("#chk_own_accounts").on('change',
@@ -643,7 +644,8 @@ function bindInterestDataTable() {
 
 function onViewInvestmentStatement() {
     let strUrl = `./investment-statements/${selectedInvestment.investmentId}?startDate=${$('#dtStatementStart').val()}&endDate=${$('#dtStatementEnds').val()}`;
-    $(location).attr('href', strUrl);
+    // $(location).attr('href', strUrl);
+    window.open(strUrl);
 }
 
 
