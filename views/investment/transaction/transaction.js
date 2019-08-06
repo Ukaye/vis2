@@ -81,7 +81,7 @@ function decideListOfAccounts(id) {
 
 function getInvestmentMaturity() {
     if (isWalletPage === 0) {
-        if (selectedInvestment.maturityDays === true) {
+        if (selectedInvestment.maturityDays === true && selectedInvestment.isClosed === 0) {
             const cBal = parseInt(selectedInvestment.txnCurrentBalance.toString().split(',').join(''));
             if (cBal !== 0) {
                 if (maturityAlert === 0) {

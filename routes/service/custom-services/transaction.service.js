@@ -2027,12 +2027,14 @@ async function setcharges(data, HOST, isReversal) {
                                         }
                                     });
                                 } else if (response_product.data[0].withdrawal_freq_duration === 'Weekly') {
+                                    let weekStartDate = startOfWeek(new Date());
+                                    let endOfTheWeek = endOfWeek(new Date());
+                                    const weekStartDateFormat = `${weekStartDate.getFullYear()}-${weekStartDate.getMonth() + 1}-${weekStartDate.getDate()}`;
+                                    const endOfTheWeekFormat = `${endOfTheWeek.getFullYear()}-${endOfTheWeek.getMonth() + 1}-${endOfTheWeek.getDate()}`;
 
-                                    let weekStartDate = startOfWeek(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()));
-                                    let endOfTheWeek = endOfWeek(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()));
-                                    query = `SELECT * FROM investment_txns v WHERE 
-                                        STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${weekStartDate}' 
-                                        AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${endOfTheWeek}' 
+                                    query = `SELECT * FROM investment_txns WHERE 
+                                        STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${weekStartDateFormat}' 
+                                        AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${endOfTheWeekFormat}' 
                                         AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
                                     axios.get(url, {
                                         params: {
@@ -2090,12 +2092,15 @@ async function setcharges(data, HOST, isReversal) {
                                         }
                                     });
                                 } else if (response_product.data[0].withdrawal_freq_duration === 'Monthly') {
-                                    let monthStartDate = startOfMonth(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()));
-                                    let endOfTheMonth = endOfMonth(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()));
+                                    let monthStartDate = startOfMonth(new Date());
+                                    let endOfTheMonth = endOfMonth(new Date());
+
+                                    const monthStartDateFormat = `${monthStartDate.getFullYear()}-${monthStartDate.getMonth() + 1}-${1}`;
+                                    const endOfTheMonthFormat = `${endOfTheMonth.getFullYear()}-${endOfTheMonth.getMonth() + 1}-${endOfTheMonth.getDate()}`;
 
                                     query = `SELECT * FROM investment_txns v WHERE 
-                                        STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${monthStartDate}' 
-                                        AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${endOfTheMonth}' 
+                                        STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${monthStartDateFormat}' 
+                                        AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${endOfTheMonthFormat}' 
                                         AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
                                     let endpoint = `/core-service/get`;
                                     url = `${HOST}${endpoint}`;
@@ -2155,12 +2160,16 @@ async function setcharges(data, HOST, isReversal) {
                                         }
                                     });
                                 } else if (response_product.data[0].withdrawal_freq_duration === 'Quaterly') {
-                                    let quaterStartDate = startOfQuarter(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()))
-                                    let endOfTheMonth = endOfQuarter(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()));
+                                    let quaterStartDate = startOfQuarter(new Date())
+                                    let quaterEndDate = endOfQuarter(new Date());
+
+                                    const quaterStartDateFormat = `${quaterStartDate.getFullYear()}-${quaterStartDate.getMonth() + 1}-${1}`;
+                                    const quaterEndDateFormat = `${quaterEndDate.getFullYear()}-${quaterEndDate.getMonth() + 1}-${quaterEndDate.getDate()}`;
+
 
                                     query = `SELECT * FROM investment_txns v WHERE 
-                                        STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${quaterStartDate}' 
-                                        AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${endOfTheMonth}' 
+                                        STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${quaterStartDateFormat}' 
+                                        AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${quaterEndDateFormat}' 
                                         AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
                                     let endpoint = `/core-service/get`;
                                     url = `${HOST}${endpoint}`;
@@ -2222,12 +2231,15 @@ async function setcharges(data, HOST, isReversal) {
 
                                 } else if (response_product.data[0].withdrawal_freq_duration === 'Yearly') {
                                     //endOfYear
-                                    let beginOfTheMonth = new Date(currentDate.getUTCFullYear(), 1, 1);
-                                    let endOfTheMonth = endOfYear(new Date(currentDate.getUTCFullYear(), currentDate.getMonth() + 1, currentDate.getDate()));
+                                    let beginOfTheYear = new Date();
+                                    
+                                    const yearStartDateFormat = `${beginOfTheYear.getFullYear()}-${1}-${1}`;
+                                    const yearEndDateFormat = `${beginOfTheYear.getFullYear()}-${12}-${31}`;
+
 
                                     query = `SELECT * FROM investment_txns v WHERE 
-                                        STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${beginOfTheMonth}' 
-                                        AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${endOfTheMonth}' 
+                                        STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${yearStartDateFormat}' 
+                                        AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${yearEndDateFormat}' 
                                         AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
                                     let endpoint = `/core-service/get`;
                                     url = `${HOST}${endpoint}`;
