@@ -64,7 +64,7 @@ function displayInvoice(val) {
         <li id="invoice-${val.type}-${val.ID}" class="ui-state-default">
             <div class="row">
                 <div class="col-lg-9">
-                    <p><strong>Name: </strong>${val.client}</p>
+                    <p><strong>Name: </strong>${val.client} <strong>#INV-${padWithZeroes(val.ID, 6)}</strong></p>
                     <p><strong>Date: </strong>${val.payment_collect_date} (${val.type}) ${status}</p>
                     <p><strong>Balance: </strong>${numberToCurrencyFormatter_(val.payment_amount)}
                         <small class="text-muted"><strong>Invoice Amt: </strong>${numberToCurrencyFormatter_(val.invoice_amount)} 
@@ -345,7 +345,7 @@ function findMatches() {
                                 <li id="invoice-${invoice.type}-${invoice.ID}" class="ui-state-default invoice-match">
                                     <div class="row">
                                         <div class="col-lg-9">
-                                            <p><strong>Name: </strong>${invoice.client} <span class="badge badge-warning" style="float: right;">
+                                            <p><strong>Name: </strong>${invoice.client} <strong>#INV-${padWithZeroes(invoice.ID, 6)}</strong> <span class="badge badge-warning" style="float: right;">
                                                 <i class="fa fa-link"></i> ${check.value}</span></p>
                                             <p><strong>Date: </strong>${invoice.payment_collect_date} (${invoice.type}) ${status}</p>
                                             <p><strong>Balance: </strong>${numberToCurrencyFormatter_(invoice.payment_amount)}

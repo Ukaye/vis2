@@ -40,7 +40,7 @@ function displayInvoice(val) {
         <li id="invoice-${val.type}-${val.ID}" class="ui-state-default">
             <div class="row">
                 <div class="col-lg-9">
-                    <p><strong>Name: </strong>${val.client}</p>
+                    <p><strong>Name: </strong>${val.client} <strong>#INV-${padWithZeroes(val.ID, 6)}</strong></p>
                     <p><strong>Date: </strong>${val.payment_collect_date} (${val.type}) ${status}</p>
                     <p><strong>Balance: </strong>${numberToCurrencyFormatter_(val.payment_amount)}
                         <small class="text-muted"><strong>Invoice Amt: </strong>${numberToCurrencyFormatter_(val.invoice_amount)} 
