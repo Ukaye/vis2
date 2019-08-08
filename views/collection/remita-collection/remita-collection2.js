@@ -11,8 +11,7 @@ function getInvoices(){
     $('#wait').show();
     $.ajax({
         type: 'GET',
-        // url: '/collection/remita/invoices/due',
-        url: '/collection/invoices/due',
+        url: '/collection/remita/invoices/due',
         success: function (data) {
             let response = data.response;
             allInvoices = response;
@@ -94,6 +93,7 @@ function validatePayment() {
 
 function postPayment() {
     $('#wait').show();
+    return notification('Remita: Error sending requests!', '', 'error');
     $.ajax({
         'url': '/remita/payments/create',
         'type': 'post',
