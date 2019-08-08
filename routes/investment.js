@@ -9,7 +9,6 @@ router.post('/products', function (req, res, next) {
     data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('INSERT INTO investment_products SET ?', data, function (error, result, fields) {
         if (error) {
-            console.log(error);
             res.send({
                 "status": 500,
                 "error": error,
@@ -80,6 +79,7 @@ router.post('/products/:id', function (req, res, next) {
     data.histories[data.histories.length - 1].date_created = dt;
     data.date_modified = dt;
     data.histories = JSON.stringify(data.histories);
+    const productId = data.ID;
     delete data.ID;
     db.query('UPDATE investment_products SET ? WHERE ID = ' + req.params.id, data, function (error, result, fields) {
         if (error) {
@@ -89,6 +89,16 @@ router.post('/products/:id', function (req, res, next) {
                 "response": null
             });
         } else {
+            if (data.chkEnforceCount === 0) {
+                query = `UPDATE investments SET canWithdraw = 1 WHERE ID <> 0 AND productId = ${productId}`;
+                endpoint = `/core-service/get`;
+                url = `${HOST}${endpoint}`;
+                axios.get(url, {
+                    params: {
+                        query: query
+                    }
+                });
+            }
             res.send({
                 "status": 200,
                 "message": "Investment product updated successfully",

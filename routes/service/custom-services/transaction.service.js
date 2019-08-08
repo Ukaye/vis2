@@ -84,7 +84,7 @@ router.post('/create', function (req, res, next) {
     computeTotalBalance(data.clientId, data.investmentId, HOST).then(totalBalance_ => {
         let total = (data.isWallet.toString() === '1') ? totalBalance_.currentWalletBalance : totalBalance_.currentAcctBalance;
         let inv_txn = {
-            txn_date: (data.txn_date !== undefined) ? data.txn_date : moment().utcOffset('+0100').format('YYYY-MM-DD'),
+            txn_date: (data.txn_date !== undefined) ? data.txn_date : moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
             description: (data.isPaymentMadeByWallet !== undefined && data.isPaymentMadeByWallet === '1' && data.is_capital === '1') ? 'Opening balance from wallet' : data.description,
             amount: Number(data.amount.split(',').join('')).toFixed(2),
             is_credit: data.is_credit,
@@ -423,7 +423,7 @@ router.post('/create-transfers', function (req, res, next) {
                     }
                 });
                 let inv_txn = {
-                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                     description: `TRANSFER BETWEEN ${(data.creditedClientId !== '') ? 'CLIENTS WALLET' : 'CLIENT AND INVESTMENT ACCOUNT'} Transfer from : ${data.debitedClientName} to ${data.creditedClientName}`,
                     amount: Number(data.amount).toFixed(2),
                     is_credit: 0,
@@ -471,7 +471,7 @@ router.post('/create-transfers', function (req, res, next) {
                                         });
                                     }
                                     let inv_txn = {
-                                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                         description: `TRANSFER BETWEEN ${(data.creditedClientId !== '') ? 'CLIENTS WALLET' : 'CLIENT AND INVESTMENT ACCOUNT'} Transfer from : ${data.debitedClientName} to ${data.creditedClientName}`,
                                         amount: Number(data.amount).toFixed(2),
                                         is_credit: 1,
@@ -959,7 +959,7 @@ function fundBeneficialAccount(data, HOST) {
                 let total_bal = (data.isMoveFundTransfer.toString() === '1') ? computedBalanceAmt.currentWalletBalance : computedBalanceAmt.currentAcctBalance;
                 let sumTotal = total_bal + parseFloat(data.amount.toString().split(',').join(''));
                 let inv_txn = {
-                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                     description: data.description,
                     amount: data.amount,
                     is_credit: 1,
@@ -1148,7 +1148,7 @@ async function upFrontInterest(data, HOST) {
                     total = totalAmt.currentAcctBalance + SI;
                 }
                 let _inv_txn = {
-                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                     description: 'Total Up-Front interest',
                     amount: Number(SI).toFixed(2),
                     is_credit: 1,
@@ -1172,7 +1172,12 @@ async function upFrontInterest(data, HOST) {
                 let url = `${HOST}${endpoint}`;
                 axios.post(url, _inv_txn)
                     .then(function (_payload_) {
-                        resolve({});
+                        computeTotalBalance(data.clientId, data.investmentId, HOST).then(totalAmt2 => {
+                            deductWithHoldingTax(HOST, data, _inv_txn.amount, 0, totalAmt2.currentAcctBalance, data.clientId, data.isWallet, _inv_txn)
+                                .then(p__ => {
+                                    resolve({});
+                                });
+                        });
                     }, err => {
                         reject(err);
                     });
@@ -1203,7 +1208,7 @@ async function deductTransferCharge(data, HOST, amount) {
                         let _refId = moment().utcOffset('+0100').format('x');
                         let balTransfer = currentBalance - configAmount;
                         let inv_txn = {
-                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                             description: `FUND TRANSFER CHARGE ON REF.: <strong>${data.refId}</strong>`,
                             amount: configAmount,
                             is_credit: 0,
@@ -1311,7 +1316,7 @@ function chargeForceTerminate(data, HOST) {
                         let _charge = (configData.min_days_termination_charge === null) ? 0 : parseFloat(configData.min_days_termination_charge.toString());
                         let configAmount = (configData.opt_on_min_days_termination === 'Fixed') ? _charge : ((_charge * balance) / 100);
                         let inv_txn = {
-                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                             description: `CHARGE ON INVESTMENT TERMINATION`,
                             amount: configAmount,
                             is_credit: 0,
@@ -1410,7 +1415,7 @@ function reverseEarlierInterest(data, HOST) {
                         let total = totalBal;
                         let refId = moment().utcOffset('+0100').format('x');
                         inv_txn = {
-                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                             description: 'Reverse: ' + 'Interest on investment',
                             amount: Number(totalInterestAmount).toFixed(2),
                             is_credit: 0,
@@ -1452,7 +1457,7 @@ function reverseEarlierInterest(data, HOST) {
                                 let interestAmount = diffInDays * _amount;
                                 refId = moment().utcOffset('+0100').format('x');
                                 inv_txn = {
-                                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                     description: 'Investment termination interest',
                                     amount: Number(interestAmount).toFixed(2),
                                     is_credit: 1,
@@ -1481,7 +1486,7 @@ function reverseEarlierInterest(data, HOST) {
                                         let configAmount = (configData.interest_forfeit_charge_opt == 'Fixed') ? configData.interest_forfeit_charge : (configData.interest_forfeit_charge * parseFloat(Number(totalInvestedAmount + interestAmount).toFixed(2))) / 100;
                                         let sumBalance = (totalInvestedAmount + interestAmount) - configAmount;
                                         let inv_txn = {
-                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                             description: `CHARGE ON TERMINATION OF INVESTMENT`,
                                             amount: configAmount,
                                             is_credit: 0,
@@ -1512,7 +1517,7 @@ function reverseEarlierInterest(data, HOST) {
                                                     .then(function (_res_) {
                                                         if (_res_.data.status === undefined) {
                                                             inv_txn = {
-                                                                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                                                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                                                 description: `TERMINATE INVESTMENT`,
                                                                 amount: Number(result).toFixed(2),
                                                                 is_credit: 0,
@@ -1541,7 +1546,7 @@ function reverseEarlierInterest(data, HOST) {
                                                                         let _totalBalance = wBalance + parseFloat(wResult.toString());
 
                                                                         inv_txn = {
-                                                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                                                             description: `WALLET FUNDED BY TERMINATING INVESTMENT`,
                                                                             amount: wResult,
                                                                             is_credit: 1,
@@ -1603,7 +1608,7 @@ function reverseEarlierInterest(data, HOST) {
                         let configAmount = (configData.interest_forfeit_charge_opt === 'Fixed') ? configData.interest_forfeit_charge : (configData.interest_forfeit_charge * _computeCurrentBalance) / 100;
                         let sumBalance2 = _computeCurrentBalance - configAmount;
                         let inv_txn = {
-                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                             description: `CHARGE ON TERMINATION OF INVESTMENT`,
                             amount: configAmount,
                             is_credit: 0,
@@ -1634,7 +1639,7 @@ function reverseEarlierInterest(data, HOST) {
                                     .then(function (_res_) {
                                         if (_res_.data.status === undefined) {
                                             inv_txn = {
-                                                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                                 description: `TERMINATE INVESTMENT`,
                                                 amount: result,
                                                 is_credit: 0,
@@ -1657,7 +1662,7 @@ function reverseEarlierInterest(data, HOST) {
                                                 let _totalBalance = wBalance + parseFloat(wResult.toString());
                                                 setInvestmentTxns(HOST, inv_txn).then(function (_res_ponse_) {
                                                     const inv_txn = {
-                                                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                                         description: `WALLET FUNDED BY TERMINATING INVESTMENT`,
                                                         amount: wResult,
                                                         is_credit: 1,
@@ -1727,7 +1732,7 @@ function debitWalletTxns(HOST, data) {
                 let walletAmt = parseFloat(data.amount.toString());
                 let walletCurrentBal = walletBal - walletAmt;
                 let inv_txn = {
-                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                     description: `Transfer to investment account`,
                     amount: Number(walletAmt).toFixed(2),
                     is_credit: 0,
@@ -1783,7 +1788,7 @@ function fundDestination(HOST, data) {
             let walletAmt = parseFloat(data.amount.toString());
             let walletCurrentBal = walletBal + walletAmt;
             let inv_txn = {
-                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                 description: `Transfer to investment account`,
                 amount: Number(walletAmt).toFixed(2),
                 is_credit: 1,
@@ -1829,7 +1834,7 @@ async function setcharges(data, HOST, isReversal) {
         } else {
             computeTotalBalance(data.clientId, data.investmentId, HOST).then(computedTotalBalance => {
                 let _total = (data.isWallet.toString() === '1') ? computedTotalBalance.currentWalletBalance : computedTotalBalance.currentAcctBalance;
-
+                data.amount = data.amount.split(',').join('');
                 if (data.isInvestmentMatured.toString() === '0' && data.investmentId !== '') {
                     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                     let refId = moment().utcOffset('+0100').format('x');
@@ -1854,7 +1859,7 @@ async function setcharges(data, HOST, isReversal) {
                                     //let total = parseFloat(chargeForDeposit[chargeForDeposit.length - 1].txnBalance.split(',').join(''))
                                     const chargedCost = (chargeForDeposit[0].saving_charge_opt === 'Fixed') ? parseFloat(chargeForDeposit[0].saving_fees.split(',').join('')) : ((parseFloat(chargeForDeposit[0].saving_fees.split(',').join('')) / 100) * parseFloat(data.amount.split(',').join('')));
                                     let inv_txn = {
-                                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                         description: (isReversal === false) ? 'Charge: ' + chargeForDeposit[0].description : `Reverse: ${chargeForDeposit[0].description}`,
                                         amount: Number(chargedCost).toFixed(2),
                                         is_credit: 0,
@@ -1901,16 +1906,17 @@ async function setcharges(data, HOST, isReversal) {
                                 getInvestBalance.minimum_bal_charges = (getInvestBalance.minimum_bal_charges === '') ? '0' : getInvestBalance.minimum_bal_charges;
                                 let chargedCostMinBal = (getInvestBalance.minimum_bal_charges_opt === 'Fixed')
                                     ? parseFloat(getInvestBalance.minimum_bal_charges.split(',').join(''))
-                                    : ((parseFloat(getInvestBalance.minimum_bal_charges.split(',').join('')) / 100) * parseFloat(getInvestBalance.txnBalance.split(',').join('')));
-                                if ((parseFloat(getInvestBalance.txnBalance.split(',').join('')) - parseFloat(getInvestBalance.txnAmount.split(',').join(''))) < parseFloat(getInvestBalance.minimum_bal.split(',').join(''))) {
+                                    : ((parseFloat(getInvestBalance.minimum_bal_charges.split(',').join('')) / 100) * parseFloat(_total.toString()));
+                                if ((parseFloat(_total.toString()) - parseFloat(data.amount.toString())) < parseFloat(getInvestBalance.minimum_bal.split(',').join(''))) {
                                     refId = moment().utcOffset('+0100').format('x');
+                                    const sumBal_ = parseFloat(_total.toString()) - chargedCostMinBal;
                                     let inv_txn = {
-                                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                         description: 'Charge: ' + getInvestBalance.description,
                                         amount: Number(chargedCostMinBal).toFixed(2),
                                         is_credit: 0,
                                         created_date: dt,
-                                        balance: Number(getInvestBalance.txnBalance - chargedCostMinBal).toFixed(2),
+                                        balance: Number(sumBal_).toFixed(2),
                                         is_capital: 0,
                                         isCharge: 1,
                                         isApproved: 1,
@@ -1939,45 +1945,49 @@ async function setcharges(data, HOST, isReversal) {
                                         }, err => { });
                                 }
 
-                                let currentDate = new Date();
-                                let formatedDate = `${currentDate.getUTCFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}`;
-                                if (response_product.data[0].withdrawal_freq_duration === 'Daily') {
-                                    query = `SELECT * FROM investment_txns WHERE 
+
+                                computeTotalBalance(data.clientId, data.investmentId, HOST).then(computedTotalBalance2 => {
+                                    _total = (data.isWallet.toString() === '1') ? computedTotalBalance.currentWalletBalance : computedTotalBalance.currentAcctBalance;
+                                    let currentDate = new Date();
+                                    let formatedDate = `${currentDate.getUTCFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}`;
+                                    if (response_product.data[0].withdrawal_freq_duration === 'Daily') {
+                                        query = `SELECT * FROM investment_txns WHERE 
                                         STR_TO_DATE(updated_date, '%Y-%m-%d') = '${formatedDate}' 
                                         AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
-                                    axios.get(url, {
-                                        params: {
-                                            query: query
-                                        }
-                                    }).then(response_product_ => {
-                                        if (response_product_.data.length === parseInt(response_product.data[0].freq_withdrawal)
-                                        && response_product.data[0].chkEnforceCount === 1) {
-                                            query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
-                                            endpoint = `/core-service/get`;
-                                            url = `${HOST}${endpoint}`;
-                                            axios.get(url, {
-                                                params: {
-                                                    query: query
-                                                }
-                                            });
-                                        }
-                                        
-                                        if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal) && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
-                                            let _getInvestBalance = response_product.data[response_product.data.length - 1];
-                                            let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
-                                                parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
-                                                ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
-                                                    parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
-                                            if ((parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join(''))) >
-                                                parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
+                                        axios.get(url, {
+                                            params: {
+                                                query: query
+                                            }
+                                        }).then(response_product_ => {
+                                            if (response_product_.data.length === parseInt(response_product.data[0].freq_withdrawal)
+                                                && response_product.data[0].chkEnforceCount === 1) {
+                                                query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
+                                                endpoint = `/core-service/get`;
+                                                url = `${HOST}${endpoint}`;
+                                                axios.get(url, {
+                                                    params: {
+                                                        query: query
+                                                    }
+                                                });
+                                            }
+
+                                            if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)
+                                                && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
+                                                let _getInvestBalance = response_product.data[response_product.data.length - 1];
+                                                _getInvestBalance.withdrawal_fees = (_getInvestBalance.withdrawal_fees === '') ? '0' : _getInvestBalance.withdrawal_fees;
+                                                let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
+                                                    parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
+                                                    ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
+                                                        parseFloat(_total.toString()));
                                                 refId = moment().utcOffset('+0100').format('x');
+                                                const sumBal_1 = parseFloat(_total.toString()) - _chargedCostMinBal;
                                                 let inv_txn = {
-                                                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                                     description: 'Charge: Exceeding the total number of daily withdrawal',
                                                     amount: Number(_chargedCostMinBal).toFixed(2),
                                                     is_credit: 0,
                                                     created_date: dt,
-                                                    balance: Number(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2),
+                                                    balance: Number(sumBal_1).toFixed(2),
                                                     is_capital: 0,
                                                     isCharge: 1,
                                                     isApproved: 1,
@@ -2008,54 +2018,52 @@ async function setcharges(data, HOST, isReversal) {
                                             } else {
                                                 resolve({});
                                             }
-                                        } else {
-                                            resolve({});
-                                        }
-                                    });
-                                } else if (response_product.data[0].withdrawal_freq_duration === 'Weekly') {
-                                    let weekStartDate = startOfWeek(new Date());
-                                    let endOfTheWeek = endOfWeek(new Date());
-                                    const weekStartDateFormat = `${weekStartDate.getFullYear()}-${weekStartDate.getMonth() + 1}-${weekStartDate.getDate()}`;
-                                    const endOfTheWeekFormat = `${endOfTheWeek.getFullYear()}-${endOfTheWeek.getMonth() + 1}-${endOfTheWeek.getDate()}`;
+                                        });
+                                    } else if (response_product.data[0].withdrawal_freq_duration === 'Weekly') {
+                                        let weekStartDate = startOfWeek(new Date());
+                                        let endOfTheWeek = endOfWeek(new Date());
+                                        const weekStartDateFormat = `${weekStartDate.getFullYear()}-${weekStartDate.getMonth() + 1}-${weekStartDate.getDate()}`;
+                                        const endOfTheWeekFormat = `${endOfTheWeek.getFullYear()}-${endOfTheWeek.getMonth() + 1}-${endOfTheWeek.getDate()}`;
 
-                                    query = `SELECT * FROM investment_txns WHERE 
+                                        query = `SELECT * FROM investment_txns WHERE 
                                         STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${weekStartDateFormat}' 
                                         AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${endOfTheWeekFormat}' 
                                         AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
-                                    axios.get(url, {
-                                        params: {
-                                            query: query
-                                        }
-                                    }).then(response_product_ => {
+                                        axios.get(url, {
+                                            params: {
+                                                query: query
+                                            }
+                                        }).then(response_product_ => {
 
-                                        if (response_product_.data.length === parseInt(response_product.data[0].freq_withdrawal)
-                                        && response_product.data[0].chkEnforceCount === 1) {
-                                            query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
-                                            endpoint = `/core-service/get`;
-                                            url = `${HOST}${endpoint}`;
-                                            axios.get(url, {
-                                                params: {
-                                                    query: query
-                                                }
-                                            });
-                                        }
+                                            if (response_product_.data.length === parseInt(response_product.data[0].freq_withdrawal)
+                                                && response_product.data[0].chkEnforceCount === 1) {
+                                                query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
+                                                endpoint = `/core-service/get`;
+                                                url = `${HOST}${endpoint}`;
+                                                axios.get(url, {
+                                                    params: {
+                                                        query: query
+                                                    }
+                                                });
+                                            }
 
-                                        if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal) && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
-                                            let _getInvestBalance = response_product.data[response_product.data.length - 1];
-                                            let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
-                                                parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
-                                                ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
-                                                    parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
-                                            if ((parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join(''))) >
-                                                parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
+                                            if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)
+                                                && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
+                                                let _getInvestBalance = response_product.data[response_product.data.length - 1];
+                                                _getInvestBalance.withdrawal_fees = (_getInvestBalance.withdrawal_fees === '') ? '0' : _getInvestBalance.withdrawal_fees;
+                                                let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
+                                                    parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
+                                                    ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
+                                                        parseFloat(data.amount.toString()));
                                                 refId = moment().utcOffset('+0100').format('x');
+                                                const sumBal_1 = parseFloat(_total.toString()) - _chargedCostMinBal;
                                                 let inv_txn = {
-                                                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                                     description: 'Charge: Exceeding the total number of weekly withdrawal',
                                                     amount: Number(_chargedCostMinBal).toFixed(2),
                                                     is_credit: 0,
                                                     created_date: dt,
-                                                    balance: Number(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2),
+                                                    balance: Number(sumBal_1).toFixed(2),
                                                     is_capital: 0,
                                                     isCharge: 1,
                                                     isApproved: 1,
@@ -2086,57 +2094,55 @@ async function setcharges(data, HOST, isReversal) {
                                             } else {
                                                 resolve({});
                                             }
-                                        } else {
-                                            resolve({});
-                                        }
-                                    });
-                                } else if (response_product.data[0].withdrawal_freq_duration === 'Monthly') {
-                                    let monthStartDate = startOfMonth(new Date());
-                                    let endOfTheMonth = endOfMonth(new Date());
+                                        });
+                                    } else if (response_product.data[0].withdrawal_freq_duration === 'Monthly') {
+                                        let monthStartDate = startOfMonth(new Date());
+                                        let endOfTheMonth = endOfMonth(new Date());
 
-                                    const monthStartDateFormat = `${monthStartDate.getFullYear()}-${monthStartDate.getMonth() + 1}-${1}`;
-                                    const endOfTheMonthFormat = `${endOfTheMonth.getFullYear()}-${endOfTheMonth.getMonth() + 1}-${endOfTheMonth.getDate()}`;
+                                        const monthStartDateFormat = `${monthStartDate.getFullYear()}-${monthStartDate.getMonth() + 1}-${1}`;
+                                        const endOfTheMonthFormat = `${endOfTheMonth.getFullYear()}-${endOfTheMonth.getMonth() + 1}-${endOfTheMonth.getDate()}`;
 
-                                    query = `SELECT * FROM investment_txns v WHERE 
+                                        query = `SELECT * FROM investment_txns v WHERE 
                                         STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${monthStartDateFormat}' 
                                         AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${endOfTheMonthFormat}' 
                                         AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
-                                    let endpoint = `/core-service/get`;
-                                    url = `${HOST}${endpoint}`;
-                                    axios.get(url, {
-                                        params: {
-                                            query: query
-                                        }
-                                    }).then(response_product_ => {
+                                        let endpoint = `/core-service/get`;
+                                        url = `${HOST}${endpoint}`;
+                                        axios.get(url, {
+                                            params: {
+                                                query: query
+                                            }
+                                        }).then(response_product_ => {
 
-                                        if (response_product_.data.length === parseInt(response_product.data[0].freq_withdrawal)
-                                        && response_product.data[0].chkEnforceCount === 1) {
-                                            query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
-                                            endpoint = `/core-service/get`;
-                                            url = `${HOST}${endpoint}`;
-                                            axios.get(url, {
-                                                params: {
-                                                    query: query
-                                                }
-                                            });
-                                        }
+                                            if (response_product_.data.length === parseInt(response_product.data[0].freq_withdrawal)
+                                                && response_product.data[0].chkEnforceCount === 1) {
+                                                query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
+                                                endpoint = `/core-service/get`;
+                                                url = `${HOST}${endpoint}`;
+                                                axios.get(url, {
+                                                    params: {
+                                                        query: query
+                                                    }
+                                                });
+                                            }
 
-                                        if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal) && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
-                                            let _getInvestBalance = response_product.data[response_product.data.length - 1];
-                                            let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
-                                                parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
-                                                ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
-                                                    parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
-                                            if ((parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join(''))) >
-                                                parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
+                                            if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)
+                                                && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
+                                                let _getInvestBalance = response_product.data[response_product.data.length - 1];
+                                                _getInvestBalance.withdrawal_fees = (_getInvestBalance.withdrawal_fees === '') ? '0' : _getInvestBalance.withdrawal_fees;
+                                                let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
+                                                    parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
+                                                    ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
+                                                        parseFloat(data.amount.toString()));
                                                 refId = moment().utcOffset('+0100').format('x');
+                                                const sumBal_1 = parseFloat(_total.toString()) - _chargedCostMinBal;
                                                 let inv_txn = {
-                                                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                                     description: 'Charge: Exceeding the total number of monthly withdrawal',
                                                     amount: Number(_chargedCostMinBal).toFixed(2),
                                                     is_credit: 0,
                                                     created_date: dt,
-                                                    balance: Number(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2),
+                                                    balance: Number(sumBal_1).toFixed(2),
                                                     is_capital: 0,
                                                     isCharge: 1,
                                                     isApproved: 1,
@@ -2167,58 +2173,56 @@ async function setcharges(data, HOST, isReversal) {
                                             } else {
                                                 resolve({});
                                             }
-                                        } else {
-                                            resolve({});
-                                        }
-                                    });
-                                } else if (response_product.data[0].withdrawal_freq_duration === 'Quaterly') {
-                                    let quaterStartDate = startOfQuarter(new Date())
-                                    let quaterEndDate = endOfQuarter(new Date());
+                                        });
+                                    } else if (response_product.data[0].withdrawal_freq_duration === 'Quaterly') {
+                                        let quaterStartDate = startOfQuarter(new Date())
+                                        let quaterEndDate = endOfQuarter(new Date());
 
-                                    const quaterStartDateFormat = `${quaterStartDate.getFullYear()}-${quaterStartDate.getMonth() + 1}-${1}`;
-                                    const quaterEndDateFormat = `${quaterEndDate.getFullYear()}-${quaterEndDate.getMonth() + 1}-${quaterEndDate.getDate()}`;
+                                        const quaterStartDateFormat = `${quaterStartDate.getFullYear()}-${quaterStartDate.getMonth() + 1}-${1}`;
+                                        const quaterEndDateFormat = `${quaterEndDate.getFullYear()}-${quaterEndDate.getMonth() + 1}-${quaterEndDate.getDate()}`;
 
 
-                                    query = `SELECT * FROM investment_txns v WHERE 
+                                        query = `SELECT * FROM investment_txns v WHERE 
                                         STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${quaterStartDateFormat}' 
                                         AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${quaterEndDateFormat}' 
                                         AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
-                                    let endpoint = `/core-service/get`;
-                                    url = `${HOST}${endpoint}`;
-                                    axios.get(url, {
-                                        params: {
-                                            query: query
-                                        }
-                                    }).then(response_product_ => {
+                                        let endpoint = `/core-service/get`;
+                                        url = `${HOST}${endpoint}`;
+                                        axios.get(url, {
+                                            params: {
+                                                query: query
+                                            }
+                                        }).then(response_product_ => {
 
-                                        if (response_product_.data.length === parseInt(response_product.data[0].freq_withdrawal)
-                                        && response_product.data[0].chkEnforceCount === 1) {
-                                            query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
-                                            endpoint = `/core-service/get`;
-                                            url = `${HOST}${endpoint}`;
-                                            axios.get(url, {
-                                                params: {
-                                                    query: query
-                                                }
-                                            });
-                                        }
+                                            if (response_product_.data.length === parseInt(response_product.data[0].freq_withdrawal)
+                                                && response_product.data[0].chkEnforceCount === 1) {
+                                                query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
+                                                endpoint = `/core-service/get`;
+                                                url = `${HOST}${endpoint}`;
+                                                axios.get(url, {
+                                                    params: {
+                                                        query: query
+                                                    }
+                                                });
+                                            }
 
-                                        if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal) && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
-                                            let _getInvestBalance = response_product.data[response_product.data.length - 1];
-                                            let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
-                                                parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
-                                                ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
-                                                    parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
-                                            if ((parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join(''))) >
-                                                parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
+                                            if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)
+                                                && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
+                                                let _getInvestBalance = response_product.data[response_product.data.length - 1];
+                                                _getInvestBalance.withdrawal_fees = (_getInvestBalance.withdrawal_fees === '') ? '0' : _getInvestBalance.withdrawal_fees;
+                                                let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
+                                                    parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
+                                                    ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
+                                                        parseFloat(data.amount.toString()));
                                                 refId = moment().utcOffset('+0100').format('x');
+                                                const sumBal_1 = parseFloat(_total.toString()) - _chargedCostMinBal;
                                                 let inv_txn = {
-                                                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                                     description: 'Charge: Exceeding the total number of quaterly withdrawal',
                                                     amount: Number(_chargedCostMinBal).toFixed(2),
                                                     is_credit: 0,
                                                     created_date: dt,
-                                                    balance: Number(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2),
+                                                    balance: Number(sumBal_1).toFixed(2),
                                                     is_capital: 0,
                                                     isCharge: 1,
                                                     isApproved: 1,
@@ -2249,60 +2253,55 @@ async function setcharges(data, HOST, isReversal) {
                                             } else {
                                                 resolve({});
                                             }
-                                        } else {
-                                            resolve({});
-                                        }
-                                    });
+                                        });
 
-                                } else if (response_product.data[0].withdrawal_freq_duration === 'Yearly') {
-                                    //endOfYear
-                                    let beginOfTheYear = new Date();
+                                    } else if (response_product.data[0].withdrawal_freq_duration === 'Yearly') {
+                                        let beginOfTheYear = new Date();
 
-                                    const yearStartDateFormat = `${beginOfTheYear.getFullYear()}-${1}-${1}`;
-                                    const yearEndDateFormat = `${beginOfTheYear.getFullYear()}-${12}-${31}`;
+                                        const yearStartDateFormat = `${beginOfTheYear.getFullYear()}-${1}-${1}`;
+                                        const yearEndDateFormat = `${beginOfTheYear.getFullYear()}-${12}-${31}`;
 
 
-                                    query = `SELECT * FROM investment_txns v WHERE 
+                                        query = `SELECT * FROM investment_txns WHERE 
                                         STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${yearStartDateFormat}' 
                                         AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${yearEndDateFormat}' 
                                         AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
-                                    let endpoint = `/core-service/get`;
-                                    url = `${HOST}${endpoint}`;
-                                    axios.get(url, {
-                                        params: {
-                                            query: query
-                                        }
-                                    }).then(response_product_ => {
+                                        let endpoint = `/core-service/get`;
+                                        url = `${HOST}${endpoint}`;
+                                        axios.get(url, {
+                                            params: {
+                                                query: query
+                                            }
+                                        }).then(response_product_ => {
+                                            if (response_product_.data.length === parseInt(response_product.data[0].freq_withdrawal)
+                                                && response_product.data[0].chkEnforceCount === 1) {
+                                                query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
+                                                endpoint = `/core-service/get`;
+                                                url = `${HOST}${endpoint}`;
+                                                axios.get(url, {
+                                                    params: {
+                                                        query: query
+                                                    }
+                                                });
+                                            }
 
-
-                                        if (response_product_.data.length === parseInt(response_product.data[0].freq_withdrawal)
-                                        && response_product.data[0].chkEnforceCount === 1) {
-                                            query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
-                                            endpoint = `/core-service/get`;
-                                            url = `${HOST}${endpoint}`;
-                                            axios.get(url, {
-                                                params: {
-                                                    query: query
-                                                }
-                                            });
-                                        }
-
-                                        if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal) && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
-                                            let _getInvestBalance = response_product.data[response_product.data.length - 1];
-                                            let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
-                                                parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
-                                                ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
-                                                    parseFloat(_getInvestBalance.txnAmount.split(',').join('')));
-                                            if ((parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - parseFloat(_getInvestBalance.txnAmount.split(',').join(''))) >
-                                                parseFloat(_getInvestBalance.withdrawal_fees.split(',').join(''))) {
+                                            if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)
+                                                && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
+                                                let _getInvestBalance = response_product.data[response_product.data.length - 1];
+                                                _getInvestBalance.withdrawal_fees = (_getInvestBalance.withdrawal_fees === '') ? '0' : _getInvestBalance.withdrawal_fees;
+                                                let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
+                                                    parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
+                                                    ((parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) / 100) *
+                                                        parseFloat(data.amount.toString()));
                                                 refId = moment().utcOffset('+0100').format('x');
+                                                const sumBal_1 = parseFloat(_total.toString()) - _chargedCostMinBal;
                                                 let inv_txn = {
-                                                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                                     description: 'CHARGE: EXCEEDING THE TOTAL NUMBER OF WITHDRAWAL',
                                                     amount: Number(_chargedCostMinBal).toFixed(2),
                                                     is_credit: 0,
                                                     created_date: dt,
-                                                    balance: Number(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2),
+                                                    balance: Number(sumBal_1).toFixed(2),
                                                     is_capital: 0,
                                                     isCharge: 1,
                                                     isApproved: 1,
@@ -2333,11 +2332,10 @@ async function setcharges(data, HOST, isReversal) {
                                             } else {
                                                 resolve({});
                                             }
-                                        } else {
-                                            resolve({});
-                                        }
-                                    });
-                                }
+                                        });
+                                    }
+                                });
+
                             }
                         } else {
                             resolve({});
@@ -2365,11 +2363,11 @@ function deductVatTax(HOST, data, _amount, txn, balance) {
             }).then(response => {
                 if (response.data.status === undefined) {
                     let configData = response.data[0];
-                    let configAmount = (configData.vatChargeMethod === 'Fixed') ? configData.withHoldingTax : (parseFloat(configData.withHoldingTax.toString()) * parseFloat(_amount.toString())) / 100;
+                    let configAmount = (configData.vatChargeMethod === 'Fixed') ? configData.vat : (parseFloat(configData.vat.toString()) * parseFloat(_amount.toString())) / 100;
                     let _refId = moment().utcOffset('+0100').format('x');
                     let _mBalance = Number(parseFloat(balance)).toFixed(2) - parseFloat(configAmount);
                     let inv_txn = {
-                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                         description: `VAT ON CHARGE TRANSACTION WITH REF.: <strong>${txn.ref_no}</strong>`,
                         amount: Number(parseFloat(configAmount)).toFixed(2),
                         is_credit: 0,
@@ -2713,7 +2711,7 @@ async function computeInterestTxns(HOST, data) {
                                 bal_ = payload3.data[0].total + (payload1.data[0].total + parseFloat(Number(_amount).toFixed(2)));
 
                                 let inv_txn = {
-                                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                     description: `Balance ${payload3.data[0].total + (payload1.data[0].total + parseFloat(Number(_amount).toFixed(2)))} @${formatedDate}`,
                                     amount: payload1.data[0].total + parseFloat(Number(_amount).toFixed(2)),
                                     is_credit: 1,
@@ -2755,7 +2753,7 @@ async function computeInterestTxns(HOST, data) {
                             } else {
                                 let _amt = parseFloat(payload1.data[0].total.toString()) + parseFloat(_amount.toString());
                                 let inv_txn = {
-                                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                     description: `Investment interest@ ${formatedDate}`,
                                     amount: Number(_amt).toFixed(2),
                                     is_credit: 1,
@@ -2815,11 +2813,11 @@ async function deductWithHoldingTax(HOST, data, _amount, total, bal_, clientId, 
     }).then(response => {
         if (response.data.status === undefined) {
             let configData = response.data[0];
-            let configAmount = (configData.withHoldingTaxChargeMethod == 'Fixed') ? configData.vat : (configData.vat * (total + parseFloat(Number(_amount).toFixed(2)))) / 100;
+            let configAmount = (configData.withHoldingTaxChargeMethod == 'Fixed') ? configData.withHoldingTax : (configData.withHoldingTax * (total + parseFloat(Number(_amount).toFixed(2)))) / 100;
             let refId = moment().utcOffset('+0100').format('x');
             let balTotal = bal_ - configAmount;
             let inv_txn = {
-                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                 description: `WITH-HOLDING TAX ON INTEREST TRANSACTION WITH REF.: <strong>${txn.ref_no}</strong>`,
                 amount: Number(configAmount).toFixed(2),
                 is_credit: 0,
