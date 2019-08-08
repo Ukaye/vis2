@@ -170,7 +170,9 @@ function getInvestmentProducts(id) {
                 $('#acct_allows_withdrawal').attr('checked', ((product_obj.acct_allows_withdrawal) ?
                     true : false));
 
-                console.log(product_obj.acct_allows_withdrawal);
+                $('#chk_enforce_count').attr('checked', ((product_obj.chkEnforceCount) ?
+                    true : false));
+
                 if (product_obj.acct_allows_withdrawal === 1) {
                     $('#withdrawal_conditions_value').attr("disabled", false);
                     $('#chk_enforce_count').attr("disabled", false);
@@ -511,6 +513,8 @@ function set_investment_product() {
     product_obj.createdBy = (JSON.parse(localStorage.getItem("user_obj"))).ID;
 
     product_obj.canTerminate = $('#chk_can_terminate').is(':checked') ? 1 : 0;
+    product_obj.chkEnforceCount = $('#chk_enforce_count').is(':checked') ? 1 : 0;
+
     if (product_obj.code !== '' && product_obj.name !== '' && product_obj.minimum_bal !== '') {
         if (product_obj.ID === undefined) {
             $.ajax({
@@ -549,8 +553,7 @@ function set_investment_product() {
                 'type': 'post',
                 'data': product_obj,
                 'success': function (data) {
-                    console.log(data);
-
+                    
                     if (data.status === 200) {
                         $('#wait').hide();
                         swal('Investment Product updated successfully!', '', 'success');

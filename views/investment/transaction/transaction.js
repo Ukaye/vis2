@@ -659,13 +659,12 @@ $("#idChkForceTerminate").on('change',
         let status = $('#idChkForceTerminate').is(':checked');
         $('#notice_date').val('');
         if (status) {
-            let date = new Date();
-            let minDate = `${date.getUTCFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-            $('#notice_date').attr('min', minDate);
-            $('#notice_date').val(date).trigger('change');
+            let currentDate = new Date();
+            let _cmax = `${currentDate.getUTCFullYear()}-${pad(currentDate.getMonth() + 1)}-${pad(currentDate.getDate())}`;
+            $('#notice_date').attr('min', _cmax);
         } else {
             let date = new Date();
-            date.setDate(date.getDate() + selectedConfig.investment_termination_days);
+            date.setDate(date.getDate() + parseInt(selectedConfig.investment_termination_days.toString()));
             let minDate = `${date.getUTCFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 
             $('#notice_date').attr('min', minDate);
@@ -680,7 +679,7 @@ function getConfigItems() {
             $('#wait').hide();
             selectedConfig = data;
             let date = new Date();
-            date.setDate(date.getDate() + data.investment_termination_days + data.min_days_termination);
+            date.setDate(date.getDate() + parseInt(data.investment_termination_days.toString()) + parseInt(data.min_days_termination));
             let minDate = `${date.getUTCFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 
             $('#notice_date').attr('min', minDate);
@@ -947,8 +946,25 @@ function setReviewRequirements(value) {
     });
 }
 
+async function getWithdrawalStatus() {
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: `investment-service/get-investment-withdrawal-status/${selectedInvestment.investmentId}`,
+            'type': 'get',
+            'success': function (data) {
+                $('#wait').hide();
+                resolve(data);
+            },
+            'error': function (err) {
+                $('#wait').hide();
+                resolve({});
+            }
+        });
+    });
+}
 
-function onExecutiveTransaction() {
+
+async function onExecutiveTransaction() {
     let _mRoleId = [];
     let mAmount_ = $("#input_amount").val().toString().split(',').join('');
     if (parseFloat(clientWalletBalance.toString()) < parseFloat(mAmount_) && opsObj.operationId === '1' && $('#opt_payment_made_by').val() === '1') {
@@ -999,28 +1015,34 @@ function onExecutiveTransaction() {
             isInvestmentMatured: (selectedInvestment.maturityDays === true) ? 1 : 0
         };
         investmentOps.clientId = (investmentOps.isPaymentMadeByWallet === 1) ? selectedInvestment.clientId : sURLVariables;
-        $.ajax({
-            url: `investment-txns/create`,
-            'type': 'post',
-            'data': investmentOps,
-            'success': function (data) {
-                if (data.status === undefined) {
-                    $('#wait').hide();
-                    $("#input_amount").val('');
-                    $("#input_description").val('');
-                    swal(`${(investmentOps.isDeposit === 1) ? 'Deposit' : 'Withdrawal'} transaction successful!`, '', 'success');
-                    // bindDataTable(selectedInvestment.investmentId, false);
-                    table.ajax.reload(null, false);
-                } else {
+
+        const canWithdrawStatus = await getWithdrawalStatus();
+        if (canWithdrawStatus.canWithdraw === 1 || investmentOps.is_credit.toString() === '1' || investmentOps.isTransfer.toString() === '1') {
+            $.ajax({
+                url: `investment-txns/create`,
+                'type': 'post',
+                'data': investmentOps,
+                'success': function (data) {
+                    if (data.status === undefined) {
+                        $('#wait').hide();
+                        $("#input_amount").val('');
+                        $("#input_description").val('');
+                        swal(`${(investmentOps.isDeposit === 1) ? 'Deposit' : 'Withdrawal'} transaction successful!`, '', 'success');
+                        // bindDataTable(selectedInvestment.investmentId, false);
+                        table.ajax.reload(null, false);
+                    } else {
+                        $('#wait').hide();
+                        swal('Oops! An error occurred while executing deposit transaction', '', 'error');
+                    }
+                },
+                'error': function (err) {
                     $('#wait').hide();
                     swal('Oops! An error occurred while executing deposit transaction', '', 'error');
                 }
-            },
-            'error': function (err) {
-                $('#wait').hide();
-                swal('Oops! An error occurred while executing deposit transaction', '', 'error');
-            }
-        });
+            });
+        } else {
+            swal('Oops! Exceed withdrawal limit, please uncheck enforce count to proceed  ', '', 'error');
+        }
     } else {
         swal('Oops! Missing required field(s)', '', 'error');
     }
@@ -1179,7 +1201,7 @@ function getProductDocRequirements(verify) {
 
                     if (element.status.toString() === '1') {
                         $("#tbodyUploadedDocs").append(`<tr>
-                        <td><span>${element.name} (<a href="/files${element.filePath}" class="badge badge-light">View File</a>)</span></td>
+                        <td><span>${element.name} (<button type="button" class="btn btn-link" onclick="onViewDocFile('${element.filePath}')">View File</button>)</span></td>
                         <td>
                         ${element.createdAt}
                         </td>
@@ -1196,7 +1218,7 @@ function getProductDocRequirements(verify) {
                                 </div>
                                 <div class="form-control-label">
                                 ${(element.status.toString() === '1') ?
-                            `<a href="/files${element.filePath}" class="badge badge-light">View File</a>`
+                            `<button type="button" class="btn btn-link" onclick="onViewDocFile('${element.filePath}')">View File</button>`
                             :
                             `<a class="badge badge-light">File Not Found</a>`}                                
                                 </div>
@@ -1208,6 +1230,10 @@ function getProductDocRequirements(verify) {
             });
         }
     });
+}
+
+function onViewDocFile(path) {
+    window.open(`/files${path}`);
 }
 
 function onOpenMandate() {
