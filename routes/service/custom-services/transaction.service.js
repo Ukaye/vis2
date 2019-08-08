@@ -810,8 +810,9 @@ router.post('/posts', function (req, res, next) {
                                 let bal = (data.isCredit.toString() === '1') ? (total_bal + parseFloat(data.amount.split(',').join(''))) :
                                     (total_bal - parseFloat(data.amount.split(',').join('')));
                                 if (data.isInvestmentTerminated.toString() === '0') {
+                                    const updateDate = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                                     query = `UPDATE investment_txns SET isApproved = ${data.status}, 
-                                    updated_date ='${dt.toString()}', createdBy = ${data.userId},postDone = ${data.status},
+                                    updated_date ='${updateDate}', createdBy = ${data.userId},postDone = ${data.status},
                                     amount = ${Number(data.amount.split(',').join('')).toFixed(2)} , balance ='${Number(bal).toFixed(2)}'
                                     WHERE ID =${data.txnId}`;
                                     endpoint = `/core-service/get`;
@@ -867,76 +868,47 @@ router.post('/posts', function (req, res, next) {
 
                     });
                 } else {
-                    query = (data.isWallet.toString() === '0') ?
-                        `SELECT amount,is_credit,isApproved FROM investment_txns WHERE investmentId = ${data.investmentId}` :
-                        `SELECT amount,is_credit,isApproved FROM investment_txns WHERE clientid = ${data.clientId} AND isWallet = 1`;
-                    let endpoint = "/core-service/get";
-                    let url = `${HOST}${endpoint}`;
-                    axios.get(url, {
-                        params: {
-                            query: query
-                        }
-                    })
-                        .then(function (response_bal) {
-                            if (response_bal.data.length > 0) {
-                                let total_bal = 0;
-                                response_bal.data.map(x => {
-                                    if (x.isApproved.toString() === '1') {
-                                        let _x = x.amount.split(',').join('');
-                                        if (x.is_credit.toString() === '1') {
-                                            total_bal += parseFloat(_x);
-                                        } else {
-                                            total_bal -= parseFloat(_x);
-                                        }
-                                    }
-                                });
-                                let bal = 0;
-                                if (data.isCredit === 1) {
-                                    bal = (data.status === 0) ? (total_bal - parseFloat(data.amount.split(',').join(''))) : total_bal;
-                                } else {
-                                    bal = (data.status === 0) ? (total_bal + parseFloat(data.amount.split(',').join(''))) : total_bal;
-                                }
-                                if (data.isInvestmentTerminated.toString() === '0') {
-                                    query = `UPDATE investment_txns SET isApproved = ${0}, updated_date ='${dt.toString()}', postDone = ${0}, isDeny = ${data.isDeny},
-                                        amount = ${ Number(data.amount.split(',').join('')).toFixed(2)} , balance ='${Number(bal).toFixed(2)}'
-                                        WHERE ID =${data.txnId}`;
-                                    endpoint = `/core-service/get`;
-                                    url = `${HOST}${endpoint}`;
-                                    axios.get(url, {
-                                        params: {
-                                            query: query
-                                        }
-                                    })
-                                        .then(function (response_) {
-                                            fundBeneficialAccount(data, HOST);
-                                            res.send(response.data);
-                                        }, err => {
-                                            res.send({
-                                                status: 500,
-                                                error: err,
-                                                response: null
-                                            });
-                                        })
-                                        .catch(function (error) {
-                                            res.send({
-                                                status: 500,
-                                                error: error,
-                                                response: null
-                                            });
-                                        });
-                                } else if (data.isInvestmentTerminated.toString() === '1') {
-                                    fundBeneficialAccount(data, HOST).then(_payload_2 => {
-                                        res.send(_payload_2.data);
-                                    }, err => {
-                                        res.send({
-                                            status: 500,
-                                            error: error,
-                                            response: null
-                                        });
-                                    });
-                                }
+                    if (data.isInvestmentTerminated.toString() === '0') {
+                        const updateDate_ = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                        query = `UPDATE investment_txns SET isApproved = ${0}, updated_date ='${updateDate_}', postDone = ${0}, isDeny = ${data.isDeny},
+                            amount = ${Number(data.amount.split(',').join('')).toFixed(2)} , balance ='${Number(data.amount.split(',').join('')).toFixed(2)}'
+                            WHERE ID =${data.txnId}`;
+                        endpoint = `/core-service/get`;
+                        url = `${HOST}${endpoint}`;
+                        axios.get(url, {
+                            params: {
+                                query: query
                             }
+                        })
+                            .then(function (response_) {
+                                fundBeneficialAccount(data, HOST).then(payloadf => {
+                                    res.send(response.data);
+                                });
+                            }, err => {
+                                res.send({
+                                    status: 500,
+                                    error: err,
+                                    response: null
+                                });
+                            })
+                            .catch(function (error) {
+                                res.send({
+                                    status: 500,
+                                    error: error,
+                                    response: null
+                                });
+                            });
+                    } else if (data.isInvestmentTerminated.toString() === '1') {
+                        fundBeneficialAccount(data, HOST).then(_payload_2 => {
+                            res.send(_payload_2.data);
+                        }, err => {
+                            res.send({
+                                status: 500,
+                                error: error,
+                                response: null
+                            });
                         });
+                    }
                 }
             }, err => {
                 res.send({
@@ -1249,7 +1221,7 @@ async function deductTransferCharge(data, HOST, amount) {
                             createdBy: data.createdBy
                         };
                         setInvestmentTxns(HOST, inv_txn).then(payload => {
-                            deductVatTax(HOST, data, configAmount, inv_txn, balTransfer).then(payload_1 => {
+                            deductVatTax(HOST, data, configAmount, inv_txn, inv_txn.balance).then(payload_1 => {
                                 resolve({});
                             }, err_1 => {
                                 resolve({});
@@ -1361,7 +1333,7 @@ function chargeForceTerminate(data, HOST) {
                         url = `${HOST}${endpoint}`;
                         try {
                             axios.post(url, inv_txn).then(response__ => {
-                                deductVatTax(HOST, data, configAmount, inv_txn, balance).then(payload___ => {
+                                deductVatTax(HOST, data, configAmount, inv_txn, inv_txn.balance).then(payload___ => {
                                     resolve(payload___);
                                 }, err => {
                                     resolve({});
@@ -1528,7 +1500,7 @@ function reverseEarlierInterest(data, HOST) {
                                             isVat: 1
                                         };
                                         setInvestmentTxns(HOST, inv_txn).then(payload => {
-                                            deductVatTax(HOST, data, configAmount, inv_txn, ((totalInvestedAmount + interestAmount) - configAmount)).then(result => {
+                                            deductVatTax(HOST, data, configAmount, inv_txn, inv_txn.balance).then(result => {
                                                 query = `DELETE FROM investment_txns WHERE ID=${data.txnId}`;
                                                 endpoint = `/core-service/get`;
                                                 url = `${HOST}${endpoint}`;
@@ -1650,7 +1622,7 @@ function reverseEarlierInterest(data, HOST) {
                             isVat: 1
                         };
                         setInvestmentTxns(HOST, inv_txn).then(payload_2 => {
-                            deductVatTax(HOST, data, configAmount, inv_txn, (_computeCurrentBalance - configAmount)).then(result => {
+                            deductVatTax(HOST, data, configAmount, inv_txn, inv_txn.balance).then(result => {
                                 query = `DELETE FROM investment_txns WHERE ID=${data.txnId}`;
                                 endpoint = `/core-service/get`;
                                 url = `${HOST}${endpoint}`;
@@ -1861,13 +1833,13 @@ async function setcharges(data, HOST, isReversal) {
                 if (data.isInvestmentMatured.toString() === '0' && data.investmentId !== '') {
                     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                     let refId = moment().utcOffset('+0100').format('x');
-                    query = `SELECT t.*,p.*,v.description,v.amount as txnAmount, v.balance as txnBalance, v.is_credit,
+                    let query = `SELECT t.*,p.*,v.description,v.amount as txnAmount, v.balance as txnBalance, v.is_credit,
                     v.isInterest,p.freq_withdrawal, p.withdrawal_freq_duration, p.withdrawal_fees, p.withdrawal_freq_fees_opt
                     FROM investments t left join investment_products p on p.ID = t.productId
                     left join investment_txns v on v.investmentId = t.ID
                     WHERE t.ID = ${data.investmentId} AND v.ID = ${data.txnId}`;
                     let endpoint = `/core-service/get`;
-                    url = `${HOST}${endpoint}`;
+                    let url = `${HOST}${endpoint}`;
                     axios.get(url, {
                         params: {
                             query: query
@@ -1908,7 +1880,7 @@ async function setcharges(data, HOST, isReversal) {
                                                 if (isReversal === false) {
                                                     let txnAmount2 = Number(chargedCost).toFixed(2);
                                                     let txnBal = Number(total - chargedCost).toFixed(2);
-                                                    deductVatTax(HOST, data, txnAmount2, inv_txn, txnBal).then(result => {
+                                                    deductVatTax(HOST, data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
                                                         resolve(result);
                                                     }, err => {
                                                         resolve({});
@@ -1958,7 +1930,7 @@ async function setcharges(data, HOST, isReversal) {
                                             if (payload.data.status === undefined) {
                                                 let txnAmount2 = Number(chargedCostMinBal).toFixed(2);
                                                 let txnBal = Number(getInvestBalance.txnBalance - chargedCostMinBal).toFixed(2);
-                                                deductVatTax(HOST, data, txnAmount2, inv_txn, txnBal).then(result => {
+                                                deductVatTax(HOST, data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
                                                     resolve(result);
                                                 }, err => {
                                                     resolve({});
@@ -1978,6 +1950,18 @@ async function setcharges(data, HOST, isReversal) {
                                             query: query
                                         }
                                     }).then(response_product_ => {
+                                        if (response_product_.data.length === parseInt(response_product.data[0].freq_withdrawal)
+                                        && response_product.data[0].chkEnforceCount === 1) {
+                                            query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
+                                            endpoint = `/core-service/get`;
+                                            url = `${HOST}${endpoint}`;
+                                            axios.get(url, {
+                                                params: {
+                                                    query: query
+                                                }
+                                            });
+                                        }
+                                        
                                         if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal) && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
                                             let _getInvestBalance = response_product.data[response_product.data.length - 1];
                                             let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
@@ -2014,7 +1998,7 @@ async function setcharges(data, HOST, isReversal) {
                                                         if (payload.data.status === undefined) {
                                                             let txnAmount2 = Number(_chargedCostMinBal).toFixed(2);
                                                             let txnBal = Number(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
-                                                            deductVatTax(HOST, data, txnAmount2, inv_txn, txnBal).then(result => {
+                                                            deductVatTax(HOST, data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
                                                                 resolve(result);
                                                             }, err => {
                                                                 resolve({});
@@ -2043,6 +2027,19 @@ async function setcharges(data, HOST, isReversal) {
                                             query: query
                                         }
                                     }).then(response_product_ => {
+
+                                        if (response_product_.data.length === parseInt(response_product.data[0].freq_withdrawal)
+                                        && response_product.data[0].chkEnforceCount === 1) {
+                                            query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
+                                            endpoint = `/core-service/get`;
+                                            url = `${HOST}${endpoint}`;
+                                            axios.get(url, {
+                                                params: {
+                                                    query: query
+                                                }
+                                            });
+                                        }
+
                                         if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal) && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
                                             let _getInvestBalance = response_product.data[response_product.data.length - 1];
                                             let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
@@ -2079,7 +2076,7 @@ async function setcharges(data, HOST, isReversal) {
                                                         if (payload.data.status === undefined) {
                                                             let txnAmount2 = Number(_chargedCostMinBal).toFixed(2);
                                                             let txnBal = Number(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
-                                                            deductVatTax(HOST, data, txnAmount2, inv_txn, txnBal).then(result => {
+                                                            deductVatTax(HOST, data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
                                                                 resolve(result);
                                                             }, err => {
                                                                 resolve({});
@@ -2111,6 +2108,19 @@ async function setcharges(data, HOST, isReversal) {
                                             query: query
                                         }
                                     }).then(response_product_ => {
+
+                                        if (response_product_.data.length === parseInt(response_product.data[0].freq_withdrawal)
+                                        && response_product.data[0].chkEnforceCount === 1) {
+                                            query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
+                                            endpoint = `/core-service/get`;
+                                            url = `${HOST}${endpoint}`;
+                                            axios.get(url, {
+                                                params: {
+                                                    query: query
+                                                }
+                                            });
+                                        }
+
                                         if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal) && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
                                             let _getInvestBalance = response_product.data[response_product.data.length - 1];
                                             let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
@@ -2147,7 +2157,7 @@ async function setcharges(data, HOST, isReversal) {
                                                         if (payload.data.status === undefined) {
                                                             let txnAmount2 = Number(_chargedCostMinBal).toFixed(2);
                                                             let txnBal = Number(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
-                                                            deductVatTax(HOST, data, txnAmount2, inv_txn, txnBal).then(result => {
+                                                            deductVatTax(HOST, data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
                                                                 resolve(result);
                                                             }, err => {
                                                                 resolve({});
@@ -2180,6 +2190,19 @@ async function setcharges(data, HOST, isReversal) {
                                             query: query
                                         }
                                     }).then(response_product_ => {
+
+                                        if (response_product_.data.length === parseInt(response_product.data[0].freq_withdrawal)
+                                        && response_product.data[0].chkEnforceCount === 1) {
+                                            query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
+                                            endpoint = `/core-service/get`;
+                                            url = `${HOST}${endpoint}`;
+                                            axios.get(url, {
+                                                params: {
+                                                    query: query
+                                                }
+                                            });
+                                        }
+
                                         if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal) && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
                                             let _getInvestBalance = response_product.data[response_product.data.length - 1];
                                             let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
@@ -2216,7 +2239,7 @@ async function setcharges(data, HOST, isReversal) {
                                                         if (payload.data.status === undefined) {
                                                             let txnAmount2 = Number(_chargedCostMinBal).toFixed(2);
                                                             let txnBal = Number(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
-                                                            deductVatTax(HOST, data, txnAmount2, inv_txn, txnBal).then(result => {
+                                                            deductVatTax(HOST, data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
                                                                 resolve(result);
                                                             }, err => {
                                                                 resolve({});
@@ -2234,7 +2257,7 @@ async function setcharges(data, HOST, isReversal) {
                                 } else if (response_product.data[0].withdrawal_freq_duration === 'Yearly') {
                                     //endOfYear
                                     let beginOfTheYear = new Date();
-                                    
+
                                     const yearStartDateFormat = `${beginOfTheYear.getFullYear()}-${1}-${1}`;
                                     const yearEndDateFormat = `${beginOfTheYear.getFullYear()}-${12}-${31}`;
 
@@ -2250,6 +2273,20 @@ async function setcharges(data, HOST, isReversal) {
                                             query: query
                                         }
                                     }).then(response_product_ => {
+
+
+                                        if (response_product_.data.length === parseInt(response_product.data[0].freq_withdrawal)
+                                        && response_product.data[0].chkEnforceCount === 1) {
+                                            query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
+                                            endpoint = `/core-service/get`;
+                                            url = `${HOST}${endpoint}`;
+                                            axios.get(url, {
+                                                params: {
+                                                    query: query
+                                                }
+                                            });
+                                        }
+
                                         if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal) && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
                                             let _getInvestBalance = response_product.data[response_product.data.length - 1];
                                             let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
@@ -2286,7 +2323,7 @@ async function setcharges(data, HOST, isReversal) {
                                                         if (payload.data.status === undefined) {
                                                             let txnAmount2 = Number(_chargedCostMinBal).toFixed(2);
                                                             let txnBal = Number(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
-                                                            deductVatTax(HOST, data, txnAmount2, inv_txn, txnBal).then(result => {
+                                                            deductVatTax(HOST, data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
                                                                 resolve(result);
                                                             }, err => {
                                                                 resolve({});
@@ -2824,7 +2861,7 @@ router.get('/client-wallets/:id', function (req, res, next) {
     v.ID,v.ref_no,c.fullname,v.description,v.created_date,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName,
     v.isDeny,v.isPaymentMadeByWallet,v.isReversedTxn,v.isTransfer,v.isMoveFundTransfer,v.beneficialInvestmentId,p.interest_disbursement_time,p.interest_moves_wallet,
     v.approvalDone,v.reviewDone,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.isInvestmentTerminated,
-    p.acct_allows_withdrawal,i.investment_mature_date,p.interest_rate,v.isForceTerminate,v.isInvestmentMatured,p.inv_moves_wallet,
+    p.acct_allows_withdrawal,i.investment_mature_date,p.interest_rate,v.isForceTerminate,v.isInvestmentMatured,p.inv_moves_wallet,p.chkEnforceCount,
     i.clientId,p.canTerminate,v.is_capital,v.investmentId,i.isTerminated,v.isWallet, v.updated_date, i.isMatured FROM investment_txns v 
     left join investments i on v.investmentId = i.ID 
     left join clients c on i.clientId = c.ID
