@@ -37,9 +37,6 @@
         .todolist a {
             margin: 5px 0;
         }
-        .todolist a.btn-danger {
-            margin-left: 10px;
-        }
         .todolist h4 {
             text-align: center;
             margin-bottom: 15px;
@@ -74,11 +71,6 @@
             border-bottom: 24px solid transparent;
             content: " ";
         }
-        .ui-state-empty {
-            padding: 0 15px;
-            margin-bottom: 5px;
-            height: 95px;
-        }
         .card-body {
             max-height: 520px;
             overflow-y: auto;
@@ -87,7 +79,7 @@
 </head>
 <body class="open">
 <script src="../../menus/menu-items.js"></script>
-<script type="text/javascript" src="../../collection/bulk-collection/bulk-collection1.js"></script>
+<script type="text/javascript" src="../../collection/remita-collection/remita-collection1.js"></script>
 <!-- Left Panel -->
 <aside id="left-panel" class="left-panel" include-html="/includes/sidebar.html"></aside><!-- /#left-panel -->
 <!-- Left Panel -->
@@ -102,7 +94,7 @@
         <div class="col-sm-4">
             <div class="page-header float-left">
                 <div class="page-title">
-                    <h1>Bulk Collection</h1>
+                    <h1>Remita Collection</h1>
                 </div>
             </div>
         </div>
@@ -112,7 +104,7 @@
                     <ol class="breadcrumb text-right">
                         <li><a href="#">Dashboard</a></li>
                         <li><a href="#">Collection</a></li>
-                        <li class="active">Bulk Collection</li>
+                        <li class="active">Remita Collection</li>
                     </ol>
                 </div>
             </div>
@@ -125,50 +117,27 @@
                 <div id="user-form" class="col-xs-12 col-sm-12">
                     <div class="card">
                         <div class="card-header">
-                            <strong>Process Bulk Collection</strong> <small> Payment Information</small>
+                            <strong>Process Remita Collection</strong> <small> Payment Information</small>
                             <div class="dropdown" style="float: right;">
-                                <button class="btn btn-sm btn-success" onclick="validatePayment()" style="float: right;">POST PAYMENT</button>
-                                <button class="btn btn-sm btn-primary dropdown-toggle" type="button" id="dropdownMenuButton"
-                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> MORE ACTIONS </button>
-                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                    <a href="#" class="write dropdown-item" onclick="findMatches()"> FIND MATCHES</a>
-                                    <a href="#" class="write dropdown-item" onclick="findReversals()"> FIND REVERSALS</a>
-                                    <a href="#" class="write dropdown-item" onclick="removeDebits()"> REMOVE ALL DEBITS</a>
-                                    <a href="#" class="write dropdown-item" onclick="removePayments()"> REMOVE SELECTED PAYMENTS</a>
-                                </div>
+                                <button class="btn btn-sm btn-success" onclick="validatePayment()" style="float: right;">REQUEST PAYMENT</button>
                             </div>
                         </div>
                         <div class="card-body card-block">
                             <div class="row">
-                                <div class="col-sm-12">
-                                    <div class="alert alert-info" role="alert" data-original-title="" title="">View due invoices vs unallocated payments below. You can also <strong>drag and drop</strong> to re-order.</div>
-                                </div>
-                                <div class="col-sm-6 todolist">
+                                <div class="col-sm-2"></div>
+                                <div class="col-sm-8 todolist">
                                     <div class="row">
-                                        <div class="col-lg-11">
-                                            <h4>Due Invoices</h4>
+                                        <div class="col-sm-12">
+                                            <div class="alert alert-info" role="alert" data-original-title="" title="">View due remita repayments below. You can also <strong>drag and drop</strong> to re-order.</div>
                                         </div>
-                                        <div class="col-lg-1">
+                                        <div class="col-sm-11">
+                                            <h4>Due Remita Invoices</h4>
+                                        </div>
+                                        <div class="col-sm-1">
                                             <input id="selectInvoices" class="form-control" type="checkbox" />
                                         </div>
                                     </div>
                                     <ul id="invoices" class="list-unstyled"></ul>
-                                </div>
-                                <div class="col-sm-6 todolist">
-                                    <div class="row">
-                                        <div class="col-lg-5">
-                                            <h4>Unallocated Payments</h4>
-                                        </div>
-                                        <div class="col-lg-6">
-                                            <select id="statement" class="form-control" title="Statement">
-                                                <option selected="selected" value="0">All</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-lg-1">
-                                            <input id="selectPayments" class="form-control" type="checkbox" />
-                                        </div>
-                                    </div>
-                                    <ul id="payments" class="list-unstyled"></ul>
                                 </div>
                             </div>
                         </div>
@@ -190,7 +159,7 @@
 <script src="assets/js/main.js"></script>
 <script src="assets/js/lib/data-table/datatables.min.js"></script>
 <script src="../../js/helper-functions.js"></script>
-<script type="text/javascript" src="../../collection/bulk-collection/bulk-collection2.js"></script>
+<script type="text/javascript" src="../../collection/remita-collection/remita-collection2.js"></script>
 <script src="../../js/loader.js"></script>
 <script src="../../js/notifications.js"></script>
 </body>

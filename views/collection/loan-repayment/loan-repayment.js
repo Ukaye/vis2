@@ -914,7 +914,8 @@ function read_write_custom(){
     let w,
         perms = JSON.parse(localStorage.getItem("permissions")),
         page = (window.location.pathname.split('/')[1].split('.'))[0],
-        reversePayment = ($.grep(perms, function(e){return e.module_name === 'reversePayment';}))[0];
+        reversePayment = ($.grep(perms, function(e){return e.module_name === 'reversePayment';}))[0],
+        stopMandate = ($.grep(perms, function(e){return e.module_name === 'stopMandate';}))[0];
     perms.forEach(function (k){
         if (k.module_name === page)
             w = $.grep(perms, function(e){return e.id === parseInt(k.id);});
@@ -924,4 +925,7 @@ function read_write_custom(){
 
     if (reversePayment && reversePayment['read_only'] === '0')
         $('.reversePayment').hide();
+
+    if (stopMandate && stopMandate['read_only'] === '0')
+        $('#stopMandateBtn').hide();
 }
