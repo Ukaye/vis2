@@ -15,7 +15,7 @@ let token,
 	hbs = require('nodemailer-express-handlebars'),
     smtpTransport = require('nodemailer-smtp-transport'),
 	smtpConfig = smtpTransport({
-		service: 'Mailjet',
+		service: 'Mailgun',
 		auth: {
 			user: process.env.MAILJET_KEY,
 			pass: process.env.MAILJET_SECRET
@@ -3168,6 +3168,7 @@ users.get('/forgot-password/:username', function(req, res) {
         };
 
         transporter.sendMail(mailOptions, function(error, info){
+            console.log(info)
             if(error)
                 return res.send({"status": 500, "message": "Oops! An error occurred while sending request", "response": error});
             return res.send({"status": 200, "message": "Forgot Password request sent successfully!"});

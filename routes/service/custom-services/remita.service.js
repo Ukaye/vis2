@@ -1,4 +1,5 @@
 const
+    async = require('async'),
     axios = require('axios'),
     moment = require('moment'),
     db = require('../../../db'),
@@ -54,6 +55,55 @@ router.post('/payment/create', function (req, res, next) {
             res.send({status: 500, error: payment_response, response: null});
         }
     });
+});
+
+router.post('/payments/create', function (req, res, next) {
+    let count = 0,
+        invoices = req.body.invoices,
+        created_by = req.body.created_by;
+    db.getConnection(function(err, connection) {
+        if (err) throw err;
+
+        async.forEach(invoices, function (invoice, callback) {
+            let payload = {},
+                payment = invoice;
+            payload.created_by = created_by;
+            delete payment.created_by;
+            helperFunctions.sendDebitInstruction(payment, function (payment_response) {
+                if (payment_response && payment_response.statuscode === '069') {
+                    const HOST = `${req.protocol}://${req.get('host')}`;
+                    let query =  `INSERT INTO remita_payments Set ?`,
+                        endpoint = `/core-service/post?query=${query}`,
+                        url = `${HOST}${endpoint}`;
+                    payload.fundingAccount = payment.fundingAccount;
+                    payload.fundingBankCode = payment.fundingBankCode;
+                    payload.totalAmount = payment.totalAmount;
+                    payload.RRR = payment_response.RRR;
+                    payload.requestId = payment_response.requestId;
+                    payload.mandateId = payment_response.mandateId;
+                    payload.transactionRef = payment_response.transactionRef;
+                    payload.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                    connection.query(query, payload, function (error, response) {
+                        if(error) {
+                            console.log(error)
+                        } else {
+                            count++;
+                        }
+                        callback();
+                    });
+                } else {
+                    console.log(payment_response);
+                }
+            });
+        }, function (data) {
+            connection.release();
+            return res.send({
+                status: 200,
+                error: null,
+                response: `${count} payments(s) requested successfully.`
+            });
+        })
+    })
 });
 
 router.get('/payments/get/:applicationID', function (req, res, next) {

@@ -54,6 +54,7 @@ let app = express(),
     preapplication_service = require('./routes/service/custom-services/preapplication.service'),
     collection_service = require('./routes/service/custom-services/collection.service'),
     remita_service = require('./routes/service/custom-services/remita.service'),
+    xero_service = require('./routes/service/custom-services/xero.service'),
     notification = require('./routes/notifications'),
     index = require('./routes/index');
 
@@ -221,6 +222,7 @@ app.use('/collection', collection_service);
 app.use('/investment-interests', investment_interest_service);
 // app.use('/notification-service', notification_service);
 app.use('/remita', remita_service);
+app.use('/xero', xero_service);
 app.use('/notifications', notification);
 app.use('/files', express.static(__dirname + '/files'));
 
@@ -458,6 +460,12 @@ app.get('/commission-profile', requireLogin, function (req, res) {
     });
 });
 
+app.get('/integrations', requireLogin, function (req, res) {
+    res.sendFile('/settings/integrations/integrations.html', {
+        root: __dirname + '/views'
+    });
+});
+
 app.get('/commission-dashboard', requireLogin, function (req, res) {
     res.sendFile('commission/commission-dashboard/commission-dashboard.html', {
         root: __dirname + '/views'
@@ -568,6 +576,12 @@ app.get('/bulk-upload', requireLogin, function (req, res) {
 
 app.get('/bulk-collection', requireLogin, function (req, res) {
     res.sendFile('collection/bulk-collection/bulk-collection.html', {
+        root: __dirname + '/views'
+    });
+});
+
+app.get('/remita-collection', requireLogin, function (req, res) {
+    res.sendFile('collection/remita-collection/remita-collection.html', {
         root: __dirname + '/views'
     });
 });

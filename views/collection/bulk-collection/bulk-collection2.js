@@ -605,6 +605,17 @@ $('#selectPayments').change((e) => {
     }
 });
 
+$('#selectInvoices').change((e) => {
+    let $invoiceCheckboxes = $('li[id^="invoice-"]').find('input[type="checkbox"]');
+    if ($('#selectInvoices').is(':checked')) {
+        selectedInvoices = allInvoices;
+        $invoiceCheckboxes.prop('checked', true);
+    } else {
+        selectedInvoices = [];
+        $invoiceCheckboxes.prop('checked', false);
+    }
+});
+
 function removePayments() {
     if (!selectedPayments[0]) return notification('No payment has been selected!', '', 'warning');
     swal({
