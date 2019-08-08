@@ -39,6 +39,7 @@ function getApplication(){
                 $('#remitaPaymentButton').show();
                 getRemitaPayments();
                 getMandateStatus();
+                getRemitaLogs();
             }
         },
         'error': function (err) {
@@ -835,6 +836,31 @@ function getRemitaPayments() {
                     }
                     $('#remita-payments').dataTable().fnAddData(table);
                     $('#remita-payments').dataTable().fnSort([[4,'desc']]);
+                });
+            } else {
+                console.log(data.error);
+            }
+        }
+    });
+}
+
+function getRemitaLogs() {
+    $.ajax({
+        type: 'get',
+        url: `/remita/logs/get/${application_id}`,
+        success: function (data) {
+            if (data.status !== 500){
+                $('#remita-logs').dataTable().fnClearTable();
+                $.each(data.response, (k, v) => {
+                    let table = [
+                        `₦${numberToCurrencyformatter(v.totalAmount)}`,
+                        v.RRR || 'N/A',
+                        v.transactionRef || 'N/A',
+                        v.date_created,
+                        JSON.parse(v.response).status
+                    ];
+                    $('#remita-logs').dataTable().fnAddData(table);
+                    $('#remita-logs').dataTable().fnSort([[4,'desc']]);
                 });
             } else {
                 console.log(data.error);

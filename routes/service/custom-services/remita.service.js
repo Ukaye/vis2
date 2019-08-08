@@ -93,6 +93,9 @@ router.post('/payments/create', function (req, res, next) {
                 payload.invoiceID = invoice.invoiceID;
                 payload.applicationID = invoice.applicationID;
                 payload.clientID = invoice.clientID;
+                invoice.RRR = payload.RRR;
+                invoice.requestId = payload.requestId;
+                invoice.transactionRef = payload.transactionRef;
                 invoice.response = JSON.stringify(payment_response);
                 connection.query('INSERT INTO remita_debits_log Set ?', invoice, function (error, response) {
                     if (payment_response && payment_response.statuscode === '069') {
@@ -149,6 +152,20 @@ router.get('/payments/get/:applicationID', function (req, res, next) {
         } else {
             res.send({status: 500, error: 'There is no remita mandate setup for this application', response: null});
         }
+    });
+});
+
+router.get('/logs/get/:applicationID', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let query =  `SELECT * FROM remita_debits_log WHERE applicationID = ${req.params.applicationID} AND status = 1`,
+        endpoint = '/core-service/get',
+        url = `${HOST}${endpoint}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        res.send({status: 200, error: null, response: response.data});
     });
 });
 

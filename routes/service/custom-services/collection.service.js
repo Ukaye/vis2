@@ -372,9 +372,9 @@ router.get('/remita/invoices/due', function(req, res, next) {
         query = "SELECT s.ID,c.fullname AS client, c.ID AS clientID, s.applicationID, s.status, s.payment_collect_date, s.payment_status, 'Principal' AS 'type', " +
             "s.payment_amount invoice_amount, l.response, r.mandateId, r.payerAccount fundingAccount, r.payerBankCode fundingBankCode, (SELECT COALESCE(SUM(p.payment_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1) total_paid, " +
             "(s.payment_amount - (SELECT COALESCE(SUM(p.payment_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)) payment_amount FROM remita_mandates r, clients c, application_schedules s LEFT JOIN remita_debits_log l ON (l.invoiceID = s.ID) " +
-            "WHERE s.status = 1 AND r.applicationID = s.applicationID AND NOT EXISTS (SELECT p.ID FROM remita_payments p WHERE p.invoiceID = s.ID) " +
+            "WHERE s.status = 1 AND s.payment_status < 2 AND (SELECT a.status FROM applications a WHERE a.ID = s.applicationID) <> 0 AND r.applicationID = s.applicationID AND NOT EXISTS (SELECT p.ID FROM remita_payments p WHERE p.invoiceID = s.ID) " +
             "AND ((s.payment_amount - (SELECT COALESCE(SUM(p.payment_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)) > 0) = 1 AND c.ID = (select userID from applications a where a.ID = s.applicationID) " +
-            "AND (select close_status from applications a where a.ID = s.applicationID) = 0 AND s.payment_amount > 0 AND TIMESTAMP(s.payment_collect_date) <= TIMESTAMP('"+today+"') ORDER BY ID desc";
+            "AND (select a.close_status from applications a where a.ID = s.applicationID) = 0 AND s.payment_amount > 0 AND TIMESTAMP(s.payment_collect_date) <= TIMESTAMP('"+today+"') ORDER BY ID desc";
 
     db.query(query, function (error, results, fields) {
         if(error) {
@@ -383,9 +383,9 @@ router.get('/remita/invoices/due', function(req, res, next) {
             query = "SELECT s.ID,c.fullname AS client, c.ID AS clientID, s.applicationID, s.status, s.interest_collect_date as payment_collect_date, s.payment_status, 'Interest' AS 'type', " +
                 "s.interest_amount invoice_amount, l.response, r.mandateId, r.payerAccount fundingAccount, r.payerBankCode fundingBankCode, (SELECT COALESCE(SUM(p.interest_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1) total_paid, " +
                 "(s.interest_amount - (SELECT COALESCE(SUM(p.interest_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)) payment_amount FROM remita_mandates r, clients c, application_schedules s LEFT JOIN remita_debits_log l ON (l.invoiceID = s.ID) " +
-                "WHERE s.status = 1 AND r.applicationID = s.applicationID AND NOT EXISTS (SELECT p.ID FROM remita_payments p WHERE p.invoiceID = s.ID) " +
+                "WHERE s.status = 1 AND s.payment_status < 2 AND (SELECT a.status FROM applications a WHERE a.ID = s.applicationID) <> 0 AND r.applicationID = s.applicationID AND NOT EXISTS (SELECT p.ID FROM remita_payments p WHERE p.invoiceID = s.ID) " +
                 "AND ((s.interest_amount - (SELECT COALESCE(SUM(p.interest_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)) > 0) = 1 AND c.ID = (select userID from applications a where a.ID = s.applicationID) " +
-                "AND (select close_status from applications a where a.ID = s.applicationID) = 0 AND s.interest_amount > 0 AND TIMESTAMP(s.interest_collect_date) <= TIMESTAMP('"+today+"') ORDER BY ID desc";
+                "AND (select a.close_status from applications a where a.ID = s.applicationID) = 0 AND s.interest_amount > 0 AND TIMESTAMP(s.interest_collect_date) <= TIMESTAMP('"+today+"') ORDER BY ID desc";
             let results_principal = results;
             db.query(query, function (error, results2, fields) {
                 if(error) {
