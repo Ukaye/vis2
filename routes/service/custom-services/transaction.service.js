@@ -2801,49 +2801,53 @@ async function computeInterestTxns(HOST, data) {
     }
 }
 
-async function deductWithHoldingTax(HOST, data, _amount, total, bal_, clientId, isWallet, txn) {
-    let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    let query = `SELECT * FROM investment_config ORDER BY ID DESC LIMIT 1`;
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(response => {
-        if (response.data.status === undefined) {
-            let configData = response.data[0];
-            let configAmount = (configData.withHoldingTaxChargeMethod == 'Fixed') ? configData.withHoldingTax : (configData.withHoldingTax * (total + parseFloat(Number(_amount).toFixed(2)))) / 100;
-            let refId = moment().utcOffset('+0100').format('x');
-            let balTotal = bal_ - configAmount;
-            let inv_txn = {
-                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-                description: `WITH-HOLDING TAX ON INTEREST TRANSACTION WITH REF.: <strong>${txn.ref_no}</strong>`,
-                amount: Number(configAmount).toFixed(2),
-                is_credit: 0,
-                created_date: dt,
-                balance: Number(balTotal).toFixed(2),
-                is_capital: 0,
-                isCharge: 0,
-                isApproved: 1,
-                isWithHoldings: 1,
-                postDone: 1,
-                reviewDone: 1,
-                approvalDone: 1,
-                ref_no: refId,
-                updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-                investmentId: data.investmentId,
-                createdBy: data.createdBy,
-                clientId: clientId,
-                isWallet: isWallet
-            };
-            setInvestmentTxns(HOST, inv_txn).then(result => {
-                return result;
-            }, err => {
-                return {};
-            });
-        }
-    }, err => { })
+function deductWithHoldingTax(HOST, data, _amount, total, bal_, clientId, isWallet, txn) {
+    return new Promise((resolve, reject) => {
+        let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        let query = `SELECT * FROM investment_config ORDER BY ID DESC LIMIT 1`;
+        let endpoint = '/core-service/get';
+        let url = `${HOST}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(response => {
+            if (response.data.status === undefined) {
+                let configData = response.data[0];
+                let configAmount = (configData.withHoldingTaxChargeMethod == 'Fixed') ? configData.withHoldingTax : (configData.withHoldingTax * (total + parseFloat(Number(_amount).toFixed(2)))) / 100;
+                let refId = moment().utcOffset('+0100').format('x');
+                let balTotal = bal_ - configAmount;
+                let inv_txn = {
+                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                    description: `WITH-HOLDING TAX ON INTEREST TRANSACTION WITH REF.: <strong>${txn.ref_no}</strong>`,
+                    amount: Number(configAmount).toFixed(2),
+                    is_credit: 0,
+                    created_date: dt,
+                    balance: Number(balTotal).toFixed(2),
+                    is_capital: 0,
+                    isCharge: 0,
+                    isApproved: 1,
+                    isWithHoldings: 1,
+                    postDone: 1,
+                    reviewDone: 1,
+                    approvalDone: 1,
+                    ref_no: refId,
+                    updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                    investmentId: data.investmentId,
+                    createdBy: data.createdBy,
+                    clientId: clientId,
+                    isWallet: isWallet
+                };
+                setInvestmentTxns(HOST, inv_txn).then(result => {
+                    resolve(result);
+                }, err => {
+                    resolve({});
+                });
+            }
+        }, err => {
+            resolve({});
+        })
+    });
 }
 
 router.get('/client-wallets/:id', function (req, res, next) {
