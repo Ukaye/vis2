@@ -1172,7 +1172,12 @@ async function upFrontInterest(data, HOST) {
                 let url = `${HOST}${endpoint}`;
                 axios.post(url, _inv_txn)
                     .then(function (_payload_) {
-                        resolve({});
+                        computeTotalBalance(data.clientId, data.investmentId, HOST).then(totalAmt2 => {
+                            deductWithHoldingTax(HOST, data, _inv_txn.amount, 0, totalAmt2.currentAcctBalance, data.clientId, data.isWallet, _inv_txn)
+                                .then(p__ => {
+                                    resolve({});
+                                });
+                        });
                     }, err => {
                         reject(err);
                     });
@@ -2358,7 +2363,7 @@ function deductVatTax(HOST, data, _amount, txn, balance) {
             }).then(response => {
                 if (response.data.status === undefined) {
                     let configData = response.data[0];
-                    let configAmount = (configData.vatChargeMethod === 'Fixed') ? configData.withHoldingTax : (parseFloat(configData.withHoldingTax.toString()) * parseFloat(_amount.toString())) / 100;
+                    let configAmount = (configData.vatChargeMethod === 'Fixed') ? configData.vat : (parseFloat(configData.vat.toString()) * parseFloat(_amount.toString())) / 100;
                     let _refId = moment().utcOffset('+0100').format('x');
                     let _mBalance = Number(parseFloat(balance)).toFixed(2) - parseFloat(configAmount);
                     let inv_txn = {
@@ -2808,7 +2813,7 @@ async function deductWithHoldingTax(HOST, data, _amount, total, bal_, clientId, 
     }).then(response => {
         if (response.data.status === undefined) {
             let configData = response.data[0];
-            let configAmount = (configData.withHoldingTaxChargeMethod == 'Fixed') ? configData.vat : (configData.vat * (total + parseFloat(Number(_amount).toFixed(2)))) / 100;
+            let configAmount = (configData.withHoldingTaxChargeMethod == 'Fixed') ? configData.withHoldingTax : (configData.withHoldingTax * (total + parseFloat(Number(_amount).toFixed(2)))) / 100;
             let refId = moment().utcOffset('+0100').format('x');
             let balTotal = bal_ - configAmount;
             let inv_txn = {
