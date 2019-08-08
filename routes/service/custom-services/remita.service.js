@@ -60,40 +60,55 @@ router.post('/payment/create', function (req, res, next) {
 router.post('/payments/create', function (req, res, next) {
     let count = 0,
         invoices = req.body.invoices,
-        created_by = req.body.created_by;
+        created_by = req.body.created_by,
+        date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.getConnection(function(err, connection) {
         if (err) throw err;
 
         async.forEach(invoices, function (invoice, callback) {
+            invoice.invoiceID = invoice.ID;
+            invoice.totalAmount = invoice.payment_amount;
+            invoice.payment_status = invoice.status;
+            invoice.created_by = created_by;
+            invoice.date_created = date;
+            delete invoice.ID;
+            delete invoice.status;
             let payload = {},
-                payment = invoice;
-            payload.created_by = created_by;
-            delete payment.created_by;
+                payment = {
+                    mandateId: invoice.mandateId,
+                    fundingAccount: invoice.fundingAccount,
+                    fundingBankCode: invoice.fundingBankCode,
+                    totalAmount: invoice.totalAmount
+                };
+            payload.created_by = invoice.created_by;
             helperFunctions.sendDebitInstruction(payment, function (payment_response) {
-                if (payment_response && payment_response.statuscode === '069') {
-                    const HOST = `${req.protocol}://${req.get('host')}`;
-                    let query =  `INSERT INTO remita_payments Set ?`,
-                        endpoint = `/core-service/post?query=${query}`,
-                        url = `${HOST}${endpoint}`;
-                    payload.fundingAccount = payment.fundingAccount;
-                    payload.fundingBankCode = payment.fundingBankCode;
-                    payload.totalAmount = payment.totalAmount;
-                    payload.RRR = payment_response.RRR;
-                    payload.requestId = payment_response.requestId;
-                    payload.mandateId = payment_response.mandateId;
-                    payload.transactionRef = payment_response.transactionRef;
-                    payload.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                    connection.query(query, payload, function (error, response) {
-                        if(error) {
-                            console.log(error)
-                        } else {
-                            count++;
-                        }
+                payload.fundingAccount = payment.fundingAccount;
+                payload.fundingBankCode = payment.fundingBankCode;
+                payload.totalAmount = payment.totalAmount;
+                payload.RRR = payment_response.RRR;
+                payload.requestId = payment_response.requestId;
+                payload.mandateId = payment_response.mandateId;
+                payload.transactionRef = payment_response.transactionRef;
+                payload.date_created = date;
+                payload.invoiceID = invoice.invoiceID;
+                payload.applicationID = invoice.applicationID;
+                payload.clientID = invoice.clientID;
+                invoice.response = JSON.stringify(payment_response);
+                connection.query('INSERT INTO remita_debits_log Set ?', invoice, function (error, response) {
+                    if (payment_response && payment_response.statuscode === '069') {
+                        connection.query('INSERT INTO remita_payments Set ?', payload, function (error, response) {
+                            if(error) {
+                                console.log(error)
+                            } else {
+                                count++;
+                            }
+                            callback();
+                        });
+                    } else {
+                        console.log(payment_response);
                         callback();
-                    });
-                } else {
-                    console.log(payment_response);
-                }
+                    }
+                });
             });
         }, function (data) {
             connection.release();

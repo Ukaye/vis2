@@ -93,7 +93,6 @@ function validatePayment() {
 
 function postPayment() {
     $('#wait').show();
-    return notification('Remita: Error sending requests!', '', 'error');
     $.ajax({
         'url': '/remita/payments/create',
         'type': 'post',
