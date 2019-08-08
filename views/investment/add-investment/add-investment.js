@@ -1,12 +1,10 @@
-var addMonths = '../../../node_modules/date-fns/add_months/index';
-// import * as differenceInMinutes from 'date-fns/difference_in_minutes';
 let clientBalance = 0;
 
 $(document).ready(function () {
     component_initializer();
     let currentDate = new Date();
     let _cmax = `${currentDate.getUTCFullYear()}-${pad(currentDate.getMonth() + 1)}-${pad(currentDate.getDate())}`;
-    $('#investment_date_start').attr('max', _cmax);
+    $('#investment_date_start').attr('min', _cmax);
 });
 var productsControl = {};
 var products = [];
@@ -131,23 +129,52 @@ $("#investment_product").on("change", function (event) {
     if (selectedValue !== undefined) {
         $("#amount_info").html(`Min.: ${(selectedValue.investment_min === '') ? 'N/A' : selectedValue.investment_min} Max.:${(selectedValue.investment_max === '') ? 'N/A' : selectedValue.investment_max}`);
         let start_with = $("#investment_date_start").val();
+        if (start_with !== '' && start_with !== ' ') {
+            var _date = new Date(start_with);
+            if (selectedValue !== undefined && selectedValue !== undefined) {
+                let data = {
+                    year: _date.getUTCFullYear(),
+                    month: _date.getMonth(),
+                    day: _date.getDate(),
+                    min: parseInt(selectedValue.min_term),
+                    max: parseInt(selectedValue.max_term)
+                };
+                $.ajax({
+                    'url': '/investment-products/get-maturity-dates',
+                    'type': 'post',
+                    'data': data,
+                    'success': function (data) {
+                        if (!data.error) {
+                            $('#wait').hide();
+                            $('#investment_mature_date').attr('disabled', false);
 
-        let min_date = new Date(start_with);
-        let max_date = new Date(start_with);
+                            const minDate = new Date(data.min);
+                            let _m = minDate.getUTCMonth() + 1;
+                            const _cmax_1 = `${minDate.getUTCFullYear()}-${pad(_m)}-${pad(minDate.getUTCDate())}`;
+                            const maxDate = new Date(data.max);
+                            let _m2 = maxDate.getUTCMonth() + 1;
+                            const _cmax_2 = `${maxDate.getUTCFullYear()}-${pad(_m2)}-${pad(maxDate.getUTCDate())}`;
 
-        min_date.setMonth((min_date.getMonth() + 1) + parseInt(selectedValue.min_term));
-        max_date.setMonth((max_date.getMonth() + 1) + parseInt(selectedValue.max_term));
-
-        let _min = `${min_date.getUTCFullYear()}-${pad(min_date.getMonth())}-${pad(min_date.getDate())}`;
-        let _max = `${max_date.getUTCFullYear()}-${pad(max_date.getMonth())}-${pad(max_date.getDate())}`;
-        $('#investment_mature_date').attr('min', _min);
-        $('#investment_mature_date').attr('max', _max);
-
-        $('#investment_mature_date').val(0);
-        if (!isNaN(min_date.getDate()) && !isNaN(max_date.getDate())) {
-            $("#duration_info").html(`Min.: ${pad(min_date.getDate())}-${pad(min_date.getMonth())}-${min_date.getUTCFullYear()} Max.: ${pad(max_date.getDate())}-${pad(max_date.getMonth())}-${max_date.getUTCFullYear()}`);
+                            $('#investment_mature_date').attr('min', _cmax_1);
+                            $('#investment_mature_date').attr('max', _cmax_2);
+                            if (!isNaN(minDate.getDate()) && !isNaN(maxDate.getDate())) {
+                                $("#duration_info").html(`Min.: ${pad(minDate.getUTCDate())}-${minDate.getUTCMonth() + 1}-${minDate.getUTCFullYear()} Max.: ${pad(maxDate.getUTCDate() + 1)}-${pad(maxDate.getUTCMonth())}-${maxDate.getUTCFullYear()}`);
+                            }
+                        } else {
+                            $('#wait').hide();
+                            swal('Oops! An error occurred while computing maturity date; kindly check your internet connection', '', 'error');
+                        }
+                    },
+                    'error': function (err) {
+                        $('#wait').hide();
+                        swal('Oops! An error occurred while creating Investment; ', '', 'error');
+                    }
+                });
+            } else {
+                swal('Please select product', '', 'error');
+                $('#investment_mature_date').attr('disabled', true);
+            }
         }
-        $('#investment_mature_date').attr('disabled', false);
     }
 });
 
@@ -163,20 +190,46 @@ $("#investment_date_start").on("change", function (event) {
     start_with = val;
     const selectedID = $("#investment_product").val();
     let selectedValue = products.find(x => x.ID.toString() === selectedID.toString());
-    var min_date = new Date(start_with);
-    var max_date = new Date(start_with);
+    var _date = new Date(start_with);
     if (selectedValue !== undefined && selectedValue !== undefined) {
-        $('#investment_mature_date').attr('disabled', false);
-        min_date.setMonth((min_date.getMonth() + 1) + parseInt(selectedValue.min_term));
-        max_date.setMonth((max_date.getMonth() + 1) + parseInt(selectedValue.max_term));
+        let data = {
+            year: _date.getUTCFullYear(),
+            month: _date.getMonth(),
+            day: _date.getDate(),
+            min: parseInt(selectedValue.min_term),
+            max: parseInt(selectedValue.max_term)
+        };
+        $.ajax({
+            'url': '/investment-products/get-maturity-dates',
+            'type': 'post',
+            'data': data,
+            'success': function (data) {
+                if (!data.error) {
+                    $('#wait').hide();
+                    $('#investment_mature_date').attr('disabled', false);
 
-        let _min = `${min_date.getUTCFullYear()}-${pad(min_date.getMonth())}-${pad(min_date.getDate())}`;
-        let _max = `${max_date.getUTCFullYear()}-${pad(max_date.getMonth())}-${pad(max_date.getDate())}`;
-        $('#investment_mature_date').attr('min', _min);
-        $('#investment_mature_date').attr('max', _max);
-        if (!isNaN(min_date.getDate()) && !isNaN(max_date.getDate())) {
-            $("#duration_info").html(`Min.: ${pad(min_date.getDate())}-${pad(min_date.getMonth())}-${min_date.getUTCFullYear()} Max.: ${pad(max_date.getDate())}-${pad(max_date.getMonth())}-${max_date.getUTCFullYear()}`);
-        }
+                    const minDate = new Date(data.min);
+                    let _m = minDate.getUTCMonth() + 1;
+                    const _cmax_1 = `${minDate.getUTCFullYear()}-${pad(_m)}-${pad(minDate.getUTCDate())}`;
+                    const maxDate = new Date(data.max);
+                    let _m2 = maxDate.getUTCMonth() + 1;
+                    const _cmax_2 = `${maxDate.getUTCFullYear()}-${pad(_m2)}-${pad(maxDate.getUTCDate())}`;
+
+                    $('#investment_mature_date').attr('min', _cmax_1);
+                    $('#investment_mature_date').attr('max', _cmax_2);
+                    if (!isNaN(minDate.getDate()) && !isNaN(maxDate.getDate())) {
+                        $("#duration_info").html(`Min.: ${pad(minDate.getUTCDate())}-${pad(minDate.getUTCMonth() + 1)}-${minDate.getUTCFullYear()} Max.: ${pad(maxDate.getUTCDate())}-${pad(maxDate.getUTCMonth() + 1)}-${maxDate.getUTCFullYear()}`);
+                    }
+                } else {
+                    $('#wait').hide();
+                    swal('Oops! An error occurred while computing maturity date; kindly check your internet connection', '', 'error');
+                }
+            },
+            'error': function (err) {
+                $('#wait').hide();
+                swal('Oops! An error occurred while creating Investment; ', '', 'error');
+            }
+        });
     } else {
         swal('Please select product', '', 'error');
         $('#investment_mature_date').attr('disabled', true);
@@ -270,7 +323,6 @@ $("select").on("change", function (event) {
 
 function validate() {
     if (
-
         $('#client').on('select2:select').val() !== "0" &&
         $('#investment_product').on('select2:select').val() !== "0" &&
         $('#investment_amount').val() !== "") {

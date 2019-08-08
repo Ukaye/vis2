@@ -81,7 +81,7 @@ function decideListOfAccounts(id) {
 
 function getInvestmentMaturity() {
     if (isWalletPage === 0) {
-        if (selectedInvestment.maturityDays === true) {
+        if (selectedInvestment.maturityDays === true && selectedInvestment.isClosed === 0) {
             const cBal = parseInt(selectedInvestment.txnCurrentBalance.toString().split(',').join(''));
             if (cBal !== 0) {
                 if (maturityAlert === 0) {
@@ -162,7 +162,8 @@ function getInvestmentMaturity() {
 
 function bindWalletTransaction() {
     let url = `./investment-transactions?clientId=${selectedInvestment.clientId}&clientName=${selectedInvestment.fullname}`;
-    $(location).attr('href', url);
+    // $(location).attr('href', url);
+    window.open(url);
 }
 
 $("#chk_own_accounts").on('change',
@@ -330,7 +331,7 @@ function bindDataTable(id) {
                             $('#btnDeposit').attr('disabled', true);
                             $('#btnCompInterestInvestment').attr('disabled', true);
                             $('#btnTerminateInvestment').attr('disabled', true);
-                            // $('#btnInvestmentStatement').attr('disabled', true);
+                            $('#btnInvestmentStatement').attr('disabled', true);
                         }
                         $("#client_name").html((isWalletPage === 1) ? sPageURL.split('=')[2].split('%20').join(' ') : data.data[0].fullname);
                         $("#inv_name").html(`${data.data[0].name} (${data.data[0].code})`);
@@ -350,6 +351,10 @@ function bindDataTable(id) {
 
                         if (data.data[0].interest_disbursement_time === 'Up-Front') {
                             $('#btnComputeInterest').attr('hidden', true);
+                        }
+
+                        if (data.data[0].investment_mature_date === '' || data.data[0].investment_mature_date === null) {
+                            $('#btnTerminateInvestment').attr('hidden', true);
                         }
                         getInvestmentMaturity();
                     } else {
@@ -441,10 +446,10 @@ function bindDataTable(id) {
                         </i> 
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         <button class="dropdown-item" id="dropdownItemDoc" data-toggle="modal" data-target="#viewListDocModal">Document</button>
-                          <button class="dropdown-item" id="dropdownItemRevert" ${(selectedInvestment.maturityDays === true) ? 'disabled' : ''} ${(full.isWallet === 1 || full.isTransfer === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 1 && full.is_capital === 0) ? '' : 'disabled'} ${(selectedInvestment.isClosed === 1) ? 'disabled' : ''}>Reverse</button>
-                          <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal" ${(selectedInvestment.isClosed === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 0) ? '' : 'disabled'}>Review</button>
-                          <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(selectedInvestment.isClosed === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1) ? '' : 'disabled'} ${(full.approvalDone === 0) ? '' : 'disabled'}>Approval</button>
-                          <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal" ${(selectedInvestment.isClosed === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1 && full.approvalDone === 1) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Post</button>
+                          <button class="dropdown-item" id="dropdownItemRevert" ${(selectedInvestment.maturityDays === true) ? 'disabled' : ''} ${(full.isWallet === 1 || full.isTransfer === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 1 && full.is_capital === 0) ? '' : 'disabled'}>Reverse</button>
+                          <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 0) ? '' : 'disabled'}>Review</button>
+                          <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1) ? '' : 'disabled'} ${(full.approvalDone === 0) ? '' : 'disabled'}>Approval</button>
+                          <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1 && full.approvalDone === 1) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Post</button>
                         </div>
                       </div>`;
             }
@@ -639,7 +644,8 @@ function bindInterestDataTable() {
 
 function onViewInvestmentStatement() {
     let strUrl = `./investment-statements/${selectedInvestment.investmentId}?startDate=${$('#dtStatementStart').val()}&endDate=${$('#dtStatementEnds').val()}`;
-    $(location).attr('href', strUrl);
+    // $(location).attr('href', strUrl);
+    window.open(strUrl);
 }
 
 
