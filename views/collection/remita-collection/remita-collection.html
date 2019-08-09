@@ -127,14 +127,25 @@
                                 <div class="col-sm-2"></div>
                                 <div class="col-sm-8 todolist">
                                     <div class="row">
-                                        <div class="col-sm-12">
+                                        <div class="col-xs-12">
                                             <div class="alert alert-info" role="alert" data-original-title="" title="">View due remita repayments below. You can also <strong>drag and drop</strong> to re-order.</div>
                                         </div>
-                                        <div class="col-sm-11">
+                                        <div class="col-md-7">
                                             <h4>Due Remita Invoices</h4>
                                         </div>
-                                        <div class="col-sm-1">
-                                            <input id="selectInvoices" class="form-control" type="checkbox" />
+                                        <div class="col-md-5">
+                                            <div class="row">
+                                                <div class="col-md-9">
+                                                    <select id="status" class="form-control" title="Status">
+                                                        <option selected="selected" value="0">All</option>
+                                                        <option value="1">Unattempted Payments</option>
+                                                        <option value="2">Unsuccessful Payments</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <input id="selectInvoices" class="form-control" type="checkbox" />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <ul id="invoices" class="list-unstyled"></ul>

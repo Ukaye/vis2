@@ -26,34 +26,46 @@ transporter = nodemailer.createTransport(smtpConfig);
 transporter.use('compile', hbs(options));
 
 router.post('/payment/create', function (req, res, next) {
-    let payload = {},
-        payment = req.body;
-    payload.created_by = payment.created_by;
-    delete payment.created_by;
+    let invoice = req.body,
+        payload = {},
+        payment = {
+            mandateId: invoice.mandateId,
+            fundingAccount: invoice.fundingAccount,
+            fundingBankCode: invoice.fundingBankCode,
+            totalAmount: invoice.totalAmount
+        },
+        date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    invoice.payment_amount = invoice.totalAmount;
     helperFunctions.sendDebitInstruction(payment, function (payment_response) {
-        if (payment_response && payment_response.statuscode === '069') {
-            const HOST = `${req.protocol}://${req.get('host')}`;
-            let query =  `INSERT INTO remita_payments Set ?`,
-                endpoint = `/core-service/post?query=${query}`,
-                url = `${HOST}${endpoint}`;
-            payload.fundingAccount = payment.fundingAccount;
-            payload.fundingBankCode = payment.fundingBankCode;
-            payload.totalAmount = payment.totalAmount;
-            payload.RRR = payment_response.RRR;
-            payload.requestId = payment_response.requestId;
-            payload.mandateId = payment_response.mandateId;
-            payload.transactionRef = payment_response.transactionRef;
-            payload.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-            db.query(query, payload, function (error, response) {
-                if(error) {
-                    res.send({status: 500, error: error, response: null});
-                } else {
-                    res.send(response);
-                }
-            });
-        } else {
-            res.send({status: 500, error: payment_response, response: null});
-        }
+        payload.fundingAccount = payment.fundingAccount;
+        payload.fundingBankCode = payment.fundingBankCode;
+        payload.totalAmount = payment.totalAmount;
+        payload.RRR = payment_response.RRR;
+        payload.requestId = payment_response.requestId;
+        payload.mandateId = payment_response.mandateId;
+        payload.transactionRef = payment_response.transactionRef;
+        payload.date_created = date;
+        payload.created_by = invoice.created_by;
+        payload.applicationID = invoice.applicationID;
+        payload.clientID = invoice.clientID;
+        invoice.date_created = date;
+        invoice.RRR = payload.RRR;
+        invoice.requestId = payload.requestId;
+        invoice.transactionRef = payload.transactionRef;
+        invoice.response = JSON.stringify(payment_response);
+        db.query('INSERT INTO remita_debits_log Set ?', invoice, function (error, response) {
+            if (payment_response && payment_response.statuscode === '069') {
+                db.query('INSERT INTO remita_payments Set ?', payload, function (error, response) {
+                    if(error) {
+                        res.send({status: 500, error: error, response: null});
+                    } else {
+                        res.send(response);
+                    }
+                });
+            } else {
+                res.send({status: 500, error: payment_response, response: null});
+            }
+        });
     });
 });
 
@@ -80,7 +92,6 @@ router.post('/payments/create', function (req, res, next) {
                     fundingBankCode: invoice.fundingBankCode,
                     totalAmount: invoice.totalAmount
                 };
-            payload.created_by = invoice.created_by;
             helperFunctions.sendDebitInstruction(payment, function (payment_response) {
                 payload.fundingAccount = payment.fundingAccount;
                 payload.fundingBankCode = payment.fundingBankCode;
@@ -90,6 +101,7 @@ router.post('/payments/create', function (req, res, next) {
                 payload.mandateId = payment_response.mandateId;
                 payload.transactionRef = payment_response.transactionRef;
                 payload.date_created = date;
+                payload.created_by = invoice.created_by;
                 payload.invoiceID = invoice.invoiceID;
                 payload.applicationID = invoice.applicationID;
                 payload.clientID = invoice.clientID;
@@ -100,15 +112,10 @@ router.post('/payments/create', function (req, res, next) {
                 connection.query('INSERT INTO remita_debits_log Set ?', invoice, function (error, response) {
                     if (payment_response && payment_response.statuscode === '069') {
                         connection.query('INSERT INTO remita_payments Set ?', payload, function (error, response) {
-                            if(error) {
-                                console.log(error)
-                            } else {
-                                count++;
-                            }
+                            if(!error) count++;
                             callback();
                         });
                     } else {
-                        console.log(payment_response);
                         callback();
                     }
                 });
@@ -157,7 +164,8 @@ router.get('/payments/get/:applicationID', function (req, res, next) {
 
 router.get('/logs/get/:applicationID', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query =  `SELECT * FROM remita_debits_log WHERE applicationID = ${req.params.applicationID} AND status = 1`,
+    let query =  `SELECT l.*, u.fullname initiator FROM remita_debits_log l, users u
+                WHERE l.applicationID = ${req.params.applicationID} AND l.status = 1 AND l.created_by = u.ID`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
     axios.get(url, {

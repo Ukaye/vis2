@@ -54,7 +54,7 @@ function getMandateStatus(){
         'type': 'get',
         'success': function (data) {
             if (!data.data.isActive) {
-                $('#stopMandateBtn').text('MANDATE STOPPED');
+                $('#stopMandateBtn').text('MANDATE INACTIVE');
                 $('#stopMandateBtn').prop('disabled', true);
                 $('#makeRemitaPayment').prop('disabled', true);
                 $('.cancelRemitaPaymentBtn').removeClass('reversePayment');
@@ -780,6 +780,9 @@ function makeRemitaPayment() {
             if (yes) {
                 $('#wait').show();
                 let payment = {};
+                payment.client = application.fullname;
+                payment.clientID = application.userID;
+                payment.applicationID = application.ID;
                 payment.mandateId = application.mandateId;
                 payment.fundingAccount = application.payerAccount;
                 payment.fundingBankCode = application.payerBankCode;
@@ -855,8 +858,8 @@ function getRemitaLogs() {
                     let table = [
                         `₦${numberToCurrencyformatter(v.totalAmount)}`,
                         v.RRR || 'N/A',
-                        v.transactionRef || 'N/A',
                         v.date_created,
+                        v.initiator,
                         JSON.parse(v.response).status
                     ];
                     $('#remita-logs').dataTable().fnAddData(table);

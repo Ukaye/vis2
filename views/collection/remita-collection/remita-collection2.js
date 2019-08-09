@@ -2,10 +2,34 @@ $(document).ready(function() {
     getInvoices();
 });
 
-
-let allInvoices = [],
+let allInvoices_,
+    allInvoices = [],
     selectedInvoices = [],
     selectedPayments = [];
+
+$('#status').change((e) => {
+    let invoices;
+    switch (e.target.value) {
+        case '0': {
+            invoices = allInvoices_;
+            break;
+        }
+        case '1': {
+            invoices = $.grep(allInvoices_, (e) => { return !e.response });
+            break;
+        }
+        case '2': {
+            invoices = $.grep(allInvoices_, (e) => { return !!e.response });
+            break;
+        }
+    }
+    allInvoices = invoices;
+    $('#invoices').html('');
+    selectedInvoices = [];
+    $.each(allInvoices, function (key, val) {
+        displayInvoice(val);
+    });
+});
 
 function getInvoices(){
     $('#wait').show();
@@ -15,6 +39,7 @@ function getInvoices(){
         success: function (data) {
             let response = data.response;
             allInvoices = response;
+            allInvoices_ = allInvoices;
             $('#invoices').html('');
             selectedInvoices = [];
             $.each(response, function (key, val) {
