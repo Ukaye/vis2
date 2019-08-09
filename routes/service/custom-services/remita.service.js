@@ -7,6 +7,7 @@ const
     express = require('express'),
     router = express.Router(),
     SHA512 = require('js-sha512'),
+    enums = require('../../../enums'),
     nodemailer = require('nodemailer'),
     helperFunctions = require('../../../helper-functions'),
     hbs = require('nodemailer-express-handlebars'),
@@ -266,6 +267,32 @@ router.post('/notification/push', function (req, res, next) {
             data: payload
         });
     }
+});
+
+router.delete('/invoices/disable', function (req, res, next) {
+    let count = 0,
+        payload = {},
+        records = req.body.invoices;
+    payload.enable_remita = enums.ENABLE_REMITA.STATUS.INACTIVE;
+
+    db.getConnection(function(err, connection) {
+        if (err) throw err;
+
+        async.forEach(records, function (record, callback) {
+            let query =  `UPDATE application_schedules Set ? WHERE ID = ${record.ID}`;
+            connection.query(query, payload, function (error, response) {
+                if (error){
+                    console.log(error);
+                } else {
+                    count++;
+                }
+                callback();
+            });
+        }, function (data) {
+            connection.release();
+            return res.send({status: 200, error: null, response: `${count} invoice(s) removed successfully!`});
+        })
+    });
 });
 
 module.exports = router;

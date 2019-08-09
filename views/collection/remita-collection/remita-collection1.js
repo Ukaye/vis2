@@ -3,4 +3,7 @@ jQuery(document).ready(function($){
     $invoices.sortable();
     $invoices.disableSelection();
     $('.dropdown-toggle').dropdown();
+    $('body').tooltip({
+        selector: '[data-toggle="tooltip"]'
+    });
 });

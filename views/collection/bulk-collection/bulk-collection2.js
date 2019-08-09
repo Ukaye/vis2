@@ -185,6 +185,7 @@ function removePayment(obj) {
                         if (data.status === 200) {
                             notification('Payment record removed successfully', '', 'success');
                             $(`#payment-${payment.ID}`).remove();
+                            selectedPayments.splice(selectedPayments.findIndex((e) => { return e.ID === payment['ID']; }), 1);
                         } else {
                             console.log(data.error);
                             notification(data.error, '', 'error');

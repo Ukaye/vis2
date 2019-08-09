@@ -18,4 +18,12 @@ enums.COLLECTION_BULK_UPLOAD = {
     }
 };
 
+enums.ENABLE_REMITA = {
+    STATUS: {
+        INACTIVE: 0,
+        ACTIVE: 1
+    }
+};
+
+
 module.exports = enums;

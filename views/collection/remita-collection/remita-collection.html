@@ -75,6 +75,14 @@
             max-height: 520px;
             overflow-y: auto;
         }
+        .tool-tip {
+            position: absolute;
+            right: 26px;
+            top: 13px;
+        }
+        .tool-tip:hover {
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="open">
@@ -120,6 +128,11 @@
                             <strong>Process Remita Collection</strong> <small> Payment Information</small>
                             <div class="dropdown" style="float: right;">
                                 <button class="btn btn-sm btn-success" onclick="validatePayment()" style="float: right;">REQUEST PAYMENT</button>
+                                <button class="btn btn-sm btn-primary dropdown-toggle" type="button" id="dropdownMenuButton"
+                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> MORE ACTIONS </button>
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                    <a href="#" class="write dropdown-item" onclick="disableMultipleRemita()"> REMOVE SELECTED INVOICES</a>
+                                </div>
                             </div>
                         </div>
                         <div class="card-body card-block">
@@ -127,7 +140,7 @@
                                 <div class="col-sm-2"></div>
                                 <div class="col-sm-8 todolist">
                                     <div class="row">
-                                        <div class="col-xs-12">
+                                        <div class="col-md-12">
                                             <div class="alert alert-info" role="alert" data-original-title="" title="">View due remita repayments below. You can also <strong>drag and drop</strong> to re-order.</div>
                                         </div>
                                         <div class="col-md-7">

@@ -73,8 +73,12 @@ function displayInvoice(val) {
                         </small></p>
                 </div>
                 <div class="col-lg-3">
+                    ${(!!val.response)? `<i class="fa fa-info-circle tool-tip" data-toggle="tooltip" data-placement="top" title="${JSON.parse(val.response).status}"></i>` : ''}
                     <p><input class="form-control" type="checkbox" onclick="selectInvoice('${encodeURIComponent(JSON.stringify(val))}')" /></p>
-                    <p><a class="btn btn-primary btn-sm" href="/application?id=${val.applicationID}">View Loan</a></p>
+                    <p>
+                        <a class="btn btn-primary btn-sm" href="/application?id=${val.applicationID}">View Loan</a>
+                        <a class="btn btn-danger btn-sm" onclick="disableRemita('${encodeURIComponent(JSON.stringify(val))}')"><i class="fa fa-trash"></i></a>
+                    </p>
                 </div>
             </div>
         </li>`);
@@ -152,3 +156,68 @@ $('#selectInvoices').change((e) => {
         $invoiceCheckboxes.prop('checked', false);
     }
 });
+
+function disableRemita(invoice) {
+    swal({
+        title: "Are you sure?",
+        text: "Once removed, this process is not reversible!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true
+    })
+        .then((yes) => {
+            if (yes) {
+                let inv = JSON.parse(decodeURIComponent(invoice));
+                $('#wait').show();
+                $.ajax({
+                    'url': '/remita/invoices/disable',
+                    'type': 'delete',
+                    'data': {invoices: [inv]},
+                    'success': function (data) {
+                        $(`#invoice-${inv['type']}-${inv['ID']}`).remove();
+                        selectedInvoices.splice(selectedInvoices.findIndex((e) => { return e.ID === inv['ID']; }), 1);
+                        $('#wait').hide();
+                        notification(data.response, '', 'success');
+                    },
+                    'error': function (err) {
+                        $('#wait').hide();
+                        notification('Oops! An error occurred while posting payment(s)', '', 'error');
+                    }
+                });
+            }
+        });
+}
+function disableMultipleRemita() {
+    if (!selectedInvoices[0]) return notification('No invoice has been selected!', '', 'warning');
+    swal({
+        title: "Are you sure?",
+        text: "Once removed, this process is not reversible!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true
+    })
+        .then((yes) => {
+            if (yes) {
+                $('#wait').show();
+                $.ajax({
+                    'url': `/remita/invoices/disable`,
+                    'type': 'delete',
+                    'data': {invoices: selectedInvoices},
+                    'success': function (data) {
+                        const invoice_count = selectedInvoices.length;
+                        for (let i=0; i<invoice_count; i++) {
+                            let inv = selectedInvoices[0];
+                            $(`#invoice-${inv['type']}-${inv['ID']}`).remove();
+                            selectedInvoices.splice(selectedInvoices.findIndex((e) => { return e.ID === inv['ID']; }), 1);
+                        }
+                        $('#wait').hide();
+                        notification(data.response, '', 'success');
+                    },
+                    'error': function (err) {
+                        console.log(err);
+                        notification('No internet connection', '', 'error');
+                    }
+                });
+            }
+        });
+}
