@@ -82,7 +82,7 @@ router.get('/get-products', function (req, res, next) {
     let qStatus = (status === undefined) ? "" : `status = ${status} AND`;
     let search_string = req.query.search_string.toUpperCase();
     let query = `SELECT ID,name,code,investment_max,investment_min,interest_rate,status, date_created 
-    FROM investment_products  WHERE ${qStatus} code LIKE "${search_string}%" OR name LIKE "${search_string}%" 
+    FROM investment_products WHERE status = 1 AND (code LIKE "${search_string}%" OR name LIKE "${search_string}%")
     ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
