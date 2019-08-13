@@ -163,7 +163,7 @@ function selectInvoice(obj) {
             }
         }
     } else {
-        selectedInvoices.splice(selectedInvoices.findIndex((e) => { return e.ID === invoice.ID; }), 1);
+        selectedInvoices.splice(selectedInvoices.findIndex((e) => { return e.ID === invoice.ID && e.type === invoice.type; }), 1);
     }
 }
 
