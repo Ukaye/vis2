@@ -659,15 +659,19 @@ $("#idChkForceTerminate").on('change',
         let status = $('#idChkForceTerminate').is(':checked');
         $('#notice_date').val('');
         if (status) {
-            let currentDate = new Date();
-            let _cmax = `${currentDate.getUTCFullYear()}-${pad(currentDate.getMonth() + 1)}-${pad(currentDate.getDate())}`;
-            $('#notice_date').attr('min', _cmax);
+            $('#notice_date').attr('disabled', true);
+            $('#notice_date').val('');
         } else {
+            $('#notice_date').attr('disabled', false);
             let date = new Date();
             date.setDate(date.getDate() + parseInt(selectedConfig.investment_termination_days.toString()));
             let minDate = `${date.getUTCFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-
             $('#notice_date').attr('min', minDate);
+
+            let endDate = new Date(selectedInvestment.investment_mature_date);
+            endDate.setDate(date.getDate() - 1);
+            let minDate2 = `${endDate.getUTCFullYear()}-${pad(endDate.getMonth() + 1)}-${pad(endDate.getDate())}`;
+            $('#notice_date').attr('max', minDate2);
         }
     });
 
@@ -679,10 +683,14 @@ function getConfigItems() {
             $('#wait').hide();
             selectedConfig = data;
             let date = new Date();
-            date.setDate(date.getDate() + parseInt(data.investment_termination_days.toString()) + parseInt(data.min_days_termination));
+            date.setDate(date.getDate() + parseInt(selectedConfig.investment_termination_days.toString()));
             let minDate = `${date.getUTCFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-
             $('#notice_date').attr('min', minDate);
+
+            let endDate = new Date(selectedInvestment.investment_mature_date);
+            endDate.setDate(date.getDate() - 1);
+            let minDate2 = `${endDate.getUTCFullYear()}-${pad(endDate.getMonth() + 1)}-${pad(endDate.getDate())}`;
+            $('#notice_date').attr('max', minDate2);
         },
         'error': function (err) {
             $('#wait').hide();

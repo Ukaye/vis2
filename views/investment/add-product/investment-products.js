@@ -129,7 +129,7 @@ $("#product_code").on("focusout", function (event) {
         });
     }
 });
-
+let originalProductObj = {};
 function getInvestmentProducts(id) {
     $.ajax({
         type: "GET",
@@ -138,7 +138,8 @@ function getInvestmentProducts(id) {
             if (data.status === undefined) {
                 $("li_sub_dir").html("Update Product");
                 product_obj = data[0];
-                product_obj.histories = JSON.parse(product_obj.histories);
+                originalProductObj = JSON.parse(JSON.stringify(data[0]));
+                // product_obj.histories = JSON.parse(product_obj.histories);
                 $('#product_name').val(product_obj.name);
                 $('#product_investment_amount_min').val(product_obj.investment_min);
                 $('#product_investment_amount_max').val(product_obj.investment_max);
@@ -482,7 +483,7 @@ function set_investment_product() {
     product_obj.name = $('#product_name').val();
     product_obj.investment_max = $('#product_investment_amount_max').val();
     product_obj.investment_min = $('#product_investment_amount_min').val();
-    product_obj.freq_withdrawal = $('#withdrawal_conditions_value').val();
+    product_obj.freq_withdrawal = parseInt($('#withdrawal_conditions_value').val());
     product_obj.saving_fees = $('#saving_fees').val();
     product_obj.saving_charge_opt = $('#opt_on_deposit').val();
     product_obj.withdrawal_fees = $('#withdrawal_charge_freq').val();
@@ -502,15 +503,15 @@ function set_investment_product() {
     product_obj.acct_allows_withdrawal = $('#acct_allows_withdrawal').is(':checked') ? 1 : 0;
     product_obj.inv_moves_wallet = $('#inv_moves_wallet').is(':checked') ? 1 : 0;
     product_obj.interest_moves_wallet = $('#interest_moves_wallet').is(':checked') ? 1 : 0;
-    product_obj.min_term = parseInt($('#min_term').val());
-    product_obj.max_term = parseInt($('#max_term').val());
-    product_obj.histories = (product_obj.histories == null) ? [] : product_obj.histories;
+    product_obj.min_term = $('#min_term').val();
+    product_obj.max_term = $('#max_term').val();
+    // product_obj.histories = (product_obj.histories == null) ? [] : product_obj.histories;
 
     product_obj.premature_interest_rate = $('#premature_interest_rate').val();
     product_obj.min_days_termination = $('#min_days_termination').val();
     product_obj.min_days_termination_charge = $('#min_days_termination_charge').val();
     product_obj.opt_on_min_days_termination = $('#opt_on_min_days_termination').val();
-    product_obj.createdBy = (JSON.parse(localStorage.getItem("user_obj"))).ID;
+    product_obj.createdby = (JSON.parse(localStorage.getItem("user_obj"))).ID.toString();
 
     product_obj.canTerminate = $('#chk_can_terminate').is(':checked') ? 1 : 0;
     product_obj.chkEnforceCount = $('#chk_enforce_count').is(':checked') ? 1 : 0;
@@ -544,35 +545,46 @@ function set_investment_product() {
                 }
             });
         } else {
-            product_obj.histories.push({
-                createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
-                rate: product_obj.interest_rate
-            });
-            $.ajax({
-                url: `/investment/products/${product_obj.ID}`,
-                'type': 'post',
-                'data': product_obj,
-                'success': function (data) {
-                    
-                    if (data.status === 200) {
-                        $('#wait').hide();
-                        swal('Investment Product updated successfully!', '', 'success');
-                        var url = "./all-investment-products";
-                        $(location).attr('href', url);
-                        $('input').val("");
-                        $('input').attr("checked", false);
-                    } else {
+            if (product_obj.histories !== undefined)
+                delete product_obj.histories;
+
+            if (originalProductObj.histories !== undefined)
+                delete originalProductObj.histories;
+
+            if (JSON.stringify(product_obj) === JSON.stringify(originalProductObj)) {
+                $('#wait').hide();
+                swal('Oops! You have not make any changes',
+                    '', 'error');
+            } else {
+                $.ajax({
+                    url: `/investment/products/${product_obj.ID}`,
+                    'type': 'post',
+                    'data': product_obj,
+                    'success': function (data) {
+                        if (data.status === 200) {
+                            $('#wait').hide();
+                            swal('Investment Product updated successfully!', '', 'success');
+                            var url = "./all-investment-products";
+                            $(location).attr('href', url);
+                            $('input').val("");
+                            $('input').attr("checked", false);
+                        } else {
+                            $('#wait').hide();
+                            swal('Oops! An error occurred while updating Investment Product; Required field(s) missing',
+                                '', 'error');
+                        }
+                    },
+                    'error': function (err) {
                         $('#wait').hide();
                         swal('Oops! An error occurred while updating Investment Product; Required field(s) missing',
                             '', 'error');
                     }
-                },
-                'error': function (err) {
-                    $('#wait').hide();
-                    swal('Oops! An error occurred while updating Investment Product; Required field(s) missing',
-                        '', 'error');
-                }
-            });
+                });
+            }
+            // product_obj.histories.push({
+            //     createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
+            //     rate: product_obj.interest_rate
+            // });
         }
     } else {
         swal('Required field(s) missing',
