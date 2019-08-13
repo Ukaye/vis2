@@ -292,12 +292,19 @@ function postPayment(records, connection, req, escrow, callback) {
                         payload.affected = record.applicationID;
                         notificationsService.log(req, payload);
 
-                        let update2 = {};
+                        let update2 = {},
+                            TABLE = 'collection_bulk_uploads',
+                            ID = record.collection_bulk_uploadID;
                         update2.status = (status === 'part')? enums.COLLECTION_BULK_UPLOAD.STATUS.PART_PAYMENT :
                             enums.COLLECTION_BULK_UPLOAD.STATUS.FULL_PAYMENT;
                         if (escrow) update2.status = enums.COLLECTION_BULK_UPLOAD.STATUS.FULL_PAYMENT;
                         update2.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                        connection.query(`UPDATE collection_bulk_uploads Set ? WHERE ID = ${record.collection_bulk_uploadID}`, update2, function (error, response2) {
+                        if (record.remitaPaymentID) {
+                            TABLE = 'remita_payments';
+                            ID = record.remitaPaymentID;
+                            update2.invoiceID = record.invoiceID;
+                        }
+                        connection.query(`UPDATE ${TABLE} Set ? WHERE ID = ${ID}`, update2, function (error, response2) {
                             if (error)
                                 console.log(error);
                             callback_();
@@ -310,6 +317,81 @@ function postPayment(records, connection, req, escrow, callback) {
         callback(count);
     })
 }
+
+router.post('/remita/confirm-payment', function(req, res, next) {
+    let count = 0,
+        invoices = req.body.invoices,
+        payments = req.body.payments,
+        created_by = req.body.created_by;
+
+    db.getConnection(function(err, connection) {
+        if (err) throw err;
+
+        let payment_history = {
+            index: 0,
+            balance: helperFunctions.currencyToNumberFormatter(payments[0]['unallocated'])
+        };
+        async.forEach(invoices, function (invoice, callback) {
+            let records = [],
+                invoice_amount = helperFunctions.currencyToNumberFormatter(invoice.payment_amount);
+            do {
+                let amount = 0,
+                    record = {},
+                    update = {
+                        actual_payment_amount: '0',
+                        actual_interest_amount: '0',
+                        actual_fees_amount: '0',
+                        actual_penalty_amount: '0',
+                        payment_status: 1
+                    };
+                let payment = payments[payment_history['index']];
+                if (invoice_amount >= payment_history.balance) {
+                    amount = payment_history.balance;
+                    invoice_amount -= amount;
+                    payment_history.balance = 0;
+                    record.status = 'full';
+                } else {
+                    amount = invoice_amount;
+                    payment_history.balance -= amount;
+                    invoice_amount = 0;
+                    record.status = 'part';
+                }
+                if (invoice.type === 'Principal') update.actual_payment_amount = amount;
+                if (invoice.type === 'Interest') update.actual_interest_amount = amount;
+                record.invoiceID = invoice.ID;
+                record.agentID = created_by;
+                record.applicationID = invoice.applicationID;
+                record.payment_amount = update.actual_payment_amount;
+                record.interest_amount = update.actual_interest_amount;
+                record.fees_amount = update.actual_fees_amount;
+                record.penalty_amount = update.actual_penalty_amount;
+                record.payment_source = 'cash';
+                record.payment_date = payment.value_date;
+                record.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                record.remitaPaymentID = payment.ID;
+                records.push({record: record, update: update});
+
+                if (payment_history.index >= payments.length - 1) break;
+                if (invoice_amount > payment_history.balance) {
+                    payment_history.index = payment_history.index + 1;
+                    payment_history.balance = helperFunctions.currencyToNumberFormatter(payments[payment_history['index']]['unallocated']);
+                }
+            }
+            while (invoice_amount > 0);
+            postPayment(records, connection, req, null, function (response) {
+                count += response;
+                callback();
+            });
+        }, function (data) {
+            connection.release();
+            return res.send({
+                status: 200,
+                error: null,
+                response: `${count} payment(s) posted successfully.`
+            });
+        });
+    });
+});
 
 router.get('/bulk_upload/history', function(req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;

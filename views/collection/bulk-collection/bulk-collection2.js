@@ -240,6 +240,8 @@ function validatePayment() {
     if (selectedInvoices.length > 1 && overpayment < 0)
         return notification('Part payment is not allowed on multiple invoices!', '', 'warning');
 
+    if ($('#statement').val() === 'remita') return postPayment();
+
     if (selectedInvoices.length === 1 && overpayment > 0) {
         swal({
             title: 'Are you sure?',
@@ -273,8 +275,11 @@ function validatePayment() {
 
 function postPayment(escrow) {
     $('#wait').show();
+    let url = '/collection/bulk_upload/confirm-payment';
+    if ($('#statement').val() === 'remita')
+        url = '/collection/remita/confirm-payment';
     $.ajax({
-        'url': '/collection/bulk_upload/confirm-payment',
+        'url': url,
         'type': 'post',
         'data': {
             escrow: escrow,
