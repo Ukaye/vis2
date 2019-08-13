@@ -581,7 +581,13 @@ app.get('/bulk-collection', requireLogin, function (req, res) {
 });
 
 app.get('/remita-collection', requireLogin, function (req, res) {
-    res.sendFile('collection/remita-collection/remita-collection.html', {
+    res.sendFile('remita/remita-collection/remita-collection.html', {
+        root: __dirname + '/views'
+    });
+});
+
+app.get('/remita-debits-log', requireLogin, function (req, res) {
+    res.sendFile('remita/remita-debits-log/remita-debits-log.html', {
         root: __dirname + '/views'
     });
 });

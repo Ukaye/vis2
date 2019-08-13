@@ -132,6 +132,85 @@ router.post('/payments/create', function (req, res, next) {
     })
 });
 
+router.get('/payments/get', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let start = req.query.start, end = req.query.end,
+        query =  `SELECT * FROM remita_payments WHERE status = 1`,
+        endpoint = '/core-service/get',
+        url = `${HOST}${endpoint}`;
+    if (start && end) query = query.concat(` AND TIMESTAMP(date_created) BETWEEN TIMESTAMP('${start}') AND TIMESTAMP('${end}')`);
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        res.send({status: 200, error: null, response: response.data});
+    });
+});
+
+router.get('/collection/payments/get', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let start = req.query.start, end = req.query.end,
+        query =  `SELECT ID, '0' balance, totalAmount credit, '0' debit, CONCAT('Remita RRR ', RRR) description, date_created posting_date, 
+            date_created value_date, 1 status, created_by, date_created, date_modified, '0' allocated, totalAmount unallocated, applicationID, clientID  
+            FROM remita_payments WHERE status = 1`,
+        endpoint = '/core-service/get',
+        url = `${HOST}${endpoint}`;
+    if (start && end) query = query.concat(` AND TIMESTAMP(date_created) BETWEEN TIMESTAMP('${start}') AND TIMESTAMP('${end}')`);
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        res.send({status: 200, error: null, response: response.data});
+    });
+});
+
+router.delete('/collection/payment/:id', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let payload = {},
+        id = req.params.id,
+        query =  `UPDATE remita_payments Set ? WHERE ID = ${id}`,
+        endpoint = `/core-service/post?query=${query}`,
+        url = `${HOST}${endpoint}`;
+    payload.status = enums.COLLECTION_BULK_UPLOAD.STATUS.INACTIVE;
+    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+
+    db.query(query, payload, function (error, response) {
+        if (error)
+            return res.send({status: 500, error: error, response: null});
+        return res.send({status: 200, error: null, response: response});
+    });
+});
+
+router.delete('/collection/payments', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let count = 0,
+        payload = {},
+        records = req.body.records;
+    payload.status = enums.REMITA_PAYMENT.STATUS.INACTIVE;
+    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+
+    db.getConnection(function(err, connection) {
+        if (err) throw err;
+
+        async.forEach(records, function (record, callback) {
+            let query =  `UPDATE remita_payments Set ? WHERE ID = ${record.ID}`;
+            connection.query(query, payload, function (error, response) {
+                if (error){
+                    console.log(error);
+                } else {
+                    count++;
+                }
+                callback();
+            });
+        }, function (data) {
+            connection.release();
+            return res.send({status: 200, error: null, response: `${count} record(s) removed successfully!`});
+        })
+    });
+});
+
 router.get('/payments/get/:applicationID', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query =  `SELECT mandateId, requestId FROM remita_mandates WHERE applicationID = ${req.params.applicationID} AND status = 1`,
@@ -160,6 +239,22 @@ router.get('/payments/get/:applicationID', function (req, res, next) {
         } else {
             res.send({status: 500, error: 'There is no remita mandate setup for this application', response: null});
         }
+    });
+});
+
+router.get('/logs/get', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let start = req.query.start, end = req.query.end,
+        query =  `SELECT l.*, u.fullname initiator FROM remita_debits_log l, users u WHERE l.status = 1 AND l.created_by = u.ID`,
+        endpoint = '/core-service/get',
+        url = `${HOST}${endpoint}`;
+    if (start && end) query = query.concat(` AND TIMESTAMP(l.date_created) BETWEEN TIMESTAMP('${start}') AND TIMESTAMP('${end}')`);
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        res.send({status: 200, error: null, response: response.data});
     });
 });
 

@@ -4,8 +4,7 @@ $(document).ready(function() {
 
 let allInvoices_,
     allInvoices = [],
-    selectedInvoices = [],
-    selectedPayments = [];
+    selectedInvoices = [];
 
 $('#status').change((e) => {
     let invoices;
@@ -62,11 +61,11 @@ function displayInvoice(val) {
         }
     }
     $('#invoices').append(`
-        <li id="invoice-${val.type}-${val.ID}" class="ui-state-default">
+        <li id="invoice-${val.ID}" class="ui-state-default">
             <div class="row">
                 <div class="col-lg-9">
                     <p><strong>Name: </strong>${val.client} <strong>#INV-${padWithZeroes(val.ID, 6)}</strong></p>
-                    <p><strong>Date: </strong>${val.payment_collect_date} (${val.type}) ${status}</p>
+                    <p><strong>Date: </strong>${val.payment_collect_date} ${status}</p>
                     <p><strong>Balance: </strong>${numberToCurrencyFormatter_(val.payment_amount)}
                         <small class="text-muted"><strong>Invoice Amt: </strong>${numberToCurrencyFormatter_(val.invoice_amount)} 
                             <strong>Total Paid: </strong>${numberToCurrencyFormatter_(val.total_paid)}
@@ -86,18 +85,9 @@ function displayInvoice(val) {
 
 function selectInvoice(obj) {
     let invoice = JSON.parse(decodeURIComponent(obj)),
-        $checkbox = $(`#invoice-${invoice.type}-${invoice.ID}`).find('input[type="checkbox"]');
+        $checkbox = $(`#invoice-${invoice.ID}`).find('input[type="checkbox"]');
     if ($checkbox.is(':checked')) {
-        if (selectedPayments.length <= 1) {
-            selectedInvoices.push(invoice);
-        } else {
-            if (selectedInvoices.length === 0) {
-                selectedInvoices.push(invoice);
-            } else {
-                $checkbox.prop('checked', false);
-                return notification('Invoice has already been selected for multiple payments!', '', 'warning');
-            }
-        }
+        selectedInvoices.push(invoice);
     } else {
         selectedInvoices.splice(selectedInvoices.findIndex((e) => { return e.ID === invoice.ID; }), 1);
     }
@@ -133,7 +123,7 @@ function postPayment() {
             const invoice_count = selectedInvoices.length;
             for (let i=0; i<invoice_count; i++) {
                 let inv = selectedInvoices[0];
-                $(`#invoice-${inv['type']}-${inv['ID']}`).remove();
+                $(`#invoice-${inv['ID']}`).remove();
                 selectedInvoices.splice(selectedInvoices.findIndex((e) => { return e.ID === inv['ID']; }), 1);
             }
             $('#wait').hide();
@@ -174,7 +164,7 @@ function disableRemita(invoice) {
                     'type': 'delete',
                     'data': {invoices: [inv]},
                     'success': function (data) {
-                        $(`#invoice-${inv['type']}-${inv['ID']}`).remove();
+                        $(`#invoice-${inv['ID']}`).remove();
                         selectedInvoices.splice(selectedInvoices.findIndex((e) => { return e.ID === inv['ID']; }), 1);
                         $('#wait').hide();
                         notification(data.response, '', 'success');
@@ -207,7 +197,7 @@ function disableMultipleRemita() {
                         const invoice_count = selectedInvoices.length;
                         for (let i=0; i<invoice_count; i++) {
                             let inv = selectedInvoices[0];
-                            $(`#invoice-${inv['type']}-${inv['ID']}`).remove();
+                            $(`#invoice-${inv['ID']}`).remove();
                             selectedInvoices.splice(selectedInvoices.findIndex((e) => { return e.ID === inv['ID']; }), 1);
                         }
                         $('#wait').hide();

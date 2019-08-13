@@ -131,10 +131,10 @@
                                 <button class="btn btn-sm btn-primary dropdown-toggle" type="button" id="dropdownMenuButton"
                                         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> MORE ACTIONS </button>
                                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                    <a href="#" class="write dropdown-item" onclick="findMatches()"> FIND MATCHES</a>
-                                    <a href="#" class="write dropdown-item" onclick="findReversals()"> FIND REVERSALS</a>
-                                    <a href="#" class="write dropdown-item" onclick="removeDebits()"> REMOVE ALL DEBITS</a>
-                                    <a href="#" class="write dropdown-item" onclick="removePayments()"> REMOVE SELECTED PAYMENTS</a>
+                                    <a href="#" id="findMatches" class="write dropdown-item" onclick="findMatches()"> FIND MATCHES</a>
+                                    <a href="#" id="findReversals" class="write dropdown-item" onclick="findReversals()"> FIND REVERSALS</a>
+                                    <a href="#" id="removeDebits" class="write dropdown-item" onclick="removeDebits()"> REMOVE ALL DEBITS</a>
+                                    <a href="#" id="removePayments" class="write dropdown-item" onclick="removePayments()"> REMOVE SELECTED PAYMENTS</a>
                                 </div>
                             </div>
                         </div>
@@ -162,6 +162,7 @@
                                         <div class="col-lg-6">
                                             <select id="statement" class="form-control" title="Statement">
                                                 <option selected="selected" value="0">All</option>
+                                                <option value="remita">Remita</option>
                                             </select>
                                         </div>
                                         <div class="col-lg-1">
