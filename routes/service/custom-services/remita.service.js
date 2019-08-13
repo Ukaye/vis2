@@ -213,6 +213,22 @@ router.delete('/collection/payments', function (req, res, next) {
 
 router.get('/payments/get/:applicationID', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
+    let start = req.query.start, end = req.query.end,
+        query =  `SELECT * FROM remita_payments WHERE applicationID = ${req.params.applicationID} AND status <> 0`,
+        endpoint = '/core-service/get',
+        url = `${HOST}${endpoint}`;
+    if (start && end) query = query.concat(` AND TIMESTAMP(date_created) BETWEEN TIMESTAMP('${start}') AND TIMESTAMP('${end}')`);
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        res.send({status: 200, error: null, response: response.data});
+    });
+});
+
+router.get('/payments/status/get/:applicationID', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
     let query =  `SELECT mandateId, requestId FROM remita_mandates WHERE applicationID = ${req.params.applicationID} AND status = 1`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;

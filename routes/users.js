@@ -6,6 +6,7 @@ let token,
     path = require('path'),
     users = express.Router(),
     async = require('async'),
+    enums = require('../enums'),
     moment  = require('moment'),
     bcrypt = require('bcryptjs'),
     jwt = require('jsonwebtoken'),
@@ -2818,6 +2819,7 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
             postData.payment_status = 1;
             delete postData.payment_source;
             delete postData.payment_date;
+            delete postData.remitaPaymentID;
             db.query('UPDATE application_schedules SET ? WHERE ID = '+req.params.id, postData, function (error, invoice, fields) {
                 if(error){
                     res.send({"status": 500, "error": error, "response": null});
@@ -2836,6 +2838,7 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                     invoice.clientID = application.clientID;
                     invoice.loan_officerID = application.loan_officerID;
                     invoice.branchID = application.branchID;
+                    if (data.remitaPaymentID) invoice.remitaPaymentID = data.remitaPaymentID;
                     if (invoice.payment_amount > 0 && invoice.interest_amount > 0) {
                         invoice.type = 'multiple';
                     } else {
@@ -2859,7 +2862,17 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                             payload.description = 'Loan Application Payment Confirmed';
                             payload.affected = req.params.application_id;
                             notificationsService.log(req, payload);
-                            res.send({"status": 200, "message": "Invoice Payment confirmed successfully!"});
+                            if (!invoice.remitaPaymentID)
+                                return res.send({"status": 200, "message": "Invoice Payment confirmed successfully!"});
+                            let update = {};
+                            update.status = enums.REMITA_PAYMENT.STATUS.FULL_ASSIGNED;
+                            update.invoiceID = invoice.invoiceID;
+                            update.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                            db.query(`UPDATE remita_payments Set ? WHERE ID = ${invoice.remitaPaymentID}`, update, function (error, response) {
+                                if (error)
+                                    console.log(error);
+                                return res.send({"status": 200, "message": "Invoice Payment confirmed successfully!"});
+                            });
                         }
                     });
                 }

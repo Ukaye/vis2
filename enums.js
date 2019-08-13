@@ -28,7 +28,9 @@ enums.ENABLE_REMITA = {
 enums.REMITA_PAYMENT = {
     STATUS: {
         INACTIVE: 0,
-        ACTIVE: 1
+        ACTIVE: 1,
+        PART_ASSIGNED: 2,
+        FULL_ASSIGNED: 3
     }
 };
 
