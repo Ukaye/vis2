@@ -53,7 +53,7 @@ function component_initializer() {
         allowClear: true,
         placeholder: "Search by Product Code/Name",
         ajax: {
-            url: "/investment-products/all",
+            url: "/investment-products/all/0",
             dataType: "json",
             delay: 250,
             data: function (params) {

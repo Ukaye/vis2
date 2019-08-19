@@ -2,7 +2,7 @@ var table = {};
 let data_row = {};
 $(document).ready(function () {
     $('#bootstrap-data-table-export').DataTable();
-    bindDataTable();
+    bindDataTable(0, false);
 });
 
 function padReferenceNo(value) {
@@ -10,6 +10,43 @@ function padReferenceNo(value) {
         value = String('00000000' + value).slice(-8);
     }
     return value;
+}
+let selectedItems = [];
+$('#bootstrap-data-table2 tbody').on('change', '#chkBoxSelectItem', function () {
+    const status = $(this).is(':checked');
+    const selectedItem = table.row($(this).parents('tr')).data();
+    if (status) {
+        selectedItems.push(selectedItem);
+    } else {
+        selectedItems = selectedItems.filter(x => x.ID !== selectedItem.ID);
+    }
+    if (selectedItems.length > 0) {
+        $('#btnCloseInvestment').attr('hidden', false);
+    } else {
+        $('#btnCloseInvestment').attr('hidden', true);
+    }
+});
+
+function onSwitchActiveInvestments() {
+    $('#bootstrap-data-table2').html('');
+    $(table.column(6).header()).text('Action');
+    bindDataTable(0, false);
+}
+
+function onSwitchMatureInvestments() {
+    $(table.column(6).header()).html(`<input type="checkbox" id="chkBoxSelectAll" onchange="onSelectAll()"> Select`);
+    bindDataTable(1, false);
+}
+
+function onSelectAll() {
+    let status = $("#chkBoxSelectAll").is(':checked');
+    if (status) {
+        $('#btnCloseInvestment').attr('hidden', false);
+        bindDataTable(1, true);
+    } else {
+        $('#btnCloseInvestment').attr('hidden', true);
+        bindDataTable(1, false);
+    }
 }
 
 async function onRemoveBadge(id) {
@@ -51,7 +88,7 @@ function upload(parentFolder, subFolder, file, imgId) {
 async function onAddMandatePassport() {
     if ($(`#idPassportImage`)[0].files[0] !== undefined && $('#idPassportName').val() !== '' && $('#idPassportName').val() !== ' ') {
         let dt = new Date();
-        let imgId = `${dt.getFullYear()}${dt.getMonth()+1}${dt.getDate()}${dt.getHours()}${dt.getMinutes()}${dt.getSeconds()}${dt.getMilliseconds()}`;
+        let imgId = `${dt.getFullYear()}${dt.getMonth() + 1}${dt.getDate()}${dt.getHours()}${dt.getMinutes()}${dt.getSeconds()}${dt.getMilliseconds()}`;
         let ext_ = $(`#idPassportImage`)[0].files[0].type.split('/')[1];
         ext_ = (ext_ === 'jpeg') ? 'jpg' : ext_;
         if (ext_.toString().toLowerCase() === 'jpg' || ext_.toString().toLowerCase() === 'png') {
@@ -82,7 +119,7 @@ async function onAddMandatePassport() {
 async function onAddMandateSignature() {
     if ($(`#idSignatureImage`)[0].files[0] !== undefined && $('#idSignatureName').val() !== '' && $('#idSignatureName').val() !== ' ') {
         let dt = new Date();
-        let imgId = `${dt.getFullYear()}${dt.getMonth()+1}${dt.getDate()}${dt.getHours()}${dt.getMinutes()}${dt.getSeconds()}${dt.getMilliseconds()}`;
+        let imgId = `${dt.getFullYear()}${dt.getMonth() + 1}${dt.getDate()}${dt.getHours()}${dt.getMinutes()}${dt.getSeconds()}${dt.getMilliseconds()}`;
         let ext_ = $(`#idSignatureImage`)[0].files[0].type.split('/')[1];
         ext_ = (ext_ === 'jpeg') ? 'jpg' : ext_;
         if (ext_.toString().toLowerCase() === 'jpg' || ext_.toString().toLowerCase() === 'png') {
@@ -214,9 +251,10 @@ $('#bootstrap-data-table2 tbody').on('click', '#idButtonMandate', function () {
 
 let _table = $('#bootstrap-data-table-export').DataTable();
 
-function bindDataTable() {
+function bindDataTable(isMatureList, status) {
     table = $('#bootstrap-data-table2').DataTable({
         dom: 'Blfrtip',
+        destroy: true,
         bProcessing: true,
         bServerSide: true,
         buttons: [
@@ -224,35 +262,35 @@ function bindDataTable() {
         ],
         fnServerData: function (sSource, aoData, fnCallback) {
             let tableHeaders = [{
-                    name: "ID",
-                    query: `ORDER BY ID desc`
-                }, {
-                    name: "client",
-                    query: `ORDER BY client ${aoData[2].value[0].dir}`
-                },
-                {
-                    name: "investment",
-                    query: `ORDER BY investment ${aoData[2].value[0].dir}`
-                },
-                {
-                    name: "amount",
-                    query: `ORDER BY CAST(REPLACE(v.amount, ',', '') AS DECIMAL) ${aoData[2].value[0].dir}`
-                },
-                {
-                    name: "investment_start_date",
-                    query: `ORDER BY STR_TO_DATE(v.investment_start_date, '%Y-%m-%d') ${aoData[2].value[0].dir}`
-                }, {
-                    name: "investment_mature_date",
-                    query: `ORDER BY STR_TO_DATE(v.investment_mature_date, '%Y-%m-%d') ${aoData[2].value[0].dir}`
-                }, {
-                    name: "status",
-                    query: `ORDER BY v.status ${aoData[2].value[0].dir}`
-                }
+                name: "ID",
+                query: `ORDER BY ID desc`
+            }, {
+                name: "client",
+                query: `ORDER BY client ${aoData[2].value[0].dir}`
+            },
+            {
+                name: "investment",
+                query: `ORDER BY investment ${aoData[2].value[0].dir}`
+            },
+            {
+                name: "amount",
+                query: `ORDER BY CAST(REPLACE(v.amount, ',', '') AS DECIMAL) ${aoData[2].value[0].dir}`
+            },
+            {
+                name: "investment_start_date",
+                query: `ORDER BY STR_TO_DATE(v.investment_start_date, '%Y-%m-%d') ${aoData[2].value[0].dir}`
+            }, {
+                name: "investment_mature_date",
+                query: `ORDER BY STR_TO_DATE(v.investment_mature_date, '%Y-%m-%d') ${aoData[2].value[0].dir}`
+            }, {
+                name: "status",
+                query: `ORDER BY ID desc`
+            }
             ];
             $.ajax({
                 dataType: 'json',
                 type: "GET",
-                url: `/investment-service/get-investments`,
+                url: (isMatureList === 0) ? `/investment-service/get-investments` : `/investment-service/get-mature-investments`,
                 data: {
                     limit: aoData[4].value,
                     offset: aoData[3].value,
@@ -261,6 +299,12 @@ function bindDataTable() {
                     order: tableHeaders[aoData[2].value[0].column].query
                 },
                 success: function (data) {
+                    if (status === true) {
+                        selectedItems = [];
+                        selectedItems = data.data;
+                    } else {
+                        selectedItems = [];
+                    }
                     fnCallback(data)
                 }
             });
@@ -271,48 +315,75 @@ function bindDataTable() {
             sType: "numeric"
         }],
         columns: [{
-                width: "auto",
-                "mRender": function (data, type, full) {
-                    return full.code;
-                }
-            },
-            {
-                data: "client",
-                width: "15%"
-            },
-            {
-                data: "investment",
-                width: "15%"
-            },
-            {
-                data: "amount",
-                width: "15%"
-            },
-            {
-                width: "15%",
-                "mRender": function (data, type, full) {
-                    return (full.investment_start_date === "") ? "N/A" : full.investment_start_date;
-                }
-            }, {
-                width: "15%",
-                "mRender": function (data, type, full) {
-                    return (full.investment_mature_date === "") ? "N/A" : full.investment_mature_date;
-                }
-            },
-            {
-                width: "15%",
-                "mRender": function (data, type, full) {
-                    return `<div class="dropdown dropleft">
-                        <i class="fa fa-ellipsis-v" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        </i> 
-                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        <a class="dropdown-item" href="./investment-transactions?id=${full.ID}">View Transaction</a>
-                        <button class="dropdown-item" id="idButtonMandate" data-toggle="modal" data-target="#viewMandateModal">Set Mandate</button>
-                        </div>
-                      </div>`;
-                }
+            width: "auto",
+            "mRender": function (data, type, full) {
+                return `<a class="btn btn-link" href="./investment-transactions?id=${full.ID}">${full.code}</a>`;
             }
+        },
+        {
+            data: "client",
+            width: "25%"
+        },
+        {
+            data: "investment",
+            width: "15%"
+        },
+        {
+            data: "amount",
+            width: "15%"
+        },
+        {
+            width: "15%",
+            "mRender": function (data, type, full) {
+                return (full.investment_start_date === "") ? "N/A" : full.investment_start_date;
+            }
+        }, {
+            width: "15%",
+            "mRender": function (data, type, full) {
+                return (full.investment_mature_date === "") ? "N/A" : full.investment_mature_date;
+            }
+        },
+        {
+            width: "auto",
+            "mRender": function (data, type, full) {
+                return (isMatureList === 0) ? `
+            <div class="btn-group">
+                    <button class="btn btn-primary btn-sm" type="button">
+                        more
+                    </button>
+                <button type="button" class="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span class="sr-only">Toggle Dropdown</span>
+                </button>
+                <div class="dropdown-menu">
+                    <a class="dropdown-item" href="./investment-transactions?id=${full.ID}">View Transaction</a>
+                    <button class="dropdown-item" id="idButtonMandate" data-toggle="modal" data-target="#viewMandateModal">Set Mandate</button>
+                </div>
+            </div>`: 
+            `<input type="checkbox" id="chkBoxSelectItem" ${(status) ? 'checked' : ''}>`;
+            }
+        }
         ]
     });
 }
-$(document).ready(function () {});
+
+
+
+function onCloseInvestment() {
+    let items = {
+        value: selectedItems
+    }
+    $.ajax({
+        url: `investment-txns/close-mature-investments`,
+        'type': 'post',
+        'data': items,
+        'success': function (data) {
+            $('#wait').hide();
+            table.ajax.reload(null, false);
+        },
+        'error': function (err) {
+            $('#wait').hide();
+        }
+    });
+}
+
+$(document).ready(function () { });

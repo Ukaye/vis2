@@ -2,128 +2,55 @@ $(document).ready(function () {
     component_initializer();
     getCountries();
 });
-
+var productsControl = {};
+var products = [];
 function component_initializer() {
-    // $('#investment_product').select2({
-    //     allowClear: true,
-    //     placeholder: "Search by Product Code/Name",
-    //     ajax: {
-    //         url: "/investment-products/all",
-    //         dataType: "json",
-    //         delay: 250,
-    //         data: function (params) {
-    //             params.page = (params.page === undefined || params.page === null) ? 0 : params.page;
-    //             return {
-    //                 limit: 10,
-    //                 page: params.page,
-    //                 search_string: params.term
-    //             };
-    //         },
-    //         processResults: function (data, params) {
-    //             params.page = params.page || 1;
-    //             if (data.error) {
-    //                 return {
-    //                     results: []
-    //                 };
-    //             } else {
-    //                 return {
-    //                     results: data.map(function (item) {
-    //                         return {
-    //                             id: item.ID,
-    //                             text: `${item.name} (${item.code})`
+    productsControl = $('#investment_product').select2({
+        allowClear: true,
+        placeholder: "Search by Product Code/Name",
+        ajax: {
+            url: "/investment-products/all/1",
+            dataType: "json",
+            delay: 250,
+            data: function (params) {
+                params.page = (params.page === undefined || params.page === null) ? 0 : params.page;
+                return {
+                    limit: 10,
+                    page: params.page,
+                    search_string: params.term
+                };
+            },
+            processResults: function (data, params) {
+                if (data.length > 0) {
+                    products.push(...data);
+                }
+                params.page = params.page || 1;
+                if (data.error) {
+                    return {
+                        results: []
+                    };
+                } else {
+                    return {
+                        results: data.map(function (item) {
+                            return {
+                                id: item.ID,
+                                text: `${item.name} (${item.code})`,
+                                min: item.investment_min,
+                                max: item.investment_max,
+                                min_term: item.min_term,
+                                max_term: item.max_term
 
-    //                         };
-    //                     }),
-    //                     pagination: {
-    //                         more: params.page * 10
-    //                     }
-    //                 };
-    //             }
-    //         },
-    //         cache: true
-    //     }
-    // });
-
-    // $('#investment_product_with_holdings').select2({
-    //     allowClear: true,
-    //     placeholder: "Search by Product Code/Name",
-    //     ajax: {
-    //         url: "/investment-products/all",
-    //         dataType: "json",
-    //         delay: 250,
-    //         data: function (params) {
-    //             params.page = (params.page === undefined || params.page === null) ? 0 : params.page;
-    //             return {
-    //                 limit: 10,
-    //                 page: params.page,
-    //                 search_string: params.term
-    //             };
-    //         },
-    //         processResults: function (data, params) {
-    //             params.page = params.page || 1;
-    //             if (data.error) {
-    //                 return {
-    //                     results: []
-    //                 };
-    //             } else {
-    //                 return {
-    //                     results: data.map(function (item) {
-    //                         return {
-    //                             id: item.ID,
-    //                             text: `${item.name} (${item.code})`
-
-    //                         };
-    //                     }),
-    //                     pagination: {
-    //                         more: params.page * 10
-    //                     }
-    //                 };
-    //             }
-    //         },
-    //         cache: true
-    //     }
-    // });
-
-    // $('#investment_product_vat').select2({
-    //     allowClear: true,
-    //     placeholder: "Search by Product Code/Name",
-    //     ajax: {
-    //         url: "/investment-products/all",
-    //         dataType: "json",
-    //         delay: 250,
-    //         data: function (params) {
-    //             params.page = (params.page === undefined || params.page === null) ? 0 : params.page;
-    //             return {
-    //                 limit: 10,
-    //                 page: params.page,
-    //                 search_string: params.term
-    //             };
-    //         },
-    //         processResults: function (data, params) {
-    //             console.log(data);
-    //             params.page = params.page || 1;
-    //             if (data.error) {
-    //                 return {
-    //                     results: []
-    //                 };
-    //             } else {
-    //                 return {
-    //                     results: data.map(function (item) {
-    //                         return {
-    //                             id: item.ID,
-    //                             text: `${item.name} (${item.code})`
-
-    //                         };
-    //                     }),
-    //                     pagination: {
-    //                         more: params.page * 10
-    //                     }
-    //                 };
-    //             }
-    //         },
-    //         cache: true
-    //     }
-    // });
+                            };
+                        }),
+                        pagination: {
+                            more: params.page * 10
+                        }
+                    };
+                }
+            },
+            cache: true
+        }
+    });
 
     getExistingConfigs();
 }
@@ -173,14 +100,12 @@ function getExistingConfigs() {
                     $('#idWithHoldingTaxMethod').val(data.withHoldingTaxChargeMethod);
 
 
-                // option = new Option(`${data.vatAcctName} (${data.vatCode})`, data.vatProductId, true, true);
-                // $('#investment_product_vat').append(option).trigger('change');
-                // option = new Option(`${data.withHoldingsAcctName} (${data.withHoldingCode})`, data.withHoldingsProductId, true, true);
-                // $('#investment_product_with_holdings').append(option).trigger('change');
-
                 $('#idTransferCharge').val(data.transferValue);
                 if (data.transferChargeMethod !== null)
                     $('#idTransferMethod').val(data.transferChargeMethod);
+
+                $("#investment_product").val(null).trigger('change');
+                $("#investment_product").append(new Option(`${data.productName} (${data.code})`, data.walletProductId, true, true)).trigger('change');
             }
         },
         'error': function (err) {
@@ -311,7 +236,6 @@ function saveOrganisationData() {
         stampPath: (stampPath === '') ? selectedConfig.stampPath : stampPath,
         signaturePath: (signaturePath === '') ? selectedConfig.signaturePath : signaturePath,
         investment_termination_days: $('#termination_no_day').val(),
-        productId: $('#investment_product').on('select2:select').val(),
         createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
         vat: $('#idVatCharge').val(),
         withHoldingTax: $('#idWithHoldingTaxCharge').val(),
@@ -320,7 +244,8 @@ function saveOrganisationData() {
         // withHoldingProductId: $('#investment_product_with_holdings').on('select2:select').val(),
         // vatProductId: $('#investment_product_vat').on('select2:select').val(),
         transferValue: $('#idTransferCharge').val(),
-        transferChargeMethod: $('#idTransferMethod').val()
+        transferChargeMethod: $('#idTransferMethod').val(),
+        walletProductId: $('#investment_product').on('select2:select').val()
     };
 
     $.ajax({
