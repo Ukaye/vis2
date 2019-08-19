@@ -16,7 +16,16 @@ function getStatements(){
 }
 
 $('#statement').change((e) => {
-    getPayments(e.target.value);
+    if (e.target.value === 'remita') {
+        $('#findMatches').hide();
+        $('#findReversals').hide();
+        $('#removeDebits').hide();
+    } else {
+        $('#findMatches').show();
+        $('#findReversals').show();
+        $('#removeDebits').show();
+    }
+    getInvoices(e.target.value);
 });
 
 
@@ -29,7 +38,7 @@ let allInvoices = [],
     unmatchedInvoices = [],
     unmatchedPayments = [];
 
-function getInvoices(){
+function getInvoices(id){
     $('#wait').show();
     $.ajax({
         type: 'GET',
@@ -40,7 +49,7 @@ function getInvoices(){
             $('#invoices').html('');
             unmatchedInvoices = [];
             selectedInvoices = [];
-            getPayments();
+            getPayments(id);
             $.each(response, function (key, val) {
                 displayInvoice(val);
             });
@@ -81,7 +90,17 @@ function displayInvoice(val) {
 
 function getPayments(id){
     let url = '/collection/bulk_upload';
-    if (id && id !== '0') url = url.concat(`?history=${id}`);
+    if (id) {
+        switch (id) {
+            case '0':
+                break;
+            case 'remita':
+                url = '/remita/collection/payments/get';
+                break;
+            default:
+                url = url.concat(`?history=${id}`);
+        }
+    }
     $.ajax({
         type: 'GET',
         url: url,
@@ -92,6 +111,8 @@ function getPayments(id){
             unmatchedPayments = [];
             selectedPayments = [];
             $('#wait').hide();
+            if ($('#statement').val() === 'remita')
+                return findRemitaMatches();
             $.each(response, function (key, val) {
                 displayPayment(val);
             });
@@ -142,7 +163,7 @@ function selectInvoice(obj) {
             }
         }
     } else {
-        selectedInvoices.splice(selectedInvoices.findIndex((e) => { return e.ID === invoice.ID; }), 1);
+        selectedInvoices.splice(selectedInvoices.findIndex((e) => { return e.ID === invoice.ID && e.type === invoice.type; }), 1);
     }
 }
 
@@ -177,14 +198,18 @@ function removePayment(obj) {
         .then((yes) => {
             if (yes) {
                 $('#wait').show();
+                let url = `/collection/bulk_upload/record/${payment.ID}`;
+                if ($('#statement').val() === 'remita')
+                    url = `/remita/collection/payment/${payment.ID}`;
                 $.ajax({
-                    'url': `/collection/bulk_upload/record/${payment.ID}`,
+                    'url': url,
                     'type': 'delete',
                     'success': function (data) {
                         $('#wait').hide();
                         if (data.status === 200) {
                             notification('Payment record removed successfully', '', 'success');
                             $(`#payment-${payment.ID}`).remove();
+                            selectedPayments.splice(selectedPayments.findIndex((e) => { return e.ID === pay['ID']; }), 1);
                         } else {
                             console.log(data.error);
                             notification(data.error, '', 'error');
@@ -214,6 +239,8 @@ function validatePayment() {
 
     if (selectedInvoices.length > 1 && overpayment < 0)
         return notification('Part payment is not allowed on multiple invoices!', '', 'warning');
+
+    if ($('#statement').val() === 'remita') return postPayment();
 
     if (selectedInvoices.length === 1 && overpayment > 0) {
         swal({
@@ -248,8 +275,11 @@ function validatePayment() {
 
 function postPayment(escrow) {
     $('#wait').show();
+    let url = '/collection/bulk_upload/confirm-payment';
+    if ($('#statement').val() === 'remita')
+        url = '/collection/remita/confirm-payment';
     $.ajax({
-        'url': '/collection/bulk_upload/confirm-payment',
+        'url': url,
         'type': 'post',
         'data': {
             escrow: escrow,
@@ -628,8 +658,11 @@ function removePayments() {
         .then((yes) => {
             if (yes) {
                 $('#wait').show();
+                let url = '/collection/bulk_upload/records';
+                if ($('#statement').val() === 'remita')
+                    url = '/remita/collection/payments';
                 $.ajax({
-                    'url': `/collection/bulk_upload/records`,
+                    'url': url,
                     'type': 'delete',
                     'data': {records: selectedPayments},
                     'success': function (data) {
@@ -649,4 +682,81 @@ function removePayments() {
                 });
             }
         });
+}
+
+function findRemitaMatches() {
+    $('#invoices').html('');
+    $('#payments').html('');
+    matchedPayments = [];
+    unmatchedPayments = [];
+    unmatchedInvoices = allInvoices;
+    $('#wait').show();
+    for (let i=0; i<allPayments.length; i++) {
+        let payment = allPayments[i],
+            check = $.grep(allInvoices, (e) => {return e.applicationID === payment.applicationID});
+        if (!check[0]) {
+            unmatchedPayments.push(payment);
+        } else {
+            let checkMatchedPayments = ($.grep(matchedPayments, (e) => { return e.ID === payment.ID }))[0];
+            if (!checkMatchedPayments) {
+                matchedPayments.push(payment);
+                let type = '<span class="badge badge-success">CREDIT</span>';
+                $('#payments').append(`
+                        <li id="payment-${payment.ID}" class="ui-state-default payment-match">
+                            <div class="row">
+                                <div class="col-lg-10">
+                                    <p><strong>Amount: </strong>${numberToCurrencyFormatter_(payment.credit)}</p>
+                                    <p><strong>Date: </strong>${payment.value_date} ${type}</p>
+                                    <p><strong>Description: </strong>${payment.description}</p>
+                                </div>
+                                <div class="col-lg-2">
+                                    <p><input class="form-control" type="checkbox" onclick="selectPayment('${encodeURIComponent(JSON.stringify(payment))}')" /></p>
+                                    <p><a class="btn btn-danger btn-sm" onclick="removePayment('${encodeURIComponent(JSON.stringify(payment))}')">
+                                        <i class="fa fa-trash"></i></a></p>
+                                </div>
+                            </div>
+                        </li>`);
+                for (let j=0; j<check.length; j++) {
+                    let status,
+                        invoice = check[j];
+                    switch (invoice.payment_status) {
+                        case 0: {
+                            status = '<span class="badge badge-danger">Not Paid</span>';
+                            break;
+                        }
+                        case 1: {
+                            status = '<span class="badge badge-warning">Part Paid</span>';
+                            break;
+                        }
+                    }
+                    $('#invoices').append(`
+                        <li id="invoice-${invoice.type}-${invoice.ID}" class="ui-state-default invoice-match">
+                            <div class="row">
+                                <div class="col-lg-9">
+                                    <p><strong>Name: </strong>${invoice.client} <strong>#INV-${padWithZeroes(invoice.ID, 6)}</strong></p>
+                                    <p><strong>Date: </strong>${invoice.payment_collect_date} (${invoice.type}) ${status}</p>
+                                    <p><strong>Balance: </strong>${numberToCurrencyFormatter_(invoice.payment_amount)}
+                                        <small class="text-muted"><strong>Invoice Amt: </strong>${numberToCurrencyFormatter_(invoice.invoice_amount)} 
+                                            <strong>Total Paid: </strong>${numberToCurrencyFormatter_(invoice.total_paid)}
+                                        </small></p>
+                                </div>
+                                <div class="col-lg-3">
+                                    <p><input class="form-control" type="checkbox" onclick="selectInvoice('${encodeURIComponent(JSON.stringify(invoice))}')" /></p>
+                                    <p><a class="btn btn-primary btn-sm" href="/application?id=${invoice.applicationID}">View Loan</a></p>
+                                </div>
+                            </div>
+                        </li>`);
+                    unmatchedInvoices.splice(unmatchedInvoices.findIndex((e) => { return e.ID === invoice.ID; }), 1);
+                    if (j > 0) $('#payments').append('<li class="ui-state-empty"></li>');
+                }
+            }
+        }
+    }
+    for (let i=0; i<unmatchedInvoices.length; i++) {
+        displayInvoice(unmatchedInvoices[i]);
+    }
+    for (let i=0; i<unmatchedPayments.length; i++) {
+        displayPayment(unmatchedPayments[i]);
+    }
+    $('#wait').hide();
 }

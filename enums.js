@@ -18,4 +18,20 @@ enums.COLLECTION_BULK_UPLOAD = {
     }
 };
 
+enums.ENABLE_REMITA = {
+    STATUS: {
+        INACTIVE: 0,
+        ACTIVE: 1
+    }
+};
+
+enums.REMITA_PAYMENT = {
+    STATUS: {
+        INACTIVE: 0,
+        ACTIVE: 1,
+        PART_ASSIGNED: 2,
+        FULL_ASSIGNED: 3
+    }
+};
+
 module.exports = enums;

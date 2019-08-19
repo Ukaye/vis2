@@ -37,6 +37,7 @@ function getApplication(){
             $("#workflow-div-title").text(fullname.toUpperCase());
             if (application.mandateId) {
                 $('#remitaPaymentButton').show();
+                getRemitaSuccessPayments();
                 getRemitaPayments();
                 getMandateStatus();
                 getRemitaLogs();
@@ -54,7 +55,7 @@ function getMandateStatus(){
         'type': 'get',
         'success': function (data) {
             if (!data.data.isActive) {
-                $('#stopMandateBtn').text('MANDATE STOPPED');
+                $('#stopMandateBtn').text('MANDATE INACTIVE');
                 $('#stopMandateBtn').prop('disabled', true);
                 $('#makeRemitaPayment').prop('disabled', true);
                 $('.cancelRemitaPaymentBtn').removeClass('reversePayment');
@@ -296,6 +297,7 @@ function initRepaymentSchedule(application) {
                                     '    </button>\n' +
                                     '    <div class="dropdown-menu">\n' +
                                     '        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#confirmPayment" onclick="confirmPaymentModal('+application.schedule[i - 2]['ID']+')">Confirm Payment</a>\n' +
+                                    '        <a class="dropdown-item" href="#" onclick="selectRemitaModal('+application.schedule[i - 2]['ID']+')">Apply Remita</a>\n' +
                                     '        <div class="dropdown-divider"></div>\n' +
                                     '        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#editSchedule" onclick="editScheduleModal('+application.schedule[i - 2]['ID']+')">Edit Schedule</a>\n' +
                                     '        <a class="dropdown-item" data-toggle="modal" data-target="#invoiceHistory" href="#" onclick="invoiceHistory('+application.schedule[i - 2]['ID']+')">Payment History</a>\n' +
@@ -310,6 +312,7 @@ function initRepaymentSchedule(application) {
                                     '    </button>\n' +
                                     '    <div class="dropdown-menu">\n' +
                                     '        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#confirmPayment" onclick="confirmPaymentModal('+application.schedule[i - 2]['ID']+')">Confirm Payment</a>\n' +
+                                    '        <a class="dropdown-item" href="#" onclick="selectRemitaModal('+application.schedule[i - 2]['ID']+')">Apply Remita</a>\n' +
                                     '        <div class="dropdown-divider"></div>\n' +
                                     '        <a class="dropdown-item" data-toggle="modal" data-target="#invoiceHistory" href="#" onclick="invoiceHistory('+application.schedule[i - 2]['ID']+')">Payment History</a>\n' +
                                     '        <a class="dropdown-item" data-toggle="modal" data-target="#editHistory" href="#" onclick="editHistory('+application.schedule[i - 2]['ID']+')">Edit History</a>\n' +
@@ -367,7 +370,8 @@ function totalActualPayment(a){
     return ((parseFloat(a.actual_payment_amount)+parseFloat(a.actual_interest_amount)+parseFloat(a.actual_fees_amount)+parseFloat(a.actual_penalty_amount)).round(2)).toString();
 }
 
-let invoice_id,
+let remita_id,
+    invoice_id,
     expected_invoice;
 function confirmPaymentModal(id) {
     invoice_id = id;
@@ -387,6 +391,22 @@ function confirmPaymentModal(id) {
     $('#interest').attr({max:invoice.interest_amount});
     $('#principal-payable').text('₦'+(parseFloat(invoice.payment_amount)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
     $('#interest-payable').text('₦'+(parseFloat(invoice.interest_amount)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
+}
+
+function selectRemitaModal(id) {
+    invoice_id = id;
+    $('#selectRemita').modal('show');
+}
+
+function applyRemitaPayment(obj) {
+    $('#selectRemita').modal('hide');
+    let remita = JSON.parse(decodeURIComponent(obj));
+    remita_id = remita.ID;
+    confirmPaymentModal(invoice_id);
+    $('#source').val('remita');
+    $('#source').prop('disabled', true);
+    $('#payment').val(remita.totalAmount);
+    $('#payment').prop('disabled', true);
 }
 
 $('#source').change(function () {
@@ -465,6 +485,7 @@ function confirmPayment() {
         return notification('Insufficient escrow funds ('+parseFloat(application.escrow).round(2)+')','','warning');
     $('#wait').show();
     $('#confirmPayment').modal('hide');
+    if (invoice.payment_source === 'remita' && remita_id) invoice.remitaPaymentID = remita_id;
     updateEscrow(invoice.payment_source, total_payment, function () {
         let overpayment = (payment - (parseFloat(invoice.actual_payment_amount) + parseFloat(invoice.actual_interest_amount))).round(2);
         if (overpayment > 0){
@@ -780,6 +801,9 @@ function makeRemitaPayment() {
             if (yes) {
                 $('#wait').show();
                 let payment = {};
+                payment.client = application.fullname;
+                payment.clientID = application.userID;
+                payment.applicationID = application.ID;
                 payment.mandateId = application.mandateId;
                 payment.fundingAccount = application.payerAccount;
                 payment.fundingBankCode = application.payerBankCode;
@@ -811,10 +835,39 @@ function makeRemitaPayment() {
         });
 }
 
-function getRemitaPayments() {
+function getRemitaSuccessPayments() {
     $.ajax({
         type: 'get',
         url: `/remita/payments/get/${application_id}`,
+        success: function (data) {
+            if (data.status !== 500){
+                $('#remita-success-payments').dataTable().fnClearTable();
+                $.each(data.response, function(k, v){
+                    let table = [
+                        `₦${numberToCurrencyformatter(v.totalAmount)}`,
+                        v.RRR,
+                        v.date_created
+                    ];
+                    if (!v.invoiceID) {
+                        table.push(`<button data-toggle="modal" data-target="#confirmPayment" class="btn btn-success" 
+                            onclick="applyRemitaPayment('${encodeURIComponent(JSON.stringify(v))}')">Click to Apply</button>`);
+                    } else {
+                        table.push(`Applied to INV-${padWithZeroes(v.invoiceID, 6)}`);
+                    }
+                    $('#remita-success-payments').dataTable().fnAddData(table);
+                    $('#remita-success-payments').dataTable().fnSort([[2,'desc']]);
+                });
+            } else {
+                console.log(data.error);
+            }
+        }
+    });
+}
+
+function getRemitaPayments() {
+    $.ajax({
+        type: 'get',
+        url: `/remita/payments/status/get/${application_id}`,
         success: function (data) {
             if (data.status !== 500){
                 $('#remita-total-amount').text(`₦${numberToCurrencyformatter(data.response.totalAmount || 0)}`);
@@ -855,12 +908,12 @@ function getRemitaLogs() {
                     let table = [
                         `₦${numberToCurrencyformatter(v.totalAmount)}`,
                         v.RRR || 'N/A',
-                        v.transactionRef || 'N/A',
                         v.date_created,
+                        v.initiator,
                         JSON.parse(v.response).status
                     ];
                     $('#remita-logs').dataTable().fnAddData(table);
-                    $('#remita-logs').dataTable().fnSort([[4,'desc']]);
+                    $('#remita-logs').dataTable().fnSort([[2,'desc']]);
                 });
             } else {
                 console.log(data.error);
