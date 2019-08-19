@@ -188,6 +188,8 @@ function getInvestmentProducts(id) {
                     true : false));
                 $('#chk_can_terminate').attr('checked', ((product_obj.canTerminate) ?
                     true : false));
+                $('#walletApprovalChkBox').attr('checked', ((product_obj.isWalletApproval) ?
+                    true : false));
                 $('#min_term').val(product_obj.min_term);
                 $('#max_term').val(product_obj.max_term);
                 $('#premature_interest_rate').val(product_obj.premature_interest_rate);
@@ -483,12 +485,12 @@ function set_investment_product() {
     product_obj.name = $('#product_name').val();
     product_obj.investment_max = $('#product_investment_amount_max').val();
     product_obj.investment_min = $('#product_investment_amount_min').val();
-    product_obj.freq_withdrawal = parseInt($('#withdrawal_conditions_value').val());
+    product_obj.freq_withdrawal = ($('#withdrawal_conditions_value').val() !== '') ? parseInt($('#withdrawal_conditions_value').val()) : 0;
     product_obj.saving_fees = $('#saving_fees').val();
     product_obj.saving_charge_opt = $('#opt_on_deposit').val();
     product_obj.withdrawal_fees = $('#withdrawal_charge_freq').val();
     product_obj.withdrawal_freq_duration = $('#withdrawal_charge_duration').val();
-    product_obj.minimum_bal = $('#minimum_bal').val();
+    product_obj.minimum_bal = ($('#minimum_bal').val() !=='') ? $('#minimum_bal').val() : '0';
     product_obj.code = $('#product_code').val();
     product_obj.interest_rate = $('#interest_rate').val();
     product_obj.interest_disbursement_time = $('#condition_for_interest').val();
@@ -515,7 +517,7 @@ function set_investment_product() {
 
     product_obj.canTerminate = $('#chk_can_terminate').is(':checked') ? 1 : 0;
     product_obj.chkEnforceCount = $('#chk_enforce_count').is(':checked') ? 1 : 0;
-
+    product_obj.isWalletApproval = $('#walletApprovalChkBox').is(':checked') ? 1 : 0;
     if (product_obj.code !== '' && product_obj.name !== '' && product_obj.minimum_bal !== '') {
         if (product_obj.ID === undefined) {
             $.ajax({

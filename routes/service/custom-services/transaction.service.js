@@ -76,191 +76,237 @@ router.get('/get-product-configs/:id', function (req, res, next) {
     })
 });
 
+function organisationSettings(HOST) {
+    return new Promise((resolve, reject) => {
+        let query = `SELECT c.*, p.min_days_termination, p.name as productName, p.code FROM investment_config c
+                    left join investment_products p on p.ID = c.walletProductId ORDER BY ID DESC LIMIT 1`;
+        let endpoint = '/core-service/get';
+        let url = `${HOST}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(response => {
+            resolve(response.data[0].walletProductId);
+        }, err => {
+            resolve(0);
+        })
+    });
+}
+
+
 router.post('/create', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     var data = req.body
     const dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let refId = moment().utcOffset('+0100').format('x');
-    computeTotalBalance(data.clientId, data.investmentId, HOST).then(totalBalance_ => {
-        let total = (data.isWallet.toString() === '1') ? totalBalance_.currentWalletBalance : totalBalance_.currentAcctBalance;
-        let inv_txn = {
-            txn_date: (data.txn_date !== undefined) ? data.txn_date : moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-            description: (data.isPaymentMadeByWallet !== undefined && data.isPaymentMadeByWallet === '1' && data.is_capital === '1') ? 'Opening balance from wallet' : data.description,
-            amount: Number(data.amount.split(',').join('')).toFixed(2),
-            is_credit: data.is_credit,
-            created_date: dt,
-            balance: Number(total).toFixed(2),
-            is_capital: 0,
-            ref_no: (data.isReversedTxn === '1') ? `${data.ref_no}-R` : refId,
-            parentTxnId: data.parentTxnId,
-            isReversedTxn: data.isReversedTxn,
-            investmentId: data.investmentId,
-            createdBy: data.createdBy,
-            clientId: data.clientId,
-            isMoveFundTransfer: data.isMoveFundTransfer,
-            isWithdrawal: data.isWithdrawal,
-            isDeposit: data.isDeposit,
-            isTransfer: data.isTransfer,
-            beneficialInvestmentId: data.beneficialInvestmentId,
-            isInvestmentTerminated: data.isInvestmentTerminated,
-            isForceTerminate: data.isForceTerminate,
-            expectedTerminationDate: data.expectedTerminationDate,
-            isWallet: data.isWallet,
-            isPaymentMadeByWallet: (data.isWallet === '1') ? 0 : ((data.isPaymentMadeByWallet === '') ? 0 : data.isPaymentMadeByWallet),
-            isInvestmentMatured: (data.isInvestmentMatured === undefined) ? 0 : data.isInvestmentMatured
-        };
-        query = `INSERT INTO investment_txns SET ?`;
-        endpoint = `/core-service/post?query=${query}`;
-        url = `${HOST}${endpoint}`;
-        axios.post(url, inv_txn)
-            .then(function (_response) {
-                if (_response.data.status === undefined) {
-                    query = `SELECT * FROM investment_product_requirements
-                            WHERE productId = ${data.productId} AND operationId = ${(data.isWallet === '0') ? data.operationId : 0} AND status = 1`;
-                    endpoint = "/core-service/get";
-                    url = `${HOST}${endpoint}`;
-                    axios.get(url, {
-                        params: {
-                            query: query
-                        }
-                    })
-                        .then(function (response2) {
-                            if (response2.data.length > 0) {
-                                let result = response2.data[0];
-                                let pasrsedData = JSON.parse(result.roleId);
-                                let jsonPriority = JSON.parse(result.priority);
-                                jsonPriority = (jsonPriority === null) ? [] : jsonPriority;
-                                pasrsedData.map(role => {
+    organisationSettings(HOST).then(config => {
+        data.productId = (data.isWallet === '1') ? config : data.productId;
+        computeTotalBalance(data.clientId, data.investmentId, HOST).then(totalBalance_ => {
+            let total = (data.isWallet.toString() === '1') ? totalBalance_.currentWalletBalance : totalBalance_.currentAcctBalance;
+            let inv_txn = {
+                txn_date: (data.txn_date !== undefined) ? data.txn_date : moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                description: (data.isPaymentMadeByWallet !== undefined && data.isPaymentMadeByWallet === '1' && data.is_capital === '1') ? 'Opening balance from wallet' : data.description,
+                amount: Number(data.amount.split(',').join('')).toFixed(2),
+                is_credit: data.is_credit,
+                created_date: dt,
+                balance: Number(total).toFixed(2),
+                is_capital: 0,
+                ref_no: (data.isReversedTxn === '1') ? `${data.ref_no}-R` : refId,
+                parentTxnId: data.parentTxnId,
+                isReversedTxn: data.isReversedTxn,
+                investmentId: data.investmentId,
+                createdBy: data.createdBy,
+                clientId: data.clientId,
+                isMoveFundTransfer: data.isMoveFundTransfer,
+                isWithdrawal: data.isWithdrawal,
+                isDeposit: data.isDeposit,
+                isTransfer: data.isTransfer,
+                beneficialInvestmentId: data.beneficialInvestmentId,
+                isInvestmentTerminated: data.isInvestmentTerminated,
+                isForceTerminate: data.isForceTerminate,
+                expectedTerminationDate: data.expectedTerminationDate,
+                isWallet: data.isWallet,
+                isPaymentMadeByWallet: (data.isWallet === '1') ? 0 : ((data.isPaymentMadeByWallet === '') ? 0 : data.isPaymentMadeByWallet),
+                isInvestmentMatured: (data.isInvestmentMatured === undefined) ? 0 : data.isInvestmentMatured
+            };
+            query = `INSERT INTO investment_txns SET ?`;
+            endpoint = `/core-service/post?query=${query}`;
+            url = `${HOST}${endpoint}`;
+            axios.post(url, inv_txn)
+                .then(function (_response) {
+                    if (_response.data.status === undefined) {
+                        query = `SELECT * FROM investment_product_requirements
+                                WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
+                        endpoint = "/core-service/get";
+                        url = `${HOST}${endpoint}`;
+                        axios.get(url, {
+                            params: {
+                                query: query
+                            }
+                        })
+                            .then(function (response2) {
+                                if (response2.data.length > 0) {
+                                    let result = response2.data[0];
+                                    let pasrsedData = JSON.parse(result.roleId);
+                                    let jsonPriority = JSON.parse(result.priority);
+                                    jsonPriority = (jsonPriority === null) ? [] : jsonPriority;
+                                    pasrsedData.map(role => {
+                                        let invOps = {
+                                            investmentId: data.investmentId,
+                                            operationId: data.operationId,
+                                            roleId: role,
+                                            isAllRoles: result.isAllRoles,
+                                            createdAt: dt,
+                                            updatedAt: dt,
+                                            createdBy: data.createdBy,
+                                            txnId: _response.data.insertId,
+                                            method: 'APPROVAL'
+                                        };
+                                        if (jsonPriority.length > 0) {
+                                            const check = jsonPriority.filter(x => x.id.toString() === role.toString());
+                                            if (check.length > 0) {
+                                                invOps.priority = JSON.stringify(check);
+                                            }
+                                        }
+
+                                        query = `INSERT INTO investment_op_approvals SET ?`;
+                                        endpoint = `/core-service/post?query=${query}`;
+                                        url = `${HOST}${endpoint}`;
+                                        axios.post(url, invOps).then(p => {
+                                        }, er22 => { });
+
+                                    });
+                                } else {
                                     let invOps = {
                                         investmentId: data.investmentId,
                                         operationId: data.operationId,
-                                        roleId: role,
-                                        isAllRoles: result.isAllRoles,
+                                        roleId: '',
                                         createdAt: dt,
                                         updatedAt: dt,
                                         createdBy: data.createdBy,
                                         txnId: _response.data.insertId,
                                         method: 'APPROVAL'
                                     };
-                                    if (jsonPriority.length > 0) {
-                                        const check = jsonPriority.filter(x => x.id.toString() === role.toString());
-                                        if (check.length > 0) {
-                                            invOps.priority = JSON.stringify(check);
-                                        }
-                                    }
 
                                     query = `INSERT INTO investment_op_approvals SET ?`;
                                     endpoint = `/core-service/post?query=${query}`;
                                     url = `${HOST}${endpoint}`;
                                     axios.post(url, invOps).then(p => {
                                     }, er22 => { });
+                                }
+                            })
+                            .catch(function (error) {
+                            });
 
-                                });
-                            } else {
-                                let invOps = {
-                                    investmentId: data.investmentId,
-                                    operationId: data.operationId,
-                                    roleId: '',
-                                    createdAt: dt,
-                                    updatedAt: dt,
-                                    createdBy: data.createdBy,
-                                    txnId: _response.data.insertId,
-                                    method: 'APPROVAL'
-                                };
 
-                                query = `INSERT INTO investment_op_approvals SET ?`;
-                                endpoint = `/core-service/post?query=${query}`;
-                                url = `${HOST}${endpoint}`;
-                                axios.post(url, invOps).then(p => {
-                                }, er22 => { });
+                        query = `SELECT * FROM investment_product_reviews
+                                WHERE productId = ${data.productId} AND operationId = ${(data.isWallet === '0') ? data.operationId : 0} AND status = 1`;
+                        endpoint = "/core-service/get";
+                        url = `${HOST}${endpoint}`;
+                        axios.get(url, {
+                            params: {
+                                query: query
                             }
                         })
-                        .catch(function (error) {
-                        });
-
-
-                    query = `SELECT * FROM investment_product_reviews
-                            WHERE productId = ${data.productId} AND operationId = ${(data.isWallet === '0') ? data.operationId : 0} AND status = 1`;
-                    endpoint = "/core-service/get";
-                    url = `${HOST}${endpoint}`;
-                    axios.get(url, {
-                        params: {
-                            query: query
-                        }
-                    })
-                        .then(function (response2) {
-                            if (response2.data.length > 0) {
-                                let result = response2.data[0];
-                                let pasrsedData = JSON.parse(result.roleId);
-                                let jsonPriority = JSON.parse(result.priority);
-                                jsonPriority = (jsonPriority === null) ? [] : jsonPriority;
-                                pasrsedData.map((role) => {
+                            .then(function (response2) {
+                                if (response2.data.length > 0) {
+                                    let result = response2.data[0];
+                                    let pasrsedData = JSON.parse(result.roleId);
+                                    let jsonPriority = JSON.parse(result.priority);
+                                    jsonPriority = (jsonPriority === null) ? [] : jsonPriority;
+                                    pasrsedData.map((role) => {
+                                        let invOps = {
+                                            investmentId: data.investmentId,
+                                            operationId: data.operationId,
+                                            roleId: role,
+                                            isAllRoles: result.isAllRoles,
+                                            createdAt: dt,
+                                            updatedAt: dt,
+                                            createdBy: data.createdBy,
+                                            txnId: _response.data.insertId,
+                                            method: 'REVIEW'
+                                        };
+                                        if (jsonPriority.length > 0) {
+                                            const check = jsonPriority.filter(x => x.id.toString() === role.toString());
+                                            if (check.length > 0) {
+                                                invOps.priority = JSON.stringify(check);
+                                            }
+                                        }
+                                        query = `INSERT INTO investment_op_approvals SET ?`;
+                                        endpoint = `/core-service/post?query=${query}`;
+                                        url = `${HOST}${endpoint}`;
+                                        axios.post(url, invOps).then(p => { }, er22 => {
+                                        });
+                                    });
+                                } else {
                                     let invOps = {
                                         investmentId: data.investmentId,
                                         operationId: data.operationId,
-                                        roleId: role,
-                                        isAllRoles: result.isAllRoles,
+                                        roleId: '',
                                         createdAt: dt,
                                         updatedAt: dt,
                                         createdBy: data.createdBy,
                                         txnId: _response.data.insertId,
                                         method: 'REVIEW'
                                     };
-                                    if (jsonPriority.length > 0) {
-                                        const check = jsonPriority.filter(x => x.id.toString() === role.toString());
-                                        if (check.length > 0) {
-                                            invOps.priority = JSON.stringify(check);
-                                        }
-                                    }
+
                                     query = `INSERT INTO investment_op_approvals SET ?`;
                                     endpoint = `/core-service/post?query=${query}`;
                                     url = `${HOST}${endpoint}`;
                                     axios.post(url, invOps).then(p => { }, er22 => {
                                     });
-                                });
-                            } else {
-                                let invOps = {
-                                    investmentId: data.investmentId,
-                                    operationId: data.operationId,
-                                    roleId: '',
-                                    createdAt: dt,
-                                    updatedAt: dt,
-                                    createdBy: data.createdBy,
-                                    txnId: _response.data.insertId,
-                                    method: 'REVIEW'
-                                };
+                                }
+                            })
+                            .catch(function (error) {
+                            });
 
-                                query = `INSERT INTO investment_op_approvals SET ?`;
-                                endpoint = `/core-service/post?query=${query}`;
-                                url = `${HOST}${endpoint}`;
-                                axios.post(url, invOps).then(p => { }, er22 => {
-                                });
+                        query = `SELECT * FROM investment_product_posts
+                                WHERE productId = ${data.productId} AND operationId = ${(data.isWallet === '0') ? data.operationId : 0} AND status = 1`;
+                        endpoint = "/core-service/get";
+                        url = `${HOST}${endpoint}`;
+                        axios.get(url, {
+                            params: {
+                                query: query
                             }
                         })
-                        .catch(function (error) {
-                        });
+                            .then(function (response2) {
+                                if (response2.data.length > 0) {
+                                    let result = response2.data[0];
+                                    let pasrsedData = JSON.parse(result.roleId);
+                                    let jsonPriority = JSON.parse(result.priority);
+                                    jsonPriority = (jsonPriority === null) ? [] : jsonPriority;
+                                    pasrsedData.map(role => {
+                                        let invOps = {
+                                            investmentId: data.investmentId,
+                                            operationId: data.operationId,
+                                            roleId: role,
+                                            isAllRoles: result.isAllRoles,
+                                            createdAt: dt,
+                                            updatedAt: dt,
+                                            createdBy: data.createdBy,
+                                            txnId: _response.data.insertId,
+                                            method: 'POST'
+                                        };
 
-                    query = `SELECT * FROM investment_product_posts
-                            WHERE productId = ${data.productId} AND operationId = ${(data.isWallet === '0') ? data.operationId : 0} AND status = 1`;
-                    endpoint = "/core-service/get";
-                    url = `${HOST}${endpoint}`;
-                    axios.get(url, {
-                        params: {
-                            query: query
-                        }
-                    })
-                        .then(function (response2) {
-                            if (response2.data.length > 0) {
-                                let result = response2.data[0];
-                                let pasrsedData = JSON.parse(result.roleId);
-                                let jsonPriority = JSON.parse(result.priority);
-                                jsonPriority = (jsonPriority === null) ? [] : jsonPriority;
-                                pasrsedData.map(role => {
+                                        if (jsonPriority.length > 0) {
+                                            const check = jsonPriority.filter(x => x.id.toString() === role.toString());
+                                            if (check.length > 0) {
+                                                invOps.priority = JSON.stringify(check);
+                                            }
+                                        }
+
+                                        query = `INSERT INTO investment_op_approvals SET ?`;
+                                        endpoint = `/core-service/post?query=${query}`;
+                                        url = `${HOST}${endpoint}`;
+                                        axios.post(url, invOps).then(p => { }, er22 => {
+                                        });
+                                    });
+                                } else {
                                     let invOps = {
                                         investmentId: data.investmentId,
                                         operationId: data.operationId,
-                                        roleId: role,
-                                        isAllRoles: result.isAllRoles,
+                                        roleId: '',
                                         createdAt: dt,
                                         updatedAt: dt,
                                         createdBy: data.createdBy,
@@ -268,66 +314,41 @@ router.post('/create', function (req, res, next) {
                                         method: 'POST'
                                     };
 
-                                    if (jsonPriority.length > 0) {
-                                        const check = jsonPriority.filter(x => x.id.toString() === role.toString());
-                                        if (check.length > 0) {
-                                            invOps.priority = JSON.stringify(check);
-                                        }
-                                    }
-
                                     query = `INSERT INTO investment_op_approvals SET ?`;
                                     endpoint = `/core-service/post?query=${query}`;
                                     url = `${HOST}${endpoint}`;
                                     axios.post(url, invOps).then(p => { }, er22 => {
                                     });
-                                });
-                            } else {
-                                let invOps = {
-                                    investmentId: data.investmentId,
-                                    operationId: data.operationId,
-                                    roleId: '',
-                                    createdAt: dt,
-                                    updatedAt: dt,
-                                    createdBy: data.createdBy,
-                                    txnId: _response.data.insertId,
-                                    method: 'POST'
-                                };
+                                }
+                            })
+                            .catch(function (error) {
+                            });
 
-                                query = `INSERT INTO investment_op_approvals SET ?`;
-                                endpoint = `/core-service/post?query=${query}`;
-                                url = `${HOST}${endpoint}`;
-                                axios.post(url, invOps).then(p => { }, er22 => {
-                                });
-                            }
-                        })
-                        .catch(function (error) {
+                        setDocRequirement(HOST, data, _response.data.insertId);
+                        res.send({});
+                    } else {
+                        res.send({
+                            status: 500,
+                            error: '',
+                            response: null
                         });
-
-                    setDocRequirement(HOST, data, _response.data.insertId);
-                    res.send({});
-                } else {
+                    }
+                })
+                .catch(function (error) {
                     res.send({
                         status: 500,
-                        error: '',
+                        error: error,
                         response: null
                     });
-                }
-            })
-            .catch(function (error) {
-                res.send({
-                    status: 500,
-                    error: error,
-                    response: null
                 });
-            });
-    })
-        .catch(function (error) {
+        }).catch(function (error) {
             res.send({
                 status: 500,
                 error: error,
                 response: null
             });
         });
+    }, err => { });
 });
 
 
@@ -422,13 +443,14 @@ router.post('/create-transfers', function (req, res, next) {
                         }
                     }
                 });
+                let sumTotalBalance = parseFloat(Number(total).toFixed(2)) - parseFloat(Number(data.amount.toString().split(',').join('')).toFixed(2));
                 let inv_txn = {
                     txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                     description: `TRANSFER BETWEEN ${(data.creditedClientId !== '') ? 'CLIENTS WALLET' : 'CLIENT AND INVESTMENT ACCOUNT'} Transfer from : ${data.debitedClientName} to ${data.creditedClientName}`,
                     amount: Number(data.amount).toFixed(2),
                     is_credit: 0,
                     created_date: dt,
-                    balance: parseFloat(Number(total).toFixed(2)) - parseFloat(Number(data.amount.toString().split(',').join('')).toFixed(2)),
+                    balance: Number(sumTotalBalance).toFixed(2),
                     is_capital: 0,
                     ref_no: refId,
                     clientId: data.debitedClientId,
@@ -470,13 +492,14 @@ router.post('/create-transfers', function (req, res, next) {
                                             }
                                         });
                                     }
+                                    let _sumTotalBalance = parseFloat(Number(total).toFixed(2)) + parseFloat(Number(data.amount.toString().split(',').join('')).toFixed(2));
                                     let inv_txn = {
                                         txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                         description: `TRANSFER BETWEEN ${(data.creditedClientId !== '') ? 'CLIENTS WALLET' : 'CLIENT AND INVESTMENT ACCOUNT'} Transfer from : ${data.debitedClientName} to ${data.creditedClientName}`,
                                         amount: Number(data.amount).toFixed(2),
                                         is_credit: 1,
                                         created_date: dt,
-                                        balance: parseFloat(Number(total).toFixed(2)) + parseFloat(Number(data.amount.toString().split(',').join('')).toFixed(2)),
+                                        balance: Number(_sumTotalBalance).toFixed(2),
                                         is_capital: 0,
                                         ref_no: refId,
                                         clientId: data.creditedClientId,
@@ -803,69 +826,80 @@ router.post('/posts', function (req, res, next) {
                 if (((counter.data[0].total_postedBy === counter.data[0].total_posted) || (counter.data[0].isOptional > 0) ||
                     (counter.data[0].priorityTotal !== 0 && counter.data[0].priorityTotal === counter.data[0].priorityItemTotal)) && data.status === '1') {
                     let total_bal = 0;
+
+
                     computeTotalBalance(data.clientId, data.investmentId, HOST).then(totalBalance_ => {
-                        getTerminatedOrMaturedInvestment(data.investmentId, HOST).then(invItem => {
-                            updateTerminatedOrMaturedInvestment(invItem.investmentId, HOST).then(updated_payload => {
-                                total_bal = (data.isWallet.toString() === '1') ? totalBalance_.currentWalletBalance : totalBalance_.currentAcctBalance;
-                                let bal = (data.isCredit.toString() === '1') ? (total_bal + parseFloat(data.amount.split(',').join(''))) :
-                                    (total_bal - parseFloat(data.amount.split(',').join('')));
-                                if (data.isInvestmentTerminated.toString() === '0') {
-                                    const updateDate = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                                    query = `UPDATE investment_txns SET isApproved = ${data.status}, 
-                                    updated_date ='${updateDate}', createdBy = ${data.userId},postDone = ${data.status},
-                                    amount = ${Number(data.amount.split(',').join('')).toFixed(2)} , balance ='${Number(bal).toFixed(2)}'
-                                    WHERE ID =${data.txnId}`;
-                                    endpoint = `/core-service/get`;
-                                    url = `${HOST}${endpoint}`;
-                                    axios.get(url, {
-                                        params: {
-                                            query: query
-                                        }
-                                    })
-                                        .then(function (response_) {
-                                            if (data.isReversedTxn === '0') {
-                                                debitWalletTxns(HOST, data).then(payld => {
-                                                    setcharges(data, HOST, false).then(payload => {
-                                                        upFrontInterest(data, HOST).then(payld2 => {
-                                                            res.send(response.data);
-                                                        }, __err => {
-                                                        });
-                                                    }, err => {
-                                                    });
-                                                }, errrr => {
-                                                });
-                                            } else {
-                                                res.send(response_.data);
+                        let cloneData = data;
+                        cloneData.mAmount = totalBalance_.currentAcctBalance;
+                        computeInterestBalance(cloneData, HOST).then(interest_payload => {
+                            getTerminatedOrMaturedInvestment(data.investmentId, HOST).then(invItem => {
+                                updateTerminatedOrMaturedInvestment(invItem.investmentId, HOST, invItem.isInvestmentMatured).then(updated_payload => {
+                                    total_bal = (data.isWallet.toString() === '1') ? totalBalance_.currentWalletBalance : totalBalance_.currentAcctBalance;
+                                    let bal = (data.isCredit.toString() === '1') ? (total_bal + parseFloat(data.amount.split(',').join(''))) :
+                                        (total_bal - parseFloat(data.amount.split(',').join('')));
+                                    let _amountTxn = Number(data.amount.split(',').join('')).toFixed(2);
+                                    if (data.isInvestmentMatured.toString() === '1') {
+                                        bal = '0.00';
+                                        _amountTxn = interest_payload
+                                    }
+                                    if (data.isInvestmentTerminated.toString() === '0') {
+                                        const updateDate = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                                        query = `UPDATE investment_txns SET isApproved = ${data.status}, 
+                                        updated_date ='${updateDate}', createdBy = ${data.userId},postDone = ${data.status},
+                                        amount = ${_amountTxn} , balance ='${Number(bal).toFixed(2)}'
+                                        WHERE ID =${data.txnId}`;
+                                        endpoint = `/core-service/get`;
+                                        url = `${HOST}${endpoint}`;
+                                        axios.get(url, {
+                                            params: {
+                                                query: query
                                             }
+                                        })
+                                            .then(function (response_) {
+                                                if (data.isReversedTxn === '0') {
+                                                    debitWalletTxns(HOST, data).then(payld => {
+                                                        setcharges(data, HOST, false).then(payload => {
+                                                            upFrontInterest(data, HOST).then(payld2 => {
+                                                                res.send(response.data);
+                                                            }, __err => {
+                                                            });
+                                                        }, err => {
+                                                        });
+                                                    }, errrr => {
+                                                    });
+                                                } else {
+                                                    res.send(response_.data);
+                                                }
+                                            }, err => {
+                                                res.send({
+                                                    status: 500,
+                                                    error: err,
+                                                    response: null
+                                                });
+                                            }).catch(function (error) {
+                                                res.send({
+                                                    status: 500,
+                                                    error: error,
+                                                    response: null
+                                                });
+                                            });
+                                    } else if (data.isInvestmentTerminated.toString() === '1') {
+                                        fundBeneficialAccount(data, HOST).then(_payload_2 => {
+                                            res.send({});
                                         }, err => {
                                             res.send({
                                                 status: 500,
                                                 error: err,
                                                 response: null
                                             });
-                                        }).catch(function (error) {
-                                            res.send({
-                                                status: 500,
-                                                error: error,
-                                                response: null
-                                            });
                                         });
-                                } else if (data.isInvestmentTerminated.toString() === '1') {
-                                    fundBeneficialAccount(data, HOST).then(_payload_2 => {
-                                        res.send({});
-                                    }, err => {
-                                        res.send({
-                                            status: 500,
-                                            error: err,
-                                            response: null
-                                        });
-                                    });
-                                }
-                            })
+                                    }
+                                })
+                            });
+
+
+
                         });
-
-
-
                     });
                 } else {
                     if (data.isInvestmentTerminated.toString() === '0') {
@@ -961,7 +995,7 @@ function fundBeneficialAccount(data, HOST) {
                 let inv_txn = {
                     txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                     description: data.description,
-                    amount: data.amount,
+                    amount: Number(parseFloat(data.amount.toString())).toFixed(2),
                     is_credit: 1,
                     isCharge: 0,
                     created_date: dt,
@@ -1070,8 +1104,9 @@ function computeWalletBalance(clientId, HOST) {
             }
         }).then(payload2 => {
             let result = (payload2.data[0] === undefined || payload2.data[0] === null) ? { currentWalletBalance: 0 } : {
-                currentWalletBalance: (payload2.data[0].currentWalletBalance === null) ? 0 : parseFloat(Number(payload2.data[0].currentWalletBalance.toString().split(',').join('')).toFixed(2))
+                currentWalletBalance: (payload2.data[0].currentWalletBalance === null || payload2.data[0].currentWalletBalance === '') ? 0 : parseFloat(Number(payload2.data[0].currentWalletBalance.toString().split(',').join('')).toFixed(2))
             };
+            result = !isNaN(result.currentWalletBalance) ? result : { currentWalletBalance: 0 };
             resolve(result);
         }, err => {
             resolve({});
@@ -1081,7 +1116,7 @@ function computeWalletBalance(clientId, HOST) {
 
 function getTerminatedOrMaturedInvestment(investmentId, HOST) {
     return new Promise((resolve, reject) => {
-        let query = `Select investmentId from investment_txns where investmentId = ${(investmentId === '' || investmentId === undefined || investmentId === null) ? 0 : investmentId} AND (isInvestmentMatured = 1 or isInvestmentTerminated = 1) Limit 1`;
+        let query = `Select investmentId,isInvestmentMatured from investment_txns where investmentId = ${(investmentId === '' || investmentId === undefined || investmentId === null) ? 0 : investmentId} AND (isInvestmentMatured = 1 or isInvestmentTerminated = 1) Limit 1`;
         let endpoint = '/core-service/get';
         let url = `${HOST}${endpoint}`;
         axios.get(url, {
@@ -1100,10 +1135,11 @@ function getTerminatedOrMaturedInvestment(investmentId, HOST) {
     });
 }
 
-function updateTerminatedOrMaturedInvestment(investmentId, HOST) {
+function updateTerminatedOrMaturedInvestment(investmentId, HOST, isInvestmentMatured) {
     return new Promise((resolve, reject) => {
-        if (investmentId !== undefined && investmentId !== null && investmentId !== '') {
-            let query = `UPDATE investments SET isClosed = 1 WHERE ID = ${investmentId}`;
+        if (investmentId !== undefined && investmentId !== null && investmentId !== ''
+            && isInvestmentMatured !== undefined && isInvestmentMatured !== null && isInvestmentMatured !== '') {
+            let query = `UPDATE investments SET isClosed = 1, isMatured = 1 WHERE ID = ${investmentId}`;
             let endpoint = '/core-service/get';
             let url = `${HOST}${endpoint}`;
             axios.get(url, {
@@ -1210,10 +1246,10 @@ async function deductTransferCharge(data, HOST, amount) {
                         let inv_txn = {
                             txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                             description: `FUND TRANSFER CHARGE ON REF.: <strong>${data.refId}</strong>`,
-                            amount: configAmount,
+                            amount: Number(configAmount).toFixed(2),
                             is_credit: 0,
                             created_date: dt,
-                            balance: parseFloat(Number(balTransfer).toFixed(2)),
+                            balance: Number(balTransfer).toFixed(2),
                             is_capital: 0,
                             isCharge: 1,
                             isApproved: 1,
@@ -1263,7 +1299,9 @@ function closeInvestmentWallet(investmentId, HOST) {
         let query = `UPDATE investments SET
         date_modified = '${dt}',
         isTerminated = 1,
-        isInterestCleared = 1
+        isInterestCleared = 1,
+        isMatured = 1,
+        isClosed = 1
         WHERE ID = ${investmentId}`;
         let endpoint = `/core-service/get`;
         let url = `${HOST}${endpoint}`;
@@ -1303,7 +1341,7 @@ function chargeForceTerminate(data, HOST) {
                 v.balance as txnBalance,v.isApproved,v.isInterestCharged,v.is_credit FROM investments t 
                 left join investment_products p on p.ID = t.productId
                 left join investment_txns v on v.investmentId = t.ID
-                WHERE v.investmentId = ${data.investmentId} AND p.status = 1 AND v.isApproved = 1 ORDER BY STR_TO_DATE(v.updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1`;
+                WHERE v.investmentId = ${data.investmentId} AND v.isApproved = 1 ORDER BY STR_TO_DATE(v.updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1`;
                 let endpoint = '/core-service/get';
                 let url = `${HOST}${endpoint}`;
                 axios.get(url, {
@@ -1313,15 +1351,16 @@ function chargeForceTerminate(data, HOST) {
                 }).then(response => {
                     if (response.data.status === undefined) {
                         let configData = response.data[0];
-                        let _charge = (configData.min_days_termination_charge === null) ? 0 : parseFloat(configData.min_days_termination_charge.toString());
+                        let _charge = (configData.min_days_termination_charge === null || configData.min_days_termination_charge === '') ? 0 : parseFloat(configData.min_days_termination_charge.toString());
                         let configAmount = (configData.opt_on_min_days_termination === 'Fixed') ? _charge : ((_charge * balance) / 100);
+                        let sumTotalBalance = balance - configAmount;
                         let inv_txn = {
                             txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                             description: `CHARGE ON INVESTMENT TERMINATION`,
-                            amount: configAmount,
+                            amount: Number(configAmount).toFixed(2),
                             is_credit: 0,
                             created_date: dt,
-                            balance: balance - configAmount,
+                            balance: Number(sumTotalBalance).toFixed(2),
                             is_capital: 0,
                             isCharge: 1,
                             isApproved: 1,
@@ -1365,8 +1404,10 @@ function chargeForceTerminate(data, HOST) {
 
 function getExistingInterests(data, HOST) {
     return new Promise((resolve, reject) => {
-        let query = `SELECT description,amount as txnAmount,balance as txnBalance,isApproved,
-        isInterest,isInterestCharged,is_credit FROM investment_txns
+        let query = `SELECT v.description,v.is_credit,v.amount as txnAmount,v.balance as txnBalance,v.isApproved,
+        v.isInterest,v.isInterestCharged,v.is_credit,p.premature_interest_rate FROM investment_txns v
+        LEFT JOIN investments i on i.ID = v.investmentId
+        left join investment_products p on p.ID = i.productId
         WHERE investmentId = ${data.investmentId} AND isApproved = 1 AND isInterest = 1`;
         let endpoint = `/core-service/get`;
         let url = `${HOST}${endpoint}`;
@@ -1409,19 +1450,24 @@ function reverseEarlierInterest(data, HOST) {
                 let reduceInterestRateApplied = _getExistingInterests.filter(x => x.premature_interest_rate !== '' && x.premature_interest_rate !== undefined && x.premature_interest_rate.toString() !== '0');
                 if (reduceInterestRateApplied.length > 0) {
                     _getExistingInterests.map(item => {
-                        totalInterestAmount += parseFloat(item.txnAmount.toString().split(',').join(''));
+                        if (item.is_credit.toString() === '1') {
+                            totalInterestAmount += parseFloat(item.txnAmount.toString().split(',').join(''));
+                        } else {
+                            totalInterestAmount -= parseFloat(item.txnAmount.toString().split(',').join(''));
+                        }
                     });
                     computeCurrentBalance(data.investmentId, HOST).then(totalBal => {
                         let total = totalBal;
                         let refId = moment().utcOffset('+0100').format('x');
+                        let sumTotalBalance = total - parseFloat(Number(totalInterestAmount).toFixed(2));
                         inv_txn = {
                             txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                             description: 'Reverse: ' + 'Interest on investment',
                             amount: Number(totalInterestAmount).toFixed(2),
                             is_credit: 0,
-                            isCharge: 1,
+                            isCharge: 0,
                             created_date: dt,
-                            balance: total - parseFloat(Number(totalInterestAmount).toFixed(2)),
+                            balance: Number(sumTotalBalance).toFixed(2),
                             is_capital: 0,
                             isApproved: 1,
                             postDone: 1,
@@ -1445,7 +1491,6 @@ function reverseEarlierInterest(data, HOST) {
                                 }
                                 let totalInvestedAmount = total - totalInterestAmount;
 
-
                                 let interestInDays = parseFloat(_getProductConfigInterests.premature_interest_rate) / daysInYear;
                                 let SI = (totalInvestedAmount * interestInDays) / 100;
                                 let _amount = parseFloat(Number(SI * 100) / 100).toFixed(2);
@@ -1456,6 +1501,7 @@ function reverseEarlierInterest(data, HOST) {
                                 );
                                 let interestAmount = diffInDays * _amount;
                                 refId = moment().utcOffset('+0100').format('x');
+                                let sumTotalBalance = totalInvestedAmount + interestAmount;
                                 inv_txn = {
                                     txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                     description: 'Investment termination interest',
@@ -1463,7 +1509,7 @@ function reverseEarlierInterest(data, HOST) {
                                     is_credit: 1,
                                     isCharge: 1,
                                     created_date: dt,
-                                    balance: totalInvestedAmount + interestAmount,
+                                    balance: Number(sumTotalBalance).toFixed(2),
                                     is_capital: 0,
                                     isApproved: 1,
                                     postDone: 1,
@@ -1488,7 +1534,7 @@ function reverseEarlierInterest(data, HOST) {
                                         let inv_txn = {
                                             txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                             description: `CHARGE ON TERMINATION OF INVESTMENT`,
-                                            amount: configAmount,
+                                            amount: Number(configAmount).toFixed(2),
                                             is_credit: 0,
                                             created_date: dt,
                                             balance: Number(sumBalance).toFixed(2),
@@ -1544,7 +1590,6 @@ function reverseEarlierInterest(data, HOST) {
                                                                         let wBalance = __balance.currentWalletBalance;
                                                                         let wResult = Number(parseFloat(result.toString())).toFixed(2);
                                                                         let _totalBalance = wBalance + parseFloat(wResult.toString());
-
                                                                         inv_txn = {
                                                                             txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                                                             description: `WALLET FUNDED BY TERMINATING INVESTMENT`,
@@ -1610,7 +1655,7 @@ function reverseEarlierInterest(data, HOST) {
                         let inv_txn = {
                             txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                             description: `CHARGE ON TERMINATION OF INVESTMENT`,
-                            amount: configAmount,
+                            amount: Number(configAmount).toFixed(2),
                             is_credit: 0,
                             created_date: dt,
                             balance: Number(sumBalance2).toFixed(2),
@@ -1667,7 +1712,7 @@ function reverseEarlierInterest(data, HOST) {
                                                         amount: wResult,
                                                         is_credit: 1,
                                                         created_date: dt,
-                                                        balance: _totalBalance,
+                                                        balance: Number(_totalBalance).toFixed(2),
                                                         is_capital: 0,
                                                         isCharge: 0,
                                                         isApproved: 1,
@@ -2709,14 +2754,14 @@ async function computeInterestTxns(HOST, data) {
                             if (payload.data[0].interest_moves_wallet === 1) {
                                 let payload3 = await sumAllWalletInvestmentTxns(HOST, payload.data[0].clientId);
                                 bal_ = payload3.data[0].total + (payload1.data[0].total + parseFloat(Number(_amount).toFixed(2)));
-
+                                let amountValue = payload1.data[0].total + parseFloat(Number(_amount).toFixed(2));
                                 let inv_txn = {
                                     txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                     description: `Balance ${payload3.data[0].total + (payload1.data[0].total + parseFloat(Number(_amount).toFixed(2)))} @${formatedDate}`,
-                                    amount: payload1.data[0].total + parseFloat(Number(_amount).toFixed(2)),
+                                    amount: Number(amountValue).toFixed(2),
                                     is_credit: 1,
                                     created_date: dt,
-                                    balance: bal_,
+                                    balance: Number(bal_).toFixed(2),
                                     is_capital: 0,
                                     isCharge: 0,
                                     isApproved: 1,
@@ -2752,13 +2797,14 @@ async function computeInterestTxns(HOST, data) {
                                 });
                             } else {
                                 let _amt = parseFloat(payload1.data[0].total.toString()) + parseFloat(_amount.toString());
+                                let sumTotalBalance = totalInvestedAmount + (payload1.data[0].total + parseFloat(Number(_amount).toFixed(2)));
                                 let inv_txn = {
                                     txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                     description: `Investment interest@ ${formatedDate}`,
                                     amount: Number(_amt).toFixed(2),
                                     is_credit: 1,
                                     created_date: dt,
-                                    balance: totalInvestedAmount + (payload1.data[0].total + parseFloat(Number(_amount).toFixed(2))),
+                                    balance: Number(sumTotalBalance).toFixed(2),
                                     is_capital: 0,
                                     isCharge: 0,
                                     isApproved: 1,
@@ -2869,7 +2915,7 @@ router.get('/client-wallets/:id', function (req, res, next) {
     left join clients c on i.clientId = c.ID
     left join users u on u.ID = v.createdBy
     left join investment_products p on i.productId = p.ID
-    WHERE v.isWallet = 1 AND v.clientId = ${req.params.id} ORDER BY STR_TO_DATE(v.updated_date, '%Y-%m-%d %l:%i:%s %p') LIMIT ${limit} OFFSET ${offset}`;
+    WHERE v.isWallet = 1 AND v.clientId = ${req.params.id} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     var data = [];
@@ -3150,6 +3196,134 @@ router.get('/check-reverse-txns/:id', function (req, res, next) {
     });
 });
 
+router.post('/close-mature-investments', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    const _data = req.body;
+    for (let index = 0; index < _data.value.length; index++) {
+        const data = _data.value[index];
+        data.investmentId = data.ID;
+        setTimeout(() => {
+            setInvestmentInterestBalance(data, HOST).then(payload => {
+                computeWalletBalance(data.clientId, HOST).then(walletBal => {
+                    const balTotal = parseFloat(walletBal.currentWalletBalance.toString()) + parseFloat(payload.toString());
+                    let inv_txn = {
+                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                        description: `MOVE ${data.code} INVESTMENT FUND TO CLIENT'S WALLET`,
+                        amount: Number(payload).toFixed(2),
+                        is_credit: 1,
+                        created_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                        balance: Number(balTotal).toFixed(2),
+                        is_capital: 0,
+                        ref_no: moment().utcOffset('+0100').format('x'),
+                        clientId: data.clientId,
+                        createdBy: data.createdBy,
+                        isWallet: 1,
+                        isCharge: 0,
+                        isApproved: 1,
+                        postDone: 1,
+                        reviewDone: 1,
+                        approvalDone: 1,
+                        updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
+                    };
+                    setInvestmentTxns(HOST, inv_txn).then(payload => {
+                        let inv_txn2 = {
+                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                            description: `MOVE INVESTMENT FUND TO CLIENT'S WALLET`,
+                            amount: Number(balTotal).toFixed(2),
+                            is_credit: 0,
+                            created_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                            balance: '0.00',
+                            is_capital: 0,
+                            ref_no: moment().utcOffset('+0100').format('x'),
+                            clientId: data.clientId,
+                            createdBy: data.createdBy,
+                            investmentId: data.ID,
+                            isApproved: 1,
+                            postDone: 1,
+                            reviewDone: 1,
+                            approvalDone: 1,
+                            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
+                        };
+                        setInvestmentTxns(HOST, inv_txn2).then(payload__ => {
+                            closeInvestmentWallet(data.investmentId, HOST).then(payload2 => {
+                                if (index + 1 === _data.value.length)
+                                    res.send({});
+                            });
+                        });
+                    });
+                });
+            });
+        }, 1000);
+    }
+});
 
+
+function setInvestmentInterestBalance(data, HOST) {
+    return new Promise((resolve, reject) => {
+        let totalInterestedAmount = 0;
+        getExistingInterests(data, HOST).then(payload => {
+            if (payload.length > 0 && payload[0].txnAmount !== undefined) {
+                payload.map(x => {
+                    let val = x.txnAmount.split(',').join('');
+                    if (x.is_credit.toString() === '1') {
+                        totalInterestedAmount += parseFloat(val);
+                    } else {
+                        totalInterestedAmount -= parseFloat(val);
+                    }
+                });
+            }
+            let investedAmount = parseFloat(data.amount.split(',').join(''));
+            let rate_ = parseFloat(data.interest_rate.split(',').join('')) / 100;
+            let T = 1 / 365;
+            let interestPerDay = investedAmount * rate_ * T;
+            let numOfDays = differenceInCalendarDays(
+                new Date(data.investment_mature_date),
+                new Date(data.investment_start_date)
+            );
+            numOfDays = (numOfDays < 0) ? 0 : numOfDays;
+            let sumInterestTotal = numOfDays * interestPerDay;
+            let interestBalance = sumInterestTotal - totalInterestedAmount;
+            computeCurrentBalance(data.investmentId, HOST).then(currentInvBalance => {
+                let txnBalance = currentInvBalance + interestBalance;
+                let inv_txn = {
+                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                    description: `INTEREST BALANCE`,
+                    amount: Number(interestBalance).toFixed(2),
+                    is_credit: 1,
+                    created_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                    balance: Number(txnBalance).toFixed(2),
+                    is_capital: 0,
+                    isCharge: 0,
+                    isApproved: 1,
+                    postDone: 1,
+                    reviewDone: 1,
+                    investmentId: data.investmentId,
+                    approvalDone: 1,
+                    ref_no: moment().utcOffset('+0100').format('x'),
+                    updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                    createdBy: data.createdBy
+                };
+                setInvestmentTxns(HOST, inv_txn).then(payload => {
+                    resolve(inv_txn.balance);
+                });
+            });
+        });
+    });
+}
+
+
+
+function computeInterestBalance(data, HOST) {
+    return new Promise((resolve, reject) => {
+        if (data.isInvestmentMatured.toString() === '1') {
+            data.amount = data.mAmount.toString();
+            setInvestmentInterestBalance(data, HOST).then(payload => {
+                resolve(payload);
+            });
+        } else {
+            resolve({});
+        }
+    });
+};
 
 module.exports = router;
