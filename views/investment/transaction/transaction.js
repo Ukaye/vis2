@@ -663,7 +663,10 @@ $("#idChkForceTerminate").on('change',
         } else {
             $('#notice_date').attr('disabled', false);
             let date = new Date();
-            date.setDate(date.getDate() + parseInt(selectedConfig.investment_termination_days.toString()));
+            let extendedDays = (selectedInvestment.min_days_termination !== '') ?
+                parseInt(selectedInvestment.min_days_termination) :
+                parseInt(selectedConfig.investment_termination_days.toString());
+            date.setDate(date.getDate() + extendedDays);
             let minDate = `${date.getUTCFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
             $('#notice_date').attr('min', minDate);
 
@@ -682,10 +685,12 @@ function getConfigItems() {
             $('#wait').hide();
             selectedConfig = data;
             let date = new Date();
-            date.setDate(date.getDate() + parseInt(selectedConfig.investment_termination_days.toString()));
+            let extendedDays = (selectedInvestment.min_days_termination !== '') ?
+                parseInt(selectedInvestment.min_days_termination) :
+                parseInt(selectedConfig.investment_termination_days.toString());
+            date.setDate(date.getDate() + extendedDays);
             let minDate = `${date.getUTCFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
             $('#notice_date').attr('min', minDate);
-
             let endDate = new Date(selectedInvestment.investment_mature_date);
             endDate.setDate(date.getDate() - 1);
             let minDate2 = `${endDate.getUTCFullYear()}-${pad(endDate.getMonth() + 1)}-${pad(endDate.getDate())}`;
