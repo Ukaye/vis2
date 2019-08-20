@@ -520,6 +520,12 @@ app.get('/investment-statements/:id?', requireLogin, function (req, res) {
     });
 });
 
+// app.get('/mature-investments', requireLogin, function (req, res) {
+//     res.sendFile('investment/all-product/all-investment-products.html', {
+//         root: __dirname + '/views'
+//     });
+// });
+
 app.get('/all-commissions', requireLogin, function (req, res) {
     res.sendFile('commission/all-commissions/all-commissions.html', {
         root: __dirname + '/views'

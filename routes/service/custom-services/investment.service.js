@@ -315,11 +315,11 @@ router.get('/get-investments', function (req, res, next) {
     let draw = req.query.draw;
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
-    let query = `SELECT v.ID,v.code,p.name AS investment,c.fullname AS client,amount, investment_start_date, investment_mature_date
-    FROM investments v left join investment_products p on
+    let query = `SELECT v.ID,v.code,p.name AS investment,c.fullname AS client,amount, investment_start_date, 
+    investment_mature_date,v.isMatured FROM investments v left join investment_products p on
     v.productId = p.ID left join clients c on
-    v.clientId = c.ID WHERE upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%" 
-    OR upper(c.fullname) LIKE "${search_string}%" ${order} LIMIT ${limit} OFFSET ${offset}`;
+    v.clientId = c.ID WHERE v.isMatured = 0 AND v.isClosed = 0 AND (upper(v.code) LIKE "${search_string}%" OR upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%" 
+    OR upper(c.fullname) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     var data = [];
@@ -330,8 +330,58 @@ router.get('/get-investments', function (req, res, next) {
     }).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM investments v 
                     left join investment_products p on v.productId = p.ID left join clients c on
-                    v.clientId = c.ID WHERE upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%" 
+                    v.clientId = c.ID WHERE v.isMatured = 0 AND v.isClosed = 0 AND upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%" 
                     OR upper(c.fullname) LIKE "${search_string}%") as recordsFiltered FROM investments`;
+        endpoint = '/core-service/get';
+        url = `${HOST}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(payload => {
+            res.send({
+                draw: draw,
+                recordsTotal: payload.data[0].recordsTotal,
+                recordsFiltered: payload.data[0].recordsFiltered,
+                data: (response.data === undefined) ? [] : response.data
+            });
+        });
+    });
+});
+
+router.get('/get-mature-investments', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let limit = req.query.limit;
+    let offset = req.query.offset;
+    let draw = req.query.draw;
+    let order = req.query.order;
+    let search_string = req.query.search_string.toUpperCase();
+    const date = new Date();
+    const formatedDate = `${date.getUTCFullYear()}-${date.getMonth() + 1}-${date.getUTCDate()}`;
+    let query = `SELECT v.ID,v.code,v.productId,v.clientId,p.interest_rate,p.name AS investment,v.isMatured,
+    c.fullname AS client,amount, investment_start_date, investment_mature_date FROM investments v 
+    left join investment_products p on v.productId = p.ID 
+    left join clients c on v.clientId = c.ID 
+    WHERE v.isMatured = 1 OR v.isClosed = 0 AND v.investment_mature_date <> '' AND 
+    STR_TO_DATE(v.investment_mature_date, '%Y-%m-%d') <= '${formatedDate}' 
+    AND (upper(v.code) LIKE "${search_string}%" OR upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%" 
+    OR upper(c.fullname) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
+    let endpoint = '/core-service/get';
+    let url = `${HOST}${endpoint}`;
+    var data = [];
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM investments v 
+                    left join investment_products p on v.productId = p.ID 
+                    left join clients c on v.clientId = c.ID 
+                    WHERE v.isMatured = 1 OR v.isClosed = 0 AND v.investment_mature_date <> '' 
+                    AND STR_TO_DATE(investment_mature_date, '%Y-%m-%d') <= '${formatedDate}' AND
+                    (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%" 
+                    OR upper(c.fullname) LIKE "${search_string}%")) as recordsFiltered FROM investments
+                    WHERE isMatured = 0 AND isClosed = 0 AND investment_mature_date <> '' AND STR_TO_DATE(investment_mature_date, '%Y-%m-%d') <= '${formatedDate}'`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {
@@ -407,7 +457,7 @@ router.get('/client-investments/:id', function (req, res, next) {
     (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} ORDER BY ID DESC LIMIT 1) as balance,
     v.ID,v.ref_no,c.fullname,v.description,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName, v.isDeny,
     v.approvalDone,v.reviewDone,v.created_date,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.updated_date,p.chkEnforceCount,
-    i.clientId,v.isMoveFundTransfer,v.isWallet,v.isWithdrawal,isDeposit,v.isDocUploaded,p.canTerminate,i.isPaymentMadeByWallet,p.acct_allows_withdrawal,
+    i.clientId,v.isMoveFundTransfer,v.isWallet,v.isWithdrawal,isDeposit,v.isDocUploaded,p.canTerminate,i.isPaymentMadeByWallet,p.acct_allows_withdrawal,p.min_days_termination,
     v.is_capital,v.investmentId,i.isTerminated,i.isMatured,v.isForceTerminate,v.isReversedTxn,v.isInvestmentTerminated,v.expectedTerminationDate,p.inv_moves_wallet,
     v.isPaymentMadeByWallet,p.interest_disbursement_time,p.interest_moves_wallet,i.investment_mature_date,p.interest_rate,v.isInvestmentMatured,i.isClosed,
     i.code as acctNo, v.isTransfer, v.beneficialInvestmentId FROM investment_txns v
@@ -628,10 +678,8 @@ router.get('/remove-mandates/:id', function (req, res, next) {
 
 router.get('/get-configs', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query = `SELECT c.*, p.min_days_termination FROM investment_config c
-                left join investment_products p
-                on p.ID > 1 ORDER BY ID DESC LIMIT 1`;
-
+    let query = `SELECT c.*, p.min_days_termination, p.name as productName, p.code FROM investment_config c
+                left join investment_products p on p.ID = c.walletProductId ORDER BY ID DESC LIMIT 1`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {

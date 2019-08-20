@@ -46,7 +46,7 @@ function decideListOfAccounts(id) {
                     page: params.page,
                     search_string: params.term,
                     clientId: (isWalletPage === 1) ? sURLVariables : selectedInvestment.clientId,
-                    excludedItem: selectedInvestment.investmentId
+                    excludedItem: (isWalletPage === 0) ? selectedInvestment.investmentId : 0
                 };
             },
             processResults: function (data, params) {
@@ -109,50 +109,49 @@ function getInvestmentMaturity() {
                         icon: (selectedInvestment.inv_moves_wallet === 0) ? "warning" : "success"
                     });
                     if (selectedInvestment.isLastMaturedTxnExist === 0) {
-                        if (selectedInvestment.inv_moves_wallet === 1) {
-                            let _mRoleId = [];
-                            let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === 2 && status === 1);
-                            if (mRoleId.length === 0) {
-                                _mRoleId.push({
-                                    roles: "[]",
-                                    operationId: 2
-                                });
-                            } else {
-                                _mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === 2 && status === 1);
-                            }
-                            let investmentOps = {
-                                amount: selectedInvestment.txnCurrentBalance,
-                                description: `MOVE FUND FROM INVESTMENT ACCT. TO CLIENT'S WALLET`,
-                                investmentId: selectedInvestment.investmentId,
-                                is_credit: 0,
-                                operationId: 2,
-                                isCharge: 0,
-                                is_capital: 0,
-                                isApproved: 0,
-                                isMoveFundTransfer: 1,
-                                approvedBy: '',
-                                isTransfer: 1,
-                                clientId: selectedInvestment.clientId,
-                                createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
-                                roleIds: _mRoleId,
-                                beneficialInvestmentId: selectedInvestment.investmentId,
-                                productId: selectedInvestment.productId,
-                                isWallet: isWalletPage,
-                                isInvestmentMatured: (selectedInvestment.maturityDays === true) ? 1 : 0
-                            };
-                            $.ajax({
-                                url: `investment-txns/create`,
-                                'type': 'post',
-                                'data': investmentOps,
-                                'success': function (data) {
-                                    $('#wait').hide();
-                                    table.ajax.reload(null, false);
-                                },
-                                'error': function (err) {
-                                    $('#wait').hide();
-                                }
+                        let _mRoleId = [];
+                        let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === 2 && status === 1);
+                        if (mRoleId.length === 0) {
+                            _mRoleId.push({
+                                roles: "[]",
+                                operationId: 2
                             });
+                        } else {
+                            _mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === 2 && status === 1);
                         }
+                        let investmentOps = {
+                            amount: selectedInvestment.txnCurrentBalance,
+                            description: `MOVE FUND FROM INVESTMENT ACCT. TO CLIENT'S WALLET`,
+                            investmentId: selectedInvestment.investmentId,
+                            is_credit: 0,
+                            operationId: 2,
+                            isCharge: 0,
+                            is_capital: 0,
+                            isApproved: 0,
+                            isMoveFundTransfer: 1,
+                            approvedBy: '',
+                            isTransfer: 1,
+                            clientId: selectedInvestment.clientId,
+                            createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
+                            roleIds: _mRoleId,
+                            beneficialInvestmentId: selectedInvestment.investmentId,
+                            productId: selectedInvestment.productId,
+                            isWallet: isWalletPage,
+                            isInvestmentMatured: (selectedInvestment.maturityDays === true) ? 1 : 0
+                        };
+
+                        $.ajax({
+                            url: `investment-txns/create`,
+                            'type': 'post',
+                            'data': investmentOps,
+                            'success': function (data) {
+                                $('#wait').hide();
+                                table.ajax.reload(null, false);
+                            },
+                            'error': function (err) {
+                                $('#wait').hide();
+                            }
+                        });
                     }
                 }
             }
@@ -416,13 +415,13 @@ function bindDataTable(id) {
             width: "auto",
             "mRender": function (data, type, full) {
                 let _amount = full.amount.split(',').join('');
-                return `<span style="color:green">${(full.is_credit === 1) ?
+                return `<span style="color:green">${(full.is_credit === 1 && !full.amount.toString().includes('-')) ?
                     (formater(_amount).includes('.') ? formater(_amount) : formater(_amount) + '.00') : ""}</span>`;
             }
         }, {
             width: "auto",
             "mRender": function (data, type, full) {
-                return `<span style="color:red;float: right">${(full.is_credit === 0) ?
+                return `<span style="color:red;float: right">${(full.is_credit === 0 || full.amount.toString().includes('-')) ?
                     (formater(full.amount.split(',').join('')).includes('.') ? formater(full.amount.split(',').join('')) :
                         formater(full.amount.split(',').join('')) + '.00') : ""}</span>`;
             }
@@ -664,7 +663,10 @@ $("#idChkForceTerminate").on('change',
         } else {
             $('#notice_date').attr('disabled', false);
             let date = new Date();
-            date.setDate(date.getDate() + parseInt(selectedConfig.investment_termination_days.toString()));
+            let extendedDays = (selectedInvestment.min_days_termination !== '') ?
+                parseInt(selectedInvestment.min_days_termination) :
+                parseInt(selectedConfig.investment_termination_days.toString());
+            date.setDate(date.getDate() + extendedDays);
             let minDate = `${date.getUTCFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
             $('#notice_date').attr('min', minDate);
 
@@ -683,10 +685,12 @@ function getConfigItems() {
             $('#wait').hide();
             selectedConfig = data;
             let date = new Date();
-            date.setDate(date.getDate() + parseInt(selectedConfig.investment_termination_days.toString()));
+            let extendedDays = (selectedInvestment.min_days_termination !== '') ?
+                parseInt(selectedInvestment.min_days_termination) :
+                parseInt(selectedConfig.investment_termination_days.toString());
+            date.setDate(date.getDate() + extendedDays);
             let minDate = `${date.getUTCFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
             $('#notice_date').attr('min', minDate);
-
             let endDate = new Date(selectedInvestment.investment_mature_date);
             endDate.setDate(date.getDate() - 1);
             let minDate2 = `${endDate.getUTCFullYear()}-${pad(endDate.getMonth() + 1)}-${pad(endDate.getDate())}`;
@@ -737,7 +741,7 @@ function onTerminateInvest() {
                     createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
                     roleIds: _mRoleId,
                     productId: selectedInvestment.productId,
-                    isForceTerminate: ($('#idChkForceTerminate').is(':checked') === true) ? 1 : 0,
+                    isForceTerminate: ($('#notice_date').val() === '') ? 1 : (($('#idChkForceTerminate').is(':checked') === true) ? 1 : 0),
                     expectedTerminationDate: ($('#notice_date').val() === '') ? date.toLocaleString() : $('#notice_date').val(),
                     clientId: selectedInvestment.clientId
                 };
@@ -866,7 +870,7 @@ async function onOpenMode(name, operationId, is_credit) {
             $("#btnTransaction").attr('disabled', true);
             $("#input_description").attr('disabled', true);
             $("#input_txn_date").attr('disabled', true);
-            swal('Oops! An error occurred while initiating deposit dialog, please refresh your this page', '', 'error');
+            // swal('Oops! An error occurred while initiating deposit dialog, please refresh your this page', '', 'error');
         }
     });
 }
@@ -1649,7 +1653,10 @@ function onPost(value, approvedId, txnId, id, isDeny) {
         investment_mature_date: data_row.investment_mature_date,
         investment_start_date: data_row.investment_start_date,
         interest_rate: data_row.interest_rate,
-        isInvestmentMatured: data_row.isInvestmentMatured
+        isInvestmentMatured: data_row.isInvestmentMatured,
+        interest_rate: selectedInvestment.interest_rate,
+        investment_mature_date: selectedInvestment.investment_mature_date,
+        investment_start_date: selectedInvestment.investment_start_date
     }
     $.ajax({
         url: `investment-txns/posts`,
