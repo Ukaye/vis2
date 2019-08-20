@@ -741,7 +741,7 @@ function onTerminateInvest() {
                     createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
                     roleIds: _mRoleId,
                     productId: selectedInvestment.productId,
-                    isForceTerminate: ($('#idChkForceTerminate').is(':checked') === true) ? 1 : 0,
+                    isForceTerminate: ($('#notice_date').val() === '') ? 1 : (($('#idChkForceTerminate').is(':checked') === true) ? 1 : 0),
                     expectedTerminationDate: ($('#notice_date').val() === '') ? date.toLocaleString() : $('#notice_date').val(),
                     clientId: selectedInvestment.clientId
                 };
