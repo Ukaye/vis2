@@ -41,7 +41,6 @@ function onSwitchMatureInvestments() {
 
 function onSelectAll() {
     let status = $("#chkBoxSelectAll").is(':checked');
-    console.log(status, selectedItems.length);
     if (status && selectedItems.length > 0) {
         $('#btnCloseInvestment').attr('hidden', false);
         bindDataTable(1, true);
