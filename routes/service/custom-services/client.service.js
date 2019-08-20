@@ -10,7 +10,7 @@ const axios = require('axios'),
     emailService = require('../../service/custom-services/email.service');
 
 //Get Investment Product
-router.get('/all', function (req, res, next) {
+router.get('/all', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let page = ((req.query.page - 1) * 10 < 0) ? 0 : (req.query.page - 1) * 10;
@@ -33,7 +33,7 @@ router.get('/all', function (req, res, next) {
         });
 });
 
-router.post('/mandate/setup', function (req, res, next) {
+router.post('/mandate/setup', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let end = req.body.end,
         bank = req.body.bank,
@@ -114,7 +114,7 @@ router.post('/mandate/setup', function (req, res, next) {
     });
 });
 
-router.get('/mandate/stop/:applicationID', function (req, res, next) {
+router.get('/mandate/stop/:applicationID', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query =  `SELECT mandateId, requestId FROM remita_mandates WHERE applicationID = ${req.params.applicationID} AND status = 1`,
         endpoint = '/core-service/get',
@@ -153,7 +153,7 @@ router.get('/mandate/stop/:applicationID', function (req, res, next) {
     });
 });
 
-router.post('/corporate/create', function (req, res, next) {
+router.post('/corporate/create', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let postData = req.body,
         query = `SELECT * FROM corporates WHERE name = '${req.body.name}'`,
@@ -203,7 +203,7 @@ router.post('/corporate/create', function (req, res, next) {
         });
 });
 
-router.get('/corporates/get', function (req, res, next) {
+router.get('/corporates/get', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
@@ -247,7 +247,7 @@ router.get('/corporates/get', function (req, res, next) {
     });
 });
 
-router.get('/corporate/get/:id', function (req, res, next) {
+router.get('/corporate/get/:id', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT *, (SELECT fullname FROM clients WHERE ID = p.clientID) client FROM corporates p WHERE ID = ${req.params.id}`,
         endpoint = '/core-service/get',
@@ -263,7 +263,7 @@ router.get('/corporate/get/:id', function (req, res, next) {
     });
 });
 
-router.post('/corporate/disable/:id', function (req, res, next) {
+router.post('/corporate/disable/:id', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `UPDATE corporates Set ? WHERE ID = ${req.params.id}`;
     let endpoint = `/core-service/post?query=${query}`;
@@ -289,7 +289,7 @@ router.post('/corporate/disable/:id', function (req, res, next) {
     });
 });
 
-router.post('/corporate/enable/:id', function (req, res, next) {
+router.post('/corporate/enable/:id', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `UPDATE corporates Set ? WHERE ID = ${req.params.id}`;
     let endpoint = `/core-service/post?query=${query}`;
@@ -315,7 +315,7 @@ router.post('/corporate/enable/:id', function (req, res, next) {
     });
 });
 
-router.post('/bad_cheque', function (req, res, next) {
+router.post('/bad_cheque', function (req, res) {
     let data = req.body;
     data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('INSERT INTO bad_cheques SET ?', data, function (error, result) {
@@ -345,7 +345,7 @@ router.post('/bad_cheque', function (req, res, next) {
     });
 });
 
-router.get('/bad_cheque/:clientID', function (req, res, next) {
+router.get('/bad_cheque/:clientID', function (req, res) {
     db.query(`SELECT * FROM bad_cheques WHERE status = 1 AND clientID = ${req.params.clientID}`, function (error, results) {
         if (error) {
             res.send({
@@ -363,7 +363,7 @@ router.get('/bad_cheque/:clientID', function (req, res, next) {
     });
 });
 
-router.delete('/bad_cheque/:id', function (req, res, next) {
+router.delete('/bad_cheque/:id', function (req, res) {
     db.query(`SELECT * FROM bad_cheques WHERE status = 1 AND ID = ${req.params.id}`, function (error, cheque) {
         if (error) {
             res.send({
@@ -409,7 +409,7 @@ router.delete('/bad_cheque/:id', function (req, res, next) {
     });
 });
 
-router.get('/corporates-v2/get', function(req, res, next) {
+router.get('/corporates-v2/get', function(req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT ID, name, email, status, date_created from corporates WHERE status = 1 ORDER BY name asc`,
         endpoint = '/core-service/get',
@@ -424,7 +424,7 @@ router.get('/corporates-v2/get', function(req, res, next) {
 });
 
 /* Add New Client */
-router.post('/create', function(req, res, next) {
+router.post('/create', function(req, res) {
     let id;
     let postData = req.body,
         query =  'INSERT INTO clients Set ?',
@@ -435,7 +435,7 @@ router.post('/create', function(req, res, next) {
         || !postData.bvn || !postData.loan_officer || !postData.branch)
         return res.send({"status": 200, "error": null, "response": null, "message": "Required parameter(s) not sent!"});
 
-    postData.fullname = postData.first_name + postData.middle_name + postData.last_name;
+    postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
     postData.password = bcrypt.hashSync(postData.password, parseInt(process.env.SALT_ROUNDS));
     db.getConnection(function(err, connection) {
         if (err) throw err;
@@ -572,6 +572,77 @@ router.post('/login', function (req, res) {
                 "response": "Password is incorrect!"
             });
         }
+    });
+});
+
+router.put('/update/:id', function(req, res) {
+    let postData = req.body;
+    postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    let query = `Update clients SET ? where ID = ${req.params.id}`;
+    delete postData.ID;
+    delete postData.username;
+    delete postData.password;
+    delete postData.email;
+    db.query(query, postData, function (error, results) {
+        if(error)
+            return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+        let payload = {};
+        payload.category = 'Clients';
+        payload.userid = req.cookies.timeout;
+        payload.description = 'Client details updated.';
+        payload.affected = req.params.id;
+        notificationsService.log(req, payload);
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": "Client Details Updated"
+        });
+    });
+});
+
+router.delete('/disable/:id', function(req, res) {
+    let postData = req.body;
+    postData.status = enums.CLIENT.STATUS.INACTIVE;
+    postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    let query = `Update clients SET ? where ID = ${req.params.id}`;
+    db.query(query, postData, function (error, results) {
+        if(error)
+            return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": "Client Disabled!"
+        });
+    });
+});
+
+router.get('/products', function(req, res) {
+    let query = 'SELECT w.*, a.loan_requested_min, a.loan_requested_max, a.tenor_min, a.tenor_max, a.interest_rate_min, a.interest_rate_max, ' +
+        '(SELECT GROUP_CONCAT(s.document) FROM workflow_stages s WHERE w.ID = s.workflowID) document ' +
+        'FROM workflows w, application_settings a WHERE w.status <> 0 AND a.ID = (SELECT MAX(ID) FROM application_settings) ORDER BY w.ID desc';
+    db.query(query, function (error, results) {
+        if(error)
+            return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": results
+        });
     });
 });
 
