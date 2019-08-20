@@ -1,9 +1,13 @@
 const axios = require('axios'),
     moment = require('moment'),
     db = require('../../../db'),
+    bcrypt = require('bcryptjs'),
     express = require('express'),
     router = express.Router(),
-    helperFunctions = require('../../../helper-functions');
+    enums = require('../../../enums'),
+    helperFunctions = require('../../../helper-functions'),
+    notificationsService = require('../../notifications-service'),
+    emailService = require('../../service/custom-services/email.service');
 
 //Get Investment Product
 router.get('/all', function (req, res, next) {
@@ -314,7 +318,7 @@ router.post('/corporate/enable/:id', function (req, res, next) {
 router.post('/bad_cheque', function (req, res, next) {
     let data = req.body;
     data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.query('INSERT INTO bad_cheques SET ?', data, function (error, result, fields) {
+    db.query('INSERT INTO bad_cheques SET ?', data, function (error, result) {
         if (error) {
             res.send({
                 "status": 500,
@@ -322,7 +326,7 @@ router.post('/bad_cheque', function (req, res, next) {
                 "response": null
             });
         } else {
-            db.query(`SELECT * FROM bad_cheques WHERE status = 1 AND clientID = ${data.clientID}`, function (error, results, fields) {
+            db.query(`SELECT * FROM bad_cheques WHERE status = 1 AND clientID = ${data.clientID}`, function (error, results) {
                 if (error) {
                     res.send({
                         "status": 500,
@@ -342,7 +346,7 @@ router.post('/bad_cheque', function (req, res, next) {
 });
 
 router.get('/bad_cheque/:clientID', function (req, res, next) {
-    db.query(`SELECT * FROM bad_cheques WHERE status = 1 AND clientID = ${req.params.clientID}`, function (error, results, fields) {
+    db.query(`SELECT * FROM bad_cheques WHERE status = 1 AND clientID = ${req.params.clientID}`, function (error, results) {
         if (error) {
             res.send({
                 "status": 500,
@@ -360,7 +364,7 @@ router.get('/bad_cheque/:clientID', function (req, res, next) {
 });
 
 router.delete('/bad_cheque/:id', function (req, res, next) {
-    db.query(`SELECT * FROM bad_cheques WHERE status = 1 AND ID = ${req.params.id}`, function (error, cheque, fields) {
+    db.query(`SELECT * FROM bad_cheques WHERE status = 1 AND ID = ${req.params.id}`, function (error, cheque) {
         if (error) {
             res.send({
                 "status": 500,
@@ -376,7 +380,7 @@ router.delete('/bad_cheque/:id', function (req, res, next) {
         } else {
             let query = "UPDATE bad_cheques SET status = 0, date_modified = ? WHERE ID = ? AND status = 1",
                 date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-            db.query(query, [date_modified, req.params.id], function (error, results, fields) {
+            db.query(query, [date_modified, req.params.id], function (error, results) {
                 if (error) {
                     res.send({
                         "status": 500,
@@ -384,7 +388,7 @@ router.delete('/bad_cheque/:id', function (req, res, next) {
                         "response": null
                     });
                 } else {
-                    db.query(`SELECT * FROM bad_cheques WHERE status = 1 AND clientID = ${cheque[0]['clientID']}`, function (error, results, fields) {
+                    db.query(`SELECT * FROM bad_cheques WHERE status = 1 AND clientID = ${cheque[0]['clientID']}`, function (error, results) {
                         if (error) {
                             res.send({
                                 "status": 500,
@@ -416,6 +420,107 @@ router.get('/corporates-v2/get', function(req, res, next) {
         }
     }).then(response => {
         res.send(response['data'] || []);
+    });
+});
+
+/* Add New Client */
+router.post('/create', function(req, res, next) {
+    let id;
+    let postData = req.body,
+        query =  'INSERT INTO clients Set ?',
+        query2 = 'select * from clients where username = ? or email = ? or phone = ?';
+    postData.status = enums.CLIENT.STATUS.ACTIVE;
+    postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    if (!postData.username || !postData.password || !postData.first_name || !postData.last_name || !postData.phone || !postData.email
+        || !postData.bvn || !postData.loan_officer || !postData.branch)
+        return res.send({"status": 200, "error": null, "response": null, "message": "Required parameter(s) not sent!"});
+
+    postData.fullname = postData.first_name + postData.middle_name + postData.last_name;
+    postData.password = bcrypt.hashSync(postData.password, parseInt(process.env.SALT_ROUNDS));
+    db.getConnection(function(err, connection) {
+        if (err) throw err;
+        connection.query(query2,[postData.username, postData.email, postData.phone], function (error, results) {
+            if (results && results[0]){
+                return res.send({"status": 200, "error": null, "response": results, "message": "Information in use by existing client!"});
+            }
+            let bvn = postData.bvn;
+            if (bvn.trim() !== ''){
+                connection.query('select * from clients where bvn = ? and status = 1 limit 1', [bvn], function (error, rest, foelds){
+                    if (rest && rest[0]){
+                        return res.send({"status": 200, "error": null, "response": rest, "bvn_exists": "Yes"});
+                    }
+                    connection.query(query,postData, function (error, re) {
+                        if(error){
+                            console.log(error);
+                            res.send({"status": 500, "error": error, "response": null});
+                        } else {
+                            connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function(err, re) {
+                                if (!err){
+                                    id = re[0]['ID'];
+                                    connection.query('INSERT into wallets Set ?', {clientId: id}, function(er, r) {
+                                        connection.release();
+                                        if (!er){
+                                            let payload = {};
+                                            payload.category = 'Clients';
+                                            payload.userid = req.cookies.timeout;
+                                            payload.description = 'New Client Created';
+                                            payload.affected = id;
+                                            notificationsService.log(req, payload);
+                                            emailService.send({
+                                                to: postData.email,
+                                                subject: 'Signup Successful!',
+                                                template: 'client',
+                                                context: postData
+                                            });
+                                            res.send({"status": 200, "error": null, "response": re});
+                                        } else {
+                                            res.send({"status": 500, "error": er, "response": "Error creating client wallet!"});
+                                        }
+                                    });
+                                } else {
+                                    res.send({"status": 500, "error": err, "response": "Error retrieving client details. Please try a new username!"});
+                                }
+                            });
+                        }
+                    });
+                });
+            }
+            else {
+                connection.query(query,postData, function (error, re) {
+                    if(error){
+                        res.send({"status": 500, "error": error, "response": null});
+                    } else {
+                        connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function(err, re) {
+                            if (!err){
+                                id = re[0]['ID'];
+                                connection.query('INSERT into wallets Set ?', {clientId: id}, function(er, r) {
+                                    connection.release();
+                                    if (!er){
+                                        let payload = {};
+                                        payload.category = 'Clients';
+                                        payload.userid = req.cookies.timeout;
+                                        payload.description = 'New Client Created';
+                                        payload.affected = id;
+                                        notificationsService.log(req, payload);
+                                        emailService.send({
+                                            to: postData.email,
+                                            subject: 'Signup Successful!',
+                                            template: 'client',
+                                            context: postData
+                                        });
+                                        res.send({"status": 200, "error": null, "response": re});
+                                    } else {
+                                        res.send({"status": 500, "error": er, "response": "Error creating client wallet!"});
+                                    }
+                                });
+                            } else {
+                                res.send({"status": 500, "error": err, "response": "Error retrieving client details. Please try a new username!"});
+                            }
+                        });
+                    }
+                });
+            }
+        });
     });
 });
 

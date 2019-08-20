@@ -39,6 +39,7 @@
     "node-cron": "^2.0.3",
     "nodemailer": "^4.7.0",
     "nodemailer-express-handlebars": "^3.0.0",
+    "nodemailer-mailgun-transport": "^1.4.0",
     "nodemailer-smtp-transport": "^2.7.4",
     "request": "^2.88.0",
     "request-promise": "^4.2.4",

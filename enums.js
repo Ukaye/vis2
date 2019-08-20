@@ -34,4 +34,11 @@ enums.REMITA_PAYMENT = {
     }
 };
 
+enums.CLIENT = {
+    STATUS: {
+        INACTIVE: 0,
+        ACTIVE: 1
+    }
+};
+
 module.exports = enums;
