@@ -457,7 +457,7 @@ router.post('/create', function(req, res, next) {
                             connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function(err, re) {
                                 if (!err){
                                     id = re[0]['ID'];
-                                    connection.query('INSERT into wallets Set ?', {clientId: id}, function(er, r) {
+                                    connection.query('INSERT into wallets Set ?', {client_id: id}, function(er, r) {
                                         connection.release();
                                         if (!er){
                                             let payload = {};
@@ -493,7 +493,7 @@ router.post('/create', function(req, res, next) {
                         connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function(err, re) {
                             if (!err){
                                 id = re[0]['ID'];
-                                connection.query('INSERT into wallets Set ?', {clientId: id}, function(er, r) {
+                                connection.query('INSERT into wallets Set ?', {client_id: id}, function(er, r) {
                                     connection.release();
                                     if (!er){
                                         let payload = {};
@@ -521,6 +521,79 @@ router.post('/create', function(req, res, next) {
                 });
             }
         });
+    });
+});
+
+router.post('/login', function (req, res) {
+    let username = req.body.username,
+        password = req.body.password;
+
+    db.query('SELECT *, (select role_name from user_roles r where r.id = user_role) as role FROM users WHERE username = ?', username, function (err, rows, fields) {
+        if (err)
+            return res.send({
+                "status": 500,
+                "response": "Connection Error!"
+            });
+
+        if (rows.length === 0)
+            return res.send({
+                "status": 500,
+                "response": "Incorrect Username/Password!"
+            });
+
+        if (rows[0].status === "0")
+            return res.send({
+                "status": 500,
+                "response": "User Disabled!"
+            });
+
+        if (bcrypt.compareSync(password, rows[0].password)) {
+            req.session.user = rows[0]['user_role'];
+            user = rows[0];
+            db.query('SELECT id,module_id, (select module_name from modules m where m.id = module_id) as module_name, (select menu_name from modules m where m.id = module_id) as menu_name, read_only, editable ' +
+                'FROM permissions where role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?)) group by module_id', [parseInt(user.user_role), parseInt(user.user_role), parseInt(user.user_role)],
+                function (error, perm, fields) {
+                    if (!error) {
+                        user.permissions = perm;
+                        let modules = [],
+                            query1 = 'select * from modules m where m.id in (select p.module_id from permissions p where read_only = 1 ' +
+                                'and p.role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?)) group by module_id) and menu_name = "Main Menu" order by id asc',
+                            query2 = 'select * from modules m where m.id in (select p.module_id from permissions p where read_only = 1 ' +
+                                'and p.role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?)) group by module_id) and menu_name = "Sub Menu" order by id asc',
+                            query3 = 'select * from modules m where m.id in (select p.module_id from permissions p where read_only = 1 ' +
+                                'and p.role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?)) group by module_id) and menu_name = "Others" order by id asc';
+                        db.query(query1, [user.user_role, user.user_role, user.user_role], function (er, mods, fields) {
+                            modules = modules.concat(mods);
+                            db.query(query2, [user.user_role, user.user_role, user.user_role], function (er, mods, fields) {
+                                modules = modules.concat(mods);
+                                user.modules = modules;
+                                user.tenant = process.env.TENANT;
+                                user.environment = process.env.STATUS;
+                                let payload = {};
+                                payload.category = 'Authentication';
+                                payload.userid = user.ID;
+                                payload.description = 'New User Login';
+                                payload.affected = user.ID;
+                                notificationsService.log(req, payload);
+                                res.send({
+                                    "status": 200,
+                                    "response": user
+                                });
+                            });
+                        });
+                    } else {
+                        res.send({
+                            "status": 500,
+                            "response": "No permissions set for this user"
+                        })
+                    }
+                });
+        } else {
+            res.send({
+                "status": 500,
+                "response": "Password is incorrect!"
+            });
+        }
     });
 });
 
