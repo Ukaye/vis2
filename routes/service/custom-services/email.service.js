@@ -23,7 +23,7 @@ email.send = function (mailOptions) {
     mailOptions.subject = `${process.env.TENANT}: ${mailOptions.subject}`;
 
     transporter.sendMail(mailOptions, function(error, info){
-        console.log(error)
+        if (error) console.log(error);
     });
 };
 
