@@ -20,6 +20,7 @@ $('#bootstrap-data-table2 tbody').on('change', '#chkBoxSelectItem', function () 
     } else {
         selectedItems = selectedItems.filter(x => x.ID !== selectedItem.ID);
     }
+    selectedItems = selectedItems.filter(x => x.isMatured !== 1);
     if (selectedItems.length > 0) {
         $('#btnCloseInvestment').attr('hidden', false);
     } else {
@@ -40,7 +41,8 @@ function onSwitchMatureInvestments() {
 
 function onSelectAll() {
     let status = $("#chkBoxSelectAll").is(':checked');
-    if (status) {
+    console.log(status, selectedItems.length);
+    if (status && selectedItems.length > 0) {
         $('#btnCloseInvestment').attr('hidden', false);
         bindDataTable(1, true);
     } else {
@@ -284,7 +286,7 @@ function bindDataTable(isMatureList, status) {
                 query: `ORDER BY STR_TO_DATE(v.investment_mature_date, '%Y-%m-%d') ${aoData[2].value[0].dir}`
             }, {
                 name: "status",
-                query: `ORDER BY ID desc`
+                query: (isMatureList === 0) ? `ORDER BY ID desc` : `ORDER BY v.isClosed ${aoData[2].value[0].dir}`
             }
             ];
             $.ajax({
@@ -301,7 +303,7 @@ function bindDataTable(isMatureList, status) {
                 success: function (data) {
                     if (status === true) {
                         selectedItems = [];
-                        selectedItems = data.data;
+                        selectedItems = data.data.filter(x => x.isMatured !== 1);
                     } else {
                         selectedItems = [];
                     }
@@ -358,8 +360,8 @@ function bindDataTable(isMatureList, status) {
                     <a class="dropdown-item" href="./investment-transactions?id=${full.ID}">View Transaction</a>
                     <button class="dropdown-item" id="idButtonMandate" data-toggle="modal" data-target="#viewMandateModal">Set Mandate</button>
                 </div>
-            </div>`: 
-            `<input type="checkbox" id="chkBoxSelectItem" ${(status) ? 'checked' : ''}>`;
+            </div>`:
+                    `<input type="checkbox" id="chkBoxSelectItem" ${(status) ? 'checked' : ''} ${(full.isMatured === 1) ? 'hidden' : ''}>`;
             }
         }
         ]
