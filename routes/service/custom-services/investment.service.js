@@ -315,10 +315,12 @@ router.get('/get-investments', function (req, res, next) {
     let draw = req.query.draw;
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
+    const date = new Date();
+    const formatedDate = `${date.getUTCFullYear()}-${date.getMonth() + 1}-${date.getUTCDate()}`;
     let query = `SELECT v.ID,v.code,p.name AS investment,c.fullname AS client,amount, investment_start_date, 
     investment_mature_date,v.isMatured FROM investments v left join investment_products p on
     v.productId = p.ID left join clients c on
-    v.clientId = c.ID WHERE v.isMatured = 0 AND v.isClosed = 0 AND (upper(v.code) LIKE "${search_string}%" OR upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%" 
+    v.clientId = c.ID WHERE STR_TO_DATE(v.investment_mature_date, '%Y-%m-%d') > '${formatedDate}' AND v.isMatured = 0 AND v.isClosed = 0 AND (upper(v.code) LIKE "${search_string}%" OR upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%" 
     OR upper(c.fullname) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
@@ -330,7 +332,7 @@ router.get('/get-investments', function (req, res, next) {
     }).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM investments v 
                     left join investment_products p on v.productId = p.ID left join clients c on
-                    v.clientId = c.ID WHERE v.isMatured = 0 AND v.isClosed = 0 AND upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%" 
+                    v.clientId = c.ID WHERE STR_TO_DATE(v.investment_mature_date, '%Y-%m-%d') > '${formatedDate}' AND v.isMatured = 0 AND v.isClosed = 0 AND upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%" 
                     OR upper(c.fullname) LIKE "${search_string}%") as recordsFiltered FROM investments`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
