@@ -41,7 +41,7 @@ function onSwitchMatureInvestments() {
 
 function onSelectAll() {
     let status = $("#chkBoxSelectAll").is(':checked');
-    if (status && selectedItems.length > 0) {
+    if (status) {
         $('#btnCloseInvestment').attr('hidden', false);
         bindDataTable(1, true);
     } else {
@@ -370,21 +370,39 @@ function bindDataTable(isMatureList, status) {
 
 
 function onCloseInvestment() {
-    let items = {
-        value: selectedItems
+    if (selectedItems.length === 0) {
+        swal('You have not selected any investment', '', 'error');
+        return;
     }
-    $.ajax({
-        url: `investment-txns/close-mature-investments`,
-        'type': 'post',
-        'data': items,
-        'success': function (data) {
-            $('#wait').hide();
-            table.ajax.reload(null, false);
-        },
-        'error': function (err) {
-            $('#wait').hide();
-        }
-    });
+
+    swal({
+        title: "Are you sure?",
+        text: `You are about to close ${selectedItems.lenght} mature investment${(selectedItems.lenght > 1) ? 's' : ''}!`,
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+    })
+        .then((willDelete) => {
+            if (willDelete) {
+                let items = {
+                    value: selectedItems
+                }
+                $.ajax({
+                    url: `investment-txns/close-mature-investments`,
+                    'type': 'post',
+                    'data': items,
+                    'success': function (data) {
+                        $('#wait').hide();
+                        table.ajax.reload(null, false);
+                    },
+                    'error': function (err) {
+                        $('#wait').hide();
+                    }
+                });
+            } else {
+                swal("Investment remains active!");
+            }
+        });
 }
 
 $(document).ready(function () { });
