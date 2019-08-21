@@ -308,6 +308,12 @@ functions.verifyJWT = function (req, res, next) {
             "response": "Failed to authenticate token!"
         });
 
+        if (parseInt(req.params.id) !== decoded.ID) return res.send({
+            "status": 500,
+            "error": err,
+            "response": "Unauthorized operation!"
+        });
+
         req.user = decoded;
         next();
     });
