@@ -11,10 +11,11 @@ let token,
     bcrypt = require('bcryptjs'),
     jwt = require('jsonwebtoken'),
     nodemailer = require('nodemailer'),
-    helperFunctions = require('../helper-functions'),
-    notificationsService = require('./notifications-service'),
     hbs = require('nodemailer-express-handlebars'),
+    helperFunctions = require('../helper-functions'),
     smtpTransport = require('nodemailer-smtp-transport'),
+    notificationsService = require('./notifications-service'),
+    emailService = require('./service/custom-services/email.service'),
     smtpConfig = smtpTransport({
         service: 'Mailjet',
         auth: {
@@ -1852,22 +1853,18 @@ users.post('/contact', function(req, res) {
 
 users.post('/sendmail', function(req, res) {
     let data = req.body;
-    if (!data.name || !data.email || !data.company || !data.phone || !data.title || !data.location || !data.description || !data.lead)
+    if (!data.name || !data.email || !data.company || !data.phone || !data.title)
         return res.send("Required Parameters not sent!");
     data.date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let mailOptions = {
-        from: 'ATB Cisco <applications@loan35.com>',
-        to: 'abiodun@atbtechsoft.com',
+        from: 'ATB Cisco <solutions@atbtechsoft.com>',
+        to: 'solutions@atbtechsoft.com',
         subject: 'ATB Cisco Application: '+data.name,
         template: 'mail',
         context: data
     };
-
-    transporter.sendMail(mailOptions, function(error, info){
-        if(error)
-            return res.send("Error");
-        return res.send("OK");
-    });
+    emailService.sendByDomain('app.atbtechsoft.com', mailOptions);
+    return res.send("OK");
 });
 
 /* GET User Applications. */

@@ -1,4 +1,5 @@
 const fs = require('fs'),
+    async = require('async'),
     axios = require('axios'),
     moment = require('moment'),
     db = require('../../../db'),
@@ -773,6 +774,234 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function(req, res) {
                 });
             }
         });
+    });
+});
+
+router.post('/application/create/:id', helperFunctions.verifyJWT, function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let postData = req.body,
+        query =  'INSERT INTO client_applications Set ?',
+        endpoint = `/core-service/post?query=${query}`,
+        url = `${HOST}${endpoint}`;
+    postData.userID = req.user.ID;
+    postData.name = req.user.fullname;
+    postData.rate = 120;
+    postData.created_by = req.user.ID;
+    postData.status = enums.CLIENT_APPLICATION.STATUS.ACTIVE;
+    postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    db.query(query, postData, function (error, results) {
+        if(error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+        query = `SELECT * from client_applications WHERE ID = (SELECT MAX(ID) from client_applications)`;
+        endpoint = `/core-service/get`;
+        url = `${HOST}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(response_ => {
+            res.send({status: 200, error: null, response: response_['data'][0]});
+        }, err => {
+            res.send({status: 500, error: err, response: null});
+        })
+            .catch(error => {
+                res.send({status: 500, error: error, response: null});
+            });
+    });
+});
+
+router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let id = req.params.id;
+    let limit = req.query.limit;
+    let offset = req.query.offset;
+    let draw = req.query.draw;
+    let order = req.query.order;
+    let search_string = req.query.search_string.toUpperCase();
+    let query = `SELECT p.*, c.fullname, c.phone FROM client_applications p, clients c 
+                 WHERE p.userID = ${id} AND p.userID = c.ID AND p.status in (1,2) AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
+                 OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
+    let endpoint = '/core-service/get';
+    let url = `${HOST}${endpoint}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM client_applications p 
+                 WHERE p.userID = ${id} AND p.status in (1,2) AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
+                 OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM client_applications WHERE userID = ${id} AND status in (1,2)`;
+        endpoint = '/core-service/get';
+        url = `${HOST}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(payload => {
+            res.send({
+                "status": 200,
+                "error": null,
+                "response": {
+                    draw: draw,
+                    recordsTotal: payload.data[0].recordsTotal,
+                    recordsFiltered: payload.data[0].recordsFiltered,
+                    data: (response.data === undefined) ? [] : response.data
+                }
+            });
+        });
+    });
+});
+
+router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`,
+        path = `files/client_application-${req.params.application_id}/`;
+    let query = `SELECT p.*, c.fullname, c.email, c.phone FROM client_applications p 
+                INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.application_id} AND p.userID = ${req.params.id}`,
+        endpoint = '/core-service/get',
+        url = `${HOST}${endpoint}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        let obj = {},
+            result = (response.data === undefined) ? {} : response.data[0];
+        if (!result) return res.send({
+            "status": 500,
+            "error": 'Application does not exist!',
+            "response": null
+        });
+        if (!fs.existsSync(path)) {
+            result.files = {};
+            res.send(result);
+        } else {
+            fs.readdir(path, function (err, files){
+                async.forEach(files, function (file, callback){
+                    let filename = file.split('.')[0].split('_');
+                    filename.shift();
+                    obj[filename.join('_')] = path+file;
+                    callback();
+                }, function(data){
+                    result.files = obj;
+                    res.send({
+                        "status": 200,
+                        "error": null,
+                        "response": result
+                    });
+                });
+            });
+        }
+    });
+});
+
+router.post('/application/approve/:id', helperFunctions.verifyJWT, function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let payload = req.body,
+        id = req.params.id,
+        query =  `UPDATE client_applications Set ? WHERE ID = ${id}`,
+        endpoint = `/core-service/post?query=${query}`,
+        url = `${HOST}${endpoint}`;
+    payload.status = enums.CLIENT_APPLICATION.STATUS.APPROVED;
+    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+
+    db.query(query, payload, function (error, response) {
+        if (error)
+            return res.send({status: 500, error: error, response: null});
+        return res.send({status: 200, error: null, response: response});
+    });
+});
+
+router.get('/application/complete/:id', helperFunctions.verifyJWT, function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let payload = {},
+        id = req.params.id,
+        query =  `UPDATE client_applications Set ? WHERE ID = ${id}`,
+        endpoint = `/core-service/post?query=${query}`,
+        url = `${HOST}${endpoint}`;
+    payload.status = enums.CLIENT_APPLICATION.STATUS.COMPLETED;
+    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+
+    db.query(query, payload, function (error, response) {
+        if (error)
+            return res.send({status: 500, error: error, response: null});
+        return res.send({status: 200, error: null, response: response});
+    });
+});
+
+router.get('/application/reject/:id', helperFunctions.verifyJWT, function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let payload = {},
+        id = req.params.id,
+        query =  `UPDATE client_applications Set ? WHERE ID = ${id}`,
+        endpoint = `/core-service/post?query=${query}`,
+        url = `${HOST}${endpoint}`;
+    payload.status = enums.CLIENT_APPLICATION.STATUS.REJECTED;
+    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+
+    db.query(query, payload, function (error, response) {
+        if (error)
+            return res.send({status: 500, error: error, response: null});
+        return res.send({status: 200, error: null, response: response});
+    });
+});
+
+router.post('/application/upload/:id/:name', helperFunctions.verifyJWT, function(req, res) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let	name = req.params.name,
+        preapplication_id = req.params.id,
+        sampleFile = req.files.file,
+        extArray = sampleFile.name.split("."),
+        extension = extArray[extArray.length - 1],
+        query = `SELECT * FROM client_applications WHERE ID = ${preapplication_id}`,
+        endpoint = '/core-service/get',
+        url = `${HOST}${endpoint}`;
+    if (extension) extension = extension.toLowerCase();
+
+    if (!name) return res.status(400).send('No files were uploaded.');
+    if (!req.files) return res.status(400).send('No files were uploaded.');
+    if (!req.params || !preapplication_id || !name) return res.status(400).send('No parameters specified!');
+
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        let preapplication = response.data;
+        if (!preapplication || !preapplication[0]) {
+            res.send({"status": 500, "error": "Preapplication does not exist", "response": null});
+        } else {
+            const file_folder = `files/preapplication-${preapplication_id}/`;
+            fs.stat(file_folder, function(err) {
+                if (err && (err.code === 'ENOENT'))
+                    fs.mkdirSync(file_folder);
+
+                const file_url = `${file_folder}${preapplication_id}_${name}.${extension}`;
+                fs.stat(file_url, function (err) {
+                    if (err) {
+                        sampleFile.mv(file_url, function(err) {
+                            if (err) return res.status(500).send(err);
+                            res.send({file:file_url, data: sampleFile});
+                        });
+                    } else {
+                        fs.unlink(file_url,function(err){
+                            if(err){
+                                return console.log(err);
+                            } else {
+                                sampleFile.mv(file_url, function(err) {
+                                    if (err)
+                                        return res.status(500).send(err);
+                                    res.send({file:file_url, data: sampleFile});
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+        }
     });
 });
 

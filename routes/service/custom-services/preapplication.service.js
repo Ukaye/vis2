@@ -17,6 +17,12 @@ router.post('/create', function (req, res, next) {
     postData.status = enums.PREAPPLICATION.STATUS.ACTIVE;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query(query, postData, function (error, results) {
+        if(error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+
         query = `SELECT * from preapplications WHERE ID = (SELECT MAX(ID) from preapplications)`;
         endpoint = `/core-service/get`;
         url = `${HOST}${endpoint}`;
@@ -54,7 +60,7 @@ router.get('/get', function (req, res, next) {
     }).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM preapplications p 
                  WHERE p.status in (1,2) AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
-                 OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM preapproved_loans WHERE status in (1,2)`;
+                 OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM preapplications WHERE status in (1,2)`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {
