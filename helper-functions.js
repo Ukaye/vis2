@@ -2,7 +2,9 @@ let functions = {},
     db = require('./db'),
     moment = require('moment'),
     request = require('request'),
-    SHA512 = require('js-sha512');
+    SHA512 = require('js-sha512'),
+    jwt = require('jsonwebtoken');
+
 
 functions.getNextWorkflowProcess = function(application_id, workflow_id, stage, callback) {
     db.query('SELECT * FROM workflow_stages WHERE workflowID=? ORDER BY ID asc',[workflow_id], function (error, stages, fields) {
@@ -289,6 +291,26 @@ functions.currencyToNumberFormatter = function (value) {
     if (!value && isNaN(value))
         return value;
     return Number(value.replace(/[^0-9.-]+/g, ''));
+};
+
+functions.verifyJWT = function (req, res, next) {
+    let token = req.headers['x-access-token'];
+    if (!token) return res.send({
+        "status": 500,
+        "error": null,
+        "response": "No token provided!"
+    });
+
+    jwt.verify(token, process.env.SECRET_KEY, function(err, decoded) {
+        if (err) return res.send({
+            "status": 500,
+            "error": err,
+            "response": "Failed to authenticate token!"
+        });
+
+        req.user = decoded;
+        next();
+    });
 };
 
 module.exports = functions;
