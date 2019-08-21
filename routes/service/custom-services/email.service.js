@@ -37,14 +37,12 @@ email.sendByDomain = function (domain, mailOptions) {
     transporter = nodemailer.createTransport(transport);
     transporter.use('compile', hbs(options));
 
-    mailOptions.from = mailOptions.from || 'no-reply@x3.loanratus.com';
-    mailOptions.subject = `${process.env.TENANT}: ${mailOptions.subject}`;
+    mailOptions.from = mailOptions.from || `no-reply@${domain}`;
     transporter.sendMail(mailOptions, function(error, info){
         console.log(info)
         console.log(error)
         if (error) console.log(error);
     });
 };
-
 
 module.exports = email;
