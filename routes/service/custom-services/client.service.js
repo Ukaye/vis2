@@ -5,6 +5,7 @@ const fs = require('fs'),
     bcrypt = require('bcryptjs'),
     express = require('express'),
     router = express.Router(),
+    jwt = require('jsonwebtoken'),
     enums = require('../../../enums'),
     helperFunctions = require('../../../helper-functions'),
     notificationsService = require('../../notifications-service'),
@@ -438,7 +439,7 @@ router.post('/create', function(req, res) {
 
     postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
     postData.password = bcrypt.hashSync(postData.password, parseInt(process.env.SALT_ROUNDS));
-    postData.images_folder = `${postData.fullname}_${postData.email}`;
+    postData.images_folder = postData.email;
     db.getConnection(function(err, connection) {
         if (err) throw err;
         connection.query(query2,[postData.username, postData.email, postData.phone], function (error, results) {
@@ -554,6 +555,17 @@ router.post('/login', function (req, res) {
 
         let user = client[0];
         if (bcrypt.compareSync(password, user.password)) {
+            user.token = jwt.sign({
+                    ID: user.ID,
+                    username: user.username,
+                    fullname: user.fullname,
+                    email: user.email,
+                    phone: user.phone
+                },
+                process.env.SECRET_KEY,
+                {
+                    expiresIn: 60 * 60 * 24
+                });
             user.tenant = process.env.TENANT;
             user.environment = process.env.STATUS;
             let payload = {};
@@ -577,7 +589,7 @@ router.post('/login', function (req, res) {
     });
 });
 
-router.put('/update/:id', function(req, res) {
+router.put('/update/:id', helperFunctions.verifyJWT, function(req, res) {
     let postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `Update clients SET ? where ID = ${req.params.id}`;
@@ -607,7 +619,28 @@ router.put('/update/:id', function(req, res) {
     });
 });
 
-router.delete('/disable/:id', function(req, res) {
+router.get('/enable/:id', helperFunctions.verifyJWT, function(req, res) {
+    let postData = req.body;
+    postData.status = enums.CLIENT.STATUS.ACTIVE;
+    postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    let query = `Update clients SET ? where ID = ${req.params.id}`;
+    db.query(query, postData, function (error, results) {
+        if(error)
+            return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": "Client Reactivated!"
+        });
+    });
+});
+
+router.delete('/disable/:id', helperFunctions.verifyJWT, function(req, res) {
     let postData = req.body;
     postData.status = enums.CLIENT.STATUS.INACTIVE;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -628,7 +661,7 @@ router.delete('/disable/:id', function(req, res) {
     });
 });
 
-router.get('/products', function(req, res) {
+router.get('/products', helperFunctions.verifyJWT, function(req, res) {
     let query = 'SELECT w.*, a.loan_requested_min, a.loan_requested_max, a.tenor_min, a.tenor_max, a.interest_rate_min, a.interest_rate_max, ' +
         '(SELECT GROUP_CONCAT(s.document) FROM workflow_stages s WHERE w.ID = s.workflowID) document ' +
         'FROM workflows w, application_settings a WHERE w.status <> 0 AND a.ID = (SELECT MAX(ID) FROM application_settings) ORDER BY w.ID desc';
@@ -649,7 +682,7 @@ router.get('/products', function(req, res) {
 });
 
 //File Upload - New Client (Image and Signature)
-router.post('/upload/:id/:item', function(req, res) {
+router.post('/upload/:id/:item', helperFunctions.verifyJWT, function(req, res) {
     if (!req.files) return res.status(500).send('No file was found!');
     if (!req.params.id || !req.params.item) return res.status(500).send('Required parameter(s) not sent!');
 
@@ -673,7 +706,7 @@ router.post('/upload/:id/:item', function(req, res) {
             sampleFile = req.files.file,
             extArray = sampleFile.name.split("."),
             extension = extArray[extArray.length - 1],
-            folder = `${user.fullname}_${user.email}`;
+            folder = user.images_folder || `${user.fullname}_${user.email}`;
         if (extension) extension = extension.toLowerCase();
         const HOST = `${req.protocol}://${req.get('host')}`,
             folder_url = `files/users/${folder}/`,
@@ -712,7 +745,7 @@ router.post('/upload/:id/:item', function(req, res) {
                         "status": 200,
                         "error": null,
                         "message": 'File uploaded!',
-                        "response": `${HOST}/${encodeURIComponent(file_url)}`
+                        "response": `${HOST}/${encodeURI(file_url)}`
                     });
                 });
             } else {
@@ -734,7 +767,7 @@ router.post('/upload/:id/:item', function(req, res) {
                             "status": 200,
                             "error": null,
                             "message": 'File uploaded!',
-                            "response": `${HOST}/${encodeURIComponent(file_url)}`
+                            "response": `${HOST}/${encodeURI(file_url)}`
                         });
                     });
                 });
