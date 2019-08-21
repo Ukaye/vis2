@@ -39,8 +39,6 @@ email.sendByDomain = function (domain, mailOptions) {
 
     mailOptions.from = mailOptions.from || `no-reply@${domain}`;
     transporter.sendMail(mailOptions, function(error, info){
-        console.log(info)
-        console.log(error)
         if (error) console.log(error);
     });
 };
