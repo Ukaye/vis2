@@ -17,6 +17,12 @@ router.post('/create', function (req, res, next) {
     postData.status = enums.PREAPPLICATION.STATUS.ACTIVE;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query(query, postData, function (error, results) {
+        if(error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+
         query = `SELECT * from preapplications WHERE ID = (SELECT MAX(ID) from preapplications)`;
         endpoint = `/core-service/get`;
         url = `${HOST}${endpoint}`;
