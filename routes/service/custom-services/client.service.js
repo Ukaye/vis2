@@ -1,4 +1,5 @@
 const fs = require('fs'),
+    async = require('async'),
     axios = require('axios'),
     moment = require('moment'),
     db = require('../../../db'),
@@ -803,7 +804,7 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, function (req,
                 query: query
             }
         }).then(response_ => {
-            return res.send(response_['data'][0]);
+            res.send({status: 200, error: null, response: response_['data'][0]});
         }, err => {
             res.send({status: 500, error: err, response: null});
         })
@@ -833,7 +834,7 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
     }).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM client_applications p 
                  WHERE p.userID = ${id} AND p.status in (1,2) AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
-                 OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM preapproved_loans WHERE status in (1,2)`;
+                 OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM client_applications WHERE userID = ${id} AND status in (1,2)`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {
@@ -842,20 +843,24 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
             }
         }).then(payload => {
             res.send({
-                draw: draw,
-                recordsTotal: payload.data[0].recordsTotal,
-                recordsFiltered: payload.data[0].recordsFiltered,
-                data: (response.data === undefined) ? [] : response.data
+                "status": 200,
+                "error": null,
+                "response": {
+                    draw: draw,
+                    recordsTotal: payload.data[0].recordsTotal,
+                    recordsFiltered: payload.data[0].recordsFiltered,
+                    data: (response.data === undefined) ? [] : response.data
+                }
             });
         });
     });
 });
 
-router.get('/application/get/:id', helperFunctions.verifyJWT, function (req, res, next) {
+router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`,
-        path = `files/preapplication-${req.params.id}/`;
+        path = `files/client_application-${req.params.application_id}/`;
     let query = `SELECT p.*, c.fullname, c.email, c.phone FROM client_applications p 
-                INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.id}`,
+                INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.application_id} AND p.userID = ${req.params.id}`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -865,6 +870,11 @@ router.get('/application/get/:id', helperFunctions.verifyJWT, function (req, res
     }).then(response => {
         let obj = {},
             result = (response.data === undefined) ? {} : response.data[0];
+        if (!result) return res.send({
+            "status": 500,
+            "error": 'Application does not exist!',
+            "response": null
+        });
         if (!fs.existsSync(path)) {
             result.files = {};
             res.send(result);
@@ -877,7 +887,11 @@ router.get('/application/get/:id', helperFunctions.verifyJWT, function (req, res
                     callback();
                 }, function(data){
                     result.files = obj;
-                    res.send(result);
+                    res.send({
+                        "status": 200,
+                        "error": null,
+                        "response": result
+                    });
                 });
             });
         }
