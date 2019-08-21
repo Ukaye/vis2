@@ -1,4 +1,5 @@
-const axios = require('axios'),
+const fs = require('fs'),
+    axios = require('axios'),
     moment = require('moment'),
     db = require('../../../db'),
     bcrypt = require('bcryptjs'),
@@ -437,6 +438,7 @@ router.post('/create', function(req, res) {
 
     postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
     postData.password = bcrypt.hashSync(postData.password, parseInt(process.env.SALT_ROUNDS));
+    postData.images_folder = `${postData.fullname}_${postData.email}`;
     db.getConnection(function(err, connection) {
         if (err) throw err;
         connection.query(query2,[postData.username, postData.email, postData.phone], function (error, results) {
@@ -642,6 +644,101 @@ router.get('/products', function(req, res) {
             "status": 200,
             "error": null,
             "response": results
+        });
+    });
+});
+
+//File Upload - New Client (Image and Signature)
+router.post('/upload/:id/:item', function(req, res) {
+    if (!req.files) return res.status(500).send('No file was found!');
+    if (!req.params.id || !req.params.item) return res.status(500).send('Required parameter(s) not sent!');
+
+    db.query(`SELECT * FROM clients WHERE ID = ${req.params.id}`, function (error, client) {
+        if(error)
+            return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+        if(!client[0])
+            return res.send({
+                "status": 500,
+                "error": null,
+                "response": 'User does not exist!'
+            });
+
+        let user = client[0],
+            item = req.params.item,
+            sampleFile = req.files.file,
+            extArray = sampleFile.name.split("."),
+            extension = extArray[extArray.length - 1],
+            folder = `${user.fullname}_${user.email}`;
+        if (extension) extension = extension.toLowerCase();
+        const HOST = `${req.protocol}://${req.get('host')}`,
+            folder_url = `files/users/${folder}/`,
+            file_url = `${folder_url}${folder}_${item}.${extension}`;
+        switch (item) {
+            case '1': {
+                item ="Image";
+                break;
+            }
+            case '2': {
+                item ="Signature";
+                break;
+            }
+            case '3': {
+                item ="ID Card";
+                break;
+            }
+        }
+        fs.stat(folder_url, function(err) {
+            if (!err) {
+                console.log('file or directory exists');
+            } else if (err.code === 'ENOENT') {
+                fs.mkdirSync(`files/users/${folder}/`);
+            }
+        });
+
+        fs.stat(file_url, function (err) {
+            if (err) {
+                sampleFile.mv(file_url, function(err) {
+                    if (err) return res.send({
+                        "status": 500,
+                        "error": err,
+                        "response": null
+                    });
+                    res.send({
+                        "status": 200,
+                        "error": null,
+                        "message": 'File uploaded!',
+                        "response": `${HOST}/${encodeURIComponent(file_url)}`
+                    });
+                });
+            } else {
+                fs.unlink(file_url,function(err){
+                    if(err) return res.send({
+                        "status": 500,
+                        "error": err,
+                        "response": null
+                    });
+
+                    sampleFile.mv(file_url, function(err) {
+                        if (err) return res.send({
+                            "status": 500,
+                            "error": err,
+                            "response": null
+                        });
+
+                        res.send({
+                            "status": 200,
+                            "error": null,
+                            "message": 'File uploaded!',
+                            "response": `${HOST}/${encodeURIComponent(file_url)}`
+                        });
+                    });
+                });
+            }
         });
     });
 });
