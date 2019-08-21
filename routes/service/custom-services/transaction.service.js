@@ -3275,11 +3275,11 @@ router.post('/close-mature-investments', function (req, res, next) {
                         approvalDone: 1,
                         updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
                     };
-                    setInvestmentTxns(HOST, inv_txn).then(payload => {
+                    setInvestmentTxns(HOST, inv_txn).then(payload_2 => {
                         let inv_txn2 = {
                             txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                             description: `MOVE INVESTMENT FUND TO CLIENT'S WALLET`,
-                            amount: Number(balTotal).toFixed(2),
+                            amount: Number(payload).toFixed(2),
                             is_credit: 0,
                             created_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                             balance: '0.00',
