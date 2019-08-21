@@ -1863,7 +1863,7 @@ users.post('/sendmail', function(req, res) {
         template: 'mail',
         context: data
     };
-    emailService.send(mailOptions);
+    emailService.sendByDomain('app.atbtechsoft.com', mailOptions);
     return res.send("OK");
 });
 
