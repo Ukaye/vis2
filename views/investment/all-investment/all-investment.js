@@ -377,7 +377,7 @@ function onCloseInvestment() {
 
     swal({
         title: "Are you sure?",
-        text: `You are about to close ${selectedItems.lenght} mature investment${(selectedItems.lenght > 1) ? 's' : ''}!`,
+        text: `You are about to close ${selectedItems.length} mature investment${(selectedItems.length > 1) ? 's' : ''}!`,
         icon: "warning",
         buttons: true,
         dangerMode: true,
