@@ -1343,7 +1343,7 @@ function chargeForceTerminate(data, HOST) {
                 v.balance as txnBalance,v.isApproved,v.isInterestCharged,v.is_credit FROM investments t 
                 left join investment_products p on p.ID = t.productId
                 left join investment_txns v on v.investmentId = t.ID
-                WHERE v.investmentId = ${data.investmentId} AND v.isApproved = 1 ORDER BY STR_TO_DATE(v.updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1`;
+                WHERE v.investmentId = ${data.investmentId} AND v.isApproved = 1 ORDER BY v.ID DESC LIMIT 1`;
                 let endpoint = '/core-service/get';
                 let url = `${HOST}${endpoint}`;
                 axios.get(url, {
@@ -2678,7 +2678,7 @@ async function dailyMaturedInvestmentTxns(host, investmentId, firstDate, date) {
     left join investments a on a.ID = t.investmentId
     left join investment_products p on p.ID = a.productId
     WHERE t.isWallet = 0 AND t.investmentId = ${investmentId} AND STR_TO_DATE(t.updated_date, '%Y-%m-%d') <= '${date}' 
-    AND t.isApproved = 1 ORDER BY STR_TO_DATE(t.updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1`;
+    AND t.isApproved = 1 ORDER BY t.ID DESC LIMIT 1`;
 
     let endpoint = '/core-service/get';
     let url = `${host}${endpoint}`;
@@ -3131,7 +3131,7 @@ router.get('/inv-statements/:id', function (req, res, next) {
     left join clients c on i.clientId = c.ID
     left join users u on u.ID = v.createdBy
     left join investment_products p on i.productId = p.ID
-    WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id} AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') >= '${data.startDate}' AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') <= '${data.endDate}' AND v.isApproved = 1 ORDER BY STR_TO_DATE(v.updated_date, '%Y-%m-%d %l:%i:%s %p')`;
+    WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id} AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') >= '${data.startDate}' AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') <= '${data.endDate}' AND v.isApproved = 1 ORDER BY v.ID`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
