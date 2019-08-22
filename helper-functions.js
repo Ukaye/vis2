@@ -316,6 +316,7 @@ functions.verifyJWT = function (req, res, next) {
             });
 
         req.user = decoded;
+        req.HOST = `${req.protocol}://${req.get('host')}`;
         next();
     });
 };

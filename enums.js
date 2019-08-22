@@ -46,7 +46,9 @@ enums.CLIENT_APPLICATION = {
         REJECTED: 0,
         ACTIVE: 1,
         APPROVED: 2,
-        COMPLETED: 3
+        COMPLETED: 3,
+        ACCEPTED: 4,
+        DECLINED: 5
     }
 };
 

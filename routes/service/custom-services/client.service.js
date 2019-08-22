@@ -662,6 +662,30 @@ router.delete('/disable/:id', helperFunctions.verifyJWT, function(req, res) {
     });
 });
 
+router.get('/get/:id', helperFunctions.verifyJWT, function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let query = `SELECT * FROM clients WHERE ID = ${req.params.id}`,
+        endpoint = '/core-service/get',
+        url = `${HOST}${endpoint}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        let result = (response.data === undefined) ? {} : response.data[0];
+        if (!result) return res.send({
+            "status": 500,
+            "error": 'User does not exist!',
+            "response": null
+        });
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": result
+        });
+    });
+});
+
 router.get('/products', helperFunctions.verifyJWT, function(req, res) {
     let query = 'SELECT w.*, a.loan_requested_min, a.loan_requested_max, a.tenor_min, a.tenor_max, a.interest_rate_min, a.interest_rate_max, ' +
         '(SELECT GROUP_CONCAT(s.document) FROM workflow_stages s WHERE w.ID = s.workflowID) document ' +
@@ -709,8 +733,7 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function(req, res) {
             extension = extArray[extArray.length - 1],
             folder = user.images_folder || `${user.fullname}_${user.email}`;
         if (extension) extension = extension.toLowerCase();
-        const HOST = `${req.protocol}://${req.get('host')}`,
-            folder_url = `files/users/${folder}/`,
+        const folder_url = `files/users/${folder}/`,
             file_url = `${folder_url}${folder}_${item}.${extension}`;
         switch (item) {
             case '1': {
@@ -746,7 +769,7 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function(req, res) {
                         "status": 200,
                         "error": null,
                         "message": 'File uploaded!',
-                        "response": `${HOST}/${encodeURI(file_url)}`
+                        "response": `${req.HOST}/${encodeURI(file_url)}`
                     });
                 });
             } else {
@@ -768,7 +791,7 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function(req, res) {
                             "status": 200,
                             "error": null,
                             "message": 'File uploaded!',
-                            "response": `${HOST}/${encodeURI(file_url)}`
+                            "response": `${req.HOST}/${encodeURI(file_url)}`
                         });
                     });
                 });
@@ -898,24 +921,79 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
     });
 });
 
-router.post('/application/approve/:id', helperFunctions.verifyJWT, function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
-    let payload = req.body,
+router.get('/application/accept/:id/:application_id', helperFunctions.verifyJWT, function (req, res, next) {
+    let payload = {},
         id = req.params.id,
-        query =  `UPDATE client_applications Set ? WHERE ID = ${id}`,
-        endpoint = `/core-service/post?query=${query}`,
-        url = `${HOST}${endpoint}`;
-    payload.status = enums.CLIENT_APPLICATION.STATUS.APPROVED;
+        application_id = req.params.application_id,
+        query =  `UPDATE client_applications Set ? WHERE ID = ${application_id} AND userID = ${id}`;
+    payload.status = enums.CLIENT_APPLICATION.STATUS.ACCEPTED;
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
-    db.query(query, payload, function (error, response) {
-        if (error)
-            return res.send({status: 500, error: error, response: null});
-        return res.send({status: 200, error: null, response: response});
+    db.query(`SELECT * FROM client_applications WHERE ID = ${application_id} AND userID = ${id}`, function (err, application) {
+        if (err) return res.send({
+                "status": 500,
+                "error": err,
+                "response": null
+            });
+
+        if (!application[0]) return res.send({
+            "status": 500,
+            "error": null,
+            "response": 'Application does not exist!'
+        });
+
+        if (application[0]['status'] !== enums.CLIENT_APPLICATION.STATUS.APPROVED)
+            return res.send({
+                "status": 500,
+                "error": null,
+                "response": 'Application needs to be approved!'
+            });
+
+        db.query(query, payload, function (error, response) {
+            if (error)
+                return res.send({status: 500, error: error, response: null});
+            return res.send({status: 200, error: null, response: response});
+        });
     });
 });
 
-router.get('/application/complete/:id', helperFunctions.verifyJWT, function (req, res, next) {
+router.get('/application/decline/:id/:application_id', helperFunctions.verifyJWT, function (req, res, next) {
+    let payload = {},
+        id = req.params.id,
+        application_id = req.params.application_id,
+        query =  `UPDATE client_applications Set ? WHERE ID = ${application_id} AND userID = ${id}`;
+    payload.status = enums.CLIENT_APPLICATION.STATUS.DECLINED;
+    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+
+    db.query(`SELECT * FROM client_applications WHERE ID = ${application_id} AND userID = ${id}`, function (err, application) {
+        if (err) return res.send({
+            "status": 500,
+            "error": err,
+            "response": null
+        });
+
+        if (!application[0]) return res.send({
+            "status": 500,
+            "error": null,
+            "response": 'Application does not exist!'
+        });
+
+        if (application[0]['status'] !== enums.CLIENT_APPLICATION.STATUS.APPROVED)
+            return res.send({
+                "status": 500,
+                "error": null,
+                "response": 'Application needs to be approved!'
+            });
+
+        db.query(query, payload, function (error, response) {
+            if (error)
+                return res.send({status: 500, error: error, response: null});
+            return res.send({status: 200, error: null, response: response});
+        });
+    });
+});
+
+router.get('/application/complete/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let payload = {},
         id = req.params.id,
@@ -932,7 +1010,24 @@ router.get('/application/complete/:id', helperFunctions.verifyJWT, function (req
     });
 });
 
-router.get('/application/reject/:id', helperFunctions.verifyJWT, function (req, res, next) {
+router.post('/application/approve/:id', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let payload = req.body,
+        id = req.params.id,
+        query =  `UPDATE client_applications Set ? WHERE ID = ${id}`,
+        endpoint = `/core-service/post?query=${query}`,
+        url = `${HOST}${endpoint}`;
+    payload.status = enums.CLIENT_APPLICATION.STATUS.APPROVED;
+    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+
+    db.query(query, payload, function (error, response) {
+        if (error)
+            return res.send({status: 500, error: error, response: null});
+        return res.send({status: 200, error: null, response: response});
+    });
+});
+
+router.get('/application/reject/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let payload = {},
         id = req.params.id,
@@ -949,42 +1044,49 @@ router.get('/application/reject/:id', helperFunctions.verifyJWT, function (req, 
     });
 });
 
-router.post('/application/upload/:id/:name', helperFunctions.verifyJWT, function(req, res) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
-    let	name = req.params.name,
-        preapplication_id = req.params.id,
+router.post('/application/upload/:id/:application_id/:name', helperFunctions.verifyJWT, function(req, res) {
+    let	id = req.params.id,
+        name = req.params.name,
         sampleFile = req.files.file,
         extArray = sampleFile.name.split("."),
         extension = extArray[extArray.length - 1],
-        query = `SELECT * FROM client_applications WHERE ID = ${preapplication_id}`,
+        application_id = req.params.application_id,
+        query = `SELECT * FROM client_applications WHERE ID = ${application_id} AND userID = ${id}`,
         endpoint = '/core-service/get',
-        url = `${HOST}${endpoint}`;
+        url = `${req.HOST}${endpoint}`;
     if (extension) extension = extension.toLowerCase();
-
-    if (!name) return res.status(400).send('No files were uploaded.');
-    if (!req.files) return res.status(400).send('No files were uploaded.');
-    if (!req.params || !preapplication_id || !name) return res.status(400).send('No parameters specified!');
+    if (!req.files) return res.status(500).send('No files were uploaded.');
+    if (!req.params || !application_id || !name) return res.status(500).send('Required parameter(s) not sent!');
 
     axios.get(url, {
         params: {
             query: query
         }
     }).then(response => {
-        let preapplication = response.data;
-        if (!preapplication || !preapplication[0]) {
-            res.send({"status": 500, "error": "Preapplication does not exist", "response": null});
+        let client_application = response.data;
+        if (!client_application || !client_application[0]) {
+            return res.send({
+                "status": 500,
+                "error": "Application does not exist",
+                "response": null
+            });
         } else {
-            const file_folder = `files/preapplication-${preapplication_id}/`;
+            const file_folder = `files/client_application-${application_id}/`;
             fs.stat(file_folder, function(err) {
                 if (err && (err.code === 'ENOENT'))
                     fs.mkdirSync(file_folder);
 
-                const file_url = `${file_folder}${preapplication_id}_${name}.${extension}`;
+                const file_url = `${file_folder}${application_id}_${name}.${extension}`;
                 fs.stat(file_url, function (err) {
                     if (err) {
                         sampleFile.mv(file_url, function(err) {
                             if (err) return res.status(500).send(err);
-                            res.send({file:file_url, data: sampleFile});
+                            res.send({
+                                "status": 200,
+                                "error": null,
+                                "message": 'File uploaded!',
+                                "response": `${req.HOST}/${encodeURI(file_url)}`
+                            });
                         });
                     } else {
                         fs.unlink(file_url,function(err){
@@ -994,7 +1096,12 @@ router.post('/application/upload/:id/:name', helperFunctions.verifyJWT, function
                                 sampleFile.mv(file_url, function(err) {
                                     if (err)
                                         return res.status(500).send(err);
-                                    res.send({file:file_url, data: sampleFile});
+                                    res.send({
+                                        "status": 200,
+                                        "error": null,
+                                        "message": 'File uploaded!',
+                                        "response": `${req.HOST}/${encodeURI(file_url)}`
+                                    });
                                 });
                             }
                         });
@@ -1002,6 +1109,136 @@ router.post('/application/upload/:id/:name', helperFunctions.verifyJWT, function
                 });
             });
         }
+    });
+});
+
+router.get('/loans/get/:id', helperFunctions.verifyJWT, function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let id = req.params.id;
+    let limit = req.query.limit;
+    let offset = req.query.offset;
+    let draw = req.query.draw;
+    let order = req.query.order;
+    let search_string = req.query.search_string.toUpperCase();
+    let query = `SELECT p.*, c.fullname, c.phone FROM applications p, clients c 
+                 WHERE p.userID = ${id} AND p.userID = c.ID AND p.status in (1,2) AND (upper(p.userID) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
+                 OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
+    let endpoint = '/core-service/get';
+    let url = `${HOST}${endpoint}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM applications p 
+                 WHERE p.userID = ${id} AND p.status in (1,2) AND (upper(p.userID) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
+                 OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM applications WHERE userID = ${id} AND status in (1,2)`;
+        endpoint = '/core-service/get';
+        url = `${HOST}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(payload => {
+            res.send({
+                "status": 200,
+                "error": null,
+                "response": {
+                    draw: draw,
+                    recordsTotal: payload.data[0].recordsTotal,
+                    recordsFiltered: payload.data[0].recordsFiltered,
+                    data: (response.data === undefined) ? [] : response.data
+                }
+            });
+        });
+    });
+});
+
+router.get('/loan/get/:id/:application_id', helperFunctions.verifyJWT, function (req, res, next) {
+    let obj = {},
+        id = req.params.id,
+        application_id = req.params.application_id,
+        path = 'files/application-'+application_id+'/',
+        query = 'SELECT u.ID userID, u.fullname, u.phone, u.email, u.address, cast(u.loan_officer as unsigned) loan_officer, ' +
+            'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.interest_rate, a.repayment_date, ' +
+            'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, ' +
+            '(SELECT l.supervisor FROM users l WHERE l.ID = u.loan_officer) AS supervisor, ' +
+            '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
+            'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
+            'FROM clients AS u INNER JOIN applications AS a ON u.ID = a.userID LEFT JOIN remita_mandates r ' +
+            'ON (r.applicationID = a.ID AND r.status = 1) WHERE a.ID = ? AND a.userID = ?',
+        query2 = 'SELECT u.ID userID, c.ID contactID, u.name fullname, u.phone, u.email, u.address, cast(c.loan_officer as unsigned) loan_officer, ' +
+            'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.interest_rate, a.repayment_date, ' +
+            'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, ' +
+            '(SELECT l.supervisor FROM users l WHERE l.ID = c.loan_officer) AS supervisor, ' +
+            '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
+            'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
+            'FROM corporates AS u INNER JOIN applications AS a ON u.ID = a.userID INNER JOIN clients AS c ON u.clientID=c.ID LEFT JOIN remita_mandates r ' +
+            'ON (r.applicationID = a.ID AND r.status = 1) WHERE a.ID = ? AND a.userID = ?';
+    db.getConnection(function(err, connection) {
+        if (err) throw err;
+
+        connection.query('SELECT client_type FROM applications WHERE ID = ? AND userID = ?', [application_id, id], function (error, app, fields) {
+            if (error || !app[0]) {
+                res.send({"status": 500, "error": error, "response": null});
+            } else {
+                if (app[0]['client_type'] === 'corporate')
+                    query = query2;
+                connection.query(query, [application_id, id], function (error, result, fields) {
+                    if(error){
+                        res.send({"status": 500, "error": error, "response": null});
+                    } else {
+                        result = (result[0])? result[0] : {};
+                        if (!fs.existsSync(path)){
+                            result.files = {};
+                            connection.query('SELECT * FROM application_schedules WHERE applicationID=?', [application_id], function (error, schedule, fields) {
+                                if (error) {
+                                    res.send({"status": 500, "error": error, "response": null});
+                                } else {
+                                    result.schedule = schedule;
+                                    connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', [application_id], function (error, payment_history, fields) {
+                                        connection.release();
+                                        if (error) {
+                                            res.send({"status": 500, "error": error, "response": null});
+                                        } else {
+                                            result.payment_history = payment_history;
+                                            return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
+                                        }
+                                    });
+                                }
+                            });
+                        } else {
+                            fs.readdir(path, function (err, files){
+                                async.forEach(files, function (file, callback){
+                                    let filename = file.split('.')[0].split('_');
+                                    filename.shift();
+                                    obj[filename.join('_')] = path+file;
+                                    callback();
+                                }, function(data){
+                                    result.files = obj;
+                                    connection.query('SELECT * FROM application_schedules WHERE applicationID=?', [application_id], function (error, schedule, fields) {
+                                        if (error) {
+                                            res.send({"status": 500, "error": error, "response": null});
+                                        } else {
+                                            result.schedule = schedule;
+                                            connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', [application_id], function (error, payment_history, fields) {
+                                                connection.release();
+                                                if (error) {
+                                                    res.send({"status": 500, "error": error, "response": null});
+                                                } else {
+                                                    result.payment_history = payment_history;
+                                                    return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
+                                                }
+                                            });
+                                        }
+                                    });
+                                });
+                            });
+                        }
+                    }
+                });
+            }
+        });
     });
 });
 
