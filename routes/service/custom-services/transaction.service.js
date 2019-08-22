@@ -1045,7 +1045,7 @@ function fundBeneficialAccount(data, HOST) {
 function computeCurrentBalance(investmentId, HOST) {
     return new Promise((resolve, reject) => {
         let query = `Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${investmentId} 
-        AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1`;
+        AND isApproved = 1 AND postDone = 1 ORDER BY ID DESC LIMIT 1`;
         let endpoint = `/core-service/get`;
         let url = `${HOST}${endpoint}`;
         axios.get(url, {
@@ -1066,9 +1066,9 @@ function computeTotalBalance(clientId, investmentId, HOST) {
     return new Promise((resolve, reject) => {
         let query = `Select 
         (Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${clientId} 
-            AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1) as currentWalletBalance,
+            AND isApproved = 1 AND postDone = 1 ORDER BY ID DESC LIMIT 1) as currentWalletBalance,
         (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${(investmentId === '' || investmentId === undefined || investmentId === null) ? 0 : investmentId} 
-            AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1) as currentAcctBalance`;
+            AND isApproved = 1 AND postDone = 1 ORDER BY ID DESC LIMIT 1) as currentAcctBalance`;
         let endpoint = '/core-service/get';
         let url = `${HOST}${endpoint}`;
         axios.get(url, {
@@ -1095,7 +1095,7 @@ function computeTotalBalance(clientId, investmentId, HOST) {
 function computeWalletBalance(clientId, HOST) {
     return new Promise((resolve, reject) => {
         let query = `Select balance as currentWalletBalance from investment_txns WHERE isWallet = 1 AND clientId = ${clientId} 
-        AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1`;
+        AND isApproved = 1 AND postDone = 1 ORDER BY ID DESC LIMIT 1`;
         let endpoint = '/core-service/get';
         let url = `${HOST}${endpoint}`;
         axios.get(url, {
@@ -1343,7 +1343,7 @@ function chargeForceTerminate(data, HOST) {
                 v.balance as txnBalance,v.isApproved,v.isInterestCharged,v.is_credit FROM investments t 
                 left join investment_products p on p.ID = t.productId
                 left join investment_txns v on v.investmentId = t.ID
-                WHERE v.investmentId = ${data.investmentId} AND v.isApproved = 1 ORDER BY STR_TO_DATE(v.updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1`;
+                WHERE v.investmentId = ${data.investmentId} AND v.isApproved = 1 ORDER BY v.ID DESC LIMIT 1`;
                 let endpoint = '/core-service/get';
                 let url = `${HOST}${endpoint}`;
                 axios.get(url, {
@@ -1453,7 +1453,7 @@ function getInterestEndOfTenure(HOST, data, _getProductConfigInterests) {
             }
             let interestInDays = parseFloat(_getProductConfigInterests.premature_interest_rate) / daysInYear;
             let SI = (totalInvestedAmount * interestInDays) / 100;
-            let _amount = parseFloat(Number(SI * 100) / 100).toFixed(2);
+            let _amount = SI;
             let diffInDays = differenceInDays(
                 new Date(),
                 new Date(_getProductConfigInterests.investment_start_date)
@@ -1482,6 +1482,7 @@ function getInterestEndOfTenure(HOST, data, _getProductConfigInterests) {
                 createdBy: data.createdBy
             };
             setInvestmentTxns(HOST, inv_txn).then(payload => {
+                inv_txn.ID = payload.insertId;
                 deductWithHoldingTax(HOST, data, _amount, 0, inv_txn.balance, inv_txn.clientId, inv_txn.isWallet, inv_txn).then(payload3 => {
                     resolve({});
                 });
@@ -1567,7 +1568,7 @@ function reverseEarlierInterest(data, HOST) {
 
                                     let interestInDays = parseFloat(_getProductConfigInterests.premature_interest_rate) / daysInYear;
                                     let SI = (totalInvestedAmount * interestInDays) / 100;
-                                    let _amount = parseFloat(Number(SI * 100) / 100).toFixed(2);
+                                    let _amount = SI;
                                     let date = new Date();
                                     let diffInDays = differenceInDays(
                                         new Date(),
@@ -1599,6 +1600,7 @@ function reverseEarlierInterest(data, HOST) {
                                     let url = `${HOST}${endpoint}`;
                                     axios.post(url, inv_txn)
                                         .then(_payload_interest_2 => {
+                                            inv_txn.ID = _payload_interest_2.data.insertId;
                                             deductWithHoldingTax(HOST, data, interestAmount, 0, (totalInvestedAmount + interestAmount), '', '0', inv_txn).then(_payload_3 => {
                                                 let refId = moment().utcOffset('+0100').format('x');
                                                 dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -1838,7 +1840,7 @@ function reverseEarlierInterest(data, HOST) {
 function debitWalletTxns(HOST, data) {
     return new Promise((resolve, reject) => {
         if (data.isPaymentMadeByWallet.toString() === '1') {
-            let query = `SELECT * FROM investment_txns WHERE clientId = ${data.clientId} AND isWallet = 1 ORDER BY STR_TO_DATE(updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1`;
+            let query = `SELECT * FROM investment_txns WHERE clientId = ${data.clientId} AND isWallet = 1 ORDER BY ID DESC LIMIT 1`;
             let endpoint = `/core-service/get`;
             url = `${HOST}${endpoint}`;
             axios.get(url, {
@@ -2676,7 +2678,7 @@ async function dailyMaturedInvestmentTxns(host, investmentId, firstDate, date) {
     left join investments a on a.ID = t.investmentId
     left join investment_products p on p.ID = a.productId
     WHERE t.isWallet = 0 AND t.investmentId = ${investmentId} AND STR_TO_DATE(t.updated_date, '%Y-%m-%d') <= '${date}' 
-    AND t.isApproved = 1 ORDER BY STR_TO_DATE(t.updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1`;
+    AND t.isApproved = 1 ORDER BY t.ID DESC LIMIT 1`;
 
     let endpoint = '/core-service/get';
     let url = `${host}${endpoint}`;
@@ -2856,7 +2858,7 @@ async function computeInterestTxns(HOST, data) {
                                 };
 
                                 let setInv = await setInvestmentTxns(HOST, inv_txn);
-                                inv_txn.ID = setInv.data.insertId;
+                                inv_txn.ID = setInv.insertId;
                                 deductWithHoldingTax(HOST, data, _amount, payload1.data[0].total, bal_, payload.data[0].clientId, 1, inv_txn);
                                 let _formatedDate = new Date(formatedDate);
                                 let query = `UPDATE investment_interests SET isPosted = 1 
@@ -2898,7 +2900,7 @@ async function computeInterestTxns(HOST, data) {
                                 };
                                 const getTxnValue = await setInvestmentTxns(HOST, inv_txn);
                                 let bal2 = totalInvestedAmount + (payload1.data[0].total + parseFloat(Number(_amount).toFixed(2)));
-                                inv_txn.ID = getTxnValue.data.insertId;
+                                inv_txn.ID = getTxnValue.insertId;
                                 await deductWithHoldingTax(HOST, data, _amount, payload1.data[0].total, bal2, '', 0, inv_txn);
                                 let _formatedDate = new Date(formatedDate);
                                 query = `UPDATE investment_interests SET isPosted = 1 
@@ -2987,7 +2989,7 @@ router.get('/client-wallets/:id', function (req, res, next) {
     //ORDER BY STR_TO_DATE(v.created_date, '%Y-%m-%d') ${aoData[2].value[0].dir}
     let search_string = req.query.search_string.toUpperCase();
     let query = `SELECT 
-    (Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id} ORDER BY STR_TO_DATE(updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1) as balance,
+    (Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id} ORDER BY ID DESC LIMIT 1) as balance,
     v.ID,v.ref_no,c.fullname,v.description,v.created_date,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName,
     v.isDeny,v.isPaymentMadeByWallet,v.isReversedTxn,v.isTransfer,v.isMoveFundTransfer,v.beneficialInvestmentId,p.interest_disbursement_time,p.interest_moves_wallet,
     v.approvalDone,v.reviewDone,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.isInvestmentTerminated,
@@ -3037,7 +3039,7 @@ router.get('/client-wallets/:id', function (req, res, next) {
             }
         }).then(payload => {
             query = `Select 
-            (Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1) as txnCurrentBalance,
+            (Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY ID DESC LIMIT 1) as txnCurrentBalance,
             (SELECT count(*) as recordsTotal FROM investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id}) as recordsTotal`;
 
             // query = `SELECT count(*) as recordsTotal FROM investment_txns WHERE clientId = ${req.params.id}`;
@@ -3063,7 +3065,7 @@ router.get('/client-wallets/:id', function (req, res, next) {
 
 router.get('/client-wallet-balance/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query = `Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1`;
+    let query = `Select balance from investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY ID DESC LIMIT 1`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
 
@@ -3129,7 +3131,7 @@ router.get('/inv-statements/:id', function (req, res, next) {
     left join clients c on i.clientId = c.ID
     left join users u on u.ID = v.createdBy
     left join investment_products p on i.productId = p.ID
-    WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id} AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') >= '${data.startDate}' AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') <= '${data.endDate}' AND v.isApproved = 1 ORDER BY STR_TO_DATE(v.updated_date, '%Y-%m-%d %l:%i:%s %p')`;
+    WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id} AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') >= '${data.startDate}' AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') <= '${data.endDate}' AND v.isApproved = 1 ORDER BY v.ID`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
