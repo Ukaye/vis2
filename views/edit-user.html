@@ -334,9 +334,6 @@
         });
 
         function confirmPassword(){
-            console.log("Here");
-            console.log($('#cpassword').val());
-            console.log($('#password').val());
             if ($('#cpassword').val() == "" || $('#cpassword').val() != $('#password').val()){
                 $('#cpassword').css('border-color', 'red');
                 $('#cpassword-error').html("Passwords don't match");
