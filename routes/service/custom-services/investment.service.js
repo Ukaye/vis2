@@ -511,7 +511,7 @@ router.get('/client-investments/:id', function (req, res, next) {
             }
         }).then(payload => {
             query = `Select 
-            (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY STR_TO_DATE(updated_date, '%Y-%m-%d %l:%i:%s %p') DESC LIMIT 1) as txnCurrentBalance,
+            (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY ID DESC LIMIT 1) as txnCurrentBalance,
             (SELECT count(*) as recordsTotal FROM investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id}) as recordsTotal,
             (SELECT count(*) as maturedInventmentTxn FROM investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} AND isInvestmentMatured = 1) as maturedInventmentTxn`;
 
