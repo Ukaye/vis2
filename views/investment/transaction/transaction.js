@@ -325,12 +325,13 @@ function bindDataTable(id) {
                             $('#btnTransfer').attr('disabled', true);
                             $('#btnWithdrawal').attr('disabled', true);
                         }
-                        if ((selectedInvestment.isMatured === 1 || selectedInvestment.isTerminated === 1) && isWalletPage === 0) {
+                        if ((selectedInvestment.isMatured === 1 || selectedInvestment.isTerminated === 1 || selectedInvestment.isClosed === 1) && isWalletPage === 0) {
                             $('#btnWithdrawal').attr('disabled', true);
                             $('#btnDeposit').attr('disabled', true);
                             $('#btnCompInterestInvestment').attr('disabled', true);
                             $('#btnTerminateInvestment').attr('disabled', true);
                             $('#btnInvestmentStatement').attr('disabled', true);
+                            $('#btnComputeInterest').attr('hidden', true);
                         }
                         $("#client_name").html((isWalletPage === 1) ? sPageURL.split('=')[2].split('%20').join(' ') : data.data[0].fullname);
                         $("#inv_name").html(`${data.data[0].name} (${data.data[0].code})`);
