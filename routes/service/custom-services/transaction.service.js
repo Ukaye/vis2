@@ -1453,7 +1453,7 @@ function getInterestEndOfTenure(HOST, data, _getProductConfigInterests) {
             }
             let interestInDays = parseFloat(_getProductConfigInterests.premature_interest_rate) / daysInYear;
             let SI = (totalInvestedAmount * interestInDays) / 100;
-            let _amount = parseFloat(Number(SI * 100) / 100).toFixed(2);
+            let _amount = SI;
             let diffInDays = differenceInDays(
                 new Date(),
                 new Date(_getProductConfigInterests.investment_start_date)
@@ -1482,6 +1482,7 @@ function getInterestEndOfTenure(HOST, data, _getProductConfigInterests) {
                 createdBy: data.createdBy
             };
             setInvestmentTxns(HOST, inv_txn).then(payload => {
+                inv_txn.ID = payload.insertId;
                 deductWithHoldingTax(HOST, data, _amount, 0, inv_txn.balance, inv_txn.clientId, inv_txn.isWallet, inv_txn).then(payload3 => {
                     resolve({});
                 });
@@ -1567,7 +1568,7 @@ function reverseEarlierInterest(data, HOST) {
 
                                     let interestInDays = parseFloat(_getProductConfigInterests.premature_interest_rate) / daysInYear;
                                     let SI = (totalInvestedAmount * interestInDays) / 100;
-                                    let _amount = parseFloat(Number(SI * 100) / 100).toFixed(2);
+                                    let _amount = SI;
                                     let date = new Date();
                                     let diffInDays = differenceInDays(
                                         new Date(),
@@ -1599,6 +1600,7 @@ function reverseEarlierInterest(data, HOST) {
                                     let url = `${HOST}${endpoint}`;
                                     axios.post(url, inv_txn)
                                         .then(_payload_interest_2 => {
+                                            inv_txn.ID = _payload_interest_2.data.insertId;
                                             deductWithHoldingTax(HOST, data, interestAmount, 0, (totalInvestedAmount + interestAmount), '', '0', inv_txn).then(_payload_3 => {
                                                 let refId = moment().utcOffset('+0100').format('x');
                                                 dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -2856,7 +2858,7 @@ async function computeInterestTxns(HOST, data) {
                                 };
 
                                 let setInv = await setInvestmentTxns(HOST, inv_txn);
-                                inv_txn.ID = setInv.data.insertId;
+                                inv_txn.ID = setInv.insertId;
                                 deductWithHoldingTax(HOST, data, _amount, payload1.data[0].total, bal_, payload.data[0].clientId, 1, inv_txn);
                                 let _formatedDate = new Date(formatedDate);
                                 let query = `UPDATE investment_interests SET isPosted = 1 
@@ -2898,7 +2900,7 @@ async function computeInterestTxns(HOST, data) {
                                 };
                                 const getTxnValue = await setInvestmentTxns(HOST, inv_txn);
                                 let bal2 = totalInvestedAmount + (payload1.data[0].total + parseFloat(Number(_amount).toFixed(2)));
-                                inv_txn.ID = getTxnValue.data.insertId;
+                                inv_txn.ID = getTxnValue.insertId;
                                 await deductWithHoldingTax(HOST, data, _amount, payload1.data[0].total, bal2, '', 0, inv_txn);
                                 let _formatedDate = new Date(formatedDate);
                                 query = `UPDATE investment_interests SET isPosted = 1 
