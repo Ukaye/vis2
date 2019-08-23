@@ -574,6 +574,18 @@ app.get('/all-preapplications', requireLogin, function (req, res) {
     });
 });
 
+app.get('/all-client-applications', requireLogin, function (req, res) {
+    res.sendFile('application/client-applications/all-client-applications/all-client-applications.html', {
+        root: __dirname + '/views'
+    });
+});
+
+app.get('/view-client-application', requireLogin, function (req, res) {
+    res.sendFile('application/client-applications/view-client-applications/view-client-applications.html', {
+        root: __dirname + '/views'
+    });
+});
+
 app.get('/bulk-upload', requireLogin, function (req, res) {
     res.sendFile('collection/bulk-upload/bulk-upload.html', {
         root: __dirname + '/views'

@@ -662,7 +662,7 @@ router.delete('/disable/:id', helperFunctions.verifyJWT, function(req, res) {
     });
 });
 
-router.get('/get/:id', helperFunctions.verifyJWT, function (req, res, next) {
+router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT * FROM clients WHERE ID = ${req.params.id}`,
         endpoint = '/core-service/get',
@@ -800,7 +800,7 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function(req, res) {
     });
 });
 
-router.post('/application/create/:id', helperFunctions.verifyJWT, function (req, res, next) {
+router.post('/application/create/:id', helperFunctions.verifyJWT, function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let postData = req.body,
         query =  'INSERT INTO client_applications Set ?',
@@ -837,7 +837,7 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, function (req,
     });
 });
 
-router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, res, next) {
+router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let id = req.params.id;
     let limit = req.query.limit;
@@ -879,7 +879,7 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
     });
 });
 
-router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, function (req, res, next) {
+router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`,
         path = `files/client_application-${req.params.application_id}/`;
     let query = `SELECT p.*, c.fullname, c.email, c.phone FROM client_applications p 
@@ -921,7 +921,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
     });
 });
 
-router.get('/application/accept/:id/:application_id', helperFunctions.verifyJWT, function (req, res, next) {
+router.get('/application/accept/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
     let payload = {},
         id = req.params.id,
         application_id = req.params.application_id,
@@ -952,12 +952,12 @@ router.get('/application/accept/:id/:application_id', helperFunctions.verifyJWT,
         db.query(query, payload, function (error, response) {
             if (error)
                 return res.send({status: 500, error: error, response: null});
-            return res.send({status: 200, error: null, response: response});
+            return res.send({status: 200, error: null, response: 'Loan offer accepted successfully!'});
         });
     });
 });
 
-router.get('/application/decline/:id/:application_id', helperFunctions.verifyJWT, function (req, res, next) {
+router.get('/application/decline/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
     let payload = {},
         id = req.params.id,
         application_id = req.params.application_id,
@@ -988,59 +988,8 @@ router.get('/application/decline/:id/:application_id', helperFunctions.verifyJWT
         db.query(query, payload, function (error, response) {
             if (error)
                 return res.send({status: 500, error: error, response: null});
-            return res.send({status: 200, error: null, response: response});
+            return res.send({status: 200, error: null, response: 'Loan offer declined successfully!'});
         });
-    });
-});
-
-router.get('/application/complete/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
-    let payload = {},
-        id = req.params.id,
-        query =  `UPDATE client_applications Set ? WHERE ID = ${id}`,
-        endpoint = `/core-service/post?query=${query}`,
-        url = `${HOST}${endpoint}`;
-    payload.status = enums.CLIENT_APPLICATION.STATUS.COMPLETED;
-    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-
-    db.query(query, payload, function (error, response) {
-        if (error)
-            return res.send({status: 500, error: error, response: null});
-        return res.send({status: 200, error: null, response: response});
-    });
-});
-
-router.post('/application/approve/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
-    let payload = req.body,
-        id = req.params.id,
-        query =  `UPDATE client_applications Set ? WHERE ID = ${id}`,
-        endpoint = `/core-service/post?query=${query}`,
-        url = `${HOST}${endpoint}`;
-    payload.status = enums.CLIENT_APPLICATION.STATUS.APPROVED;
-    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-
-    db.query(query, payload, function (error, response) {
-        if (error)
-            return res.send({status: 500, error: error, response: null});
-        return res.send({status: 200, error: null, response: response});
-    });
-});
-
-router.get('/application/reject/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
-    let payload = {},
-        id = req.params.id,
-        query =  `UPDATE client_applications Set ? WHERE ID = ${id}`,
-        endpoint = `/core-service/post?query=${query}`,
-        url = `${HOST}${endpoint}`;
-    payload.status = enums.CLIENT_APPLICATION.STATUS.REJECTED;
-    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-
-    db.query(query, payload, function (error, response) {
-        if (error)
-            return res.send({status: 500, error: error, response: null});
-        return res.send({status: 200, error: null, response: response});
     });
 });
 
@@ -1112,7 +1061,7 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
     });
 });
 
-router.get('/loans/get/:id', helperFunctions.verifyJWT, function (req, res, next) {
+router.get('/loans/get/:id', helperFunctions.verifyJWT, function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let id = req.params.id;
     let limit = req.query.limit;
@@ -1154,7 +1103,7 @@ router.get('/loans/get/:id', helperFunctions.verifyJWT, function (req, res, next
     });
 });
 
-router.get('/loan/get/:id/:application_id', helperFunctions.verifyJWT, function (req, res, next) {
+router.get('/loan/get/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
     let obj = {},
         id = req.params.id,
         application_id = req.params.application_id,
@@ -1239,6 +1188,190 @@ router.get('/loan/get/:id/:application_id', helperFunctions.verifyJWT, function 
                 });
             }
         });
+    });
+});
+
+router.post('/application/createV2', function (req, res) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let postData = req.body,
+        query =  'INSERT INTO client_applications Set ?',
+        endpoint = `/core-service/post?query=${query}`,
+        url = `${HOST}${endpoint}`;
+    postData.status = enums.CLIENT_APPLICATION.STATUS.ACTIVE;
+    postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    db.query(query, postData, function (error, results) {
+        if(error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+
+        query = `SELECT * from client_applications WHERE ID = (SELECT MAX(ID) from client_applications)`;
+        endpoint = `/core-service/get`;
+        url = `${HOST}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(response_ => {
+            res.send({status: 200, error: null, response: response_['data'][0]});
+        }, err => {
+            res.send({status: 500, error: err, response: null});
+        })
+            .catch(error => {
+                res.send({status: 500, error: error, response: null});
+            });
+    });
+});
+
+router.get('/applications/get', function (req, res) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let id = req.params.id;
+    let limit = req.query.limit;
+    let offset = req.query.offset;
+    let draw = req.query.draw;
+    let order = req.query.order;
+    let search_string = req.query.search_string.toUpperCase();
+    let query_status = `(${enums.CLIENT_APPLICATION.STATUS.ACTIVE},${enums.CLIENT_APPLICATION.STATUS.APPROVED},
+    ${enums.CLIENT_APPLICATION.STATUS.ACCEPTED},${enums.CLIENT_APPLICATION.STATUS.DECLINED})`;
+    let query = `SELECT p.*, c.fullname, c.phone FROM client_applications p, clients c WHERE p.userID = c.ID AND p.status in 
+    ${query_status} AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
+     OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
+    let endpoint = '/core-service/get';
+    let url = `${HOST}${endpoint}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM client_applications p WHERE p.status in 
+        ${query_status} AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
+         OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM client_applications WHERE status in ${query_status}`;
+        endpoint = '/core-service/get';
+        url = `${HOST}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(payload => {
+            res.send({
+                "status": 200,
+                "error": null,
+                "response": {
+                    draw: draw,
+                    recordsTotal: payload.data[0].recordsTotal,
+                    recordsFiltered: payload.data[0].recordsFiltered,
+                    data: (response.data === undefined) ? [] : response.data
+                }
+            });
+        });
+    });
+});
+
+router.get('/application/getV2/:application_id', function (req, res) {
+    const HOST = `${req.protocol}://${req.get('host')}`,
+        path = `files/client_application-${req.params.application_id}/`;
+    let query = `SELECT p.*, c.fullname, c.email, c.phone FROM client_applications p 
+                INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.application_id}`,
+        endpoint = '/core-service/get',
+        url = `${HOST}${endpoint}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        let obj = {},
+            result = (response.data === undefined) ? {} : response.data[0];
+        if (!result) return res.send({
+            "status": 500,
+            "error": 'Application does not exist!',
+            "response": null
+        });
+        if (!fs.existsSync(path)) {
+            result.files = {};
+            res.send(result);
+        } else {
+            fs.readdir(path, function (err, files){
+                async.forEach(files, function (file, callback){
+                    let filename = file.split('.')[0].split('_');
+                    filename.shift();
+                    obj[filename.join('_')] = path+file;
+                    callback();
+                }, function(data){
+                    result.files = obj;
+                    res.send({
+                        "status": 200,
+                        "error": null,
+                        "response": result
+                    });
+                });
+            });
+        }
+    });
+});
+
+router.get('/application/complete/:application_id', function (req, res) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let payload = {},
+        id = req.params.application_id,
+        query =  `UPDATE client_applications Set ? WHERE ID = ${id}`,
+        endpoint = `/core-service/post?query=${query}`,
+        url = `${HOST}${endpoint}`;
+    payload.status = enums.CLIENT_APPLICATION.STATUS.COMPLETED;
+    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+
+    db.query(query, payload, function (error, response) {
+        if (error)
+            return res.send({status: 500, error: error, response: null});
+        return res.send({status: 200, error: null, response: response});
+    });
+});
+
+router.post('/application/approve/:application_id', function (req, res) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let payload = req.body,
+        id = req.params.application_id,
+        query =  `UPDATE client_applications Set ? WHERE ID = ${id}`,
+        endpoint = `/core-service/post?query=${query}`,
+        url = `${HOST}${endpoint}`;
+    payload.status = enums.CLIENT_APPLICATION.STATUS.APPROVED;
+    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+
+    db.query(query, payload, function (error, response) {
+        if (error)
+            return res.send({status: 500, error: error, response: null});
+        return res.send({status: 200, error: null, response: response});
+    });
+});
+
+router.get('/application/reject/:application_id', function (req, res) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let payload = {},
+        id = req.params.application_id,
+        query =  `UPDATE client_applications Set ? WHERE ID = ${id}`,
+        endpoint = `/core-service/post?query=${query}`,
+        url = `${HOST}${endpoint}`;
+    payload.status = enums.CLIENT_APPLICATION.STATUS.REJECTED;
+    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+
+    db.query(query, payload, function (error, response) {
+        if (error)
+            return res.send({status: 500, error: error, response: null});
+        return res.send({status: 200, error: null, response: response});
+    });
+});
+
+router.put('/change-password/:id', helperFunctions.verifyJWT, function(req, res) {
+    let payload = {},
+        query = `UPDATE clients SET ? WHERE ID = ${req.params.id}`;
+    payload.password = bcrypt.hashSync(req.body.password, parseInt(process.env.SALT_ROUNDS));
+    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    db.query(query, payload, function (error, results, fields) {
+        if(error) {
+            res.send({"status": 500, "error": error, "response": null});
+        } else {
+            res.send({"status": 200, "error": null, "response": "Client password updated!"});
+        }
     });
 });
 
