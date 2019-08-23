@@ -1451,9 +1451,9 @@ function getInterestEndOfTenure(HOST, data, _getProductConfigInterests) {
             if (isLeapYear(new Date())) {
                 daysInYear = 366;
             }
-            
+
             let interestInDays = parseFloat(_getProductConfigInterests.premature_interest_rate) / 100;
-            
+
             let SI = (totalInvestedAmount * interestInDays) / daysInYear;
             let _amount = SI;
             let diffInDays = differenceInDays(
@@ -2810,7 +2810,10 @@ async function computeInterestTxns(HOST, data) {
                     if (isLeapYear(new Date(formatedDate))) {
                         daysInYear = 366;
                     }
-                    let totalInvestedAmount = parseFloat(payload.data[0].balance.split(',').join(''));
+                    let totalInvestedAmount = 0;
+                    if (data.investmentId !== undefined)
+                        totalInvestedAmount = await computeCurrentBalance(data.investmentId, HOST);
+
                     let interestInDays = payload.data[0].interest_rate / daysInYear;
                     let SI = (totalInvestedAmount * interestInDays) / 100;
                     let _amount = parseFloat(parseFloat(Number(SI * 100) / 100).toFixed(2));
