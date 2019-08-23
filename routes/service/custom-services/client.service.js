@@ -1375,4 +1375,12 @@ router.put('/change-password/:id', helperFunctions.verifyJWT, function(req, res)
     });
 });
 
+router.get('/ownerships', function (req, res) {
+    return res.send({
+        "status": 200,
+        "error": null,
+        "response": enums.OWNERSHIP
+    });
+});
+
 module.exports = router;

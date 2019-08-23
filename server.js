@@ -649,6 +649,14 @@ app.use(function (req, res, next) {
     res.type('txt').send('Not found');
 });
 
+app.get('/error', function(req, res) {
+    console.log(req.query.error);
+    res.render('404', {
+        url: req.url,
+        error: req.query.error
+    });
+});
+
 module.exports = app;
 let server = http.createServer(app);
 // var cron = require('node-cron');

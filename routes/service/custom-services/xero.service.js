@@ -1,34 +1,47 @@
 const
     axios = require('axios'),
     moment = require('moment'),
-    db = require('../../../db'),
     express = require('express'),
     router = express.Router(),
-    xeroClient = require('xero-node').AccountingAPIClient,
-    helperFunctions = require('../../../helper-functions'),
-    config = {
-        appType : process.env.XERO_APP_TYPE,
-        consumerKey: process.env.XERO_CONSUMER_KEY,
-        consumerSecret: process.env.XERO_CONSUMER_SECRET,
-        callbackUrl: process.env.XERO_CALLBACK_URL
-    },
-    xero = new xeroClient(config);
+    db = require('../../../db'),
+    xeroFunctions = require('../../xero'),
+    XeroClient = require('xero-node').AccountingAPIClient,
+    helperFunctions = require('../../../helper-functions');
 
-let xeroRequestToken,
-    connectPageUrl;
 router.get('/connect', async (req, res) => {
-    const HOST = `${req.protocol}://${req.get('host')}`;
-    connectPageUrl = `${HOST}/integrations`;
-    xeroRequestToken = await xero.oauth1Client.getRequestToken();
-    let authoriseURL = xero.oauth1Client.buildAuthoriseUrl(xeroRequestToken);
-    if (req.query.url) connectPageUrl = req.query.url;
-    res.redirect(authoriseURL);
+    xeroFunctions.authorizedOperation(req, res, '/integrations', async function(xeroClient) {
+        try {
+            let organisations = await xeroClient.organisations.get()
+            res.render('organisations', {
+                organisations: organisations.Organisations,
+                active: {
+                    organisations: true,
+                    nav: {
+                        accounting: true
+                    }
+                }
+            })
+        } catch (err) {
+            handleErr(err, req, res, 'organisations');
+        }
+
+    })
 });
 
 router.get('/callback', async (req, res) => {
-    let oauthVerifier = req.query.oauth_verifier,
-        accessToken = await xero.oauth1Client.swapRequestTokenforAccessToken(xeroRequestToken, oauthVerifier);
-    res.redirect(connectPageUrl.concat(`?x=1`));
+    var xeroClient = xeroFunctions.getXeroClient();
+
+    let savedRequestToken = req.session.oauthRequestToken;
+    let oauth_verifier = req.query.oauth_verifier;
+    let accessToken = await xeroClient.oauth1Client.swapRequestTokenforAccessToken(savedRequestToken, oauth_verifier);
+
+    req.session.accessToken = accessToken;
+    res.redirect(req.session.returnTo || '/');
 });
+
+// (async function init () {
+//     const result = await xero.invoices.get();
+//     console.log('Number of invoices:', result.Invoices.length);
+// })();
 
 module.exports = router;

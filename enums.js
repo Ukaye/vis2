@@ -52,4 +52,23 @@ enums.CLIENT_APPLICATION = {
     }
 };
 
+enums.OWNERSHIP = [
+    {
+        ID: 1,
+        name: 'Family Home'
+    },
+    {
+        ID: 2,
+        name: 'Lease'
+    },
+    {
+        ID: 3,
+        name: 'Owner'
+    },
+    {
+        ID: 4,
+        name: 'Rent'
+    }
+];
+
 module.exports = enums;
