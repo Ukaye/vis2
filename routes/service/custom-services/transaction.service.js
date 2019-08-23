@@ -2810,18 +2810,15 @@ async function computeInterestTxns(HOST, data) {
                     if (isLeapYear(new Date(formatedDate))) {
                         daysInYear = 366;
                     }
-                    let totalInvestedAmount = 0;
-                    if (data.investmentId !== undefined)
-                        totalInvestedAmount = await computeCurrentBalance(data.investmentId, HOST);
-
+                    let matureTxnSum = parseFloat(payload.data[0].balance.split(',').join(''));
                     let interestInDays = payload.data[0].interest_rate / daysInYear;
-                    let SI = (totalInvestedAmount * interestInDays) / 100;
+                    let SI = (matureTxnSum * interestInDays) / 100;
                     let _amount = parseFloat(parseFloat(Number(SI * 100) / 100).toFixed(2));
 
                     let payload1 = await sumUpInvestmentInterest(HOST, data.investmentId);
                     // let bal_ = (payload1.data[0].total !== null) ? payload1.data[0].total + parseFloat(Number(_amount).toFixed(2)) : 0 + parseFloat(Number(_amount).toFixed(2));
 
-                    let _bal_ = ((index === data.startDay) ? totalInvestedAmount : (totalInvestedAmount + parseFloat(payload1.data[0].total)));
+                    let _bal_ = ((index === data.startDay) ? matureTxnSum : (matureTxnSum + parseFloat(payload1.data[0].total)));
                     let bal_ = _bal_ + parseFloat(Number(_amount).toFixed(2));
 
                     let dailyInterest = {
@@ -2883,6 +2880,7 @@ async function computeInterestTxns(HOST, data) {
                                     updateDatedTxns(HOST, datedTxns.data).then(updatedDates => { });
                                 });
                             } else {
+                                let totalInvestedAmount = await computeCurrentBalance(data.investmentId, HOST);
                                 let _amt = parseFloat(payload1.data[0].total.toString()) + parseFloat(_amount.toString());
                                 let sumTotalBalance = totalInvestedAmount + (payload1.data[0].total + parseFloat(Number(_amount).toFixed(2)));
                                 let inv_txn = {
