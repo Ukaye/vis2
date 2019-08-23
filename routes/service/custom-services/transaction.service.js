@@ -1451,13 +1451,16 @@ function getInterestEndOfTenure(HOST, data, _getProductConfigInterests) {
             if (isLeapYear(new Date())) {
                 daysInYear = 366;
             }
-            let interestInDays = parseFloat(_getProductConfigInterests.premature_interest_rate) / daysInYear;
-            let SI = (totalInvestedAmount * interestInDays) / 100;
+            
+            let interestInDays = parseFloat(_getProductConfigInterests.premature_interest_rate) / 100;
+            
+            let SI = (totalInvestedAmount * interestInDays) / daysInYear;
             let _amount = SI;
             let diffInDays = differenceInDays(
                 new Date(),
                 new Date(_getProductConfigInterests.investment_start_date)
             );
+            diffInDays = diffInDays + 1;
             let interestAmount = diffInDays * _amount;
             let refId = moment().utcOffset('+0100').format('x');
             let sumTotalBalance = totalInvestedAmount + interestAmount;
@@ -1483,7 +1486,7 @@ function getInterestEndOfTenure(HOST, data, _getProductConfigInterests) {
             };
             setInvestmentTxns(HOST, inv_txn).then(payload => {
                 inv_txn.ID = payload.insertId;
-                deductWithHoldingTax(HOST, data, _amount, 0, inv_txn.balance, inv_txn.clientId, inv_txn.isWallet, inv_txn).then(payload3 => {
+                deductWithHoldingTax(HOST, data, inv_txn.amount, 0, inv_txn.balance, inv_txn.clientId, inv_txn.isWallet, inv_txn).then(payload3 => {
                     resolve({});
                 });
             });
@@ -1565,15 +1568,15 @@ function reverseEarlierInterest(data, HOST) {
                                         daysInYear = 366;
                                     }
                                     let totalInvestedAmount = parseFloat(Number(nextBalance).toFixed(2));// total - totalInterestAmount;
-
-                                    let interestInDays = parseFloat(_getProductConfigInterests.premature_interest_rate) / daysInYear;
-                                    let SI = (totalInvestedAmount * interestInDays) / 100;
+                                    let interestInDays = parseFloat(_getProductConfigInterests.premature_interest_rate) / 100;
+                                    let SI = (totalInvestedAmount * interestInDays) / daysInYear;
                                     let _amount = SI;
                                     let date = new Date();
                                     let diffInDays = differenceInDays(
                                         new Date(),
                                         new Date(_getProductConfigInterests.investment_start_date)
                                     );
+                                    diffInDays = diffInDays + 1;
                                     let interestAmount = diffInDays * _amount;
                                     refId = moment().utcOffset('+0100').format('x');
                                     let sumTotalBalance = totalInvestedAmount + interestAmount;
