@@ -12,7 +12,7 @@ xero.getXeroClient = function (session) {
 };
 
 xero.authorizeRedirect = async function (req, res, returnTo) {
-    var xeroClient = getXeroClient(req.session);
+    var xeroClient = xero.getXeroClient(req.session);
     let requestToken = await xeroClient.oauth1Client.getRequestToken();
 
     var authoriseUrl = xeroClient.oauth1Client.buildAuthoriseUrl(requestToken);
@@ -23,16 +23,16 @@ xero.authorizeRedirect = async function (req, res, returnTo) {
 
 xero.authorizedOperation = function (req, res, returnTo, callback) {
     if (req.session.accessToken) {
-        callback(getXeroClient(req.session.accessToken));
+        callback(xero.getXeroClient(req.session.accessToken));
     } else {
-        authorizeRedirect(req, res, returnTo);
+        xero.authorizeRedirect(req, res, returnTo);
     }
 };
 
 xero.handleErr = function (err, req, res, returnTo) {
     console.log(err);
     if (err.data && err.data.oauth_problem && err.data.oauth_problem === 'token_rejected') {
-        authorizeRedirect(req, res, returnTo);
+        xero.authorizeRedirect(req, res, returnTo);
     } else {
         res.redirect('error', err);
     }

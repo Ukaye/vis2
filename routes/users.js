@@ -11,6 +11,7 @@ let token,
     bcrypt = require('bcryptjs'),
     jwt = require('jsonwebtoken'),
     nodemailer = require('nodemailer'),
+    xeroFunctions = require('../routes/xero');
     hbs = require('nodemailer-express-handlebars'),
     helperFunctions = require('../helper-functions'),
     smtpTransport = require('nodemailer-smtp-transport'),
@@ -1853,17 +1854,17 @@ users.post('/contact', function(req, res) {
 
 users.post('/sendmail', function(req, res) {
     let data = req.body;
-    if (!data.name || !data.email || !data.company || !data.phone || !data.title)
+    if (!data.name || !data.email || !data.company || !data.phone || !data.title || !data.location || !data.description || !data.lead)
         return res.send("Required Parameters not sent!");
     data.date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let mailOptions = {
         from: 'ATB Cisco <solutions@atbtechsoft.com>',
-        to: 'solutions@atbtechsoft.com',
+        to: 'sibironke@atbtechsoft.com',
         subject: 'ATB Cisco Application: '+data.name,
         template: 'mail',
         context: data
     };
-    emailService.sendByDomain('app.atbtechsoft.com', mailOptions);
+    emailService.send(mailOptions);
     return res.send("OK");
 });
 
@@ -2540,8 +2541,11 @@ users.post('/application/schedule/:id', function(req, res, next) {
                     async.forEach(req.body.schedule, function (obj, callback2) {
                         obj.applicationID = req.params.id;
                         connection.query('INSERT INTO application_schedules SET ?', obj, function (error, response, fields) {
-                            if(!error)
+                            if(!error) {
                                 count++;
+                            } else {
+                                // xeroFunctions.authorizedOperation(req, res, '', )
+                            }
                             callback2();
                         });
                     }, function (data) {
