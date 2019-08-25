@@ -231,8 +231,10 @@ function getWorkflows(data){
     });
 }
 
+let workflow_comments;
 function loadComments(comments) {
     if (comments && comments[0]){
+        workflow_comments = comments;
         let $comments = $('#comments');
         $comments.html('');
         comments.forEach(function (comment) {
@@ -249,12 +251,14 @@ function loadComments(comments) {
                 '</div>');
         });
     } else {
+        $('#generateLoanFile').prop('disabled', true);
         $.ajax({
             'url': '/user/application/comments/'+application_id,
             'type': 'get',
             'success': function (data) {
                 let comments = data.response,
                     $comments = $('#comments');
+                workflow_comments = comments;
                 $comments.html('');
                 if (!comments[0])
                     return $comments.append('<h2 style="margin: auto;">No comments available yet!</h2>');
@@ -271,6 +275,7 @@ function loadComments(comments) {
                         '    </div>\n' +
                         '</div>');
                 });
+                $('#generateLoanFile').prop('disabled', false);
             },
             'error': function (err) {
                 console.log(err);
@@ -500,6 +505,7 @@ function loadWorkflowState() {
     });
 }
 
+let workflow_processes;
 function loadAllWorkflowState(workflow_stages) {
     $.ajax({
         'url': '/user/workflow_process_all/'+application_id,
@@ -507,6 +513,7 @@ function loadAllWorkflowState(workflow_stages) {
         'success': function (data) {
             let states = data.response,
                 $processes = $('#processes');
+            workflow_processes = states;
 
             $processes.html('');
             if (!states[0])
@@ -1794,6 +1801,32 @@ $("#setupDirectDebit").click(function () {
             }
         });
 });
+
+function generateLoanFile() {
+    const loanFile = {
+        id: application_id,
+        request_date: application.date_created,
+        customer_name: application.fullname,
+        incorporation_date: application.incorporation_date,
+        line_of_business: application.industry,
+        initiating_officer: workflow_processes[0]['agent'],
+        client_date_created: application.client_date_created,
+        registration_number: application.registration_number,
+        loan_amount: application.loan_amount,
+        interest_rate: application.interest_rate,
+        fees: application.fees,
+        tenor: application.duration,
+        loan_purpose: application.loan_purpose,
+        documents: application.documents,
+        customer_details_request: (workflow_comments[0])? workflow_comments[0]['text'] : '',
+        transaction_dynamics: (workflow_comments[1])? workflow_comments[1]['text'] : '',
+        kyc: `${($.isEmptyObject(application.files))? 'Not':'Yes'} Attached`,
+        security: `${($.isEmptyObject(application.files))? 'Not':'Yes'} Attached`,
+        workflow_processes: workflow_processes
+    };
+    localStorage.loanFile = encodeURIComponent(JSON.stringify(loanFile));
+    return window.open(`/loan-file?id=${application_id}`, '_blank');
+}
 
 function read_write_1(){
     let perms = JSON.parse(localStorage.getItem("permissions")),
