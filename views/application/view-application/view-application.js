@@ -260,8 +260,8 @@ function loadComments(comments) {
                     $comments = $('#comments');
                 workflow_comments = comments;
                 $comments.html('');
-                if (!comments[0])
-                    return $comments.append('<h2 style="margin: auto;">No comments available yet!</h2>');
+                $('#generateLoanFile').prop('disabled', false);
+                if (!comments[0]) return $comments.append('<h2 style="margin: auto;">No comments available yet!</h2>');
                 comments.forEach(function (comment) {
                     $comments.append('<div class="row">\n' +
                         '    <div class="col-sm-2">\n' +
@@ -275,7 +275,6 @@ function loadComments(comments) {
                         '    </div>\n' +
                         '</div>');
                 });
-                $('#generateLoanFile').prop('disabled', false);
             },
             'error': function (err) {
                 console.log(err);
