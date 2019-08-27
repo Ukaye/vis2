@@ -9,12 +9,12 @@ const urlParams = new URLSearchParams(window.location.search),
 function init() {
     if (loan_id !== loan.id) return notification('Loan file not found!', '', 'error');
 
-    $('#request_date').text(loan.request_date || 'N/A');
+    $('#request_date').text(formatDate_(loan.request_date) || 'N/A');
     $('#customer_name').text(loan.customer_name || 'N/A');
-    $('#incorporation_date').text(loan.incorporation_date || 'N/A');
+    $('#incorporation_date').text(formatDate_(loan.incorporation_date) || 'N/A');
     $('#line_of_business').text(loan.line_of_business || 'N/A');
     $('#initiating_officer').text(loan.initiating_officer || 'N/A');
-    $('#client_date_created').text(loan.client_date_created || 'N/A');
+    $('#client_date_created').text(formatDate_(loan.client_date_created) || 'N/A');
     $('#registration_number').text(loan.registration_number || 'N/A');
     $('#loan_amount').text(numberToCurrencyformatter(loan.loan_amount) || 'N/A');
     $('#interest_rate').text(loan.interest_rate || 'N/A');
@@ -34,4 +34,9 @@ function init() {
     }
 
     return window.print();
+}
+
+function formatDate_(date) {
+    if (!date) return date;
+    return (date.split(' '))[0];
 }
