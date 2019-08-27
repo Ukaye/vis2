@@ -40,7 +40,9 @@
             border: 2px dashed red;
         }
         #csvUpload {
-            width: 100%;
+            width: 85%;
+            display: inline-block;
+            float: left;
         }
         td.disabled {
             background-color: #efefef !important;
@@ -51,6 +53,9 @@
         }
         .input-group > .radio {
             margin-right: 15px;
+        }
+        #csvUploadClear {
+            float: right;
         }
     </style>
 </head>
@@ -142,7 +147,8 @@
                                 </div>
                                 <div class="col-lg-3">
                                     <label for="csvUpload">Statement<strong style="color:red"> *</strong></label>
-                                    <input type="file" id="csvUpload" style="display: inline-block"/>
+                                    <input type="file" id="csvUpload"/>
+                                    <button id="csvUploadClear" class="btn btn-sm btn-outline-danger"><i class="fa fa-times"></i></button>
                                 </div>
                             </div>
                             <div class="row" style="margin-top: 5px;">
