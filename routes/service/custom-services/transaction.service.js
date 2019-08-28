@@ -2758,6 +2758,11 @@ async function sumAllWalletInvestmentTxns(host, clientId) {
                 query: query
             }
         }).then(result => {
+            if (result.data.length === 0) {
+                result.data = [{ total: 0 }];
+                resolve(result);
+            }
+            result.data[0].total = parseFloat(result.data[0].total.split(',').join(''));
             resolve(result);
         }, err => {
             reject(err);
@@ -2860,6 +2865,7 @@ async function computeInterestTxns(HOST, data) {
                             sumInvestmentInterestRange(HOST, data.investmentId, startDate, endDate).then(totalMonthlyInterest => {
                                 if (payload.data[0].interest_moves_wallet === 1) {
                                     sumAllWalletInvestmentTxns(HOST, payload.data[0].clientId).then(payload3 => {
+
                                         bal_ = payload3.data[0].total + totalMonthlyInterest.data[0].total;
                                         let amountValue = totalMonthlyInterest.data[0].total;
                                         let inv_txn = {
