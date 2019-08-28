@@ -2930,9 +2930,9 @@ async function computeInterestTxns(HOST, data) {
                                             isInterest: 1
                                         };
                                         setInvestmentTxns(HOST, inv_txn).then(getTxnValue => {
-                                            let bal2 = totalInvestedAmount + (payload1.data[0].total + parseFloat(Number(_amount).toFixed(2)));
+                                            // let bal2 = totalInvestedAmount + (payload1.data[0].total + parseFloat(Number(_amount).toFixed(2)));
                                             inv_txn.ID = getTxnValue.insertId;
-                                            deductWithHoldingTax(HOST, data, _amount, payload1.data[0].total, bal2, '', 0, inv_txn).then(deductWithHoldingTax_ => {
+                                            deductWithHoldingTax(HOST, data, inv_txn.amount, 0, totalInvestedAmount, '', 0, inv_txn).then(deductWithHoldingTax_ => {
                                                 let _formatedDate = new Date(formatedDate);
                                                 query = `UPDATE investment_interests SET isPosted = 1 
                                                 WHERE id <> 0 AND investmentId = ${data.investmentId} 
