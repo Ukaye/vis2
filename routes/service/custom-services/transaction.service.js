@@ -1608,7 +1608,7 @@ function reverseEarlierInterest(data, HOST) {
                                                 let refId = moment().utcOffset('+0100').format('x');
                                                 dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                                                 let configData = _getProductConfigInterests;
-                                                let configAmount = (configData.interest_forfeit_charge_opt == 'Fixed') ? configData.interest_forfeit_charge : (configData.interest_forfeit_charge * parseFloat(Number(_payload_3.balance).toFixed(2))) / 100;//totalInvestedAmount + interestAmount).toFixed(2))) / 100;
+                                                let configAmount = (configData.interest_forfeit_charge_opt == 'Fixed') ? configData.interest_forfeit_charge : (configData.interest_forfeit_charge * totalInvestedAmount) / 100;//_payload_3.balance;
                                                 let sumBalance = _payload_3.balance - configAmount; //(totalInvestedAmount + interestAmount) - configAmount;
                                                 inv_txn = {
                                                     txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
