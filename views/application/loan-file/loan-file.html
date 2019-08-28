@@ -1,0 +1,380 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Facility Summary Report</title>
+    <style>
+
+        @import url(https://fonts.googleapis.com/css?family=Roboto:100,300,400,900,700,500,300,100);
+
+        * {
+            margin: 0;
+            box-sizing: border-box;
+
+        }
+
+        body {
+            background: #fafafa;
+            font-family: 'Roboto', sans-serif;
+            background-image: url('');
+            background-repeat: repeat-y;
+            background-size: 100%;
+        }
+
+        ::selection {
+            background: #f31544;
+            color: #FFF;
+        }
+
+        ::moz-selection {
+            background: #f31544;
+            color: #FFF;
+        }
+
+        h1 {
+            font-size: 1.2em;
+            color: #222;
+        }
+
+        h2 {
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        h3 {
+            font-size: 1.2em;
+            font-weight: 300;
+            line-height: 2em;
+        }
+
+        p {
+            font-size: .8em;
+            color: #666;
+            line-height: 1.2em;
+        }
+
+        li {
+            font-size: .8em;
+            color: #666;
+            line-height: 1.2em;
+        }
+
+
+        #invoice {
+            position: relative;
+            /*top: -290px;*/
+            margin: 0 auto;
+            width: 880px;
+            /*min-width: 832px;*/
+            /*width: auto;*/
+            background: #FFF;
+        }
+
+        #invoice-top {
+            min-height: 120px;
+            padding: 30px 24px;
+        }
+
+        #invoice-mid {
+            /*min-height: 120px;*/
+            padding: 0 24px;
+        }
+
+        .logo {
+            float: left;
+            height: 100px;
+            width: 100px;
+            background: url(https://x3.loanratus.com/fin-ratus-logo.svg) no-repeat;
+            background-size: contain;
+        }
+
+
+        .info {
+            display: block;
+            float: left;
+            /*margin-left: 20px;*/
+        }
+
+        .title {
+            /*float: right;*/
+            text-align: center;
+        }
+
+        .title p {
+            text-align: right;
+        }
+
+        #project {
+            margin-left: 52%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td {
+            padding: 10px;
+            /*border: 1px solid #EEE*/
+        }
+
+        .tabletitle {
+            padding: 5px;
+            background: #EEE;
+        }
+
+        .service {
+            border: 1px solid #EEE;
+        }
+
+        .item {
+            width: 50%;
+        }
+
+        .itemtext {
+            font-size: 14px;
+        }
+
+        #legalcopy {
+            padding: 0 35px 40px 35px;
+        }
+
+        form {
+            float: right;
+            margin-top: 30px;
+            text-align: right;
+        }
+
+        .effect2 {
+            position: relative;
+        }
+
+        .effect2:before, .effect2:after {
+            z-index: -1;
+            position: absolute;
+            content: "";
+            bottom: 15px;
+            left: 10px;
+            width: 50%;
+            top: 80%;
+            max-width: 300px;
+            background: #777;
+            -webkit-box-shadow: 0 15px 10px #777;
+            -moz-box-shadow: 0 15px 10px #777;
+            box-shadow: 0 15px 10px #777;
+            -webkit-transform: rotate(-3deg);
+            -moz-transform: rotate(-3deg);
+            -o-transform: rotate(-3deg);
+            -ms-transform: rotate(-3deg);
+            transform: rotate(-3deg);
+        }
+
+        .effect2:after {
+            -webkit-transform: rotate(3deg);
+            -moz-transform: rotate(3deg);
+            -o-transform: rotate(3deg);
+            -ms-transform: rotate(3deg);
+            transform: rotate(3deg);
+            right: 10px;
+            left: auto;
+        }
+
+        .customer-details {
+            padding-top: 20px;
+        }
+
+        .customer-details td {
+            padding: 0 24px 0 0;
+            font-size: 14px;
+            line-height: 1.5rem;
+        }
+
+        .customer-details td:first-of-type {
+            padding-left: 24px;
+        }
+
+        .transaction-content {
+            margin: 24px;
+            border: 1px solid #EEE;
+            height: auto;
+            padding: 10px;
+            min-height: 60px;
+        }
+
+        .transaction-content p, li {
+            line-height: 1.5rem !important;
+        }
+    </style>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script src="/assets/js/vendor/jquery-2.1.4.min.js"></script>
+</head>
+
+<body>
+<div id="invoice" style="margin-top: 40px;" class="effect2">
+    <div id="invoice-top" style="height: 130px">
+        <div class="logo"></div>
+        <div class="title">
+            <h1>FACILITY SUMMARY REPORT</h1>
+        </div><!--End Title-->
+    </div>
+    <div id="invoice-mid">
+        <div class="info">
+            <h2>CUSTOMER DETAILS</h2>
+        </div>
+    </div>
+    <table class="customer-details">
+        <tbody>
+        <tr>
+            <td>
+                Request Date:
+                <br>
+                Customer Name:
+                <br>
+                Inc. Date:
+                <br>
+                Line of Business:
+                <br>
+                Unit Location:
+            </td>
+            <td>
+                <b id="request_date"></b>
+                <br>
+                <b id="customer_name"></b>
+                <br>
+                <b id="incorporation_date"></b>
+                <br>
+                <b id="line_of_business"></b>
+                <br>
+                <b>Business Development</b>
+            </td>
+            <td>
+                Initiating Officer:
+                <br>
+                A/c Op Date:
+                <br>
+                RC/Reg. No.:
+                <br>
+                <br>
+                <br>
+            </td>
+            <td>
+                <b id="initiating_officer"></b>
+                <br>
+                <b id="client_date_created"></b>
+                <br>
+                <b id="registration_number"></b>
+                <br>
+                <br>
+                <br>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <table cellpadding="0" cellspacing="0"
+           style="width:100%; border:none; border-collapse:collapse;">
+        <tbody>
+        <tr>
+            <td>
+                <center>
+                    <table cellpadding="0" cellspacing="0"
+                           style="border-collapse:collapse">
+                        <tbody>
+                        <tr>
+                            <td colspan="2"
+                                style="padding:30px 15px; vertical-align:top; background:rgb(255,255,255); font-size:12px; line-height:16px; border: none;">
+                                <table style="width: 100%;">
+                                    <tbody>
+                                    <tr class="tabletitle">
+                                        <td class="item"><h2>S/N</h2></td>
+                                        <td class="item"><h2>Facility Type</h2></td>
+                                        <td class="item"><h2>Facility Amount (₦)</h2></td>
+                                        <td class="Hours"><h2>Previous amount (₦)</h2></td>
+                                        <td class="Rate"><h2>Interest rate (monthly)</h2></td>
+                                        <td class="subtotal"><h2>facility fees (flat)</h2></td>
+                                        <td class="subtotal"><h2>tenor (months)</h2></td>
+                                        <td class="subtotal tooltip-test">
+                                            <h2>purpose</h2></td>
+                                        <td class="subtotal tooltip-test">
+                                            <h2>security/comfort</h2></td>
+                                    </tr>
+
+                                    <tr class="service">
+                                        <td class="tableitem"><p class="itemtext">1</p></td>
+                                        <td class="tableitem"><p class="itemtext">Time Loan</p></td>
+                                        <td class="tableitem"><p class="itemtext" id="loan_amount"></p></td>
+                                        <td class="tableitem"><p class="itemtext">0.00</p></td>
+                                        <td class="tableitem"><p class="itemtext" id="interest_rate"></p></td>
+                                        <td class="tableitem"><p class="itemtext" id="fees"></p></td>
+                                        <td class="tableitem"><p class="itemtext" id="tenor"></p></td>
+                                        <td class="tableitem"><p class="itemtext" id="loan_purpose"></p></td>
+                                        <td class="tableitem tooltip-test">
+                                            <p class="itemtext" id="documents"></p></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </center>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="info" style="padding-left: 24px;">
+        <h2>CUSTOMER DETAILS & REQUEST</h2>
+
+    </div>
+    <div class="transaction-content">
+        <p id="customer_details_request"></p>
+    </div>
+    <br>
+    <div class="info" style="padding-left: 24px;">
+        <h2>TRANSACTION DYNAMICS</h2>
+    </div>
+    <div class="transaction-content">
+        <p id="transaction_dynamics"></p>
+    </div>
+    <!--<br>-->
+    <table class="customer-details">
+        <tbody>
+        <tr>
+            <td>
+                KYC:
+                <br>
+                Security:
+                <br>
+            </td>
+            <td>
+                <b id="kyc"></b>
+                <br>
+                <b id="security"></b>
+                <br>
+            </td>
+            <td>
+                Financial Information:
+                <br>
+                Expiry Date:
+                <br>
+            </td>
+            <td>
+                <b>N/A</b>
+                <br>
+                <b>One Year</b>
+                <br>
+            </td>
+        </tr>
+        <tr>
+            <td id="process_label"></td>
+            <td id="process_value"></td>
+        </tr>
+        </tbody>
+    </table>
+    <br>
+    <br>
+</div>
+<script src="/js/helper-functions.js"></script>
+<script src="/../application/loan-file/loan-file.js"></script>
+</body>
+</html>

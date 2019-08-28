@@ -11,6 +11,7 @@ let token,
     bcrypt = require('bcryptjs'),
     jwt = require('jsonwebtoken'),
     nodemailer = require('nodemailer'),
+    xeroFunctions = require('../routes/xero');
     hbs = require('nodemailer-express-handlebars'),
     helperFunctions = require('../helper-functions'),
     smtpTransport = require('nodemailer-smtp-transport'),
@@ -1853,17 +1854,17 @@ users.post('/contact', function(req, res) {
 
 users.post('/sendmail', function(req, res) {
     let data = req.body;
-    if (!data.name || !data.email || !data.company || !data.phone || !data.title)
+    if (!data.name || !data.email || !data.company || !data.phone || !data.title || !data.location || !data.description || !data.lead)
         return res.send("Required Parameters not sent!");
     data.date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let mailOptions = {
         from: 'ATB Cisco <solutions@atbtechsoft.com>',
-        to: 'solutions@atbtechsoft.com',
+        to: 'sibironke@atbtechsoft.com',
         subject: 'ATB Cisco Application: '+data.name,
         template: 'mail',
         context: data
     };
-    emailService.sendByDomain('app.atbtechsoft.com', mailOptions);
+    emailService.send(mailOptions);
     return res.send("OK");
 });
 
@@ -1961,17 +1962,19 @@ users.get('/application-id/:id', function(req, res, next) {
     let obj = {},
         application_id = req.params.id,
         path = 'files/application-'+application_id+'/',
-        query = 'SELECT u.ID userID, u.fullname, u.phone, u.email, u.address, cast(u.loan_officer as unsigned) loan_officer, ' +
+        query = 'SELECT u.ID userID, u.fullname, u.phone, u.email, u.address, u.industry, u.date_created client_date_created, a.fees, ' +
+            '(SELECT title FROM loan_purpose_settings WHERE ID = a.loan_purpose) loan_purpose, (SELECT GROUP_CONCAT(document) FROM workflow_stages WHERE workflowID = a.workflowID) documents, cast(u.loan_officer as unsigned) loan_officer, ' +
             'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.interest_rate, a.repayment_date, ' +
-            'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, ' +
+            'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, a.interest_rate, a.duration, ' +
             '(SELECT l.supervisor FROM users l WHERE l.ID = u.loan_officer) AS supervisor, ' +
             '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
             'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
             'FROM clients AS u INNER JOIN applications AS a ON u.ID = a.userID LEFT JOIN remita_mandates r ' +
             'ON (r.applicationID = a.ID AND r.status = 1) WHERE a.ID = ?',
-        query2 = 'SELECT u.ID userID, c.ID contactID, u.name fullname, u.phone, u.email, u.address, cast(c.loan_officer as unsigned) loan_officer, ' +
+        query2 = 'SELECT u.ID userID, c.ID contactID, u.name fullname, u.phone, u.email, u.address, u.industry, u.incorporation_date, u.registration_number, u.date_created client_date_created, a.fees, ' +
+            '(SELECT title FROM loan_purpose_settings WHERE ID = a.loan_purpose) loan_purpose, (SELECT GROUP_CONCAT(document) FROM workflow_stages WHERE workflowID = a.workflowID) documents, cast(c.loan_officer as unsigned) loan_officer, ' +
             'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.interest_rate, a.repayment_date, ' +
-            'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, ' +
+            'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, a.interest_rate, a.duration, ' +
             '(SELECT l.supervisor FROM users l WHERE l.ID = c.loan_officer) AS supervisor, ' +
             '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
             'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
@@ -2476,7 +2479,8 @@ users.get('/workflow_process/:application_id', function(req, res, next) {
 
 users.get('/workflow_process_all/:application_id', function(req, res, next) {
     let query = 'SELECT w.ID, w.workflowID, w.previous_stage, w.current_stage, w.next_stage, w.approval_status, w.date_created, w.applicationID, w.status,' +
-        'w.agentID, u.fullname AS agent FROM workflow_processes AS w, users AS u WHERE applicationID = ? AND w.agentID = u.ID';
+        'w.agentID, u.fullname AS agent, (SELECT role_name FROM user_roles WHERE ID = u.user_role) role, (SELECT name FROM workflow_stages WHERE workflowID = w.workflowID AND stageID = w.current_stage) stage ' +
+        'FROM workflow_processes AS w, users AS u WHERE applicationID = ? AND w.agentID = u.ID';
     db.query(query, [req.params.application_id], function (error, results, fields) {
         if(error){
             res.send({"status": 500, "error": error, "response": null});
@@ -2494,7 +2498,7 @@ users.post('/application/comments/:id/:user_id', function(req, res, next) {
             db.query('INSERT INTO application_comments SET ?', [{applicationID:req.params.id,userID:req.params.user_id,text:req.body.text,date_created:moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')}],
                 function (error, response, fields) {
                     if(error || !response)
-                        res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+                        return res.send({"status": 500, "error": error, "response": null});
                     db.query('SELECT c.text, c.date_created, u.fullname FROM application_comments AS c, users AS u WHERE c.applicationID = ? AND c.userID=u.ID ORDER BY c.ID desc', [req.params.id], function (error, comments, fields) {
                         if(error){
                             res.send({"status": 500, "error": error, "response": null});
@@ -2540,8 +2544,11 @@ users.post('/application/schedule/:id', function(req, res, next) {
                     async.forEach(req.body.schedule, function (obj, callback2) {
                         obj.applicationID = req.params.id;
                         connection.query('INSERT INTO application_schedules SET ?', obj, function (error, response, fields) {
-                            if(!error)
+                            if(!error) {
                                 count++;
+                            } else {
+                                // xeroFunctions.authorizedOperation(req, res, '', )
+                            }
                             callback2();
                         });
                     }, function (data) {

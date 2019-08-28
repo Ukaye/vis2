@@ -882,8 +882,9 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
 router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`,
         path = `files/client_application-${req.params.application_id}/`;
-    let query = `SELECT p.*, c.fullname, c.email, c.phone FROM client_applications p 
-                INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.application_id} AND p.userID = ${req.params.id}`,
+    let query = `SELECT p.*, c.fullname, c.email, c.phone, a.ID loanID FROM client_applications p 
+                INNER JOIN clients c ON p.userID = c.ID LEFT JOIN applications a ON p.ID = a.preapplicationID 
+                WHERE p.ID = ${req.params.application_id} AND p.userID = ${req.params.id}`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -1372,6 +1373,14 @@ router.put('/change-password/:id', helperFunctions.verifyJWT, function(req, res)
         } else {
             res.send({"status": 200, "error": null, "response": "Client password updated!"});
         }
+    });
+});
+
+router.get('/ownerships', function (req, res) {
+    return res.send({
+        "status": 200,
+        "error": null,
+        "response": enums.OWNERSHIP
     });
 });
 

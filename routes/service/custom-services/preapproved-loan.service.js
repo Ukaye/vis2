@@ -397,6 +397,10 @@ router.get('/get/:id', function (req, res, next) {
         query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, r.requestId, r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
                 LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) WHERE p.userID = '${req.params.id}'`;
     }
+    if (req.query.key === 'applicationID') {
+        query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, r.requestId, r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
+                LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) WHERE p.applicationID = '${req.params.id}'`;
+    }
     axios.get(url, {
         params: {
             query: query

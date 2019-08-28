@@ -622,13 +622,17 @@ app.get('/expenses', requireLogin, function (req, res) {
     });
 });
 
-
 app.get('/collection-banks', requireLogin, function (req, res) {
     res.sendFile('collection/collection-banks/collection-banks.html', {
         root: __dirname + '/views'
     });
 });
 
+app.get('/loan-file/:id?', requireLogin, function (req, res) {
+    res.sendFile('/application/loan-file/loan-file.html', {
+        root: __dirname + '/views'
+    });
+});
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
@@ -647,6 +651,14 @@ app.use(function (req, res, next) {
     }
 
     res.type('txt').send('Not found');
+});
+
+app.get('/error', function(req, res) {
+    console.log(req.query.error);
+    res.render('404', {
+        url: req.url,
+        error: req.query.error
+    });
 });
 
 module.exports = app;

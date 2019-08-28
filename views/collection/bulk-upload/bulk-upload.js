@@ -28,7 +28,8 @@
         $dvCSV = $("#dvCSV"),
         $csvUpload = $("#csvUpload"),
         $nve_cr_rvsl = $('#nve_cr_rvsl'),
-        $dateType = $('input[name=dateType]');
+        $dateType = $('input[name=dateType]'),
+        $csvUploadClear = $("#csvUploadClear");
 
     $date.val(new Date().toDateInputValue());
 
@@ -102,6 +103,13 @@
             $('#wait').hide();
             return notification('Please select a valid CSV file.','Note that symbols and special characters are not allowed in the filename!','warning');
         }
+    });
+
+    $csvUploadClear.click(() => {
+        statement = [];
+        statement_ = [];
+        $dvCSV.html('');
+        $csvUpload.val('');
     });
 
     function previewStatement(rows) {
@@ -235,7 +243,6 @@
                         $(`#invoice-${i+1}-3`).text(numberToCurrencyformatter(source_value));
                     } else {
                         $(`#invoice-${i+1}-2`).text(numberToCurrencyformatter(source_value));
-                        $(`#invoice-${i+1}-3`).text('');
                     }
                 } else {
                     $invoice.text(numberToCurrencyformatter(source_value));
