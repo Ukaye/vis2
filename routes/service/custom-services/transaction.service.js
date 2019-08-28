@@ -2749,8 +2749,8 @@ async function setInvestmentInterest(host, value) {
 
 async function sumAllWalletInvestmentTxns(host, clientId) {
     return new Promise((resolve, reject) => {
-        let query = `SELECT SUM(amount) as total FROM investment_txns
-        WHERE clientId = ${clientId} AND isWallet = ${1}`;
+        let query = `SELECT balance as total FROM investment_txns
+        WHERE clientId = ${clientId} AND isWallet = ${1} ORDER BY ID DESC LIMIT 1`;
         let endpoint = '/core-service/get';
         let url = `${host}${endpoint}`;
         axios.get(url, {
