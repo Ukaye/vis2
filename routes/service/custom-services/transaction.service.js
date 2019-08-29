@@ -2728,7 +2728,7 @@ async function sumInvestmentInterestRange(host, investmentId, startDate, endDate
                 query: query
             }
         }).then(result => {
-            resolve(result);
+            resolve(result.data[0].total);
         }, err => {
             reject(err);
         });
@@ -2859,109 +2859,112 @@ async function computeInterestTxns(HOST, data) {
                             setInvestmentInterest(HOST, dailyInterest).then(payload2 => {
                                 if (index === daysInMonth) {
                                     if (payload2.data.status === undefined) {
-                                        sumInvestmentInterestRange(HOST, data.investmentId, startDate, endDate).then(totalMonthlyInterest => {
-                                            if (payload.data[0].interest_moves_wallet === 1) {
-                                                sumAllWalletInvestmentTxns(HOST, payload.data[0].clientId).then(payload3 => {
+                                        setTimeout(() => {
+                                            sumInvestmentInterestRange(HOST, data.investmentId, startDate, endDate)
+                                                .then(totalMonthlyInterest => {
+                                                    if (payload.data[0].interest_moves_wallet === 1) {
+                                                        sumAllWalletInvestmentTxns(HOST, payload.data[0].clientId).then(payload3 => {
 
-                                                    bal_ = payload3.data[0].total + totalMonthlyInterest.data[0].total;
-                                                    let amountValue = totalMonthlyInterest.data[0].total;
-                                                    let inv_txn = {
-                                                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-                                                        description: `Balance ${Number(bal_).toFixed(2)} @${formatedDate}`,
-                                                        amount: Number(amountValue).toFixed(2),
-                                                        is_credit: 1,
-                                                        created_date: dt,
-                                                        balance: Number(bal_).toFixed(2),
-                                                        is_capital: 0,
-                                                        isCharge: 0,
-                                                        isApproved: 1,
-                                                        postDone: 1,
-                                                        reviewDone: 1,
-                                                        approvalDone: 1,
-                                                        ref_no: refId,
-                                                        updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-                                                        investmentId: data.investmentId,
-                                                        createdBy: data.createdBy,
-                                                        clientId: payload.data[0].clientId,
-                                                        isWallet: 1,
-                                                        isInterest: 1
-                                                    };
+                                                            bal_ = payload3.data[0].total + totalMonthlyInterest;
+                                                            let amountValue = totalMonthlyInterest;
+                                                            let inv_txn = {
+                                                                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                                                description: `Balance ${Number(bal_).toFixed(2)} @${formatedDate}`,
+                                                                amount: Number(amountValue).toFixed(2),
+                                                                is_credit: 1,
+                                                                created_date: dt,
+                                                                balance: Number(bal_).toFixed(2),
+                                                                is_capital: 0,
+                                                                isCharge: 0,
+                                                                isApproved: 1,
+                                                                postDone: 1,
+                                                                reviewDone: 1,
+                                                                approvalDone: 1,
+                                                                ref_no: refId,
+                                                                updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                                                investmentId: data.investmentId,
+                                                                createdBy: data.createdBy,
+                                                                clientId: payload.data[0].clientId,
+                                                                isWallet: 1,
+                                                                isInterest: 1
+                                                            };
 
-                                                    setInvestmentTxns(HOST, inv_txn).then(setInv => {
-                                                        inv_txn.ID = setInv.insertId;
-                                                        deductWithHoldingTax(HOST, data, _amount, payload1.data[0].total, bal_, payload.data[0].clientId, 1, inv_txn).then(deductWithHoldingTax_ => {
-                                                            let _formatedDate = new Date(formatedDate);
-                                                            let query = `UPDATE investment_interests SET isPosted = 1 
+                                                            setInvestmentTxns(HOST, inv_txn).then(setInv => {
+                                                                inv_txn.ID = setInv.insertId;
+                                                                deductWithHoldingTax(HOST, data, inv_txn.amount, 0, inv_txn.balance, payload.data[0].clientId, 1, inv_txn).then(deductWithHoldingTax_ => {
+                                                                    let _formatedDate = new Date(formatedDate);
+                                                                    let query = `UPDATE investment_interests SET isPosted = 1 
                                                                     WHERE id <> 0 AND investmentId = ${data.investmentId} 
                                                                     AND month = ${_formatedDate.getMonth()} 
                                                                     AND year = ${_formatedDate.getFullYear()}`;
 
-                                                            endpoint = '/core-service/get';
-                                                            url = `${HOST}${endpoint}`;
-                                                            axios.get(url, {
-                                                                params: {
-                                                                    query: query
-                                                                }
-                                                            }).then(axio_callback => {
-                                                                getDatedTxns(HOST, data).then(datedTxns => {
-                                                                    updateDatedTxns(HOST, datedTxns.data).then(updatedDates => {
-                                                                        resolve({});
+                                                                    endpoint = '/core-service/get';
+                                                                    url = `${HOST}${endpoint}`;
+                                                                    axios.get(url, {
+                                                                        params: {
+                                                                            query: query
+                                                                        }
+                                                                    }).then(axio_callback => {
+                                                                        getDatedTxns(HOST, data).then(datedTxns => {
+                                                                            updateDatedTxns(HOST, datedTxns.data).then(updatedDates => {
+                                                                                resolve({});
+                                                                            });
+                                                                        });
                                                                     });
                                                                 });
                                                             });
                                                         });
-                                                    });
-                                                });
-                                            } else {
-                                                computeCurrentBalance(data.investmentId, HOST).then(totalInvestedAmount => {
-                                                    let _amt = totalMonthlyInterest.data[0].total;
-                                                    let sumTotalBalance = totalInvestedAmount + totalMonthlyInterest.data[0].total;
-                                                    let inv_txn = {
-                                                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-                                                        description: `Investment interest@ ${formatedDate}`,
-                                                        amount: Number(_amt).toFixed(2),
-                                                        is_credit: 1,
-                                                        created_date: dt,
-                                                        balance: Number(sumTotalBalance).toFixed(2),
-                                                        is_capital: 0,
-                                                        isCharge: 0,
-                                                        isApproved: 1,
-                                                        postDone: 1,
-                                                        reviewDone: 1,
-                                                        approvalDone: 1,
-                                                        ref_no: refId,
-                                                        updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-                                                        investmentId: data.investmentId,
-                                                        createdBy: data.createdBy,
-                                                        isInterest: 1
-                                                    };
-                                                    setInvestmentTxns(HOST, inv_txn).then(getTxnValue => {
-                                                        // let bal2 = totalInvestedAmount + (payload1.data[0].total + parseFloat(Number(_amount).toFixed(2)));
-                                                        inv_txn.ID = getTxnValue.insertId;
-                                                        deductWithHoldingTax(HOST, data, inv_txn.amount, 0, inv_txn.balance, '', 0, inv_txn).then(deductWithHoldingTax_ => {
-                                                            let _formatedDate = new Date(formatedDate);
-                                                            query = `UPDATE investment_interests SET isPosted = 1 
+                                                    } else {
+                                                        computeCurrentBalance(data.investmentId, HOST).then(totalInvestedAmount => {
+                                                            let _amt = totalMonthlyInterest;
+                                                            let sumTotalBalance = totalInvestedAmount + totalMonthlyInterest;
+                                                            let inv_txn = {
+                                                                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                                                description: `Investment interest@ ${formatedDate}`,
+                                                                amount: Number(_amt).toFixed(2),
+                                                                is_credit: 1,
+                                                                created_date: dt,
+                                                                balance: Number(sumTotalBalance).toFixed(2),
+                                                                is_capital: 0,
+                                                                isCharge: 0,
+                                                                isApproved: 1,
+                                                                postDone: 1,
+                                                                reviewDone: 1,
+                                                                approvalDone: 1,
+                                                                ref_no: refId,
+                                                                updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                                                investmentId: data.investmentId,
+                                                                createdBy: data.createdBy,
+                                                                isInterest: 1
+                                                            };
+                                                            setInvestmentTxns(HOST, inv_txn).then(getTxnValue => {
+                                                                // let bal2 = totalInvestedAmount + (payload1.data[0].total + parseFloat(Number(_amount).toFixed(2)));
+                                                                inv_txn.ID = getTxnValue.insertId;
+                                                                deductWithHoldingTax(HOST, data, inv_txn.amount, 0, inv_txn.balance, '', 0, inv_txn).then(deductWithHoldingTax_ => {
+                                                                    let _formatedDate = new Date(formatedDate);
+                                                                    query = `UPDATE investment_interests SET isPosted = 1 
                                                             WHERE id <> 0 AND investmentId = ${data.investmentId} 
                                                             AND month = ${_formatedDate.getMonth()} 
                                                             AND year = ${_formatedDate.getFullYear()}`;
-                                                            endpoint = '/core-service/get';
-                                                            url = `${HOST}${endpoint}`;
-                                                            axios.get(url, {
-                                                                params: {
-                                                                    query: query
-                                                                }
-                                                            }).then(axio_callback => {
-                                                                getDatedTxns(HOST, data).then(datedTxns => {
-                                                                    updateDatedTxns(HOST, datedTxns.data).then(updatedDates => {
-                                                                        resolve({});
+                                                                    endpoint = '/core-service/get';
+                                                                    url = `${HOST}${endpoint}`;
+                                                                    axios.get(url, {
+                                                                        params: {
+                                                                            query: query
+                                                                        }
+                                                                    }).then(axio_callback => {
+                                                                        getDatedTxns(HOST, data).then(datedTxns => {
+                                                                            updateDatedTxns(HOST, datedTxns.data).then(updatedDates => {
+                                                                                resolve({});
+                                                                            });
+                                                                        });
                                                                     });
                                                                 });
                                                             });
                                                         });
-                                                    });
+                                                    }
                                                 });
-                                            }
-                                        });
+                                        }, 5000);
                                     }
                                 }
                             });
