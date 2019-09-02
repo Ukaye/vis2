@@ -260,7 +260,8 @@ router.get('/payments/status/get/:applicationID', function (req, res, next) {
 
 router.get('/logs/get', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let start = req.query.start, end = req.query.end,
+    let start = req.query.start,
+        end = moment(req.query.end).add(1, 'days').utcOffset('+0100').format('YYYY-MM-DD'),
         query =  `SELECT l.*, u.fullname initiator FROM remita_debits_log l, users u WHERE l.status = 1 AND l.created_by = u.ID`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
