@@ -3,15 +3,13 @@ const
     axios = require('axios'),
     moment = require('moment'),
     db = require('../../../db'),
-    bcrypt = require('bcryptjs'),
     express = require('express'),
     router = express.Router(),
-    SHA512 = require('js-sha512'),
     enums = require('../../../enums'),
     nodemailer = require('nodemailer'),
-    helperFunctions = require('../../../helper-functions'),
     hbs = require('nodemailer-express-handlebars'),
     smtpTransport = require('nodemailer-smtp-transport'),
+    helperFunctions = require('../../../helper-functions'),
     smtpConfig = smtpTransport({
         service: 'Mailjet',
         auth: {
@@ -243,14 +241,38 @@ router.get('/payments/status/get/:applicationID', function (req, res, next) {
                 mandateId: remita_mandate.mandateId,
                 requestId: remita_mandate.requestId
             }, function (history_response) {
-                if (history_response && (history_response.statuscode === '00' ||  history_response.statuscode === '074')) {
+                if (history_response && history_response.data && history_response.data.data && history_response.data.data.paymentDetails) {
                     let result = history_response.data.data;
                     result.mandateId = history_response.mandateId;
                     result.requestId = history_response.requestId;
                     res.send({status: 200, error: null, response: result});
                 } else {
-                    res.send({status: 500, error: history_response, response: null});
+                    res.send({status: 500, error: history_response.status, response: null});
                 }
+            })
+        } else {
+            res.send({status: 500, error: 'There is no remita mandate setup for this application', response: null});
+        }
+    });
+});
+
+router.get('/payment/status/get/:id', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let query =  `SELECT mandateId, requestId FROM remita_debits_log WHERE ID = ${req.params.id}`,
+        endpoint = '/core-service/get',
+        url = `${HOST}${endpoint}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        let remita_mandate = response.data[0];
+        if (remita_mandate) {
+            helperFunctions.debitInstructionStatus({
+                mandateId: remita_mandate.mandateId,
+                requestId: remita_mandate.requestId
+            }, function (history_response) {
+                res.send({status: 500, error: null, response: history_response.status});
             })
         } else {
             res.send({status: 500, error: 'There is no remita mandate setup for this application', response: null});
