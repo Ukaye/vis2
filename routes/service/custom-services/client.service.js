@@ -4,6 +4,7 @@ const fs = require('fs'),
     moment = require('moment'),
     db = require('../../../db'),
     bcrypt = require('bcryptjs'),
+    request = require('request'),
     express = require('express'),
     router = express.Router(),
     jwt = require('jsonwebtoken'),
@@ -1501,7 +1502,7 @@ router.post('/verify/email/:id', helperFunctions.verifyJWT, function (req, res) 
     data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
     data.verify_url = `${req.body.callback_url}?token=${token}`;
     emailService.send({
-        to: req.user.email,
+        to: 'itaukemeabasi@gmail.com',
         subject: 'Email Verification',
         template: 'verify-email',
         context: data
@@ -1510,6 +1511,35 @@ router.post('/verify/email/:id', helperFunctions.verifyJWT, function (req, res) 
         "status": 200,
         "error": null,
         "response": `Verification email sent to ${req.user.email} successfully!`
+    });
+});
+
+router.get('/verify/email/:token', function (req, res) {
+    if (!req.params.token) return res.status(500).send('Required parameter(s) not sent!');
+    jwt.verify(req.params.token, process.env.SECRET_KEY, function(err, decoded) {
+        if (err) return res.send({
+            "status": 500,
+            "error": err,
+            "response": "Failed to authenticate token!"
+        });
+
+        let payload = {},
+            query =  `UPDATE clients Set ? WHERE ID = ${decoded.ID}`;
+        payload.verify_email = enums.VERIFY_EMAIL.STATUS.VERIFIED;
+        payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+
+        db.query(query, payload, function (error, response) {
+            if (error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+            return res.send({
+                "status": 200,
+                "error": null,
+                "response": `Email verified successfully!`
+            });
+        });
     });
 });
 
