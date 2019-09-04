@@ -782,33 +782,12 @@
             'type': 'post',
             'data': {schedule:schedule},
             'success': function (data) {
-                updatePreapplicationStatus(application_id);
+                notification('Loan Application created successfully!','','success');
+                window.location.href = `/application?id=${application_id}`;
             },
             'error': function (err) {
                 $('#wait').hide();
                 notification('Oops! An error occurred while saving schedule','','error');
-            }
-        });
-    }
-
-    function updatePreapplicationStatus(application_id) {
-        $.ajax({
-            'url': `/client/application/complete/${preapplication.ID}`,
-            'type': 'get',
-            'success': function (data) {
-                $('#wait').hide();
-                if (data.status !== 500) {
-                    notification('Loan Application created successfully!','','success');
-                    window.location.href = `/application?id=${application_id}`;
-                } else {
-                    console.log(data.error);
-                    notification(data.error,'','error');
-                }
-            },
-            'error': function (err) {
-                console.log(err);
-                $('#wait').hide();
-                notification('No internet connection','','error');
             }
         });
     }

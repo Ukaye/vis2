@@ -672,17 +672,38 @@ router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
             query: query
         }
     }).then(response => {
-        let result = (response.data === undefined) ? {} : response.data[0];
+        let obj = {},
+            result = (response.data === undefined) ? {} : response.data[0];
         if (!result) return res.send({
             "status": 500,
             "error": 'User does not exist!',
             "response": null
         });
-        res.send({
-            "status": 200,
-            "error": null,
-            "response": result
-        });
+        const path = `files/users/${result.email}/`;
+        if (!fs.existsSync(path)) {
+            result.files = {};
+            return res.send({
+                "status": 200,
+                "error": null,
+                "response": result
+            });
+        } else {
+            fs.readdir(path, function (err, files){
+                async.forEach(files, function (file, callback){
+                    let filename = file.split('.')[1].split('_');
+                    filename.shift();
+                    obj[filename.join('_')] = path+file;
+                    callback();
+                }, function(data){
+                    result.files = obj;
+                    return res.send({
+                        "status": 200,
+                        "error": null,
+                        "response": result
+                    });
+                });
+            });
+        }
     });
 });
 
@@ -912,31 +933,51 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
         }).then(response => {
             let obj = {},
                 result2 = (response.data === undefined) ? {} : response.data[0];
-            if (result2) result.loanID = result2.ID;
-            if (result2) result.loan_status = result2.status;
-            delete result2.ID;
-            delete result2.status;
-            result = Object.assign({}, result, result2);
-            if (!fs.existsSync(path)) {
-                result.files = {};
-                res.send(result);
-            } else {
-                fs.readdir(path, function (err, files){
-                    async.forEach(files, function (file, callback){
-                        let filename = file.split('.')[0].split('_');
-                        filename.shift();
-                        obj[filename.join('_')] = path+file;
-                        callback();
-                    }, function(data){
-                        result.files = obj;
-                        res.send({
-                            "status": 200,
-                            "error": null,
-                            "response": result
-                        });
-                    });
-                });
+            if (result2) {
+                result.loanID = result2.ID;
+                result.loan_status = result2.status;
+                delete result2.ID;
+                delete result2.status;
             }
+            result = Object.assign({}, result, result2);
+            db.query('SELECT * FROM application_schedules WHERE applicationID=?', [result.loanID], function (error, schedule, fields) {
+                if (error) {
+                    res.send({"status": 500, "error": error, "response": null});
+                } else {
+                    result.schedule = schedule;
+                    db.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', [result.loanID], function (error, payment_history, fields) {
+                        if (error) {
+                            res.send({"status": 500, "error": error, "response": null});
+                        } else {
+                            result.payment_history = payment_history;
+                            if (!fs.existsSync(path)) {
+                                result.files = {};
+                                return res.send({
+                                    "status": 200,
+                                    "error": null,
+                                    "response": result
+                                });
+                            } else {
+                                fs.readdir(path, function (err, files){
+                                    async.forEach(files, function (file, callback){
+                                        let filename = file.split('.')[0].split('_');
+                                        filename.shift();
+                                        obj[filename.join('_')] = path+file;
+                                        callback();
+                                    }, function(data){
+                                        result.files = obj;
+                                        return res.send({
+                                            "status": 200,
+                                            "error": null,
+                                            "response": result
+                                        });
+                                    });
+                                });
+                            }
+                        }
+                    });
+                }
+            });
         });
     });
 });
@@ -962,7 +1003,7 @@ router.get('/application/accept/:id/:application_id', helperFunctions.verifyJWT,
             "response": 'Application does not exist!'
         });
 
-        if (application[0]['status'] !== enums.CLIENT_APPLICATION.STATUS.APPROVED)
+        if (application[0]['status'] !== enums.CLIENT_APPLICATION.STATUS.COMPLETED)
             return res.send({
                 "status": 500,
                 "error": null,
@@ -998,7 +1039,7 @@ router.get('/application/decline/:id/:application_id', helperFunctions.verifyJWT
             "response": 'Application does not exist!'
         });
 
-        if (application[0]['status'] !== enums.CLIENT_APPLICATION.STATUS.APPROVED)
+        if (application[0]['status'] !== enums.CLIENT_APPLICATION.STATUS.COMPLETED)
             return res.send({
                 "status": 500,
                 "error": null,
@@ -1246,16 +1287,15 @@ router.post('/application/createV2', function (req, res) {
 
 router.get('/applications/get', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let id = req.params.id;
     let limit = req.query.limit;
     let offset = req.query.offset;
     let draw = req.query.draw;
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
-    let query_status = `(${enums.CLIENT_APPLICATION.STATUS.ACTIVE},${enums.CLIENT_APPLICATION.STATUS.APPROVED},
-    ${enums.CLIENT_APPLICATION.STATUS.ACCEPTED},${enums.CLIENT_APPLICATION.STATUS.DECLINED})`;
+    let query_status = `(${enums.CLIENT_APPLICATION.STATUS.ACTIVE},${enums.CLIENT_APPLICATION.STATUS.APPROVED})`;
     let query = `SELECT p.*, c.fullname, c.phone FROM client_applications p, clients c WHERE p.userID = c.ID AND p.status in 
-    ${query_status} AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
+     ${query_status} AND p.ID NOT IN (SELECT a.preapplicationID FROM applications a WHERE p.userID = a.userID) 
+     AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
      OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
@@ -1265,8 +1305,10 @@ router.get('/applications/get', function (req, res) {
         }
     }).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM client_applications p WHERE p.status in 
-        ${query_status} AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
-         OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM client_applications WHERE status in ${query_status}`;
+         ${query_status} AND p.ID NOT IN (SELECT a.preapplicationID FROM applications a WHERE p.userID = a.userID) 
+         AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
+         OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM client_applications WHERE status in ${query_status} 
+         AND ID NOT IN (SELECT a.preapplicationID FROM applications a WHERE userID = a.userID)`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {

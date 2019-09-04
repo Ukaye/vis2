@@ -551,28 +551,33 @@ function nextStage(state, workflow_stages, action_stage) {
     }
     if (!application.schedule || (application.schedule && !application.schedule[0]))
         return notification('Kindly upload loan schedule to proceed!','','warning');
-    $.ajax({
-        'url': '/user/workflow_process/'+application_id+'/'+state.workflowID,
-        'type': 'post',
-        'data': {stage: stage, user_role:localStorage.getItem('role'), agentID:(JSON.parse(localStorage.getItem("user_obj"))).ID},
-        'success': function (data) {
-            if (data.status === 200){
-                $('#document-upload').hide();
-                $('#document-upload-text').text('');
-                notification('Workflow updated successfully!','','success');
-                window.location.reload();
-            } else {
-                if (data.message){
-                    notification(data.message,'','info');
+    $('#wait').show();
+    updatePreapplicationStatus(application.preapplicationID, state.next_stage, () => {
+        $.ajax({
+            'url': '/user/workflow_process/'+application_id+'/'+state.workflowID,
+            'type': 'post',
+            'data': {stage: stage, user_role:localStorage.getItem('role'), agentID:(JSON.parse(localStorage.getItem("user_obj"))).ID},
+            'success': function (data) {
+                $('#wait').hide();
+                if (data.status === 200){
+                    $('#document-upload').hide();
+                    $('#document-upload-text').text('');
+                    notification('Workflow updated successfully!','','success');
+                    window.location.reload();
                 } else {
-                    notification('No internet connection','','error');
+                    if (data.message){
+                        notification(data.message,'','info');
+                    } else {
+                        notification('No internet connection','','error');
+                    }
                 }
+            },
+            'error': function (err) {
+                $('#wait').hide();
+                console.log(err);
+                notification('No internet connection','','error');
             }
-        },
-        'error': function (err) {
-            console.log(err);
-            notification('No internet connection','','error');
-        }
+        });
     });
 }
 
@@ -1825,6 +1830,22 @@ function generateLoanFile() {
     };
     localStorage.loanFile = encodeURIComponent(JSON.stringify(loanFile));
     return window.open(`/loan-file?id=${application_id}`, '_blank');
+}
+
+function updatePreapplicationStatus(id, stage, callback) {
+    if (stage !== 2) return callback;
+    $.ajax({
+        'url': `/client/application/complete/${id}`,
+        'type': 'get',
+        'success': function (data) {
+            if (data.status === 500) console.log(data.error);
+            callback();
+        },
+        'error': function (err) {
+            console.log(err);
+            callback();
+        }
+    });
 }
 
 function read_write_1(){
