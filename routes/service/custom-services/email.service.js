@@ -22,8 +22,6 @@ email.send = function (mailOptions) {
     mailOptions.from = mailOptions.from || 'no-reply@x3.loanratus.com';
     mailOptions.subject = `${process.env.TENANT}: ${mailOptions.subject}`;
     transporter.sendMail(mailOptions, function(error, info){
-        console.log(info)
-        console.log(error)
         if (error) console.log(error);
     });
 };

@@ -931,7 +931,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                 query: query2
             }
         }).then(response => {
-            let obj = {},
+            let obj = {}, obj2 = {},
                 result2 = (response.data === undefined) ? {} : response.data[0];
             if (result2) {
                 result.loanID = result2.ID;
@@ -950,13 +950,32 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                             res.send({"status": 500, "error": error, "response": null});
                         } else {
                             result.payment_history = payment_history;
+                            let path2 = `files/application-${result.loanID}/`;
                             if (!fs.existsSync(path)) {
                                 result.files = {};
-                                return res.send({
-                                    "status": 200,
-                                    "error": null,
-                                    "response": result
-                                });
+                                if (!fs.existsSync(path2)) {
+                                    return res.send({
+                                        "status": 200,
+                                        "error": null,
+                                        "response": result
+                                    });
+                                } else {
+                                    fs.readdir(path2, function (err, files){
+                                        async.forEach(files, function (file, callback){
+                                            let filename = file.split('.')[0].split('_');
+                                            filename.shift();
+                                            obj2[filename.join('_')] = path2+file;
+                                            callback();
+                                        }, function(data){
+                                            result.files = Object.assign({}, result.files, obj2);
+                                            return res.send({
+                                                "status": 200,
+                                                "error": null,
+                                                "response": result
+                                            });
+                                        });
+                                    });
+                                }
                             } else {
                                 fs.readdir(path, function (err, files){
                                     async.forEach(files, function (file, callback){
@@ -966,11 +985,29 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                         callback();
                                     }, function(data){
                                         result.files = obj;
-                                        return res.send({
-                                            "status": 200,
-                                            "error": null,
-                                            "response": result
-                                        });
+                                        if (!fs.existsSync(path2)) {
+                                            return res.send({
+                                                "status": 200,
+                                                "error": null,
+                                                "response": result
+                                            });
+                                        } else {
+                                            fs.readdir(path2, function (err, files){
+                                                async.forEach(files, function (file, callback){
+                                                    let filename = file.split('.')[0].split('_');
+                                                    filename.shift();
+                                                    obj2[filename.join('_')] = path2+file;
+                                                    callback();
+                                                }, function(data){
+                                                    result.files = Object.assign({}, result.files, obj2);
+                                                    return res.send({
+                                                        "status": 200,
+                                                        "error": null,
+                                                        "response": result
+                                                    });
+                                                });
+                                            });
+                                        }
                                     });
                                 });
                             }
@@ -1442,6 +1479,37 @@ router.get('/ownerships', function (req, res) {
         "status": 200,
         "error": null,
         "response": enums.OWNERSHIP
+    });
+});
+
+router.post('/verify/email/:id', helperFunctions.verifyJWT, function (req, res) {
+    if (!req.body.callback_url) return res.status(500).send('Required parameter(s) not sent!');
+    let data = {};
+    const expiry_days = 1,
+        token = jwt.sign(
+            {
+                ID: req.user.ID,
+                email: req.user.email,
+                phone: req.user.phone
+            },
+            process.env.SECRET_KEY,
+            {
+                expiresIn: 60 * 60 * expiry_days
+            });
+    data.name = req.user.fullname;
+    data.date = moment().utcOffset('+0100').format('YYYY-MM-DD');
+    data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
+    data.verify_url = `${req.body.callback_url}?token=${token}`;
+    emailService.send({
+        to: req.user.email,
+        subject: 'Email Verification',
+        template: 'verify-email',
+        context: data
+    });
+    return res.send({
+        "status": 200,
+        "error": null,
+        "response": `Verification email sent to ${req.user.email} successfully!`
     });
 });
 
