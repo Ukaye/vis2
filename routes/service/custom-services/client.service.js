@@ -845,7 +845,7 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
     let draw = req.query.draw;
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
-    let query = `SELECT p.*, c.fullname, c.phone FROM client_applications p, clients c 
+    let query = `SELECT p.*, c.fullname, c.phone, a.ID loanID, a.status loan_status FROM clients c, client_applications p LEFT JOIN applications a ON p.ID = a.preapplicationID AND a.userID = ${id} 
                  WHERE p.userID = ${id} AND p.userID = c.ID AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
                  OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
@@ -882,9 +882,16 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
 router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`,
         path = `files/client_application-${req.params.application_id}/`;
-    let query = `SELECT p.*, c.fullname, c.email, c.phone, a.ID loanID FROM client_applications p 
-                INNER JOIN clients c ON p.userID = c.ID LEFT JOIN applications a ON p.ID = a.preapplicationID 
-                WHERE p.ID = ${req.params.application_id} AND p.userID = ${req.params.id}`,
+    let query = `SELECT p.*, c.fullname, c.email, c.phone FROM client_applications p 
+                INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.application_id} AND p.userID = ${req.params.id}`,
+        query2 = `SELECT u.ID userID, u.fullname, u.phone, u.email, u.address, cast(u.loan_officer as unsigned) loan_officer,
+            a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.interest_rate, a.repayment_date,
+            a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type,
+            (SELECT l.supervisor FROM users l WHERE l.ID = u.loan_officer) AS supervisor,
+            (SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow,
+            r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef
+            FROM clients AS u INNER JOIN applications AS a ON u.ID = a.userID LEFT JOIN remita_mandates r 
+            ON (r.applicationID = a.ID AND r.status = 1) WHERE a.preapplicationID = ${req.params.application_id} AND a.userID = ${req.params.id}`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -892,33 +899,45 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
             query: query
         }
     }).then(response => {
-        let obj = {},
-            result = (response.data === undefined) ? {} : response.data[0];
+        let result = (response.data === undefined) ? {} : response.data[0];
         if (!result) return res.send({
             "status": 500,
             "error": 'Application does not exist!',
             "response": null
         });
-        if (!fs.existsSync(path)) {
-            result.files = {};
-            res.send(result);
-        } else {
-            fs.readdir(path, function (err, files){
-                async.forEach(files, function (file, callback){
-                    let filename = file.split('.')[0].split('_');
-                    filename.shift();
-                    obj[filename.join('_')] = path+file;
-                    callback();
-                }, function(data){
-                    result.files = obj;
-                    res.send({
-                        "status": 200,
-                        "error": null,
-                        "response": result
+        axios.get(url, {
+            params: {
+                query: query2
+            }
+        }).then(response => {
+            let obj = {},
+                result2 = (response.data === undefined) ? {} : response.data[0];
+            if (result2) result.loanID = result2.ID;
+            if (result2) result.loan_status = result2.status;
+            delete result2.ID;
+            delete result2.status;
+            result = Object.assign({}, result, result2);
+            if (!fs.existsSync(path)) {
+                result.files = {};
+                res.send(result);
+            } else {
+                fs.readdir(path, function (err, files){
+                    async.forEach(files, function (file, callback){
+                        let filename = file.split('.')[0].split('_');
+                        filename.shift();
+                        obj[filename.join('_')] = path+file;
+                        callback();
+                    }, function(data){
+                        result.files = obj;
+                        res.send({
+                            "status": 200,
+                            "error": null,
+                            "response": result
+                        });
                     });
                 });
-            });
-        }
+            }
+        });
     });
 });
 
