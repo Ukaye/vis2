@@ -1833,7 +1833,7 @@ function generateLoanFile() {
 }
 
 function updatePreapplicationStatus(id, stage, callback) {
-    if (stage !== 2) return callback;
+    if (stage !== 2) return callback();
     $.ajax({
         'url': `/client/application/complete/${id}`,
         'type': 'get',
