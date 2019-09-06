@@ -249,9 +249,11 @@ function getMaturedMonths() {
             if (data.status === undefined) {
                 $('#wait').hide();
                 if (data.length > 0) {
+                    console.log(data);
                     $("#maturedInterestMonths").html('');
                     data.forEach(element => {
-                        $("#maturedInterestMonths").append(`<button class="dropdown-item"  onclick="onComputeInterest({day:${element.day},month:${element.month},year:${element.year}})">${element.month + '/' + element.year}</button>`).trigger('change');
+                        console.log(element);
+                        $("#maturedInterestMonths").append(`<button class="dropdown-item"  onclick="onComputeInterest({startDate:'${element.startDate}',endDate:'${element.endDate}'})">${element.startDate + ' - ' + element.endDate}</button>`).trigger('change');
                     });
                 }
             }
@@ -318,6 +320,7 @@ function bindDataTable(id) {
                 success: function (data) {
                     if (data.data.length > 0) {
                         selectedInvestment = (isWalletPage === 1) ? data.data[0] : data.data[data.data.length - 1];
+                        
                         if (selectedInvestment.canTerminate === 0 || selectedInvestment.canTerminate === null) {
                             $('#btnTerminateInvestment').attr('disabled', true);
                         }
@@ -339,6 +342,7 @@ function bindDataTable(id) {
                         selectedInvestment.txnCurrentBalance = data.txnCurrentBalance;
                         selectedInvestment.isLastMaturedTxnExist = data.isLastMaturedTxnExist;
                         selectedInvestment.maturityDays = data.maturityDays;
+                        selectedInvestment.txnFinalBalance = data.txnFinalBalance;
                         let sign = '';
                         data.txnCurrentBalance = (data.txnCurrentBalance === null) ? '0.00' : data.txnCurrentBalance;
                         if (data.txnCurrentBalance.includes('-')) {
@@ -728,7 +732,7 @@ function onTerminateInvest() {
                 let investmentOps = {
                     description: 'Terminate Investment',
                     is_credit: 0,
-                    amount: selectedInvestment.balance,
+                    amount: selectedInvestment.txnFinalBalance,
                     investmentId: selectedInvestment.investmentId,
                     isWithdrawal: 1,
                     operationId: withdrawalOperation,
@@ -1684,14 +1688,17 @@ function onPost(value, approvedId, txnId, id, isDeny) {
 }
 
 function onComputeInterest(value) {
+    console.log(value);
     let _data = {
+        interest_moves_wallet: selectedInvestment.interest_moves_wallet,
+        clientId: selectedInvestment.clientId,
         investmentId: selectedInvestment.investmentId,
         investment_start_date: selectedInvestment.investment_start_date,
         createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
         productId: selectedInvestment.productId,
-        month: value.month,
-        year: value.year,
-        startDay: value.day
+        startDate: value.startDate,
+        endDate: value.endDate,
+        interest_rate: selectedInvestment.interest_rate
     }
     $.ajax({
         url: `investment-txns/compute-interest`,

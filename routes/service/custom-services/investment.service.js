@@ -317,7 +317,7 @@ router.get('/get-investments', function (req, res, next) {
     let search_string = req.query.search_string.toUpperCase();
     const date = new Date();
     const formatedDate = `${date.getUTCFullYear()}-${date.getMonth() + 1}-${date.getUTCDate()}`;
-    let query = `SELECT v.ID,v.code,p.name AS investment,c.fullname AS client,amount, investment_start_date, 
+    let query = `SELECT v.ID,v.code,p.name AS investment,c.fullname AS client,amount, investment_start_date,p.interest_moves_wallet,
     investment_mature_date,v.isMatured FROM investments v left join investment_products p on
     v.productId = p.ID left join clients c on
     v.clientId = c.ID WHERE STR_TO_DATE(v.investment_mature_date, '%Y-%m-%d') > '${formatedDate}' AND v.isMatured = 0 AND v.isClosed = 0 AND (upper(v.code) LIKE "${search_string}%" OR upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%" 
@@ -511,7 +511,8 @@ router.get('/client-investments/:id', function (req, res, next) {
             }
         }).then(payload => {
             query = `Select 
-            (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY ID DESC LIMIT 1) as txnCurrentBalance,
+            (Select balance from investment_txns WHERE isWallet = 0 AND isInterest = 0 AND investmentId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY ID DESC LIMIT 1) as txnCurrentBalance,
+            (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY ID DESC LIMIT 1) as txnFinalBalance,
             (SELECT count(*) as recordsTotal FROM investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id}) as recordsTotal,
             (SELECT count(*) as maturedInventmentTxn FROM investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} AND isInvestmentMatured = 1) as maturedInventmentTxn`;
 
@@ -537,6 +538,7 @@ router.get('/client-investments/:id', function (req, res, next) {
                             res.send({
                                 draw: draw,
                                 maturityDays: true,
+                                txnFinalBalance: (payload2.data[0].txnFinalBalance === null) ? '' : payload2.data[0].txnFinalBalance,
                                 txnCurrentBalance: (payload2.data[0].txnCurrentBalance === null) ? '' : payload2.data[0].txnCurrentBalance,
                                 isLastMaturedTxnExist: (payload2.data[0].maturedInventmentTxn > 0) ? 1 : 0,
                                 recordsTotal: payload2.data[0].recordsTotal,
