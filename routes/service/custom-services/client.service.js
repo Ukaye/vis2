@@ -755,8 +755,7 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function(req, res) {
             extension = extArray[extArray.length - 1],
             folder = user.images_folder || `${user.fullname}_${user.email}`;
         if (extension) extension = extension.toLowerCase();
-        const folder_url = `files/users/${folder}/`,
-            file_url = `${folder_url}${folder}_${item}.${extension}`;
+        const folder_url = `files/users/${folder}/`;
         switch (item) {
             case '1': {
                 item ="Image";
@@ -771,6 +770,7 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function(req, res) {
                 break;
             }
         }
+        const file_url = `${folder_url}${folder}_${item}.${extension}`;
         fs.stat(folder_url, function(err) {
             if (!err) {
                 console.log('file or directory exists');
