@@ -680,7 +680,7 @@ router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
             "error": 'User does not exist!',
             "response": null
         });
-        const path = `${req.HOST}/files/users/${result.email}/`;
+        const path = `files/users/${result.email}/`;
         if (!fs.existsSync(path)) {
             result.files = {};
             return res.send({
@@ -693,7 +693,7 @@ router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
                 async.forEach(files, function (file, callback){
                     let filename = file.split('.')[1].split('_');
                     filename.shift();
-                    obj[filename.join('_')] = path+file;
+                    obj[filename.join('_')] = `${req.HOST}/${path}${file}`;
                     callback();
                 }, function(data){
                     result.files = obj;
@@ -903,7 +903,7 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
 
 router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`,
-        path = `${req.HOST}/files/client_application-${req.params.application_id}/`;
+        path = `files/client_application-${req.params.application_id}/`;
     let query = `SELECT p.*, c.fullname, c.email, c.phone FROM client_applications p 
                 INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.application_id} AND p.userID = ${req.params.id}`,
         query2 = `SELECT u.ID userID, u.fullname, u.phone, u.email, u.address, cast(u.loan_officer as unsigned) loan_officer,
@@ -951,7 +951,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                             res.send({"status": 500, "error": error, "response": null});
                         } else {
                             result.payment_history = payment_history;
-                            let path2 = `${req.HOST}/files/application-${result.loanID}/`;
+                            let path2 = `files/application-${result.loanID}/`;
                             if (!fs.existsSync(path)) {
                                 result.files = {};
                                 if (!fs.existsSync(path2)) {
@@ -965,7 +965,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                         async.forEach(files, function (file, callback){
                                             let filename = file.split('.')[0].split('_');
                                             filename.shift();
-                                            obj2[filename.join('_')] = path2+file;
+                                            obj2[filename.join('_')] = `${req.HOST}/${path2}${file}`;
                                             callback();
                                         }, function(data){
                                             result.files = Object.assign({}, result.files, obj2);
@@ -982,7 +982,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                     async.forEach(files, function (file, callback){
                                         let filename = file.split('.')[0].split('_');
                                         filename.shift();
-                                        obj[filename.join('_')] = path+file;
+                                        obj[filename.join('_')] = `${req.HOST}/${path}${file}`;
                                         callback();
                                     }, function(data){
                                         result.files = obj;
@@ -997,7 +997,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                                 async.forEach(files, function (file, callback){
                                                     let filename = file.split('.')[0].split('_');
                                                     filename.shift();
-                                                    obj2[filename.join('_')] = path2+file;
+                                                    obj2[filename.join('_')] = `${req.HOST}/${path2}${file}`;
                                                     callback();
                                                 }, function(data){
                                                     result.files = Object.assign({}, result.files, obj2);
@@ -1206,7 +1206,7 @@ router.get('/loan/get/:id/:application_id', helperFunctions.verifyJWT, function 
     let obj = {},
         id = req.params.id,
         application_id = req.params.application_id,
-        path = `${req.HOST}/files/application-${application_id}/`,
+        path = `files/application-${application_id}/`,
         query = 'SELECT u.ID userID, u.fullname, u.phone, u.email, u.address, cast(u.loan_officer as unsigned) loan_officer, ' +
             'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.interest_rate, a.repayment_date, ' +
             'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, ' +
@@ -1260,7 +1260,7 @@ router.get('/loan/get/:id/:application_id', helperFunctions.verifyJWT, function 
                                 async.forEach(files, function (file, callback){
                                     let filename = file.split('.')[0].split('_');
                                     filename.shift();
-                                    obj[filename.join('_')] = path+file;
+                                    obj[filename.join('_')] = `${req.HOST}/${path}${file}`;
                                     callback();
                                 }, function(data){
                                     result.files = obj;
