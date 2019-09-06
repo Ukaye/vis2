@@ -1543,4 +1543,14 @@ router.get('/verify/email/:token', function (req, res) {
     });
 });
 
+router.get('/logout', helperFunctions.verifyJWT, function (req, res) {
+    delete req.user;
+    delete req.HOST;
+    return res.send({
+        "status": 200,
+        "error": null,
+        "response": `Client logged out successfully!`
+    });
+});
+
 module.exports = router;
