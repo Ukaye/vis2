@@ -1854,7 +1854,7 @@ users.post('/contact', function(req, res) {
 
 users.post('/sendmail', function(req, res) {
     let data = req.body;
-    if (!data.name || !data.email || !data.company || !data.phone || !data.title || !data.location || !data.description || !data.lead)
+    if (!data.name || !data.email || !data.company || !data.phone || !data.description)
         return res.send("Required Parameters not sent!");
     data.date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let mailOptions = {
