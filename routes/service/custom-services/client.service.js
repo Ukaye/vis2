@@ -11,6 +11,7 @@ const fs = require('fs'),
     enums = require('../../../enums'),
     helperFunctions = require('../../../helper-functions'),
     notificationsService = require('../../notifications-service'),
+    paystack = require('paystack')(process.env.PAYSTACK_SECRET_KEY),
     emailService = require('../../service/custom-services/email.service');
 
 //Get Investment Product
@@ -734,15 +735,13 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function(req, res) {
     if (!req.params.id || !req.params.item) return res.status(500).send('Required parameter(s) not sent!');
 
     db.query(`SELECT * FROM clients WHERE ID = ${req.params.id}`, function (error, client) {
-        if(error)
-            return res.send({
+        if(error) return res.send({
                 "status": 500,
                 "error": error,
                 "response": null
             });
 
-        if(!client[0])
-            return res.send({
+        if(!client[0]) return res.send({
                 "status": 500,
                 "error": null,
                 "response": 'User does not exist!'
@@ -1551,6 +1550,176 @@ router.get('/logout', helperFunctions.verifyJWT, function (req, res) {
         "error": null,
         "response": `Client logged out successfully!`
     });
+});
+
+router.get('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, function (req, res) {
+    db.query(`SELECT s.*, a.status app_status, a.close_status, ROUND((s.interest_amount + s.payment_amount), 2) 
+        amount FROM application_schedules s, applications a WHERE s.ID = ${req.params.invoice_id} 
+        AND s.applicationID = a.ID AND a.userID = ${req.params.id}`, function(error, schedule) {
+            if(error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+            if(!schedule[0]) return res.send({
+                    "status": 500,
+                    "error": null,
+                    "response": 'Invoice does not exist for this client!'
+                });
+
+            const invoice = schedule[0];
+
+            if(invoice.app_status !== 2 || invoice.close_status !== 0)
+                return res.send({
+                    "status": 500,
+                    "error": null,
+                    "response": 'Invoice is not active!'
+                });
+
+            if(invoice.payment_status !== 0)
+                return res.send({
+                    "status": 500,
+                    "error": null,
+                    "response": 'Invoice already has a payment!'
+                });
+
+            paystack.transaction.initialize({
+                email: req.user.email,
+                amount: parseFloat(invoice.amount) * 100
+            })
+            .then(function(body){
+                if (body.status) {
+                    return res.send({
+                        "status": 200,
+                        "error": null,
+                        "response": body.data
+                    });
+                } else {
+                    return res.send({
+                        "status": 500,
+                        "error": null,
+                        "response": body.message
+                    });
+                }
+            })
+            .catch(function(error){
+                if(error) return res.send({
+                    "status": 500,
+                    "error": error,
+                    "response": null
+                });
+            });
+        });    
+});
+
+router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, function (req, res) {
+    db.query(`SELECT s.*, a.ID app_id, a.userID, ROUND((s.interest_amount + s.payment_amount), 2) amount, 
+    c.loan_officer, c.branch FROM application_schedules s, applications a, clients c WHERE s.ID = ${req.params.invoice_id} 
+    AND s.applicationID = a.ID AND a.userID = ${req.params.id} AND a.userID = c.ID`, function(error, schedule) {
+            if(error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+            if(!schedule[0]) return res.send({
+                    "status": 500,
+                    "error": null,
+                    "response": 'Invoice does not exist!'
+                });
+
+            const invoice_ = schedule[0]
+            
+            paystack.transaction.verify(req.body.reference)
+            .then(function(body){
+                if (body.status) {
+                    if(body.data.amount !== parseFloat(invoice_.amount) * 100)
+                        return res.send({
+                            "status": 500,
+                            "error": null,
+                            "response": 'Payment amount does not match the invoice amount!'
+                        });
+                    if (body.data.status === 'success') {
+                        let data = {
+                                actual_payment_amount: invoice_.payment_amount,
+                                actual_interest_amount: invoice_.interest_amount,
+                                actual_fees_amount: invoice_.fees_amount || '0',
+                                actual_penalty_amount: invoice_.penalty_amount || '0',
+                                payment_source: 'paystack',
+                                payment_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
+                            },
+                            postData = Object.assign({}, data);
+                        postData.payment_status = 1;
+                        delete postData.payment_source;
+                        delete postData.payment_date;
+                        db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`, 
+                            postData, function (error, schedule) {
+                            if (error) {
+                                res.send({
+                                    "status": 500, 
+                                    "error": error, 
+                                    "response": null});
+                            } else {
+                                let invoice = {};
+                                invoice.invoiceID = req.params.invoice_id;
+                                invoice.agentID = 0;
+                                invoice.applicationID = invoice_.app_id;
+                                invoice.payment_amount = data.actual_payment_amount;
+                                invoice.interest_amount = data.actual_interest_amount;
+                                invoice.fees_amount = data.actual_fees_amount;
+                                invoice.penalty_amount = data.actual_penalty_amount;
+                                invoice.payment_source = data.payment_source;
+                                invoice.payment_date = data.payment_date;
+                                invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                                invoice.clientID = invoice_.userID;
+                                invoice.loan_officerID = invoice_.loan_officer;
+                                invoice.branchID = invoice_.branch;
+                                invoice.type = 'multiple';
+                                db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response) {
+                                    if (error) {
+                                        res.send({
+                                            "status": 500, 
+                                            "error": error, 
+                                            "response": null});
+                                    } else {
+                                        let payload = {};
+                                        payload.category = 'Application';
+                                        payload.userid = req.cookies.timeout;
+                                        payload.description = 'Loan Application Payment Confirmed';
+                                        payload.affected = invoice_.app_id;
+                                        notificationsService.log(req, payload);
+                                        return res.send({
+                                            "status": 200, 
+                                            "error": null, 
+                                            "message": "Invoice payment confirmed successfully!"});
+                                    }
+                                });
+                            }
+                        });
+                    } else {
+                        return res.send({
+                            "status": 500,
+                            "error": null,
+                            "response": body.data.gateway_response
+                        });
+                    }
+                } else {
+                    return res.send({
+                        "status": 500,
+                        "error": null,
+                        "response": body.message
+                    });
+                }
+            })
+            .catch(function(error){
+                if(error) return res.send({
+                    "status": 500,
+                    "error": error,
+                    "response": null
+                });
+            });
+        });    
 });
 
 module.exports = router;
