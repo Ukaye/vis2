@@ -1123,7 +1123,7 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
                 if (err && (err.code === 'ENOENT'))
                     fs.mkdirSync(file_folder);
 
-                const file_url = `${file_folder}${application_id}_${name.replace(/ /g, '_')}.${extension}`;
+                const file_url = `${file_folder}${application_id}_${name.trim().replace(/ /g, '_')}.${extension}`;
                 fs.stat(file_url, function (err) {
                     if (err) {
                         sampleFile.mv(file_url, function(err) {
