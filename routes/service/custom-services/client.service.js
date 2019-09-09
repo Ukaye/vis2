@@ -1123,7 +1123,7 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
                 if (err && (err.code === 'ENOENT'))
                     fs.mkdirSync(file_folder);
 
-                const file_url = `${file_folder}${application_id}_${name}.${extension}`;
+                const file_url = `${file_folder}${application_id}_${name.replace(/ /g, '_')}.${extension}`;
                 fs.stat(file_url, function (err) {
                     if (err) {
                         sampleFile.mv(file_url, function(err) {
@@ -1663,7 +1663,7 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
                             } else {
                                 let invoice = {};
                                 invoice.invoiceID = req.params.invoice_id;
-                                invoice.agentID = 1;
+                                invoice.agentID = 0;
                                 invoice.applicationID = invoice_.app_id;
                                 invoice.payment_amount = data.actual_payment_amount;
                                 invoice.interest_amount = data.actual_interest_amount;
