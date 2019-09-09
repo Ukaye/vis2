@@ -1959,7 +1959,7 @@ users.get('/application/:id', function(req, res, next) {
 });
 
 users.get('/application-id/:id', function(req, res, next) {
-    let obj = {},
+    let obj = {}, obj2 = {},
         application_id = req.params.id,
         path = 'files/application-'+application_id+'/',
         query = 'SELECT u.ID userID, u.fullname, u.phone, u.email, u.address, u.industry, u.date_created client_date_created, a.fees, ' +
@@ -1994,52 +1994,66 @@ users.get('/application-id/:id', function(req, res, next) {
                         res.send({"status": 500, "error": error, "response": null});
                     } else {
                         result = (result[0])? result[0] : {};
-                        if (!fs.existsSync(path)){
-                            result.files = {};
-                            connection.query('SELECT * FROM application_schedules WHERE applicationID=?', [application_id], function (error, schedule, fields) {
-                                if (error) {
-                                    res.send({"status": 500, "error": error, "response": null});
-                                } else {
-                                    result.schedule = schedule;
-                                    connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', [application_id], function (error, payment_history, fields) {
-                                        connection.release();
-                                        if (error) {
-                                            res.send({"status": 500, "error": error, "response": null});
+                        connection.query('SELECT * FROM application_schedules WHERE applicationID=?', [application_id], function (error, schedule, fields) {
+                            if (error) {
+                                res.send({"status": 500, "error": error, "response": null});
+                            } else {
+                                result.schedule = schedule;
+                                connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', [application_id], function (error, payment_history, fields) {
+                                    connection.release();
+                                    if (error) {
+                                        res.send({"status": 500, "error": error, "response": null});
+                                    } else {
+                                        result.payment_history = payment_history;
+                                        let path2 = `files/client_application-${result.preapplicationID}/`;
+                                        if (!fs.existsSync(path)){
+                                            result.files = {};
+                                            if (!fs.existsSync(path2)){
+                                                return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
+                                            } else {
+                                                fs.readdir(path2, function (err, files){
+                                                    async.forEach(files, function (file, callback){
+                                                        let filename = file.split('.')[0].split('_');
+                                                        filename.shift();
+                                                        obj2[filename.join('_')] = path2+file;
+                                                        callback();
+                                                    }, function(data){
+                                                        result.files = Object.assign({}, result.files, obj2);
+                                                        return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
+                                                    });
+                                                });
+                                            }
                                         } else {
-                                            result.payment_history = payment_history;
-                                            return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
-                                        }
-                                    });
-                                }
-                            });
-                        } else {
-                            fs.readdir(path, function (err, files){
-                                async.forEach(files, function (file, callback){
-                                    let filename = file.split('.')[0].split('_');
-                                    filename.shift();
-                                    obj[filename.join('_')] = path+file;
-                                    callback();
-                                }, function(data){
-                                    result.files = obj;
-                                    connection.query('SELECT * FROM application_schedules WHERE applicationID=?', [application_id], function (error, schedule, fields) {
-                                        if (error) {
-                                            res.send({"status": 500, "error": error, "response": null});
-                                        } else {
-                                            result.schedule = schedule;
-                                            connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', [application_id], function (error, payment_history, fields) {
-                                                connection.release();
-                                                if (error) {
-                                                    res.send({"status": 500, "error": error, "response": null});
-                                                } else {
-                                                    result.payment_history = payment_history;
-                                                    return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
-                                                }
+                                            fs.readdir(path, function (err, files){
+                                                async.forEach(files, function (file, callback){
+                                                    let filename = file.split('.')[0].split('_');
+                                                    filename.shift();
+                                                    obj[filename.join('_')] = path+file;
+                                                    callback();
+                                                }, function(data){
+                                                    result.files = obj;
+                                                    if (!fs.existsSync(path2)){
+                                                        return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
+                                                    } else {
+                                                        fs.readdir(path2, function (err, files){
+                                                            async.forEach(files, function (file, callback){
+                                                                let filename = file.split('.')[0].split('_');
+                                                                filename.shift();
+                                                                obj2[filename.join('_')] = path2+file;
+                                                                callback();
+                                                            }, function(data){
+                                                                result.files = Object.assign({}, result.files, obj2);
+                                                                return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
+                                                            });
+                                                        });
+                                                    }
+                                                });
                                             });
                                         }
-                                    });
+                                    }
                                 });
-                            });
-                        }
+                            }
+                        });
                     }
                 });
             }
