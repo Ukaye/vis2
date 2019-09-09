@@ -545,7 +545,7 @@ function nextStage(state, workflow_stages, action_stage) {
     }
     if (stage_documents[0]){
         for (let i=0; i<stage_documents.length; i++){
-            if (!(stage_documents[i].replace(/ /g, '_') in application.files))
+            if (!(stage_documents[i].trim().replace(/ /g, '_') in application.files))
                 return notification('Kindly upload required document ('+stage_documents+')','','warning');
         }
     }
