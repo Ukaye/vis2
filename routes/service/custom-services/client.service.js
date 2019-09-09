@@ -1663,7 +1663,7 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
                             } else {
                                 let invoice = {};
                                 invoice.invoiceID = req.params.invoice_id;
-                                invoice.agentID = 0;
+                                invoice.agentID = 1;
                                 invoice.applicationID = invoice_.app_id;
                                 invoice.payment_amount = data.actual_payment_amount;
                                 invoice.interest_amount = data.actual_interest_amount;
