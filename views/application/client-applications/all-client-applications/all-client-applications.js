@@ -104,16 +104,16 @@ function bindDataTable() {
                 mRender: function (data, type, full) {
                     switch (full.status){
                         case 1: {
-                            return '<span class="badge badge-primary">Pending Approval</span>'
+                            return '<span class="badge badge-primary">Pending Review</span>'
                         }
                         case 2: {
-                            return '<span class="badge badge-success">Approved</span>'
+                            return '<span class="badge badge-success">Application Reviewed</span>'
                         }
                         case 4: {
-                            return '<span class="badge badge-info">Accepted</span>'
+                            return '<span class="badge badge-info">Client Accepted</span>'
                         }
                         case 5: {
-                            return '<span class="badge badge-danger">Declined</span>'
+                            return '<span class="badge badge-danger">Client Declined</span>'
                         }
                     }
                 }
