@@ -384,6 +384,8 @@ function onCloseInvestment() {
     })
         .then((willDelete) => {
             if (willDelete) {
+
+                selectedItems.map(x => x.createdBy = (JSON.parse(localStorage.getItem("user_obj"))).ID);
                 let items = {
                     value: selectedItems
                 }

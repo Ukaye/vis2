@@ -342,16 +342,17 @@ $('#client').on("select2:selecting", function (e) {
             url: `/investment-txns/client-wallet-balance/${_id}`,
             'type': 'get',
             'success': function (data) {
-                clientBalance = data[0].balance.toString();
+                clientBalance = data.currentWalletBalance;
                 $('#opt_payment_made_by').html('');
                 if (data.status === undefined) {
                     $('#wait').hide();
-                    if (data.length > 0) {
+                    if (data.currentWalletBalance !== undefined) {
                         let sign = '';
                         if (clientBalance.toString().includes('-')) {
                             sign = '-';
                         }
                         let _clientBalance = Number(clientBalance).toFixed(2);
+                        console.log(_clientBalance);
                         $('<option/>').val('1').html(`Wallet <strong>(₦${sign}${formater(_clientBalance)})</strong>`).appendTo(
                             '#opt_payment_made_by');
                         $('<option/>').val('0').html(`Cash`).appendTo(
