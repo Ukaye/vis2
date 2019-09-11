@@ -341,7 +341,7 @@ router.post('/bad_cheque', function (req, res) {
                 } else {
                     res.send({
                         "status": 200,
-                        "message": "Bad cheque saved successfully!",
+                        "error": null,
                         "response": results
                     });
                 }
@@ -361,7 +361,7 @@ router.get('/bad_cheque/:clientID', function (req, res) {
         } else {
             res.send({
                 "status": 200,
-                "message": "Bad cheques fetched successfully!",
+                "error": null,
                 "response": results
             });
         }
@@ -403,7 +403,7 @@ router.delete('/bad_cheque/:id', function (req, res) {
                         } else {
                             res.send({
                                 "status": 200,
-                                "message": "Bad cheque deleted successfully!",
+                                "error": null,
                                 "response": results
                             });
                         }
@@ -438,7 +438,7 @@ router.post('/create', function(req, res) {
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     if (!postData.username || !postData.password || !postData.first_name || !postData.last_name || !postData.phone || !postData.email
         || !postData.bvn || !postData.loan_officer || !postData.branch)
-        return res.send({"status": 200, "error": null, "response": null, "message": "Required parameter(s) not sent!"});
+        return res.send({"status": 200, "error": null, "response": "Required parameter(s) not sent!"});
 
     postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
     postData.password = bcrypt.hashSync(postData.password, parseInt(process.env.SALT_ROUNDS));
@@ -447,7 +447,7 @@ router.post('/create', function(req, res) {
         if (err) throw err;
         connection.query(query2,[postData.username, postData.email, postData.phone], function (error, results) {
             if (results && results[0]){
-                return res.send({"status": 200, "error": null, "response": results, "message": "Information in use by existing client!"});
+                return res.send({"status": 200, "error": null, "response": "Information in use by existing client!"});
             }
             let bvn = postData.bvn;
             if (bvn.trim() !== ''){
@@ -789,7 +789,6 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function(req, res) {
                     res.send({
                         "status": 200,
                         "error": null,
-                        "message": 'File uploaded!',
                         "response": `${req.HOST}/${encodeURI(file_url)}`
                     });
                 });
@@ -811,7 +810,6 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function(req, res) {
                         res.send({
                             "status": 200,
                             "error": null,
-                            "message": 'File uploaded!',
                             "response": `${req.HOST}/${encodeURI(file_url)}`
                         });
                     });
@@ -1131,7 +1129,6 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
                             res.send({
                                 "status": 200,
                                 "error": null,
-                                "message": 'File uploaded!',
                                 "response": `${req.HOST}/${encodeURI(file_url)}`
                             });
                         });
@@ -1146,7 +1143,6 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
                                     res.send({
                                         "status": 200,
                                         "error": null,
-                                        "message": 'File uploaded!',
                                         "response": `${req.HOST}/${encodeURI(file_url)}`
                                     });
                                 });
@@ -1249,7 +1245,7 @@ router.get('/loan/get/:id/:application_id', helperFunctions.verifyJWT, function 
                                             res.send({"status": 500, "error": error, "response": null});
                                         } else {
                                             result.payment_history = payment_history;
-                                            return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
+                                            return res.send({"status": 200, "error": null, "response": result});
                                         }
                                     });
                                 }
@@ -1274,7 +1270,7 @@ router.get('/loan/get/:id/:application_id', helperFunctions.verifyJWT, function 
                                                     res.send({"status": 500, "error": error, "response": null});
                                                 } else {
                                                     result.payment_history = payment_history;
-                                                    return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
+                                                    return res.send({"status": 200, "error": null, "response": result});
                                                 }
                                             });
                                         }
@@ -1692,7 +1688,7 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
                                         return res.send({
                                             "status": 200, 
                                             "error": null, 
-                                            "message": "Invoice payment confirmed successfully!"});
+                                            "response": "Invoice payment confirmed successfully!"});
                                     }
                                 });
                             }
