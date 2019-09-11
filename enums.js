@@ -71,4 +71,11 @@ enums.OWNERSHIP = [
     }
 ];
 
+enums.VERIFY_EMAIL = {
+    STATUS: {
+        NOT_VERIFIED: 0,
+        VERIFIED: 1
+    }
+};
+
 module.exports = enums;

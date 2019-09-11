@@ -75,7 +75,7 @@ function displayInvoice(val) {
                     ${(!!val.response)? `<i class="fa fa-info-circle tool-tip" data-toggle="tooltip" data-placement="top" title="${JSON.parse(val.response).status}"></i>` : ''}
                     <p><input class="form-control" type="checkbox" onclick="selectInvoice('${encodeURIComponent(JSON.stringify(val))}')" /></p>
                     <p>
-                        <a class="btn btn-primary btn-sm" href="/application?id=${val.applicationID}">View Loan</a>
+                        <a class="btn btn-primary btn-sm" href="/loan-repayment?id=${val.applicationID}">View Loan</a>
                         <a class="btn btn-danger btn-sm" onclick="disableRemita('${encodeURIComponent(JSON.stringify(val))}')"><i class="fa fa-trash"></i></a>
                     </p>
                 </div>

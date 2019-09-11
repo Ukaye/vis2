@@ -1854,7 +1854,7 @@ users.post('/contact', function(req, res) {
 
 users.post('/sendmail', function(req, res) {
     let data = req.body;
-    if (!data.name || !data.email || !data.company || !data.phone || !data.title || !data.location || !data.description || !data.lead)
+    if (!data.name || !data.email || !data.company || !data.phone)
         return res.send("Required Parameters not sent!");
     data.date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let mailOptions = {
@@ -1959,13 +1959,13 @@ users.get('/application/:id', function(req, res, next) {
 });
 
 users.get('/application-id/:id', function(req, res, next) {
-    let obj = {},
+    let obj = {}, obj2 = {},
         application_id = req.params.id,
         path = 'files/application-'+application_id+'/',
         query = 'SELECT u.ID userID, u.fullname, u.phone, u.email, u.address, u.industry, u.date_created client_date_created, a.fees, ' +
             '(SELECT title FROM loan_purpose_settings WHERE ID = a.loan_purpose) loan_purpose, (SELECT GROUP_CONCAT(document) FROM workflow_stages WHERE workflowID = a.workflowID) documents, cast(u.loan_officer as unsigned) loan_officer, ' +
             'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.interest_rate, a.repayment_date, ' +
-            'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, a.interest_rate, a.duration, ' +
+            'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, a.interest_rate, a.duration, a.preapplicationID, ' +
             '(SELECT l.supervisor FROM users l WHERE l.ID = u.loan_officer) AS supervisor, ' +
             '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
             'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
@@ -1974,7 +1974,7 @@ users.get('/application-id/:id', function(req, res, next) {
         query2 = 'SELECT u.ID userID, c.ID contactID, u.name fullname, u.phone, u.email, u.address, u.industry, u.incorporation_date, u.registration_number, u.date_created client_date_created, a.fees, ' +
             '(SELECT title FROM loan_purpose_settings WHERE ID = a.loan_purpose) loan_purpose, (SELECT GROUP_CONCAT(document) FROM workflow_stages WHERE workflowID = a.workflowID) documents, cast(c.loan_officer as unsigned) loan_officer, ' +
             'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.interest_rate, a.repayment_date, ' +
-            'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, a.interest_rate, a.duration, ' +
+            'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, a.interest_rate, a.duration, a.preapplicationID, ' +
             '(SELECT l.supervisor FROM users l WHERE l.ID = c.loan_officer) AS supervisor, ' +
             '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
             'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
@@ -1994,52 +1994,66 @@ users.get('/application-id/:id', function(req, res, next) {
                         res.send({"status": 500, "error": error, "response": null});
                     } else {
                         result = (result[0])? result[0] : {};
-                        if (!fs.existsSync(path)){
-                            result.files = {};
-                            connection.query('SELECT * FROM application_schedules WHERE applicationID=?', [application_id], function (error, schedule, fields) {
-                                if (error) {
-                                    res.send({"status": 500, "error": error, "response": null});
-                                } else {
-                                    result.schedule = schedule;
-                                    connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', [application_id], function (error, payment_history, fields) {
-                                        connection.release();
-                                        if (error) {
-                                            res.send({"status": 500, "error": error, "response": null});
+                        connection.query('SELECT * FROM application_schedules WHERE applicationID=?', [application_id], function (error, schedule, fields) {
+                            if (error) {
+                                res.send({"status": 500, "error": error, "response": null});
+                            } else {
+                                result.schedule = schedule;
+                                connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', [application_id], function (error, payment_history, fields) {
+                                    connection.release();
+                                    if (error) {
+                                        res.send({"status": 500, "error": error, "response": null});
+                                    } else {
+                                        result.payment_history = payment_history;
+                                        let path2 = `files/client_application-${result.preapplicationID}/`;
+                                        if (!fs.existsSync(path)){
+                                            result.files = {};
+                                            if (!fs.existsSync(path2)){
+                                                return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
+                                            } else {
+                                                fs.readdir(path2, function (err, files){
+                                                    async.forEach(files, function (file, callback){
+                                                        let filename = file.split('.')[0].split('_');
+                                                        filename.shift();
+                                                        obj2[filename.join('_')] = path2+file;
+                                                        callback();
+                                                    }, function(data){
+                                                        result.files = Object.assign({}, result.files, obj2);
+                                                        return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
+                                                    });
+                                                });
+                                            }
                                         } else {
-                                            result.payment_history = payment_history;
-                                            return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
-                                        }
-                                    });
-                                }
-                            });
-                        } else {
-                            fs.readdir(path, function (err, files){
-                                async.forEach(files, function (file, callback){
-                                    let filename = file.split('.')[0].split('_');
-                                    filename.shift();
-                                    obj[filename.join('_')] = path+file;
-                                    callback();
-                                }, function(data){
-                                    result.files = obj;
-                                    connection.query('SELECT * FROM application_schedules WHERE applicationID=?', [application_id], function (error, schedule, fields) {
-                                        if (error) {
-                                            res.send({"status": 500, "error": error, "response": null});
-                                        } else {
-                                            result.schedule = schedule;
-                                            connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', [application_id], function (error, payment_history, fields) {
-                                                connection.release();
-                                                if (error) {
-                                                    res.send({"status": 500, "error": error, "response": null});
-                                                } else {
-                                                    result.payment_history = payment_history;
-                                                    return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
-                                                }
+                                            fs.readdir(path, function (err, files){
+                                                async.forEach(files, function (file, callback){
+                                                    let filename = file.split('.')[0].split('_');
+                                                    filename.shift();
+                                                    obj[filename.join('_')] = path+file;
+                                                    callback();
+                                                }, function(data){
+                                                    result.files = obj;
+                                                    if (!fs.existsSync(path2)){
+                                                        return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
+                                                    } else {
+                                                        fs.readdir(path2, function (err, files){
+                                                            async.forEach(files, function (file, callback){
+                                                                let filename = file.split('.')[0].split('_');
+                                                                filename.shift();
+                                                                obj2[filename.join('_')] = path2+file;
+                                                                callback();
+                                                            }, function(data){
+                                                                result.files = Object.assign({}, result.files, obj2);
+                                                                return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
+                                                            });
+                                                        });
+                                                    }
+                                                });
                                             });
                                         }
-                                    });
+                                    }
                                 });
-                            });
-                        }
+                            }
+                        });
                     }
                 });
             }

@@ -245,6 +245,23 @@ functions.mandatePaymentHistory = function (payload, callback) {
         })
 };
 
+functions.debitInstructionStatus = function (payload, callback) {
+    payload.merchantId = process.env.REMITA_MERCHANT_ID;
+    payload.hash = SHA512(payload.mandateId + payload.merchantId + payload.requestId + process.env.REMITA_API_KEY);
+    request.post(
+        {
+            url: `${process.env.REMITA_BASE_URL}/payment/status`,
+            body: payload,
+            json: true
+        },
+        (error, res, body) => {
+            if (error) {
+                return callback(error);
+            }
+            callback(functions.formatJSONP(body));
+        })
+};
+
 functions.cancelDebitInstruction = function (payload, callback) {
     payload.merchantId = process.env.REMITA_MERCHANT_ID;
     payload.hash = SHA512(payload.transactionRef + payload.merchantId + payload.requestId + process.env.REMITA_API_KEY);

@@ -47,9 +47,22 @@ function populateDataTable(data) {
             v.date_created,
             v.initiator,
             JSON.parse(v.response).status,
-            `<a class="btn btn-primary btn-sm" href="/application?id=${v.applicationID}">View Loan</a>`
+            `<a class="btn btn-primary btn-sm" href="/loan-repayment?id=${v.applicationID}">View Loan</a>
+             <a class="btn btn-outline-info btn-sm" onclick="getRemitaStatus(${v.ID})">View Status</a>`
         ];
         $('#remita-logs').dataTable().fnAddData(table);
         $('#remita-logs').dataTable().fnSort([[3,'desc']]);
+    });
+}
+
+function getRemitaStatus(id) {
+    $('#wait').show();
+    $.ajax({
+        type: 'get',
+        url: `/remita/payment/status/get/${id}`,
+        success: function (data) {
+            $('#wait').hide();
+            alert(data.response || data.error);
+        }
     });
 }
