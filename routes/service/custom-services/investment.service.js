@@ -456,7 +456,6 @@ router.get('/client-investments/:id', function (req, res, next) {
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
     let query = `SELECT 
-    (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} ORDER BY ID DESC LIMIT 1) as balance,
     v.ID,v.ref_no,c.fullname,v.description,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName, v.isDeny,
     v.approvalDone,v.reviewDone,v.created_date,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.updated_date,p.chkEnforceCount,
     i.clientId,v.isMoveFundTransfer,v.isWallet,v.isWithdrawal,isDeposit,v.isDocUploaded,p.canTerminate,i.isPaymentMadeByWallet,p.acct_allows_withdrawal,p.min_days_termination,
@@ -510,64 +509,69 @@ router.get('/client-investments/:id', function (req, res, next) {
                 query: query
             }
         }).then(payload => {
-            query = `Select 
-            (Select balance from investment_txns WHERE isWallet = 0 AND isInterest = 0 AND investmentId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY ID DESC LIMIT 1) as txnCurrentBalance,
-            (Select balance from investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} AND isApproved = 1 AND postDone = 1 ORDER BY ID DESC LIMIT 1) as txnFinalBalance,
-            (SELECT count(*) as recordsTotal FROM investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id}) as recordsTotal,
-            (SELECT count(*) as maturedInventmentTxn FROM investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} AND isInvestmentMatured = 1) as maturedInventmentTxn`;
+            investmentBalanceWithInterest(HOST, req.params.id, 0).then(txnCurrentBalanceWithoutInterest => {
+                investmentBalanceWithInterest(HOST, req.params.id, 1).then(txnCurrentBalance => {
+                    query = `Select 
+                        (SELECT count(*) as recordsTotal FROM investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id}) as recordsTotal,
+                        (SELECT count(*) as maturedInventmentTxn FROM investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} AND isInvestmentMatured = 1) as maturedInventmentTxn`;
 
-            endpoint = '/core-service/get';
-            url = `${HOST}${endpoint}`;
-            axios.get(url, {
-                params: {
-                    query: query
-                }
-            }).then(payload2 => {
-                if (uniqueTxns.length > 0) {
-                    const currentDate = new Date();
-                    const maturityDate = new Date(uniqueTxns[0].investment_mature_date);
-                    if (maturityDate <= currentDate) {
-                        query = `UPDATE investments SET isMatured = 1 WHERE ID = ${req.params.id}`;
-                        endpoint = '/core-service/get';
-                        url = `${HOST}${endpoint}`;
-                        axios.get(url, {
-                            params: {
-                                query: query
+                    endpoint = '/core-service/get';
+                    url = `${HOST}${endpoint}`;
+                    axios.get(url, {
+                        params: {
+                            query: query
+                        }
+                    }).then(payload2 => {
+                        if (uniqueTxns.length > 0) {
+                            const currentDate = new Date();
+                            const maturityDate = new Date(uniqueTxns[0].investment_mature_date);
+                            if (maturityDate <= currentDate) {
+                                query = `UPDATE investments SET isMatured = 1 WHERE ID = ${req.params.id}`;
+                                endpoint = '/core-service/get';
+                                url = `${HOST}${endpoint}`;
+                                axios.get(url, {
+                                    params: {
+                                        query: query
+                                    }
+                                }).then(respons_e => {
+
+                                    res.send({
+                                        draw: draw,
+                                        maturityDays: true,
+                                        txnCurrentBalance: txnCurrentBalance,
+                                        txnCurrentBalanceWithoutInterest:txnCurrentBalanceWithoutInterest,
+                                        isLastMaturedTxnExist: (payload2.data[0].maturedInventmentTxn > 0) ? 1 : 0,
+                                        recordsTotal: payload2.data[0].recordsTotal,
+                                        recordsFiltered: payload.data[0].recordsFiltered,
+                                        data: (uniqueTxns === undefined) ? [] : uniqueTxns
+                                    });
+                                }, err => {
+                                })
+                            } else {
+                                res.send({
+                                    draw: draw,
+                                    maturityDays: false,
+                                    txnCurrentBalance: txnCurrentBalance,
+                                    txnCurrentBalanceWithoutInterest:txnCurrentBalanceWithoutInterest,
+                                    isLastMaturedTxnExist: (payload2.data[0].maturedInventmentTxn > 0) ? 1 : 0,
+                                    recordsTotal: payload2.data[0].recordsTotal,
+                                    recordsFiltered: payload.data[0].recordsFiltered,
+                                    data: (uniqueTxns === undefined) ? [] : uniqueTxns
+                                });
                             }
-                        }).then(respons_e => {
+                        } else {
                             res.send({
                                 draw: draw,
-                                maturityDays: true,
-                                txnFinalBalance: (payload2.data[0].txnFinalBalance === null) ? '' : payload2.data[0].txnFinalBalance,
-                                txnCurrentBalance: (payload2.data[0].txnCurrentBalance === null) ? '' : payload2.data[0].txnCurrentBalance,
-                                isLastMaturedTxnExist: (payload2.data[0].maturedInventmentTxn > 0) ? 1 : 0,
+                                maturityDays: false,
+                                txnCurrentBalance: txnCurrentBalance,
+                                txnCurrentBalanceWithoutInterest:txnCurrentBalanceWithoutInterest,
                                 recordsTotal: payload2.data[0].recordsTotal,
                                 recordsFiltered: payload.data[0].recordsFiltered,
                                 data: (uniqueTxns === undefined) ? [] : uniqueTxns
                             });
-                        }, err => {
-                        })
-                    } else {
-                        res.send({
-                            draw: draw,
-                            maturityDays: false,
-                            txnCurrentBalance: (payload2.data[0].txnCurrentBalance === null) ? '' : payload2.data[0].txnCurrentBalance,
-                            isLastMaturedTxnExist: (payload2.data[0].maturedInventmentTxn > 0) ? 1 : 0,
-                            recordsTotal: payload2.data[0].recordsTotal,
-                            recordsFiltered: payload.data[0].recordsFiltered,
-                            data: (uniqueTxns === undefined) ? [] : uniqueTxns
-                        });
-                    }
-                } else {
-                    res.send({
-                        draw: draw,
-                        maturityDays: false,
-                        txnCurrentBalance: (payload2.data[0].txnCurrentBalance === null) ? '' : payload2.data[0].txnCurrentBalance,
-                        recordsTotal: payload2.data[0].recordsTotal,
-                        recordsFiltered: payload.data[0].recordsFiltered,
-                        data: (uniqueTxns === undefined) ? [] : uniqueTxns
+                        }
                     });
-                }
+                });
             });
         });
     });
@@ -592,6 +596,57 @@ router.post('/create-configs', function (req, res, next) {
             });
         });
 });
+
+
+function investmentBalanceWithInterest(HOST, investmentId, isInterest) {
+    return new Promise((resolve, reject) => {
+        let conditionalQuery = (isInterest === 0) ? ' AND isInterest = 0' : '';
+        let query = `Select amount, is_credit from investment_txns WHERE isWallet = 0 
+        AND investmentId = ${investmentId} 
+        AND isApproved = 1 AND postDone = 1 ${conditionalQuery}`;
+        let endpoint = "/core-service/get";
+        let url = `${HOST}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(function (payload) {
+            let totalBalance = 0;
+
+            if (payload.data.length === 0)
+                resolve(totalBalance);
+
+            for (let index = 0; index < payload.data.length; index++) {
+                const element = payload.data[index];
+                if (element.is_credit === 1)
+                    totalBalance += parseFloat(element.amount);
+                else
+                    totalBalance -= parseFloat(element.amount);
+            }
+            resolve(totalBalance);
+        });
+    });
+}
+
+function investmentStatus(HOST, investmentId) {
+    return new Promise((resolve, reject) => {
+        let query = `Select count(ID) from investments 
+        WHERE (isTerminated = 1 OR isMatured = 1)
+        AND id = ${investmentId}`;
+        let endpoint = "/core-service/get";
+        let url = `${HOST}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(function (payload) {
+            if (payload.data.length > 0)
+                resolve(0);
+            else
+                resolve(1);
+        });
+    });
+}
 
 
 

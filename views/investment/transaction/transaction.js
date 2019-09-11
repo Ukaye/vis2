@@ -96,18 +96,12 @@ function getInvestmentMaturity() {
                     $('#chk_own_accounts').attr('disabled', true);
                     $('#chk_client_wallet').attr('checked', true);
                     $('#list_accounts').attr('disabled', true);
-                    const finalTotalBalance = formater(selectedInvestment.txnCurrentBalance.split(',').join(''));
+                    const finalTotalBalance = formater(selectedInvestment.txnCurrentBalance.toString());
                     $('#input_transfer_amount').val(finalTotalBalance);
                     $('#input_amount').val(finalTotalBalance);
                     maturityAlert = 1;
-
-                    swal({
-                        title: "Investment Matured",
-                        text: (selectedInvestment.inv_moves_wallet === 0) ?
-                            "Investment activities could not longer be executed on this account, you could only moved fund to client's wallet or account"
-                            : "FUND TRANSACTION TO CLIENT'S WALLET INITIATED PLEASE COMPLETE THE APPROVAL STAGE",
-                        icon: (selectedInvestment.inv_moves_wallet === 0) ? "warning" : "success"
-                    });
+                    $('#wait').show();
+                    $('#maturityAlert').attr('hidden', false);
                     if (selectedInvestment.isLastMaturedTxnExist === 0) {
                         let _mRoleId = [];
                         let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === 2 && status === 1);
@@ -123,6 +117,10 @@ function getInvestmentMaturity() {
                             amount: selectedInvestment.txnCurrentBalance,
                             description: `MOVE FUND FROM INVESTMENT ACCT. TO CLIENT'S WALLET`,
                             investmentId: selectedInvestment.investmentId,
+                            code: selectedInvestment.acctNo,
+                            interest_rate: selectedInvestment.interest_rate,
+                            investment_mature_date: selectedInvestment.investment_mature_date,
+                            investment_start_date: selectedInvestment.investment_start_date,
                             is_credit: 0,
                             operationId: 2,
                             isCharge: 0,
@@ -141,15 +139,17 @@ function getInvestmentMaturity() {
                         };
 
                         $.ajax({
-                            url: `investment-txns/create`,
+                            url: `investment-txns/compute-mature-investment`,
                             'type': 'post',
                             'data': investmentOps,
                             'success': function (data) {
                                 $('#wait').hide();
+                                $('#maturityAlert').attr('hidden', true);
                                 table.ajax.reload(null, false);
                             },
                             'error': function (err) {
                                 $('#wait').hide();
+                                $('#maturityAlert').attr('hidden', true);
                             }
                         });
                     }
@@ -249,10 +249,8 @@ function getMaturedMonths() {
             if (data.status === undefined) {
                 $('#wait').hide();
                 if (data.length > 0) {
-                    console.log(data);
                     $("#maturedInterestMonths").html('');
                     data.forEach(element => {
-                        console.log(element);
                         $("#maturedInterestMonths").append(`<button class="dropdown-item"  onclick="onComputeInterest({startDate:'${element.startDate}',endDate:'${element.endDate}'})">${element.startDate + ' - ' + element.endDate}</button>`).trigger('change');
                     });
                 }
@@ -320,7 +318,7 @@ function bindDataTable(id) {
                 success: function (data) {
                     if (data.data.length > 0) {
                         selectedInvestment = (isWalletPage === 1) ? data.data[0] : data.data[data.data.length - 1];
-                        
+
                         if (selectedInvestment.canTerminate === 0 || selectedInvestment.canTerminate === null) {
                             $('#btnTerminateInvestment').attr('disabled', true);
                         }
@@ -342,14 +340,14 @@ function bindDataTable(id) {
                         selectedInvestment.txnCurrentBalance = data.txnCurrentBalance;
                         selectedInvestment.isLastMaturedTxnExist = data.isLastMaturedTxnExist;
                         selectedInvestment.maturityDays = data.maturityDays;
-                        selectedInvestment.txnFinalBalance = data.txnFinalBalance;
+                        selectedInvestment.balance = data.txnCurrentBalanceWithoutInterest;
                         let sign = '';
                         data.txnCurrentBalance = (data.txnCurrentBalance === null) ? '0.00' : data.txnCurrentBalance;
-                        if (data.txnCurrentBalance.includes('-')) {
+                        if (data.txnCurrentBalance.toString().includes('-')) {
                             sign = '-';
                             selectedInvestment.txnCurrentBalance = '-' + data.txnCurrentBalance;
                         }
-                        let total_balance_ = Number(data.txnCurrentBalance.split(',').join('')).toFixed(2);
+                        let total_balance_ = Number(data.txnCurrentBalance.toString().split(',').join('')).toFixed(2);
 
                         $("#inv_bal_amount").html(`${sign}₦${formater(total_balance_.toString())}`);
 
@@ -732,7 +730,7 @@ function onTerminateInvest() {
                 let investmentOps = {
                     description: 'Terminate Investment',
                     is_credit: 0,
-                    amount: selectedInvestment.txnFinalBalance,
+                    amount: selectedInvestment.txnCurrentBalance,
                     investmentId: selectedInvestment.investmentId,
                     isWithdrawal: 1,
                     operationId: withdrawalOperation,
@@ -787,11 +785,7 @@ function getClientAccountBalance() {
             'type': 'get',
             'success': function (data) {
                 $('#wait').hide();
-                if (data.status === undefined) {
-                    resolve(data[0]);
-                } else {
-                    resolve({ balance: 0.00 });
-                }
+                resolve(data);
             },
             'error': function (err) {
                 $('#wait').hide();
@@ -1631,6 +1625,9 @@ function onPost(value, approvedId, txnId, id, isDeny) {
         id: approvedId,
         method: 'POST',
         txnId: txnId,
+        createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
+        productId: selectedInvestment.productId,
+        code: selectedInvestment.acctNo,
         isCredit: data_row.is_credit,
         amount: data_row.amount,
         balance: data_row.txnBalance,
@@ -1688,7 +1685,6 @@ function onPost(value, approvedId, txnId, id, isDeny) {
 }
 
 function onComputeInterest(value) {
-    console.log(value);
     let _data = {
         interest_moves_wallet: selectedInvestment.interest_moves_wallet,
         clientId: selectedInvestment.clientId,

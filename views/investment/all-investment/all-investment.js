@@ -384,12 +384,11 @@ function onCloseInvestment() {
     })
         .then((willDelete) => {
             if (willDelete) {
-                console.log(selectedItems);
+
                 selectedItems.map(x => x.createdBy = (JSON.parse(localStorage.getItem("user_obj"))).ID);
                 let items = {
                     value: selectedItems
                 }
-
                 $.ajax({
                     url: `investment-txns/close-mature-investments`,
                     'type': 'post',
