@@ -320,7 +320,7 @@ function loadWorkflowStages(state) {
                 $('#document-upload').show();
                 $('#document-upload-text').append('<i class="fa fa-warning"></i> Kindly upload '+documents.join(', '));
                 documents.forEach(function (document) {
-                    if (document.replace(/ /g, '_') in application.files){
+                    if (document.trim().replace(/ /g, '_') in application.files){
                         $('#stage-documents').append('<option value = "'+document+'">'+document+' &nbsp; (&check;)</option>');
                     } else {
                         $('#stage-documents').append('<option value = "'+document+'">'+document+'</option>');
@@ -545,7 +545,7 @@ function nextStage(state, workflow_stages, action_stage) {
     }
     if (stage_documents[0]){
         for (let i=0; i<stage_documents.length; i++){
-            if (!(stage_documents[i].replace(/ /g, '_') in application.files))
+            if (!(stage_documents[i].trim().replace(/ /g, '_') in application.files))
                 return notification('Kindly upload required document ('+stage_documents+')','','warning');
         }
     }
