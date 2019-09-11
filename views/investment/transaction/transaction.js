@@ -121,6 +121,7 @@ function getInvestmentMaturity() {
                             interest_rate: selectedInvestment.interest_rate,
                             investment_mature_date: selectedInvestment.investment_mature_date,
                             investment_start_date: selectedInvestment.investment_start_date,
+                            interest_moves_wallet: selectedInvestment.interest_moves_wallet,
                             is_credit: 0,
                             operationId: 2,
                             isCharge: 0,

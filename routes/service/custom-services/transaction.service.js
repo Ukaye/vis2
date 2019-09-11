@@ -2597,10 +2597,12 @@ function investmentStartAndEndOfMonths(diffInCalendarMonths, investment_start_da
 
             if (index === 0) {
                 let date = lastDayOfMonth(new Date(investment_start_date));
+                let currentDate = new Date();
+                let mCurrentDate = `${currentDate.getUTCFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}`;
                 endDate = `${date.getUTCFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
                 invStartAndEndOfMonths.push({
                     startDate: investment_start_date,
-                    endDate: endDate
+                    endDate: (isPast(endDate)) ? endDate : mCurrentDate
                 });
             } else {
                 let _date = addDays(new Date(endDate), 1);
@@ -2749,8 +2751,8 @@ function sumInvestmentInterestPerDayRange(host, investmentId, inStartDate, start
                     total -= parseFloat(x.amount.toString());
                 }
             });
-            let result = parseFloat(Number(total).toFixed(2));
-            resolve(result);
+            let _result = parseFloat(Number(total).toFixed(2));
+            resolve(_result);
         }, err => {
             reject(err);
         });
@@ -2945,8 +2947,8 @@ async function sumAllWalletInvestmentTxns(host, clientId) {
                     total -= parseFloat(x.amount.toString());
                 }
             });
-            let result = parseFloat(Number(total).toFixed(2));
-            resolve(result);
+            let _result = parseFloat(Number(total).toFixed(2));
+            resolve(_result);
         }, err => {
             reject(err);
         });
@@ -3027,10 +3029,10 @@ async function computeInterestTxns2(HOST, data) {
         }
         getInvestmentDailyBalance(HOST, _data).then(payload => {
             setInvestmentInterestPerDay(HOST, payload.dailyBalances).then(interestValues => {
-                if (data.interest_moves_wallet === 1) {
+                if (data.interest_moves_wallet.toString() === '1') {
                     sumAllWalletInvestmentTxns(HOST, data.clientId).then(walletBalance_ => {
                         let bal_ = walletBalance_ + payload.totalInterestAmount;
-                        let amountValue = totalMonthlyInterest;
+                        let amountValue = payload.totalInterestAmount;
                         let inv_txn = {
                             txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                             description: `Balance ${Number(bal_).toFixed(2)} @${data.endDate}`,
@@ -3055,7 +3057,7 @@ async function computeInterestTxns2(HOST, data) {
 
                         setInvestmentTxns(HOST, inv_txn).then(setInv => {
                             inv_txn.ID = setInv.insertId;
-                            deductWithHoldingTax(HOST, data, inv_txn.amount, 0, inv_txn.balance, payload.data[0].clientId, 1, inv_txn).then(deductWithHoldingTax_ => {
+                            deductWithHoldingTax(HOST, data, inv_txn.amount, 0, inv_txn.balance, data.clientId, 1, inv_txn).then(deductWithHoldingTax_ => {
                                 let query = `UPDATE investment_interests SET isPosted = 1 
                                                             WHERE id <> 0 AND investmentId = ${data.investmentId} 
                                                             AND month = ${monthNyear[1]} 
@@ -3573,7 +3575,8 @@ async function computeInterestBalance(data, HOST) {
                 interest_rate: data.interest_rate,
                 investment_mature_date: data.investment_mature_date,
                 investment_start_date: data.investment_start_date,
-                productId: data.productId
+                productId: data.productId,
+                interest_moves_wallet: data.interest_moves_wallet
             }]
         };
         const payld = await closeMatureInvestmentAccount(HOST, items);

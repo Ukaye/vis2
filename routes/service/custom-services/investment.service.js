@@ -360,7 +360,7 @@ router.get('/get-mature-investments', function (req, res, next) {
     let search_string = req.query.search_string.toUpperCase();
     const date = new Date();
     const formatedDate = `${date.getUTCFullYear()}-${date.getMonth() + 1}-${date.getUTCDate()}`;
-    let query = `SELECT v.ID,v.code,v.productId,v.clientId,p.interest_rate,p.name AS investment,v.isMatured,
+    let query = `SELECT v.ID,v.code,v.productId,v.clientId,p.interest_rate,p.name AS investment,v.isMatured,p.interest_moves_wallet,
     c.fullname AS client,amount, investment_start_date, investment_mature_date FROM investments v 
     left join investment_products p on v.productId = p.ID 
     left join clients c on v.clientId = c.ID 
