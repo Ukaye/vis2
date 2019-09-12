@@ -1049,14 +1049,17 @@ function computeAccountBalanceIncludeInterest(investmentId, HOST) {
             }
         }).then(response_prdt_ => {
             let total = 0;
-            response_prdt_.data.map(x => {
-                if (x.is_credit === 1) {
-                    total += parseFloat(x.amount.toString());
-                } else {
-                    total -= parseFloat(x.amount.toString());
-                }
-            });
-            resolve(total);
+            if (response_prdt_.data.status === undefined) {
+                response_prdt_.data.map(x => {
+                    if (x.is_credit === 1) {
+                        total += parseFloat(x.amount.toString());
+                    } else {
+                        total -= parseFloat(x.amount.toString());
+                    }
+                });
+            }
+            let result = parseFloat(Number(total).toFixed(2));
+            resolve(result);
         }, err => {
             resolve(0);
         });
@@ -1082,7 +1085,8 @@ function computeCurrentBalance(investmentId, HOST) {
                     total -= parseFloat(x.amount.toString());
                 }
             });
-            resolve(total);
+            let result = parseFloat(Number(total).toFixed(2));
+            resolve(result);
         }, err => {
             resolve(0);
         });
@@ -1126,7 +1130,8 @@ function computeWalletBalance(clientId, HOST) {
                     total -= parseFloat(x.amount.toString());
                 }
             });
-            resolve({ currentWalletBalance: total });
+            let result = parseFloat(Number(total).toFixed(2));
+            resolve({ currentWalletBalance: result });
         }, err => {
             resolve({ currentWalletBalance: 0 });
         });
@@ -2744,7 +2749,8 @@ function sumInvestmentInterestPerDayRange(host, investmentId, inStartDate, start
                     total -= parseFloat(x.amount.toString());
                 }
             });
-            resolve(total);
+            let result = parseFloat(Number(total).toFixed(2));
+            resolve(result);
         }, err => {
             reject(err);
         });
@@ -2939,7 +2945,8 @@ async function sumAllWalletInvestmentTxns(host, clientId) {
                     total -= parseFloat(x.amount.toString());
                 }
             });
-            resolve(total);
+            let result = parseFloat(Number(total).toFixed(2));
+            resolve(result);
         }, err => {
             reject(err);
         });

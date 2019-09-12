@@ -340,7 +340,7 @@ function bindDataTable(id) {
                         selectedInvestment.txnCurrentBalance = data.txnCurrentBalance;
                         selectedInvestment.isLastMaturedTxnExist = data.isLastMaturedTxnExist;
                         selectedInvestment.maturityDays = data.maturityDays;
-                        selectedInvestment.balance = data.txnCurrentBalanceWithoutInterest;
+                        selectedInvestment.balance = (data.txnCurrentBalanceWithoutInterest !== undefined) ? data.txnCurrentBalanceWithoutInterest : data.txnCurrentBalance;
                         let sign = '';
                         data.txnCurrentBalance = (data.txnCurrentBalance === null) ? '0.00' : data.txnCurrentBalance;
                         if (data.txnCurrentBalance.toString().includes('-')) {
@@ -814,13 +814,13 @@ async function onOpenMode(name, operationId, is_credit) {
         $('#opt_payment_made_by').attr('disabled', false);
         $('#opt_payment_made_by').html('');
         const _acctBal = await getClientAccountBalance();
-        clientWalletBalance = _acctBal.balance;
+        clientWalletBalance = _acctBal.currentWalletBalance;
         let sign = '';
         _acctBal.balance = (_acctBal.balance === undefined || _acctBal.balance === '') ? 0.00 : _acctBal.balance;
         if (_acctBal.balance.toString().includes('-')) {
             sign = '-';
         }
-        $('<option/>').val('1').html(`Wallet <strong>(₦${sign}${formater(_acctBal.balance.toString())})</strong>`).appendTo(
+        $('<option/>').val('1').html(`Wallet <strong>(₦${sign}${formater(Number(_acctBal.currentWalletBalance).toFixed(2).toString())})</strong>`).appendTo(
             '#opt_payment_made_by');
         $('<option/>').val('0').html(`Cash`).appendTo(
             '#opt_payment_made_by');
