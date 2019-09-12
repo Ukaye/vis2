@@ -1031,8 +1031,8 @@ async function fundBeneficialAccount(data, HOST) {
             });
         });
     } else if (data.isInvestmentTerminated === '1') {
-        await chargeForceTerminate(data, HOST);
-        let result = await reverseEarlierInterest(data, HOST);
+        const bal2CalTerminationChrg = await chargeForceTerminate(data, HOST);
+        let result = await reverseEarlierInterest(data, HOST, bal2CalTerminationChrg);
         return result;
     }
 }
@@ -1411,7 +1411,7 @@ function chargeForceTerminate(data, HOST) {
                                     deductVatTax(HOST, data, configAmount, inv_txn, inv_txn.balance).then(payload___ => {
                                         resolve(payload___);
                                     }, err => {
-                                        resolve({});
+                                        resolve(balance);
                                     });
                                 }, err__ => {
                                     resolve({});
@@ -1518,7 +1518,7 @@ function updateTerminatedInterest(HOST, data) {
     });
 }
 
-async function reverseEarlierInterest(data, HOST) {
+async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
     const _getExistingInterests = await getExistingInterests(data, HOST);
     const _getProductConfigInterests = await getProductConfigInterests(data, HOST);
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD');
@@ -1597,7 +1597,7 @@ async function reverseEarlierInterest(data, HOST) {
             refId = moment().utcOffset('+0100').format('x');
             dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
             let configData = _getProductConfigInterests;
-            let configAmount = (configData.interest_forfeit_charge_opt == 'Fixed') ? configData.interest_forfeit_charge : (configData.interest_forfeit_charge * totalInvestedAmount) / 100;//_payload_3.balance;
+            let configAmount = (configData.interest_forfeit_charge_opt == 'Fixed') ? configData.interest_forfeit_charge : (configData.interest_forfeit_charge * bal2CalTerminationChrg) / 100;//_payload_3.balance;
             const invSumBalance = await computeAccountBalanceIncludeInterest(data.investmentId, HOST);
             let sumBalance = invSumBalance - configAmount; //(totalInvestedAmount + interestAmount) - configAmount;
             inv_txn = {
