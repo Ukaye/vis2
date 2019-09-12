@@ -56,7 +56,6 @@ let app = express(),
     remita_service = require('./routes/service/custom-services/remita.service'),
     xero_service = require('./routes/service/custom-services/xero.service'),
     notification = require('./routes/notifications'),
-    vodacom = require('./routes/vodacom'),
     index = require('./routes/index');
 
 app.engine('html', require('ejs').renderFile);
