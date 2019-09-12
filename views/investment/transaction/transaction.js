@@ -674,7 +674,7 @@ $("#idChkForceTerminate").on('change',
             $('#notice_date').attr('min', minDate);
 
             let endDate = new Date(selectedInvestment.investment_mature_date);
-            endDate.setDate(date.getDate() - 1);
+            endDate.setDate(endDate.getDate() - 1);
             let minDate2 = `${endDate.getUTCFullYear()}-${pad(endDate.getMonth() + 1)}-${pad(endDate.getDate())}`;
             $('#notice_date').attr('max', minDate2);
         }
@@ -695,7 +695,7 @@ function getConfigItems() {
             let minDate = `${date.getUTCFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
             $('#notice_date').attr('min', minDate);
             let endDate = new Date(selectedInvestment.investment_mature_date);
-            endDate.setDate(date.getDate() - 1);
+            endDate.setDate(endDate.getDate() - 1);
             let minDate2 = `${endDate.getUTCFullYear()}-${pad(endDate.getMonth() + 1)}-${pad(endDate.getDate())}`;
             $('#notice_date').attr('max', minDate2);
         },
