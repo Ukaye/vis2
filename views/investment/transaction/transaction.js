@@ -349,8 +349,7 @@ function bindDataTable(id) {
                             selectedInvestment.txnCurrentBalance = '-' + data.txnCurrentBalance;
                         }
                         let total_balance_ = Number(data.txnCurrentBalance.toString().split(',').join('')).toFixed(2);
-
-                        $("#inv_bal_amount").html(`${sign}₦${formater(total_balance_.toString())}`);
+                        $("#inv_bal_amount").html(`${(parseInt(total_balance_.toString()) === 0) ? '' : sign}₦${formater(total_balance_.toString())}`);
 
                         if (data.data[0].interest_disbursement_time === 'Up-Front') {
                             $('#btnComputeInterest').attr('hidden', true);
