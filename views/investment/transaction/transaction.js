@@ -121,6 +121,7 @@ function getInvestmentMaturity() {
                             interest_rate: selectedInvestment.interest_rate,
                             investment_mature_date: selectedInvestment.investment_mature_date,
                             investment_start_date: selectedInvestment.investment_start_date,
+                            interest_moves_wallet: selectedInvestment.interest_moves_wallet,
                             is_credit: 0,
                             operationId: 2,
                             isCharge: 0,
@@ -348,8 +349,7 @@ function bindDataTable(id) {
                             selectedInvestment.txnCurrentBalance = '-' + data.txnCurrentBalance;
                         }
                         let total_balance_ = Number(data.txnCurrentBalance.toString().split(',').join('')).toFixed(2);
-
-                        $("#inv_bal_amount").html(`${sign}₦${formater(total_balance_.toString())}`);
+                        $("#inv_bal_amount").html(`${(parseInt(total_balance_.toString()) === 0) ? '' : sign}₦${formater(total_balance_.toString())}`);
 
                         if (data.data[0].interest_disbursement_time === 'Up-Front') {
                             $('#btnComputeInterest').attr('hidden', true);
