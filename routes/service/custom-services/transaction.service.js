@@ -23,6 +23,7 @@ const isSameMonth = require('date-fns/is_same_month');
 var differenceInCalendarDays = require('date-fns/difference_in_calendar_days');
 const sRequest = require('../s_request');
 const isAfter = require('date-fns/is_after');
+var isLastDayOfMonth = require('date-fns/is_last_day_Of_month');
 
 //re.role_name as review_role_name,po.role_name as post_role_name,
 // left join user_roles re on a.roleId = re.id
@@ -2440,7 +2441,8 @@ router.get('/mature-interest-months/:id', function (req, res, next) {
     //     res.send(err);
     // });
     getValidInvestmentMatureMonths(HOST, req.params.id, 1).then(payload => {
-        res.send(payload);
+        const result = payload.filter(x => isLastDayOfMonth(x.endDate));
+        res.send(result);
     });
 });
 
