@@ -1654,9 +1654,9 @@ function onPost(value, approvedId, txnId, id, isDeny) {
         is_capital: data_row.is_capital,
         investment_mature_date: data_row.investment_mature_date,
         investment_start_date: data_row.investment_start_date,
-        interest_rate: data_row.interest_rate,
+        interest_rate: (data_row.isInvestmentTerminated === 1) ? data_row.premature_interest_rate : data_row.interest_rate,
         isInvestmentMatured: data_row.isInvestmentMatured,
-        interest_rate: selectedInvestment.interest_rate,
+        // interest_rate: selectedInvestment.interest_rate,
         investment_mature_date: selectedInvestment.investment_mature_date,
         investment_start_date: selectedInvestment.investment_start_date
     }
