@@ -1032,7 +1032,6 @@ async function fundBeneficialAccount(data, HOST) {
         });
     } else if (data.isInvestmentTerminated === '1') {
         const bal2CalTerminationChrg = await chargeForceTerminate(data, HOST);
-        console.log('chargeForceTerminate: ' + bal2CalTerminationChrg);
         let result = await reverseEarlierInterest(data, HOST, bal2CalTerminationChrg);
         return result;
     }
@@ -1473,7 +1472,7 @@ function getProductConfigInterests(data, HOST) {
     });
 }
 
-async function getInterestEndOfTenure(HOST, data, _getProductConfigInterests) {
+async function getInterestEndOfTenure(HOST, data) {
     const matureMonths = await getValidInvestmentMatureMonths(HOST, data.investmentId, 0);
     try {
         for (let index = 0; index < matureMonths.length; index++) {
@@ -1487,7 +1486,7 @@ async function getInterestEndOfTenure(HOST, data, _getProductConfigInterests) {
                 productId: data.productId,
                 startDate: element.startDate,
                 endDate: element.endDate,
-                interest_rate: _getProductConfigInterests.interest_rate
+                interest_rate: data.interest_rate
             }
             await computeInterestTxns2(HOST, _data);
         }
@@ -1520,7 +1519,6 @@ function updateTerminatedInterest(HOST, data) {
 }
 
 async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
-    console.log('reverseEarlierInterest: ' + bal2CalTerminationChrg);
     const _getExistingInterests = await getExistingInterests(data, HOST);
     const _getProductConfigInterests = await getProductConfigInterests(data, HOST);
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD');
@@ -1739,7 +1737,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                     query: query
                 }
             });
-            await getInterestEndOfTenure(HOST, data, _getProductConfigInterests);
+            await getInterestEndOfTenure(HOST, data);
             if (_res_.data.status === undefined) {
                 refId = moment().utcOffset('+0100').format('x');
                 const mBalance = await computeAccountBalanceIncludeInterest(data.investmentId, HOST);
@@ -2747,7 +2745,6 @@ function sumInvestmentInterestPerDayRange(host, investmentId, inStartDate, start
                 query: query
             }
         }).then(result => {
-            console.log(query);
             let total = 0;
             result.data.map(x => {
                 if (x.is_credit === 1) {
@@ -2757,7 +2754,6 @@ function sumInvestmentInterestPerDayRange(host, investmentId, inStartDate, start
                 }
             });
             let _result = parseFloat(Number(total).toFixed(2));
-            console.log('_result: ' + _result);
             resolve(_result);
         }, err => {
             reject(err);
@@ -2826,19 +2822,12 @@ async function getInvestmentDailyBalance(HOST, data) {
     for (let index = 0; index < payload.length; index++) {
         const x = payload[index];
         const balance = await sumInvestmentInterestPerDayRange(HOST, data.investmentId, data.investment_start_date, data.startDate, x)
-        console.log('Daily Balance: ' + balance);
         let totalInvestedAmount = parseFloat(balance.toString());
         monthlyOpeningBalance = (monthlyOpeningBalance === 0) ? totalInvestedAmount : monthlyOpeningBalance;
         let interestInDays = parseFloat(data.interest_rate) / 100;
-        console.log('interestInDays: ' + interestInDays);
         let SI = (totalInvestedAmount * interestInDays * (1 / daysInYear));
         totalInterestAmount += SI;
         monthlyOpeningBalance += SI;
-        console.log(x,
-            Number(monthlyOpeningBalance).toFixed(2),
-            Number(SI).toFixed(2),
-            x.split('-')[1],
-            x.split('-')[0]);
         dailyBalances.push({
             date: x,
             balance: Number(monthlyOpeningBalance).toFixed(2),
@@ -3211,7 +3200,7 @@ router.get('/client-wallets/:id', function (req, res, next) {
     v.ID,v.ref_no,c.fullname,v.description,v.created_date,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName,
     v.isDeny,v.isPaymentMadeByWallet,v.isReversedTxn,v.isTransfer,v.isMoveFundTransfer,v.beneficialInvestmentId,p.interest_disbursement_time,p.interest_moves_wallet,
     v.approvalDone,v.reviewDone,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.isInvestmentTerminated,
-    p.acct_allows_withdrawal,i.investment_mature_date,p.interest_rate,v.isForceTerminate,v.isInvestmentMatured,p.inv_moves_wallet,p.chkEnforceCount,
+    p.acct_allows_withdrawal,i.investment_mature_date,p.interest_rate,v.isForceTerminate,v.isInvestmentMatured,p.inv_moves_wallet,p.chkEnforceCount,p.premature_interest_rate,
     i.clientId,p.canTerminate,v.is_capital,v.investmentId,i.isTerminated,v.isWallet, v.updated_date, i.isMatured FROM investment_txns v 
     left join investments i on v.investmentId = i.ID 
     left join clients c on i.clientId = c.ID
