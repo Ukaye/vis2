@@ -1535,7 +1535,7 @@ function initCSVUpload2(application, settings) {
                         'success': function (data) {
                             $csvLoader.hide();
                             notification('Reschedule approved successfully','','success');
-                            window.location.reload();
+                            // window.location.reload();
                         },
                         'error': function (err) {
                             $csvLoader.hide();

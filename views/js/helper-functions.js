@@ -1,3 +1,12 @@
+$(document).ready(() => {
+    $.ajaxSetup({
+        complete: (response) => {
+            if (response && response.responseJSON && response.responseJSON.code === 'xero')
+                return window.location.href = response.responseJSON.url;
+        }
+    });
+})
+
 function getBaseUrl() {
     if (location.hostname === 'x3.loanratus.com') {
         return 'https://login.remita.net/remita/ecomm/mandate';

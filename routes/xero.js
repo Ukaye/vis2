@@ -18,7 +18,7 @@ xero.authorizeRedirect = async function (req, res, returnTo) {
     var authoriseUrl = xeroClient.oauth1Client.buildAuthoriseUrl(requestToken);
     req.session.oauthRequestToken = requestToken;
     req.session.returnTo = returnTo;
-    res.redirect(authoriseUrl);
+    res.status(400).json({url: authoriseUrl, code: 'xero'});
 };
 
 xero.authorizedOperation = function (req, res, returnTo, callback) {
@@ -30,11 +30,10 @@ xero.authorizedOperation = function (req, res, returnTo, callback) {
 };
 
 xero.handleErr = function (err, req, res, returnTo) {
-    console.log(err);
     if (err.data && err.data.oauth_problem && err.data.oauth_problem === 'token_rejected') {
         xero.authorizeRedirect(req, res, returnTo);
     } else {
-        res.redirect('error', err);
+        console.log(err);
     }
 };
 

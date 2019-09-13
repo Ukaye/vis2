@@ -4,7 +4,7 @@ const
     xeroFunctions = require('../../xero');
 
 router.get('/connect', async (req, res) => {
-    xeroFunctions.authorizedOperation(req, res, '/integrations', async function(xeroClient) {
+    xeroFunctions.authorizedOperation(req, res, '/integrations', async (xeroClient) => {
         res.redirect('/integrations?x=1');
     })
 });
