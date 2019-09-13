@@ -2793,25 +2793,46 @@ function setInvestmentInterestPerDay(host, values) {
     });
 }
 
-function getInvestmentMonthDatesRange(startDate, maturityDate) {
-    return new Promise((resolve, reject) => {
-        let daysInInvestmentDuration = differenceInCalendarDays(
-            new Date(maturityDate),
-            new Date(startDate)
-        );
-        let daysInInvestment = [];
-        for (let index = 0; index <= daysInInvestmentDuration; index++) {
-            const dt = addDays(new Date(startDate), index);
-            daysInInvestment.push(`${dt.getUTCFullYear()}-${dt.getMonth() + 1}-${dt.getDate()}`);
-        }
 
-        resolve(daysInInvestment);
+function getInvestmentMaturityDate(host, investmentId) {
+    return new Promise((resolve, reject) => {
+        let query = `SELECT investment_mature_date FROM investments WHERE ID = ${investmentId}`;
+        let endpoint = '/core-service/get';
+        let url = `${host}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(payload => {
+            resolve(payload.data[0]);
+        }, err => {
+            resolve(false);
+        });
+    });
+}
+
+
+function getInvestmentMonthDatesRange(HOST, startDate, maturityDate, investmentId) {
+    return new Promise((resolve, reject) => {
+        getInvestmentMaturityDate(HOST, investmentId).then(iv_maturityDate => {
+            let daysInInvestmentDuration = differenceInCalendarDays(
+                new Date(maturityDate),
+                new Date(startDate)
+            );
+            let daysInInvestment = [];
+            for (let index = 0; index <= daysInInvestmentDuration; index++) {
+                const dt = addDays(new Date(startDate), index);
+                daysInInvestment.push(`${dt.getUTCFullYear()}-${dt.getMonth() + 1}-${dt.getDate()}`);
+            }
+            const result = daysInInvestment.filter(x => isAfter(new Date(x), new Date(iv_maturityDate.investment_mature_date) === false));
+            resolve(result);
+        });
     });
 }
 
 async function getInvestmentDailyBalance(HOST, data) {
     let dailyBalances = [];
-    const payload = await getInvestmentMonthDatesRange(data.startDate, data.maturityDate)
+    const payload = await getInvestmentMonthDatesRange(HOST, data.startDate, data.maturityDate, data.investmentId);
     let daysInYear = 365;
     if (isLeapYear(new Date())) {
         daysInYear = 366;
