@@ -23,7 +23,7 @@ const isSameMonth = require('date-fns/is_same_month');
 var differenceInCalendarDays = require('date-fns/difference_in_calendar_days');
 const sRequest = require('../s_request');
 const isAfter = require('date-fns/is_after');
-var isLastDayOfMonth = require('date-fns/is_last_day_Of_month');
+var isLastDayOfMonth = require('date-fns/is_last_day_of_month');
 
 //re.role_name as review_role_name,po.role_name as post_role_name,
 // left join user_roles re on a.roleId = re.id
@@ -1032,6 +1032,7 @@ async function fundBeneficialAccount(data, HOST) {
         });
     } else if (data.isInvestmentTerminated === '1') {
         const bal2CalTerminationChrg = await chargeForceTerminate(data, HOST);
+        console.log('chargeForceTerminate: ' + bal2CalTerminationChrg);
         let result = await reverseEarlierInterest(data, HOST, bal2CalTerminationChrg);
         return result;
     }
@@ -1387,7 +1388,7 @@ function chargeForceTerminate(data, HOST) {
                             let sumTotalBalance = balanceIncludingInterest - configAmount;
                             let inv_txn = {
                                 txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-                                description: `CHARGE ON INVESTMENT TERMINATION`,
+                                description: `MINIMUM NOTICE DAYS TERMINATION CHARGE`,
                                 amount: Number(configAmount).toFixed(2),
                                 is_credit: 0,
                                 created_date: dt,
@@ -1409,7 +1410,7 @@ function chargeForceTerminate(data, HOST) {
                             try {
                                 axios.post(url, inv_txn).then(response__ => {
                                     deductVatTax(HOST, data, configAmount, inv_txn, inv_txn.balance).then(payload___ => {
-                                        resolve(payload___);
+                                        resolve(balance);
                                     }, err => {
                                         resolve(balance);
                                     });
@@ -1519,6 +1520,7 @@ function updateTerminatedInterest(HOST, data) {
 }
 
 async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
+    console.log('reverseEarlierInterest: ' + bal2CalTerminationChrg);
     const _getExistingInterests = await getExistingInterests(data, HOST);
     const _getProductConfigInterests = await getProductConfigInterests(data, HOST);
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD');
@@ -1593,7 +1595,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                 startDate: data.investment_start_date
             }
             await updateTerminatedInterest(HOST, mdata);
-            const totalInvestedAmount = await computeCurrentBalance(data.investmentId, HOST);
+            // const totalInvestedAmount = await computeCurrentBalance(data.investmentId, HOST);
             refId = moment().utcOffset('+0100').format('x');
             dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
             let configData = _getProductConfigInterests;
@@ -1602,7 +1604,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
             let sumBalance = invSumBalance - configAmount; //(totalInvestedAmount + interestAmount) - configAmount;
             inv_txn = {
                 txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-                description: `CHARGE ON TERMINATION OF INVESTMENT`,
+                description: `CHARGE ON PREMATURE INVESTMENT`,
                 amount: Number(configAmount).toFixed(2),
                 is_credit: 0,
                 created_date: dt,
@@ -1706,11 +1708,11 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
             let refId = moment().utcOffset('+0100').format('x');
             let configData = _getProductConfigInterests;
             configData.interest_forfeit_charge = (configData.interest_forfeit_charge !== null && configData.interest_forfeit_charge !== '') ? parseFloat(configData.interest_forfeit_charge.toString()) : 0;
-            let configAmount = (configData.interest_forfeit_charge_opt === 'Fixed') ? configData.interest_forfeit_charge : (configData.interest_forfeit_charge * _computeCurrentBalance) / 100;
+            let configAmount = (configData.interest_forfeit_charge_opt === 'Fixed') ? configData.interest_forfeit_charge : (configData.interest_forfeit_charge * bal2CalTerminationChrg) / 100;
             let sumBalance2 = _currentBalance - configAmount;
             let inv_txn = {
                 txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-                description: `CHARGE ON TERMINATION OF INVESTMENT`,
+                description: `CHARGE ON PREMATURE INVESTMENT`,
                 amount: Number(configAmount).toFixed(2),
                 is_credit: 0,
                 created_date: dt,
@@ -2745,6 +2747,7 @@ function sumInvestmentInterestPerDayRange(host, investmentId, inStartDate, start
                 query: query
             }
         }).then(result => {
+            console.log(query);
             let total = 0;
             result.data.map(x => {
                 if (x.is_credit === 1) {
@@ -2754,6 +2757,7 @@ function sumInvestmentInterestPerDayRange(host, investmentId, inStartDate, start
                 }
             });
             let _result = parseFloat(Number(total).toFixed(2));
+            console.log('_result: ' + _result);
             resolve(_result);
         }, err => {
             reject(err);
@@ -2822,12 +2826,19 @@ async function getInvestmentDailyBalance(HOST, data) {
     for (let index = 0; index < payload.length; index++) {
         const x = payload[index];
         const balance = await sumInvestmentInterestPerDayRange(HOST, data.investmentId, data.investment_start_date, data.startDate, x)
+        console.log('Daily Balance: ' + balance);
         let totalInvestedAmount = parseFloat(balance.toString());
         monthlyOpeningBalance = (monthlyOpeningBalance === 0) ? totalInvestedAmount : monthlyOpeningBalance;
         let interestInDays = parseFloat(data.interest_rate) / 100;
+        console.log('interestInDays: ' + interestInDays);
         let SI = (totalInvestedAmount * interestInDays * (1 / daysInYear));
         totalInterestAmount += SI;
         monthlyOpeningBalance += SI;
+        console.log(x,
+            Number(monthlyOpeningBalance).toFixed(2),
+            Number(SI).toFixed(2),
+            x.split('-')[1],
+            x.split('-')[0]);
         dailyBalances.push({
             date: x,
             balance: Number(monthlyOpeningBalance).toFixed(2),
@@ -2836,7 +2847,7 @@ async function getInvestmentDailyBalance(HOST, data) {
             investmentId: data.investmentId,
             createdAt: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
             month: x.split('-')[1],
-            year: x.split('-')[0],
+            year: x.split('-')[0]
         });
     }
     return ({ dailyBalances: dailyBalances, totalInterestAmount: totalInterestAmount });
