@@ -1234,13 +1234,11 @@ async function upFrontInterest(data, HOST) {
                     let url = `${HOST}${endpoint}`;
                     axios.post(url, _inv_txn)
                         .then(function (_payload_) {
-                            computeTotalBalance(data.clientId, data.investmentId, HOST).then(totalAmt2 => {
-                                _inv_txn.ID = _payload_.data.insertId;
-                                deductWithHoldingTax(HOST, data, _inv_txn.amount, 0, totalAmt2.currentAcctBalance, data.clientId, data.isWallet, _inv_txn)
-                                    .then(p__ => {
-                                        resolve({});
-                                    });
-                            });
+                            _inv_txn.ID = _payload_.data.insertId;
+                            deductWithHoldingTax(HOST, data, _inv_txn.amount, 0, _inv_txn.balance, data.clientId, data.interest_moves_wallet, _inv_txn)
+                                .then(p__ => {
+                                    resolve({});
+                                });
                         }, err => {
                             reject(err);
                         });
@@ -1418,16 +1416,18 @@ function chargeForceTerminate(data, HOST) {
                                 });
 
                             } catch (error) {
-                                resolve({});
+                                resolve(balance);
                             }
                         }
                     }, err => {
-                        resolve({});
+                        resolve(balance);
                     })
                 });
             });
         } else {
-            resolve({});
+            computeCurrentBalance(data.investmentId, HOST).then(balance => {
+                resolve(balance);
+            });
         }
     });
 }
@@ -2824,7 +2824,14 @@ function getInvestmentMonthDatesRange(HOST, startDate, maturityDate, investmentI
                 const dt = addDays(new Date(startDate), index);
                 daysInInvestment.push(`${dt.getUTCFullYear()}-${dt.getMonth() + 1}-${dt.getDate()}`);
             }
-            const result = daysInInvestment.filter(x => isAfter(new Date(x), new Date(iv_maturityDate.investment_mature_date) === false));
+            const result = daysInInvestment.filter(x => {
+                if (
+                    isAfter(new Date(x),
+                        new Date(iv_maturityDate.investment_mature_date)) === false) {
+                    return x;
+                }
+
+            });
             resolve(result);
         });
     });
