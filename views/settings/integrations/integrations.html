@@ -38,6 +38,9 @@
             -moz-box-shadow: 0 5px 5px -3px #777;
             box-shadow: 0 5px 5px -3px #777;
         }
+        input[type="checkbox"] {
+            margin-right: 15px;
+        }
     </style>
 </head>
 
@@ -84,12 +87,12 @@
 
                         <div class="card-body">
                             <div class="widget-main padding-8">
-                                <div class="col-lg-3 logo" onclick="connectXero()">
+                                <div class="col-lg-3 logo"  data-toggle="modal" data-target="#xeroConfig">
                                     <img src="https://www.accountancyage.com/wp-content/uploads/sites/3/2019/02/Xero-Logo-Blue-Blue-Byline-Below-RGB.png" alt="xero">
                                 </div>
-                                <div class="col-lg-3 logo">
+                                <!-- <div class="col-lg-3 logo">
                                     <img style="margin-top: 50px;" src="https://camo.githubusercontent.com/a7b368cab293892c59fc278fa5cebe4f8ddbe1a8/68747470733a2f2f7261772e6769746875622e636f6d2f6d61696c67756e2f6d656469612f6d61737465722f4d61696c67756e5f5072696d6172792e706e67" alt="mailgun">
-                                </div>
+                                </div> -->
                                 <div class="col-lg-3 logo">
                                     <img style="margin-top: 10px;" src="https://netstorage-legit.akamaized.net/images/vllkyt7nki3c742g7.jpg?imwidth=900" alt="remita">
                                 </div>
@@ -99,12 +102,62 @@
                 </div>
             </div>
         </div><!-- .animated -->
-        <div id="wait" style=";width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;"><img src='spinner.gif' width="100" height="100" style="background-color: transparent"/></div>
+        <div id="wait" style="width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;"><img src='spinner.gif' width="100" height="100" style="background-color: transparent"/></div>
     </div><!-- .content -->
 
 
 </div><!-- /#right-panel -->
 <!-- Right Panel -->
+
+<div class="modal fade" id="xeroConfig" tabindex="-1" role="dialog" aria-labelledby="xeroConfigLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="xeroConfigLabel">Xero Configuration</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label class="form-control-label">
+                            <input id="xero_client" type="checkbox">
+                            Sync Clients to Xero
+                        </label>
+                    </div>
+                    <hr>
+                    <div class="form-group">
+                        <label class="form-control-label">
+                            <input id="xero_loan_account" type="checkbox">
+                            Get Loan Accounts
+                        </label>
+                    </div>
+                    <hr>
+                    <div class="form-group">
+                        <label class="form-control-label">
+                            <input id="xero_collection_bank" type="checkbox">
+                            Get Collection Banks
+                        </label>
+                    </div>
+                    <hr>
+                    <div class="form-group">
+                        <label class="form-control-label">
+                            <input id="xero_escrow" type="checkbox">
+                            Get Escrow (Overpayment) Account
+                        </label>
+                        <select id="xero_escrow_account" class="form-control" disabled="disabled">
+                            <option value="000" selected="selected">-- Select Account --</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="saveXeroConfig()">Save Configuration</button>
+                <button type="button" class="btn btn-success" onclick="connectXero()">Connect to Xero</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Notification Panel -->
 <div id="panels" include-html="/includes/notifications.html"></div>
@@ -114,16 +167,6 @@
 <script src="assets/js/plugins.js"></script>
 <script src="assets/js/main.js"></script>
 <script src="assets/js/lib/data-table/datatables.min.js"></script>
-<script src="assets/js/lib/data-table/dataTables.bootstrap.min.js"></script>
-<script src="assets/js/lib/data-table/dataTables.buttons.min.js"></script>
-<script src="assets/js/lib/data-table/buttons.bootstrap.min.js"></script>
-<script src="assets/js/lib/data-table/jszip.min.js"></script>
-<script src="assets/js/lib/data-table/pdfmake.min.js"></script>
-<script src="assets/js/lib/data-table/vfs_fonts.js"></script>
-<script src="assets/js/lib/data-table/buttons.html5.min.js"></script>
-<script src="assets/js/lib/data-table/buttons.print.min.js"></script>
-<script src="assets/js/lib/data-table/buttons.colVis.min.js"></script>
-<script src="assets/js/lib/data-table/datatables-init.js"></script>
 <script src="../../js/helper-functions.js"></script>
 <script src="../../menus/menu-items.js"></script>
 <script type="text/javascript" src="../../settings/integrations/integrations.js"></script>

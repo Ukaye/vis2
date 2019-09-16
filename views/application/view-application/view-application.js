@@ -1,7 +1,21 @@
 $(document).ready(function() {
     loadComments();
     read_write_1();
+    getFundingSource();
 });
+
+function getFundingSource() {
+    $.ajax({
+        type: "GET",
+        url: "/settings/application/funding_source",
+        success: function (data) {
+            $.each(data.response, function (key, funding_source) {
+                $('#funding').append(`<option value="${funding_source.Code}">${funding_source.Name} 
+                    (${funding_source.Type})</option>`);
+            });
+        }
+    });
+}
 
 const urlParams = new URLSearchParams(window.location.search);
 const application_id = urlParams.get('id');
@@ -1535,7 +1549,7 @@ function initCSVUpload2(application, settings) {
                         'success': function (data) {
                             $csvLoader.hide();
                             notification('Reschedule approved successfully','','success');
-                            // window.location.reload();
+                            window.location.reload();
                         },
                         'error': function (err) {
                             $csvLoader.hide();

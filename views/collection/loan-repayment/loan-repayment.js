@@ -1,7 +1,20 @@
 $(document).ready(function() {
     getApplication();
     getComments();
+    getCollectionBank();
 });
+
+function getCollectionBank() {
+    $.ajax({
+        type: "GET",
+        url: "/settings/collection_bank",
+        success: function (data) {
+            $.each(data.response, function (key, collection_bank) {
+                $('#collection_bank').append(`<option value="${collection_bank.Code}">${collection_bank.Name}</option>`);
+            });
+        }
+    });
+}
 
 const urlParams = new URLSearchParams(window.location.search);
 const application_id = urlParams.get('id');
@@ -486,6 +499,7 @@ function confirmPayment() {
     $('#wait').show();
     $('#confirmPayment').modal('hide');
     if (invoice.payment_source === 'remita' && remita_id) invoice.remitaPaymentID = remita_id;
+    invoice.xeroCollectionBankID = $('#collection_bank').val();
     updateEscrow(invoice.payment_source, total_payment, function () {
         let overpayment = (payment - (parseFloat(invoice.actual_payment_amount) + parseFloat(invoice.actual_interest_amount))).round(2);
         if (overpayment > 0){
@@ -558,7 +572,7 @@ function escrow(amount) {
         'type': 'post',
         'data': {clientID:application.userID,amount:amount},
         'success': function (data) {
-            notification('Payment confirmed successfully','Overpayment of ₦'+(parseFloat(amount).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'))+' has been credited to escrow','success');
+            notification('Payment confirmed successfully',`Overpayment of ₦${numberToCurrencyformatter(amount)} has been credited to escrow`,'success');
             window.location.reload();
         },
         'error': function (err) {

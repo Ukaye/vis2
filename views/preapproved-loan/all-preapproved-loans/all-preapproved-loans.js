@@ -2,6 +2,7 @@ let table = {},
     $wait = $('#wait');
 $(document).ready(function () {
     bindDataTable();
+    getFundingSource();
 });
 
 function bindDataTable() {
@@ -215,4 +216,15 @@ function deletePreapprovedLoan(id) {
         });
 }
 
-$(document).ready(function () {});
+function getFundingSource() {
+    $.ajax({
+        type: "GET",
+        url: "/settings/application/funding_source",
+        success: function (data) {
+            $.each(data.response, function (key, funding_source) {
+                $('#funding').append(`<option value="${funding_source.Code}">${funding_source.Name} 
+                    (${funding_source.Type})</option>`);
+            });
+        }
+    });
+}
