@@ -30,7 +30,7 @@
                     $('#client-text').text(preapproved_loan.client);
                     $('#loan-amount-text').text(`₦${numberToCurrencyformatter(preapproved_loan.loan_amount)}`);
                     $('#tenor-text').text(`${numberToCurrencyformatter(preapproved_loan.duration)} month(s)`);
-                    $('#first-repayment-text').text(preapproved_loan.repayment_date);
+                    $('#first-repayment-text').text(preapproved_loan.repayment_date || preapproved_loan.schedule[0]['payment_collect_date']);
                     $('#expiry-text').html(`Please note that this loan is only valid till <strong>${preapproved_loan.expiry_date}</strong>`);
                     $('#fullname').text(preapproved_loan.fullname);
                     $('#email').text(preapproved_loan.email);
@@ -169,8 +169,8 @@
                 cells[5] = schedule[i - 2]['interest_amount'];
                 cells[6] = schedule[i - 2]['balance'];
                 cells[7] = (parseFloat(cells[2]) + parseFloat(cells[5])).round(2);
-                payment_amount = cells[7];
-                $('#payment-amount-text').text(numberToCurrencyformatter(cells[7]));
+                payment_amount = (payment_amount && payment_amount > cells[7])? payment_amount : cells[7];
+                $('#payment-amount-text').text(numberToCurrencyformatter(payment_amount));
             }
             for (let j = 0; j < cells.length; j++) {
                 let cell = $("<td />");

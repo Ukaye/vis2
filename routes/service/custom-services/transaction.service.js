@@ -23,6 +23,7 @@ const isSameMonth = require('date-fns/is_same_month');
 var differenceInCalendarDays = require('date-fns/difference_in_calendar_days');
 const sRequest = require('../s_request');
 const isAfter = require('date-fns/is_after');
+var isLastDayOfMonth = require('date-fns/is_last_day_of_month');
 
 //re.role_name as review_role_name,po.role_name as post_role_name,
 // left join user_roles re on a.roleId = re.id
@@ -1030,8 +1031,8 @@ async function fundBeneficialAccount(data, HOST) {
             });
         });
     } else if (data.isInvestmentTerminated === '1') {
-        await chargeForceTerminate(data, HOST);
-        let result = await reverseEarlierInterest(data, HOST);
+        const bal2CalTerminationChrg = await chargeForceTerminate(data, HOST);
+        let result = await reverseEarlierInterest(data, HOST, bal2CalTerminationChrg);
         return result;
     }
 }
@@ -1386,7 +1387,7 @@ function chargeForceTerminate(data, HOST) {
                             let sumTotalBalance = balanceIncludingInterest - configAmount;
                             let inv_txn = {
                                 txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-                                description: `CHARGE ON INVESTMENT TERMINATION`,
+                                description: `MINIMUM NOTICE DAYS TERMINATION CHARGE`,
                                 amount: Number(configAmount).toFixed(2),
                                 is_credit: 0,
                                 created_date: dt,
@@ -1408,9 +1409,9 @@ function chargeForceTerminate(data, HOST) {
                             try {
                                 axios.post(url, inv_txn).then(response__ => {
                                     deductVatTax(HOST, data, configAmount, inv_txn, inv_txn.balance).then(payload___ => {
-                                        resolve(payload___);
+                                        resolve(balance);
                                     }, err => {
-                                        resolve({});
+                                        resolve(balance);
                                     });
                                 }, err__ => {
                                     resolve({});
@@ -1471,7 +1472,7 @@ function getProductConfigInterests(data, HOST) {
     });
 }
 
-async function getInterestEndOfTenure(HOST, data, _getProductConfigInterests) {
+async function getInterestEndOfTenure(HOST, data) {
     const matureMonths = await getValidInvestmentMatureMonths(HOST, data.investmentId, 0);
     try {
         for (let index = 0; index < matureMonths.length; index++) {
@@ -1485,7 +1486,7 @@ async function getInterestEndOfTenure(HOST, data, _getProductConfigInterests) {
                 productId: data.productId,
                 startDate: element.startDate,
                 endDate: element.endDate,
-                interest_rate: _getProductConfigInterests.interest_rate
+                interest_rate: data.interest_rate
             }
             await computeInterestTxns2(HOST, _data);
         }
@@ -1517,7 +1518,7 @@ function updateTerminatedInterest(HOST, data) {
     });
 }
 
-async function reverseEarlierInterest(data, HOST) {
+async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
     const _getExistingInterests = await getExistingInterests(data, HOST);
     const _getProductConfigInterests = await getProductConfigInterests(data, HOST);
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD');
@@ -1592,16 +1593,16 @@ async function reverseEarlierInterest(data, HOST) {
                 startDate: data.investment_start_date
             }
             await updateTerminatedInterest(HOST, mdata);
-            const totalInvestedAmount = await computeCurrentBalance(data.investmentId, HOST);
+            // const totalInvestedAmount = await computeCurrentBalance(data.investmentId, HOST);
             refId = moment().utcOffset('+0100').format('x');
             dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
             let configData = _getProductConfigInterests;
-            let configAmount = (configData.interest_forfeit_charge_opt == 'Fixed') ? configData.interest_forfeit_charge : (configData.interest_forfeit_charge * totalInvestedAmount) / 100;//_payload_3.balance;
+            let configAmount = (configData.interest_forfeit_charge_opt == 'Fixed') ? configData.interest_forfeit_charge : (configData.interest_forfeit_charge * bal2CalTerminationChrg) / 100;//_payload_3.balance;
             const invSumBalance = await computeAccountBalanceIncludeInterest(data.investmentId, HOST);
             let sumBalance = invSumBalance - configAmount; //(totalInvestedAmount + interestAmount) - configAmount;
             inv_txn = {
                 txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-                description: `CHARGE ON TERMINATION OF INVESTMENT`,
+                description: `CHARGE ON PREMATURE INVESTMENT`,
                 amount: Number(configAmount).toFixed(2),
                 is_credit: 0,
                 created_date: dt,
@@ -1705,11 +1706,11 @@ async function reverseEarlierInterest(data, HOST) {
             let refId = moment().utcOffset('+0100').format('x');
             let configData = _getProductConfigInterests;
             configData.interest_forfeit_charge = (configData.interest_forfeit_charge !== null && configData.interest_forfeit_charge !== '') ? parseFloat(configData.interest_forfeit_charge.toString()) : 0;
-            let configAmount = (configData.interest_forfeit_charge_opt === 'Fixed') ? configData.interest_forfeit_charge : (configData.interest_forfeit_charge * _computeCurrentBalance) / 100;
+            let configAmount = (configData.interest_forfeit_charge_opt === 'Fixed') ? configData.interest_forfeit_charge : (configData.interest_forfeit_charge * bal2CalTerminationChrg) / 100;
             let sumBalance2 = _currentBalance - configAmount;
             let inv_txn = {
                 txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-                description: `CHARGE ON TERMINATION OF INVESTMENT`,
+                description: `CHARGE ON PREMATURE INVESTMENT`,
                 amount: Number(configAmount).toFixed(2),
                 is_credit: 0,
                 created_date: dt,
@@ -1736,7 +1737,7 @@ async function reverseEarlierInterest(data, HOST) {
                     query: query
                 }
             });
-            await getInterestEndOfTenure(HOST, data, _getProductConfigInterests);
+            await getInterestEndOfTenure(HOST, data);
             if (_res_.data.status === undefined) {
                 refId = moment().utcOffset('+0100').format('x');
                 const mBalance = await computeAccountBalanceIncludeInterest(data.investmentId, HOST);
@@ -2440,7 +2441,8 @@ router.get('/mature-interest-months/:id', function (req, res, next) {
     //     res.send(err);
     // });
     getValidInvestmentMatureMonths(HOST, req.params.id, 1).then(payload => {
-        res.send(payload);
+        const result = payload.filter(x => isLastDayOfMonth(x.endDate));
+        res.send(result);
     });
 });
 
@@ -2791,25 +2793,46 @@ function setInvestmentInterestPerDay(host, values) {
     });
 }
 
-function getInvestmentMonthDatesRange(startDate, maturityDate) {
-    return new Promise((resolve, reject) => {
-        let daysInInvestmentDuration = differenceInCalendarDays(
-            new Date(maturityDate),
-            new Date(startDate)
-        );
-        let daysInInvestment = [];
-        for (let index = 0; index <= daysInInvestmentDuration; index++) {
-            const dt = addDays(new Date(startDate), index);
-            daysInInvestment.push(`${dt.getUTCFullYear()}-${dt.getMonth() + 1}-${dt.getDate()}`);
-        }
 
-        resolve(daysInInvestment);
+function getInvestmentMaturityDate(host, investmentId) {
+    return new Promise((resolve, reject) => {
+        let query = `SELECT investment_mature_date FROM investments WHERE ID = ${investmentId}`;
+        let endpoint = '/core-service/get';
+        let url = `${host}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(payload => {
+            resolve(payload.data[0]);
+        }, err => {
+            resolve(false);
+        });
+    });
+}
+
+
+function getInvestmentMonthDatesRange(HOST, startDate, maturityDate, investmentId) {
+    return new Promise((resolve, reject) => {
+        getInvestmentMaturityDate(HOST, investmentId).then(iv_maturityDate => {
+            let daysInInvestmentDuration = differenceInCalendarDays(
+                new Date(maturityDate),
+                new Date(startDate)
+            );
+            let daysInInvestment = [];
+            for (let index = 0; index <= daysInInvestmentDuration; index++) {
+                const dt = addDays(new Date(startDate), index);
+                daysInInvestment.push(`${dt.getUTCFullYear()}-${dt.getMonth() + 1}-${dt.getDate()}`);
+            }
+            const result = daysInInvestment.filter(x => isAfter(new Date(x), new Date(iv_maturityDate.investment_mature_date) === false));
+            resolve(result);
+        });
     });
 }
 
 async function getInvestmentDailyBalance(HOST, data) {
     let dailyBalances = [];
-    const payload = await getInvestmentMonthDatesRange(data.startDate, data.maturityDate)
+    const payload = await getInvestmentMonthDatesRange(HOST, data.startDate, data.maturityDate, data.investmentId);
     let daysInYear = 365;
     if (isLeapYear(new Date())) {
         daysInYear = 366;
@@ -2834,7 +2857,7 @@ async function getInvestmentDailyBalance(HOST, data) {
             investmentId: data.investmentId,
             createdAt: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
             month: x.split('-')[1],
-            year: x.split('-')[0],
+            year: x.split('-')[0]
         });
     }
     return ({ dailyBalances: dailyBalances, totalInterestAmount: totalInterestAmount });
@@ -3198,7 +3221,7 @@ router.get('/client-wallets/:id', function (req, res, next) {
     v.ID,v.ref_no,c.fullname,v.description,v.created_date,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName,
     v.isDeny,v.isPaymentMadeByWallet,v.isReversedTxn,v.isTransfer,v.isMoveFundTransfer,v.beneficialInvestmentId,p.interest_disbursement_time,p.interest_moves_wallet,
     v.approvalDone,v.reviewDone,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.isInvestmentTerminated,
-    p.acct_allows_withdrawal,i.investment_mature_date,p.interest_rate,v.isForceTerminate,v.isInvestmentMatured,p.inv_moves_wallet,p.chkEnforceCount,
+    p.acct_allows_withdrawal,i.investment_mature_date,p.interest_rate,v.isForceTerminate,v.isInvestmentMatured,p.inv_moves_wallet,p.chkEnforceCount,p.premature_interest_rate,
     i.clientId,p.canTerminate,v.is_capital,v.investmentId,i.isTerminated,v.isWallet, v.updated_date, i.isMatured FROM investment_txns v 
     left join investments i on v.investmentId = i.ID 
     left join clients c on i.clientId = c.ID
