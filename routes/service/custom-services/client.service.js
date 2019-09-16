@@ -864,11 +864,12 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
     let draw = req.query.draw;
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
-    let query = `SELECT p.*, c.fullname, c.phone, a.ID loanID, a.status loan_status FROM clients c, client_applications p LEFT JOIN applications a ON p.ID = a.preapplicationID AND a.userID = ${id} 
+    let query = `SELECT p.*, c.fullname, c.phone, a.ID loanID, a.status loan_status, a.close_status FROM clients c, client_applications p LEFT JOIN applications a ON p.ID = a.preapplicationID AND a.userID = ${id} 
                  WHERE p.userID = ${id} AND p.userID = c.ID AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
                  OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
+    console.log(query)
     axios.get(url, {
         params: {
             query: query
