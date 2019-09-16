@@ -1846,59 +1846,61 @@ users.post('/new-owner', function(req, res, next) {
  */
 
 users.post('/apply', function(req, res) {
-    let data = {},
-        workflow_id = req.body.workflowID,
-        postData = Object.assign({},req.body),
-        query =  'INSERT INTO applications Set ?';
-    if (!workflow_id)
-        query =  'INSERT INTO requests Set ?';
-    delete postData.email;
-    delete postData.username;
-    postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.query(query, postData, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
-        } else {
-            data.name = req.body.username;
-            data.date = postData.date_created;
-            let mailOptions = {
-                from: process.env.TENANT+' <noreply@finratus.com>',
-                to: req.body.email,
-                subject: process.env.TENANT+' Application Successful',
-                template: 'application',
-                context: data
-            };
-            if (!workflow_id)
-                mailOptions.template =  'main';
-            transporter.sendMail(mailOptions, function(error, info){
-                if(error)
-                    console.log({"status": 500, "message": "Error occurred!", "response": error});
+    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async () => {
+        let data = {},
+            workflow_id = req.body.workflowID,
+            postData = Object.assign({},req.body),
+            query =  'INSERT INTO applications Set ?';
+        if (!workflow_id)
+            query =  'INSERT INTO requests Set ?';
+        delete postData.email;
+        delete postData.username;
+        postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        db.query(query, postData, function (error, results, fields) {
+            if(error){
+                res.send({"status": 500, "error": error, "response": null});
+            } else {
+                data.name = req.body.username;
+                data.date = postData.date_created;
+                let mailOptions = {
+                    from: process.env.TENANT+' <noreply@finratus.com>',
+                    to: req.body.email,
+                    subject: process.env.TENANT+' Application Successful',
+                    template: 'application',
+                    context: data
+                };
                 if (!workflow_id)
-                    return res.send({"status": 200, "message": "New Application Added!"});
-                helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process) {
-                    db.query('SELECT MAX(ID) AS ID from applications', function(err, application, fields) {
-                        process.workflowID = workflow_id;
-                        process.agentID = postData.agentID;
-                        process.applicationID = application[0]['ID'];
-                        process.date_created = postData.date_created;
+                    mailOptions.template =  'main';
+                transporter.sendMail(mailOptions, function(error, info){
+                    if(error)
+                        console.log({"status": 500, "message": "Error occurred!", "response": error});
+                    if (!workflow_id)
+                        return res.send({"status": 200, "message": "New Application Added!"});
+                    helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process) {
+                        db.query('SELECT MAX(ID) AS ID from applications', function(err, application, fields) {
+                            process.workflowID = workflow_id;
+                            process.agentID = postData.agentID;
+                            process.applicationID = application[0]['ID'];
+                            process.date_created = postData.date_created;
 
-                        let payload = {}
-                        payload.category = 'Application'
-                        payload.userid = req.cookies.timeout
-                        payload.description = 'New Application Created'
-                        payload.affected = application[0]['ID']
-                        notificationsService.log(req, payload)
-                        db.query('INSERT INTO workflow_processes SET ?',process, function (error, results, fields) {
-                            if(error){
-                                return res.send({"status": 500, "error": error, "response": null});
-                            } else {
-                                return res.send({"status": 200, "message": "New Application Added!", "response": application[0]});
-                            }
+                            let payload = {}
+                            payload.category = 'Application'
+                            payload.userid = req.cookies.timeout
+                            payload.description = 'New Application Created'
+                            payload.affected = application[0]['ID']
+                            notificationsService.log(req, payload)
+                            db.query('INSERT INTO workflow_processes SET ?',process, function (error, results, fields) {
+                                if(error){
+                                    return res.send({"status": 500, "error": error, "response": null});
+                                } else {
+                                    return res.send({"status": 200, "message": "New Application Added!", "response": application[0]});
+                                }
+                            });
                         });
                     });
                 });
-            });
-        }
+            }
+        });
     });
 });
 
