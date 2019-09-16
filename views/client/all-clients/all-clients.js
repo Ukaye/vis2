@@ -252,10 +252,12 @@ function populateDataTable(data) {
         let actions;
         if (v.status === "1"){
             actions = '<a href="./client-info?id='+v.ID+'" class="write btn btn-primary "><i class="fa fa-tasks"></i> View Profile</a>'+
-                '<button onclick="disableClient('+v.ID+')" class="write btn btn-danger "><i class="fa fa-trash"></i> Disable Client</button>'
+                '<button onclick="disableClient('+v.ID+',\'non_corporate\','+v.xeroContactID+')" '+
+                'class="write btn btn-danger "><i class="fa fa-trash"></i> Disable Client</button>'
         }
         else {
-            actions = '<button id="'+v.ID+'" name="'+v.ID+'" onclick="enableClient('+v.ID+')" class="write btn btn-success "><i class="fa fa-lightbulb-o"></i> Enable Client</button>';
+            actions = '<button id="'+v.ID+'" name="'+v.ID+'" onclick="enableClient('+v.ID+',\'non_corporate\','+v.xeroContactID+')" '+
+                'class="write btn btn-success "><i class="fa fa-lightbulb-o"></i> Enable Client</button>';
         }
         v.actions = actions;
         processed_data.push(v);
@@ -279,7 +281,7 @@ function populateDataTable(data) {
     });
 }
 
-function disableClient(id, type){
+function disableClient(id, type, xeroContactID){
     swal({
         title: "Disable this client?",
         text: "Click OK to continue",
@@ -288,12 +290,13 @@ function disableClient(id, type){
     }).then(
         function(isConfirm) {
             if (isConfirm){
-                let test = {},
+                let test = {}, data = {},
                     url = (type === 'corporate')? `/client/corporate/disable/${id}` : `/user/del-client/${id}`;
+                if (xeroContactID) data.xeroContactID = xeroContactID;
                 $.ajax({
                     'url': url,
                     'type': 'post',
-                    'data': {},
+                    'data': data,
                     'success': function (data) {
                         if (type !== 'corporate')
                             test = JSON.parse(data);
@@ -317,7 +320,7 @@ function disableClient(id, type){
         });
 }
 
-function enableClient(id, type){
+function enableClient(id, type, xeroContactID){
     swal({
         title: "Reactivate this client?",
         text: "Click OK to continue",
@@ -326,12 +329,13 @@ function enableClient(id, type){
     }).then(
         function(isConfirm) {
             if (isConfirm){
-                let test = {},
+                let test = {}, data = {},
                     url = (type === 'corporate')? `/client/corporate/enable/${id}` : `/user/en-client/${id}`;
+                if (xeroContactID) data.xeroContactID = xeroContactID;
                 $.ajax({
                     'url': url,
                     'type': 'post',
-                    'data': {},
+                    'data': data,
                     'success': function (data) {
                         if (type !== 'corporate')
                             test = JSON.parse(data);
@@ -778,6 +782,7 @@ function submitDetails(){
         obj.kin_relationship = $('#kin_relationship').val();
     }
 
+    if (edit_client.xeroContactID) obj.xeroContactID = edit_client.xeroContactID;
     let test={};
     $.ajax({
         'url': '/user/edit-client/'+ed,
@@ -790,9 +795,10 @@ function submitDetails(){
             if(test.response === null){
                 swal('Error!', "Action could not be completed! Please try again", 'error');
             }
-            else
+            else {
                 swal('Success!', "Client Details Updated!", 'success');
-            window.location.href = "./all-clients";
+                // window.location.href = "./all-clients";
+            }
         },
         'error': function (err) {
             swal('Error!', 'No Internet Connection.', 'error');
@@ -992,10 +998,10 @@ function corporatesDataTable() {
                     if (full.status === 1){
                         actions = `<a class="btn btn-info btn-sm" href="/client-info?id=${full.clientID}">
                                         <i class="fa fa-tasks"></i> View Contact</a> 
-                                   <a class="btn btn-danger btn-sm" onclick="disableClient(${full.ID}, 'corporate')">
+                                   <a class="btn btn-danger btn-sm" onclick="disableClient(${full.ID}, 'corporate', ${full.xeroContactID})">
                                         <i class="fa fa-trash"></i> Disable</a>`
                     } else {
-                        actions = `<a class="btn btn-success btn-sm" onclick="enableClient(${full.ID}, 'corporate')">
+                        actions = `<a class="btn btn-success btn-sm" onclick="enableClient(${full.ID}, 'corporate'), ${full.xeroContactID}">
                                         <i class="fa fa-lightbulb-o"></i> Enable</a>`;
                     }
                     return actions;

@@ -268,88 +268,123 @@ users.post('/new-user', function(req, res, next) {
 
 /* Add New Client */
 users.post('/new-client', function(req, res, next) {
-    let id;
-    let postData = req.body,
-        query =  'INSERT INTO clients Set ?',
-        query2 = 'select * from clients where username = ? or email = ? or phone = ?';
-    postData.status = 1;
-    postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async () => {
+        let id;
+        let postData = req.body,
+            query =  'INSERT INTO clients Set ?',
+            query2 = 'select * from clients where username = ? or email = ? or phone = ?';
+        postData.status = 1;
+        postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
-    db.getConnection(function(err, connection) {
-        if (err) throw err;
-        connection.query(query2,[req.body.username, req.body.email, req.body.phone], function (error, results, fields) {
-            if (results && results[0]){
-                return res.send(JSON.stringify({"status": 200, "error": null, "response": results, "message": "Information in use by existing client!"}));
-            }
-            let bvn = req.body.bvn;
-            if (bvn.trim() !== ''){
-                connection.query('select * from clients where bvn = ? and status = 1 limit 1', [req.body.bvn], function (error, rest, foelds){
-                    if (rest && rest[0]){
-                        return res.send(JSON.stringify({"status": 200, "error": null, "response": rest, "bvn_exists": "Yes"}));
-                    }
-                    connection.query(query,postData, function (error, re, fields) {
-                        if(error){
-                            console.log(error);
-                            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
-                        } else {
-                            connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function(err, re, fields) {
-                                if (!err){
-                                    id = re[0]['ID'];
-                                    connection.query('INSERT into wallets Set ?', {client_id: id}, function(er, r, fields) {
-                                        connection.release();
-                                        if (!er){
-                                            let payload = {}
-                                            payload.category = 'Clients'
-                                            payload.userid = req.cookies.timeout
-                                            payload.description = 'New Client Created'
-                                            payload.affected = id
-                                            notificationsService.log(req, payload)
-                                            res.send(JSON.stringify({"status": 200, "error": null, "response": re}));
+        db.getConnection(function(err, connection) {
+            if (err) throw err;
+            connection.query(query2,[req.body.username, req.body.email, req.body.phone], function (error, results, fields) {
+                if (results && results[0]){
+                    return res.send(JSON.stringify({"status": 200, "error": null, "response": results, "message": "Information in use by existing client!"}));
+                }
+                let bvn = req.body.bvn;
+                if (bvn.trim() !== ''){
+                    connection.query('select * from clients where bvn = ? and status = 1 limit 1', [req.body.bvn], function (error, rest, foelds){
+                        if (rest && rest[0]){
+                            return res.send(JSON.stringify({"status": 200, "error": null, "response": rest, "bvn_exists": "Yes"}));
+                        }
+                        xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
+                            let contact = {
+                                Name: postData.fullname,
+                                ContactNumber: postData.phone,
+                                ContactStatus: 'ACTIVE',
+                                EmailAddress: postData.email,
+                                Phones: [{
+                                    PhoneType: 'MOBILE',
+                                    PhoneNumber: postData.phone
+                                }]
+                            };
+                            if (postData.first_name) contact.FirstName = postData.first_name;
+                            if (postData.last_name) contact.LastName = postData.last_name;
+                            if (postData.account) contact.BankAccountDetails = postData.account;
+                            let xeroContact = await xeroClient.contacts.create(contact);
+                            postData.xeroContactID = xeroContact.Contacts[0]['ContactNumber'];
+                            connection.query(query,postData, function (error, re, fields) {
+                                if(error){
+                                    console.log(error);
+                                    res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+                                } else {
+                                    connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function(err, re, fields) {
+                                        if (!err){
+                                            id = re[0]['ID'];
+                                            connection.query('INSERT into wallets Set ?', {client_id: id}, function(er, r, fields) {
+                                                connection.release();
+                                                if (!er){
+                                                    let payload = {}
+                                                    payload.category = 'Clients'
+                                                    payload.userid = req.cookies.timeout
+                                                    payload.description = 'New Client Created'
+                                                    payload.affected = id
+                                                    notificationsService.log(req, payload)
+                                                    res.send(JSON.stringify({"status": 200, "error": null, "response": re}));
+                                                }
+                                                else{
+                                                    res.send(JSON.stringify({"response": "Error creating client wallet!"}));
+                                                }
+                                            });
                                         }
                                         else{
-                                            res.send(JSON.stringify({"response": "Error creating client wallet!"}));
+                                            res.send(JSON.stringify({"response": "Error retrieving client details. Please try a new username!"}));
                                         }
                                     });
                                 }
-                                else{
-                                    res.send(JSON.stringify({"response": "Error retrieving client details. Please try a new username!"}));
-                                }
                             });
-                        }
+                        });
                     });
-                });
-            }
-            else {
-                connection.query(query,postData, function (error, re, fields) {
-                    if(error){
-                        res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
-                    } else {
-                        connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function(err, re, fields) {
-                            if (!err){
-                                id = re[0]['ID'];
-                                connection.query('INSERT into wallets Set ?', {client_id: id}, function(er, r, fields) {
-                                    connection.release();
-                                    if (!er){
-                                        let payload = {}
-                                        payload.category = 'Clients'
-                                        payload.userid = req.cookies.timeout
-                                        payload.description = 'New Client Created'
-                                        payload.affected = id
-                                        notificationsService.log(req, payload)
-                                        res.send(JSON.stringify({"status": 200, "error": null, "response": re}));
+                } else {
+                    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
+                        let contact = {
+                            Name: postData.fullname,
+                            ContactNumber: postData.phone,
+                            ContactStatus: 'ACTIVE',
+                            EmailAddress: postData.email,
+                            Phones: [{
+                                PhoneType: 'MOBILE',
+                                PhoneNumber: postData.phone
+                            }]
+                        };
+                        if (postData.first_name) contact.FirstName = postData.first_name;
+                        if (postData.last_name) contact.LastName = postData.last_name;
+                        if (postData.account) contact.BankAccountDetails = postData.account;
+                        let xeroContact = await xeroClient.contacts.create(contact);
+                        postData.xeroContactID = xeroContact.Contacts[0]['ContactNumber'];
+                        connection.query(query,postData, function (error, re, fields) {
+                            if(error){
+                                res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+                            } else {
+                                connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function(err, re, fields) {
+                                    if (!err){
+                                        id = re[0]['ID'];
+                                        connection.query('INSERT into wallets Set ?', {client_id: id}, function(er, r, fields) {
+                                            connection.release();
+                                            if (!er){
+                                                let payload = {}
+                                                payload.category = 'Clients'
+                                                payload.userid = req.cookies.timeout
+                                                payload.description = 'New Client Created'
+                                                payload.affected = id
+                                                notificationsService.log(req, payload)
+                                                res.send(JSON.stringify({"status": 200, "error": null, "response": re}));
+                                            }
+                                            else{
+                                                res.send(JSON.stringify({"response": "Error creating client wallet!"}));
+                                            }
+                                        });
                                     }
                                     else{
-                                        res.send(JSON.stringify({"response": "Error creating client wallet!"}));
+                                        res.send(JSON.stringify({"response": "Error retrieving client details. Please try a new username!"}));
                                     }
                                 });
                             }
-                            else{
-                                res.send(JSON.stringify({"response": "Error retrieving client details. Please try a new username!"}));
-                            }
                         });
-                    }
-                });
-            }
+                    });
+                }
+            });
         });
     });
 });
@@ -1575,31 +1610,50 @@ users.post('/edit-user/:id/:user', function(req, res, next) {
 });
 
 users.post('/edit-client/:id', function(req, res, next) {
-    let date = Date.now(),
-        postData = req.body;
-    postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    let payload = [postData.username, postData.fullname, postData.first_name, postData.middle_name, postData.last_name, postData.phone, postData.address, postData.email,
-        postData.gender, postData.dob, postData.marital_status, postData.loan_officer, postData.branch, postData.bank, postData.account, postData.bvn, postData.client_state, postData.postcode, postData.client_country,
-        postData.years_add, postData.ownership , postData.employer_name ,postData.industry ,postData.job, postData.salary, postData.job_country , postData.off_address, postData.off_state,
-        postData.doe, postData.guarantor_name, postData.guarantor_occupation, postData.relationship, postData.years_known, postData.guarantor_phone, postData.guarantor_email,
-        postData.guarantor_address, postData.gua_country, postData.product_sold, postData.capital_invested, postData.market_name, postData.market_years,
-        postData.market_address, postData.kin_fullname, postData.kin_phone, postData.kin_relationship, postData.images_folder, postData.date_modified, req.params.id];
-    let query = 'Update clients SET username = ?, fullname=?, first_name=?, middle_name=?, last_name=?,  phone=?, address = ?, email=?, gender=?, dob = ?, marital_status=?, loan_officer=?, branch=?, bank=?, account=?, bvn = ?, ' +
-        'client_state=?, postcode=?, client_country=?, years_add=?, ownership=?, employer_name=?, industry=?, job=?, salary=?, job_country=?, off_address=?, off_state=?, ' +
-        'doe=?, guarantor_name=?, guarantor_occupation=?, relationship=?, years_known=?, guarantor_phone=?, guarantor_email=?, guarantor_address=?, gua_country=?, ' +
-        'product_sold =? , capital_invested = ?, market_name =? , market_years = ?, market_address =? , kin_fullname = ?, kin_phone =? , kin_relationship = ?, images_folder = ?, date_modified = ? where ID=?';
-    db.query(query, payload, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
-        } else {
-            let payload = {}
-            payload.category = 'Clients'
-            payload.userid = req.cookies.timeout
-            payload.description = 'Client details updated.'
-            payload.affected = req.params.id
-            notificationsService.log(req, payload)
-            res.send(JSON.stringify({"status": 200, "error": null, "response": "Client Details Updated"}));
+    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
+        let date = Date.now(),
+            postData = req.body;
+        postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        let payload = [postData.username, postData.fullname, postData.first_name, postData.middle_name, postData.last_name, postData.phone, postData.address, postData.email,
+            postData.gender, postData.dob, postData.marital_status, postData.loan_officer, postData.branch, postData.bank, postData.account, postData.bvn, postData.client_state, postData.postcode, postData.client_country,
+            postData.years_add, postData.ownership , postData.employer_name ,postData.industry ,postData.job, postData.salary, postData.job_country , postData.off_address, postData.off_state,
+            postData.doe, postData.guarantor_name, postData.guarantor_occupation, postData.relationship, postData.years_known, postData.guarantor_phone, postData.guarantor_email,
+            postData.guarantor_address, postData.gua_country, postData.product_sold, postData.capital_invested, postData.market_name, postData.market_years,
+            postData.market_address, postData.kin_fullname, postData.kin_phone, postData.kin_relationship, postData.images_folder, postData.date_modified, req.params.id];
+        let query = 'Update clients SET username = ?, fullname=?, first_name=?, middle_name=?, last_name=?,  phone=?, address = ?, email=?, gender=?, dob = ?, marital_status=?, loan_officer=?, branch=?, bank=?, account=?, bvn = ?, ' +
+            'client_state=?, postcode=?, client_country=?, years_add=?, ownership=?, employer_name=?, industry=?, job=?, salary=?, job_country=?, off_address=?, off_state=?, ' +
+            'doe=?, guarantor_name=?, guarantor_occupation=?, relationship=?, years_known=?, guarantor_phone=?, guarantor_email=?, guarantor_address=?, gua_country=?, ' +
+            'product_sold =? , capital_invested = ?, market_name =? , market_years = ?, market_address =? , kin_fullname = ?, kin_phone =? , kin_relationship = ?, images_folder = ?, date_modified = ? where ID=?';
+        if (postData.xeroContactID) {
+            let contact = {
+                Name: postData.fullname,
+                ContactNumber: postData.phone,
+                ContactStatus: 'ACTIVE',
+                EmailAddress: postData.email,
+                Phones: [{
+                    PhoneType: 'MOBILE',
+                    PhoneNumber: postData.phone
+                }]
+            };
+            if (postData.first_name) contact.FirstName = postData.first_name;
+            if (postData.last_name) contact.LastName = postData.last_name;
+            if (postData.account) contact.BankAccountDetails = postData.account;
+            contact.ContactNumber = postData.xeroContactID;
+            let xeroContact = await xeroClient.contacts.update(contact);
         }
+        db.query(query, payload, function (error, results, fields) {
+            if(error){
+                res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+            } else {
+                let payload = {}
+                payload.category = 'Clients'
+                payload.userid = req.cookies.timeout
+                payload.description = 'Client details updated.'
+                payload.affected = req.params.id
+                notificationsService.log(req, payload)
+                res.send(JSON.stringify({"status": 200, "error": null, "response": "Client Details Updated"}));
+            }
+        });
     });
 });
 
@@ -1701,33 +1755,49 @@ users.post('/en-user/:id', function(req, res, next) {
 
 // Change Client Status
 users.post('/del-client/:id', function(req, res, next) {
-    let date = Date.now(),
-        postData = req.body;
-    postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    let payload = [postData.date_modified, req.params.id],
-        query = 'Update clients SET status = 0, date_modified = ? where ID=?';
-    db.query(query, payload, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
-        } else {
-            res.send(JSON.stringify({"status": 200, "error": null, "response": "Client Disabled!"}));
+    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
+        let date = Date.now(),
+            postData = req.body;
+        postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        let payload = [postData.date_modified, req.params.id],
+            query = 'Update clients SET status = 0, date_modified = ? where ID=?';
+        if (postData.xeroContactID) {
+            let xeroContact = await xeroClient.contacts.update({
+                ContactNumber: postData.xeroContactID,
+                ContactStatus: 'ARCHIVED'
+            });
         }
+        db.query(query, payload, function (error, results, fields) {
+            if(error){
+                res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+            } else {
+                res.send(JSON.stringify({"status": 200, "error": null, "response": "Client Disabled!"}));
+            }
+        });
     });
 });
 
 // Enable Client
 users.post('/en-client/:id', function(req, res, next) {
-    let date = Date.now(),
-        postData = req.body;
-    postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    let payload = [postData.date_modified, req.params.id],
-        query = 'Update clients SET status = 1, date_modified = ? where ID=?';
-    db.query(query, payload, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
-        } else {
-            res.send(JSON.stringify({"status": 200, "error": null, "response": "Client Reactivated!"}));
-        }
+    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
+        let date = Date.now(),
+            postData = req.body;
+        postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        let payload = [postData.date_modified, req.params.id],
+            query = 'Update clients SET status = 1, date_modified = ? where ID=?';
+        // if (postData.xeroContactID) {
+        //     let xeroContact = await xeroClient.contacts.update({
+        //         ContactNumber: postData.xeroContactID,
+        //         ContactStatus: 'ACTIVE'
+        //     });
+        // }
+        db.query(query, payload, function (error, results, fields) {
+            if(error){
+                res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+            } else {
+                res.send(JSON.stringify({"status": 200, "error": null, "response": "Client Reactivated!"}));
+            }
+        });
     });
 });
 
@@ -2546,7 +2616,7 @@ users.post('/application/schedule/:id', function(req, res, next) {
         db.getConnection(function(err, connection) {
             if (err) throw err;
 
-            connection.query(`SELECT c.fullname FROM applications a, clients c WHERE a.ID = ${req.params.id} 
+            connection.query(`SELECT c.fullname, a.funding_source FROM applications a, clients c WHERE a.ID = ${req.params.id} 
             AND a.userID = c.ID`, function (error, client) {
                 if(error){
                     res.send({"status": 500, "error": error, "response": null});
@@ -2558,7 +2628,7 @@ users.post('/application/schedule/:id', function(req, res, next) {
                         } else {
                             let obj2 = {};
                             async.forEach(invoices, function (old_invoice, callback) {
-                                if (old_invoice.interest_invoice_no) {
+                                if (old_invoice.interest_invoice_no && client[0]['funding_source']) {
                                     xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
                                         let xeroInterest2 = await xeroClient.invoices.update({
                                             Type: 'ACCREC',
@@ -2571,7 +2641,7 @@ users.post('/application/schedule/:id', function(req, res, next) {
                                                 Description: `LOAN ID: ${helperFunctions.padWithZeroes(old_invoice.applicationID, 6)}`,
                                                 Quantity: '1',
                                                 UnitAmount: old_invoice.interest_amount,
-                                                AccountCode: process.env.XERO_LOAN_ACCOUNT
+                                                AccountCode: client[0]['funding_source']
                                             }],
                                             InvoiceNumber: old_invoice.interest_invoice_no,
                                             Status: "VOIDED"
@@ -2588,47 +2658,53 @@ users.post('/application/schedule/:id', function(req, res, next) {
                             }, function (data) {
                                 let LineItems = [],
                                     schedule = req.body.schedule;
-                                for (let i=0; i<schedule.length; i++) {
-                                    let invoice = schedule[i];
-                                    LineItems.push({
-                                        Description: `LOAN ID: ${helperFunctions.padWithZeroes(req.params.id, 6)}`,
-                                        Quantity: '1',
-                                        UnitAmount: invoice.payment_amount,
-                                        AccountCode: process.env.XERO_LOAN_ACCOUNT
-                                    });
+                                if (client[0]['funding_source']) {
+                                    for (let i=0; i<schedule.length; i++) {
+                                        let invoice = schedule[i];
+                                        LineItems.push({
+                                            Description: `LOAN ID: ${helperFunctions.padWithZeroes(req.params.id, 6)}`,
+                                            Quantity: '1',
+                                            UnitAmount: invoice.payment_amount,
+                                            AccountCode: client[0]['funding_source']
+                                        });
+                                    }
                                 }
                                 xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
-                                    let xeroPrincipal = await xeroClient.invoices.create({
-                                        Type: 'ACCREC',
-                                        Contact: {
-                                            Name: client[0]['fullname']
-                                        },
-                                        Date: schedule[0]['payment_create_date'],
-                                        DueDate: schedule[0]['payment_collect_date'],
-                                        LineItems: LineItems,
-                                        Status: "AUTHORISED"
-                                    });
+                                    if (client[0]['funding_source']) {
+                                        let xeroPrincipal = await xeroClient.invoices.create({
+                                            Type: 'ACCREC',
+                                            Contact: {
+                                                Name: client[0]['fullname']
+                                            },
+                                            Date: schedule[0]['payment_create_date'],
+                                            DueDate: schedule[0]['payment_collect_date'],
+                                            LineItems: LineItems,
+                                            Status: "AUTHORISED"
+                                        });
+                                    }
                                     let count = 0;
                                     async.forEach(schedule, (obj, callback2) => {
                                         xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
                                             obj.applicationID = req.params.id;
-                                            let xeroInterest = await xeroClient.invoices.create({
-                                                Type: 'ACCREC',
-                                                Contact: {
-                                                    Name: client[0]['fullname']
-                                                },
-                                                Date: obj.interest_create_date,
-                                                DueDate: obj.interest_collect_date,
-                                                LineItems: [{
-                                                    Description: `LOAN ID: ${helperFunctions.padWithZeroes(obj.applicationID, 6)}`,
-                                                    Quantity: '1',
-                                                    UnitAmount: obj.interest_amount,
-                                                    AccountCode: process.env.XERO_LOAN_ACCOUNT
-                                                }],
-                                                Status: "AUTHORISED"
-                                            });
-                                            obj.principal_invoice_no = xeroPrincipal.Invoices[0]['InvoiceNumber'];
-                                            obj.interest_invoice_no = xeroInterest.Invoices[0]['InvoiceNumber'];
+                                            if (client[0]['funding_source']) {
+                                                let xeroInterest = await xeroClient.invoices.create({
+                                                    Type: 'ACCREC',
+                                                    Contact: {
+                                                        Name: client[0]['fullname']
+                                                    },
+                                                    Date: obj.interest_create_date,
+                                                    DueDate: obj.interest_collect_date,
+                                                    LineItems: [{
+                                                        Description: `LOAN ID: ${helperFunctions.padWithZeroes(obj.applicationID, 6)}`,
+                                                        Quantity: '1',
+                                                        UnitAmount: obj.interest_amount,
+                                                        AccountCode: client[0]['funding_source']
+                                                    }],
+                                                    Status: "AUTHORISED"
+                                                });
+                                                obj.principal_invoice_no = xeroPrincipal.Invoices[0]['InvoiceNumber'];
+                                                obj.interest_invoice_no = xeroInterest.Invoices[0]['InvoiceNumber'];
+                                            }
                                             connection.query('INSERT INTO application_schedules SET ?', obj, function (error, response, fields) {
                                                 if(!error) count++;
                                                 callback2();
@@ -2653,7 +2729,7 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
         db.getConnection(function(err, connection) {
             if (err) throw err;
 
-            connection.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID, c.fullname 
+            connection.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, a.funding_source, c.loan_officer loan_officerID, c.branch branchID, c.fullname 
                 FROM applications a, clients c WHERE a.ID=${req.params.id} AND a.userID=c.ID`, function (error, app, fields) {
                 if (error) {
                     res.send({"status": 500, "error": error, "response": null});
@@ -2672,7 +2748,7 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                             connection.query(`SELECT * FROM application_schedules WHERE applicationID = ${req.params.id} AND status = 1`, (error, old_schedule) => {
                                 let obj2 = {};
                                 async.forEach(old_schedule, (old_invoice, callback2) => {
-                                    if (old_invoice.interest_invoice_no) {
+                                    if (old_invoice.interest_invoice_no && application.funding_source) {
                                         xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
                                             let xeroInterest2 = await xeroClient.invoices.update({
                                                 Type: 'ACCREC',
@@ -2685,7 +2761,7 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                     Description: `LOAN ID: ${helperFunctions.padWithZeroes(old_invoice.applicationID, 6)}`,
                                                     Quantity: '1',
                                                     UnitAmount: old_invoice.interest_amount,
-                                                    AccountCode: process.env.XERO_LOAN_ACCOUNT
+                                                    AccountCode: application.funding_source
                                                 }],
                                                 InvoiceNumber: old_invoice.interest_invoice_no,
                                                 Status: "VOIDED"
@@ -2702,47 +2778,53 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                 }, (data) => {
                                     connection.query(`SELECT * FROM application_schedules WHERE applicationID = ${req.params.id} AND status = 2`, (error, new_schedule) => {
                                         let LineItems = [];
-                                        for (let i=0; i<new_schedule.length; i++) {
-                                            let invoice = new_schedule[i];
-                                            LineItems.push({
-                                                Description: `LOAN ID: ${helperFunctions.padWithZeroes(req.params.id, 6)}`,
-                                                Quantity: '1',
-                                                UnitAmount: invoice.payment_amount,
-                                                AccountCode: process.env.XERO_LOAN_ACCOUNT
-                                            });
+                                        if (application.funding_source) {
+                                            for (let i=0; i<new_schedule.length; i++) {
+                                                let invoice = new_schedule[i];
+                                                LineItems.push({
+                                                    Description: `LOAN ID: ${helperFunctions.padWithZeroes(req.params.id, 6)}`,
+                                                    Quantity: '1',
+                                                    UnitAmount: invoice.payment_amount,
+                                                    AccountCode: application.funding_source
+                                                });
+                                            }
                                         }
                                         xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
-                                            let xeroPrincipal = await xeroClient.invoices.create({
-                                                Type: 'ACCREC',
-                                                Contact: {
-                                                    Name: application.fullname
-                                                },
-                                                Date: new_schedule[0]['payment_create_date'],
-                                                DueDate: new_schedule[0]['payment_collect_date'],
-                                                LineItems: LineItems,
-                                                Status: "AUTHORISED"
-                                            });
+                                            if (application.funding_source) {
+                                                let xeroPrincipal = await xeroClient.invoices.create({
+                                                    Type: 'ACCREC',
+                                                    Contact: {
+                                                        Name: application.fullname
+                                                    },
+                                                    Date: new_schedule[0]['payment_create_date'],
+                                                    DueDate: new_schedule[0]['payment_collect_date'],
+                                                    LineItems: LineItems,
+                                                    Status: "AUTHORISED"
+                                                });
+                                            }
                                             let obj = {},
                                                 count = 0;
                                             async.forEach(new_schedule, (new_invoice, callback) => {
                                                 xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
-                                                    let xeroInterest = await xeroClient.invoices.create({
-                                                        Type: 'ACCREC',
-                                                        Contact: {
-                                                            Name: application.fullname
-                                                        },
-                                                        Date: new_invoice.interest_create_date,
-                                                        DueDate: new_invoice.interest_collect_date,
-                                                        LineItems: [{
-                                                            Description: `LOAN ID: ${helperFunctions.padWithZeroes(new_invoice.applicationID, 6)}`,
-                                                            Quantity: '1',
-                                                            UnitAmount: new_invoice.interest_amount,
-                                                            AccountCode: process.env.XERO_LOAN_ACCOUNT
-                                                        }],
-                                                        Status: "AUTHORISED"
-                                                    });
-                                                    obj.principal_invoice_no = xeroPrincipal.Invoices[0]['InvoiceNumber'];
-                                                    obj.interest_invoice_no = xeroInterest.Invoices[0]['InvoiceNumber'];
+                                                    if (application.funding_source) {
+                                                        let xeroInterest = await xeroClient.invoices.create({
+                                                            Type: 'ACCREC',
+                                                            Contact: {
+                                                                Name: application.fullname
+                                                            },
+                                                            Date: new_invoice.interest_create_date,
+                                                            DueDate: new_invoice.interest_collect_date,
+                                                            LineItems: [{
+                                                                Description: `LOAN ID: ${helperFunctions.padWithZeroes(new_invoice.applicationID, 6)}`,
+                                                                Quantity: '1',
+                                                                UnitAmount: new_invoice.interest_amount,
+                                                                AccountCode: application.funding_source
+                                                            }],
+                                                            Status: "AUTHORISED"
+                                                        });
+                                                        obj.principal_invoice_no = xeroPrincipal.Invoices[0]['InvoiceNumber'];
+                                                        obj.interest_invoice_no = xeroInterest.Invoices[0]['InvoiceNumber'];
+                                                    }
                                                     obj.date_modified = date_modified;
                                                     obj.status = 1;
                                                     connection.query(`UPDATE application_schedules SET ? WHERE ID = ${new_invoice.ID}`, 
@@ -3012,7 +3094,8 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                         invoice.clientID = application.clientID;
                         invoice.loan_officerID = application.loan_officerID;
                         invoice.branchID = application.branchID;
-                        invoice.xeroCollectionBankID = data.xeroCollectionBankID;
+                        if (data.xeroCollectionBankID)
+                            invoice.xeroCollectionBankID = data.xeroCollectionBankID;
                         if (data.remitaPaymentID) invoice.remitaPaymentID = data.remitaPaymentID;
                         if (invoice.payment_amount > 0 && invoice.interest_amount > 0) {
                             invoice.type = 'multiple';
@@ -3028,13 +3111,13 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                             }
                         }
                         xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
-                            if (invoice.payment_amount > 0) {
+                            if (invoice.payment_amount > 0 && invoice.xeroCollectionBankID) {
                                 let xeroPayment = await xeroClient.payments.create({
                                     Invoice: {
                                         InvoiceNumber: application.principal_invoice_no
                                     },
                                     Account: {
-                                        Code: process.env.XERO_COLLECTION_BANK
+                                        Code: invoice.xeroCollectionBankID
                                     },
                                     Date: invoice.date_created,
                                     Amount: invoice.payment_amount,
@@ -3042,13 +3125,13 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                 });
                                 invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
                             }
-                            if (invoice.interest_amount > 0) {
+                            if (invoice.interest_amount > 0 && invoice.xeroCollectionBankID) {
                                 let xeroPayment = await xeroClient.payments.create({
                                     Invoice: {
                                         InvoiceNumber: application.interest_invoice_no
                                     },
                                     Account: {
-                                        Code: process.env.XERO_COLLECTION_BANK
+                                        Code: invoice.xeroCollectionBankID
                                     },
                                     Date: invoice.date_created,
                                     Amount: invoice.interest_amount,
@@ -3091,34 +3174,38 @@ users.post('/application/escrow', function(req, res, next) {
     xeroFunctions.authorizedOperation(req, res, req.headers.referer, async () => {
         let data = req.body;
         data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-        db.query(`SELECT fullname FROM clients WHERE ID = ${data.clientID}`, (error, client) => {
-            if (data.type === 'debit') {
-                //Allocating Overpayment in xero
-            } else {
-                xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
-                    let xeroPayment = await xeroClient.bankTransactions.create({
-                        Type: 'RECEIVE-OVERPAYMENT',
-                        Contact: {
-                            Name: client[0]['fullname']
-                        },
-                        BankAccount: {
-                            Code: process.env.XERO_COLLECTION_BANK
-                        },
-                        LineItems: [{
-                            Description: `ClientID: ${helperFunctions.padWithZeroes(data.clientID, 6)}`,
-                            LineAmount: data.amount
-                        }]
-                    });
-                    data.xeroOverpaymentID = xeroPayment.BankTransactions[0]['OverpaymentID'];
-                    db.query('INSERT INTO escrow SET ?', data, function (error, result, fields) {
-                        if(error){
-                            res.send({"status": 500, "error": error, "response": null});
-                        } else {
-                            res.send({"status": 200, "message": "Escrow saved successfully!"});
+        db.query(`SELECT xero_escrow_account FROM integrations WHERE ID = (SELECT MAX(ID) FROM integrations)`, (error, integrations) => {
+            db.query(`SELECT fullname FROM clients WHERE ID = ${data.clientID}`, (error, client) => {
+                if (data.type === 'debit') {
+                    //Allocating Overpayment in xero
+                } else {
+                    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
+                        if (integrations[0] && integrations[0]['xero_escrow_account']) {
+                            let xeroPayment = await xeroClient.bankTransactions.create({
+                                Type: 'RECEIVE-OVERPAYMENT',
+                                Contact: {
+                                    Name: client[0]['fullname']
+                                },
+                                BankAccount: {
+                                    Code: integrations[0]['xero_escrow_account']
+                                },
+                                LineItems: [{
+                                    Description: `ClientID: ${helperFunctions.padWithZeroes(data.clientID, 6)}`,
+                                    LineAmount: data.amount
+                                }]
+                            });
+                            data.xeroOverpaymentID = xeroPayment.BankTransactions[0]['OverpaymentID'];
                         }
+                        db.query('INSERT INTO escrow SET ?', data, function (error, result, fields) {
+                            if(error){
+                                res.send({"status": 500, "error": error, "response": null});
+                            } else {
+                                res.send({"status": 200, "message": "Escrow saved successfully!"});
+                            }
+                        });
                     });
-                });
-            }
+                }
+            });
         });
     });
 });
@@ -3257,34 +3344,36 @@ users.get('/application/escrow-payment-reversal/:id', function(req, res, next) {
         let update = {};
         update.status = 0,
         update.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-        db.query(`SELECT clientID, amount, xeroOverpaymentID FROM escrow WHERE ID = ${req.params.id}`, [req.params.id], function (error, escrow, fields) {
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
-            } else {
-                if (escrow[0]['xeroOverpaymentID']) {
-                    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
-                        let xeroPayment = await xeroClient.payments.update({
-                            Overpayment: {
-                                OverpaymentID: escrow[0]['xeroOverpaymentID']
-                            },
-                            Account: {
-                                Code: process.env.XERO_COLLECTION_BANK
-                            },
-                            Date: update.date_modified,
-                            Amount: escrow[0]['amount'],
-                            Reference: `CLIENT ID: ${helperFunctions.padWithZeroes(escrow[0]['clientID'], 6)}`
+        db.query(`SELECT xero_escrow_account FROM integrations WHERE ID = (SELECT MAX(ID) FROM integrations)`, (error, integrations) => {
+            db.query(`SELECT clientID, amount, xeroOverpaymentID FROM escrow WHERE ID = ${req.params.id}`, [req.params.id], function (error, escrow, fields) {
+                if(error){
+                    res.send({"status": 500, "error": error, "response": null});
+                } else {
+                    if (escrow[0]['xeroOverpaymentID'] && integrations[0] && integrations[0]['xero_escrow_account']) {
+                        xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
+                            let xeroPayment = await xeroClient.payments.update({
+                                Overpayment: {
+                                    OverpaymentID: escrow[0]['xeroOverpaymentID']
+                                },
+                                Account: {
+                                    Code: integrations[0]['xero_escrow_account']
+                                },
+                                Date: update.date_modified,
+                                Amount: escrow[0]['amount'],
+                                Reference: `CLIENT ID: ${helperFunctions.padWithZeroes(escrow[0]['clientID'], 6)}`
+                            });
                         });
+                    }
+                    db.query(`UPDATE escrow SET ? WHERE ID = ${req.params.id}`, update, function (error, response, fields) {
+                        if(error){
+                            res.send({"status": 500, "error": error, "response": null});
+                        } else {
+                            
+                            res.send({"status": 200, "message": "Payment reversed successfully!"});
+                        }
                     });
                 }
-                db.query(`UPDATE escrow SET ? WHERE ID = ${req.params.id}`, update, function (error, response, fields) {
-                    if(error){
-                        res.send({"status": 500, "error": error, "response": null});
-                    } else {
-                        
-                        res.send({"status": 200, "message": "Payment reversed successfully!"});
-                    }
-                });
-            }
+            });
         });
     });
 });

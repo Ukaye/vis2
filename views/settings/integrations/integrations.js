@@ -40,7 +40,7 @@ function getAccounts() {
     });
 }
 
-function getXeroConfig(){
+function getXeroConfig() {
     $.ajax({
         'type': 'get',
         'url': '/settings/xero',
@@ -58,7 +58,7 @@ function getXeroConfig(){
     });
 }
 
-function saveXeroConfig(){
+function saveXeroConfig() {
     let config = {};
     if ($('#xero_escrow').is(':checked')) {
         if ($('#xero_escrow_account').val() === '000')
