@@ -263,7 +263,7 @@ function processCommission(id,earnings,paid) {
                     table = [
                         v.title,
                         v.type,
-                        '₦'+numberToCurrencyformatter(Math.abs(amount)),
+                        `₦${numberToCurrencyformatter(Math.abs(amount))}`,
                         v.date_created
                     ];
                 if (v.status === 0){
@@ -275,10 +275,10 @@ function processCommission(id,earnings,paid) {
                 $('#process-history').dataTable().fnSort([[1,'desc']]);
                 process_amount += amount;
             });
-            if (process_amount !== 0)
-                processed_commission = parseFloat(earnings) - parseFloat(paid) + process_amount;
+            // if (process_amount !== 0)
+            processed_commission = parseFloat(earnings) - parseFloat(paid) + process_amount;
             processed_commission = processed_commission.toFixed(2);
-            $('#commission-processed').text('₦'+processed_commission.replace(/\d(?=(\d{3})+\.)/g, '$&,'));
+            $('#commission-processed').text(`₦${numberToCurrencyformatter(processed_commission)}`);
         }
     });
 }
