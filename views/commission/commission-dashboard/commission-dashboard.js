@@ -219,8 +219,6 @@ function openCommissionModal(owner) {
             let accelerator_threshold = (parseFloat(accelerator_threshold_rate)/100) * parseFloat(target_value),
                 threshold = (parseFloat(threshold_rate)/100) * parseFloat(target_value),
                 progress = (parseFloat(data.total)/parseFloat(target_value)) * 100;
-            console.log(data.total)
-            console.log(threshold)
             if (parseFloat(data.total) >= threshold){
                 if ((accelerator !== 'null') &&
                     (accelerator_type !== 'null') &&
@@ -295,6 +293,14 @@ $("#process-amount").on("keyup", function () {
     $("#process-amount").val(numberToCurrencyformatter(val));
 });
 
+$("#process-type").change(function () {
+    if ($(this).val() === 'none') {
+        $('#process-amount').prop('disabled', true).val('');
+    } else {
+        $('#process-amount').prop('disabled', false);
+    }
+});
+
 function payCommission() {
     let obj = {};
     obj.userID = user_id;
@@ -359,14 +365,18 @@ function saveProcess() {
     obj.title = $('#process-title').val();
     obj.type = $('#process-type').val();
     obj.amount = currencyToNumberformatter($('#process-amount').val());
-    if (!obj.amount || !obj.title || obj.amount === '-- Select Type --')
+    if ((obj.type !== 'none' && !obj.amount) || !obj.title || obj.type === '-- Select Type --')
         return notification('Kindly fill all required field(s)','','warning');
     obj.amount = parseFloat(obj.amount);
-    if (obj.amount <= 0)
+    if (obj.type !== 'none') {
+        if (obj.amount <= 0)
         return notification('Invalid amount specified','','warning');
-    if ((obj.type === 'deduction') && (obj.amount > earnings))
-        return notification('Insufficient commission earned ('+earnings+')','','warning');
-    obj.amount = (obj.type === 'addition')? obj.amount : (-1 * obj.amount);
+        if ((obj.type === 'deduction') && (obj.amount > earnings))
+            return notification('Insufficient commission earned ('+earnings+')','','warning');
+        obj.amount = (obj.type === 'addition')? obj.amount : (-1 * obj.amount);
+    } else {
+        obj.amount = 0;
+    }
     $('#wait').show();
     $.ajax({
         'url': '/user/commission/processes',
