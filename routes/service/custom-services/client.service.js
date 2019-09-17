@@ -872,7 +872,7 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
             WHEN s.payment_collect_date < CURDATE() OR s.interest_collect_date < CURDATE() THEN 3
         END) payment_status
         FROM clients c, client_applications p LEFT JOIN applications a ON p.ID = a.preapplicationID AND a.userID = ${id} 
-        LEFT JOIN application_schedules s ON s.ID = (SELECT MAX(ID) FROM application_schedules WHERE a.ID = applicationID AND payment_status = 0)
+        LEFT JOIN application_schedules s ON s.ID = (SELECT MIN(ID) FROM application_schedules WHERE a.ID = applicationID AND payment_status = 0)
         WHERE p.userID = ${id} AND p.userID = c.ID AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) 
         LIKE "${search_string}%" OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
@@ -924,7 +924,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
             END) payment_status
             FROM clients AS u INNER JOIN applications AS a ON u.ID = a.userID LEFT JOIN remita_mandates r 
             ON (r.applicationID = a.ID AND r.status = 1) LEFT JOIN application_schedules s ON s.ID = 
-            (SELECT MAX(ID) FROM application_schedules WHERE a.ID = applicationID AND payment_status = 0)
+            (SELECT MIN(ID) FROM application_schedules WHERE a.ID = applicationID AND payment_status = 0)
             WHERE a.preapplicationID = ${req.params.application_id} AND a.userID = ${req.params.id}`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
@@ -1559,7 +1559,7 @@ router.get('/verify/email/:token', function (req, res) {
     });
 });
 
-router.get('/logout', helperFunctions.verifyJWT, function (req, res) {
+router.get('/logout', function (req, res) {
     delete req.user;
     delete req.HOST;
     return res.send({
@@ -1736,7 +1736,7 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
                     "response": null
                 });
             });
-        });    
+        });
 });
 
 module.exports = router;
