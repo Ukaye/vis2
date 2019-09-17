@@ -2460,7 +2460,8 @@ router.get('/client-interests/:id', function (req, res, next) {
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
     let query = `SELECT * FROM investment_interests 
-    WHERE investmentId = ${req.params.id} AND amount LIKE "${search_string}%" ${order} LIMIT ${limit} OFFSET ${offset}`;
+    WHERE isTerminated = 0 AND investmentId = ${req.params.id} 
+    AND amount LIKE "${search_string}%" ${order} LIMIT ${limit} OFFSET ${offset}`;
 
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
