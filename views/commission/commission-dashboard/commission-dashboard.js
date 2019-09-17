@@ -219,8 +219,6 @@ function openCommissionModal(owner) {
             let accelerator_threshold = (parseFloat(accelerator_threshold_rate)/100) * parseFloat(target_value),
                 threshold = (parseFloat(threshold_rate)/100) * parseFloat(target_value),
                 progress = (parseFloat(data.total)/parseFloat(target_value)) * 100;
-            console.log(data.total)
-            console.log(threshold)
             if (parseFloat(data.total) >= threshold){
                 if ((accelerator !== 'null') &&
                     (accelerator_type !== 'null') &&
@@ -265,7 +263,7 @@ function processCommission(id,earnings,paid) {
                     table = [
                         v.title,
                         v.type,
-                        '₦'+numberToCurrencyformatter(Math.abs(amount)),
+                        `₦${numberToCurrencyformatter(Math.abs(amount))}`,
                         v.date_created
                     ];
                 if (v.status === 0){
@@ -277,10 +275,10 @@ function processCommission(id,earnings,paid) {
                 $('#process-history').dataTable().fnSort([[1,'desc']]);
                 process_amount += amount;
             });
-            if (process_amount !== 0)
-                processed_commission = parseFloat(earnings) - parseFloat(paid) + process_amount;
+            // if (process_amount !== 0)
+            processed_commission = parseFloat(earnings) - parseFloat(paid) + process_amount;
             processed_commission = processed_commission.toFixed(2);
-            $('#commission-processed').text('₦'+processed_commission.replace(/\d(?=(\d{3})+\.)/g, '$&,'));
+            $('#commission-processed').text(`₦${numberToCurrencyformatter(processed_commission)}`);
         }
     });
 }
@@ -293,6 +291,14 @@ $("#amount").on("keyup", function () {
 $("#process-amount").on("keyup", function () {
     let val = $("#process-amount").val();
     $("#process-amount").val(numberToCurrencyformatter(val));
+});
+
+$("#process-type").change(function () {
+    if ($(this).val() === 'none') {
+        $('#process-amount').prop('disabled', true).val('');
+    } else {
+        $('#process-amount').prop('disabled', false);
+    }
 });
 
 function payCommission() {
@@ -359,14 +365,18 @@ function saveProcess() {
     obj.title = $('#process-title').val();
     obj.type = $('#process-type').val();
     obj.amount = currencyToNumberformatter($('#process-amount').val());
-    if (!obj.amount || !obj.title || obj.amount === '-- Select Type --')
+    if ((obj.type !== 'none' && !obj.amount) || !obj.title || obj.type === '-- Select Type --')
         return notification('Kindly fill all required field(s)','','warning');
     obj.amount = parseFloat(obj.amount);
-    if (obj.amount <= 0)
+    if (obj.type !== 'none') {
+        if (obj.amount <= 0)
         return notification('Invalid amount specified','','warning');
-    if ((obj.type === 'deduction') && (obj.amount > earnings))
-        return notification('Insufficient commission earned ('+earnings+')','','warning');
-    obj.amount = (obj.type === 'addition')? obj.amount : (-1 * obj.amount);
+        if ((obj.type === 'deduction') && (obj.amount > earnings))
+            return notification('Insufficient commission earned ('+earnings+')','','warning');
+        obj.amount = (obj.type === 'addition')? obj.amount : (-1 * obj.amount);
+    } else {
+        obj.amount = 0;
+    }
     $('#wait').show();
     $.ajax({
         'url': '/user/commission/processes',

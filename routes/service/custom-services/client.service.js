@@ -20,7 +20,8 @@ router.get('/all', function (req, res) {
     let limit = req.query.limit;
     let page = ((req.query.page - 1) * 10 < 0) ? 0 : (req.query.page - 1) * 10;
     let search_string = (req.query.search_string === undefined) ? "" : req.query.search_string.toUpperCase();
-    let query = `SELECT ID,fullname FROM clients WHERE status = 1 AND (upper(email) LIKE "${search_string}%" OR upper(fullname) LIKE "${search_string}%") ORDER BY ID desc LIMIT ${limit} OFFSET ${page}`;
+    let query = `SELECT ID,fullname FROM clients WHERE status = 1 AND (upper(email) LIKE "${search_string}%" OR 
+    upper(fullname) LIKE "${search_string}%") ORDER BY ID desc LIMIT ${limit} OFFSET ${page}`;
     const endpoint = "/core-service/get";
     const url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -864,9 +865,16 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
     let draw = req.query.draw;
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
-    let query = `SELECT p.*, c.fullname, c.phone, a.ID loanID, a.status loan_status FROM clients c, client_applications p LEFT JOIN applications a ON p.ID = a.preapplicationID AND a.userID = ${id} 
-                 WHERE p.userID = ${id} AND p.userID = c.ID AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
-                 OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
+    let query = `SELECT p.*, c.fullname, c.phone, a.ID loanID, a.status loan_status, a.close_status, 
+        (CASE
+            WHEN s.payment_collect_date > CURDATE() AND s.interest_collect_date > CURDATE() THEN 1
+            WHEN s.payment_collect_date = CURDATE() OR s.interest_collect_date = CURDATE() THEN 2
+            WHEN s.payment_collect_date < CURDATE() OR s.interest_collect_date < CURDATE() THEN 3
+        END) payment_status
+        FROM clients c, client_applications p LEFT JOIN applications a ON p.ID = a.preapplicationID AND a.userID = ${id} 
+        LEFT JOIN application_schedules s ON s.ID = (SELECT MAX(ID) FROM application_schedules WHERE a.ID = applicationID AND payment_status = 0)
+        WHERE p.userID = ${id} AND p.userID = c.ID AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) 
+        LIKE "${search_string}%" OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -908,9 +916,16 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
             a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type,
             (SELECT l.supervisor FROM users l WHERE l.ID = u.loan_officer) AS supervisor,
             (SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow,
-            r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef
+            r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef,
+            (CASE
+                WHEN s.payment_collect_date > CURDATE() AND s.interest_collect_date > CURDATE() THEN 1
+                WHEN s.payment_collect_date = CURDATE() OR s.interest_collect_date = CURDATE() THEN 2
+                WHEN s.payment_collect_date < CURDATE() OR s.interest_collect_date < CURDATE() THEN 3
+            END) payment_status
             FROM clients AS u INNER JOIN applications AS a ON u.ID = a.userID LEFT JOIN remita_mandates r 
-            ON (r.applicationID = a.ID AND r.status = 1) WHERE a.preapplicationID = ${req.params.application_id} AND a.userID = ${req.params.id}`,
+            ON (r.applicationID = a.ID AND r.status = 1) LEFT JOIN application_schedules s ON s.ID = 
+            (SELECT MAX(ID) FROM application_schedules WHERE a.ID = applicationID AND payment_status = 0)
+            WHERE a.preapplicationID = ${req.params.application_id} AND a.userID = ${req.params.id}`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -943,7 +958,8 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                     res.send({"status": 500, "error": error, "response": null});
                 } else {
                     result.schedule = schedule;
-                    db.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', [result.loanID], function (error, payment_history, fields) {
+                    db.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', 
+                    [result.loanID], function (error, payment_history, fields) {
                         if (error) {
                             res.send({"status": 500, "error": error, "response": null});
                         } else {
@@ -1164,7 +1180,8 @@ router.get('/loans/get/:id', helperFunctions.verifyJWT, function (req, res) {
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
     let query = `SELECT p.*, c.fullname, c.phone FROM applications p, clients c 
-                 WHERE p.userID = ${id} AND p.userID = c.ID AND p.status in (1,2) AND (upper(p.userID) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
+                 WHERE p.userID = ${id} AND p.userID = c.ID AND p.status in (1,2) AND (upper(p.userID) 
+                 LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
                  OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
@@ -1174,8 +1191,10 @@ router.get('/loans/get/:id', helperFunctions.verifyJWT, function (req, res) {
         }
     }).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM applications p 
-                 WHERE p.userID = ${id} AND p.status in (1,2) AND (upper(p.userID) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
-                 OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM applications WHERE userID = ${id} AND status in (1,2)`;
+                 WHERE p.userID = ${id} AND p.status in (1,2) AND (upper(p.userID) LIKE "${search_string}%" 
+                 OR upper(p.loan_amount) LIKE "${search_string}%" 
+                 OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM applications 
+                 WHERE userID = ${id} AND status in (1,2)`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {
@@ -1239,7 +1258,8 @@ router.get('/loan/get/:id/:application_id', helperFunctions.verifyJWT, function 
                                     res.send({"status": 500, "error": error, "response": null});
                                 } else {
                                     result.schedule = schedule;
-                                    connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', [application_id], function (error, payment_history, fields) {
+                                    connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', 
+                                    [application_id], function (error, payment_history, fields) {
                                         connection.release();
                                         if (error) {
                                             res.send({"status": 500, "error": error, "response": null});
@@ -1264,7 +1284,8 @@ router.get('/loan/get/:id/:application_id', helperFunctions.verifyJWT, function 
                                             res.send({"status": 500, "error": error, "response": null});
                                         } else {
                                             result.schedule = schedule;
-                                            connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', [application_id], function (error, payment_history, fields) {
+                                            connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', 
+                                            [application_id], function (error, payment_history, fields) {
                                                 connection.release();
                                                 if (error) {
                                                     res.send({"status": 500, "error": error, "response": null});
