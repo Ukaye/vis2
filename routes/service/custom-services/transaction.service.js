@@ -2408,7 +2408,8 @@ function deductVatTax(HOST, data, _amount, txn, balance) {
                         ref_no: _refId,
                         updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                         createdBy: data.createdBy,
-                        isVat: 1
+                        isVat: 1,
+                        isTerminationCharge: (txn.isTerminationCharge === 1) ? 1 : 0
                     };
                     setInvestmentTxns(HOST, inv_txn).then(result => {
                         let result_ = balance - configAmount;
