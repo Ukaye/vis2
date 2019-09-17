@@ -1399,7 +1399,8 @@ function chargeForceTerminate(data, HOST) {
                                 approvalDone: 1,
                                 ref_no: _refId,
                                 updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-                                createdBy: data.createdBy
+                                createdBy: data.createdBy,
+                                isTerminationCharge: 1
                             };
                             query = `INSERT INTO investment_txns SET ?`;
                             endpoint = `/core-service/post?query=${query}`;
@@ -1486,7 +1487,9 @@ async function getInterestEndOfTenure(HOST, data) {
                 productId: data.productId,
                 startDate: element.startDate,
                 endDate: element.endDate,
-                interest_rate: data.interest_rate
+                interest_rate: data.interest_rate,
+                interest_disbursement_time: data.interest_disbursement_time,
+                isInvestmentTerminated: data.isInvestmentTerminated
             }
             await computeInterestTxns2(HOST, _data);
         }
@@ -1617,7 +1620,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                 ref_no: refId,
                 updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                 createdBy: data.createdBy,
-                isVat: 1
+                isTerminationCharge: 1
             };
             await setInvestmentTxns(HOST, inv_txn);
             await deductVatTax(HOST, data, configAmount, inv_txn, inv_txn.balance);
@@ -1636,7 +1639,9 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                     productId: data.productId,
                     startDate: element.startDate,
                     endDate: element.endDate,
-                    interest_rate: reduceInterestRateApplied[0].premature_interest_rate
+                    interest_rate: reduceInterestRateApplied[0].premature_interest_rate,
+                    interest_disbursement_time: data.interest_disbursement_time,
+                    isInvestmentTerminated: data.isInvestmentTerminated
                 }
                 await computeInterestTxns2(HOST, _data);
             }
@@ -1725,7 +1730,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                 ref_no: refId,
                 updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                 createdBy: data.createdBy,
-                isVat: 1
+                isTerminationCharge: 1
             };
             await setInvestmentTxns(HOST, inv_txn);
             await deductVatTax(HOST, data, configAmount, inv_txn, inv_txn.balance);
@@ -2734,7 +2739,7 @@ function updateInvestmentInterestIDs(host, ids) {
 function sumInvestmentInterestPerDayRange(host, investmentId, inStartDate, startDate, date) {
     return new Promise((resolve, reject) => {
         let query = `SELECT amount, is_credit FROM investment_txns
-        WHERE investmentId = ${investmentId} AND isApproved = 1 AND postDone = 1 
+        WHERE investmentId = ${investmentId} AND isApproved = 1 AND postDone = 1 AND isTerminationCharge = 0 
         AND isInterest = 0 AND isWallet = 0 AND (STR_TO_DATE(updated_date, '%Y-%m-%d') >='${inStartDate}'
         OR STR_TO_DATE(updated_date, '%Y-%m-%d') >='${startDate}')
         AND STR_TO_DATE(updated_date, '%Y-%m-%d') <='${date}'`;
@@ -2987,14 +2992,18 @@ async function sumAllWalletInvestmentTxns(host, clientId) {
 
 function setInvestmentTxns(host, value) {
     return new Promise((resolve, reject) => {
-        let query = `INSERT INTO investment_txns SET ?`;
-        let endpoint = `/core-service/post?query=${query}`;
-        let url = `${host}${endpoint}`;
-        axios.post(url, value).then(payload => {
-            resolve(payload.data);
-        }, err => {
-            resolve({});
-        });
+        if (parseInt(value.amount.toString()) === 0) {
+            resolve(0);
+        } else {
+            let query = `INSERT INTO investment_txns SET ?`;
+            let endpoint = `/core-service/post?query=${query}`;
+            let url = `${host}${endpoint}`;
+            axios.post(url, value).then(payload => {
+                resolve(payload.data);
+            }, err => {
+                resolve({});
+            });
+        }
     });
 }
 
@@ -3061,8 +3070,10 @@ async function computeInterestTxns2(HOST, data) {
             setInvestmentInterestPerDay(HOST, payload.dailyBalances).then(interestValues => {
                 if (data.interest_moves_wallet.toString() === '1') {
                     sumAllWalletInvestmentTxns(HOST, data.clientId).then(walletBalance_ => {
-                        let bal_ = walletBalance_ + payload.totalInterestAmount;
-                        let amountValue = payload.totalInterestAmount;
+
+                        let amountValue = (data.interest_disbursement_time === "Up-Front" && (data.isInvestmentTerminated === '0' || data.isInvestmentTerminated === undefined))
+                            ? 0 : payload.totalInterestAmount;
+                        let bal_ = walletBalance_ + amountValue;
                         let inv_txn = {
                             txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                             description: `Balance ${Number(bal_).toFixed(2)} @${data.endDate}`,
@@ -3112,8 +3123,10 @@ async function computeInterestTxns2(HOST, data) {
                 } else {
                     computeAccountBalanceIncludeInterest(data.investmentId, HOST).then(balanceIncludingInterestm => {
                         computeCurrentBalance(data.investmentId, HOST).then(totalInvestedAmount => {
-                            let _amt = payload.totalInterestAmount;
-                            let sumTotalBalance = balanceIncludingInterestm + payload.totalInterestAmount;
+                            const _status = (data.isInvestmentTerminated === '0' || data.isInvestmentTerminated === undefined) ? 0 : 1;
+                            let _amt = (data.interest_disbursement_time === "Up-Front" && _status === 0) ? 0 : payload.totalInterestAmount;
+                            let sumTotalBalance = balanceIncludingInterestm + _amt;
+
                             let inv_txn = {
                                 txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                                 description: `Investment interest@ ${data.endDate}`,
@@ -3166,53 +3179,57 @@ async function computeInterestTxns2(HOST, data) {
 
 function deductWithHoldingTax(HOST, data, _amount, total, bal_, clientId, isWallet, txn) {
     return new Promise((resolve, reject) => {
-        let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-        let query = `SELECT * FROM investment_config ORDER BY ID DESC LIMIT 1`;
-        let endpoint = '/core-service/get';
-        let url = `${HOST}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(response => {
-            if (response.data.status === undefined) {
-                let configData = response.data[0];
-                let configAmount = (configData.withHoldingTaxChargeMethod == 'Fixed') ? configData.withHoldingTax
-                    : (configData.withHoldingTax * (total + parseFloat(Number(_amount).toFixed(2)))) / 100;
-                let refId = moment().utcOffset('+0100').format('x');
-                let balTotal = bal_ - configAmount;
-                let inv_txn = {
-                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-                    description: `WITH-HOLDING TAX ON INTEREST TRANSACTION WITH REF.: <strong>${txn.ref_no}</strong>`,
-                    amount: Number(configAmount).toFixed(2),
-                    is_credit: 0,
-                    created_date: dt,
-                    balance: Number(balTotal).toFixed(2),
-                    is_capital: 0,
-                    isCharge: 0,
-                    isApproved: 1,
-                    isWithHoldings: 1,
-                    parentTxnId: txn.ID,
-                    postDone: 1,
-                    reviewDone: 1,
-                    approvalDone: 1,
-                    ref_no: refId,
-                    updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
-                    investmentId: data.investmentId,
-                    createdBy: data.createdBy,
-                    clientId: clientId,
-                    isWallet: isWallet
-                };
-                setInvestmentTxns(HOST, inv_txn).then(result => {
-                    result.balance = inv_txn.balance;
-                    resolve(result);
-                }, err => {
-                    resolve({});
-                });
-            }
-        }, err => {
+        if (parseInt(_amount.toString()) === 0) {
             resolve({});
-        })
+        } else {
+            let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+            let query = `SELECT * FROM investment_config ORDER BY ID DESC LIMIT 1`;
+            let endpoint = '/core-service/get';
+            let url = `${HOST}${endpoint}`;
+            axios.get(url, {
+                params: {
+                    query: query
+                }
+            }).then(response => {
+                if (response.data.status === undefined) {
+                    let configData = response.data[0];
+                    let configAmount = (configData.withHoldingTaxChargeMethod == 'Fixed') ? configData.withHoldingTax
+                        : (configData.withHoldingTax * (total + parseFloat(Number(_amount).toFixed(2)))) / 100;
+                    let refId = moment().utcOffset('+0100').format('x');
+                    let balTotal = bal_ - configAmount;
+                    let inv_txn = {
+                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                        description: `WITH-HOLDING TAX ON INTEREST TRANSACTION WITH REF.: <strong>${txn.ref_no}</strong>`,
+                        amount: Number(configAmount).toFixed(2),
+                        is_credit: 0,
+                        created_date: dt,
+                        balance: Number(balTotal).toFixed(2),
+                        is_capital: 0,
+                        isCharge: 0,
+                        isApproved: 1,
+                        isWithHoldings: 1,
+                        parentTxnId: txn.ID,
+                        postDone: 1,
+                        reviewDone: 1,
+                        approvalDone: 1,
+                        ref_no: refId,
+                        updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                        investmentId: data.investmentId,
+                        createdBy: data.createdBy,
+                        clientId: clientId,
+                        isWallet: isWallet
+                    };
+                    setInvestmentTxns(HOST, inv_txn).then(result => {
+                        result.balance = inv_txn.balance;
+                        resolve(result);
+                    }, err => {
+                        resolve({});
+                    });
+                }
+            }, err => {
+                resolve({});
+            })
+        }
     });
 }
 
@@ -3519,7 +3536,9 @@ async function closeMatureInvestmentAccount(HOST, data) {
                 productId: element1.productId,
                 startDate: element.startDate,
                 endDate: element.endDate,
-                interest_rate: element1.interest_rate
+                interest_rate: element1.interest_rate,
+                interest_disbursement_time: element1.interest_disbursement_time,
+                isInvestmentTerminated: element1.isInvestmentTerminated
             }
             await computeInterestTxns2(HOST, _data);
         }
@@ -3606,7 +3625,8 @@ async function computeInterestBalance(data, HOST) {
                 investment_mature_date: data.investment_mature_date,
                 investment_start_date: data.investment_start_date,
                 productId: data.productId,
-                interest_moves_wallet: data.interest_moves_wallet
+                interest_moves_wallet: data.interest_moves_wallet,
+                interest_disbursement_time: data.interest_disbursement_time
             }]
         };
         const payld = await closeMatureInvestmentAccount(HOST, items);
