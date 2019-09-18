@@ -1858,4 +1858,149 @@ router.get('/preapproved-loan/get/:id/:loan_id/:key?', helperFunctions.verifyJWT
     });
 });
 
+router.put('/application/update/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
+    db.query(`UPDATE client_applications Set ? WHERE ID = ${req.params.application_id}
+        AND userID = ${req.params.id}`, req.body, function (error, response) {
+        if(error){
+            return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+        } else {
+            return res.send({
+                "status": 200,
+                "error": null,
+                "response": 'Application updated successfully!'
+            });
+        }
+    });
+});
+
+router.get('/payment-method/initiate/:id', helperFunctions.verifyJWT, function (req, res) {
+    paystack.transaction.initialize({
+        email: req.user.email,
+        amount: 50
+    })
+    .then(function(body){
+        if (body.status) {
+            return res.send({
+                "status": 200,
+                "error": null,
+                "response": body.data
+            });
+        } else {
+            return res.send({
+                "status": 500,
+                "error": null,
+                "response": body.message
+            });
+        }
+    })
+    .catch(function(error){
+        if(error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+    }); 
+});
+
+router.post('/payment-method/create/:id', helperFunctions.verifyJWT, function (req, res) {
+    db.query(`SELECT * FROM client_payment_methods WHERE reference = '${req.body.reference}' 
+    AND userID = ${req.params.id}`, (error, payment_method) => {
+        if(error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+        if(payment_method[0]) return res.send({
+            "status": 500,
+            "error": null,
+            "response": 'Payment method already exists!'
+        });
+        paystack.transaction.verify(req.body.reference)
+            .then(function(body){
+                if (body.status) {
+                    if (body.data.status === 'success') {
+                        let data = body.data.authorization;
+                        data.userID = req.params.id;
+                        data.reference = body.data.reference;
+                        data.payment_channel = 'paystack';
+                        data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                        data.created_by = req.params.id;
+                        delete data.bin;
+                        db.query('INSERT INTO client_payment_methods SET ?', data, function (error, response) {
+                            if (error) {
+                                res.send({
+                                    "status": 500, 
+                                    "error": error, 
+                                    "response": null
+                                });
+                            } else {
+                                return res.send({
+                                    "status": 200, 
+                                    "error": null, 
+                                    "response": "Payment method added successfully!"
+                                });
+                            }
+                        });
+                    } else {
+                        return res.send({
+                            "status": 500,
+                            "error": null,
+                            "response": body.data.gateway_response
+                        });
+                    }
+                } else {
+                    return res.send({
+                        "status": 500,
+                        "error": null,
+                        "response": body.message
+                    });
+                }
+            })
+            .catch(function(error){
+                if(error) return res.send({
+                    "status": 500,
+                    "error": error,
+                    "response": null
+                });
+            });
+    });
+});
+
+router.get('/payment-method/get/:id', helperFunctions.verifyJWT, function (req, res) {
+    db.query(`SELECT * FROM client_payment_methods WHERE userID = ${req.params.id} AND status = 1`, 
+    (error, payment_methods) => {
+        if(error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+        return res.send({
+            "status": 200, 
+            "error": null, 
+            "response": payment_methods
+        });
+    });
+});
+
+router.delete('/payment-method/delete/:id/:payment_method_id', helperFunctions.verifyJWT, function (req, res) {
+    db.query(`UPDATE client_payment_methods SET status = 0 
+    WHERE ID = ${req.params.payment_method_id} AND userID = ${req.params.id}`, 
+    (error, response) => {
+        if(error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+        return res.send({
+            "status": 200, 
+            "error": null, 
+            "response": 'Payment method deleted successfully!'
+        });
+    });
+});
+
 module.exports = router;
