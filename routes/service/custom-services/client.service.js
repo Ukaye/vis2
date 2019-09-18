@@ -1739,4 +1739,74 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
         });
 });
 
+/**
+ * 1. Preapproved Loan Offer
+ * 2. Direct Debit Mandate Setup
+ */
+router.get('/preapproved-loan/create/:id/:loan_id', helperFunctions.verifyJWT, function (req, res) {
+    db.query(`SELECT a.userID, a.workflowID, a.loan_amount, a.interest_rate, a.duration, a.repayment_date, c.fullname client, 
+    c.email, (SELECT u.phone FROM users u WHERE u.ID = (SELECT c.loan_officer FROM clients c WHERE c.ID = a.userID)) AS contact 
+    FROM applications a, clients c WHERE a.ID = ${req.params.loan_id} AND a.userID = c.ID`, (error, app) => {
+        if(error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+
+        if(!app[0]) return res.send({
+            "status": 500,
+            "error": null,
+            "response": 'Loan does not exist!'
+        });
+
+        const HOST = `${req.protocol}://${req.get('host')}`;
+        let preapproved_loan = app[0];
+        preapproved_loan.average_loan = '';
+        preapproved_loan.credit_score = '';
+        preapproved_loan.defaults = '';
+        preapproved_loan.invoices_due = '';
+        preapproved_loan.offer_duration = preapproved_loan.duration;
+        preapproved_loan.offer_loan_amount = preapproved_loan.loan_amount;
+        preapproved_loan.offer_first_repayment_date = preapproved_loan.repayment_date;
+        preapproved_loan.offer_interest_rate = preapproved_loan.interest_rate;
+        preapproved_loan.months_left = '';
+        preapproved_loan.salary_loan = '';
+        preapproved_loan.created_by = req.params.id;
+
+        let data = {},
+            email = preapproved_loan.email,
+            contact = preapproved_loan.contact,
+            date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        delete preapproved_loan.email;
+        delete preapproved_loan.contact;
+        preapproved_loan.applicationID = req.params.loan_id;
+        preapproved_loan.date_created = date_created;
+        preapproved_loan.expiry_date = moment().add(5, 'days').utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        preapproved_loan.hash = bcrypt.hashSync(preapproved_loan.userID, parseInt(process.env.SALT_ROUNDS));
+        db.query('INSERT INTO preapproved_loans Set ?', preapproved_loan, function (error, response__) {
+            if(error){
+                res.send({status: 500, error: error, response: null});
+            } else {
+                data.name = preapproved_loan.client;
+                data.date = date_created;
+                data.expiry = preapproved_loan.expiry_date;
+                data.contact = contact;
+                data.amount = helperFunctions.numberToCurrencyFormatter(preapproved_loan.loan_amount);
+                data.offer_url = `${HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}&i=${req.params.loan_id}`;
+                emailService.send({
+                    to: email,
+                    subject: `${process.env.TENANT} Mandate Setup`,
+                    template: 'mandate',
+                    context: data
+                });
+                return res.send({
+                    "status": 200,
+                    "error": null,
+                    "response": data.offer_url
+                });
+            }
+        });
+    });
+});
+
 module.exports = router;
