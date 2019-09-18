@@ -25,7 +25,7 @@ $(document).ready(function () {
             $('#input_txn_date').attr('max', _cmax);
         }
     }
-
+    read_write_custom(isWalletPage);
 });
 
 let products = [];
@@ -1934,3 +1934,20 @@ function onTransferToInvestments(amount, desc, is_credit, investmentId) {
 //         swal('Something went wrong while executing transfer operation', '', 'error');
 //     }
 // }
+
+function read_write_custom(isWalletPage){
+    let perms = JSON.parse(localStorage.getItem("permissions"));
+    let lblViewWalletTxns = ($.grep(perms, function(e){return e.module_name === 'lblViewWalletTxns';}))[0];
+    let investment_transactions = ($.grep(perms, function(e){return e.module_name === 'client-investment-transactions';}))[0];
+    let investment_wallet = ($.grep(perms, function(e){return e.module_name === 'client-investment-wallet';}))[0];
+    $('#lblViewWalletTxns').hide();
+    if (lblViewWalletTxns && lblViewWalletTxns['read_only'] === '1')
+        $('#lblViewWalletTxns').show();
+    if (isWalletPage === 1) {
+        if (!investment_wallet || investment_wallet['read_only'] !== '1')
+            return window.location.href = '/';
+    } else {
+        if (!investment_transactions || investment_transactions['read_only'] !== '1')
+            return window.location.href = '/';
+    }
+}

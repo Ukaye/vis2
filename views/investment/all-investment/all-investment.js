@@ -408,3 +408,11 @@ function onCloseInvestment() {
 }
 
 $(document).ready(function () { });
+
+function read_write(){
+    let perms = JSON.parse(localStorage.getItem("permissions"));
+    let idMatureInvestmentsLbl = ($.grep(perms, function(e){return e.module_name === 'idMatureInvestmentsLbl';}))[0];
+    $('#idMatureInvestmentsLbl').hide();
+    if (idMatureInvestmentsLbl && idMatureInvestmentsLbl['read_only'] === '1')
+        $('#idMatureInvestmentsLbl').show();
+}
