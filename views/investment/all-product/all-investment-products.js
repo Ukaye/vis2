@@ -247,7 +247,7 @@ function bindDataTable() {
         columns: [{
             width: "auto",
             "mRender": function (data, type, full) {
-                return `<span class="badge badge-pill ${(full.status === 1) ? 'badge-primary' : 'badge-danger'}">${(full.status === 1) ? 'Active' : 'Inactive'}</span>`;
+                return `<span class="badge badge-pill ${(full.isDeactivated === 0) ? 'badge-primary' : 'badge-danger'}">${(full.status === 0) ? 'Active' : 'Inactive'}</span>`;
             }
         },
         {
@@ -286,9 +286,9 @@ function bindDataTable() {
         {
             width: "auto",
             "mRender": function (data, type, full) {
-                let status_ = (full.status === 1) ? 0 : 1;
-                let status_label = (full.status === 1) ? "Deactivate" : "Activate";
-                let status_class = (full.status === 1) ? "active-status" :
+                let status_ = (full.isDeactivated === 1) ? 0 : 1;
+                let status_label = (full.isDeactivated === 0) ? "Deactivate" : "Activate";
+                let status_class = (full.isDeactivated === 0) ? "active-status" :
                     "inactive-status";
                 let strProduct = JSON.stringify(full);
                 return `
@@ -859,7 +859,7 @@ function onRemoveItemReq(value) {
                     },
                     'error': function (err) {
                         $('#wait').hide();
-                        swal('Oops! An error occurred while remove requirement', '', 'error');
+                        swal('Oops! An error occurred while removing requirement', '', 'error');
                     }
                 });
             } else {
@@ -1346,7 +1346,7 @@ function onRemoveDocRequirement(id) {
                             swal('Document requirement removed successfully', '', 'success');
                             getProductDocRequirements();
                         } else {
-                            swal('Fail to remove document requirement, please try again later', '', 'error');
+                            swal('Failed to remove document requirement, please try again later', '', 'error');
                         }
                     }
                 });
