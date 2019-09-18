@@ -50,7 +50,7 @@ async function getStatements(investmentId, startDate, endDate) {
                     $('#debitBal').html(`${formater(totalDebit.toString())}`);
                     $('#creditBal').html(`${formater(totalCredit.toString())}`);
                 } else {
-                    swal('Oops! No transaction within the set date', '', 'error');
+                    swal('Oops! No transaction occurred within the set date', '', 'error');
                 }
                 $('#wait').hide();
                 getConfigInfo();

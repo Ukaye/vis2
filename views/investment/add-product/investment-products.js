@@ -122,7 +122,7 @@ $("#product_code").on("focusout", function (event) {
             success: function (data) {
                 $('#wait').hide();
                 if (data.counter > 0) {
-                    swal('Oops! Product code identifier exist, please enter another code', '', 'error');
+                    swal('Oops! Product code identifier exists, please enter another code', '', 'error');
                     $("#product_code").val('')
                 }
             }
@@ -262,7 +262,7 @@ $("#min_days_termination").on('focusout',
                 let _noticeDays = $("#min_days_termination").val();
                 if (_noticeDays < data[0].investment_termination_days) {
                     $("#min_days_termination").val('');
-                    swal('Product termination notice can not be lesser than the system global notice days', '', 'error');
+                    swal('Product termination notice can not be less than the system global notice days', '', 'error');
                 }
             }
         });
@@ -527,7 +527,7 @@ function set_investment_product() {
                 'success': function (data) {
                     if (data.status === 200) {
                         $('#wait').hide();
-                        swal('Investment Product created successfully!!!. Kindly select MORE button to set Requirement for REVIEW,APPROVAL and POST', '', 'success');
+                        swal('Investment Product created successfully!!!. Kindly select MORE button to set Requirement for REVIEW, APPROVAL and POST', '', 'success');
                         var url = "./all-investment-products";
                         setTimeout(function () {
                             $(location).attr('href', url);
@@ -555,7 +555,7 @@ function set_investment_product() {
 
             if (JSON.stringify(product_obj) === JSON.stringify(originalProductObj)) {
                 $('#wait').hide();
-                swal('Oops! You have not make any changes',
+                swal('Oops! You have not made any changes',
                     '', 'error');
             } else {
                 $.ajax({

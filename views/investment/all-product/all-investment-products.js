@@ -859,7 +859,7 @@ function onRemoveItemReq(value) {
                     },
                     'error': function (err) {
                         $('#wait').hide();
-                        swal('Oops! An error occurred while remove requirement', '', 'error');
+                        swal('Oops! An error occurred while removing requirement', '', 'error');
                     }
                 });
             } else {
@@ -1346,7 +1346,7 @@ function onRemoveDocRequirement(id) {
                             swal('Document requirement removed successfully', '', 'success');
                             getProductDocRequirements();
                         } else {
-                            swal('Fail to remove document requirement, please try again later', '', 'error');
+                            swal('Failed to remove document requirement, please try again later', '', 'error');
                         }
                     }
                 });
