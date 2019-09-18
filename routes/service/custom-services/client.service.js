@@ -8,6 +8,7 @@ const fs = require('fs'),
     express = require('express'),
     router = express.Router(),
     jwt = require('jsonwebtoken'),
+    SHA512 = require('js-sha512'),
     enums = require('../../../enums'),
     helperFunctions = require('../../../helper-functions'),
     notificationsService = require('../../notifications-service'),
@@ -1746,7 +1747,7 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
 router.get('/preapproved-loan/create/:id/:loan_id', helperFunctions.verifyJWT, function (req, res) {
     db.query(`SELECT a.userID, a.workflowID, a.loan_amount, a.interest_rate, a.duration, a.repayment_date, c.fullname client, 
     c.email, (SELECT u.phone FROM users u WHERE u.ID = (SELECT c.loan_officer FROM clients c WHERE c.ID = a.userID)) AS contact 
-    FROM applications a, clients c WHERE a.ID = ${req.params.loan_id} AND a.userID = c.ID`, (error, app) => {
+    FROM applications a, clients c WHERE a.ID = ${req.params.loan_id} AND a.userID = ${req.params.id} AND a.userID = c.ID`, (error, app) => {
         if(error) return res.send({
             "status": 500,
             "error": error,
@@ -1756,7 +1757,7 @@ router.get('/preapproved-loan/create/:id/:loan_id', helperFunctions.verifyJWT, f
         if(!app[0]) return res.send({
             "status": 500,
             "error": null,
-            "response": 'Loan does not exist!'
+            "response": 'Loan does not exist for this client!'
         });
 
         const HOST = `${req.protocol}://${req.get('host')}`;
@@ -1806,6 +1807,54 @@ router.get('/preapproved-loan/create/:id/:loan_id', helperFunctions.verifyJWT, f
                 });
             }
         });
+    });
+});
+
+router.get('/preapproved-loan/get/:id/:loan_id/:key?', helperFunctions.verifyJWT, function (req, res) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, r.requestId, 
+        r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
+        LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) 
+        WHERE p.userID = ${req.params.id} AND (p.ID = '${decodeURIComponent(req.params.loan_id)}' OR p.hash = '${decodeURIComponent(req.params.loan_id)}')`,
+        endpoint = '/core-service/get',
+        url = `${HOST}${endpoint}`;
+    if (req.query.key === 'loanID') {
+        query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, r.requestId, 
+        r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
+        LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) 
+        WHERE p.userID = '${req.params.id}' AND p.applicationID = '${req.params.loan_id}'`;
+    }
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        if (response['data'][0]){
+            const status_payload = {
+                mandateId: response['data'][0]['mandateId'],
+                requestId: response['data'][0]['requestId']
+            };
+            helperFunctions.mandateStatus(status_payload, function (remita_mandate_status) {
+                let preapproved_loan = (response.data === undefined) ? {} : response.data[0];
+                preapproved_loan.remita = remita_mandate_status;
+                preapproved_loan.merchantId = process.env.REMITA_MERCHANT_ID;
+                preapproved_loan.hash = encodeURIComponent(preapproved_loan.hash);
+                preapproved_loan.url = `${HOST}/offer?t=${preapproved_loan.hash}&i=${preapproved_loan.applicationID}`;
+                if (response['data'][0]['requestId'])
+                    preapproved_loan.remita_hash = SHA512(preapproved_loan.merchantId + process.env.REMITA_API_KEY + response['data'][0]['requestId']);
+                return res.send({
+                    "status": 200,
+                    "error": null,
+                    "response": preapproved_loan
+                });
+            });
+        } else {
+            return res.send({
+                "status": 500,
+                "error": null,
+                "response": 'Remita does not exist!'
+            });
+        }
     });
 });
 
