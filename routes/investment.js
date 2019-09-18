@@ -123,7 +123,7 @@ router.post('/products/:id', function (req, res, next) {
 
 router.post('/products-status/:id', function (req, res, next) {
     let date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.query('UPDATE investment_products SET status = ?, date_modified = ? WHERE ID = ?', [req.body.status, date, req.params.id], function (error, result, fields) {
+    db.query('UPDATE investment_products SET isDeactivated = ?, date_modified = ? WHERE ID = ?', [req.body.status, date, req.params.id], function (error, result, fields) {
         if (error) {
             res.send({
                 "status": 500,

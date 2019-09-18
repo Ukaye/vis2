@@ -242,7 +242,7 @@ $("#btn_save_product").on("click", function (event) {
     var data = {
         clientId: $('#client').on('select2:select').val(),
         productId: $('#investment_product').on('select2:select').val(),
-        amount: $('#investment_amount').val().split('.').join(''),
+        amount: $('#investment_amount').val().split(',').join(''),
         investment_start_date: $('#investment_date_start').val(),
         investment_mature_date: $('#investment_mature_date').val(),
         code: selectedValue.code,
@@ -342,7 +342,7 @@ $('#client').on("select2:selecting", function (e) {
             url: `/investment-txns/client-wallet-balance/${_id}`,
             'type': 'get',
             'success': function (data) {
-                clientBalance = data.currentWalletBalance;
+                clientBalance = (data.currentWalletBalance === null) ? 0 : data.currentWalletBalance;
                 $('#opt_payment_made_by').html('');
                 if (data.status === undefined) {
                     $('#wait').hide();
@@ -352,7 +352,6 @@ $('#client').on("select2:selecting", function (e) {
                             sign = '-';
                         }
                         let _clientBalance = Number(clientBalance).toFixed(2);
-                        console.log(_clientBalance);
                         $('<option/>').val('1').html(`Wallet <strong>(₦${sign}${formater(_clientBalance)})</strong>`).appendTo(
                             '#opt_payment_made_by');
                         $('<option/>').val('0').html(`Cash`).appendTo(

@@ -11,7 +11,7 @@ router.get('/all/:id', function (req, res, next) {
     let page = ((req.query.page - 1) * 10 < 0) ? 0 : (req.query.page - 1) * 10;
     let search_string = (req.query.search_string === undefined) ? "" : req.query.search_string.toUpperCase();
     let query = `SELECT ID,name,code,investment_max,investment_min,min_term,max_term,interest_disbursement_time 
-    FROM investment_products WHERE isWalletApproval = ${req.params.id} AND status = 1 AND (upper(code) LIKE "${search_string}%" OR upper(name) LIKE "${search_string}%") ORDER BY ID desc LIMIT ${limit} OFFSET ${page}`;
+    FROM investment_products WHERE isWalletApproval = ${req.params.id} AND status = 1 AND isDeactivated = 0 AND (upper(code) LIKE "${search_string}%" OR upper(name) LIKE "${search_string}%") ORDER BY ID desc LIMIT ${limit} OFFSET ${page}`;
     const endpoint = "/core-service/get";
     const url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -82,7 +82,7 @@ router.get('/get-products', function (req, res, next) {
     let status = req.query.status;
     let qStatus = (status === undefined) ? "" : `status = ${status} AND`;
     let search_string = req.query.search_string.toUpperCase();
-    let query = `SELECT ID,name,code,investment_max,investment_min,interest_rate,status, date_created 
+    let query = `SELECT ID,name,code,investment_max,investment_min,interest_rate,status, date_created, isDeactivated
     FROM investment_products WHERE status = 1 AND (code LIKE "${search_string}%" OR name LIKE "${search_string}%")
     ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
@@ -92,8 +92,11 @@ router.get('/get-products', function (req, res, next) {
             query: query
         }
     }).then(response => {
-        query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM investment_products 
-        WHERE  status = 1 AND code LIKE "${search_string}%" OR name LIKE "${search_string}%") as recordsFiltered FROM investment_products`;
+        query = `SELECT
+        (SELECT count(*) AS recordsTotal FROM investment_products WHERE  status = 1) AS recordsTotal,
+        (SELECT count(*) AS recordsFiltered FROM investment_products WHERE  status = 1 
+        AND (code LIKE "${search_string}%" OR name LIKE "${search_string}%"))
+        as recordsFiltered`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {
