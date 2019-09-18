@@ -8,6 +8,7 @@ const fs = require('fs'),
     express = require('express'),
     router = express.Router(),
     jwt = require('jsonwebtoken'),
+    SHA512 = require('js-sha512'),
     enums = require('../../../enums'),
     helperFunctions = require('../../../helper-functions'),
     notificationsService = require('../../notifications-service'),
@@ -1737,6 +1738,124 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
                 });
             });
         });
+});
+
+/**
+ * 1. Preapproved Loan Offer
+ * 2. Direct Debit Mandate Setup
+ */
+router.get('/preapproved-loan/create/:id/:loan_id', helperFunctions.verifyJWT, function (req, res) {
+    db.query(`SELECT a.userID, a.workflowID, a.loan_amount, a.interest_rate, a.duration, a.repayment_date, c.fullname client, 
+    c.email, (SELECT u.phone FROM users u WHERE u.ID = (SELECT c.loan_officer FROM clients c WHERE c.ID = a.userID)) AS contact 
+    FROM applications a, clients c WHERE a.ID = ${req.params.loan_id} AND a.userID = ${req.params.id} AND a.userID = c.ID`, (error, app) => {
+        if(error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+
+        if(!app[0]) return res.send({
+            "status": 500,
+            "error": null,
+            "response": 'Loan does not exist for this client!'
+        });
+
+        const HOST = `${req.protocol}://${req.get('host')}`;
+        let preapproved_loan = app[0];
+        preapproved_loan.average_loan = '';
+        preapproved_loan.credit_score = '';
+        preapproved_loan.defaults = '';
+        preapproved_loan.invoices_due = '';
+        preapproved_loan.offer_duration = preapproved_loan.duration;
+        preapproved_loan.offer_loan_amount = preapproved_loan.loan_amount;
+        preapproved_loan.offer_first_repayment_date = preapproved_loan.repayment_date;
+        preapproved_loan.offer_interest_rate = preapproved_loan.interest_rate;
+        preapproved_loan.months_left = '';
+        preapproved_loan.salary_loan = '';
+        preapproved_loan.created_by = req.params.id;
+
+        let data = {},
+            email = preapproved_loan.email,
+            contact = preapproved_loan.contact,
+            date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        delete preapproved_loan.email;
+        delete preapproved_loan.contact;
+        preapproved_loan.applicationID = req.params.loan_id;
+        preapproved_loan.date_created = date_created;
+        preapproved_loan.expiry_date = moment().add(5, 'days').utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        preapproved_loan.hash = bcrypt.hashSync(preapproved_loan.userID, parseInt(process.env.SALT_ROUNDS));
+        db.query('INSERT INTO preapproved_loans Set ?', preapproved_loan, function (error, response__) {
+            if(error){
+                res.send({status: 500, error: error, response: null});
+            } else {
+                data.name = preapproved_loan.client;
+                data.date = date_created;
+                data.expiry = preapproved_loan.expiry_date;
+                data.contact = contact;
+                data.amount = helperFunctions.numberToCurrencyFormatter(preapproved_loan.loan_amount);
+                data.offer_url = `${HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}&i=${req.params.loan_id}`;
+                emailService.send({
+                    to: email,
+                    subject: `${process.env.TENANT} Mandate Setup`,
+                    template: 'mandate',
+                    context: data
+                });
+                return res.send({
+                    "status": 200,
+                    "error": null,
+                    "response": data.offer_url
+                });
+            }
+        });
+    });
+});
+
+router.get('/preapproved-loan/get/:id/:loan_id/:key?', helperFunctions.verifyJWT, function (req, res) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, r.requestId, 
+        r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
+        LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) 
+        WHERE p.userID = ${req.params.id} AND (p.ID = '${decodeURIComponent(req.params.loan_id)}' OR p.hash = '${decodeURIComponent(req.params.loan_id)}')`,
+        endpoint = '/core-service/get',
+        url = `${HOST}${endpoint}`;
+    if (req.query.key === 'loanID') {
+        query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, r.requestId, 
+        r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
+        LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) 
+        WHERE p.userID = '${req.params.id}' AND p.applicationID = '${req.params.loan_id}'`;
+    }
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        if (response['data'][0]){
+            const status_payload = {
+                mandateId: response['data'][0]['mandateId'],
+                requestId: response['data'][0]['requestId']
+            };
+            helperFunctions.mandateStatus(status_payload, function (remita_mandate_status) {
+                let preapproved_loan = (response.data === undefined) ? {} : response.data[0];
+                preapproved_loan.remita = remita_mandate_status;
+                preapproved_loan.merchantId = process.env.REMITA_MERCHANT_ID;
+                preapproved_loan.hash = encodeURIComponent(preapproved_loan.hash);
+                preapproved_loan.url = `${HOST}/offer?t=${preapproved_loan.hash}&i=${preapproved_loan.applicationID}`;
+                if (response['data'][0]['requestId'])
+                    preapproved_loan.remita_hash = SHA512(preapproved_loan.merchantId + process.env.REMITA_API_KEY + response['data'][0]['requestId']);
+                return res.send({
+                    "status": 200,
+                    "error": null,
+                    "response": preapproved_loan
+                });
+            });
+        } else {
+            return res.send({
+                "status": 500,
+                "error": null,
+                "response": 'Remita does not exist!'
+            });
+        }
+    });
 });
 
 module.exports = router;
