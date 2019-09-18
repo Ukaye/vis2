@@ -758,17 +758,17 @@ function onTerminateInvest() {
                             $('#wait').hide();
                             $("#input_amount").val('');
                             $("#input_description").val('');
-                            swal('Investment terminate successful!', '', 'success');
+                            swal('Investment termination initiated successfully', '', 'success');
                             // bindDataTable(selectedInvestment.investmentId, false);
                             table.ajax.reload(null, false);
                         } else {
                             $('#wait').hide();
-                            swal('Oops! An error occurred while executing terminating investment', '', 'error');
+                            swal('Oops! An error occurred while executing investment termination', '', 'error');
                         }
                     },
                     'error': function (err) {
                         $('#wait').hide();
-                        swal('Oops! An error occurred while executing terminating investment', '', 'error');
+                        swal('Oops! An error occurred while executing investment termination', '', 'error');
                     }
                 });
             } else {
@@ -868,7 +868,7 @@ async function onOpenMode(name, operationId, is_credit) {
                     $("#btnTransaction").attr('disabled', true);
                     $("#input_description").attr('disabled', true);
                     $("#input_txn_date").attr('disabled', true);
-                    swal('Oops! An error occurred while initiating deposit dialog, please refresh your this page', '', 'error');
+                    swal(`Oops! An error occurred while initiating ${name} dialog, please refresh your this page`, '', 'error');
                 }
             }
         },
@@ -1059,16 +1059,16 @@ async function onExecutiveTransaction() {
                         table.ajax.reload(null, false);
                     } else {
                         $('#wait').hide();
-                        swal('Oops! An error occurred while executing deposit transaction', '', 'error');
+                        swal(`Oops! An error occurred while executing ${(investmentOps.isDeposit === 1) ? 'Deposit' : 'Withdrawal'} transaction`, '', 'error');
                     }
                 },
                 'error': function (err) {
                     $('#wait').hide();
-                    swal('Oops! An error occurred while executing deposit transaction', '', 'error');
+                    swal(`Oops! An error occurred while executing ${(investmentOps.isDeposit === 1) ? 'Deposit' : 'Withdrawal'} transaction`, '', 'error');
                 }
             });
         } else {
-            swal('Oops! Exceed withdrawal limit, please uncheck enforce count to proceed  ', '', 'error');
+            swal('Oops! Withdrawal limit exceded, please uncheck enforce count to proceed  ', '', 'error');
         }
     } else {
         swal('Oops! Missing required field(s)', '', 'error');
@@ -1097,9 +1097,9 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
             'success': function (payload) {
                 if (payload.status === undefined) {
                     if (payload.isApproved === 1) {
-                        swal('Approved reversed transaction exist', '', 'error');
+                        swal('Approved reversed transaction exists', '', 'error');
                     } else if (payload.isApproved === 0) {
-                        swal('Pending reverse transaction exist', '', 'error');
+                        swal('Pending reverse transaction exists', '', 'error');
                     } else {
                         let _iscredit = (data_row.is_credit === 1) ? 0 : 1;
                         let _operationId = (data_row.is_credit === 1) ? 3 : 1;
@@ -1152,17 +1152,17 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
                                                 $('#wait').hide();
                                                 $("#input_amount").val('');
                                                 $("#input_description").val('');
-                                                swal('Reversal transaction successful!', '', 'success');
+                                                swal('Transaction reversed successfully!', '', 'success');
                                                 // bindDataTable(selectedInvestment.investmentId, false);
                                                 table.ajax.reload(null, false);
                                             } else {
                                                 $('#wait').hide();
-                                                swal('Oops! An error occurred while executing reversal transaction', '', 'error');
+                                                swal('Oops! An error occurred while executing transaction reversal', '', 'error');
                                             }
                                         },
                                         'error': function (err) {
                                             $('#wait').hide();
-                                            swal('Oops! An error occurred while executing reversal transaction', '', 'error');
+                                            swal('Oops! An error occurred while executing transaction reversal', '', 'error');
                                         }
                                     });
                                 } else {
@@ -1532,7 +1532,7 @@ function onApproved(value, approvedId, txnId, id, isDeny) {
         const _mAmt = data_row.amount.toString().split(',').join('');
         const _mBal = data_row.txnBalance.toString().split(',').join('');
         if (parseFloat(_mAmt) > parseFloat(_mBal)) {
-            swal(`Oops! Client's has insufficient balance to carry out this transaction`, '', 'error');
+            swal(`Oops! Client has insufficient balance to carry out this transaction`, '', 'error');
             return;
         }
     }
@@ -1556,7 +1556,7 @@ function onApproved(value, approvedId, txnId, id, isDeny) {
         'success': function (data) {
             if (data.status === undefined) {
                 $('#wait').hide();
-                swal('Approve successful!', '', 'success');
+                swal('Approved successfully!', '', 'success');
                 $("#role_list_group").html('');
                 setApprovalRequirements(data_row);
                 // bindDataTable(selectedInvestment.investmentId, false);
@@ -1579,7 +1579,7 @@ function onReviewed(value, approvedId, txnId, id, isDeny) {
         const _mAmt = data_row.amount.toString().split(',').join('');
         const _mBal = data_row.txnBalance.toString().split(',').join('');
         if (parseFloat(_mAmt) > parseFloat(_mBal)) {
-            swal(`Oops! Client's has insufficient balance to carry out this transaction`, '', 'error');
+            swal(`Oops! Client has insufficient balance to carry out this transaction`, '', 'error');
             return;
         }
     }
@@ -1603,7 +1603,7 @@ function onReviewed(value, approvedId, txnId, id, isDeny) {
         'success': function (data) {
             if (data.status === undefined) {
                 $('#wait').hide();
-                swal('Review successful!', '', 'success');
+                swal('Reviewed successfully!', '', 'success');
                 $("#review_list_group").html('');
                 setReviewRequirements(data_row);
                 table.ajax.reload(null, false);
@@ -1629,7 +1629,7 @@ function onPost(value, approvedId, txnId, id, isDeny) {
         const _mAmt = data_row.amount.toString().split(',').join('');
         const _mBal = data_row.txnBalance.toString().split(',').join('');
         if (parseFloat(_mAmt) > parseFloat(_mBal)) {
-            swal(`Oops! Client's has insufficient balance to carry out this transaction`, '', 'error');
+            swal(`Oops! Client has insufficient balance to carry out this transaction`, '', 'error');
             return;
         }
     }
@@ -1683,7 +1683,7 @@ function onPost(value, approvedId, txnId, id, isDeny) {
         'success': function (data) {
             if (data.status === undefined) {
                 $('#wait').hide();
-                swal('Post successful!', '', 'success');
+                swal('Posted successfully!', '', 'success');
                 $("#post_list_group").html('');
                 setPostRequirements(data_row);
                 // bindDataTable(selectedInvestment.investmentId, false);
