@@ -1571,6 +1571,7 @@ router.get('/logout', function (req, res) {
 });
 
 router.get('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, function (req, res) {
+    return res.send('This api has been deprecated!');
     db.query(`SELECT s.*, a.status app_status, a.close_status, ROUND((s.interest_amount + s.payment_amount), 2) 
         amount FROM application_schedules s, applications a WHERE s.ID = ${req.params.invoice_id} 
         AND s.applicationID = a.ID AND a.userID = ${req.params.id}`, function(error, schedule) {
@@ -1631,7 +1632,7 @@ router.get('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, functi
         });    
 });
 
-router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, function (req, res) {
+router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, function (req, res) {
     db.query(`SELECT s.*, a.ID app_id, a.userID, ROUND((s.interest_amount + s.payment_amount), 2) amount, 
     c.loan_officer, c.branch FROM application_schedules s, applications a, clients c WHERE s.ID = ${req.params.invoice_id} 
     AND s.applicationID = a.ID AND a.userID = ${req.params.id} AND a.userID = c.ID`, function(error, schedule) {
@@ -1681,7 +1682,7 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
                             } else {
                                 let invoice = {};
                                 invoice.invoiceID = req.params.invoice_id;
-                                invoice.agentID = 0;
+                                invoice.agentID = 1;
                                 invoice.applicationID = invoice_.app_id;
                                 invoice.payment_amount = data.actual_payment_amount;
                                 invoice.interest_amount = data.actual_interest_amount;
@@ -1880,7 +1881,7 @@ router.put('/application/update/:id/:application_id', helperFunctions.verifyJWT,
 router.get('/payment-method/initiate/:id', helperFunctions.verifyJWT, function (req, res) {
     paystack.transaction.initialize({
         email: req.user.email,
-        amount: 50
+        amount: 5000
     })
     .then(function(body){
         if (body.status) {
@@ -1999,6 +2000,123 @@ router.delete('/payment-method/delete/:id/:payment_method_id', helperFunctions.v
             "status": 200, 
             "error": null, 
             "response": 'Payment method deleted successfully!'
+        });
+    });
+});
+
+router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, function (req, res) {
+    db.query(`SELECT s.*, a.ID app_id, a.userID, ROUND((s.interest_amount + s.payment_amount), 2) amount, 
+    c.loan_officer, c.branch FROM application_schedules s, applications a, clients c WHERE s.ID = ${req.params.invoice_id} 
+    AND s.applicationID = a.ID AND a.userID = ${req.params.id} AND a.userID = c.ID`, function(error, schedule) {
+        if(error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+
+        if(!schedule[0]) return res.send({
+                "status": 500,
+                "error": null,
+                "response": 'Invoice does not exist!'
+            });
+
+        const invoice_ = schedule[0],
+            amount = parseFloat(invoice_.amount) * 100;
+        
+        paystack.transaction.charge({
+            authorization_code: req.body.authorization_code,
+            email: req.user.email,
+            amount: amount
+        })
+        .then(function(body){
+            if (body.status) {
+                if(body.data.amount !== amount)
+                    return res.send({
+                        "status": 500,
+                        "error": null,
+                        "response": 'Payment amount does not match the invoice amount!'
+                    });
+                if (body.data.status === 'success') {
+                    let data = {
+                            actual_payment_amount: invoice_.payment_amount,
+                            actual_interest_amount: invoice_.interest_amount,
+                            actual_fees_amount: invoice_.fees_amount || '0',
+                            actual_penalty_amount: invoice_.penalty_amount || '0',
+                            payment_source: 'paystack',
+                            payment_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
+                        },
+                        postData = Object.assign({}, data);
+                    postData.payment_status = 1;
+                    delete postData.payment_source;
+                    delete postData.payment_date;
+                    db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`, 
+                        postData, function (error, schedule) {
+                        if (error) {
+                            res.send({
+                                "status": 500, 
+                                "error": error, 
+                                "response": null
+                            });
+                        } else {
+                            let invoice = {};
+                            invoice.invoiceID = req.params.invoice_id;
+                            invoice.agentID = 1;
+                            invoice.applicationID = invoice_.app_id;
+                            invoice.payment_amount = data.actual_payment_amount;
+                            invoice.interest_amount = data.actual_interest_amount;
+                            invoice.fees_amount = data.actual_fees_amount;
+                            invoice.penalty_amount = data.actual_penalty_amount;
+                            invoice.payment_source = data.payment_source;
+                            invoice.payment_date = data.payment_date;
+                            invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                            invoice.clientID = invoice_.userID;
+                            invoice.loan_officerID = invoice_.loan_officer;
+                            invoice.branchID = invoice_.branch;
+                            invoice.type = 'multiple';
+                            db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response) {
+                                if (error) {
+                                    res.send({
+                                        "status": 500, 
+                                        "error": error, 
+                                        "response": null
+                                    });
+                                } else {
+                                    let payload = {};
+                                    payload.category = 'Application';
+                                    payload.userid = req.cookies.timeout;
+                                    payload.description = 'Loan Application Payment Confirmed';
+                                    payload.affected = invoice_.app_id;
+                                    notificationsService.log(req, payload);
+                                    return res.send({
+                                        "status": 200, 
+                                        "error": null, 
+                                        "response": "Invoice payment confirmed successfully!"
+                                    });
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    return res.send({
+                        "status": 500,
+                        "error": null,
+                        "response": body.data.gateway_response
+                    });
+                }
+            } else {
+                return res.send({
+                    "status": 500,
+                    "error": null,
+                    "response": body.message
+                });
+            }
+        })
+        .catch(function(error){
+            if(error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
         });
     });
 });
