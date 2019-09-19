@@ -1,5 +1,6 @@
 $(document).ready(function() {
     loadComments();
+    getInformationRequests();
     read_write_1();
 });
 
@@ -191,6 +192,7 @@ function loadApplication(user_id){
                             } else {
                                 $('.page-'+i).append('<div class="col-md-3"><a class="thumbnail" data-target="_blank" data-toggle="tooltip" data-placement="bottom" title="Click to Download!" href="'+file+'" style="padding: 25px 0;"><i class="fa fa-file" style="font-size: 150px; display: block; text-align: center;"></i></a><p style="text-align: center;">'+file_name.replace(/_/g, ' ')+'</p></div>');
                             }
+                            $('#request-file-reupload-name').append('<option value = "'+file_name+'">'+file_name+'</option>');
                         }
                         count++;
                         if (count === files_count){
@@ -1844,6 +1846,93 @@ function updatePreapplicationStatus(id, stage, callback) {
         'error': function (err) {
             console.log(err);
             callback();
+        }
+    });
+}
+
+$('#request-type').change((e) => {
+    switch (e.target.value) {
+        case 'file-upload': {
+            $('#request-file-upload-div').show();
+            $('#request-file-reupload-div').hide();
+            break;
+        }
+        case 'file-reupload': {
+            $('#request-file-upload-div').hide();
+            $('#request-file-reupload-div').show();
+            break;
+        }
+        default: {
+            $('#request-file-upload-div').hide();
+            $('#request-file-reupload-div').hide();
+        }
+    }
+});
+
+function requestInfo() {
+    let request = {};
+    request.type = $('#request-type').val();
+    request.description = $('#request-description').val();
+    if (!request.type || !request.description)
+        return notification('Kindly fill all required fields!','','error');
+    switch (request.type) {
+        case 'file-upload': {
+            request.filename = $('#request-file-upload-name').val();
+            if (!request.filename)
+                return notification('Kindly fill all required fields!','','error');
+            break;
+        }
+        case 'file-reupload': {
+            request.filename = $('#request-file-reupload-name').val();
+            if (!request.filename)
+                return notification('Kindly fill all required fields!','','error');
+            break;
+        }
+    }
+    request.created_by = (JSON.parse(localStorage.user_obj))['ID'];
+    $('#wait').show();
+    $.ajax({
+        'url': '/user/application/information-request/'+application_id,
+        'type': 'post',
+        'data': request,
+        'success': function (data) {
+            $('#wait').hide();
+            notification('Information requested successfully','','success');
+            window.location.reload();
+        },
+        'error': function (err) {
+            $('#wait').hide();
+            notification('Oops! An error occurred while requesting information','','error');
+        }
+    });
+}
+
+function getInformationRequests() {
+    $.ajax({
+        'url': '/user/application/information-request/'+application_id,
+        'type': 'get',
+        'success': function (data) {
+            let information = data.response,
+                $information = $('#information');
+            $information.html('');
+            if (!information[0]) return $information.append('<h2 style="margin: auto;">No information request available yet!</h2>');
+            information.forEach(function (info) {
+                $information.append('<div class="row">\n' +
+                    '    <div class="col-sm-2">\n' +
+                    '        <div class="thumbnail"><img class="img-responsive user-photo" src="https://ssl.gstatic.com/accounts/ui/avatar_2x.png"></div>\n' +
+                    '    </div>\n' +
+                    '    <div class="col-sm-10">\n' +
+                    '        <div class="panel panel-default">\n' +
+                    '            <div class="panel-heading"><strong>'+info.fullname+'</strong> <span class="text-muted">requested for '+info.type.replace(/-/g, ' ')+'</span></div>\n' +
+                    '            <div class="panel-body">'+info.description+'</div>\n' +
+                    '        </div>\n' +
+                    '    </div>\n' +
+                    '</div>');
+            });
+        },
+        'error': function (err) {
+            console.log(err);
+            notification('No internet connection','','error');
         }
     });
 }

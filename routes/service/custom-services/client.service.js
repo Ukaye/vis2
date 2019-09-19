@@ -965,41 +965,15 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                             res.send({"status": 500, "error": error, "response": null});
                         } else {
                             result.payment_history = payment_history;
-                            let path2 = `files/application-${result.loanID}/`;
-                            if (!fs.existsSync(path)) {
-                                result.files = {};
-                                if (!fs.existsSync(path2)) {
-                                    return res.send({
-                                        "status": 200,
-                                        "error": null,
-                                        "response": result
-                                    });
+                            db.query('SELECT * FROM application_information_requests WHERE applicationID=? ORDER BY ID desc', 
+                            [result.loanID], function (error, information_requests, fields) {
+                                if (error) {
+                                    res.send({"status": 500, "error": error, "response": null});
                                 } else {
-                                    fs.readdir(path2, function (err, files){
-                                        async.forEach(files, function (file, callback){
-                                            let filename = file.split('.')[0].split('_');
-                                            filename.shift();
-                                            obj2[filename.join('_')] = `${req.HOST}/${path2}${file}`;
-                                            callback();
-                                        }, function(data){
-                                            result.files = Object.assign({}, result.files, obj2);
-                                            return res.send({
-                                                "status": 200,
-                                                "error": null,
-                                                "response": result
-                                            });
-                                        });
-                                    });
-                                }
-                            } else {
-                                fs.readdir(path, function (err, files){
-                                    async.forEach(files, function (file, callback){
-                                        let filename = file.split('.')[0].split('_');
-                                        filename.shift();
-                                        obj[filename.join('_')] = `${req.HOST}/${path}${file}`;
-                                        callback();
-                                    }, function(data){
-                                        result.files = obj;
+                                    result.information_requests = information_requests;
+                                    let path2 = `files/application-${result.loanID}/`;
+                                    if (!fs.existsSync(path)) {
+                                        result.files = {};
                                         if (!fs.existsSync(path2)) {
                                             return res.send({
                                                 "status": 200,
@@ -1023,9 +997,43 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                                 });
                                             });
                                         }
-                                    });
-                                });
-                            }
+                                    } else {
+                                        fs.readdir(path, function (err, files){
+                                            async.forEach(files, function (file, callback){
+                                                let filename = file.split('.')[0].split('_');
+                                                filename.shift();
+                                                obj[filename.join('_')] = `${req.HOST}/${path}${file}`;
+                                                callback();
+                                            }, function(data){
+                                                result.files = obj;
+                                                if (!fs.existsSync(path2)) {
+                                                    return res.send({
+                                                        "status": 200,
+                                                        "error": null,
+                                                        "response": result
+                                                    });
+                                                } else {
+                                                    fs.readdir(path2, function (err, files){
+                                                        async.forEach(files, function (file, callback){
+                                                            let filename = file.split('.')[0].split('_');
+                                                            filename.shift();
+                                                            obj2[filename.join('_')] = `${req.HOST}/${path2}${file}`;
+                                                            callback();
+                                                        }, function(data){
+                                                            result.files = Object.assign({}, result.files, obj2);
+                                                            return res.send({
+                                                                "status": 200,
+                                                                "error": null,
+                                                                "response": result
+                                                            });
+                                                        });
+                                                    });
+                                                }
+                                            });
+                                        });
+                                    }
+                                }
+                            });
                         }
                     });
                 }

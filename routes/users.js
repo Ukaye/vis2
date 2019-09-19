@@ -2541,6 +2541,40 @@ users.get('/application/comments/:id', function(req, res, next) {
     })
 });
 
+users.post('/application/information-request/:id', (req, res) => {
+    let payload = req.body;
+    payload.applicationID = req.params.id;
+    payload.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    db.query('INSERT INTO application_information_requests SET ?', payload, (error, response) => {
+        if(error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+        return res.send({
+            "status": 200,
+            "error": null,
+            "response": "Application information requested successfully!"
+        });
+    });
+});
+
+users.get('/application/information-request/:id', function(req, res, next) {
+    db.query(`SELECT i.*, u.fullname FROM application_information_requests i, users u 
+    WHERE i.applicationID = ${req.params.id} AND i.created_by=u.ID ORDER BY i.ID desc`, (error, information) => {
+        if(error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+        return res.send({
+            "status": 200,
+            "error": null,
+            "response": information
+        });
+    })
+});
+
 users.post('/application/schedule/:id', function(req, res, next) {
     db.getConnection(function(err, connection) {
         if (err) throw err;
