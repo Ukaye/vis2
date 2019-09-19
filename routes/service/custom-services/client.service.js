@@ -2129,4 +2129,43 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
     });
 });
 
+router.post('/application/comment/:id/:loan_id', helperFunctions.verifyJWT, (req, res) => {
+    let payload = {};
+    payload.user_type = 'client';
+    payload.text = req.body.text;
+    payload.userID = req.params.id;
+    payload.applicationID = req.params.loan_id;
+    payload.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    db.query('INSERT INTO application_comments SET ?', payload,
+        (error, response) => {
+            if(error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+            return res.send({
+                "status": 200,
+                "error": null,
+                "response": "Application commented successfully!"
+            });
+        });
+});
+
+router.get('/application/comment/:id/:loan_id', (req, res) => {
+    db.query(`SELECT c.text, c.date_created, (SELECT fullname FROM clients WHERE ID = c.userID) fullname
+    FROM application_comments c WHERE c.applicationID = ${req.params.loan_id} AND c.userID = ${req.params.id} 
+        AND c.user_type = 'client' ORDER BY c.ID DESC`, (error, comments) => {
+        if(error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+        return res.send({
+            "status": 200,
+            "error": null,
+            "response": comments
+        });
+    });
+});
+
 module.exports = router;

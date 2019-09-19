@@ -2505,34 +2505,31 @@ users.get('/workflow_process_all/:application_id', function(req, res, next) {
 });
 
 users.post('/application/comments/:id/:user_id', function(req, res, next) {
-    db.query('SELECT * FROM applications WHERE ID = ?', [req.params.id], function (error, application, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
-        } else {
-            db.query('INSERT INTO application_comments SET ?', [{applicationID:req.params.id,userID:req.params.user_id,text:req.body.text,date_created:moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')}],
-                function (error, response, fields) {
-                    if(error || !response)
-                        return res.send({"status": 500, "error": error, "response": null});
-                    db.query('SELECT c.text, c.date_created, u.fullname FROM application_comments AS c, users AS u WHERE c.applicationID = ? AND c.userID=u.ID ORDER BY c.ID desc', [req.params.id], function (error, comments, fields) {
-                        if(error){
-                            res.send({"status": 500, "error": error, "response": null});
-                        } else {
-                            let payload = {}
-                            payload.category = 'Application'
-                            payload.userid = req.cookies.timeout
-                            payload.description = 'New comment on Loan Application'
-                            payload.affected = req.params.id
-                            notificationsService.log(req, payload)
-                            res.send({"status": 200, "message": "Application commented successfully!", "response": comments});
-                        }
-                    });
-                });
-        }
-    });
+    db.query('INSERT INTO application_comments SET ?', [{applicationID:req.params.id,userID:req.params.user_id,text:req.body.text,date_created:moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')}],
+        function (error, response, fields) {
+            if(error || !response)
+                return res.send({"status": 500, "error": error, "response": null});
+            db.query('SELECT c.text, c.date_created, u.fullname FROM application_comments AS c, users AS u WHERE c.applicationID = ? AND c.userID=u.ID ORDER BY c.ID desc', [req.params.id], function (error, comments, fields) {
+                if(error){
+                    res.send({"status": 500, "error": error, "response": null});
+                } else {
+                    let payload = {}
+                    payload.category = 'Application'
+                    payload.userid = req.cookies.timeout
+                    payload.description = 'New comment on Loan Application'
+                    payload.affected = req.params.id
+                    notificationsService.log(req, payload)
+                    res.send({"status": 200, "message": "Application commented successfully!", "response": comments});
+                }
+            });
+        });
 });
 
 users.get('/application/comments/:id', function(req, res, next) {
-    db.query('SELECT c.text, c.date_created, u.fullname FROM application_comments AS c, users AS u WHERE c.applicationID = ? AND c.userID=u.ID ORDER BY c.ID desc', [req.params.id], function (error, comments, fields) {
+    db.query(`SELECT c.text, c.date_created, 
+        (CASE WHEN c.user_type = 'admin' THEN (SELECT fullname FROM users WHERE ID = c.userID)
+        WHEN c.user_type = 'client' THEN (SELECT fullname FROM clients WHERE ID = c.userID) END) fullname
+        FROM application_comments c WHERE c.applicationID = ${req.params.id} ORDER BY c.ID DESC`, (error, comments) => {
         if(error){
             res.send({"status": 500, "error": error, "response": null});
         } else {
