@@ -2,6 +2,8 @@ const express = require('express');
 const moment = require('moment');
 const db = require('../db');
 const router = express.Router();
+const axios = require('axios');
+const sRequest = require('./service/s_request');
 
 router.post('/products', function (req, res, next) {
     let data = req.body;
@@ -78,6 +80,7 @@ router.post('/products/:id', function (req, res, next) {
     data = req.body;
     data.date_modified = dt;
     delete data.ID;
+    const HOST = `${req.protocol}://${req.get('host')}`;
     db.query(`UPDATE investment_products SET status = 0 WHERE ID = ${req.params.id}`, function (error, result, fields) {
         if (error) {
             res.send({
@@ -86,21 +89,6 @@ router.post('/products/:id', function (req, res, next) {
                 "response": null
             });
         } else {
-            // if (data.chkEnforceCount === 0) {
-            //     query = `UPDATE investments SET canWithdraw = 1 WHERE ID <> 0 AND productId = ${productId}`;
-            //     endpoint = `/core-service/get`;
-            //     url = `${HOST}${endpoint}`;
-            //     axios.get(url, {
-            //         params: {
-            //             query: query
-            //         }
-            //     });
-            // }
-            // res.send({
-            //     "status": 200,
-            //     "message": "Investment product updated successfully",
-            //     "response": result
-            // });
             data.status = 1;
             data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
             db.query('INSERT INTO investment_products SET ?', data, function (error, result, fields) {
@@ -111,15 +99,98 @@ router.post('/products/:id', function (req, res, next) {
                         "response": null
                     });
                 } else {
-                    res.send({
-                        "status": 200,
-                        "message": "Investment product saved successfully!"
+                    productCloneOps(HOST, req.params.id, result.insertId).then(payload => {
+                        res.send({
+                            "status": 200,
+                            "message": "Investment product saved successfully!"
+                        });
                     });
                 }
             });
         }
     });
 });
+
+function getOriginalProductRequirement(productId, HOST, table) {
+    return new Promise((resolve, reject) => {
+        let query = `Select * from ${table} 
+        WHERE productId = ${productId} AND status = 1`;
+        let endpoint = `/core-service/get`;
+        let url = `${HOST}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(response_prdt_ => {
+            resolve(response_prdt_.data);
+        }, err => {
+            resolve([]);
+        });
+    });
+}
+
+
+function createClonedProductRequirement(values, isDoc, newProductId, table) {
+    return new Promise((resolve, reject) => {
+        let baseQuery = (!isDoc) ? `INSERT INTO
+        ${table}(
+            roleId,
+            operationId,
+            productId,
+            createdDate,
+            updatedDate,
+            createdBy,
+            status,
+            isAllRoles,
+            priority
+        )VALUES ` : `INSERT INTO
+        ${table}(
+            productId,
+            name,
+            createdBy,
+            createdAt,
+            operationId,
+            status
+        )VALUES `;
+        let bodyQuery = '';
+        for (let i = 0; i < values.length; i++) {
+            const item = values[i];
+            const dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+            if (!isDoc)
+                bodyQuery += `('${item.roleId}',${item.operationId},${newProductId},'${item.createdDate}','${dt}',${item.createdBy},${1},'${item.isAllRoles}','${item.priority}')`;
+            else
+                bodyQuery += `(${newProductId},'${item.name}',${item.createdBy},'${dt}',${item.operationId},${1})`;
+
+            if (values.length !== i + 1) {
+                bodyQuery += ',';
+            }
+        }
+
+        let query = baseQuery + bodyQuery;
+        sRequest.get(query).then(result => {
+            resolve(result);
+        }, err => {
+            reject(err);
+        });
+    });
+}
+
+async function productCloneOps(HOST, originalProductId, newProductId) {
+    let tableNames = [{ name: 'investment_product_reviews', isDoc: false },
+    { name: 'investment_product_posts', isDoc: false },
+    { name: 'investment_product_requirements', isDoc: false },
+    { name: 'investment_doc_requirement', isDoc: true }];
+    let results = [];
+    for (let index = 0; index < tableNames.length; index++) {
+        const table = tableNames[index];
+        const data = await getOriginalProductRequirement(originalProductId, HOST, table.name);
+        if (data.length > 0) {
+            const clonedProduct = await createClonedProductRequirement(data, table.isDoc, newProductId, table.name);
+            results.push(clonedProduct);
+        }
+    }
+    return results;
+}
 
 router.post('/products-status/:id', function (req, res, next) {
     let date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');

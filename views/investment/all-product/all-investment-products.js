@@ -247,7 +247,7 @@ function bindDataTable() {
         columns: [{
             width: "auto",
             "mRender": function (data, type, full) {
-                return `<span class="badge badge-pill ${(full.isDeactivated === 0) ? 'badge-primary' : 'badge-danger'}">${(full.status === 0) ? 'Active' : 'Inactive'}</span>`;
+                return `<span class="badge badge-pill ${(full.isDeactivated === 0) ? 'badge-primary' : 'badge-danger'}">${(full.isDeactivated === 0) ? 'Active' : 'Inactive'}</span>`;
             }
         },
         {

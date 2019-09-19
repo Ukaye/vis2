@@ -490,7 +490,7 @@ function set_investment_product() {
     product_obj.saving_charge_opt = $('#opt_on_deposit').val();
     product_obj.withdrawal_fees = $('#withdrawal_charge_freq').val();
     product_obj.withdrawal_freq_duration = $('#withdrawal_charge_duration').val();
-    product_obj.minimum_bal = ($('#minimum_bal').val() !=='') ? $('#minimum_bal').val() : '0';
+    product_obj.minimum_bal = ($('#minimum_bal').val() !== '') ? $('#minimum_bal').val() : '0';
     product_obj.code = $('#product_code').val();
     product_obj.interest_rate = $('#interest_rate').val();
     product_obj.interest_disbursement_time = $('#condition_for_interest').val();
@@ -558,6 +558,7 @@ function set_investment_product() {
                 swal('Oops! You have not made any changes',
                     '', 'error');
             } else {
+                product_obj.createdby = (JSON.parse(localStorage.getItem("user_obj"))).ID;
                 $.ajax({
                     url: `/investment/products/${product_obj.ID}`,
                     'type': 'post',
