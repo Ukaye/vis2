@@ -871,7 +871,11 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
             WHEN s.payment_collect_date > CURDATE() AND s.interest_collect_date > CURDATE() THEN 1
             WHEN s.payment_collect_date = CURDATE() OR s.interest_collect_date = CURDATE() THEN 2
             WHEN s.payment_collect_date < CURDATE() OR s.interest_collect_date < CURDATE() THEN 3
-        END) payment_status
+        END) payment_status,
+        (CASE 
+            WHEN (SELECT COUNT(*) FROM application_comments WHERE a.ID = applicationID AND a.userID = userID) > 0 THEN 1
+            ELSE 0
+        END) information_request_status
         FROM clients c, client_applications p LEFT JOIN applications a ON p.ID = a.preapplicationID AND a.userID = ${id} 
         LEFT JOIN application_schedules s ON s.ID = (SELECT MIN(ID) FROM application_schedules WHERE a.ID = applicationID AND payment_status = 0)
         WHERE p.userID = ${id} AND p.userID = c.ID AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) 
