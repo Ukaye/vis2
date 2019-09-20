@@ -693,6 +693,7 @@ router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
             });
         } else {
             fs.readdir(path, function (err, files){
+                files = helperFunctions.removeFileDuplicates(path, files);
                 async.forEach(files, function (file, callback){
                     let filename = file.split('.')[1].split('_');
                     filename.shift();
@@ -901,9 +902,9 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
                 applications = (response.data === undefined) ? [] : response.data;
             async.forEach(applications, (application, callback) => {
                 application.document_upload_status = 0;
-                let folder_url_1 = `files/application-${application.loanID}`,
-                    folder_url_2 = `files/client_application-${application.loanID}`;
-                if (application.loanID && (fs.existsSync(folder_url_1) || fs.existsSync(folder_url_2)))
+                let folder_path_1 = `files/application-${application.loanID}`,
+                    folder_path_2 = `files/client_application-${application.loanID}`;
+                if (application.loanID && (fs.existsSync(folder_path_1) || fs.existsSync(folder_path_2)))
                     application.document_upload_status = 1;
                 applications_.push(application);
                 callback();
@@ -998,6 +999,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                             });
                                         } else {
                                             fs.readdir(path2, function (err, files){
+                                                files = helperFunctions.removeFileDuplicates(path2, files);
                                                 async.forEach(files, function (file, callback){
                                                     let filename = file.split('.')[0].split('_');
                                                     filename.shift();
@@ -1015,6 +1017,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                         }
                                     } else {
                                         fs.readdir(path, function (err, files){
+                                            files = helperFunctions.removeFileDuplicates(path, files);
                                             async.forEach(files, function (file, callback){
                                                 let filename = file.split('.')[0].split('_');
                                                 filename.shift();
@@ -1030,6 +1033,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                                     });
                                                 } else {
                                                     fs.readdir(path2, function (err, files){
+                                                        files = helperFunctions.removeFileDuplicates(path2, files);
                                                         async.forEach(files, function (file, callback){
                                                             let filename = file.split('.')[0].split('_');
                                                             filename.shift();
@@ -1297,6 +1301,7 @@ router.get('/loan/get/:id/:application_id', helperFunctions.verifyJWT, function 
                             });
                         } else {
                             fs.readdir(path, function (err, files){
+                                files = helperFunctions.removeFileDuplicates(path, files);
                                 async.forEach(files, function (file, callback){
                                     let filename = file.split('.')[0].split('_');
                                     filename.shift();
@@ -1433,6 +1438,7 @@ router.get('/application/getV2/:application_id', function (req, res) {
             res.send(result);
         } else {
             fs.readdir(path, function (err, files){
+                files = helperFunctions.removeFileDuplicates(path, files);
                 async.forEach(files, function (file, callback){
                     let filename = file.split('.')[0].split('_');
                     filename.shift();

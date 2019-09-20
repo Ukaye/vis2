@@ -1,5 +1,7 @@
 let functions = {},
+    fs = require('fs'),
     db = require('./db'),
+    path = require('path'),
     moment = require('moment'),
     request = require('request'),
     SHA512 = require('js-sha512'),
@@ -337,5 +339,31 @@ functions.verifyJWT = function (req, res, next) {
         next();
     });
 };
+
+functions.removeFileDuplicates = (folder_path, files) => {
+    let check = {},
+        files_ = [];
+    for (let i=0; i<files.length; i++) {
+        let file = files[i],
+            file_ = file.split('.')[0].split('_');
+        file_.shift();
+        name = file_.join('_');
+        datetime = fs.statSync(path.join(folder_path, file)).ctime;
+        if (check.name === name) {
+            if ((new Date(datetime) > new Date(check.datetime))) {
+                files_[files_.indexOf(check.file)] = file;
+                check.name = name;
+                check.datetime = datetime;
+                check.file = file;
+            }
+        } else {  
+            check.name = name;
+            check.datetime = datetime;
+            check.file = file;
+            files_.push(file);
+        }
+    }
+    return files_;
+}
 
 module.exports = functions;
