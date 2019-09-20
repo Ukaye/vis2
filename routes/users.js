@@ -11,7 +11,7 @@ let token,
     bcrypt = require('bcryptjs'),
     jwt = require('jsonwebtoken'),
     nodemailer = require('nodemailer'),
-    xeroFunctions = require('../routes/xero');
+    xeroFunctions = require('../routes/xero'),
     hbs = require('nodemailer-express-handlebars'),
     helperFunctions = require('../helper-functions'),
     smtpTransport = require('nodemailer-smtp-transport'),
@@ -512,6 +512,7 @@ users.get('/all-users', function(req, res, next) {
                 let path = 'files/users/'+k.username+'/';
                 if (fs.existsSync(path)){
                     fs.readdir(path, function (err, files){
+                        files = helperFunctions.removeFileDuplicates(path, files);
                         async.forEach(files, function (file, callback){
                             k.image = path+file;
                             callback();
@@ -1538,6 +1539,7 @@ users.get('/user/:id', function(req, res, next) {
                         items = [],
                         image = "";
                     fs.readdir(path, function (err, files){
+                        files = helperFunctions.removeFileDuplicates(path, files);
                         files.forEach(function (file){
                             image = path+file;
                         });
@@ -2012,6 +2014,7 @@ users.get('/application-id/:id', function(req, res, next) {
                                                 return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
                                             } else {
                                                 fs.readdir(path2, function (err, files){
+                                                    files = helperFunctions.removeFileDuplicates(path2, files);
                                                     async.forEach(files, function (file, callback){
                                                         let filename = file.split('.')[0].split('_');
                                                         filename.shift();
@@ -2025,6 +2028,7 @@ users.get('/application-id/:id', function(req, res, next) {
                                             }
                                         } else {
                                             fs.readdir(path, function (err, files){
+                                                files = helperFunctions.removeFileDuplicates(path, files);
                                                 async.forEach(files, function (file, callback){
                                                     let filename = file.split('.')[0].split('_');
                                                     filename.shift();
@@ -2036,6 +2040,7 @@ users.get('/application-id/:id', function(req, res, next) {
                                                         return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
                                                     } else {
                                                         fs.readdir(path2, function (err, files){
+                                                            files = helperFunctions.removeFileDuplicates(path2, files);
                                                             async.forEach(files, function (file, callback){
                                                                 let filename = file.split('.')[0].split('_');
                                                                 filename.shift();
@@ -9105,6 +9110,7 @@ users.get('/attached-images/:folder/', function(req, res, next) {
     if (fs.existsSync(path)){
         fs.readdir(path, function (err, files){
             var obj = [];
+            files = helperFunctions.removeFileDuplicates(path, files);
             async.forEach(files, function (file, callback){
                 obj.push(path+file)
                 callback();
