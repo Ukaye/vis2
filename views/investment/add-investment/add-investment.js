@@ -333,7 +333,6 @@ function validate() {
 }
 
 
-
 $('#client').on("select2:selecting", function (e) {
     $('#wait').show();
     setTimeout(function () {

@@ -25,11 +25,7 @@ const sRequest = require('../s_request');
 const isAfter = require('date-fns/is_after');
 var isLastDayOfMonth = require('date-fns/is_last_day_of_month');
 
-//re.role_name as review_role_name,po.role_name as post_role_name,
-// left join user_roles re on a.roleId = re.id
-//     left join user_roles po on a.roleId = po.id
-//     left join users u on u.ID = a.approvedBy
-
+/**End Point returns list of roles assign to a specific user **/
 router.get('/get-txn-user-roles/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT t.ID,t.txn_date,t.description,t.amount,u.fullname, t.isDeny,
@@ -58,6 +54,7 @@ router.get('/get-txn-user-roles/:id', function (req, res, next) {
     })
 });
 
+/**End point returns the details of a specific product **/
 router.get('/get-product-configs/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT v.ID as investmentId, v.amount,p.* FROM investments v
@@ -80,6 +77,7 @@ router.get('/get-product-configs/:id', function (req, res, next) {
     })
 });
 
+/**Function returns organisation info and settings **/
 function organisationSettings(HOST) {
     return new Promise((resolve, reject) => {
         let query = `SELECT c.*, p.min_days_termination, p.name as productName, p.code FROM investment_config c
@@ -98,7 +96,7 @@ function organisationSettings(HOST) {
     });
 }
 
-
+/**End point to create investment/savings transaction and it also enforces product requirement on the transaction **/
 router.post('/create', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     var data = req.body
@@ -357,7 +355,7 @@ router.post('/create', function (req, res, next) {
     }, err => { });
 });
 
-
+/**Function call to create investment/savings transaction document requirement **/
 function setDocRequirement(HOST, data, txnId) {
     let query = `SELECT * FROM investment_doc_requirement
                 WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
@@ -388,7 +386,7 @@ function setDocRequirement(HOST, data, txnId) {
         .catch(function (error) { });
 }
 
-
+/**End point to verify the number of uploaded investment/savings transaction document **/
 router.get('/verify-doc-uploads', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.query;
@@ -423,6 +421,7 @@ router.get('/verify-doc-uploads', function (req, res, next) {
 });
 
 
+/**End point to create transfer **/
 router.post('/create-transfers', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     var data = req.body
@@ -584,6 +583,7 @@ router.post('/create-transfers', function (req, res, next) {
         });
 });
 
+/**End point to approve an investment/savings transaction **/
 router.post('/approves', function (req, res, next) {
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     const HOST = `${req.protocol}://${req.get('host')}`;
@@ -693,6 +693,7 @@ router.post('/approves', function (req, res, next) {
         });
 });
 
+/**End point to reviews an investment/savings transaction **/
 router.post('/reviews', function (req, res, next) {
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     const HOST = `${req.protocol}://${req.get('host')}`;
@@ -803,6 +804,7 @@ router.post('/reviews', function (req, res, next) {
         });
 });
 
+/**End point to post an investment/savings transaction **/
 router.post('/posts', function (req, res, next) {
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     const HOST = `${req.protocol}://${req.get('host')}`;
@@ -970,6 +972,7 @@ router.post('/posts', function (req, res, next) {
         });
 });
 
+
 router.post('/transfer-fund-wallet', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     const data = req.body;
@@ -980,6 +983,7 @@ router.post('/transfer-fund-wallet', function (req, res, next) {
     });
 });
 
+/**Function call to fund to client wallet and investment/savings account **/
 async function fundBeneficialAccount(data, HOST) {
     if (data.isTransfer === '1') {
         return new Promise((resolve, reject) => {
@@ -1037,6 +1041,7 @@ async function fundBeneficialAccount(data, HOST) {
     }
 }
 
+/** Function call to compute the current investment/savings account balance with interest **/
 function computeAccountBalanceIncludeInterest(investmentId, HOST) {
     return new Promise((resolve, reject) => {
         let query = `Select amount, is_credit from investment_txns 
@@ -1067,6 +1072,7 @@ function computeAccountBalanceIncludeInterest(investmentId, HOST) {
     });
 }
 
+/** Function call to compute the current investment/savings account balance without interest **/
 function computeCurrentBalance(investmentId, HOST) {
     return new Promise((resolve, reject) => {
         let query = `Select amount, is_credit from investment_txns WHERE isWallet = 0 AND isInterest = 0 AND investmentId = ${investmentId} 
@@ -1102,6 +1108,7 @@ function currentBalanceForInterestCalculation(investmentId, HOST) {
     });
 }
 
+/** Function call to compute the current investment/savings account and client wallet balance **/
 async function computeTotalBalance(clientId, investmentId, HOST) {
     let currentAcctBalance = 0;
     let walletBalance = 0;
@@ -1112,6 +1119,7 @@ async function computeTotalBalance(clientId, investmentId, HOST) {
     return { currentAcctBalance: currentAcctBalance, currentWalletBalance: walletBalance.currentWalletBalance };
 }
 
+/** Function call to compute current client wallet balance **/
 function computeWalletBalance(clientId, HOST) {
     return new Promise((resolve, reject) => {
         let query = `Select amount, is_credit from investment_txns WHERE isWallet = 1 AND clientId = ${clientId} 
@@ -1186,7 +1194,7 @@ function updateTerminatedOrMaturedInvestment(investmentId, HOST, isInvestmentMat
     });
 }
 
-
+/** Function call to compute investment up-front interest **/
 async function upFrontInterest(data, HOST) {
     if (data.interest_disbursement_time.toString() === 'Up-Front' && data.is_capital.toString() === '1') {
         return new Promise((resolve, reject) => {
@@ -1250,7 +1258,7 @@ async function upFrontInterest(data, HOST) {
     }
 }
 
-
+/** Function call to compute and deduct transfer charge **/
 async function deductTransferCharge(data, HOST, amount) {
     return new Promise((resolve, reject) => {
         if (data.isInvestmentMatured.toString() === '0') {
@@ -1320,6 +1328,7 @@ function fundWallet(value, HOST) {
     });
 }
 
+/** Function call to close an investment account after maturity or termination operation **/
 function closeInvestmentWallet(investmentId, HOST) {
     return new Promise((resolve, reject) => {
         let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -1357,7 +1366,7 @@ function closeInvestmentWallet(investmentId, HOST) {
 //     });
 // }
 
-
+/** Function call to compute and charge for force termination of investment **/
 function chargeForceTerminate(data, HOST) {
     return new Promise((resolve, reject) => {
         if (data.isInvestmentTerminated.toString() === '1' && data.isForceTerminate.toString() === '1') {
@@ -1433,8 +1442,7 @@ function chargeForceTerminate(data, HOST) {
     });
 }
 
-
-
+/** Function call to compute all existing interest on an account **/
 function getExistingInterests(data, HOST) {
     return new Promise((resolve, reject) => {
         let query = `SELECT v.ID,v.isWithHoldings, v.description,v.is_credit,v.amount as txnAmount,v.balance as txnBalance,v.isApproved,
@@ -1473,6 +1481,7 @@ function getProductConfigInterests(data, HOST) {
     });
 }
 
+/** Function call to compute interest when investment mature or after termination **/
 async function getInterestEndOfTenure(HOST, data) {
     const matureMonths = await getValidInvestmentMatureMonths(HOST, data.investmentId, 0);
     try {
@@ -1500,6 +1509,7 @@ async function getInterestEndOfTenure(HOST, data) {
 
 }
 
+/** Function call to compute and update investment account after termination **/
 function updateTerminatedInterest(HOST, data) {
     return new Promise((resolve, reject) => {
         let query = `UPDATE investment_interests SET isTerminated = 1 
@@ -1521,6 +1531,7 @@ function updateTerminatedInterest(HOST, data) {
     });
 }
 
+/** Function call to compute and reverse investment interest after termination **/
 async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
     const _getExistingInterests = await getExistingInterests(data, HOST);
     const _getProductConfigInterests = await getProductConfigInterests(data, HOST);
@@ -1799,7 +1810,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
     return {};
 }
 
-
+/** Function call to raise a debit transaction on client wallet **/
 function debitWalletTxns(HOST, data) {
     return new Promise((resolve, reject) => {
         if (data.isPaymentMadeByWallet.toString() === '1') {
@@ -1842,7 +1853,7 @@ function debitWalletTxns(HOST, data) {
     });
 }
 
-
+/** Function call to compute and post any form of charge related to a transaction **/
 async function setcharges(data, HOST, isReversal) {
     return new Promise((resolve, reject) => {
         if (data.isInvestmentTerminated === '1' || data.isTransfer === '1') {
@@ -2374,6 +2385,7 @@ async function setcharges(data, HOST, isReversal) {
     });
 }
 
+/** Function call to compute and post VAT **/
 function deductVatTax(HOST, data, _amount, txn, balance) {
     return new Promise((resolve, reject) => {
         if (data.isInvestmentMatured.toString() === '0') {
@@ -2428,6 +2440,7 @@ function deductVatTax(HOST, data, _amount, txn, balance) {
 
 }
 
+/** End point to compute interest **/
 router.post('/compute-interest', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.body;
@@ -2438,6 +2451,7 @@ router.post('/compute-interest', function (req, res, next) {
     });
 });
 
+/** End point to return fully mature months in an investment account**/
 router.get('/mature-interest-months/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     // monthlyMaturedInvestmentDate(HOST, req.params.id).then(payload => {
@@ -2452,6 +2466,7 @@ router.get('/mature-interest-months/:id', function (req, res, next) {
     });
 });
 
+/** End point to return an investment daily list of interest **/
 router.get('/client-interests/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
@@ -2500,6 +2515,7 @@ router.get('/client-interests/:id', function (req, res, next) {
     });
 });
 
+/** End point to return an investment transactions within a date range **/
 router.get('/investment-statements/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
@@ -2578,6 +2594,7 @@ async function monthlyMaturedInvestmentDate(host, investmentId) {
     }
 }
 
+/** Function call to return number of mature months and investment start date **/
 function investmentMonths(host, investmentId) {
     return new Promise((resolve, reject) => {
         let query = `SELECT investment_start_date, investment_mature_date FROM investments WHERE ID = ${investmentId}`;
@@ -2598,6 +2615,8 @@ function investmentMonths(host, investmentId) {
         });
     });
 }
+
+/** Function call to return the date of the first day and the last day of every mature months **/
 function investmentStartAndEndOfMonths(diffInCalendarMonths, investment_start_date) {
     return new Promise((resolve, reject) => {
         let invStartAndEndOfMonths = [];
@@ -2627,7 +2646,6 @@ function investmentStartAndEndOfMonths(diffInCalendarMonths, investment_start_da
         resolve(invStartAndEndOfMonths);
     });
 }
-
 
 
 async function dailyMaturedInvestmentTxns(host, investmentId, firstDate, date) {
@@ -2694,6 +2712,7 @@ async function sumInvestmentInterestRange(host, investmentId, startDate, endDate
     });
 }
 
+/** Function call to return all IDs of an investment daily computed interests**/
 function getInvestmentInterestIDs(host, investmentId) {
     return new Promise((resolve, reject) => {
         let query = `SELECT ID FROM investment_interests
@@ -2712,6 +2731,7 @@ function getInvestmentInterestIDs(host, investmentId) {
     });
 }
 
+/** Function call to update all previously computed interests during investment termination**/
 function updateInvestmentInterestIDs(host, ids) {
     return new Promise((resolve, reject) => {
         let baseQuery = `UPDATE investment_txns SET isTerminated = 1 WHERE`;
@@ -2738,6 +2758,7 @@ function updateInvestmentInterestIDs(host, ids) {
     });
 }
 
+/** Function call to compute and return daily last balance without considering interest**/
 function sumInvestmentInterestPerDayRange(host, investmentId, inStartDate, startDate, date) {
     return new Promise((resolve, reject) => {
         let query = `SELECT amount, is_credit FROM investment_txns
@@ -2768,6 +2789,7 @@ function sumInvestmentInterestPerDayRange(host, investmentId, inStartDate, start
     });
 }
 
+/** Function call to compute and return daily last balance without considering interest**/
 function setInvestmentInterestPerDay(host, values) {
     return new Promise((resolve, reject) => {
         let baseQuery = `INSERT INTO
@@ -2800,7 +2822,7 @@ function setInvestmentInterestPerDay(host, values) {
     });
 }
 
-
+/** Function call to return the maturity date for an investment account **/
 function getInvestmentMaturityDate(host, investmentId) {
     return new Promise((resolve, reject) => {
         let query = `SELECT investment_mature_date FROM investments WHERE ID = ${investmentId}`;
@@ -2818,7 +2840,7 @@ function getInvestmentMaturityDate(host, investmentId) {
     });
 }
 
-
+/** Function call to return date(days) within two dates of an investment account **/
 function getInvestmentMonthDatesRange(HOST, startDate, maturityDate, investmentId) {
     return new Promise((resolve, reject) => {
         getInvestmentMaturityDate(HOST, investmentId).then(iv_maturityDate => {
@@ -2844,6 +2866,7 @@ function getInvestmentMonthDatesRange(HOST, startDate, maturityDate, investmentI
     });
 }
 
+/** Function call to compute and return investment daily interest **/
 async function getInvestmentDailyBalance(HOST, data) {
     let dailyBalances = [];
     const payload = await getInvestmentMonthDatesRange(HOST, data.startDate, data.maturityDate, data.investmentId);
@@ -2877,6 +2900,7 @@ async function getInvestmentDailyBalance(HOST, data) {
     return ({ dailyBalances: dailyBalances, totalInterestAmount: totalInterestAmount });
 }
 
+/** End point to return list of an investment maturity months and date(Written for TEST purpose) **/
 router.post('/investment-durations', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     const data = req.body;
@@ -2902,6 +2926,7 @@ router.post('/investment-durations', function (req, res, next) {
     });
 });
 
+/** Function call to only return mature month and date that interest has not been computed on **/
 async function getValidInvestmentMatureMonths(HOST, investmentId, isMonthly) {
     let results = [];
     const payload = await investmentMonths(HOST, investmentId);
@@ -2930,6 +2955,7 @@ async function getValidInvestmentMatureMonths(HOST, investmentId, isMonthly) {
     return results;
 }
 
+/** Sub Function in getValidInvestmentMatureMonths(HOST, investmentId, isMonthly) **/
 function monthlyValidMaturedInvestmentDate(host, investmentId, month, year) {
     return new Promise((resolve, reject) => {
         let query = `SELECT count(id) as counter FROM investment_interests WHERE investmentId = ${investmentId} 
@@ -2965,6 +2991,7 @@ async function setInvestmentInterest(host, value) {
     }
 }
 
+/** Function call to return the total sum of amount in a client wallet **/
 async function sumAllWalletInvestmentTxns(host, clientId) {
     return new Promise((resolve, reject) => {
         let query = `SELECT amount, is_credit FROM investment_txns
@@ -2992,6 +3019,7 @@ async function sumAllWalletInvestmentTxns(host, clientId) {
     });
 }
 
+/** Function call to save transaction **/
 function setInvestmentTxns(host, value) {
     return new Promise((resolve, reject) => {
         if (parseInt(value.amount.toString()) === 0) {
@@ -3009,6 +3037,7 @@ function setInvestmentTxns(host, value) {
     });
 }
 
+/** Function call to get all investment/savings transaction within a date range **/
 function getDatedTxns(host, data) {
     return new Promise((resolve, reject) => {
         let query = `SELECT ID FROM investment_txns
@@ -3030,6 +3059,7 @@ AND STR_TO_DATE(updated_date, '%Y-%m-%d') <='${data.endDate}'`;
     });
 }
 
+/** Function call to update each transactions from getDatedTxns(host, data) **/
 async function updateDatedTxns(host, value, isInterestCharged) {
     return new Promise((resolve, reject) => {
         let baseQuery = `UPDATE investment_txns SET isInterestCharged = ${isInterestCharged} WHERE `;
@@ -3055,6 +3085,7 @@ async function updateDatedTxns(host, value, isInterestCharged) {
     });
 }
 
+/** Function call that houses all of the functions related to computing and posting of interest **/
 async function computeInterestTxns2(HOST, data) {
     return new Promise((resolve, reject) => {
         let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -3179,6 +3210,7 @@ async function computeInterestTxns2(HOST, data) {
     });
 }
 
+/** Function call to compute and post With-Holding Tax **/
 function deductWithHoldingTax(HOST, data, _amount, total, bal_, clientId, isWallet, txn) {
     return new Promise((resolve, reject) => {
         if (parseInt(_amount.toString()) === 0) {
@@ -3235,6 +3267,7 @@ function deductWithHoldingTax(HOST, data, _amount, total, bal_, clientId, isWall
     });
 }
 
+/** End point to get client wallet transactions **/
 router.get('/client-wallets/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
@@ -3319,6 +3352,7 @@ router.get('/client-wallets/:id', function (req, res, next) {
     });
 });
 
+/** End point to get client wallet balance **/
 router.get('/client-wallet-balance/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     computeWalletBalance(req.params.id, HOST).then(balance => {
@@ -3326,7 +3360,7 @@ router.get('/client-wallet-balance/:id', function (req, res, next) {
     });
 });
 
-//Get Investment Product
+
 router.get('/investment-accounts/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
@@ -3363,7 +3397,7 @@ router.get('/investment-accounts/:id', function (req, res, next) {
         });
 });
 
-
+/** End point to return an investment/savings transaction statement **/
 router.get('/inv-statements/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.query;
@@ -3392,6 +3426,7 @@ router.get('/inv-statements/:id', function (req, res, next) {
     });
 });
 
+/** End point to return organisation details and configuration **/
 router.get('/get-organisation-configs', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT * FROM investment_config ORDER BY ID DESC LIMIT 1`;
@@ -3412,7 +3447,7 @@ router.get('/get-organisation-configs', function (req, res, next) {
     });
 });
 
-
+/** End point to return all tax transactions **/
 router.get('/get-organisation-taxes', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
@@ -3463,6 +3498,7 @@ router.get('/get-organisation-taxes', function (req, res, next) {
     });
 });
 
+/** End point to return sum of every form of charge transactions **/
 router.get('/get-sum-charges', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT * FROM investment_txns 
@@ -3502,6 +3538,7 @@ router.get('/get-sum-charges', function (req, res, next) {
     });
 });
 
+/** End point to return the status of a reversed transaction **/
 router.get('/check-reverse-txns/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT isApproved FROM investment_txns 
@@ -3523,6 +3560,7 @@ router.get('/check-reverse-txns/:id', function (req, res, next) {
     });
 });
 
+/** Function call to close an account after completing maturity opertion **/
 async function closeMatureInvestmentAccount(HOST, data) {
     for (let index1 = 0; index1 < data.value.length; index1++) {
         const element1 = data.value[index1];
@@ -3594,8 +3632,7 @@ async function closeMatureInvestmentAccount(HOST, data) {
     return {};
 }
 
-
-
+/** End point to close an account **/
 router.post('/close-mature-investments', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     const data = req.body;
@@ -3604,8 +3641,7 @@ router.post('/close-mature-investments', function (req, res, next) {
     });
 });
 
-
-
+/** End point that houses functions around maturity operation **/
 router.post('/compute-mature-investment', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     const data = req.body;
@@ -3614,7 +3650,7 @@ router.post('/compute-mature-investment', function (req, res, next) {
     });
 });
 
-
+/** function that houses functions around maturity operation **/
 async function computeInterestBalance(data, HOST) {
     if (data.isInvestmentMatured.toString() === '1') {
         let items = {

@@ -6,7 +6,7 @@ var isAfter = require('date-fns/is_after');
 var differenceInCalendarDays = require('date-fns/difference_in_calendar_days');
 let fs = require('fs');
 
-
+/** End point to create investment/savings account **/
 router.post('/create', function (req, res, next) {
     let _date = new Date();
     const HOST = `${req.protocol}://${req.get('host')}`;
@@ -276,6 +276,7 @@ router.post('/create', function (req, res, next) {
 
 });
 
+/** Function to set document requirement for investment/savings account **/
 function setDocRequirement(HOST, data, txnId) {
     let query = `SELECT * FROM investment_doc_requirement
                 WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
@@ -307,7 +308,7 @@ function setDocRequirement(HOST, data, txnId) {
         .catch(function (error) { });
 }
 
-
+/** End point to get investment/savings accounts **/
 router.get('/get-investments', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
@@ -351,6 +352,7 @@ router.get('/get-investments', function (req, res, next) {
     });
 });
 
+/** End point to get mature investment/savings accounts **/
 router.get('/get-mature-investments', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
@@ -402,6 +404,7 @@ router.get('/get-mature-investments', function (req, res, next) {
     });
 });
 
+/** End point to get transactions of an investment/savings accounts **/
 router.get('/get-investments/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
@@ -448,6 +451,7 @@ router.get('/get-investments/:id', function (req, res, next) {
         });
     });
 });
+
 
 router.get('/client-investments/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
@@ -578,6 +582,7 @@ router.get('/client-investments/:id', function (req, res, next) {
     });
 });
 
+/** End point to create organisation configuration **/
 router.post('/create-configs', function (req, res, next) {
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     const HOST = `${req.protocol}://${req.get('host')}`;
@@ -598,7 +603,7 @@ router.post('/create-configs', function (req, res, next) {
         });
 });
 
-
+/** Function to return investment balance with interest **/
 function investmentBalanceWithInterest(HOST, investmentId, isInterest) {
     return new Promise((resolve, reject) => {
         let conditionalQuery = (isInterest === 0) ? ' AND isInterest = 0' : '';
@@ -649,8 +654,7 @@ function investmentStatus(HOST, investmentId) {
     });
 }
 
-
-
+/** End point to create investment/savings mandate **/
 router.post('/create-mandates', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `INSERT INTO investment_mandate SET ?`;
@@ -671,6 +675,7 @@ router.post('/create-mandates', function (req, res, next) {
 
 });
 
+/** End point to get investment/savings mandate **/
 router.get('/get-mandates/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT * FROM investment_mandate 
@@ -693,6 +698,7 @@ router.get('/get-mandates/:id', function (req, res, next) {
     })
 });
 
+/** End point to get investment/savings withdrawal status **/
 router.get('/get-investment-withdrawal-status/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT canWithdraw FROM investments 
@@ -715,6 +721,7 @@ router.get('/get-investment-withdrawal-status/:id', function (req, res, next) {
     });
 });
 
+/** End point to get investment/savings remove mandates **/
 router.get('/remove-mandates/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `UPDATE investment_mandate SET status = 0 WHERE id = ${req.params.id}`;
@@ -736,6 +743,7 @@ router.get('/remove-mandates/:id', function (req, res, next) {
     })
 });
 
+/** End point to get organisation configuration **/
 router.get('/get-configs', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT c.*, p.min_days_termination, p.name as productName, p.code FROM investment_config c
@@ -757,7 +765,7 @@ router.get('/get-configs', function (req, res, next) {
     })
 });
 
-
+/** End point to upload document **/
 router.post('/upload-file/:id/:item/:sub', function (req, res) {
     if (!req.files) return res.status(400).send('No files were uploaded.');
     if (!req.params) return res.status(400).send('');
