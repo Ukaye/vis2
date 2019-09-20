@@ -901,16 +901,12 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
                 applications = (response.data === undefined) ? [] : response.data;
             async.forEach(applications, (application, callback) => {
                 application.document_upload_status = 0;
-                if (application.loanID) {
-                    fs.stat(`files/application-${application.loanID}`, (error) => {
-                        if (!error) application.document_upload_status = 1;
-                        applications_.push(application);
-                        callback();
-                    });
-                } else {
-                    applications_.push(application);
-                    callback();
-                }
+                let folder_url_1 = `files/application-${application.loanID}`,
+                    folder_url_2 = `files/client_application-${application.loanID}`;
+                if (application.loanID && (fs.existsSync(folder_url_1) || fs.existsSync(folder_url_2)))
+                    application.document_upload_status = 1;
+                applications_.push(application);
+                callback();
             }, (data) => {
                 res.send({
                     "status": 200,
