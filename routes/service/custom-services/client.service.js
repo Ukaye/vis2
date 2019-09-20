@@ -897,15 +897,31 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
                 query: query
             }
         }).then(payload => {
-            res.send({
-                "status": 200,
-                "error": null,
-                "response": {
-                    draw: draw,
-                    recordsTotal: payload.data[0].recordsTotal,
-                    recordsFiltered: payload.data[0].recordsFiltered,
-                    data: (response.data === undefined) ? [] : response.data
+            let applications_ = [],
+                applications = (response.data === undefined) ? [] : response.data;
+            async.forEach(applications, (application, callback) => {
+                application.document_upload_status = 0;
+                if (application.loanID) {
+                    fs.stat(`files/application-${application.loanID}`, (error) => {
+                        if (!error) application.document_upload_status = 1;
+                        applications_.push(application);
+                        callback();
+                    });
+                } else {
+                    applications_.push(application);
+                    callback();
                 }
+            }, (data) => {
+                res.send({
+                    "status": 200,
+                    "error": null,
+                    "response": {
+                        draw: draw,
+                        recordsTotal: payload.data[0].recordsTotal,
+                        recordsFiltered: payload.data[0].recordsFiltered,
+                        data: applications_
+                    }
+                });
             });
         });
     });
