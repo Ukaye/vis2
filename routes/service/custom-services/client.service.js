@@ -871,7 +871,11 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
             WHEN s.payment_collect_date > CURDATE() AND s.interest_collect_date > CURDATE() THEN 1
             WHEN s.payment_collect_date = CURDATE() OR s.interest_collect_date = CURDATE() THEN 2
             WHEN s.payment_collect_date < CURDATE() OR s.interest_collect_date < CURDATE() THEN 3
-        END) payment_status
+        END) payment_status,
+        (CASE 
+            WHEN (SELECT COUNT(*) FROM application_comments WHERE a.ID = applicationID AND a.userID = userID) > 0 THEN 1
+            ELSE 0
+        END) information_request_status
         FROM clients c, client_applications p LEFT JOIN applications a ON p.ID = a.preapplicationID AND a.userID = ${id} 
         LEFT JOIN application_schedules s ON s.ID = (SELECT MIN(ID) FROM application_schedules WHERE a.ID = applicationID AND payment_status = 0)
         WHERE p.userID = ${id} AND p.userID = c.ID AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) 
@@ -893,15 +897,27 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
                 query: query
             }
         }).then(payload => {
-            res.send({
-                "status": 200,
-                "error": null,
-                "response": {
-                    draw: draw,
-                    recordsTotal: payload.data[0].recordsTotal,
-                    recordsFiltered: payload.data[0].recordsFiltered,
-                    data: (response.data === undefined) ? [] : response.data
-                }
+            let applications_ = [],
+                applications = (response.data === undefined) ? [] : response.data;
+            async.forEach(applications, (application, callback) => {
+                application.document_upload_status = 0;
+                let folder_url_1 = `files/application-${application.loanID}`,
+                    folder_url_2 = `files/client_application-${application.loanID}`;
+                if (application.loanID && (fs.existsSync(folder_url_1) || fs.existsSync(folder_url_2)))
+                    application.document_upload_status = 1;
+                applications_.push(application);
+                callback();
+            }, (data) => {
+                res.send({
+                    "status": 200,
+                    "error": null,
+                    "response": {
+                        draw: draw,
+                        recordsTotal: payload.data[0].recordsTotal,
+                        recordsFiltered: payload.data[0].recordsFiltered,
+                        data: applications_
+                    }
+                });
             });
         });
     });
@@ -965,41 +981,15 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                             res.send({"status": 500, "error": error, "response": null});
                         } else {
                             result.payment_history = payment_history;
-                            let path2 = `files/application-${result.loanID}/`;
-                            if (!fs.existsSync(path)) {
-                                result.files = {};
-                                if (!fs.existsSync(path2)) {
-                                    return res.send({
-                                        "status": 200,
-                                        "error": null,
-                                        "response": result
-                                    });
+                            db.query('SELECT * FROM application_information_requests WHERE applicationID=? ORDER BY ID desc', 
+                            [result.loanID], function (error, information_requests, fields) {
+                                if (error) {
+                                    res.send({"status": 500, "error": error, "response": null});
                                 } else {
-                                    fs.readdir(path2, function (err, files){
-                                        async.forEach(files, function (file, callback){
-                                            let filename = file.split('.')[0].split('_');
-                                            filename.shift();
-                                            obj2[filename.join('_')] = `${req.HOST}/${path2}${file}`;
-                                            callback();
-                                        }, function(data){
-                                            result.files = Object.assign({}, result.files, obj2);
-                                            return res.send({
-                                                "status": 200,
-                                                "error": null,
-                                                "response": result
-                                            });
-                                        });
-                                    });
-                                }
-                            } else {
-                                fs.readdir(path, function (err, files){
-                                    async.forEach(files, function (file, callback){
-                                        let filename = file.split('.')[0].split('_');
-                                        filename.shift();
-                                        obj[filename.join('_')] = `${req.HOST}/${path}${file}`;
-                                        callback();
-                                    }, function(data){
-                                        result.files = obj;
+                                    result.information_requests = information_requests;
+                                    let path2 = `files/application-${result.loanID}/`;
+                                    if (!fs.existsSync(path)) {
+                                        result.files = {};
                                         if (!fs.existsSync(path2)) {
                                             return res.send({
                                                 "status": 200,
@@ -1023,9 +1013,43 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                                 });
                                             });
                                         }
-                                    });
-                                });
-                            }
+                                    } else {
+                                        fs.readdir(path, function (err, files){
+                                            async.forEach(files, function (file, callback){
+                                                let filename = file.split('.')[0].split('_');
+                                                filename.shift();
+                                                obj[filename.join('_')] = `${req.HOST}/${path}${file}`;
+                                                callback();
+                                            }, function(data){
+                                                result.files = obj;
+                                                if (!fs.existsSync(path2)) {
+                                                    return res.send({
+                                                        "status": 200,
+                                                        "error": null,
+                                                        "response": result
+                                                    });
+                                                } else {
+                                                    fs.readdir(path2, function (err, files){
+                                                        async.forEach(files, function (file, callback){
+                                                            let filename = file.split('.')[0].split('_');
+                                                            filename.shift();
+                                                            obj2[filename.join('_')] = `${req.HOST}/${path2}${file}`;
+                                                            callback();
+                                                        }, function(data){
+                                                            result.files = Object.assign({}, result.files, obj2);
+                                                            return res.send({
+                                                                "status": 200,
+                                                                "error": null,
+                                                                "response": result
+                                                            });
+                                                        });
+                                                    });
+                                                }
+                                            });
+                                        });
+                                    }
+                                }
+                            });
                         }
                     });
                 }
@@ -2117,6 +2141,45 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
                 "error": error,
                 "response": null
             });
+        });
+    });
+});
+
+router.post('/application/comment/:id/:loan_id', helperFunctions.verifyJWT, (req, res) => {
+    let payload = {};
+    payload.user_type = 'client';
+    payload.text = req.body.text;
+    payload.userID = req.params.id;
+    payload.applicationID = req.params.loan_id;
+    payload.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    db.query('INSERT INTO application_comments SET ?', payload,
+        (error, response) => {
+            if(error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+            return res.send({
+                "status": 200,
+                "error": null,
+                "response": "Application commented successfully!"
+            });
+        });
+});
+
+router.get('/application/comment/:id/:loan_id', (req, res) => {
+    db.query(`SELECT c.text, c.date_created, (SELECT fullname FROM clients WHERE ID = c.userID) fullname
+    FROM application_comments c WHERE c.applicationID = ${req.params.loan_id} AND c.userID = ${req.params.id} 
+        AND c.user_type = 'client' ORDER BY c.ID DESC`, (error, comments) => {
+        if(error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+        return res.send({
+            "status": 200,
+            "error": null,
+            "response": comments
         });
     });
 });
