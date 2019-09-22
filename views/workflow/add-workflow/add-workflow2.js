@@ -3,6 +3,35 @@ $(document).ready(function() {
     getRoles();
 });
 
+$("#more-actions-link").click(function() {
+    $("#stage-action-div").append('<div class="input-group" style="margin-bottom: 15px;">\n' +
+        '<select class="form-control local-stages-new"><option selected="selected">-- Choose Action --</option>' +
+        '</select><i class="fa fa-times" style="margin: 10px; color: #dc3545;" onclick="removeAction(this)"></i></div>');
+    getLocalStages();
+});
+
+function removeAction(element) {
+    $(element).parent().remove();
+}
+
+$("#document-upload").click(function() {
+    $("#document-upload-div").append('<div class="input-group" style="margin-bottom: 15px;">\n' +
+        '    <div class="input-group-addon"><i class="fa fa-upload"></i></div>\n' +
+        '    <input type="text" class="form-control document-upload-text" placeholder="Document Upload Caption" max="50">\n' +
+        '<i class="fa fa-times" style="margin: 10px; color: #dc3545;" onclick="removeDocumentAction(this)"></i></div>');
+});
+
+$("#document-download").click(function() {
+    $("#document-download-div").append('<div class="input-group" style="margin-bottom: 15px;">\n' +
+        '    <div class="input-group-addon"><i class="fa fa-download"></i></div>\n' +
+        '    <input type="text" class="form-control document-download-text" placeholder="Document Download Caption" max="50">\n' +
+        '<i class="fa fa-times" style="margin: 10px; color: #dc3545;" onclick="removeDocumentAction(this)"></i></div>');
+});
+
+function removeDocumentAction(element) {
+    $(element).parent().remove();
+}
+
 function resetMultiselect() {
     $('#process-rights').multiselect("clearSelection");
 }
@@ -104,7 +133,7 @@ function addProcess() {
     }).get();
 
     if (!workflow.name || !stages[0])
-        return swal('Kindly fill all required fields!');
+        return notification('Kindly fill all required fields!', '', 'warning');
     data.workflow = workflow;
     data.stages = stages;
     if (($.grep(data.stages,function(e){return e.stage_name==='Application Start'})).length > 1)
@@ -119,13 +148,13 @@ function addProcess() {
             localStorage.removeItem('local_stages');
             $('#process-name').val("");
             $('#wait').hide();
-            swal(data.message);
+            notification(data.message, '', 'success');
             window.location.href = "/all-workflow";
         },
         'error': function (err) {
             console.log(err);
             $('#wait').hide();
-            swal('No internet connection','','error');
+            notification('No internet connection','','error');
         }
     });
 }

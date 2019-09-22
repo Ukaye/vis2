@@ -3,13 +3,36 @@ $(document).ready(function() {
     getRoles();
 });
 
-$(document).ajaxStart(function(){
-    $("#wait").css("display", "block");
+$("#more-actions-link").click(function() {
+    $("#stage-action-div").append('<div class="input-group" style="margin-bottom: 15px;">\n' +
+        '<select class="form-control local-stages-new"><option selected="selected" value="-- Choose Action --">-- Choose Action --</option>' +
+        '</select><i class="fa fa-times" style="margin: 10px; color: #dc3545;" onclick="removeAction(this)"></i></div>');
+    getLocalStages();
 });
 
-$(document).ajaxComplete(function(){
-    $("#wait").css("display", "none");
+function removeAction(element) {
+    archiveWorkflow();
+    $(element).parent().remove();
+}
+
+$("#document-upload").click(function() {
+    $("#document-upload-div").append('<div class="input-group" style="margin-bottom: 15px;">\n' +
+        '    <div class="input-group-addon"><i class="fa fa-upload"></i></div>\n' +
+        '    <input type="text" class="form-control document-upload-text" placeholder="Document Upload Caption" max="50">\n' +
+        '<i class="fa fa-times" style="margin: 10px; color: #dc3545;" onclick="removeDocumentAction(this)"></i></div>');
 });
+
+$("#document-download").click(function() {
+    $("#document-download-div").append('<div class="input-group" style="margin-bottom: 15px;">\n' +
+        '    <div class="input-group-addon"><i class="fa fa-download"></i></div>\n' +
+        '    <input type="text" class="form-control document-download-text" placeholder="Document Download Caption" max="50">\n' +
+        '<i class="fa fa-times" style="margin: 10px; color: #dc3545;" onclick="removeDocumentAction(this)"></i></div>');
+});
+
+function removeDocumentAction(element) {
+    archiveWorkflow();
+    $(element).parent().remove();
+}
 
 function resetMultiselect() {
     $('#process-rights').multiselect("clearSelection");
@@ -82,13 +105,19 @@ $('#document-upload').click(function (e) {
 $('#document-upload-div').on('click','.document-upload-text', function (e) {
     archiveWorkflow(e);
 });
+$('#document-download').click(function (e) {
+    archiveWorkflow(e);
+});
+$('#document-download-div').on('click','.document-download-text', function (e) {
+    archiveWorkflow(e);
+});
 $('.todolist').on('click','.remove-item', function (e) {
     archiveWorkflow(e);
 });
 
 function archiveWorkflow(e) {
     if (localStorage.archive_workflow === 'false'){
-        e.preventDefault();
+        if (e) e.preventDefault();
         swal({
             title: "Are you sure?",
             text: "Only Approval Rights are editable. Any other changes to this workflow would be saved as a new copy.\n\n" +

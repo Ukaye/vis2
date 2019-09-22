@@ -40,6 +40,9 @@ jQuery(document).ready(function($){
             documents = $('.document-upload-text').map(function() {
                 if (this.value) return this.value;
             }).get(),
+            downloads = $('.document-download-text').map(function() {
+                if (this.value) return this.value;
+            }).get(),
             actions = $('.local-stages-new').map(function() {
                 if (this.value && (this.value !== '-- Choose Action --'))
                     return this.value;
@@ -52,6 +55,8 @@ jQuery(document).ready(function($){
         stage.approverID = stage.approverID.join(',');
         if (documents && documents[0])
             stage.document = documents.join(',');
+        if (downloads && downloads[0])
+            stage.download = downloads.join(',');
         $.each(actions, function (key, val) {
             let action = JSON.parse(decodeURIComponent(val));
             action_ids.push(action.ID);
@@ -87,6 +92,9 @@ jQuery(document).ready(function($){
         $('.document-upload-text').prop('disabled',false);
         $('#document-upload').removeClass('disabled');
         $('#document-upload-div').find('.fa-times').show();
+        $('.document-download-text').prop('disabled',false);
+        $('#document-download').removeClass('disabled');
+        $('#document-download-div').find('.fa-times').show();
     }
 
     function disableTransitionInputs() {
@@ -98,6 +106,9 @@ jQuery(document).ready(function($){
         $('.document-upload-text').prop('disabled',true);
         $('#document-upload').addClass('disabled');
         $('#document-upload-div').find('.fa-times').hide();
+        $('.document-download-text').prop('disabled',true);
+        $('#document-download').addClass('disabled');
+        $('#document-download-div').find('.fa-times').hide();
     }
 
     //load edit task
@@ -106,6 +117,7 @@ jQuery(document).ready(function($){
         $('#add-stage').hide();
         $('#stage-action-div').html('');
         $('#document-upload-div').html('');
+        $('#document-download-div').html('');
 
         let stage = JSON.parse(decodeURIComponent(this.id));
         $('#stage-name').val(stage.name);
@@ -146,6 +158,18 @@ jQuery(document).ready(function($){
                     '    <input id="document-name-'+count+'" type="text" class="form-control document-upload-text" placeholder="Document Upload Caption" max="50">\n' +
                     '<i class="fa fa-times" style="margin: 10px; color: #dc3545;" onclick="removeDocumentAction(this)"></i></div>');
                 $('#document-name-'+count).val(document);
+            });
+        }
+        if (stage.download) {
+            let count = 0,
+                downloads_array = stage.download.split(',');
+            downloads_array.forEach(function (download) {
+                count++;
+                $("#document-download-div").append('<div class="input-group" style="margin-bottom: 15px;">\n' +
+                    '    <div class="input-group-addon"><i class="fa fa-download"></i></div>\n' +
+                    '    <input id="download-name-'+count+'" type="text" class="form-control document-download-text" placeholder="Document Download Caption" max="50">\n' +
+                    '<i class="fa fa-times" style="margin: 10px; color: #dc3545;" onclick="removeDocumentAction(this)"></i></div>');
+                $('#download-name-'+count).val(download);
             });
         }
         localStorage.list_index = $(this).parent().index();
@@ -214,8 +238,8 @@ jQuery(document).ready(function($){
     };
 
     function clearStageInputs() {
-        $('#document-upload').prop('checked',false);
         $('#document-upload-div').html('');
+        $('#document-download-div').html('');
         $('#stage-description').val('');
         $('#stage-action-div').html('');
         $('#stage-template').val('-- Choose Action --');
