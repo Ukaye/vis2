@@ -903,8 +903,10 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
             async.forEach(applications, (application, callback) => {
                 application.document_upload_status = 0;
                 let folder_path_1 = `files/application-${application.loanID}`,
-                    folder_path_2 = `files/client_application-${application.loanID}`;
-                if (application.loanID && (fs.existsSync(folder_path_1) || fs.existsSync(folder_path_2)))
+                    folder_path_2 = `files/client_application-${application.ID}`;
+                if (application.loanID && fs.existsSync(folder_path_1))
+                    application.document_upload_status = 1;
+                if (fs.existsSync(folder_path_2))
                     application.document_upload_status = 1;
                 applications_.push(application);
                 callback();

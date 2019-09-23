@@ -286,7 +286,8 @@ function loadComments(comments) {
     }
 }
 
-let stage_documents = [];
+let stage_documents = [],
+    stage_downloads = [];
 $('.next').hide();
 $('.previous').hide();
 $('#next-actions').hide();
@@ -330,6 +331,19 @@ function loadWorkflowStages(state) {
                     stage_documents.push(document);
                 });
                 $('#stage-documents').append('<option value = "others">Others</option>');
+                fileUpload();
+            }
+
+            if (stage.download){
+                let downloads = stage.download.split(',');
+                downloads.forEach(function (download) {
+                    if (download.trim().replace(/ /g, '_') in application.file_downloads){
+                        $('#stage-downloads').append(`<option value = "${download}">${download} &nbsp; (&check;)</option>`);
+                    } else {
+                        $('#stage-downloads').append(`<option value = "${download}">${download}</option>`);
+                    }
+                    stage_downloads.push(download);
+                });
                 fileUpload();
             }
 
