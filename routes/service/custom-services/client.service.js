@@ -874,7 +874,7 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
             WHEN s.payment_collect_date < CURDATE() OR s.interest_collect_date < CURDATE() THEN 3
         END) payment_status,
         (CASE 
-            WHEN (SELECT COUNT(*) FROM application_comments WHERE a.ID = applicationID AND a.userID = userID) > 0 THEN 1
+            WHEN (SELECT COUNT(*) FROM application_information_requests WHERE a.ID = applicationID) > 0 THEN 1
             ELSE 0
         END) information_request_status
         FROM clients c, client_applications p LEFT JOIN applications a ON p.ID = a.preapplicationID AND a.userID = ${id} 
