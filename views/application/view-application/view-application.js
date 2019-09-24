@@ -342,9 +342,8 @@ function loadWorkflowStages(state) {
                     } else {
                         $('#stage-downloads').append(`<option value = "${download}">${download}</option>`);
                     }
-                    stage_downloads.push(download);
+                    stage_downloads.push(document);
                 });
-                fileUpload();
             }
 
             if (stage.actions){

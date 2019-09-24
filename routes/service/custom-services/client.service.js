@@ -927,8 +927,7 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
 });
 
 router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
-    const HOST = `${req.protocol}://${req.get('host')}`,
-        path = `files/client_application-${req.params.application_id}/`;
+    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT p.*, c.fullname, c.email, c.phone FROM client_applications p 
                 INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.application_id} AND p.userID = ${req.params.id}`,
         query2 = `SELECT u.ID userID, u.fullname, u.phone, u.email, u.address, cast(u.loan_officer as unsigned) loan_officer,
@@ -964,7 +963,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                 query: query2
             }
         }).then(response => {
-            let obj = {}, obj2 = {},
+            let obj = {},
                 result2 = (response.data === undefined) ? {} : response.data[0];
             if (result2) {
                 result.loanID = result2.ID;
@@ -990,59 +989,42 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                     res.send({"status": 500, "error": error, "response": null});
                                 } else {
                                     result.information_requests = information_requests;
-                                    let path2 = `files/application-${result.loanID}/`;
-                                    if (!fs.existsSync(path)) {
-                                        result.files = {};
-                                        if (!fs.existsSync(path2)) {
-                                            return res.send({
-                                                "status": 200,
-                                                "error": null,
-                                                "response": result
-                                            });
-                                        } else {
+                                    let path = `files/client_application-${result.ID}/`,
+                                        path2 = `files/application-${result.loanID}/`,
+                                        path3 = `files/application_download-${result.loanID}/`;
+                                    result.files = {};
+                                    fs.readdir(path, function (err, files){
+                                        if (err) files = [];
+                                        files = helperFunctions.removeFileDuplicates(path, files);
+                                        async.forEach(files, function (file, callback){
+                                            let filename = file.split('.')[0].split('_');
+                                            filename.shift();
+                                            obj[filename.join('_')] = `${req.HOST}/${path}${file}`;
+                                            callback();
+                                        }, function(data){
+                                            result.files = Object.assign({}, result.files, obj);
+                                            obj = {};
                                             fs.readdir(path2, function (err, files){
+                                                if (err) files = [];
                                                 files = helperFunctions.removeFileDuplicates(path2, files);
                                                 async.forEach(files, function (file, callback){
                                                     let filename = file.split('.')[0].split('_');
                                                     filename.shift();
-                                                    obj2[filename.join('_')] = `${req.HOST}/${path2}${file}`;
+                                                    obj[filename.join('_')] = `${req.HOST}/${path2}${file}`;
                                                     callback();
                                                 }, function(data){
-                                                    result.files = Object.assign({}, result.files, obj2);
-                                                    return res.send({
-                                                        "status": 200,
-                                                        "error": null,
-                                                        "response": result
-                                                    });
-                                                });
-                                            });
-                                        }
-                                    } else {
-                                        fs.readdir(path, function (err, files){
-                                            files = helperFunctions.removeFileDuplicates(path, files);
-                                            async.forEach(files, function (file, callback){
-                                                let filename = file.split('.')[0].split('_');
-                                                filename.shift();
-                                                obj[filename.join('_')] = `${req.HOST}/${path}${file}`;
-                                                callback();
-                                            }, function(data){
-                                                result.files = obj;
-                                                if (!fs.existsSync(path2)) {
-                                                    return res.send({
-                                                        "status": 200,
-                                                        "error": null,
-                                                        "response": result
-                                                    });
-                                                } else {
-                                                    fs.readdir(path2, function (err, files){
-                                                        files = helperFunctions.removeFileDuplicates(path2, files);
+                                                    result.files = Object.assign({}, result.files, obj);
+                                                    obj = {};
+                                                    fs.readdir(path3, function (err, files){
+                                                        if (err) files = [];
+                                                        files = helperFunctions.removeFileDuplicates(path3, files);
                                                         async.forEach(files, function (file, callback){
                                                             let filename = file.split('.')[0].split('_');
                                                             filename.shift();
-                                                            obj2[filename.join('_')] = `${req.HOST}/${path2}${file}`;
+                                                            obj[filename.join('_')] = `${req.HOST}/${path3}${file}`;
                                                             callback();
                                                         }, function(data){
-                                                            result.files = Object.assign({}, result.files, obj2);
+                                                            result.files = Object.assign({}, result.files, obj);
                                                             return res.send({
                                                                 "status": 200,
                                                                 "error": null,
@@ -1050,10 +1032,10 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                                             });
                                                         });
                                                     });
-                                                }
+                                                });
                                             });
                                         });
-                                    }
+                                    });
                                 }
                             });
                         }

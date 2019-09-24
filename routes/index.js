@@ -1289,7 +1289,8 @@ router.get('/workflows/:workflow_id', function(req, res, next) {
 });
 
 router.get('/workflow-stages', function(req, res, next) {
-    let query = 'SELECT w.ID, w.document, w.actions, w.workflowID, w.stageID, w.name, w.description, w.date_created, w.date_modified, s.name AS stage_name FROM workflow_stages AS w, stages as s WHERE w.stageID=s.ID ORDER BY w.ID asc';
+    let query = 'SELECT w.ID, w.document, w.download, w.actions, w.workflowID, w.stageID, w.name, w.description, w.date_created, '+
+    'w.date_modified, s.name AS stage_name FROM workflow_stages AS w, stages as s WHERE w.stageID=s.ID ORDER BY w.ID asc';
     db.query(query, function (error, results, fields) {
         if(error){
             res.send({"status": 500, "error": error, "response": null});
@@ -1300,7 +1301,8 @@ router.get('/workflow-stages', function(req, res, next) {
 });
 
 router.get('/workflow-stages/:workflow_id', function(req, res, next) {
-    let query = 'SELECT w.ID, w.document, w.actions, w.approverID, w.workflowID, w.stageID, w.name, w.description, w.date_created, w.date_modified, s.name AS stage_name FROM workflow_stages AS w, stages as s WHERE w.workflowID =? AND w.stageID=s.ID ORDER BY w.ID asc';
+    let query = 'SELECT w.ID, w.document, w.download, w.actions, w.approverID, w.workflowID, w.stageID, w.name, w.description, '+
+    'w.date_created, w.date_modified, s.name AS stage_name FROM workflow_stages AS w, stages as s WHERE w.workflowID =? AND w.stageID=s.ID ORDER BY w.ID asc';
     db.query(query, [req.params.workflow_id], function (error, results, fields) {
         if(error){
             res.send({"status": 500, "error": error, "response": null});
@@ -1410,9 +1412,10 @@ router.get('/document-upload/:id/:name?', function(req, res) {
     res.send('OK');
 });
 
-router.post('/document-upload/:id/:name', function(req, res) {
+router.post('/document-upload/:id/:name/:folder_path?', function(req, res) {
     let	name = req.params.name,
-        application_id = req.params.id;
+        application_id = req.params.id,
+        folder_path = req.params.folder_path || `files/application-${application_id}/`;
 
     if (!name) return res.status(400).send('No files were uploaded.');
     if (!req.files) return res.status(400).send('No files were uploaded.');
@@ -1428,22 +1431,22 @@ router.post('/document-upload/:id/:name', function(req, res) {
         } else if (!application || !application[0]) {
             res.send({"status": 500, "error": "Application does not exist", "response": null});
         } else {
-            fs.stat('files/application-'+application_id+'/', function(err) {
+            fs.stat(folder_path, function(err) {
                 if (err && (err.code === 'ENOENT'))
-                    fs.mkdirSync('files/application-'+application_id+'/');
+                    fs.mkdirSync(folder_path);
 
-                fs.stat('files/application-'+application_id+'/'+application_id+'_'+name+'.'+extension, function (err) {
+                fs.stat(folder_path+application_id+'_'+name+'.'+extension, function (err) {
                     if (err) {
-                        sampleFile.mv('files/application-'+application_id+'/'+application_id+'_'+name+'.'+extension, function(err) {
+                        sampleFile.mv(folder_path+application_id+'_'+name+'.'+extension, function(err) {
                             if (err) return res.status(500).send(err);
                             res.send({files:[sampleFile]});
                         });
                     } else {
-                        fs.unlink('files/application-'+application_id+'/'+application_id+'_'+name+'.'+extension,function(err){
+                        fs.unlink(folder_path+application_id+'_'+name+'.'+extension,function(err){
                             if(err){
                                 return console.log(err);
                             } else {
-                                sampleFile.mv('files/application-'+application_id+'/'+application_id+'_'+name+'.'+extension, function(err) {
+                                sampleFile.mv(folder_path+application_id+'_'+name+'.'+extension, function(err) {
                                     if (err)
                                         return res.status(500).send(err);
                                     else {
