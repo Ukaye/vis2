@@ -1988,7 +1988,7 @@ function uploadFile() {
         contentType: false,
         success: function (response) {
             let preview = `<img class="img-responsive user-photo" src="/${response.file}">`;
-            if (!isUriImage(`/${response.file}`)) preview = '<i class="fa fa-file" style="font-size: 150px;"></i>';
+            if (!isUriImage(`/${response.file}`)) preview = '<i class="fa fa-file" style="font-size: 100px;"></i>';
             $('#downloads').append('<div class="row">\n' +
                 '    <div class="col-sm-2">\n' +
                 '        <div class="thumbnail">'+preview+'</div>\n' +

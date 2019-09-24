@@ -2174,46 +2174,47 @@ router.get('/application/comment/:id/:loan_id', (req, res) => {
     });
 });
 
-router.post('/application/upload/:id/:name/:folder?', function(req, res) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
-    let	name = req.params.name,
-        folder = req.params.folder,
-        application_id = req.params.id,
+router.post('/application/upload/:id/:application_id/:name', helperFunctions.verifyJWT, function(req, res) {
+    let	id = req.params.id,
+        name = req.params.name,
         sampleFile = req.files.file,
         extArray = sampleFile.name.split("."),
         extension = extArray[extArray.length - 1],
-        query = `SELECT * FROM applications WHERE ID = ${application_id}`,
+        application_id = req.params.application_id,
+        query = `SELECT * FROM client_applications WHERE ID = ${application_id} AND userID = ${id}`,
         endpoint = '/core-service/get',
-        url = `${HOST}${endpoint}`;
+        url = `${req.HOST}${endpoint}`;
     if (extension) extension = extension.toLowerCase();
-
-    if (!name) return res.status(400).send('No files were uploaded.');
-    if (!req.files) return res.status(400).send('No files were uploaded.');
-    if (!req.params || !application_id || !name) return res.status(400).send('Required parameter(s) not sent!');
+    if (!req.files) return res.status(500).send('No files were uploaded.');
+    if (!req.params || !application_id || !name) return res.status(500).send('Required parameter(s) not sent!');
 
     axios.get(url, {
         params: {
             query: query
         }
     }).then(response => {
-        let application = response.data;
-        if (!application || !application[0]) {
-            res.send({"status": 500, "error": "Application does not exist", "response": null});
+        let client_application = response.data;
+        if (!client_application || !client_application[0]) {
+            return res.send({
+                "status": 500,
+                "error": "Application does not exist",
+                "response": null
+            });
         } else {
-            const file_folder = `files/${folder || `application-${application_id}`}/`;
-            return console.log(file_folder)
+            const file_folder = `files/client_application-${application_id}/`;
             fs.stat(file_folder, function(err) {
                 if (err && (err.code === 'ENOENT'))
                     fs.mkdirSync(file_folder);
 
-                const file_url = `${file_folder}${application_id}_${name}.${extension}`;
+                const file_url = `${file_folder}${application_id}_${name.trim().replace(/ /g, '_')}.${extension}`;
                 fs.stat(file_url, function (err) {
                     if (err) {
                         sampleFile.mv(file_url, function(err) {
                             if (err) return res.status(500).send(err);
                             res.send({
-                                file:file_url, 
-                                data: sampleFile
+                                "status": 200,
+                                "error": null,
+                                "response": `${req.HOST}/${encodeURI(file_url)}`
                             });
                         });
                     } else {
@@ -2225,8 +2226,9 @@ router.post('/application/upload/:id/:name/:folder?', function(req, res) {
                                     if (err)
                                         return res.status(500).send(err);
                                     res.send({
-                                        file:file_url, 
-                                        data: sampleFile
+                                        "status": 200,
+                                        "error": null,
+                                        "response": `${req.HOST}/${encodeURI(file_url)}`
                                     });
                                 });
                             }
