@@ -3,6 +3,7 @@ const axios = require('axios');
 const router = express.Router();
 const moment = require('moment');
 const addMonths = require('date-fns/add_months');
+const sRequest = require('../s_request');
 
 /** End point to return all investment product filtered by isWalletApproval (The property differentiate if a product is for wallet or not) **/
 router.get('/all/:id', function (req, res, next) {
@@ -14,13 +15,9 @@ router.get('/all/:id', function (req, res, next) {
     FROM investment_products WHERE isWalletApproval = ${req.params.id} AND status = 1 AND isDeactivated = 0 AND (upper(code) LIKE "${search_string}%" OR upper(name) LIKE "${search_string}%") ORDER BY ID desc LIMIT ${limit} OFFSET ${page}`;
     const endpoint = "/core-service/get";
     const url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    })
+    sRequest.get(query)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send(err);
         })
@@ -35,13 +32,9 @@ router.get('/validate-code/:code', function (req, res, next) {
     let query = `SELECT count(*) as counter FROM investment_products WHERE code = '${req.params.code.toUpperCase()}'`;
     const endpoint = "/core-service/get";
     const url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    })
+    sRequest.get(query)
         .then(function (response) {
-            res.send(response.data[0]);
+            res.send(response[0]);
         }, err => {
             res.send(err);
         })
@@ -59,13 +52,9 @@ router.get('/roles', function (req, res, next) {
     let query = `SELECT ID,role_name FROM user_roles WHERE status = 1 AND upper(role_name) LIKE "${search_string}%" ORDER BY ID desc LIMIT ${limit} OFFSET ${page}`;
     const endpoint = "/core-service/get";
     const url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    })
+    sRequest.get(query)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send(err);
         })
@@ -89,11 +78,7 @@ router.get('/get-products', function (req, res, next) {
     ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(response => {
+    sRequest.get(query).then(response => {
         query = `SELECT
         (SELECT count(*) AS recordsTotal FROM investment_products WHERE  status = 1) AS recordsTotal,
         (SELECT count(*) AS recordsFiltered FROM investment_products WHERE  status = 1 
@@ -101,16 +86,12 @@ router.get('/get-products', function (req, res, next) {
         as recordsFiltered`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(payload => {
+        sRequest.get(query).then(payload => {
             res.send({
                 draw: draw,
-                recordsTotal: payload.data[0].recordsTotal,
-                recordsFiltered: payload.data[0].recordsFiltered,
-                data: (response.data === undefined) ? [] : response.data
+                recordsTotal: payload[0].recordsTotal,
+                recordsFiltered: payload[0].recordsFiltered,
+                data: (response === undefined) ? [] : response
             });
         });
     });
@@ -127,9 +108,9 @@ router.post('/requirements', function (req, res, next) {
     let query = `INSERT INTO investment_product_requirements SET ?`;
     let endpoint = `/core-service/post?query=${query}`;
     let url = `${HOST}${endpoint}`;
-    axios.post(url, data)
+    sRequest.post(query, data)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send({
                 status: 500,
@@ -153,15 +134,11 @@ async function getProductApprovalItems(HOST, search_string, order, offset, limit
     let endpoint = "/core-service/get";
     let url = `${HOST}${endpoint}`;
     try {
-        let response = await axios.get(url, {
-            params: {
-                query: query
-            }
-        });
+        let response = await sRequest.get(query);
         let roles = [];
-        if (response.data.length > 0) {
-            for (let index = 0; index < response.data.length; index++) {
-                let x = response.data[index];
+        if (response.length > 0) {
+            for (let index = 0; index < response.length; index++) {
+                let x = response[index];
                 x.roles = [];
                 x.htmlTag = "";
                 x.roleId = JSON.parse(x.roleId);
@@ -175,7 +152,7 @@ async function getProductApprovalItems(HOST, search_string, order, offset, limit
                 draw: draw,
                 recordsTotal: 3,
                 recordsFiltered: 3,
-                data: response.data
+                data: response
             };
         } else {
             return {
@@ -214,9 +191,9 @@ router.post('/requirements/:id', function (req, res, next) {
     let query = `UPDATE investment_product_requirements SET isAllRoles = ${data.isAllRoles} , updatedDate = '${dt}' WHERE ID =${req.params.id}`;
     let endpoint = `/core-service/post?query=${query}`;
     let url = `${HOST}${endpoint}`;
-    axios.post(url, data)
+    sRequest.post(query, data)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send({
                 status: 500,
@@ -240,29 +217,21 @@ router.get('/required-roles', function (req, res, next) {
     operationId = ${req.query.operationId} AND status = 1`;
     let endpoint = "/core-service/get";
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    })
+    sRequest.get(query)
         .then(function (response) {
-            if (response.data.length > 0) {
+            if (response.length > 0) {
                 let _roles = [];
-                let roleId = JSON.parse(response.data[0].roleId);
+                let roleId = JSON.parse(response[0].roleId);
                 roleId.forEach((r, index) => {
                     query = `SELECT role_name FROM user_roles WHERE id = ${r}`;
                     endpoint = "/core-service/get";
                     url = `${HOST}${endpoint}`;
-                    axios.get(url, {
-                        params: {
-                            query: query
-                        }
-                    })
+                    sRequest.get(query)
                         .then(function (response2) {
                             _roles.push({
                                 id: r,
-                                text: response2.data[0].role_name,
-                                reqId: response.data[0].ID
+                                text: response2[0].role_name,
+                                reqId: response[0].ID
                             })
                             // const item = r;
                             // roleId[index] = {};
@@ -295,9 +264,9 @@ router.post('/update-requirements/:id', function (req, res, next) {
     let query = `UPDATE investment_product_requirements SET roleId =${JSON.stringify(data.roleId)}, updatedDate ='${dt.toString()}' WHERE ID =${req.params.id}`;
     let endpoint = `/core-service/post?query=${query}`;
     let url = `${HOST}${endpoint}`;
-    axios.post(url, data)
+    sRequest.post(query, data)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send({
                 status: 500,
@@ -321,13 +290,9 @@ router.get('/remove-requirements/:id', function (req, res, next) {
     let query = `UPDATE investment_product_requirements SET status = 0, updatedDate ='${dt.toString()}' WHERE ID =${req.params.id}`;
     let endpoint = `/core-service/get`;
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    })
+    sRequest.get(query)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send({
                 status: 500,
@@ -352,9 +317,9 @@ router.post('/update-approval/:id', function (req, res, next) {
     let query = `UPDATE investment_product_requirements SET priority = '${data.priority}' , updatedDate = '${dt}' WHERE ID =${req.params.id}`;
     let endpoint = `/core-service/post?query=${query}`;
     let url = `${HOST}${endpoint}`;
-    axios.post(url, data)
+    sRequest.post(query, data)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send({
                 status: 500,
@@ -382,9 +347,9 @@ router.post('/reviews', function (req, res, next) {
     let query = `INSERT INTO investment_product_reviews SET ?`;
     let endpoint = `/core-service/post?query=${query}`;
     let url = `${HOST}${endpoint}`;
-    axios.post(url, data)
+    sRequest.post(query, data)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send({
                 status: 500,
@@ -408,16 +373,12 @@ async function getRoleUserDetails(x, index2, HOST) {
     let endpoint = "/core-service/get";
     let url = `${HOST}${endpoint}`;
     try {
-        let response2 = await axios.get(url, {
-            params: {
-                query: query
-            }
-        });
+        let response2 = await sRequest.get(query);
         x.roles.push({
-            id: response2.data[0].ID,
-            name: response2.data[0].role_name
+            id: response2[0].ID,
+            name: response2[0].role_name
         });
-        x.htmlTag = x.htmlTag + `<span class="badge badge-pill badge-primary">${response2.data[0].role_name}</span>`;
+        x.htmlTag = x.htmlTag + `<span class="badge badge-pill badge-primary">${response2[0].role_name}</span>`;
         return x;
     } catch (error) {
         return error;
@@ -431,15 +392,11 @@ async function getProductReviewItems(HOST, search_string, order, offset, limit, 
     let endpoint = "/core-service/get";
     let url = `${HOST}${endpoint}`;
     try {
-        let response = await axios.get(url, {
-            params: {
-                query: query
-            }
-        });
+        let response = await sRequest.get(query);
         let roles = [];
-        if (response.data.length > 0) {
-            for (let index = 0; index < response.data.length; index++) {
-                let x = response.data[index];
+        if (response.length > 0) {
+            for (let index = 0; index < response.length; index++) {
+                let x = response[index];
                 x.roles = [];
                 x.htmlTag = "";
                 x.roleId = JSON.parse(x.roleId);
@@ -453,7 +410,7 @@ async function getProductReviewItems(HOST, search_string, order, offset, limit, 
                 draw: draw,
                 recordsTotal: 3,
                 recordsFiltered: 3,
-                data: response.data
+                data: response
             };
         } else {
             return {
@@ -491,9 +448,9 @@ router.post('/reviews/:id', function (req, res, next) {
     let query = `UPDATE investment_product_reviews SET isAllRoles = ${data.isAllRoles} , updatedDate = '${dt}' WHERE ID =${req.params.id}`;
     let endpoint = `/core-service/post?query=${query}`;
     let url = `${HOST}${endpoint}`;
-    axios.post(url, data)
+    sRequest.post(query, data)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send({
                 status: 500,
@@ -517,29 +474,21 @@ router.get('/required-review-roles', function (req, res, next) {
     operationId = ${req.query.operationId} AND status = 1`;
     let endpoint = "/core-service/get";
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    })
+    sRequest.get(query)
         .then(function (response) {
-            if (response.data.length > 0) {
+            if (response.length > 0) {
                 let _roles = [];
-                let roleId = JSON.parse(response.data[0].roleId);
+                let roleId = JSON.parse(response[0].roleId);
                 roleId.forEach((r, index) => {
                     query = `SELECT role_name FROM user_roles WHERE id = ${r}`;
                     endpoint = "/core-service/get";
                     url = `${HOST}${endpoint}`;
-                    axios.get(url, {
-                        params: {
-                            query: query
-                        }
-                    })
+                    sRequest.get(query)
                         .then(function (response2) {
                             _roles.push({
                                 id: r,
-                                text: response2.data[0].role_name,
-                                reqId: response.data[0].ID
+                                text: response2[0].role_name,
+                                reqId: response[0].ID
                             })
                             // const item = r;
                             // roleId[index] = {};
@@ -572,9 +521,9 @@ router.post('/update-reviews/:id', function (req, res, next) {
     let query = `UPDATE investment_product_reviews SET roleId =${JSON.stringify(data.roleId)}, updatedDate ='${dt.toString()}' WHERE ID =${req.params.id}`;
     let endpoint = `/core-service/post?query=${query}`;
     let url = `${HOST}${endpoint}`;
-    axios.post(url, data)
+    sRequest.post(query, data)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send({
                 status: 500,
@@ -598,13 +547,9 @@ router.get('/remove-reviews/:id', function (req, res, next) {
     let query = `UPDATE investment_product_reviews SET status = 0, updatedDate ='${dt.toString()}' WHERE ID =${req.params.id}`;
     let endpoint = `/core-service/get`;
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    })
+    sRequest.get(query)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send({
                 status: 500,
@@ -628,13 +573,9 @@ router.get('/get-product-reviews/:id', function (req, res, next) {
     let query = `SELECT * FROM investment_product_reviews WHERE id = ${req.params.id}`;
     let endpoint = `/core-service/get`;
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    })
+    sRequest.get(query)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send({
                 status: 500,
@@ -659,9 +600,9 @@ router.post('/update-review-priority/:id', function (req, res, next) {
     let query = `UPDATE investment_product_reviews SET priority = '${data.priority}' , updatedDate = '${dt}' WHERE ID =${req.params.id}`;
     let endpoint = `/core-service/post?query=${query}`;
     let url = `${HOST}${endpoint}`;
-    axios.post(url, data)
+    sRequest.post(query, data)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send({
                 status: 500,
@@ -689,9 +630,9 @@ router.post('/posts', function (req, res, next) {
     let query = `INSERT INTO investment_product_posts SET ?`;
     let endpoint = `/core-service/post?query=${query}`;
     let url = `${HOST}${endpoint}`;
-    axios.post(url, data)
+    sRequest.post(query, data)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send({
                 status: 500,
@@ -715,15 +656,11 @@ async function getProductPostItems(HOST, search_string, order, offset, limit, id
     let endpoint = "/core-service/get";
     let url = `${HOST}${endpoint}`;
     try {
-        let response = await axios.get(url, {
-            params: {
-                query: query
-            }
-        });
+        let response = await sRequest.get(query);
         let roles = [];
-        if (response.data.length > 0) {
-            for (let index = 0; index < response.data.length; index++) {
-                let x = response.data[index];
+        if (response.length > 0) {
+            for (let index = 0; index < response.length; index++) {
+                let x = response[index];
                 x.roles = [];
                 x.htmlTag = "";
                 x.roleId = JSON.parse(x.roleId);
@@ -737,7 +674,7 @@ async function getProductPostItems(HOST, search_string, order, offset, limit, id
                 draw: draw,
                 recordsTotal: 3,
                 recordsFiltered: 3,
-                data: response.data
+                data: response
             };
         } else {
             return {
@@ -775,9 +712,9 @@ router.post('/post/:id', function (req, res, next) {
     let query = `UPDATE investment_product_posts SET isAllRoles = ${data.isAllRoles} , updatedDate = '${dt}' WHERE ID =${req.params.id}`;
     let endpoint = `/core-service/post?query=${query}`;
     let url = `${HOST}${endpoint}`;
-    axios.post(url, data)
+    sRequest.post(query, data)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send({
                 status: 500,
@@ -801,29 +738,21 @@ router.get('/required-post-roles', function (req, res, next) {
     operationId = ${req.query.operationId} AND status = 1`;
     let endpoint = "/core-service/get";
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    })
+    sRequest.get(query)
         .then(function (response) {
-            if (response.data.length > 0) {
+            if (response.length > 0) {
                 let _roles = [];
-                let roleId = JSON.parse(response.data[0].roleId);
+                let roleId = JSON.parse(response[0].roleId);
                 roleId.forEach((r, index) => {
                     query = `SELECT role_name FROM user_roles WHERE id = ${r}`;
                     endpoint = "/core-service/get";
                     url = `${HOST}${endpoint}`;
-                    axios.get(url, {
-                        params: {
-                            query: query
-                        }
-                    })
+                    sRequest.get(query)
                         .then(function (response2) {
                             _roles.push({
                                 id: r,
-                                text: response2.data[0].role_name,
-                                reqId: response.data[0].ID
+                                text: response2[0].role_name,
+                                reqId: response[0].ID
                             })
                             // const item = r;
                             // roleId[index] = {};
@@ -856,9 +785,9 @@ router.post('/update-posts/:id', function (req, res, next) {
     let query = `UPDATE investment_product_posts SET roleId =${JSON.stringify(data.roleId)}, updatedDate ='${dt.toString()}' WHERE ID =${req.params.id}`;
     let endpoint = `/core-service/post?query=${query}`;
     let url = `${HOST}${endpoint}`;
-    axios.post(url, data)
+    sRequest.post(query, data)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send({
                 status: 500,
@@ -882,13 +811,9 @@ router.get('/remove-posts/:id', function (req, res, next) {
     let query = `UPDATE investment_product_posts SET status = 0, updatedDate ='${dt.toString()}' WHERE ID =${req.params.id}`;
     let endpoint = `/core-service/get`;
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    })
+    sRequest.get(query)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send({
                 status: 500,
@@ -913,9 +838,9 @@ router.post('/update-post-priority/:id', function (req, res, next) {
     let query = `UPDATE investment_product_posts SET priority = '${data.priority}' , updatedDate = '${dt}' WHERE ID =${req.params.id}`;
     let endpoint = `/core-service/post?query=${query}`;
     let url = `${HOST}${endpoint}`;
-    axios.post(url, data)
+    sRequest.post(query, data)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send({
                 status: 500,
@@ -940,9 +865,9 @@ router.post('/create-docs', function (req, res, next) {
     let query = `INSERT INTO investment_doc_requirement SET ?`;
     let endpoint = `/core-service/post?query=${query}`;
     let url = `${HOST}${endpoint}`;
-    axios.post(url, data)
+    sRequest.post(query, data)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send({
                 status: 500,
@@ -978,12 +903,8 @@ router.get('/get-doc-requirements/:id', function (req, res, next) {
     let query = `SELECT * FROM investment_doc_requirement WHERE productId = ${req.params.id} ${option} AND status = 1`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(response => {
-        res.send(response.data);
+    sRequest.get(query).then(response => {
+        res.send(response);
     }, err => {
         res.send({
             status: 500,
@@ -1001,12 +922,8 @@ router.get('/get-txn-doc-requirements/:id', function (req, res, next) {
     WHERE d.txnId = ${req.params.id} AND r.status = 1`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(response => {
-        res.send(response.data);
+    sRequest.get(query).then(response => {
+        res.send(response);
     }, err => {
         res.send({
             status: 500,
@@ -1022,12 +939,8 @@ router.get('/remove-doc-requirements/:id', function (req, res, next) {
     let query = `UPDATE investment_doc_requirement SET status = ${0} WHERE ID =${req.params.id}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(response => {
-        res.send(response.data);
+    sRequest.get(query).then(response => {
+        res.send(response);
     }, err => {
         res.send({
             status: 500,
@@ -1050,12 +963,8 @@ router.post('/update-txn-doc-requirements', function (req, res, next) {
 
         let endpoint = '/core-service/get';
         let url = `${HOST}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(response => {
-            res.send(response.data);
+        sRequest.get(query).then(response => {
+            res.send(response);
         }, err => {
             res.send({
                 status: 500,
@@ -1076,9 +985,9 @@ router.post('/update-txn-doc-requirements', function (req, res, next) {
         let query = `INSERT INTO investment_txn_doc_requirements SET ?`;
         let endpoint = `/core-service/post?query=${query}`;
         let url = `${HOST}${endpoint}`;
-        axios.post(url, data_)
+        sRequest.post(query, data_)
             .then(function (response) {
-                res.send(response.data);
+                res.send(response);
             }, err => {
                 res.send({
                     status: 500,

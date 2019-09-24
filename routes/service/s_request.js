@@ -5,7 +5,6 @@ var sRequest = {
         return new Promise((resolve, reject) => {
             db.query(query, function (error, results, fields) {
                 if (error && error !== null) {
-                    console.log(error);
                     reject({
                         "status": 500,
                         "error": error,
@@ -21,7 +20,6 @@ var sRequest = {
         return new Promise((resolve, reject) => {
             db.query(query, data, function (error, results, fields) {
                 if (error && error !== null) {
-                    console.log(error);
                     reject({
                         "status": 500,
                         "error": error,

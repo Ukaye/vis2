@@ -11,17 +11,18 @@ $(document).ready(function () {
 
 let _table = $('#bootstrap-data-table-export').DataTable();
 
-function updateStatus(id, status) {
+function updateStatus(id, isDeactivated) {
     $.ajax({
         url: `/investment/products-status/${id}`,
         'type': 'post',
         'data': {
-            status: status
+            isDeactivated: isDeactivated
         },
         'success': function (data) {
+            console.log(data);
             if (data.status === 200) {
                 $('#wait').hide();
-                if (status === 0) {
+                if (isDeactivated === 1) {
                     swal('Product deactivated successfully', '', 'success');
                 } else {
                     swal('Product activated successfully', '', 'success');

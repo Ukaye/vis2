@@ -1050,6 +1050,7 @@ async function onExecutiveTransaction() {
                 'type': 'post',
                 'data': investmentOps,
                 'success': function (data) {
+                    console.log(data);
                     if (data.status === undefined) {
                         $('#wait').hide();
                         $("#input_amount").val('');
@@ -1844,6 +1845,7 @@ function onTransferOperation() {
             'type': 'post',
             'data': investmentOps,
             'success': function (data) {
+                console.log(data);
                 $('#wait').hide();
                 swal('Transfer operation completed successfully', '', 'success');
                 $("#input_transfer_amount").val('');
@@ -1935,11 +1937,11 @@ function onTransferToInvestments(amount, desc, is_credit, investmentId) {
 //     }
 // }
 
-function read_write_custom(isWalletPage){
+function read_write_custom(isWalletPage) {
     let perms = JSON.parse(localStorage.getItem("permissions"));
-    let lblViewWalletTxns = ($.grep(perms, function(e){return e.module_name === 'lblViewWalletTxns';}))[0];
-    let investment_transactions = ($.grep(perms, function(e){return e.module_name === 'client-investment-transactions';}))[0];
-    let investment_wallet = ($.grep(perms, function(e){return e.module_name === 'client-investment-wallet';}))[0];
+    let lblViewWalletTxns = ($.grep(perms, function (e) { return e.module_name === 'lblViewWalletTxns'; }))[0];
+    let investment_transactions = ($.grep(perms, function (e) { return e.module_name === 'client-investment-transactions'; }))[0];
+    let investment_wallet = ($.grep(perms, function (e) { return e.module_name === 'client-investment-wallet'; }))[0];
     $('#lblViewWalletTxns').hide();
     if (lblViewWalletTxns && lblViewWalletTxns['read_only'] === '1')
         $('#lblViewWalletTxns').show();

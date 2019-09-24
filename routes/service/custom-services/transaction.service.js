@@ -39,12 +39,8 @@ router.get('/get-txn-user-roles/:id', function (req, res, next) {
     WHERE a.txnId = ${req.params.id} AND a.method = ${req.query.method}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(response => {
-        res.send(response.data);
+    sRequest.get(query).then(response => {
+        res.send(response);
     }, err => {
         res.send({
             status: 500,
@@ -62,12 +58,8 @@ router.get('/get-product-configs/:id', function (req, res, next) {
     WHERE v.ID =${req.params.id}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(response => {
-        res.send(response.data);
+    sRequest.get(query).then(response => {
+        res.send(response);
     }, err => {
         res.send({
             status: 500,
@@ -84,12 +76,8 @@ function organisationSettings(HOST) {
                     left join investment_products p on p.ID = c.walletProductId ORDER BY ID DESC LIMIT 1`;
         let endpoint = '/core-service/get';
         let url = `${HOST}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(response => {
-            resolve(response.data[0].walletProductId);
+        sRequest.get(query).then(response => {
+            resolve(response[0].walletProductId);
         }, err => {
             resolve(0);
         })
@@ -117,40 +105,36 @@ router.post('/create', function (req, res, next) {
                     is_capital: 0,
                     ref_no: (data.isReversedTxn === '1') ? `${data.ref_no}-R` : refId,
                     parentTxnId: data.parentTxnId,
-                    isReversedTxn: data.isReversedTxn,
+                    isReversedTxn: (data.isReversedTxn !== undefined) ? data.isReversedTxn : 0,
                     investmentId: data.investmentId,
                     createdBy: data.createdBy,
                     clientId: data.clientId,
-                    isMoveFundTransfer: data.isMoveFundTransfer,
-                    isWithdrawal: data.isWithdrawal,
-                    isDeposit: data.isDeposit,
-                    isTransfer: data.isTransfer,
+                    isMoveFundTransfer: (data.isMoveFundTransfer !== undefined) ? data.isMoveFundTransfer : 0,
+                    isWithdrawal: (data.isWithdrawal !== undefined) ? data.isWithdrawal : 0,
+                    isDeposit: (data.isDeposit !== undefined) ? data.isDeposit : 0,
+                    isTransfer: (data.isTransfer !== undefined) ? data.isTransfer : 0,
                     beneficialInvestmentId: data.beneficialInvestmentId,
-                    isInvestmentTerminated: data.isInvestmentTerminated,
-                    isForceTerminate: data.isForceTerminate,
+                    isInvestmentTerminated: (data.isInvestmentTerminated !== undefined) ? data.isInvestmentTerminated : 0,
+                    isForceTerminate: (data.isForceTerminate !== undefined) ? data.isForceTerminate : 0,
                     expectedTerminationDate: data.expectedTerminationDate,
-                    isWallet: data.isWallet,
-                    isPaymentMadeByWallet: (data.isWallet === '1') ? 0 : ((data.isPaymentMadeByWallet === '') ? 0 : data.isPaymentMadeByWallet),
+                    isWallet: (data.isWallet !== undefined) ? data.isWallet : 0,
+                    isPaymentMadeByWallet: (data.isWallet === '1') ? 0 : ((data.isPaymentMadeByWallet === '' || data.isPaymentMadeByWallet === undefined) ? 0 : data.isPaymentMadeByWallet),
                     isInvestmentMatured: (data.isInvestmentMatured === undefined) ? 0 : data.isInvestmentMatured
                 };
-                query = `INSERT INTO investment_txns SET ?`;
+                let query = `INSERT INTO investment_txns SET ?`;
                 endpoint = `/core-service/post?query=${query}`;
                 url = `${HOST}${endpoint}`;
-                axios.post(url, inv_txn)
+                sRequest.post(query, inv_txn)
                     .then(function (_response) {
-                        if (_response.data.status === undefined) {
+                        if (_response.status === undefined) {
                             query = `SELECT * FROM investment_product_requirements
                                     WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
                             endpoint = "/core-service/get";
                             url = `${HOST}${endpoint}`;
-                            axios.get(url, {
-                                params: {
-                                    query: query
-                                }
-                            })
+                            sRequest.get(query)
                                 .then(function (response2) {
-                                    if (response2.data.length > 0) {
-                                        let result = response2.data[0];
+                                    if (response2.length > 0) {
+                                        let result = response2[0];
                                         let pasrsedData = JSON.parse(result.roleId);
                                         let jsonPriority = JSON.parse(result.priority);
                                         jsonPriority = (jsonPriority === null) ? [] : jsonPriority;
@@ -163,7 +147,7 @@ router.post('/create', function (req, res, next) {
                                                 createdAt: dt,
                                                 updatedAt: dt,
                                                 createdBy: data.createdBy,
-                                                txnId: _response.data.insertId,
+                                                txnId: _response.insertId,
                                                 method: 'APPROVAL'
                                             };
                                             if (jsonPriority.length > 0) {
@@ -176,7 +160,7 @@ router.post('/create', function (req, res, next) {
                                             query = `INSERT INTO investment_op_approvals SET ?`;
                                             endpoint = `/core-service/post?query=${query}`;
                                             url = `${HOST}${endpoint}`;
-                                            axios.post(url, invOps).then(p => {
+                                            sRequest.post(query, invOps).then(p => {
                                             }, er22 => { });
 
                                         });
@@ -188,14 +172,14 @@ router.post('/create', function (req, res, next) {
                                             createdAt: dt,
                                             updatedAt: dt,
                                             createdBy: data.createdBy,
-                                            txnId: _response.data.insertId,
+                                            txnId: _response.insertId,
                                             method: 'APPROVAL'
                                         };
 
                                         query = `INSERT INTO investment_op_approvals SET ?`;
                                         endpoint = `/core-service/post?query=${query}`;
                                         url = `${HOST}${endpoint}`;
-                                        axios.post(url, invOps).then(p => {
+                                        sRequest.post(query, invOps).then(p => {
                                         }, er22 => { });
                                     }
                                 })
@@ -207,14 +191,10 @@ router.post('/create', function (req, res, next) {
                                     WHERE productId = ${data.productId} AND operationId = ${(data.isWallet === '0') ? data.operationId : 0} AND status = 1`;
                             endpoint = "/core-service/get";
                             url = `${HOST}${endpoint}`;
-                            axios.get(url, {
-                                params: {
-                                    query: query
-                                }
-                            })
+                            sRequest.get(query)
                                 .then(function (response2) {
-                                    if (response2.data.length > 0) {
-                                        let result = response2.data[0];
+                                    if (response2.length > 0) {
+                                        let result = response2[0];
                                         let pasrsedData = JSON.parse(result.roleId);
                                         let jsonPriority = JSON.parse(result.priority);
                                         jsonPriority = (jsonPriority === null) ? [] : jsonPriority;
@@ -227,7 +207,7 @@ router.post('/create', function (req, res, next) {
                                                 createdAt: dt,
                                                 updatedAt: dt,
                                                 createdBy: data.createdBy,
-                                                txnId: _response.data.insertId,
+                                                txnId: _response.insertId,
                                                 method: 'REVIEW'
                                             };
                                             if (jsonPriority.length > 0) {
@@ -239,7 +219,7 @@ router.post('/create', function (req, res, next) {
                                             query = `INSERT INTO investment_op_approvals SET ?`;
                                             endpoint = `/core-service/post?query=${query}`;
                                             url = `${HOST}${endpoint}`;
-                                            axios.post(url, invOps).then(p => { }, er22 => {
+                                            sRequest.post(query, invOps).then(p => { }, er22 => {
                                             });
                                         });
                                     } else {
@@ -250,14 +230,14 @@ router.post('/create', function (req, res, next) {
                                             createdAt: dt,
                                             updatedAt: dt,
                                             createdBy: data.createdBy,
-                                            txnId: _response.data.insertId,
+                                            txnId: _response.insertId,
                                             method: 'REVIEW'
                                         };
 
                                         query = `INSERT INTO investment_op_approvals SET ?`;
                                         endpoint = `/core-service/post?query=${query}`;
                                         url = `${HOST}${endpoint}`;
-                                        axios.post(url, invOps).then(p => { }, er22 => {
+                                        sRequest.post(query, invOps).then(p => { }, er22 => {
                                         });
                                     }
                                 })
@@ -268,14 +248,10 @@ router.post('/create', function (req, res, next) {
                                     WHERE productId = ${data.productId} AND operationId = ${(data.isWallet === '0') ? data.operationId : 0} AND status = 1`;
                             endpoint = "/core-service/get";
                             url = `${HOST}${endpoint}`;
-                            axios.get(url, {
-                                params: {
-                                    query: query
-                                }
-                            })
+                            sRequest.get(query)
                                 .then(function (response2) {
-                                    if (response2.data.length > 0) {
-                                        let result = response2.data[0];
+                                    if (response2.length > 0) {
+                                        let result = response2[0];
                                         let pasrsedData = JSON.parse(result.roleId);
                                         let jsonPriority = JSON.parse(result.priority);
                                         jsonPriority = (jsonPriority === null) ? [] : jsonPriority;
@@ -288,7 +264,7 @@ router.post('/create', function (req, res, next) {
                                                 createdAt: dt,
                                                 updatedAt: dt,
                                                 createdBy: data.createdBy,
-                                                txnId: _response.data.insertId,
+                                                txnId: _response.insertId,
                                                 method: 'POST'
                                             };
 
@@ -302,7 +278,7 @@ router.post('/create', function (req, res, next) {
                                             query = `INSERT INTO investment_op_approvals SET ?`;
                                             endpoint = `/core-service/post?query=${query}`;
                                             url = `${HOST}${endpoint}`;
-                                            axios.post(url, invOps).then(p => { }, er22 => {
+                                            sRequest.post(query, invOps).then(p => { }, er22 => {
                                             });
                                         });
                                     } else {
@@ -313,21 +289,21 @@ router.post('/create', function (req, res, next) {
                                             createdAt: dt,
                                             updatedAt: dt,
                                             createdBy: data.createdBy,
-                                            txnId: _response.data.insertId,
+                                            txnId: _response.insertId,
                                             method: 'POST'
                                         };
 
                                         query = `INSERT INTO investment_op_approvals SET ?`;
                                         endpoint = `/core-service/post?query=${query}`;
                                         url = `${HOST}${endpoint}`;
-                                        axios.post(url, invOps).then(p => { }, er22 => {
+                                        sRequest.post(query, invOps).then(p => { }, er22 => {
                                         });
                                     }
                                 })
                                 .catch(function (error) {
                                 });
 
-                            setDocRequirement(HOST, data, _response.data.insertId);
+                            setDocRequirement(HOST, data, _response.insertId);
                             res.send({});
                         } else {
                             res.send({
@@ -361,14 +337,10 @@ function setDocRequirement(HOST, data, txnId) {
                 WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
     let endpoint = "/core-service/get";
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    })
+    sRequest.get(query)
         .then(function (response2) {
-            if (response2.data.length > 0) {
-                response2.data.map((item, index) => {
+            if (response2.length > 0) {
+                response2.map((item, index) => {
                     let doc = {
                         docRequirementId: item.Id,
                         txnId: txnId,
@@ -378,7 +350,7 @@ function setDocRequirement(HOST, data, txnId) {
                     endpoint = `/core-service/post?query=${query}`;
                     url = `${HOST}${endpoint}`;
                     try {
-                        axios.post(url, doc);
+                        sRequest.post(query, doc);
                     } catch (error) { }
                 })
             }
@@ -395,14 +367,10 @@ router.get('/verify-doc-uploads', function (req, res, next) {
     (Select Count(*) as total_uploaded from investment_txn_doc_requirements where txnId = ${data.txnId} AND isReplaced = 0 AND status = 1) as total_uploaded`;
     let endpoint = `/core-service/get`;
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    })
+    sRequest.get(query)
         .then(function (response) {
-            if (response.data.status === undefined) {
-                res.send(response.data);
+            if (response.status === undefined) {
+                res.send(response);
             }
         }, err => {
             res.send({
@@ -430,15 +398,11 @@ router.post('/create-transfers', function (req, res, next) {
     let query = `SELECT amount,is_credit,isApproved FROM investment_txns WHERE clientId = ${data.debitedClientId} AND isApproved = 1`;
     let endpoint = "/core-service/get";
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    })
+    sRequest.get(query)
         .then(function (response) {
-            if (response.data.length > 0) {
+            if (response.length > 0) {
                 let total = 0;
-                response.data.map(x => {
+                response.map(x => {
                     if (x.isApproved === 1) {
                         let _x = x.amount.split(',').join('');
                         if (x.is_credit.toString() === '1') {
@@ -471,22 +435,18 @@ router.post('/create-transfers', function (req, res, next) {
                 query = `INSERT INTO investment_txns SET ?`;
                 endpoint = `/core-service/post?query=${query}`;
                 url = `${HOST}${endpoint}`;
-                axios.post(url, inv_txn)
+                sRequest.post(query, inv_txn)
                     .then(function (_response) {
-                        if (_response.data.status === undefined) {
+                        if (_response.status === undefined) {
                             let queryString = (data.investmentId === '') ? `clientId = ${data.creditedClientId}` : `investmentId = ${data.investmentId}`;
                             query = `SELECT amount,is_credit,isApproved FROM investment_txns WHERE ${queryString} AND isApproved = 1`;
                             let endpoint = "/core-service/get";
                             let url = `${HOST}${endpoint}`;
-                            axios.get(url, {
-                                params: {
-                                    query: query
-                                }
-                            })
+                            sRequest.get(query)
                                 .then(function (response2) {
                                     total = 0;
-                                    if (response2.data.length > 0) {
-                                        response2.data.map(x => {
+                                    if (response2.length > 0) {
+                                        response2.map(x => {
                                             if (x.isApproved === 1) {
                                                 let _x = x.amount.split(',').join('');
                                                 if (x.is_credit.toString() === '1') {
@@ -521,10 +481,10 @@ router.post('/create-transfers', function (req, res, next) {
                                     query = `INSERT INTO investment_txns SET ?`;
                                     endpoint = `/core-service/post?query=${query}`;
                                     url = `${HOST}${endpoint}`;
-                                    axios.post(url, inv_txn)
+                                    sRequest.post(query, inv_txn)
                                         .then(function (_response2) {
-                                            if (_response2.data.status === undefined) {
-                                                res.send(_response.data);
+                                            if (_response2.status === undefined) {
+                                                res.send(_response);
                                             } else {
                                                 res.send({
                                                     status: 500,
@@ -591,13 +551,9 @@ router.post('/approves', function (req, res, next) {
     let query = `UPDATE investment_op_approvals SET isApproved = ${data.status},isCompleted = ${1}, approvedBy=${data.userId}, updatedAt ='${dt.toString()}' WHERE ID =${data.id}`;
     let endpoint = `/core-service/get`;
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    })
+    sRequest.get(query)
         .then(function (response) {
-            if (response.data.status === undefined) {
+            if (response.status === undefined) {
                 query = `Select 
                         (Select Count(*) as total_approved from investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL' AND (isApproved = 1 && isCompleted =1)) as total_approved,
                         (Select Count(*) as isOptional from investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL' AND isAllRoles = 0) as isOptional,
@@ -606,23 +562,15 @@ router.post('/approves', function (req, res, next) {
                         (Select Count(*) as total_approvedBy from investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL') as total_approvedBy`;
                 endpoint = '/core-service/get';
                 url = `${HOST}${endpoint}`;
-                axios.get(url, {
-                    params: {
-                        query: query
-                    }
-                }).then(counter => {
-                    if (((counter.data[0].total_approvedBy === counter.data[0].total_approved) || (counter.data[0].isOptional > 0) ||
-                        (counter.data[0].priorityTotal !== 0 && counter.data[0].priorityTotal === counter.data[0].priorityItemTotal)) && data.status === '1') {
+                sRequest.get(query).then(counter => {
+                    if (((counter[0].total_approvedBy === counter[0].total_approved) || (counter[0].isOptional > 0) ||
+                        (counter[0].priorityTotal !== 0 && counter[0].priorityTotal === counter[0].priorityItemTotal)) && data.status === '1') {
                         query = `UPDATE investment_txns SET approvalDone = ${1} WHERE ID =${data.txnId}`;
                         endpoint = `/core-service/get`;
                         url = `${HOST}${endpoint}`;
-                        axios.get(url, {
-                            params: {
-                                query: query
-                            }
-                        })
+                        sRequest.get(query)
                             .then(function (response_) {
-                                res.send(response.data);
+                                res.send(response);
                             }, err => {
                                 res.send({
                                     status: 500,
@@ -641,13 +589,9 @@ router.post('/approves', function (req, res, next) {
                         query = `UPDATE investment_txns SET approvalDone = ${0}, isDeny = ${data.isDeny} WHERE ID =${data.txnId}`;
                         endpoint = `/core-service/get`;
                         url = `${HOST}${endpoint}`;
-                        axios.get(url, {
-                            params: {
-                                query: query
-                            }
-                        })
+                        sRequest.get(query)
                             .then(function (response_) {
-                                res.send(response.data);
+                                res.send(response);
                             }, err => {
                                 res.send({
                                     status: 500,
@@ -701,14 +645,10 @@ router.post('/reviews', function (req, res, next) {
     let query = `UPDATE investment_op_approvals SET isReviewed = ${data.status}, reviewedBy=${data.userId},isCompleted = ${1}, updatedAt ='${dt.toString()}' WHERE ID =${data.id}`;
     let endpoint = `/core-service/get`;
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    })
+    sRequest.get(query)
         .then(function (response) {
 
-            if (response.data.status === undefined) {
+            if (response.status === undefined) {
                 query = `Select 
                         (Select Count(*) as total_reviewed from investment_op_approvals where txnId = ${data.txnId} AND (isReviewed = 1 || isCompleted = 1) AND method = 'REVIEW') as total_reviewed,
                         (Select Count(*) as isOptional from investment_op_approvals where txnId = ${data.txnId} AND isAllRoles = 0 AND method = 'REVIEW') as isOptional,
@@ -717,23 +657,15 @@ router.post('/reviews', function (req, res, next) {
                         (Select Count(*) as total_reviewedBy from investment_op_approvals where txnId = ${data.txnId} AND method = 'REVIEW') as total_reviewedBy`;
                 endpoint = '/core-service/get';
                 url = `${HOST}${endpoint}`;
-                axios.get(url, {
-                    params: {
-                        query: query
-                    }
-                }).then(counter => {
-                    if (((counter.data[0].total_reviewedBy === counter.data[0].total_reviewed) || (counter.data[0].isOptional > 0) ||
-                        (counter.data[0].priorityTotal !== 0 && counter.data[0].priorityTotal === counter.data[0].priorityItemTotal)) && data.status === '1') {
+                sRequest.get(query).then(counter => {
+                    if (((counter[0].total_reviewedBy === counter[0].total_reviewed) || (counter[0].isOptional > 0) ||
+                        (counter[0].priorityTotal !== 0 && counter[0].priorityTotal === counter[0].priorityItemTotal)) && data.status === '1') {
                         query = `UPDATE investment_txns SET reviewDone = ${1} WHERE ID =${data.txnId}`;
                         endpoint = `/core-service/get`;
                         url = `${HOST}${endpoint}`;
-                        axios.get(url, {
-                            params: {
-                                query: query
-                            }
-                        })
+                        sRequest.get(query)
                             .then(function (response_) {
-                                res.send(response.data);
+                                res.send(response);
                             }, err => {
                                 res.send({
                                     status: 500,
@@ -752,13 +684,9 @@ router.post('/reviews', function (req, res, next) {
                         query = `UPDATE investment_txns SET reviewDone = ${0}, isDeny = ${data.isDeny} WHERE ID =${data.txnId}`;
                         endpoint = `/core-service/get`;
                         url = `${HOST}${endpoint}`;
-                        axios.get(url, {
-                            params: {
-                                query: query
-                            }
-                        })
+                        sRequest.get(query)
                             .then(function (response_) {
-                                res.send(response.data);
+                                res.send(response);
                             }, err => {
                                 res.send({
                                     status: 500,
@@ -812,12 +740,8 @@ router.post('/posts', function (req, res, next) {
     let query = `UPDATE investment_op_approvals SET isPosted = ${data.status}, postedBy=${data.userId},isCompleted = ${1}, updatedAt ='${dt.toString()}' WHERE ID =${data.id}`;
     let endpoint = `/core-service/get`;
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(function (response) {
-        if (response.data.status === undefined) {
+    sRequest.get(query).then(function (response) {
+        if (response.status === undefined) {
             query = `Select 
                 (Select Count(*) as total_posted from investment_op_approvals where txnId = ${data.txnId} AND (isPosted = 1 || isCompleted = 1) AND method = 'POST') as total_posted,
                 (Select Count(*) as isOptional from investment_op_approvals where txnId = ${data.txnId} AND isAllRoles = 0 AND method = 'POST') as isOptional,
@@ -826,13 +750,9 @@ router.post('/posts', function (req, res, next) {
                 (Select Count(*) as total_postedBy from investment_op_approvals where txnId = ${data.txnId} AND method = 'POST') as total_postedBy`;
             endpoint = '/core-service/get';
             url = `${HOST}${endpoint}`;
-            axios.get(url, {
-                params: {
-                    query: query
-                }
-            }).then(counter => {
-                if (((counter.data[0].total_postedBy === counter.data[0].total_posted) || (counter.data[0].isOptional > 0) ||
-                    (counter.data[0].priorityTotal !== 0 && counter.data[0].priorityTotal === counter.data[0].priorityItemTotal)) && data.status === '1') {
+            sRequest.get(query).then(counter => {
+                if (((counter[0].total_postedBy === counter[0].total_posted) || (counter[0].isOptional > 0) ||
+                    (counter[0].priorityTotal !== 0 && counter[0].priorityTotal === counter[0].priorityItemTotal)) && data.status === '1') {
                     let total_bal = 0;
 
 
@@ -854,17 +774,13 @@ router.post('/posts', function (req, res, next) {
                                         WHERE ID =${data.txnId}`;
                             endpoint = `/core-service/get`;
                             url = `${HOST}${endpoint}`;
-                            axios.get(url, {
-                                params: {
-                                    query: query
-                                }
-                            })
+                            sRequest.get(query)
                                 .then(function (response_) {
                                     if (data.isReversedTxn === '0') {
                                         debitWalletTxns(HOST, data).then(payld => {
                                             setcharges(data, HOST, false).then(payload => {
                                                 upFrontInterest(data, HOST).then(payld2 => {
-                                                    res.send(response.data);
+                                                    res.send(response);
                                                 }, __err => {
                                                 });
                                             }, err => {
@@ -872,7 +788,7 @@ router.post('/posts', function (req, res, next) {
                                         }, errrr => {
                                         });
                                     } else {
-                                        res.send(response_.data);
+                                        res.send(response_);
                                     }
                                 }, err => {
                                     res.send({
@@ -907,14 +823,10 @@ router.post('/posts', function (req, res, next) {
                             WHERE ID =${data.txnId}`;
                         endpoint = `/core-service/get`;
                         url = `${HOST}${endpoint}`;
-                        axios.get(url, {
-                            params: {
-                                query: query
-                            }
-                        })
+                        sRequest.get(query)
                             .then(function (response_) {
                                 fundBeneficialAccount(data, HOST).then(payloadf => {
-                                    res.send(response.data);
+                                    res.send(response);
                                 });
                             }, err => {
                                 res.send({
@@ -932,7 +844,7 @@ router.post('/posts', function (req, res, next) {
                             });
                     } else if (data.isInvestmentTerminated.toString() === '1') {
                         fundBeneficialAccount(data, HOST).then(_payload_2 => {
-                            res.send(_payload_2.data);
+                            res.send(_payload_2);
                         }, err => {
                             res.send({
                                 status: 500,
@@ -1018,9 +930,9 @@ async function fundBeneficialAccount(data, HOST) {
                     let query = `INSERT INTO investment_txns SET ?`;
                     let endpoint = `/core-service/post?query=${query}`;
                     let url = `${HOST}${endpoint}`;
-                    axios.post(url, inv_txn)
+                    sRequest.post(query, inv_txn)
                         .then(function (payload) {
-                            if (payload.data.status === undefined) {
+                            if (payload.status === undefined) {
                                 //Charge for Transfer
                                 deductTransferCharge(data, HOST, data.amount).then(result => {
                                     resolve(result);
@@ -1049,14 +961,10 @@ function computeAccountBalanceIncludeInterest(investmentId, HOST) {
         AND isApproved = 1 AND postDone = 1`;
         let endpoint = `/core-service/get`;
         let url = `${HOST}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(response_prdt_ => {
+        sRequest.get(query).then(response_prdt_ => {
             let total = 0;
-            if (response_prdt_.data.status === undefined) {
-                response_prdt_.data.map(x => {
+            if (response_prdt_.status === undefined) {
+                response_prdt_.map(x => {
                     if (x.is_credit === 1) {
                         total += parseFloat(x.amount.toString());
                     } else {
@@ -1079,13 +987,9 @@ function computeCurrentBalance(investmentId, HOST) {
         AND isApproved = 1 AND postDone = 1`;
         let endpoint = `/core-service/get`;
         let url = `${HOST}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(response_prdt_ => {
+        sRequest.get(query).then(response_prdt_ => {
             let total = 0;
-            response_prdt_.data.map(x => {
+            response_prdt_.map(x => {
                 if (x.is_credit === 1) {
                     total += parseFloat(x.amount.toString());
                 } else {
@@ -1126,13 +1030,9 @@ function computeWalletBalance(clientId, HOST) {
         AND isApproved = 1 AND postDone = 1`;
         let endpoint = '/core-service/get';
         let url = `${HOST}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(payload2 => {
+        sRequest.get(query).then(payload2 => {
             let total = 0;
-            payload2.data.map(x => {
+            payload2.map(x => {
                 if (x.is_credit === 1) {
                     total += parseFloat(x.amount.toString());
                 } else {
@@ -1152,13 +1052,9 @@ function getTerminatedOrMaturedInvestment(investmentId, HOST) {
         let query = `Select investmentId,isInvestmentMatured from investment_txns where investmentId = ${(investmentId === '' || investmentId === undefined || investmentId === null) ? 0 : investmentId} AND (isInvestmentMatured = 1 or isInvestmentTerminated = 1) Limit 1`;
         let endpoint = '/core-service/get';
         let url = `${HOST}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(payload2 => {
-            if (payload2.data.length > 0) {
-                resolve(payload2.data[0]);
+        sRequest.get(query).then(payload2 => {
+            if (payload2.length > 0) {
+                resolve(payload2[0]);
             } else {
                 resolve({});
             }
@@ -1175,12 +1071,8 @@ function updateTerminatedOrMaturedInvestment(investmentId, HOST, isInvestmentMat
             let query = `UPDATE investments SET isClosed = 1, isMatured = 1 WHERE ID = ${investmentId}`;
             let endpoint = '/core-service/get';
             let url = `${HOST}${endpoint}`;
-            axios.get(url, {
-                params: {
-                    query: query
-                }
-            }).then(payload2 => {
-                if (payload2.data.length > 0) {
+            sRequest.get(query).then(payload2 => {
+                if (payload2.length > 0) {
                     resolve({});
                 } else {
                     resolve({});
@@ -1240,9 +1132,9 @@ async function upFrontInterest(data, HOST) {
                     let query = `INSERT INTO investment_txns SET ?`;
                     let endpoint = `/core-service/post?query=${query}`;
                     let url = `${HOST}${endpoint}`;
-                    axios.post(url, _inv_txn)
+                    sRequest.post(query, _inv_txn)
                         .then(function (_payload_) {
-                            _inv_txn.ID = _payload_.data.insertId;
+                            _inv_txn.ID = _payload_.insertId;
                             deductWithHoldingTax(HOST, data, _inv_txn.amount, 0, _inv_txn.balance, data.clientId, data.interest_moves_wallet, _inv_txn)
                                 .then(p__ => {
                                     resolve({});
@@ -1267,13 +1159,9 @@ async function deductTransferCharge(data, HOST, amount) {
                 let query = `SELECT * FROM investment_config ORDER BY ID DESC LIMIT 1`;
                 let endpoint = '/core-service/get';
                 let url = `${HOST}${endpoint}`;
-                axios.get(url, {
-                    params: {
-                        query: query
-                    }
-                }).then(response => {
-                    if (response.data.status === undefined) {
-                        let configData = response.data[0];
+                sRequest.get(query).then(response => {
+                    if (response.status === undefined) {
+                        let configData = response[0];
                         let configAmount = (configData.transferChargeMethod == 'Fixed') ? configData.transferValue : (configData.transferValue * parseFloat(Number(amount).toFixed(2))) / 100;
                         let _refId = moment().utcOffset('+0100').format('x');
                         let balTransfer = currentBalance - configAmount;
@@ -1321,7 +1209,7 @@ async function deductTransferCharge(data, HOST, amount) {
 function fundWallet(value, HOST) {
     return new Promise((resolve, reject) => {
         setInvestmentTxns(HOST, value).then(payload => {
-            resolve(payload.data);
+            resolve(payload);
         }, err => {
             reject(0);
         });
@@ -1341,12 +1229,8 @@ function closeInvestmentWallet(investmentId, HOST) {
         WHERE ID = ${investmentId}`;
         let endpoint = `/core-service/get`;
         let url = `${HOST}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(response_prdt_ => {
-            resolve(response_prdt_.data);
+        sRequest.get(query).then(response_prdt_ => {
+            resolve(response_prdt_);
         }, err => {
             resolve({});
         });
@@ -1381,13 +1265,9 @@ function chargeForceTerminate(data, HOST) {
                     WHERE v.investmentId = ${data.investmentId} AND v.isApproved = 1 ORDER BY v.ID DESC LIMIT 1`;
                     let endpoint = '/core-service/get';
                     let url = `${HOST}${endpoint}`;
-                    axios.get(url, {
-                        params: {
-                            query: query
-                        }
-                    }).then(response => {
-                        if (response.data.status === undefined) {
-                            let configData = response.data[0];
+                    sRequest.get(query).then(response => {
+                        if (response.status === undefined) {
+                            let configData = response[0];
                             let _charge = (configData.min_days_termination_charge === null || configData.min_days_termination_charge === '') ? 0 : parseFloat(configData.min_days_termination_charge.toString());
                             let configAmount = (configData.opt_on_min_days_termination === 'Fixed')
                                 ? _charge : ((_charge * balance) / 100);
@@ -1415,7 +1295,7 @@ function chargeForceTerminate(data, HOST) {
                             endpoint = `/core-service/post?query=${query}`;
                             url = `${HOST}${endpoint}`;
                             try {
-                                axios.post(url, inv_txn).then(response__ => {
+                                sRequest.post(query, inv_txn).then(response__ => {
                                     deductVatTax(HOST, data, configAmount, inv_txn, inv_txn.balance).then(payload___ => {
                                         resolve(balance);
                                     }, err => {
@@ -1452,12 +1332,8 @@ function getExistingInterests(data, HOST) {
         WHERE (v.isInterest = 1 OR v.isWithHoldings = 1) AND investmentId = ${data.investmentId} AND isApproved = 1`;
         let endpoint = `/core-service/get`;
         let url = `${HOST}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(payload => {
-            const result = (payload.data.length === 0) ? [{ premature_interest_rate: 0 }] : payload.data;
+        sRequest.get(query).then(payload => {
+            const result = (payload.length === 0) ? [{ premature_interest_rate: 0 }] : payload;
             resolve(result);
         });
     });
@@ -1471,12 +1347,8 @@ function getProductConfigInterests(data, HOST) {
         WHERE t.ID = ${data.investmentId}`;
         let endpoint = `/core-service/get`;
         let url = `${HOST}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(payload => {
-            resolve(payload.data[0]);
+        sRequest.get(query).then(payload => {
+            resolve(payload[0]);
         });
     });
 }
@@ -1517,11 +1389,7 @@ function updateTerminatedInterest(HOST, data) {
 
         let endpoint = '/core-service/get';
         let url = `${HOST}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(axio_callback => {
+        sRequest.get(query).then(axio_callback => {
             getDatedTxns(HOST, data).then(datedTxns => {
                 updateDatedTxns(HOST, datedTxns, 0).then(updatedDates => {
                     resolve({});
@@ -1580,7 +1448,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
             let query = `INSERT INTO investment_txns SET ?`;
             let endpoint = `/core-service/post?query=${query}`;
             let url = `${HOST}${endpoint}`;
-            await axios.post(url, inv_txn);
+            await sRequest.post(query, inv_txn);
             const nextBalance = parseFloat(Number(sumTotalBalance).toFixed(2)) + parseFloat(Number(totalInterestAmountWHT).toFixed(2));
             inv_txn = {
                 txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
@@ -1659,12 +1527,8 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
             query = `DELETE FROM investment_txns WHERE ID=${data.txnId}`;
             endpoint = `/core-service/get`;
             url = `${HOST}${endpoint}`;
-            const _res_ = await axios.get(url, {
-                params: {
-                    query: query
-                }
-            });
-            if (_res_.data.status === undefined) {
+            const _res_ = await sRequest.get(query);
+            if (_res_.status === undefined) {
                 const currentBal = await computeAccountBalanceIncludeInterest(data.investmentId, HOST);
                 inv_txn = {
                     txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
@@ -1748,13 +1612,9 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
             let query = `DELETE FROM investment_txns WHERE ID = ${data.txnId}`;
             let endpoint = `/core-service/get`;
             let url = `${HOST}${endpoint}`;
-            const _res_ = await axios.get(url, {
-                params: {
-                    query: query
-                }
-            });
+            const _res_ = await sRequest.get(query);
             await getInterestEndOfTenure(HOST, data);
-            if (_res_.data.status === undefined) {
+            if (_res_.status === undefined) {
                 refId = moment().utcOffset('+0100').format('x');
                 const mBalance = await computeAccountBalanceIncludeInterest(data.investmentId, HOST);
                 inv_txn = {
@@ -1840,7 +1700,7 @@ function debitWalletTxns(HOST, data) {
                 query = `INSERT INTO investment_txns SET ?`;
                 endpoint = `/core-service/post?query=${query}`;
                 let url = `${HOST}${endpoint}`;
-                axios.post(url, inv_txn)
+                sRequest.post(query, inv_txn)
                     .then(function (__paylod__) {
                         resolve({});
                     }, _err__ => {
@@ -1878,15 +1738,11 @@ async function setcharges(data, HOST, isReversal) {
                         WHERE t.ID = ${data.investmentId} AND v.ID = ${data.txnId}`;
                         let endpoint = `/core-service/get`;
                         let url = `${HOST}${endpoint}`;
-                        axios.get(url, {
-                            params: {
-                                query: query
-                            }
-                        }).then(response_product => {
-                            if (response_product.data[0].isInterest.toString() === '0') {
+                        sRequest.get(query).then(response_product => {
+                            if (response_product[0].isInterest.toString() === '0') {
                                 if (data.isCredit.toString() === '1') {
 
-                                    let chargeForDeposit = response_product.data.filter(x => x.saving_fees !== '0' && x.saving_fees !== '');
+                                    let chargeForDeposit = response_product.filter(x => x.saving_fees !== '0' && x.saving_fees !== '');
                                     if (chargeForDeposit.length > 0) {
                                         let total = _total;
                                         //let total = parseFloat(chargeForDeposit[chargeForDeposit.length - 1].txnBalance.split(',').join(''))
@@ -1912,9 +1768,9 @@ async function setcharges(data, HOST, isReversal) {
                                         query = `INSERT INTO investment_txns SET ?`;
                                         endpoint = `/core-service/post?query=${query}`;
                                         let url = `${HOST}${endpoint}`;
-                                        axios.post(url, inv_txn)
+                                        sRequest.post(query, inv_txn)
                                             .then(function (payload) {
-                                                if (payload.data.status === undefined) {
+                                                if (payload.status === undefined) {
                                                     if (isReversal === false) {
                                                         let txnAmount2 = Number(chargedCost).toFixed(2);
                                                         let txnBal = Number(total - chargedCost).toFixed(2);
@@ -1935,7 +1791,7 @@ async function setcharges(data, HOST, isReversal) {
                                     }
 
                                 } else {
-                                    let getInvestBalance = response_product.data[response_product.data.length - 1];
+                                    let getInvestBalance = response_product[response_product.length - 1];
                                     getInvestBalance.minimum_bal_charges = (getInvestBalance.minimum_bal_charges === '') ? '0' : getInvestBalance.minimum_bal_charges;
                                     let chargedCostMinBal = (getInvestBalance.minimum_bal_charges_opt === 'Fixed')
                                         ? parseFloat(getInvestBalance.minimum_bal_charges.split(',').join(''))
@@ -1965,9 +1821,9 @@ async function setcharges(data, HOST, isReversal) {
                                         query = `INSERT INTO investment_txns SET ?`;
                                         endpoint = `/core-service/post?query=${query}`;
                                         let url = `${HOST}${endpoint}`;
-                                        axios.post(url, inv_txn)
+                                        sRequest.post(query, inv_txn)
                                             .then(function (payload) {
-                                                if (payload.data.status === undefined) {
+                                                if (payload.status === undefined) {
                                                     let txnAmount2 = Number(chargedCostMinBal).toFixed(2);
                                                     let txnBal = Number(getInvestBalance.txnBalance - chargedCostMinBal).toFixed(2);
                                                     deductVatTax(HOST, data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
@@ -1985,30 +1841,22 @@ async function setcharges(data, HOST, isReversal) {
                                             const sum_Total = _total = (data.isWallet.toString() === '1') ? computedTotalBalance2.currentWalletBalance : balanceIncludingInterest_2;
                                             let currentDate = new Date();
                                             let formatedDate = `${currentDate.getUTCFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}`;
-                                            if (response_product.data[0].withdrawal_freq_duration === 'Daily') {
+                                            if (response_product[0].withdrawal_freq_duration === 'Daily') {
                                                 query = `SELECT * FROM investment_txns WHERE 
                                                 STR_TO_DATE(updated_date, '%Y-%m-%d') = '${formatedDate}' 
                                                 AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
-                                                axios.get(url, {
-                                                    params: {
-                                                        query: query
-                                                    }
-                                                }).then(response_product_ => {
-                                                    if (response_product_.data.length === parseInt(response_product.data[0].freq_withdrawal)
-                                                        && response_product.data[0].chkEnforceCount === 1) {
+                                                sRequest.get(query).then(response_product_ => {
+                                                    if (response_product_.length === parseInt(response_product[0].freq_withdrawal)
+                                                        && response_product[0].chkEnforceCount === 1) {
                                                         query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
                                                         endpoint = `/core-service/get`;
                                                         url = `${HOST}${endpoint}`;
-                                                        axios.get(url, {
-                                                            params: {
-                                                                query: query
-                                                            }
-                                                        });
+                                                        sRequest.get(query);
                                                     }
 
-                                                    if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)
-                                                        && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
-                                                        let _getInvestBalance = response_product.data[response_product.data.length - 1];
+                                                    if (response_product_.length > parseInt(response_product[0].freq_withdrawal)
+                                                        && parseInt(response_product[0].freq_withdrawal) !== 0) {
+                                                        let _getInvestBalance = response_product[response_product.length - 1];
                                                         _getInvestBalance.withdrawal_fees = (_getInvestBalance.withdrawal_fees === '') ? '0' : _getInvestBalance.withdrawal_fees;
                                                         let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
                                                             parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
@@ -2038,9 +1886,9 @@ async function setcharges(data, HOST, isReversal) {
                                                         query = `INSERT INTO investment_txns SET ?`;
                                                         endpoint = `/core-service/post?query=${query}`;
                                                         let url = `${HOST}${endpoint}`;
-                                                        axios.post(url, inv_txn)
+                                                        sRequest.post(query, inv_txn)
                                                             .then(function (payload) {
-                                                                if (payload.data.status === undefined) {
+                                                                if (payload.status === undefined) {
                                                                     let txnAmount2 = Number(_chargedCostMinBal).toFixed(2);
                                                                     let txnBal = Number(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
                                                                     deductVatTax(HOST, data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
@@ -2054,7 +1902,7 @@ async function setcharges(data, HOST, isReversal) {
                                                         resolve({});
                                                     }
                                                 });
-                                            } else if (response_product.data[0].withdrawal_freq_duration === 'Weekly') {
+                                            } else if (response_product[0].withdrawal_freq_duration === 'Weekly') {
                                                 let weekStartDate = startOfWeek(new Date());
                                                 let endOfTheWeek = endOfWeek(new Date());
                                                 const weekStartDateFormat = `${weekStartDate.getFullYear()}-${weekStartDate.getMonth() + 1}-${weekStartDate.getDate()}`;
@@ -2064,27 +1912,19 @@ async function setcharges(data, HOST, isReversal) {
                                                 STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${weekStartDateFormat}' 
                                                 AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${endOfTheWeekFormat}' 
                                                 AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
-                                                axios.get(url, {
-                                                    params: {
-                                                        query: query
-                                                    }
-                                                }).then(response_product_ => {
+                                                sRequest.get(query).then(response_product_ => {
 
-                                                    if (response_product_.data.length === parseInt(response_product.data[0].freq_withdrawal)
-                                                        && response_product.data[0].chkEnforceCount === 1) {
+                                                    if (response_product_.length === parseInt(response_product[0].freq_withdrawal)
+                                                        && response_product[0].chkEnforceCount === 1) {
                                                         query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
                                                         endpoint = `/core-service/get`;
                                                         url = `${HOST}${endpoint}`;
-                                                        axios.get(url, {
-                                                            params: {
-                                                                query: query
-                                                            }
-                                                        });
+                                                        sRequest.get(query);
                                                     }
 
-                                                    if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)
-                                                        && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
-                                                        let _getInvestBalance = response_product.data[response_product.data.length - 1];
+                                                    if (response_product_.length > parseInt(response_product[0].freq_withdrawal)
+                                                        && parseInt(response_product[0].freq_withdrawal) !== 0) {
+                                                        let _getInvestBalance = response_product[response_product.length - 1];
                                                         _getInvestBalance.withdrawal_fees = (_getInvestBalance.withdrawal_fees === '') ? '0' : _getInvestBalance.withdrawal_fees;
                                                         let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
                                                             parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
@@ -2114,9 +1954,9 @@ async function setcharges(data, HOST, isReversal) {
                                                         query = `INSERT INTO investment_txns SET ?`;
                                                         endpoint = `/core-service/post?query=${query}`;
                                                         let url = `${HOST}${endpoint}`;
-                                                        axios.post(url, inv_txn)
+                                                        sRequest.post(query, inv_txn)
                                                             .then(function (payload) {
-                                                                if (payload.data.status === undefined) {
+                                                                if (payload.status === undefined) {
                                                                     let txnAmount2 = Number(_chargedCostMinBal).toFixed(2);
                                                                     let txnBal = Number(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
                                                                     deductVatTax(HOST, data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
@@ -2130,7 +1970,7 @@ async function setcharges(data, HOST, isReversal) {
                                                         resolve({});
                                                     }
                                                 });
-                                            } else if (response_product.data[0].withdrawal_freq_duration === 'Monthly') {
+                                            } else if (response_product[0].withdrawal_freq_duration === 'Monthly') {
                                                 let monthStartDate = startOfMonth(new Date());
                                                 let endOfTheMonth = endOfMonth(new Date());
 
@@ -2143,27 +1983,19 @@ async function setcharges(data, HOST, isReversal) {
                                                 AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
                                                 let endpoint = `/core-service/get`;
                                                 url = `${HOST}${endpoint}`;
-                                                axios.get(url, {
-                                                    params: {
-                                                        query: query
-                                                    }
-                                                }).then(response_product_ => {
+                                                sRequest.get(query).then(response_product_ => {
 
-                                                    if (response_product_.data.length === parseInt(response_product.data[0].freq_withdrawal)
-                                                        && response_product.data[0].chkEnforceCount === 1) {
+                                                    if (response_product_.length === parseInt(response_product[0].freq_withdrawal)
+                                                        && response_product[0].chkEnforceCount === 1) {
                                                         query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
                                                         endpoint = `/core-service/get`;
                                                         url = `${HOST}${endpoint}`;
-                                                        axios.get(url, {
-                                                            params: {
-                                                                query: query
-                                                            }
-                                                        });
+                                                        sRequest.get(query);
                                                     }
 
-                                                    if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)
-                                                        && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
-                                                        let _getInvestBalance = response_product.data[response_product.data.length - 1];
+                                                    if (response_product_.length > parseInt(response_product[0].freq_withdrawal)
+                                                        && parseInt(response_product[0].freq_withdrawal) !== 0) {
+                                                        let _getInvestBalance = response_product[response_product.length - 1];
                                                         _getInvestBalance.withdrawal_fees = (_getInvestBalance.withdrawal_fees === '') ? '0' : _getInvestBalance.withdrawal_fees;
                                                         let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
                                                             parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
@@ -2193,9 +2025,9 @@ async function setcharges(data, HOST, isReversal) {
                                                         query = `INSERT INTO investment_txns SET ?`;
                                                         endpoint = `/core-service/post?query=${query}`;
                                                         let url = `${HOST}${endpoint}`;
-                                                        axios.post(url, inv_txn)
+                                                        sRequest.post(query, inv_txn)
                                                             .then(function (payload) {
-                                                                if (payload.data.status === undefined) {
+                                                                if (payload.status === undefined) {
                                                                     let txnAmount2 = Number(_chargedCostMinBal).toFixed(2);
                                                                     let txnBal = Number(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
                                                                     deductVatTax(HOST, data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
@@ -2209,7 +2041,7 @@ async function setcharges(data, HOST, isReversal) {
                                                         resolve({});
                                                     }
                                                 });
-                                            } else if (response_product.data[0].withdrawal_freq_duration === 'Quaterly') {
+                                            } else if (response_product[0].withdrawal_freq_duration === 'Quaterly') {
                                                 let quaterStartDate = startOfQuarter(new Date())
                                                 let quaterEndDate = endOfQuarter(new Date());
 
@@ -2223,27 +2055,19 @@ async function setcharges(data, HOST, isReversal) {
                                                 AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
                                                 let endpoint = `/core-service/get`;
                                                 url = `${HOST}${endpoint}`;
-                                                axios.get(url, {
-                                                    params: {
-                                                        query: query
-                                                    }
-                                                }).then(response_product_ => {
+                                                sRequest.get(query).then(response_product_ => {
 
-                                                    if (response_product_.data.length === parseInt(response_product.data[0].freq_withdrawal)
-                                                        && response_product.data[0].chkEnforceCount === 1) {
+                                                    if (response_product_.length === parseInt(response_product[0].freq_withdrawal)
+                                                        && response_product[0].chkEnforceCount === 1) {
                                                         query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
                                                         endpoint = `/core-service/get`;
                                                         url = `${HOST}${endpoint}`;
-                                                        axios.get(url, {
-                                                            params: {
-                                                                query: query
-                                                            }
-                                                        });
+                                                        sRequest.get(query);
                                                     }
 
-                                                    if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)
-                                                        && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
-                                                        let _getInvestBalance = response_product.data[response_product.data.length - 1];
+                                                    if (response_product_.length > parseInt(response_product[0].freq_withdrawal)
+                                                        && parseInt(response_product[0].freq_withdrawal) !== 0) {
+                                                        let _getInvestBalance = response_product[response_product.length - 1];
                                                         _getInvestBalance.withdrawal_fees = (_getInvestBalance.withdrawal_fees === '') ? '0' : _getInvestBalance.withdrawal_fees;
                                                         let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
                                                             parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
@@ -2273,9 +2097,9 @@ async function setcharges(data, HOST, isReversal) {
                                                         query = `INSERT INTO investment_txns SET ?`;
                                                         endpoint = `/core-service/post?query=${query}`;
                                                         let url = `${HOST}${endpoint}`;
-                                                        axios.post(url, inv_txn)
+                                                        sRequest.post(query, inv_txn)
                                                             .then(function (payload) {
-                                                                if (payload.data.status === undefined) {
+                                                                if (payload.status === undefined) {
                                                                     let txnAmount2 = Number(_chargedCostMinBal).toFixed(2);
                                                                     let txnBal = Number(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
                                                                     deductVatTax(HOST, data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
@@ -2290,7 +2114,7 @@ async function setcharges(data, HOST, isReversal) {
                                                     }
                                                 });
 
-                                            } else if (response_product.data[0].withdrawal_freq_duration === 'Yearly') {
+                                            } else if (response_product[0].withdrawal_freq_duration === 'Yearly') {
                                                 let beginOfTheYear = new Date();
 
                                                 const yearStartDateFormat = `${beginOfTheYear.getFullYear()}-${1}-${1}`;
@@ -2303,26 +2127,18 @@ async function setcharges(data, HOST, isReversal) {
                                                 AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
                                                 let endpoint = `/core-service/get`;
                                                 url = `${HOST}${endpoint}`;
-                                                axios.get(url, {
-                                                    params: {
-                                                        query: query
-                                                    }
-                                                }).then(response_product_ => {
-                                                    if (response_product_.data.length === parseInt(response_product.data[0].freq_withdrawal)
-                                                        && response_product.data[0].chkEnforceCount === 1) {
+                                                sRequest.get(query).then(response_product_ => {
+                                                    if (response_product_.length === parseInt(response_product[0].freq_withdrawal)
+                                                        && response_product[0].chkEnforceCount === 1) {
                                                         query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
                                                         endpoint = `/core-service/get`;
                                                         url = `${HOST}${endpoint}`;
-                                                        axios.get(url, {
-                                                            params: {
-                                                                query: query
-                                                            }
-                                                        });
+                                                        sRequest.get(query);
                                                     }
 
-                                                    if (response_product_.data.length > parseInt(response_product.data[0].freq_withdrawal)
-                                                        && parseInt(response_product.data[0].freq_withdrawal) !== 0) {
-                                                        let _getInvestBalance = response_product.data[response_product.data.length - 1];
+                                                    if (response_product_.length > parseInt(response_product[0].freq_withdrawal)
+                                                        && parseInt(response_product[0].freq_withdrawal) !== 0) {
+                                                        let _getInvestBalance = response_product[response_product.length - 1];
                                                         _getInvestBalance.withdrawal_fees = (_getInvestBalance.withdrawal_fees === '') ? '0' : _getInvestBalance.withdrawal_fees;
                                                         let _chargedCostMinBal = (_getInvestBalance.withdrawal_freq_fees_opt === 'Fixed') ?
                                                             parseFloat(_getInvestBalance.withdrawal_fees.split(',').join('')) :
@@ -2352,9 +2168,9 @@ async function setcharges(data, HOST, isReversal) {
                                                         query = `INSERT INTO investment_txns SET ?`;
                                                         endpoint = `/core-service/post?query=${query}`;
                                                         let url = `${HOST}${endpoint}`;
-                                                        axios.post(url, inv_txn)
+                                                        sRequest.post(query, inv_txn)
                                                             .then(function (payload) {
-                                                                if (payload.data.status === undefined) {
+                                                                if (payload.status === undefined) {
                                                                     let txnAmount2 = Number(_chargedCostMinBal).toFixed(2);
                                                                     let txnBal = Number(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
                                                                     deductVatTax(HOST, data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
@@ -2393,13 +2209,9 @@ function deductVatTax(HOST, data, _amount, txn, balance) {
             let query = `SELECT * FROM investment_config ORDER BY ID DESC LIMIT 1`;
             let endpoint = '/core-service/get';
             let url = `${HOST}${endpoint}`;
-            axios.get(url, {
-                params: {
-                    query: query
-                }
-            }).then(response => {
-                if (response.data.status === undefined) {
-                    let configData = response.data[0];
+            sRequest.get(query).then(response => {
+                if (response.status === undefined) {
+                    let configData = response[0];
                     let configAmount = (configData.vatChargeMethod === 'Fixed') ? configData.vat : (parseFloat(configData.vat.toString()) * parseFloat(_amount.toString())) / 100;
                     let _refId = moment().utcOffset('+0100').format('x');
                     let _mBalance = Number(parseFloat(balance)).toFixed(2) - parseFloat(configAmount);
@@ -2445,7 +2257,7 @@ router.post('/compute-interest', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.body;
     computeInterestTxns2(HOST, data).then(payload => {
-        res.send(payload.data);
+        res.send(payload);
     }, err => {
         res.send(err);
     });
@@ -2481,34 +2293,22 @@ router.get('/client-interests/:id', function (req, res, next) {
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     var data = [];
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(response => {
+    sRequest.get(query).then(response => {
         query = `SELECT count(*) as recordsFiltered FROM investment_interests 
         WHERE investmentId = ${req.params.id}
         AND amount LIKE "${search_string}%"`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(payload => {
+        sRequest.get(query).then(payload => {
             query = `SELECT count(*) as recordsTotal FROM investment_interests WHERE investmentId = ${req.params.id}`;
             endpoint = '/core-service/get';
             url = `${HOST}${endpoint}`;
-            axios.get(url, {
-                params: {
-                    query: query
-                }
-            }).then(payload2 => {
+            sRequest.get(query).then(payload2 => {
                 res.send({
                     draw: draw,
-                    recordsTotal: payload2.data[0].recordsTotal,
-                    recordsFiltered: payload.data[0].recordsFiltered,
-                    data: (response.data === undefined) ? [] : response.data
+                    recordsTotal: payload2[0].recordsTotal,
+                    recordsFiltered: payload[0].recordsFiltered,
+                    data: (response === undefined) ? [] : response
                 });
             });
         });
@@ -2535,11 +2335,7 @@ router.get('/investment-statements/:id', function (req, res, next) {
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     var data = [];
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(response => {
+    sRequest.get(query).then(response => {
         query = `SELECT count(*) as recordsFiltered FROM investment_txns v 
     left join investments i on v.investmentId = i.ID
     left join clients c on i.clientId = c.ID 
@@ -2549,25 +2345,17 @@ router.get('/investment-statements/:id', function (req, res, next) {
     AND (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%")`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(payload => {
+        sRequest.get(query).then(payload => {
             query = `SELECT count(*) as recordsTotal FROM investment_txns WHERE investmentId = ${req.params.id} 
             AND STR_TO_DATE(updated_date, '%Y-%m-%d')>= '${req.query.startDate}' AND STR_TO_DATE(updated_date, '%Y-%m-%d')<= '${req.query.endDate}'`;
             endpoint = '/core-service/get';
             url = `${HOST}${endpoint}`;
-            axios.get(url, {
-                params: {
-                    query: query
-                }
-            }).then(payload2 => {
+            sRequest.get(query).then(payload2 => {
                 res.send({
                     draw: draw,
-                    recordsTotal: payload2.data[0].recordsTotal,
-                    recordsFiltered: payload.data[0].recordsFiltered,
-                    data: (response.data === undefined) ? [] : response.data
+                    recordsTotal: payload2[0].recordsTotal,
+                    recordsFiltered: payload[0].recordsFiltered,
+                    data: (response === undefined) ? [] : response
                 });
             });
         });
@@ -2583,11 +2371,7 @@ async function monthlyMaturedInvestmentDate(host, investmentId) {
     let endpoint = '/core-service/get';
     let url = `${host}${endpoint}`;
     try {
-        const months = await axios.get(url, {
-            params: {
-                query: query
-            }
-        });
+        const months = await sRequest.get(query);
         return months;
     } catch (err) {
         return err;
@@ -2600,16 +2384,14 @@ function investmentMonths(host, investmentId) {
         let query = `SELECT investment_start_date, investment_mature_date FROM investments WHERE ID = ${investmentId}`;
         let endpoint = '/core-service/get';
         let url = `${host}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(payload => {
+        const currentDate = new Date();
+        let currentDt = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}`;
+        sRequest.get(query).then(payload => {
             var result = differenceInCalendarMonths(
-                new Date(payload.data[0].investment_mature_date),
-                new Date(payload.data[0].investment_start_date)
+                new Date((payload[0].investment_mature_date !== '') ? payload[0].investment_mature_date : currentDt),
+                new Date(payload[0].investment_start_date)
             )
-            resolve({ months: result, investment_start_date: payload.data[0].investment_start_date });
+            resolve({ months: result, investment_start_date: payload[0].investment_start_date });
         }, err => {
             reject(err);
         });
@@ -2659,11 +2441,7 @@ async function dailyMaturedInvestmentTxns(host, investmentId, firstDate, date) {
     let endpoint = '/core-service/get';
     let url = `${host}${endpoint}`;
     try {
-        const result = await axios.get(url, {
-            params: {
-                query: query
-            }
-        });
+        const result = await sRequest.get(query);
         return result;
     } catch (err) {
         return err;
@@ -2676,15 +2454,11 @@ async function sumUpInvestmentInterest(host, investmentId, isPosted, isTerminate
     WHERE investmentId = ${investmentId} AND isPosted = ${isPosted} AND isTerminated = ${isTerminated}`;
         let endpoint = '/core-service/get';
         let url = `${host}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(result => {
-            if (result.data[0] === undefined) {
+        sRequest.get(query).then(result => {
+            if (result[0] === undefined) {
                 resolve('0');
             } else {
-                resolve(result.data[0].total);
+                resolve(result[0].total);
             }
         }, err => {
             reject(err);
@@ -2700,12 +2474,8 @@ async function sumInvestmentInterestRange(host, investmentId, startDate, endDate
         AND STR_TO_DATE(interestDate, '%Y-%m-%d') <='${endDate}'`;
         let endpoint = '/core-service/get';
         let url = `${host}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(result => {
-            resolve(result.data[0].total);
+        sRequest.get(query).then(result => {
+            resolve(result[0].total);
         }, err => {
             reject(err);
         });
@@ -2719,12 +2489,8 @@ function getInvestmentInterestIDs(host, investmentId) {
         WHERE investmentId = ${investmentId}`;
         let endpoint = '/core-service/get';
         let url = `${host}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(result => {
-            resolve(result.data);
+        sRequest.get(query).then(result => {
+            resolve(result);
         }, err => {
             reject(err);
         });
@@ -2746,12 +2512,8 @@ function updateInvestmentInterestIDs(host, ids) {
 
         let endpoint = '/core-service/get';
         let url = `${host}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(result => {
-            resolve(result.data);
+        sRequest.get(query).then(result => {
+            resolve(result);
         }, err => {
             reject(err);
         });
@@ -2768,13 +2530,9 @@ function sumInvestmentInterestPerDayRange(host, investmentId, inStartDate, start
         AND STR_TO_DATE(updated_date, '%Y-%m-%d') <='${date}'`;
         let endpoint = '/core-service/get';
         let url = `${host}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(result => {
+        sRequest.get(query).then(result => {
             let total = 0;
-            result.data.map(x => {
+            result.map(x => {
                 if (x.is_credit === 1) {
                     total += parseFloat(x.amount.toString());
                 } else {
@@ -2828,12 +2586,8 @@ function getInvestmentMaturityDate(host, investmentId) {
         let query = `SELECT investment_mature_date FROM investments WHERE ID = ${investmentId}`;
         let endpoint = '/core-service/get';
         let url = `${host}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(payload => {
-            resolve(payload.data[0]);
+        sRequest.get(query).then(payload => {
+            resolve(payload[0]);
         }, err => {
             resolve(false);
         });
@@ -2930,8 +2684,11 @@ router.post('/investment-durations', function (req, res, next) {
 async function getValidInvestmentMatureMonths(HOST, investmentId, isMonthly) {
     let results = [];
     const payload = await investmentMonths(HOST, investmentId);
+    console.log(payload);
     const payload2 = await investmentStartAndEndOfMonths(payload.months, payload.investment_start_date);
+    console.log(payload2);
     let matureMonths = payload2.filter(x => isPast(new Date(x.endDate)));
+    console.log(matureMonths);
     let currentDate = new Date();
     let currentDt = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}`;
     let lastIndexDate = matureMonths[matureMonths.length - 1].endDate;
@@ -2962,12 +2719,8 @@ function monthlyValidMaturedInvestmentDate(host, investmentId, month, year) {
         AND isPosted = 1 AND isTerminated = 0 AND month = ${month} AND year = ${year}`;
         let endpoint = '/core-service/get';
         let url = `${host}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(payload => {
-            if (payload.data[0].counter === 0) {
+        sRequest.get(query).then(payload => {
+            if (payload[0].counter === 0) {
                 resolve(true);
             } else {
                 resolve(false);
@@ -2984,7 +2737,7 @@ async function setInvestmentInterest(host, value) {
     let endpoint = `/core-service/post?query=${query}`;
     let url = `${host}${endpoint}`;
     try {
-        const result = await axios.post(url, value);
+        const result = await sRequest.post(query, value);
         return result;
     } catch (err) {
         return err;
@@ -2998,13 +2751,9 @@ async function sumAllWalletInvestmentTxns(host, clientId) {
         WHERE clientId = ${clientId} AND isWallet = ${1} AND isApproved = 1 AND postDone =1`;
         let endpoint = '/core-service/get';
         let url = `${host}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(result => {
+        sRequest.get(query).then(result => {
             let total = 0;
-            result.data.map(x => {
+            result.map(x => {
                 if (x.is_credit === 1) {
                     total += parseFloat(x.amount.toString());
                 } else {
@@ -3028,8 +2777,8 @@ function setInvestmentTxns(host, value) {
             let query = `INSERT INTO investment_txns SET ?`;
             let endpoint = `/core-service/post?query=${query}`;
             let url = `${host}${endpoint}`;
-            axios.post(url, value).then(payload => {
-                resolve(payload.data);
+            sRequest.post(query, value).then(payload => {
+                resolve(payload);
             }, err => {
                 resolve({});
             });
@@ -3037,7 +2786,7 @@ function setInvestmentTxns(host, value) {
     });
 }
 
-/** Function call to get all investment/savings transaction within a date range **/
+/** Function call to get all investment/savings transaction within date range **/
 function getDatedTxns(host, data) {
     return new Promise((resolve, reject) => {
         let query = `SELECT ID FROM investment_txns
@@ -3047,12 +2796,8 @@ AND STR_TO_DATE(updated_date, '%Y-%m-%d') <='${data.endDate}'`;
 
         let endpoint = '/core-service/get';
         let url = `${host}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(payload => {
-            resolve(payload.data);
+        sRequest.get(query).then(payload => {
+            resolve(payload);
         }, err => {
             reject(err);
         })
@@ -3073,12 +2818,8 @@ async function updateDatedTxns(host, value, isInterestCharged) {
         let query = baseQuery + subQuery;
         let endpoint = '/core-service/get';
         let url = `${host}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(payload => {
-            resolve(payload.data);
+        sRequest.get(query).then(payload => {
+            resolve(payload);
         }, err => {
             reject(err);
         });
@@ -3139,11 +2880,7 @@ async function computeInterestTxns2(HOST, data) {
 
                                 endpoint = '/core-service/get';
                                 url = `${HOST}${endpoint}`;
-                                axios.get(url, {
-                                    params: {
-                                        query: query
-                                    }
-                                }).then(axio_callback => {
+                                sRequest.get(query).then(axio_callback => {
                                     getDatedTxns(HOST, data).then(datedTxns => {
                                         updateDatedTxns(HOST, datedTxns, 1).then(updatedDates => {
                                             resolve({});
@@ -3189,11 +2926,7 @@ async function computeInterestTxns2(HOST, data) {
                                                         AND year = ${monthNyear[0]}`;
                                     endpoint = '/core-service/get';
                                     url = `${HOST}${endpoint}`;
-                                    axios.get(url, {
-                                        params: {
-                                            query: query
-                                        }
-                                    }).then(axio_callback => {
+                                    sRequest.get(query).then(axio_callback => {
                                         getDatedTxns(HOST, data).then(datedTxns => {
                                             updateDatedTxns(HOST, datedTxns, 1).then(updatedDates => {
                                                 resolve({});
@@ -3220,13 +2953,9 @@ function deductWithHoldingTax(HOST, data, _amount, total, bal_, clientId, isWall
             let query = `SELECT * FROM investment_config ORDER BY ID DESC LIMIT 1`;
             let endpoint = '/core-service/get';
             let url = `${HOST}${endpoint}`;
-            axios.get(url, {
-                params: {
-                    query: query
-                }
-            }).then(response => {
-                if (response.data.status === undefined) {
-                    let configData = response.data[0];
+            sRequest.get(query).then(response => {
+                if (response.status === undefined) {
+                    let configData = response[0];
                     let configAmount = (configData.withHoldingTaxChargeMethod == 'Fixed') ? configData.withHoldingTax
                         : (configData.withHoldingTax * (total + parseFloat(Number(_amount).toFixed(2)))) / 100;
                     let refId = moment().utcOffset('+0100').format('x');
@@ -3290,13 +3019,9 @@ router.get('/client-wallets/:id', function (req, res, next) {
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     var data = [];
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(response => {
+    sRequest.get(query).then(response => {
         let uniqueTxns = [];
-        response.data.map(d => {
+        response.map(d => {
             let chk = uniqueTxns.filter(x => x.ID === d.ID);
             if (chk.length === 0) {
                 uniqueTxns.push(d);
@@ -3320,29 +3045,21 @@ router.get('/client-wallets/:id', function (req, res, next) {
         AND (upper(description) LIKE "${search_string}%" OR upper(ref_no) LIKE "${search_string}%")`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(payload => {
+        sRequest.get(query).then(payload => {
             computeWalletBalance(req.params.id, HOST).then(txnCurrentBalance => {
                 query = `SELECT count(*) as recordsTotal FROM investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id}`;
                 // query = `SELECT count(*) as recordsTotal FROM investment_txns WHERE clientId = ${req.params.id}`;
                 endpoint = '/core-service/get';
                 url = `${HOST}${endpoint}`;
-                axios.get(url, {
-                    params: {
-                        query: query
-                    }
-                }).then(payload2 => {
+                sRequest.get(query).then(payload2 => {
                     uniqueTxns.map(x => {
                         x.balance = txnCurrentBalance.currentWalletBalance;
                     });
                     res.send({
                         draw: draw,
                         txnCurrentBalance: txnCurrentBalance.currentWalletBalance,
-                        recordsTotal: payload2.data[0].recordsTotal,
-                        recordsFiltered: payload.data[0].recordsFiltered,
+                        recordsTotal: payload2[0].recordsTotal,
+                        recordsFiltered: payload[0].recordsFiltered,
                         data: (uniqueTxns === undefined) ? [] : uniqueTxns
                     });
                 }, err => {
@@ -3382,13 +3099,9 @@ router.get('/investment-accounts/:id', function (req, res, next) {
     }
     const endpoint = "/core-service/get";
     const url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    })
+    sRequest.get(query)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send(err);
         })
@@ -3411,15 +3124,11 @@ router.get('/inv-statements/:id', function (req, res, next) {
     WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id} AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') >= '${data.startDate}' AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') <= '${data.endDate}' AND v.isApproved = 1 ORDER BY v.ID`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(response => {
-        if (response.data.status === undefined) {
-            res.send(response.data);
+    sRequest.get(query).then(response => {
+        if (response.status === undefined) {
+            res.send(response);
         } else {
-            res.send(response.data);
+            res.send(response);
         }
     }, err => {
         res.send(err);
@@ -3432,15 +3141,11 @@ router.get('/get-organisation-configs', function (req, res, next) {
     let query = `SELECT * FROM investment_config ORDER BY ID DESC LIMIT 1`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(response => {
-        if (response.data.status === undefined) {
-            res.send(response.data);
+    sRequest.get(query).then(response => {
+        if (response.status === undefined) {
+            res.send(response);
         } else {
-            res.send(response.data);
+            res.send(response);
         }
     }, err => {
         res.send(err);
@@ -3461,37 +3166,25 @@ router.get('/get-organisation-taxes', function (req, res, next) {
 
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(response => {
+    sRequest.get(query).then(response => {
         query = `SELECT count(*) as recordsFiltered 
         FROM investment_txns 
         WHERE isCharge = 1 || isVat = 1 || isWithHoldings = 1
         AND (upper(description) LIKE "${search_string}%" OR upper(amount) LIKE "${search_string}%")`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(payload => {
+        sRequest.get(query).then(payload => {
             query = `SELECT count(*) as recordsTotal 
             FROM investment_txns 
             WHERE isCharge = 1 || isVat = 1 || isWithHoldings = 1`;
             endpoint = '/core-service/get';
             url = `${HOST}${endpoint}`;
-            axios.get(url, {
-                params: {
-                    query: query
-                }
-            }).then(payload2 => {
+            sRequest.get(query).then(payload2 => {
                 res.send({
                     draw: draw,
-                    recordsTotal: payload2.data[0].recordsTotal,
-                    recordsFiltered: payload.data[0].recordsFiltered,
-                    data: response.data
+                    recordsTotal: payload2[0].recordsTotal,
+                    recordsFiltered: payload[0].recordsFiltered,
+                    data: response
                 });
             });
         });
@@ -3505,17 +3198,13 @@ router.get('/get-sum-charges', function (req, res, next) {
     WHERE isCharge = 1 || isVat = 1 || isWithHoldings = 1`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(response => {
-        if (response.data.status === undefined) {
+    sRequest.get(query).then(response => {
+        if (response.status === undefined) {
             let chargeTotal = 0;
             let vatTotal = 0;
             let withHoldingTaxTotal = 0;
-            if (response.data.length > 0) {
-                response.data.map(x => {
+            if (response.length > 0) {
+                response.map(x => {
                     if (x.isCharge === 1) {
                         chargeTotal += parseFloat(x.amount.toString());
                     } else if (x.isVat === 1) {
@@ -3531,7 +3220,7 @@ router.get('/get-sum-charges', function (req, res, next) {
                 withHoldingTaxTotal: withHoldingTaxTotal
             })
         } else {
-            res.send(response.data);
+            res.send(response);
         }
     }, err => {
         res.send(err);
@@ -3545,15 +3234,11 @@ router.get('/check-reverse-txns/:id', function (req, res, next) {
     WHERE isReversedTxn = 1 AND parentTxnId = ${req.params.id}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(response => {
-        if (response.data.status === undefined) {
-            res.send(response.data[0]);
+    sRequest.get(query).then(response => {
+        if (response.status === undefined) {
+            res.send(response[0]);
         } else {
-            res.send(response.data);
+            res.send(response);
         }
     }, err => {
         res.send(err);

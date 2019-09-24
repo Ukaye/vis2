@@ -323,6 +323,7 @@ $("select").on("change", function (event) {
 
 function validate() {
     if (
+        $('#investment_date_start').val() !== "" &&
         $('#client').on('select2:select').val() !== "0" &&
         $('#investment_product').on('select2:select').val() !== "0" &&
         $('#investment_amount').val() !== "") {

@@ -9,6 +9,7 @@ const sRequest = require('./service/s_request');
 router.post('/products', function (req, res, next) {
     let data = req.body;
     data.status = 1;
+    data.isDeactivated = 0;
     data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('INSERT INTO investment_products SET ?', data, function (error, result, fields) {
         if (error) {
@@ -120,12 +121,8 @@ function getOriginalProductRequirement(productId, HOST, table) {
         WHERE productId = ${productId} AND status = 1`;
         let endpoint = `/core-service/get`;
         let url = `${HOST}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(response_prdt_ => {
-            resolve(response_prdt_.data);
+        sRequest.get(query).then(response_prdt_ => {
+            resolve(response_prdt_);
         }, err => {
             resolve([]);
         });
@@ -199,7 +196,7 @@ async function productCloneOps(HOST, originalProductId, newProductId) {
 /** End point use to activate and deactivate investment/savings product **/
 router.post('/products-status/:id', function (req, res, next) {
     let date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.query('UPDATE investment_products SET isDeactivated = ?, date_modified = ? WHERE ID = ?', [req.body.status, date, req.params.id], function (error, result, fields) {
+    db.query('UPDATE investment_products SET isDeactivated = ?, date_modified = ? WHERE ID = ?', [req.body.isDeactivated, date, req.params.id], function (error, result, fields) {
         if (error) {
             res.send({
                 "status": 500,
