@@ -79,7 +79,7 @@ function populateDataTable(data) {
             } else {
                 table[table.length-2] = '<span class="badge badge-danger">Not Active</span>';
             }
-        } else{
+        } else {
             table[table.length-2] = '<span class="badge badge-warning">Closed</span>';
         }
         if (v.reschedule_amount){
@@ -87,6 +87,12 @@ function populateDataTable(data) {
         } else {
             if (v.reschedule_status === 1)
                 table[table.length-2] = table[table.length-2].concat('<span class="badge badge-pill badge-secondary">Pending Reschedule</span>');
+        }
+        if (v.client_applications_status === 2 && v.information_request_status === 1 && v.status === 1){
+            table[table.length-2] = table[table.length-2].concat('<span class="badge badge-pill badge-warning">More Info Required</span>');
+        }
+        if (v.client_applications_status === 3 && v.status === 1){
+            table[table.length-2] = table[table.length-2].concat('<span class="badge badge-pill badge-warning">Pending Client <br> Acceptance</span>');
         }
         if (v.comment){
             let view_comment_button = ' <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#viewCommentModal" onclick="openViewCommentModal('+v.ID+')"><i class="fa fa-eye"></i> View Comment</button>';
