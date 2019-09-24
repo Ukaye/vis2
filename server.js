@@ -55,6 +55,7 @@ let app = express(),
     collection_service = require('./routes/service/custom-services/collection.service'),
     remita_service = require('./routes/service/custom-services/remita.service'),
     xero_service = require('./routes/service/custom-services/xero.service'),
+    application_service = require('./routes/service/custom-services/application.service'),
     notification = require('./routes/notifications'),
     index = require('./routes/index');
 
@@ -223,6 +224,7 @@ app.use('/investment-interests', investment_interest_service);
 // app.use('/notification-service', notification_service);
 app.use('/remita', remita_service);
 app.use('/xero', xero_service);
+app.use('/application', application_service);
 app.use('/notifications', notification);
 app.use('/files', express.static(__dirname + '/files'));
 

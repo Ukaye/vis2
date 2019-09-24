@@ -1412,10 +1412,9 @@ router.get('/document-upload/:id/:name?', function(req, res) {
     res.send('OK');
 });
 
-router.post('/document-upload/:id/:name/:folder_path?', function(req, res) {
+router.post('/document-upload/:id/:name', function(req, res) {
     let	name = req.params.name,
-        application_id = req.params.id,
-        folder_path = req.params.folder_path || `files/application-${application_id}/`;
+        application_id = req.params.id;
 
     if (!name) return res.status(400).send('No files were uploaded.');
     if (!req.files) return res.status(400).send('No files were uploaded.');
@@ -1431,22 +1430,22 @@ router.post('/document-upload/:id/:name/:folder_path?', function(req, res) {
         } else if (!application || !application[0]) {
             res.send({"status": 500, "error": "Application does not exist", "response": null});
         } else {
-            fs.stat(folder_path, function(err) {
+            fs.stat('files/application-'+application_id+'/', function(err) {
                 if (err && (err.code === 'ENOENT'))
-                    fs.mkdirSync(folder_path);
+                    fs.mkdirSync('files/application-'+application_id+'/');
 
-                fs.stat(folder_path+application_id+'_'+name+'.'+extension, function (err) {
+                fs.stat('files/application-'+application_id+'/'+application_id+'_'+name+'.'+extension, function (err) {
                     if (err) {
-                        sampleFile.mv(folder_path+application_id+'_'+name+'.'+extension, function(err) {
+                        sampleFile.mv('files/application-'+application_id+'/'+application_id+'_'+name+'.'+extension, function(err) {
                             if (err) return res.status(500).send(err);
                             res.send({files:[sampleFile]});
                         });
                     } else {
-                        fs.unlink(folder_path+application_id+'_'+name+'.'+extension,function(err){
+                        fs.unlink('files/application-'+application_id+'/'+application_id+'_'+name+'.'+extension,function(err){
                             if(err){
                                 return console.log(err);
                             } else {
-                                sampleFile.mv(folder_path+application_id+'_'+name+'.'+extension, function(err) {
+                                sampleFile.mv('files/application-'+application_id+'/'+application_id+'_'+name+'.'+extension, function(err) {
                                     if (err)
                                         return res.status(500).send(err);
                                     else {
