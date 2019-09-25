@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const router = express.Router();
 const moment = require('moment');
+const sRequest = require('../s_request');
 
 //Get Investment Product
 router.get('/compute', function (req, res, next) {
@@ -12,13 +13,9 @@ router.get('/compute', function (req, res, next) {
     let query = `SELECT ID,name,code,investment_max,investment_min,min_term,max_term,interest_disbursement_time FROM investment_products WHERE status = 1 AND (upper(code) LIKE "${search_string}%" OR upper(name) LIKE "${search_string}%") ORDER BY ID desc LIMIT ${limit} OFFSET ${page}`;
     const endpoint = "/core-service/get";
     const url = `${HOST}${endpoint}`;
-    axios.get(url, {
-            params: {
-                query: query
-            }
-        })
+    sRequest.get(query)
         .then(function (response) {
-            res.send(response.data);
+            res.send(response);
         }, err => {
             res.send(err);
         })

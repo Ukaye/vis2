@@ -5,9 +5,11 @@ const router = express.Router();
 const axios = require('axios');
 const sRequest = require('./service/s_request');
 
+/** End point use to create investment/savings product **/
 router.post('/products', function (req, res, next) {
     let data = req.body;
     data.status = 1;
+    data.isDeactivated = 0;
     data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('INSERT INTO investment_products SET ?', data, function (error, result, fields) {
         if (error) {
@@ -25,7 +27,7 @@ router.post('/products', function (req, res, next) {
     });
 });
 
-//Get Investment Product
+/** End point use to get investment/savings product **/
 router.get('/products', function (req, res, next) {
     const limit = req.query.limit;
     const offset = req.query.offset;
@@ -59,7 +61,7 @@ router.get('/products', function (req, res, next) {
     });
 });
 
-
+/** End point use to get investment/savings product **/
 router.get('/products/:id', function (req, res, next) {
     let query = 'SELECT * FROM investment_products where id = ?';
     db.query(query, req.params.id, function (error, results, fields) {
@@ -75,6 +77,7 @@ router.get('/products/:id', function (req, res, next) {
     });
 });
 
+/** End point use to update investment/savings product **/
 router.post('/products/:id', function (req, res, next) {
     var dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     data = req.body;
@@ -111,25 +114,22 @@ router.post('/products/:id', function (req, res, next) {
     });
 });
 
+/** Function use to get investment/savings product requirement **/
 function getOriginalProductRequirement(productId, HOST, table) {
     return new Promise((resolve, reject) => {
         let query = `Select * from ${table} 
         WHERE productId = ${productId} AND status = 1`;
         let endpoint = `/core-service/get`;
         let url = `${HOST}${endpoint}`;
-        axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(response_prdt_ => {
-            resolve(response_prdt_.data);
+        sRequest.get(query).then(response_prdt_ => {
+            resolve(response_prdt_);
         }, err => {
             resolve([]);
         });
     });
 }
 
-
+/** Function use to create investment/savings product requirement **/
 function createClonedProductRequirement(values, isDoc, newProductId, table) {
     return new Promise((resolve, reject) => {
         let baseQuery = (!isDoc) ? `INSERT INTO
@@ -175,6 +175,7 @@ function createClonedProductRequirement(values, isDoc, newProductId, table) {
     });
 }
 
+/** Function housing both getOriginalProductRequirement(productId, HOST, table) and createClonedProductRequirement(values, isDoc, newProductId, table) **/
 async function productCloneOps(HOST, originalProductId, newProductId) {
     let tableNames = [{ name: 'investment_product_reviews', isDoc: false },
     { name: 'investment_product_posts', isDoc: false },
@@ -192,9 +193,10 @@ async function productCloneOps(HOST, originalProductId, newProductId) {
     return results;
 }
 
+/** End point use to activate and deactivate investment/savings product **/
 router.post('/products-status/:id', function (req, res, next) {
     let date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.query('UPDATE investment_products SET isDeactivated = ?, date_modified = ? WHERE ID = ?', [req.body.status, date, req.params.id], function (error, result, fields) {
+    db.query('UPDATE investment_products SET isDeactivated = ?, date_modified = ? WHERE ID = ?', [req.body.isDeactivated, date, req.params.id], function (error, result, fields) {
         if (error) {
             res.send({
                 "status": 500,

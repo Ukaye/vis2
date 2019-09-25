@@ -154,7 +154,7 @@ function getInvestmentProducts(id) {
                 $('#interest_rate').val(product_obj.interest_rate);
                 $('#condition_for_interest').val(product_obj.interest_disbursement_time);
                 $('#compute_interest_time').val(product_obj.interest_compute_time);
-                $('#forfeit_interest_on_withdrawal').attr('checked', true);
+                // $('#forfeit_interest_on_withdrawal').attr('checked', true);
                 $('#minimum_bal_penalty_amount').val(product_obj.minimum_bal_charges);
                 $('#opt_on_minimum_bal_penalty_amount').val((product_obj.minimum_bal_charges_opt ===
                     null) ? $(
@@ -349,8 +349,13 @@ function activate_interest_controls(status) {
 
 $("#forfeit_interest_on_withdrawal").on('change',
     function () {
-        let _status = $('#forfeit_interest_on_withdrawal').is(':checked');
-        activate_interest_penalty_controls(!_status);
+        let status = $('#chk_maturity_term').is(':checked');
+        if (status) {
+            let _status = $('#forfeit_interest_on_withdrawal').is(':checked');
+            activate_interest_penalty_controls(!_status);
+        }else{
+            $('#forfeit_interest_on_withdrawal').attr('checked', false);
+        }
     });
 
 function activate_interest_penalty_controls(status) {
