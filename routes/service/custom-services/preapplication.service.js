@@ -6,7 +6,8 @@ const
     db = require('../../../db'),
     express = require('express'),
     router = express.Router(),
-    enums = require('../../../enums');
+    enums = require('../../../enums'),
+    helperFunctions = require('../../../helper-functions');
 
 router.post('/create', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
@@ -97,6 +98,7 @@ router.get('/get/:id', function (req, res, next) {
             res.send(result);
         } else {
             fs.readdir(path, function (err, files){
+                files = helperFunctions.removeFileDuplicates(path, files);
                 async.forEach(files, function (file, callback){
                     let filename = file.split('.')[0].split('_');
                     filename.shift();

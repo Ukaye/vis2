@@ -205,6 +205,7 @@ function loadApplication(user_id){
 
             getApplicationSettings(application);
             checkForExistingMandate(application);
+            getFileDownloads();
         },
         'error': function (err) {
             console.log(err);
@@ -286,7 +287,8 @@ function loadComments(comments) {
     }
 }
 
-let stage_documents = [];
+let stage_documents = [],
+    stage_downloads = [];
 $('.next').hide();
 $('.previous').hide();
 $('#next-actions').hide();
@@ -331,6 +333,18 @@ function loadWorkflowStages(state) {
                 });
                 $('#stage-documents').append('<option value = "others">Others</option>');
                 fileUpload();
+            }
+
+            if (stage.download){
+                let downloads = stage.download.split(',');
+                downloads.forEach(function (download) {
+                    if (download.trim().replace(/ /g, '_') in application.file_downloads){
+                        $('#stage-downloads').append(`<option value = "${download}">${download} &nbsp; (&check;)</option>`);
+                    } else {
+                        $('#stage-downloads').append(`<option value = "${download}">${download}</option>`);
+                    }
+                    stage_downloads.push(document);
+                });
             }
 
             if (stage.actions){
@@ -403,6 +417,8 @@ function loadWorkflowStages(state) {
                 $('.next').text('Disbursal (Disbursal)');
 
             if (stage.stage_name === 'Disbursal' || application.status === 2){
+                $('#infoRequestModalBtn').hide();
+                $('#downloadsForm').hide();
                 $('#disbursement-amount').val((parseFloat(application.loan_amount)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
                 $('#stage-actions').append('<a href="#" id="stage-action-0" class="dropdown-item" data-toggle="modal" data-target="#disburseModal">Disburse Loan</a>');
             }
@@ -1682,13 +1698,14 @@ function writeOffLoan() {
 
 function payOffLoan() {
     let payoff = {};
+    payoff.close_amount = currencyToNumberformatter($('#payoff-amount').val());
     payoff.close_interest = $('#payoff-interest').val();
     payoff.close_date = $('#payoff-date').val();
     payoff.close_channel = $('#payoff-channel').val();
     payoff.close_comment = $('#payoff-notes').val();
     if ($('input[name=payoff-include-interest]:checked').val())
         payoff.close_include_interest = $('input[name=payoff-include-interest]:checked').val();
-    if (!payoff.close_interest || !payoff.close_date || !payoff.close_channel)
+    if (!payoff.close_amount || !payoff.close_interest || !payoff.close_date || !payoff.close_channel)
         return notification('Kindly fill all required inputs to close loan','','warning');
     $.ajax({
         'url': '/user/application/pay-off/'+application_id+'/'+(JSON.parse(localStorage.user_obj)).ID,
@@ -1936,6 +1953,63 @@ function getInformationRequests() {
         }
     });
 }
+
+function getFileDownloads() {
+    let downloads = application.file_downloads,
+        $downloads = $('#downloads');
+    $downloads.html('');
+    if ($.isEmptyObject(downloads)) return $downloads.append('<h2 style="margin: auto;">No file downloads available yet!</h2>');
+    Object.keys(downloads).forEach(function (key) {
+        let preview = `<img class="img-responsive user-photo" src="/${downloads[key]}">`;
+        if (!isUriImage(`/${downloads[key]}`)) preview = '<i class="fa fa-file" style="font-size: 100px;"></i>';
+        $downloads.append('<div class="row">\n' +
+            '    <div class="col-sm-2">\n' +
+            '        <div class="thumbnail">'+preview+'</div>\n' +
+            '    </div>\n' +
+            '    <div class="col-sm-10">\n' +
+            '        <div class="panel panel-default">\n' +
+            '            <div class="panel-heading"><strong>'+key+'</strong></div>\n' +
+            '            <div class="panel-body"><a href="/'+downloads[key]+'" target="_blank">Click to download file</a></div>\n' +
+            '        </div>\n' +
+            '    </div>\n' +
+            '</div>');
+    });
+}
+
+function uploadFile() {
+    let file = $(`#file-upload`)[0].files[0],
+        filename = $('#stage-downloads').val();
+    if (!file || filename === '-- Choose Document --')
+        return notification('Kindly choose file to upload!', '', 'warning');
+    let formData = new FormData();
+    formData.append('file', file);
+    $.ajax({
+        url: `/application/upload/${application_id}/${filename}/application_download-${application_id}`,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (response) {
+            let preview = `<img class="img-responsive user-photo" src="/${response.file}">`;
+            if (!isUriImage(`/${response.file}`)) preview = '<i class="fa fa-file" style="font-size: 100px;"></i>';
+            $('#downloads').append('<div class="row">\n' +
+                '    <div class="col-sm-2">\n' +
+                '        <div class="thumbnail">'+preview+'</div>\n' +
+                '    </div>\n' +
+                '    <div class="col-sm-10">\n' +
+                '        <div class="panel panel-default">\n' +
+                '            <div class="panel-heading"><strong>'+filename+'</strong></div>\n' +
+                '            <div class="panel-body"><a href="/'+response.file+'" target="_blank">Click to download file</a></div>\n' +
+                '        </div>\n' +
+                '    </div>\n' +
+                '</div>');
+            return notification('File uploaded successfully!', '', 'success');
+        },
+        error: function () {
+            notification('Oops! An error occurred while uploading file', '', 'error');
+        }
+    });
+};
 
 function read_write_1(){
     let perms = JSON.parse(localStorage.getItem("permissions")),

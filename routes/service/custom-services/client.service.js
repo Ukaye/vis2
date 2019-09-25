@@ -637,6 +637,15 @@ router.get('/enable/:id', helperFunctions.verifyJWT, function(req, res) {
                 "response": null
             });
 
+        emailService.send({
+            to: req.user.email,
+            subject: 'Account Enabled',
+            template: 'default',
+            context: {
+                name: req.user.fullname,
+                message: 'Your account has been enabled successfully!'
+            }
+        });
         res.send({
             "status": 200,
             "error": null,
@@ -658,6 +667,15 @@ router.delete('/disable/:id', helperFunctions.verifyJWT, function(req, res) {
                 "response": null
             });
 
+        emailService.send({
+            to: req.user.email,
+            subject: 'Account Disabled',
+            template: 'default',
+            context: {
+                name: req.user.fullname,
+                message: 'Your account has been disabled successfully!'
+            }
+        });
         res.send({
             "status": 200,
             "error": null,
@@ -668,7 +686,14 @@ router.delete('/disable/:id', helperFunctions.verifyJWT, function(req, res) {
 
 router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query = `SELECT * FROM clients WHERE ID = ${req.params.id}`,
+    let query = `SELECT *, (select fullname from users u where u.ID = clients.loan_officer) loan_officer,
+        (select branch_name from branches b where b.ID = clients.branch) branch, 
+        (select count(*) from applications where userID = clients.ID and not (status = 0 and close_status = 0)) total_active_loan_count, 
+        (select sum(loan_amount) from applications where userID = clients.ID and not (status = 0 and close_status = 0)) total_active_loan_sum, 
+        (select (select sum(loan_amount) from applications where userID = clients.ID and not (status = 0 and close_status = 0)) - 
+        sum(payment_amount) from schedule_history where applicationID in (select id from applications where userid = clients.ID and 
+        not (status = 0 and close_status = 0)) and status = 1) total_active_loan_balance
+        FROM clients WHERE ID = ${req.params.id}`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -693,6 +718,7 @@ router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
             });
         } else {
             fs.readdir(path, function (err, files){
+                files = helperFunctions.removeFileDuplicates(path, files);
                 async.forEach(files, function (file, callback){
                     let filename = file.split('.')[1].split('_');
                     filename.shift();
@@ -848,6 +874,15 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, function (req,
                 query: query
             }
         }).then(response_ => {
+            emailService.send({
+                to: req.user.email,
+                subject: 'Loan Request',
+                template: 'default',
+                context: {
+                    name: req.user.fullname,
+                    message: 'Your loan request has been received successfully!'
+                }
+            });
             res.send({status: 200, error: null, response: response_['data'][0]});
         }, err => {
             res.send({status: 500, error: err, response: null});
@@ -873,7 +908,7 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
             WHEN s.payment_collect_date < CURDATE() OR s.interest_collect_date < CURDATE() THEN 3
         END) payment_status,
         (CASE 
-            WHEN (SELECT COUNT(*) FROM application_comments WHERE a.ID = applicationID AND a.userID = userID) > 0 THEN 1
+            WHEN (SELECT COUNT(*) FROM application_information_requests WHERE a.ID = applicationID) > 0 THEN 1
             ELSE 0
         END) information_request_status
         FROM clients c, client_applications p LEFT JOIN applications a ON p.ID = a.preapplicationID AND a.userID = ${id} 
@@ -901,9 +936,11 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
                 applications = (response.data === undefined) ? [] : response.data;
             async.forEach(applications, (application, callback) => {
                 application.document_upload_status = 0;
-                let folder_url_1 = `files/application-${application.loanID}`,
-                    folder_url_2 = `files/client_application-${application.loanID}`;
-                if (application.loanID && (fs.existsSync(folder_url_1) || fs.existsSync(folder_url_2)))
+                let folder_path_1 = `files/application-${application.loanID}`,
+                    folder_path_2 = `files/client_application-${application.ID}`;
+                if (application.loanID && fs.existsSync(folder_path_1))
+                    application.document_upload_status = 1;
+                if (fs.existsSync(folder_path_2))
                     application.document_upload_status = 1;
                 applications_.push(application);
                 callback();
@@ -924,8 +961,7 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
 });
 
 router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
-    const HOST = `${req.protocol}://${req.get('host')}`,
-        path = `files/client_application-${req.params.application_id}/`;
+    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT p.*, c.fullname, c.email, c.phone FROM client_applications p 
                 INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.application_id} AND p.userID = ${req.params.id}`,
         query2 = `SELECT u.ID userID, u.fullname, u.phone, u.email, u.address, cast(u.loan_officer as unsigned) loan_officer,
@@ -961,7 +997,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                 query: query2
             }
         }).then(response => {
-            let obj = {}, obj2 = {},
+            let obj = {},
                 result2 = (response.data === undefined) ? {} : response.data[0];
             if (result2) {
                 result.loanID = result2.ID;
@@ -987,56 +1023,42 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                     res.send({"status": 500, "error": error, "response": null});
                                 } else {
                                     result.information_requests = information_requests;
-                                    let path2 = `files/application-${result.loanID}/`;
-                                    if (!fs.existsSync(path)) {
-                                        result.files = {};
-                                        if (!fs.existsSync(path2)) {
-                                            return res.send({
-                                                "status": 200,
-                                                "error": null,
-                                                "response": result
-                                            });
-                                        } else {
+                                    let path = `files/client_application-${result.ID}/`,
+                                        path2 = `files/application-${result.loanID}/`,
+                                        path3 = `files/application_download-${result.loanID}/`;
+                                    result.files = {};
+                                    fs.readdir(path, function (err, files){
+                                        if (err) files = [];
+                                        files = helperFunctions.removeFileDuplicates(path, files);
+                                        async.forEach(files, function (file, callback){
+                                            let filename = file.split('.')[0].split('_');
+                                            filename.shift();
+                                            obj[filename.join('_')] = `${req.HOST}/${path}${file}`;
+                                            callback();
+                                        }, function(data){
+                                            result.files = Object.assign({}, result.files, obj);
+                                            obj = {};
                                             fs.readdir(path2, function (err, files){
+                                                if (err) files = [];
+                                                files = helperFunctions.removeFileDuplicates(path2, files);
                                                 async.forEach(files, function (file, callback){
                                                     let filename = file.split('.')[0].split('_');
                                                     filename.shift();
-                                                    obj2[filename.join('_')] = `${req.HOST}/${path2}${file}`;
+                                                    obj[filename.join('_')] = `${req.HOST}/${path2}${file}`;
                                                     callback();
                                                 }, function(data){
-                                                    result.files = Object.assign({}, result.files, obj2);
-                                                    return res.send({
-                                                        "status": 200,
-                                                        "error": null,
-                                                        "response": result
-                                                    });
-                                                });
-                                            });
-                                        }
-                                    } else {
-                                        fs.readdir(path, function (err, files){
-                                            async.forEach(files, function (file, callback){
-                                                let filename = file.split('.')[0].split('_');
-                                                filename.shift();
-                                                obj[filename.join('_')] = `${req.HOST}/${path}${file}`;
-                                                callback();
-                                            }, function(data){
-                                                result.files = obj;
-                                                if (!fs.existsSync(path2)) {
-                                                    return res.send({
-                                                        "status": 200,
-                                                        "error": null,
-                                                        "response": result
-                                                    });
-                                                } else {
-                                                    fs.readdir(path2, function (err, files){
+                                                    result.files = Object.assign({}, result.files, obj);
+                                                    obj = {};
+                                                    fs.readdir(path3, function (err, files){
+                                                        if (err) files = [];
+                                                        files = helperFunctions.removeFileDuplicates(path3, files);
                                                         async.forEach(files, function (file, callback){
                                                             let filename = file.split('.')[0].split('_');
                                                             filename.shift();
-                                                            obj2[filename.join('_')] = `${req.HOST}/${path2}${file}`;
+                                                            obj[filename.join('_')] = `${req.HOST}/${path3}${file}`;
                                                             callback();
                                                         }, function(data){
-                                                            result.files = Object.assign({}, result.files, obj2);
+                                                            result.file_downloads = obj;
                                                             return res.send({
                                                                 "status": 200,
                                                                 "error": null,
@@ -1044,10 +1066,10 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                                             });
                                                         });
                                                     });
-                                                }
+                                                });
                                             });
                                         });
-                                    }
+                                    });
                                 }
                             });
                         }
@@ -1089,6 +1111,15 @@ router.get('/application/accept/:id/:application_id', helperFunctions.verifyJWT,
         db.query(query, payload, function (error, response) {
             if (error)
                 return res.send({status: 500, error: error, response: null});
+            emailService.send({
+                to: req.user.email,
+                subject: 'Loan Offer Accepted',
+                template: 'default',
+                context: {
+                    name: req.user.fullname,
+                    message: 'Your loan offer acceptance was successful!'
+                }
+            });
             return res.send({status: 200, error: null, response: 'Loan offer accepted successfully!'});
         });
     });
@@ -1125,6 +1156,15 @@ router.get('/application/decline/:id/:application_id', helperFunctions.verifyJWT
         db.query(query, payload, function (error, response) {
             if (error)
                 return res.send({status: 500, error: error, response: null});
+            emailService.send({
+                to: req.user.email,
+                subject: 'Loan Offer Declined',
+                template: 'default',
+                context: {
+                    name: req.user.fullname,
+                    message: 'Your loan offer rejection was successful!'
+                }
+            });
             return res.send({status: 200, error: null, response: 'Loan offer declined successfully!'});
         });
     });
@@ -1297,6 +1337,7 @@ router.get('/loan/get/:id/:application_id', helperFunctions.verifyJWT, function 
                             });
                         } else {
                             fs.readdir(path, function (err, files){
+                                files = helperFunctions.removeFileDuplicates(path, files);
                                 async.forEach(files, function (file, callback){
                                     let filename = file.split('.')[0].split('_');
                                     filename.shift();
@@ -1433,6 +1474,7 @@ router.get('/application/getV2/:application_id', function (req, res) {
             res.send(result);
         } else {
             fs.readdir(path, function (err, files){
+                files = helperFunctions.removeFileDuplicates(path, files);
                 async.forEach(files, function (file, callback){
                     let filename = file.split('.')[0].split('_');
                     filename.shift();
@@ -1687,8 +1729,8 @@ router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, fun
                         let data = {
                                 actual_payment_amount: invoice_.payment_amount,
                                 actual_interest_amount: invoice_.interest_amount,
-                                actual_fees_amount: invoice_.fees_amount || '0',
-                                actual_penalty_amount: invoice_.penalty_amount || '0',
+                                actual_fees_amount: invoice_.fees_amount || 0,
+                                actual_penalty_amount: invoice_.penalty_amount || 0,
                                 payment_source: 'paystack',
                                 payment_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
                             },
@@ -2064,8 +2106,8 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
                     let data = {
                             actual_payment_amount: invoice_.payment_amount,
                             actual_interest_amount: invoice_.interest_amount,
-                            actual_fees_amount: invoice_.fees_amount || '0',
-                            actual_penalty_amount: invoice_.penalty_amount || '0',
+                            actual_fees_amount: invoice_.fees_amount || 0,
+                            actual_penalty_amount: invoice_.penalty_amount || 0,
                             payment_source: 'paystack',
                             payment_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
                         },
@@ -2180,6 +2222,332 @@ router.get('/application/comment/:id/:loan_id', (req, res) => {
             "status": 200,
             "error": null,
             "response": comments
+        });
+    });
+});
+
+router.post('/application/upload/:id/:application_id/:name', helperFunctions.verifyJWT, function(req, res) {
+    let	id = req.params.id,
+        name = req.params.name,
+        sampleFile = req.files.file,
+        extArray = sampleFile.name.split("."),
+        extension = extArray[extArray.length - 1],
+        application_id = req.params.application_id,
+        query = `SELECT * FROM client_applications WHERE ID = ${application_id} AND userID = ${id}`,
+        endpoint = '/core-service/get',
+        url = `${req.HOST}${endpoint}`;
+    if (extension) extension = extension.toLowerCase();
+    if (!req.files) return res.status(500).send('No files were uploaded.');
+    if (!req.params || !application_id || !name) return res.status(500).send('Required parameter(s) not sent!');
+
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        let client_application = response.data;
+        if (!client_application || !client_application[0]) {
+            return res.send({
+                "status": 500,
+                "error": "Application does not exist",
+                "response": null
+            });
+        } else {
+            const file_folder = `files/client_application-${application_id}/`;
+            fs.stat(file_folder, function(err) {
+                if (err && (err.code === 'ENOENT'))
+                    fs.mkdirSync(file_folder);
+
+                const file_url = `${file_folder}${application_id}_${name.trim().replace(/ /g, '_')}.${extension}`;
+                fs.stat(file_url, function (err) {
+                    if (err) {
+                        sampleFile.mv(file_url, function(err) {
+                            if (err) return res.status(500).send(err);
+                            res.send({
+                                "status": 200,
+                                "error": null,
+                                "response": `${req.HOST}/${encodeURI(file_url)}`
+                            });
+                        });
+                    } else {
+                        fs.unlink(file_url,function(err){
+                            if(err){
+                                return console.log(err);
+                            } else {
+                                sampleFile.mv(file_url, function(err) {
+                                    if (err)
+                                        return res.status(500).send(err);
+                                    res.send({
+                                        "status": 200,
+                                        "error": null,
+                                        "response": `${req.HOST}/${encodeURI(file_url)}`
+                                    });
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+        }
+    });
+});
+
+router.get('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req, res) => {
+    let query1 = `SELECT COALESCE(SUM(payment_amount+interest_amount), 0) amount FROM application_schedules 
+    WHERE applicationID = ${req.params.loan_id} AND interest_collect_date <= CURDATE() AND status = 1`;
+    let query2 = `SELECT COALESCE(SUM(payment_amount), 0) amount FROM application_schedules 
+    WHERE applicationID = ${req.params.loan_id} AND interest_collect_date > CURDATE() AND status = 1`;
+    let query3 = `SELECT COALESCE(((interest_amount/30) * (CASE
+        WHEN DAY(CURDATE()) > DAY(interest_collect_date) THEN DAY(CURDATE()) - DAY(interest_collect_date)
+        WHEN DAY(CURDATE()) < DAY(interest_collect_date) THEN 30 - (DAY(interest_collect_date) - DAY(CURDATE()))
+        ElSE 0 END)), 0) amount FROM application_schedules WHERE applicationID = ${req.params.loan_id} AND status = 1 
+        AND MONTH(interest_collect_date) = MONTH(CURDATE()) AND YEAR(interest_collect_date) = YEAR(CURDATE());`;
+    let query4 = `SELECT COALESCE(SUM(payment_amount+interest_amount), 0) amount FROM schedule_history 
+    WHERE applicationID = ${req.params.loan_id} AND clientID = ${req.params.id} AND status = 1`;
+    db.query(query1, (error, overdue) => {
+        db.query(query2, (error, not_due) => {
+            db.query(query3, (error, due) => {
+                db.query(query4, (error, paid) => {
+                    return res.send({
+                        "status": 200,
+                        "error": null,
+                        "response": overdue[0]['amount'] + not_due[0]['amount'] + due[0]['amount'] - paid[0]['amount']
+                    });
+                });
+            });
+        });
+    });
+});
+
+router.post('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, function (req, res) {    
+    paystack.transaction.charge({
+        authorization_code: req.body.authorization_code,
+        email: req.user.email,
+        amount: parseFloat(req.body.close_amount) * 100
+    })
+    .then(function(body){
+        if (body.status) {
+            if (body.data.status === 'success') {
+                db.getConnection(function(err, connection) {
+                    if (err) throw err;
+            
+                    connection.query(`SELECT COALESCE(SUM(interest_amount), 0) amount FROM application_schedules 
+                    WHERE applicationID = ${req.params.loan_id} AND payment_status = 0 AND status = 1`, (error, close_interest) => {
+                        let data = {
+                            close_amount: req.body.close_amount,
+                            close_comment: req.body.close_comment
+                        };
+                        data.close_interest = close_interest[0]['amount'];
+                        data.close_date = moment().utcOffset('+0100').format('YYYY-MM-DD');
+                        data.close_channel = 'card';
+                        data.close_status = 1;
+            
+                        connection.query(`UPDATE applications SET ? WHERE ID = ${req.params.loan_id}`, data, (error, result) => {
+                            if(error) return res.send({
+                                "status": 500,
+                                "error": error,
+                                "response": null
+                            });
+                            connection.query(`SELECT * FROM application_schedules WHERE applicationID = ${req.params.loan_id} 
+                                AND status = 1 AND payment_status = 0`, function (error, invoices) {
+                                if(error) return res.send({
+                                    "status": 500,
+                                    "error": error,
+                                    "response": null
+                                });
+                                async.forEach(invoices, function (invoice_obj, callback) {
+                                    let invoice = {};
+                                    invoice.invoiceID = invoice_obj.ID;
+                                    invoice.applicationID = req.params.loan_id;
+                                    invoice.payment_amount = invoice_obj.payment_amount;
+                                    invoice.interest_amount = invoice_obj.interest_amount;
+                                    invoice.fees_amount = invoice_obj.fees_amount;
+                                    invoice.penalty_amount = invoice_obj.penalty_amount;
+                                    invoice.agentID = 1;
+                                    invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                                    connection.query(`UPDATE application_schedules SET payment_status=1 WHERE ID = ${invoice_obj.ID}`, () => {
+                                        connection.query('INSERT INTO schedule_history SET ?', invoice, () => {
+                                            callback();
+                                        });
+                                    });
+                                }, function (data) {
+                                    connection.release();
+                                    let payload = {}
+                                    payload.category = 'Application';
+                                    payload.userid = req.cookies.timeout;
+                                    payload.description = 'Loan Application Paid Off';
+                                    payload.affected = req.params.id;
+                                    notificationsService.log(req, payload);
+                                    res.send({
+                                        "status": 200,
+                                        "error": null,
+                                        "response": "Application pay off successful!"
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            } else {
+                return res.send({
+                    "status": 500,
+                    "error": null,
+                    "response": body.data.gateway_response
+                });
+            }
+        } else {
+            return res.send({
+                "status": 500,
+                "error": null,
+                "response": body.message
+            });
+        }
+    })
+    .catch(function(error){
+        if(error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+    });
+});
+
+router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, function (req, res) {
+    db.query(`SELECT s.*, a.ID app_id, a.userID, ROUND((s.interest_amount + s.payment_amount), 2) amount, 
+    c.loan_officer, c.branch FROM application_schedules s, applications a, clients c WHERE s.ID = ${req.params.invoice_id} 
+    AND s.applicationID = a.ID AND a.userID = ${req.params.id} AND a.userID = c.ID`, function(error, schedule) {
+        if(error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+
+        if(!schedule[0]) return res.send({
+                "status": 500,
+                "error": null,
+                "response": 'Invoice does not exist!'
+            });
+
+        const invoice_ = schedule[0],
+            amount = (parseFloat(req.body.principal_amount) + parseFloat(req.body.interest_amount)) * 100;
+        
+        paystack.transaction.charge({
+            authorization_code: req.body.authorization_code,
+            email: req.user.email,
+            amount: amount
+        })
+        .then(function(body){
+            if (body.status) {
+                if (body.data.status === 'success') {
+                    let data = {
+                            actual_payment_amount: req.body.principal_amount,
+                            actual_interest_amount: req.body.interest_amount,
+                            actual_fees_amount: 0,
+                            actual_penalty_amount: 0,
+                            payment_source: 'paystack',
+                            payment_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
+                        },
+                        postData = Object.assign({}, data);
+                    postData.payment_status = 1;
+                    delete postData.payment_source;
+                    delete postData.payment_date;
+                    db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`, 
+                        postData, function (error, schedule) {
+                        if (error) {
+                            res.send({
+                                "status": 500, 
+                                "error": error, 
+                                "response": null
+                            });
+                        } else {
+                            let invoice = {};
+                            invoice.invoiceID = req.params.invoice_id;
+                            invoice.agentID = 1;
+                            invoice.applicationID = invoice_.app_id;
+                            invoice.payment_amount = data.actual_payment_amount;
+                            invoice.interest_amount = data.actual_interest_amount;
+                            invoice.fees_amount = data.actual_fees_amount;
+                            invoice.penalty_amount = data.actual_penalty_amount;
+                            invoice.payment_source = data.payment_source;
+                            invoice.payment_date = data.payment_date;
+                            invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                            invoice.clientID = invoice_.userID;
+                            invoice.loan_officerID = invoice_.loan_officer;
+                            invoice.branchID = invoice_.branch;
+                            if (invoice.payment_amount > 0 && invoice.interest_amount > 0) {
+                                invoice.type = 'multiple';
+                            } else {
+                                if (invoice.payment_amount > 0) {
+                                    invoice.type = 'principal';
+                                } else if (invoice.interest_amount > 0) {
+                                    invoice.type = 'interest';
+                                } else if (invoice.fees_amount > 0) {
+                                    invoice.type = 'fees';
+                                } else if (invoice.penalty_amount > 0) {
+                                    invoice.type = 'penalty';
+                                }
+                            }
+                            db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response) {
+                                if (error) {
+                                    res.send({
+                                        "status": 500, 
+                                        "error": error, 
+                                        "response": null
+                                    });
+                                } else {
+                                    let payload = {};
+                                    payload.category = 'Application';
+                                    payload.userid = req.cookies.timeout;
+                                    payload.description = 'Loan Application Payment Confirmed';
+                                    payload.affected = invoice_.app_id;
+                                    notificationsService.log(req, payload);
+                                    return res.send({
+                                        "status": 200, 
+                                        "error": null, 
+                                        "response": "Invoice payment confirmed successfully!"
+                                    });
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    return res.send({
+                        "status": 500,
+                        "error": null,
+                        "response": body.data.gateway_response
+                    });
+                }
+            } else {
+                return res.send({
+                    "status": 500,
+                    "error": null,
+                    "response": body.message
+                });
+            }
+        })
+        .catch(function(error){
+            if(error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+        });
+    });
+});
+
+router.get('/kyc', (req, res) => {
+    db.query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='test'"+
+    "AND TABLE_NAME='clients' AND NOT (COLUMN_NAME = 'ID' OR COLUMN_NAME = 'status' "+
+    "OR COLUMN_NAME = 'date_created' OR COLUMN_NAME = 'images_folder')", (error, response) => {
+        if(error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": response
         });
     });
 });

@@ -11,7 +11,7 @@ let token,
     bcrypt = require('bcryptjs'),
     jwt = require('jsonwebtoken'),
     nodemailer = require('nodemailer'),
-    xeroFunctions = require('../routes/xero');
+    xeroFunctions = require('../routes/xero'),
     hbs = require('nodemailer-express-handlebars'),
     helperFunctions = require('../helper-functions'),
     smtpTransport = require('nodemailer-smtp-transport'),
@@ -512,6 +512,7 @@ users.get('/all-users', function(req, res, next) {
                 let path = 'files/users/'+k.username+'/';
                 if (fs.existsSync(path)){
                     fs.readdir(path, function (err, files){
+                        files = helperFunctions.removeFileDuplicates(path, files);
                         async.forEach(files, function (file, callback){
                             k.image = path+file;
                             callback();
@@ -1538,6 +1539,7 @@ users.get('/user/:id', function(req, res, next) {
                         items = [],
                         image = "";
                     fs.readdir(path, function (err, files){
+                        files = helperFunctions.removeFileDuplicates(path, files);
                         files.forEach(function (file){
                             image = path+file;
                         });
@@ -1879,6 +1881,8 @@ users.get('/applications', function(req, res, next) {
         'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.client_type, ' +
         'a.workflowID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.loanCirrusID, a.reschedule_amount, w.current_stage, ' +
         '(SELECT product FROM preapplications WHERE ID = a.preapplicationID) AS product, ' +
+        '(SELECT status FROM client_applications WHERE ID = a.preapplicationID) AS client_applications_status, ' +
+        '(CASE WHEN (SELECT COUNT(*) FROM application_information_requests WHERE applicationID = a.ID) > 0 THEN 1 ELSE 0 END) information_request_status, ' +
         '(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status ' +
         'FROM clients AS u, workflow_processes AS w, applications AS a LEFT JOIN corporates AS c ON a.userID = c.ID ' +
         'WHERE u.ID=a.userID AND a.status <> 0 AND w.ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=a.ID AND status=1) ';
@@ -1959,11 +1963,12 @@ users.get('/application/:id', function(req, res, next) {
 });
 
 users.get('/application-id/:id', function(req, res, next) {
-    let obj = {}, obj2 = {},
+    let obj = {},
         application_id = req.params.id,
         path = 'files/application-'+application_id+'/',
         query = 'SELECT u.ID userID, u.fullname, u.phone, u.email, u.address, u.industry, u.date_created client_date_created, a.fees, ' +
-            '(SELECT title FROM loan_purpose_settings WHERE ID = a.loan_purpose) loan_purpose, (SELECT GROUP_CONCAT(document) FROM workflow_stages WHERE workflowID = a.workflowID) documents, cast(u.loan_officer as unsigned) loan_officer, ' +
+            '(SELECT title FROM loan_purpose_settings WHERE ID = a.loan_purpose) loan_purpose, (SELECT GROUP_CONCAT(document) FROM workflow_stages WHERE workflowID = a.workflowID) documents, '+
+            '(SELECT GROUP_CONCAT(download) FROM workflow_stages WHERE workflowID = a.workflowID) downloads, cast(u.loan_officer as unsigned) loan_officer, ' +
             'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.interest_rate, a.repayment_date, ' +
             'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, a.interest_rate, a.duration, a.preapplicationID, ' +
             '(SELECT l.supervisor FROM users l WHERE l.ID = u.loan_officer) AS supervisor, ' +
@@ -1972,7 +1977,8 @@ users.get('/application-id/:id', function(req, res, next) {
             'FROM clients AS u INNER JOIN applications AS a ON u.ID = a.userID LEFT JOIN remita_mandates r ' +
             'ON (r.applicationID = a.ID AND r.status = 1) WHERE a.ID = ?',
         query2 = 'SELECT u.ID userID, c.ID contactID, u.name fullname, u.phone, u.email, u.address, u.industry, u.incorporation_date, u.registration_number, u.date_created client_date_created, a.fees, ' +
-            '(SELECT title FROM loan_purpose_settings WHERE ID = a.loan_purpose) loan_purpose, (SELECT GROUP_CONCAT(document) FROM workflow_stages WHERE workflowID = a.workflowID) documents, cast(c.loan_officer as unsigned) loan_officer, ' +
+            '(SELECT title FROM loan_purpose_settings WHERE ID = a.loan_purpose) loan_purpose, (SELECT GROUP_CONCAT(document) FROM workflow_stages WHERE workflowID = a.workflowID) documents, '+
+            '(SELECT GROUP_CONCAT(download) FROM workflow_stages WHERE workflowID = a.workflowID) downloads, cast(c.loan_officer as unsigned) loan_officer, ' +
             'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.interest_rate, a.repayment_date, ' +
             'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, a.interest_rate, a.duration, a.preapplicationID, ' +
             '(SELECT l.supervisor FROM users l WHERE l.ID = c.loan_officer) AS supervisor, ' +
@@ -2005,51 +2011,48 @@ users.get('/application-id/:id', function(req, res, next) {
                                         res.send({"status": 500, "error": error, "response": null});
                                     } else {
                                         result.payment_history = payment_history;
-                                        let path2 = `files/client_application-${result.preapplicationID}/`;
-                                        if (!fs.existsSync(path)){
-                                            result.files = {};
-                                            if (!fs.existsSync(path2)){
-                                                return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
-                                            } else {
+                                        let path2 = `files/client_application-${result.preapplicationID}/`,
+                                            path3 = `files/application_download-${application_id}/`;
+                                        result.files = {};
+                                        fs.readdir(path, function (err, files){
+                                            if (err) files = [];
+                                            files = helperFunctions.removeFileDuplicates(path, files);
+                                            async.forEach(files, function (file, callback){
+                                                let filename = file.split('.')[0].split('_');
+                                                filename.shift();
+                                                obj[filename.join('_')] = path+file;
+                                                callback();
+                                            }, function(data){
+                                                result.files = Object.assign({}, result.files, obj);
+                                                obj = {};
                                                 fs.readdir(path2, function (err, files){
+                                                    if (err) files = [];
+                                                    files = helperFunctions.removeFileDuplicates(path2, files);
                                                     async.forEach(files, function (file, callback){
                                                         let filename = file.split('.')[0].split('_');
                                                         filename.shift();
-                                                        obj2[filename.join('_')] = path2+file;
+                                                        obj[filename.join('_')] = path2+file;
                                                         callback();
                                                     }, function(data){
-                                                        result.files = Object.assign({}, result.files, obj2);
-                                                        return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
-                                                    });
-                                                });
-                                            }
-                                        } else {
-                                            fs.readdir(path, function (err, files){
-                                                async.forEach(files, function (file, callback){
-                                                    let filename = file.split('.')[0].split('_');
-                                                    filename.shift();
-                                                    obj[filename.join('_')] = path+file;
-                                                    callback();
-                                                }, function(data){
-                                                    result.files = obj;
-                                                    if (!fs.existsSync(path2)){
-                                                        return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
-                                                    } else {
-                                                        fs.readdir(path2, function (err, files){
+                                                        result.files = Object.assign({}, result.files, obj);
+                                                        obj = {};
+                                                        fs.readdir(path3, function (err, files){
+                                                            if (err) files = [];
+                                                            files = helperFunctions.removeFileDuplicates(path3, files);
                                                             async.forEach(files, function (file, callback){
                                                                 let filename = file.split('.')[0].split('_');
                                                                 filename.shift();
-                                                                obj2[filename.join('_')] = path2+file;
+                                                                obj[filename.join('_')] = path3+file;
                                                                 callback();
                                                             }, function(data){
-                                                                result.files = Object.assign({}, result.files, obj2);
+                                                                result.file_downloads = obj;
                                                                 return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
                                                             });
                                                         });
-                                                    }
+                                                    });
                                                 });
                                             });
-                                        }
+                                        });
                                     }
                                 });
                             }
@@ -2072,7 +2075,9 @@ users.get('/applications/:officerID', function(req, res, next) {
     let query = "SELECT u.fullname, u.phone, u.email, u.address, c.name corporate_name, c.email corporate_email, c.phone corporate_phone, c.address corporate_address, " +
         "a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.client_type, " +
         "a.loan_amount, a.date_modified, a.comment, a.close_status, a.workflowID, a.loanCirrusID, a.reschedule_amount, w.current_stage," +
-        '(SELECT product FROM preapplications WHERE ID = a.preapplicationID) AS product,' +
+        "(SELECT product FROM preapplications WHERE ID = a.preapplicationID) AS product," +
+        "(SELECT status FROM client_applications WHERE ID = a.preapplicationID) AS client_applications_status, " +
+        "(CASE WHEN (SELECT COUNT(*) FROM application_information_requests WHERE a.ID = applicationID) > 0 THEN 1 ELSE 0 END) information_request_status," +
         "(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status " +
         "FROM clients AS u, workflow_processes AS w, applications AS a LEFT JOIN corporates AS c ON a.userID = c.ID " +
         "WHERE u.ID=a.userID AND a.status <> 0 AND w.ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=a.ID AND status=1) ",
@@ -9105,6 +9110,7 @@ users.get('/attached-images/:folder/', function(req, res, next) {
     if (fs.existsSync(path)){
         fs.readdir(path, function (err, files){
             var obj = [];
+            files = helperFunctions.removeFileDuplicates(path, files);
             async.forEach(files, function (file, callback){
                 obj.push(path+file)
                 callback();

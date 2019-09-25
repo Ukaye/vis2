@@ -1289,7 +1289,8 @@ router.get('/workflows/:workflow_id', function(req, res, next) {
 });
 
 router.get('/workflow-stages', function(req, res, next) {
-    let query = 'SELECT w.ID, w.document, w.actions, w.workflowID, w.stageID, w.name, w.description, w.date_created, w.date_modified, s.name AS stage_name FROM workflow_stages AS w, stages as s WHERE w.stageID=s.ID ORDER BY w.ID asc';
+    let query = 'SELECT w.ID, w.document, w.download, w.actions, w.workflowID, w.stageID, w.name, w.description, w.date_created, '+
+    'w.date_modified, s.name AS stage_name FROM workflow_stages AS w, stages as s WHERE w.stageID=s.ID ORDER BY w.ID asc';
     db.query(query, function (error, results, fields) {
         if(error){
             res.send({"status": 500, "error": error, "response": null});
@@ -1300,7 +1301,8 @@ router.get('/workflow-stages', function(req, res, next) {
 });
 
 router.get('/workflow-stages/:workflow_id', function(req, res, next) {
-    let query = 'SELECT w.ID, w.document, w.actions, w.approverID, w.workflowID, w.stageID, w.name, w.description, w.date_created, w.date_modified, s.name AS stage_name FROM workflow_stages AS w, stages as s WHERE w.workflowID =? AND w.stageID=s.ID ORDER BY w.ID asc';
+    let query = 'SELECT w.ID, w.document, w.download, w.actions, w.approverID, w.workflowID, w.stageID, w.name, w.description, '+
+    'w.date_created, w.date_modified, s.name AS stage_name FROM workflow_stages AS w, stages as s WHERE w.workflowID =? AND w.stageID=s.ID ORDER BY w.ID asc';
     db.query(query, [req.params.workflow_id], function (error, results, fields) {
         if(error){
             res.send({"status": 500, "error": error, "response": null});

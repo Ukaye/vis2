@@ -170,6 +170,21 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">Required Client Information</label>
+                                <div class="col-sm-9">
+                                    <div class="row">
+                                        <div class="col-sm-11 input-group">
+                                            <div class="input-group-addon"><i class="fa fa-list"></i></div>
+                                            <select id="client-information" class="multiselect-ui form-control" multiple="multiple">
+                                                <option value="salary">Salary</option>
+                                                <option value="repayment_date">First Repayment Date</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <br>
                             <div class = "form-group">
                                 <input type="submit" class="btn btn-success btn-flat m-b-30 m-t-30" value="Add New Workflow" onclick="addProcess()"/><span id="submit-error" style="padding-left:50px; text-align: center"></span>
                             </div>
@@ -178,7 +193,7 @@
                 </div>
             </div>
         </div><!-- .animated -->
-        <div id="wait" style=";width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;"><img src='spinner.gif' width="100" height="100" style="background-color: transparent"/></div>
+        <div id="wait" style="width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;"><img src='spinner.gif' width="100" height="100" style="background-color: transparent"/></div>
     </div><!-- .content -->
 
 
@@ -203,13 +218,6 @@
                         </div>
                         <small class="form-text text-muted">Maximum of 50 characters</small>
                     </div>
-                    <!--<div class="form-group">-->
-                    <!--<label class="form-control-label">Transition Description</label><span id="stage-description-error" style="padding-left:50px; text-align: center"></span>-->
-                    <!--<div class="input-group">-->
-                    <!--<textarea id="stage-description" class="form-control" placeholder="Transition Description" maxlength="250"></textarea>-->
-                    <!--</div>-->
-                    <!--<small class="form-text text-muted">Maximum of 250 characters</small>-->
-                    <!--</div>-->
                     <div class="form-group">
                         <label class="form-control-label">Start Stage</label><strong style="color:red"> *</strong>
                         <div class="input-group">
@@ -226,17 +234,6 @@
                         <div id="stage-action-div"></div>
                         <small class="form-text text-muted">Select other actions that can be performed at this stage</small>
                     </div>
-                    <script type="text/javascript">
-                        $("#more-actions-link").click(function() {
-                            $("#stage-action-div").append('<div class="input-group" style="margin-bottom: 15px;">\n' +
-                                '<select class="form-control local-stages-new"><option selected="selected">-- Choose Action --</option>' +
-                                '</select><i class="fa fa-times" style="margin: 10px; color: #dc3545;" onclick="removeAction(this)"></i></div>');
-                            getLocalStages();
-                        });
-                        function removeAction(element) {
-                            $(element).parent().remove();
-                        }
-                    </script>
                     <div class="form-group">
                         <label class="col-form-label">Approval Rights <strong style="color:red"> *</strong></label>
                         <div class="input-group">
@@ -244,8 +241,8 @@
                             <select id="process-rights" class="multiselect-ui form-control" multiple="multiple" required="required"></select>
                         </div>
                     </div>
+                    <label class="form-control-label">Rules</label>
                     <div class="form-group">
-                        <label class="form-control-label">Rules</label>
                         <div class="input-group">
                             <a id="document-upload">
                                 <label class="form-control-label" style="display: block">
@@ -254,17 +251,15 @@
                         </div>
                     </div>
                     <div class="form-group" id="document-upload-div"></div>
-                    <script type="text/javascript">
-                        $("#document-upload").click(function() {
-                            $("#document-upload-div").append('<div class="input-group" style="margin-bottom: 15px;">\n' +
-                                '    <div class="input-group-addon"><i class="fa fa-upload"></i></div>\n' +
-                                '    <input type="text" class="form-control document-upload-text" placeholder="Document Upload Caption" max="50">\n' +
-                                '<i class="fa fa-times" style="margin: 10px; color: #dc3545;" onclick="removeDocumentAction(this)"></i></div>');
-                        });
-                        function removeDocumentAction(element) {
-                            $(element).parent().remove();
-                        }
-                    </script>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <a id="document-download">
+                                <label class="form-control-label" style="display: block">
+                                    <i class="fa fa-plus"></i> Document Download Required
+                                </label></a><small class="form-text text-muted">&nbsp; (Maximum of 50 characters)</small>
+                        </div>
+                    </div>
+                    <div class="form-group" id="document-download-div"></div>
                 </form>
             </div>
             <div class="modal-footer">
