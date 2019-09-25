@@ -1696,13 +1696,14 @@ function writeOffLoan() {
 
 function payOffLoan() {
     let payoff = {};
+    payoff.close_amount = currencyToNumberformatter($('#payoff-amount').val());
     payoff.close_interest = $('#payoff-interest').val();
     payoff.close_date = $('#payoff-date').val();
     payoff.close_channel = $('#payoff-channel').val();
     payoff.close_comment = $('#payoff-notes').val();
     if ($('input[name=payoff-include-interest]:checked').val())
         payoff.close_include_interest = $('input[name=payoff-include-interest]:checked').val();
-    if (!payoff.close_interest || !payoff.close_date || !payoff.close_channel)
+    if (!payoff.close_amount || !payoff.close_interest || !payoff.close_date || !payoff.close_channel)
         return notification('Kindly fill all required inputs to close loan','','warning');
     $.ajax({
         'url': '/user/application/pay-off/'+application_id+'/'+(JSON.parse(localStorage.user_obj)).ID,
