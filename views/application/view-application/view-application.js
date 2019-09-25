@@ -417,6 +417,8 @@ function loadWorkflowStages(state) {
                 $('.next').text('Disbursal (Disbursal)');
 
             if (stage.stage_name === 'Disbursal' || application.status === 2){
+                $('#infoRequestModalBtn').hide();
+                $('#downloadsForm').hide();
                 $('#disbursement-amount').val((parseFloat(application.loan_amount)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
                 $('#stage-actions').append('<a href="#" id="stage-action-0" class="dropdown-item" data-toggle="modal" data-target="#disburseModal">Disburse Loan</a>');
             }

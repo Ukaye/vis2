@@ -3,6 +3,10 @@ $(document).ready(function() {
     getRoles();
 });
 
+$('#client-information').multiselect({
+    includeSelectAllOption: true
+});
+
 $("#more-actions-link").click(function() {
     $("#stage-action-div").append('<div class="input-group" style="margin-bottom: 15px;">\n' +
         '<select class="form-control local-stages-new"><option selected="selected" value="-- Choose Action --">-- Choose Action --</option>' +
@@ -114,6 +118,9 @@ $('#document-download-div').on('click','.document-download-text', function (e) {
 $('.todolist').on('click','.remove-item', function (e) {
     archiveWorkflow(e);
 });
+$('#client-information-div').click(function (e) {
+    archiveWorkflow(e);
+});
 
 function archiveWorkflow(e) {
     if (localStorage.archive_workflow === 'false'){
@@ -153,6 +160,8 @@ function addProcess() {
     data.stages = stages;
     if (($.grep(data.stages,function(e){return e.stage_name==='Application Start'})).length > 1)
         data.stages.shift();
+    if ($('#client-information').val())
+        workflow.client_information = $('#client-information').val().join();
     if (localStorage.archive_workflow === 'false')
         url = '/edit-workflows/';
 
@@ -183,6 +192,8 @@ function init(stages){
         'success': function (data) {
             let workflow = data.response;
             $('#process-name').val(workflow.name);
+            $('#client-information').val(workflow.client_information.split(','));
+            $('#client-information').multiselect("refresh");
         },
         'error': function (err) {
             console.log(err);

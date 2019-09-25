@@ -3,6 +3,10 @@ $(document).ready(function() {
     getRoles();
 });
 
+$('#client-information').multiselect({
+    includeSelectAllOption: true
+});
+
 $("#more-actions-link").click(function() {
     $("#stage-action-div").append('<div class="input-group" style="margin-bottom: 15px;">\n' +
         '<select class="form-control local-stages-new"><option selected="selected">-- Choose Action --</option>' +
@@ -138,6 +142,8 @@ function addProcess() {
     data.stages = stages;
     if (($.grep(data.stages,function(e){return e.stage_name==='Application Start'})).length > 1)
         data.stages.shift();
+    if ($('#client-information').val()) 
+        workflow.client_information = $('#client-information').val().join();
 
     $('#wait').show();
     $.ajax({

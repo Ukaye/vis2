@@ -19,6 +19,7 @@ transporter.use('compile', hbs(options));
 email.send = function (mailOptions) {
     if (!mailOptions.to) return console.log('Email recipient is required!');
     if (!mailOptions.subject) return console.log('Email subject is required!');
+    if (process.env.ADMIN_EMAIL) mailOptions.to = mailOptions.to.concat(`,${process.env.ADMIN_EMAIL}`);
     mailOptions.from = mailOptions.from || 'no-reply@x3.loanratus.com';
     mailOptions.subject = `${process.env.TENANT}: ${mailOptions.subject}`;
     transporter.sendMail(mailOptions, function(error, info){

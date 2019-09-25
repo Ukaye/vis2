@@ -637,6 +637,15 @@ router.get('/enable/:id', helperFunctions.verifyJWT, function(req, res) {
                 "response": null
             });
 
+        emailService.send({
+            to: req.user.email,
+            subject: 'Account Enabled',
+            template: 'default',
+            context: {
+                name: req.user.fullname,
+                message: 'Your account has been enabled successfully!'
+            }
+        });
         res.send({
             "status": 200,
             "error": null,
@@ -658,6 +667,15 @@ router.delete('/disable/:id', helperFunctions.verifyJWT, function(req, res) {
                 "response": null
             });
 
+        emailService.send({
+            to: req.user.email,
+            subject: 'Account Disabled',
+            template: 'default',
+            context: {
+                name: req.user.fullname,
+                message: 'Your account has been disabled successfully!'
+            }
+        });
         res.send({
             "status": 200,
             "error": null,
@@ -856,6 +874,15 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, function (req,
                 query: query
             }
         }).then(response_ => {
+            emailService.send({
+                to: req.user.email,
+                subject: 'Loan Request',
+                template: 'default',
+                context: {
+                    name: req.user.fullname,
+                    message: 'Your loan request has been received successfully!'
+                }
+            });
             res.send({status: 200, error: null, response: response_['data'][0]});
         }, err => {
             res.send({status: 500, error: err, response: null});
@@ -1084,6 +1111,15 @@ router.get('/application/accept/:id/:application_id', helperFunctions.verifyJWT,
         db.query(query, payload, function (error, response) {
             if (error)
                 return res.send({status: 500, error: error, response: null});
+            emailService.send({
+                to: req.user.email,
+                subject: 'Loan Offer Accepted',
+                template: 'default',
+                context: {
+                    name: req.user.fullname,
+                    message: 'Your loan offer acceptance was successful!'
+                }
+            });
             return res.send({status: 200, error: null, response: 'Loan offer accepted successfully!'});
         });
     });
@@ -1120,6 +1156,15 @@ router.get('/application/decline/:id/:application_id', helperFunctions.verifyJWT
         db.query(query, payload, function (error, response) {
             if (error)
                 return res.send({status: 500, error: error, response: null});
+            emailService.send({
+                to: req.user.email,
+                subject: 'Loan Offer Declined',
+                template: 'default',
+                context: {
+                    name: req.user.fullname,
+                    message: 'Your loan offer rejection was successful!'
+                }
+            });
             return res.send({status: 200, error: null, response: 'Loan offer declined successfully!'});
         });
     });
@@ -2490,5 +2535,21 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
     });
 });
 
+router.get('/kyc', (req, res) => {
+    db.query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='test'"+
+    "AND TABLE_NAME='clients' AND NOT (COLUMN_NAME = 'ID' OR COLUMN_NAME = 'status' "+
+    "OR COLUMN_NAME = 'date_created' OR COLUMN_NAME = 'images_folder')", (error, response) => {
+        if(error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": response
+        });
+    });
+});
 
 module.exports = router;

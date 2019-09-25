@@ -584,7 +584,7 @@
                             <div class="card">
                                 <div class="card-header">
                                     <span style="margin: 5px;">Information Requests</span>
-                                    <button class ="btn btn-info" style="float: right;" data-toggle="modal" data-target="#infoRequestModal">Request Information <i class="fa fa-plus"></i></button>
+                                    <button id="infoRequestModalBtn" class ="btn btn-info" style="float: right;" data-toggle="modal" data-target="#infoRequestModal">Request Information <i class="fa fa-plus"></i></button>
                                 </div>
                                 <div class="card-body">
                                     <div id="information"></div>
@@ -597,16 +597,18 @@
                                     <span style="margin: 5px;">File Downloads</span>
                                 </div>
                                 <div class="card-body">
-                                    <select id="stage-downloads" class="form-control" required="required" style="margin: 15px 0;">
-                                        <option selected="selected">-- Choose Document --</option>
-                                    </select>
-                                    <p id="image-preview" style="display: none;"></p>
-                                    <div>
-                                        <input id="file-upload" class="image-upload" type="file" style="width: 80%; float: left;">
-                                        <button class="btn btn-primary" style="width: 20%; float: right;" onclick="uploadFile()">Upload</button>
+                                    <div id="downloadsForm">
+                                        <select id="stage-downloads" class="form-control" required="required" style="margin: 15px 0;">
+                                            <option selected="selected">-- Choose Document --</option>
+                                        </select>
+                                        <p id="image-preview" style="display: none;"></p>
+                                        <div>
+                                            <input id="file-upload" class="image-upload" type="file" style="width: 80%; float: left;">
+                                            <button class="btn btn-primary" style="width: 20%; float: right;" onclick="uploadFile()">Upload</button>
+                                        </div>
+                                        <small class="form-text text-muted">Image must be JPG/JPEG or PNG format, maximum 8MB</small>
+                                        <hr>
                                     </div>
-                                    <small class="form-text text-muted">Image must be JPG/JPEG or PNG format, maximum 8MB</small>
-                                    <hr>
                                     <div id="downloads"></div>
                                 </div>
                             </div>
