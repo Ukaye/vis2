@@ -414,7 +414,7 @@ router.post('/create-transfers', function (req, res, next) {
                 });
                 let sumTotalBalance = parseFloat(Number(total).toFixed(2)) - parseFloat(Number(data.amount.toString().split(',').join('')).toFixed(2));
                 let inv_txn = {
-                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                     description: `TRANSFER BETWEEN ${(data.creditedClientId !== '') ? 'CLIENTS WALLET' : 'CLIENT AND INVESTMENT ACCOUNT'} Transfer from : ${data.debitedClientName} to ${data.creditedClientName}`,
                     amount: Number(data.amount).toFixed(2),
                     is_credit: 0,
@@ -459,7 +459,7 @@ router.post('/create-transfers', function (req, res, next) {
                                     }
                                     let _sumTotalBalance = parseFloat(Number(total).toFixed(2)) + parseFloat(Number(data.amount.toString().split(',').join('')).toFixed(2));
                                     let inv_txn = {
-                                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                         description: `TRANSFER BETWEEN ${(data.creditedClientId !== '') ? 'CLIENTS WALLET' : 'CLIENT AND INVESTMENT ACCOUNT'} Transfer from : ${data.debitedClientName} to ${data.creditedClientName}`,
                                         amount: Number(data.amount).toFixed(2),
                                         is_credit: 1,
@@ -767,14 +767,15 @@ router.post('/posts', function (req, res, next) {
                         //     _amountTxn = interest_payload.balance
                         // }
                         if (data.isInvestmentTerminated.toString() === '0') {
-                            const updateDate = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                            const updateDate =(data.useTxnDateAsPostDate.toString() === '0') ? 
+                            moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'): data.created_date;
                             query = `UPDATE investment_txns SET isApproved = ${data.status}, 
                                         updated_date ='${updateDate}', createdBy = ${data.userId},postDone = ${data.status},
                                         amount = ${_amountTxn} , balance ='${Number(bal).toFixed(2)}'
                                         WHERE ID =${data.txnId}`;
                             endpoint = `/core-service/get`;
                             url = `${HOST}${endpoint}`;
-                            sRequest.get(query)
+                            sRequest.UpdateAndAlert(query,data.investmentId)
                                 .then(function (response_) {
                                     if (data.isReversedTxn === '0') {
                                         debitWalletTxns(HOST, data).then(payld => {
@@ -907,7 +908,7 @@ async function fundBeneficialAccount(data, HOST) {
                         ? computedBalanceAmt.currentWalletBalance : balanceIncludingInterest;
                     let sumTotal = total_bal + parseFloat(data.amount.toString().split(',').join(''));
                     let inv_txn = {
-                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                         description: data.description,
                         amount: Number(parseFloat(data.amount.toString())).toFixed(2),
                         is_credit: 1,
@@ -1110,11 +1111,11 @@ async function upFrontInterest(data, HOST) {
                         total = balanceWithInterest + SI;
                     }
                     let _inv_txn = {
-                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                         description: 'Total Up-Front interest',
                         amount: Number(SI).toFixed(2),
                         is_credit: 1,
-                        created_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                        created_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                         balance: Number(total).toFixed(2),
                         is_capital: 0,
                         ref_no: moment().utcOffset('+0100').format('x'),
@@ -1166,7 +1167,7 @@ async function deductTransferCharge(data, HOST, amount) {
                         let _refId = moment().utcOffset('+0100').format('x');
                         let balTransfer = currentBalance - configAmount;
                         let inv_txn = {
-                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                             description: `FUND TRANSFER CHARGE ON REF.: <strong>${data.refId}</strong>`,
                             amount: Number(configAmount).toFixed(2),
                             is_credit: 0,
@@ -1273,7 +1274,7 @@ function chargeForceTerminate(data, HOST) {
                                 ? _charge : ((_charge * balance) / 100);
                             let sumTotalBalance = balanceIncludingInterest - configAmount;
                             let inv_txn = {
-                                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                 description: `MINIMUM NOTICE DAYS TERMINATION CHARGE`,
                                 amount: Number(configAmount).toFixed(2),
                                 is_credit: 0,
@@ -1403,7 +1404,7 @@ function updateTerminatedInterest(HOST, data) {
 async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
     const _getExistingInterests = await getExistingInterests(data, HOST);
     const _getProductConfigInterests = await getProductConfigInterests(data, HOST);
-    let dt = moment().utcOffset('+0100').format('YYYY-MM-DD');
+    let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let totalInterestAmount = 0;
     let totalInterestAmountWHT = 0;
     let reduceInterestRateApplied = _getExistingInterests.filter(x => x.premature_interest_rate !== '' && x.premature_interest_rate !== undefined && parseFloat(x.premature_interest_rate.toString()) > 0);
@@ -1427,7 +1428,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
             let refId = moment().utcOffset('+0100').format('x');
             let sumTotalBalance = balanceIncludingInterest - parseFloat(Number(totalInterestAmount).toFixed(2));
             let inv_txn = {
-                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                 description: 'Reverse: ' + 'Interest on investment',
                 amount: Number(totalInterestAmount).toFixed(2),
                 is_credit: 0,
@@ -1451,7 +1452,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
             await sRequest.post(query, inv_txn);
             const nextBalance = parseFloat(Number(sumTotalBalance).toFixed(2)) + parseFloat(Number(totalInterestAmountWHT).toFixed(2));
             inv_txn = {
-                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                 description: `REVERSE WITHHOLDING TAX ON INTEREST`,
                 amount: Number(totalInterestAmountWHT).toFixed(2),
                 is_credit: 1,
@@ -1483,7 +1484,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
             const invSumBalance = await computeAccountBalanceIncludeInterest(data.investmentId, HOST);
             let sumBalance = invSumBalance - configAmount; //(totalInvestedAmount + interestAmount) - configAmount;
             inv_txn = {
-                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                 description: `CHARGE ON PREMATURE INVESTMENT`,
                 amount: Number(configAmount).toFixed(2),
                 is_credit: 0,
@@ -1531,7 +1532,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
             if (_res_.status === undefined) {
                 const currentBal = await computeAccountBalanceIncludeInterest(data.investmentId, HOST);
                 inv_txn = {
-                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                     description: `TERMINATE INVESTMENT`,
                     amount: Number(currentBal).toFixed(2),
                     is_credit: 0,
@@ -1557,7 +1558,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                 let wBalance = __balance.currentWalletBalance;
                 let _totalBalance = wBalance + currentBal;
                 inv_txn = {
-                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                     description: `WALLET FUNDED BY TERMINATING INVESTMENT`,
                     amount: Number(currentBal).toFixed(2),
                     is_credit: 1,
@@ -1589,7 +1590,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
             let configAmount = (configData.interest_forfeit_charge_opt === 'Fixed') ? configData.interest_forfeit_charge : (configData.interest_forfeit_charge * bal2CalTerminationChrg) / 100;
             let sumBalance2 = _currentBalance - configAmount;
             let inv_txn = {
-                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                 description: `CHARGE ON PREMATURE INVESTMENT`,
                 amount: Number(configAmount).toFixed(2),
                 is_credit: 0,
@@ -1618,7 +1619,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                 refId = moment().utcOffset('+0100').format('x');
                 const mBalance = await computeAccountBalanceIncludeInterest(data.investmentId, HOST);
                 inv_txn = {
-                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                     description: `TERMINATE INVESTMENT`,
                     amount: Number(mBalance).toFixed(2),
                     is_credit: 0,
@@ -1640,7 +1641,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                 let _totalBalance = wBalance + mBalance;
                 await setInvestmentTxns(HOST, inv_txn);
                 inv_txn = {
-                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                     description: `WALLET FUNDED BY TERMINATING INVESTMENT`,
                     amount: Number(mBalance).toFixed(2),
                     is_credit: 1,
@@ -1678,7 +1679,7 @@ function debitWalletTxns(HOST, data) {
                 let walletAmt = parseFloat(data.amount.toString());
                 let walletCurrentBal = walletBal.currentWalletBalance - walletAmt;
                 let inv_txn = {
-                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                     description: `Transfer to investment account`,
                     amount: Number(walletAmt).toFixed(2),
                     is_credit: 0,
@@ -1748,7 +1749,7 @@ async function setcharges(data, HOST, isReversal) {
                                         //let total = parseFloat(chargeForDeposit[chargeForDeposit.length - 1].txnBalance.split(',').join(''))
                                         const chargedCost = (chargeForDeposit[0].saving_charge_opt === 'Fixed') ? parseFloat(chargeForDeposit[0].saving_fees.split(',').join('')) : ((parseFloat(chargeForDeposit[0].saving_fees.split(',').join('')) / 100) * parseFloat(data.amount.split(',').join('')));
                                         let inv_txn = {
-                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                             description: (isReversal === false) ? 'Charge: ' + chargeForDeposit[0].description : `Reverse: ${chargeForDeposit[0].description}`,
                                             amount: Number(chargedCost).toFixed(2),
                                             is_credit: 0,
@@ -1801,7 +1802,7 @@ async function setcharges(data, HOST, isReversal) {
                                         refId = moment().utcOffset('+0100').format('x');
                                         const sumBal_ = acctSumBalance - chargedCostMinBal;
                                         let inv_txn = {
-                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                             description: 'Charge: ' + getInvestBalance.description,
                                             amount: Number(chargedCostMinBal).toFixed(2),
                                             is_credit: 0,
@@ -1865,7 +1866,7 @@ async function setcharges(data, HOST, isReversal) {
                                                         refId = moment().utcOffset('+0100').format('x');
                                                         const sumBal_1 = sum_Total - _chargedCostMinBal;
                                                         let inv_txn = {
-                                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                                             description: 'Charge: Exceeding the total number of daily withdrawal',
                                                             amount: Number(_chargedCostMinBal).toFixed(2),
                                                             is_credit: 0,
@@ -1933,7 +1934,7 @@ async function setcharges(data, HOST, isReversal) {
                                                         refId = moment().utcOffset('+0100').format('x');
                                                         const sumBal_1 = sum_Total - _chargedCostMinBal;
                                                         let inv_txn = {
-                                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                                             description: 'Charge: Exceeding the total number of weekly withdrawal',
                                                             amount: Number(_chargedCostMinBal).toFixed(2),
                                                             is_credit: 0,
@@ -2004,7 +2005,7 @@ async function setcharges(data, HOST, isReversal) {
                                                         refId = moment().utcOffset('+0100').format('x');
                                                         const sumBal_1 = sum_Total - _chargedCostMinBal;
                                                         let inv_txn = {
-                                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                                             description: 'Charge: Exceeding the total number of monthly withdrawal',
                                                             amount: Number(_chargedCostMinBal).toFixed(2),
                                                             is_credit: 0,
@@ -2076,7 +2077,7 @@ async function setcharges(data, HOST, isReversal) {
                                                         refId = moment().utcOffset('+0100').format('x');
                                                         const sumBal_1 = sum_Total - _chargedCostMinBal;
                                                         let inv_txn = {
-                                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                                             description: 'Charge: Exceeding the total number of quaterly withdrawal',
                                                             amount: Number(_chargedCostMinBal).toFixed(2),
                                                             is_credit: 0,
@@ -2147,7 +2148,7 @@ async function setcharges(data, HOST, isReversal) {
                                                         refId = moment().utcOffset('+0100').format('x');
                                                         const sumBal_1 = sum_Total - _chargedCostMinBal;
                                                         let inv_txn = {
-                                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                                             description: 'CHARGE: EXCEEDING THE TOTAL NUMBER OF WITHDRAWAL',
                                                             amount: Number(_chargedCostMinBal).toFixed(2),
                                                             is_credit: 0,
@@ -2216,7 +2217,7 @@ function deductVatTax(HOST, data, _amount, txn, balance) {
                     let _refId = moment().utcOffset('+0100').format('x');
                     let _mBalance = Number(parseFloat(balance)).toFixed(2) - parseFloat(configAmount);
                     let inv_txn = {
-                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                         description: `VAT ON CHARGE TRANSACTION WITH REF.: <strong>${txn.ref_no}</strong>`,
                         amount: Number(parseFloat(configAmount)).toFixed(2),
                         is_credit: 0,
@@ -2684,11 +2685,8 @@ router.post('/investment-durations', function (req, res, next) {
 async function getValidInvestmentMatureMonths(HOST, investmentId, isMonthly) {
     let results = [];
     const payload = await investmentMonths(HOST, investmentId);
-    console.log(payload);
     const payload2 = await investmentStartAndEndOfMonths(payload.months, payload.investment_start_date);
-    console.log(payload2);
     let matureMonths = payload2.filter(x => isPast(new Date(x.endDate)));
-    console.log(matureMonths);
     let currentDate = new Date();
     let currentDt = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}`;
     let lastIndexDate = matureMonths[matureMonths.length - 1].endDate;
@@ -2849,7 +2847,7 @@ async function computeInterestTxns2(HOST, data) {
                             ? 0 : payload.totalInterestAmount;
                         let bal_ = walletBalance_ + amountValue;
                         let inv_txn = {
-                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                             description: `Balance ${Number(bal_).toFixed(2)} @${data.endDate}`,
                             amount: Number(amountValue).toFixed(2),
                             is_credit: 1,
@@ -2898,7 +2896,7 @@ async function computeInterestTxns2(HOST, data) {
                             let sumTotalBalance = balanceIncludingInterestm + _amt;
 
                             let inv_txn = {
-                                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                 description: `Investment interest@ ${data.endDate}`,
                                 amount: Number(_amt).toFixed(2),
                                 is_credit: 1,
@@ -2961,7 +2959,7 @@ function deductWithHoldingTax(HOST, data, _amount, total, bal_, clientId, isWall
                     let refId = moment().utcOffset('+0100').format('x');
                     let balTotal = bal_ - configAmount;
                     let inv_txn = {
-                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                         description: `WITH-HOLDING TAX ON INTEREST TRANSACTION WITH REF.: <strong>${txn.ref_no}</strong>`,
                         amount: Number(configAmount).toFixed(2),
                         is_credit: 0,
@@ -3272,7 +3270,7 @@ async function closeMatureInvestmentAccount(HOST, data) {
         const walletBal = await computeWalletBalance(element1.clientId, HOST)
         const balTotal = parseFloat(walletBal.currentWalletBalance.toString()) + parseFloat(totalSumAmount.toString());
         let inv_txn = {
-            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
             description: `MOVE ${element1.code} INVESTMENT FUND TO CLIENT'S WALLET`,
             amount: Number(totalSumAmount).toFixed(2),
             is_credit: 1,
@@ -3293,7 +3291,7 @@ async function closeMatureInvestmentAccount(HOST, data) {
         await setInvestmentTxns(HOST, inv_txn);
 
         let inv_txn2 = {
-            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
             description: `MOVE INVESTMENT FUND TO CLIENT'S WALLET`,
             amount: Number(totalSumAmount).toFixed(2),
             is_credit: 0,
