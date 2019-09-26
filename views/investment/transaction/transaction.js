@@ -949,6 +949,7 @@ function setReviewRequirements(value) {
                                             <div class="form-control-label">
                                                 <small>Dated: </small><small class="text-muted">${element.txn_date}</small>
                                             </div>
+                                            
                                         </div>
                                     </div>
                                     <div class="form-group col-6" style="vertical-align: middle">
@@ -1489,7 +1490,7 @@ function setPostRequirements(value) {
                         if (element.method === 'POST') {
                             $("#post_list_group").append(`<li class="list-group-item">
                             <div class="row">
-                                <div class="form-group col-6">
+                                <div class="form-group col-8">
                                     <div class="form-group">
                                         <label class="form-control-label"><strong>${(element.role_name === null) ? 'Role Not Required' : element.role_name}</strong></label>
                                         <div class="form-control-label">
@@ -1499,11 +1500,21 @@ function setPostRequirements(value) {
                                             <small>Verified By: </small><small class="text-muted">${(element.fullname === null) ? 'Not Specified' : element.fullname}</small>
                                         </div>
                                         <div class="form-control-label">
-                                            <small>Dated: </small><small class="text-muted">${element.txn_date}</small>
+                                            <small>Transaction Dated: </small><small class="text-muted">${element.txn_date}</small>
                                         </div>
+                                        
+                                        <small>
+                                        <div class="form-control-label" style=padding-top:1.0rem>
+                                            <div class="custom-control custom-checkbox">
+                                                <input type="checkbox" class="custom-control-input" id="postDateCheck1" checked ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isPosted === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''}>
+                                                <label class="custom-control-label" for="postDateCheck1">Use Transaction Date as Post Date</label>
+                                            </div>
+                                            </div>
+                                        </small>
+                                        
                                     </div>
                                 </div>
-                                <div class="form-group col-6" style="vertical-align: middle">
+                                <div class="form-group col-4" style="vertical-align: middle">
                                     <button type="button" ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isPosted === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''} class="btn btn-success btn-sm" onclick="onPost(${1},${element.approvalId},${element.txnId},${element.ID},0)">Post</button>
                                     <button type="button" ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isPosted === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''} class="btn btn-danger btn-sm" onclick="onPost(${0},${element.approvalId},${element.txnId},${element.ID},1)">Deny</button>
                                 </div>
@@ -1624,7 +1635,7 @@ function onReviewed(value, approvedId, txnId, id, isDeny) {
 
 
 function onPost(value, approvedId, txnId, id, isDeny) {
-
+    const postDateStatus = $('#postDateCheck1').is(':checked');
     if (data_row.is_credit === 0) {
         const _mAmt = data_row.amount.toString().split(',').join('');
         const _mBal = data_row.txnBalance.toString().split(',').join('');
@@ -1672,6 +1683,7 @@ function onPost(value, approvedId, txnId, id, isDeny) {
         investment_start_date: data_row.investment_start_date,
         interest_rate: (data_row.isInvestmentTerminated === 1) ? data_row.premature_interest_rate : data_row.interest_rate,
         isInvestmentMatured: data_row.isInvestmentMatured,
+        useTxnDateAsPostDate: (postDateStatus) ? 1 : 0,
         // interest_rate: selectedInvestment.interest_rate,
         investment_mature_date: selectedInvestment.investment_mature_date,
         investment_start_date: selectedInvestment.investment_start_date
@@ -1935,11 +1947,11 @@ function onTransferToInvestments(amount, desc, is_credit, investmentId) {
 //     }
 // }
 
-function read_write_custom(isWalletPage){
+function read_write_custom(isWalletPage) {
     let perms = JSON.parse(localStorage.getItem("permissions"));
-    let lblViewWalletTxns = ($.grep(perms, function(e){return e.module_name === 'lblViewWalletTxns';}))[0];
-    let investment_transactions = ($.grep(perms, function(e){return e.module_name === 'client-investment-transactions';}))[0];
-    let investment_wallet = ($.grep(perms, function(e){return e.module_name === 'client-investment-wallet';}))[0];
+    let lblViewWalletTxns = ($.grep(perms, function (e) { return e.module_name === 'lblViewWalletTxns'; }))[0];
+    let investment_transactions = ($.grep(perms, function (e) { return e.module_name === 'client-investment-transactions'; }))[0];
+    let investment_wallet = ($.grep(perms, function (e) { return e.module_name === 'client-investment-wallet'; }))[0];
     $('#lblViewWalletTxns').hide();
     if (lblViewWalletTxns && lblViewWalletTxns['read_only'] === '1')
         $('#lblViewWalletTxns').show();

@@ -253,6 +253,7 @@ function saveOrganisationData() {
         'type': 'post',
         'data': organisation,
         'success': function (data) {
+            console.log(data);
             if (data.error) {
                 $('#wait').hide();
                 swal('Oops! An error occurred while creating settings; Required field(s) missing',
