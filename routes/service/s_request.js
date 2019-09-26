@@ -17,7 +17,7 @@ var sRequest = {
             });
         });
     },
-    UpdateAndAlert: function (query, investmentId) {
+    UpdateAndAlert: function (query, id, isWallet) {
         return new Promise((resolve, reject) => {
             db.query(query, function (error, results, fields) {
                 if (error && error !== null) {
@@ -27,7 +27,7 @@ var sRequest = {
                         "response": null
                     });
                 } else {
-                    transactionalAlert(investmentId).then(payload => {
+                    transactionalAlert(id, isWallet).then(payload => {
                         resolve(results);
                     });
                 }
@@ -55,9 +55,9 @@ var sRequest = {
 }
 
 
-function getRecentTxns(investmentId) {
+function getRecentTxns(id, isWallet) {
     return new Promise((resolve, reject) => {
-        const query = `SELECT 
+        const query = (isWallet.toString() === '0') ? `SELECT 
     v.ID,v.ref_no,c.fullname,c.email,v.description,v.amount,v.balance as txnBalance,v.ref_no,v.txn_date,p.ID as productId,u.fullname as createdByName, v.isDeny,
     v.approvalDone,v.reviewDone,v.created_date,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.updated_date,p.chkEnforceCount,
     i.clientId,v.isMoveFundTransfer,v.isWallet,v.isWithdrawal,isDeposit,v.isDocUploaded,p.canTerminate,i.isPaymentMadeByWallet,p.acct_allows_withdrawal,p.min_days_termination,
@@ -68,7 +68,18 @@ function getRecentTxns(investmentId) {
     left join clients c on i.clientId = c.ID
     left join users u on u.ID = v.createdBy
     left join investment_products p on i.productId = p.ID
-    WHERE v.isWallet = 0 AND v.investmentId = ${investmentId} ORDER BY ID DESC LIMIT 5 OFFSET 0`;
+    WHERE v.isWallet = 0 AND v.investmentId = ${id} ORDER BY ID DESC LIMIT 5 OFFSET 0` :
+            `SELECT 
+    v.ID,v.ref_no,c.fullname,c.email,v.description,v.created_date,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName,
+    v.isDeny,v.isPaymentMadeByWallet,v.isReversedTxn,v.isTransfer,v.isMoveFundTransfer,v.beneficialInvestmentId,p.interest_disbursement_time,p.interest_moves_wallet,
+    v.approvalDone,v.reviewDone,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.isInvestmentTerminated,
+    p.acct_allows_withdrawal,i.investment_mature_date,p.interest_rate,v.isForceTerminate,v.isInvestmentMatured,p.inv_moves_wallet,p.chkEnforceCount,p.premature_interest_rate,
+    i.clientId,p.canTerminate,v.is_capital,v.investmentId,i.isTerminated,v.isWallet, v.updated_date, i.isMatured FROM investment_txns v 
+    left join investments i on v.investmentId = i.ID 
+    left join clients c on i.clientId = c.ID
+    left join users u on u.ID = v.createdBy
+    left join investment_products p on i.productId = p.ID
+    WHERE v.isWallet = 1 AND v.clientId = ${id} ORDER BY ID DESC LIMIT 5 OFFSET 0`;
         db.query(query, function (error, results, fields) {
             if (error && error !== null) {
                 resolve([{ interest_moves_wallet: undefined }]);
@@ -80,10 +91,10 @@ function getRecentTxns(investmentId) {
 }
 
 /** Function call to compute the current investment/savings account balance with interest **/
-function computeAccountBalanceIncludeInterest(investmentId) {
+function computeAccountBalanceIncludeInterest(id) {
     return new Promise((resolve, reject) => {
         let query = `Select amount, is_credit from investment_txns 
-        WHERE isWallet = 0 AND investmentId = ${investmentId} 
+        WHERE isWallet = 0 AND investmentId = ${id} 
         AND isApproved = 1 AND postDone = 1`;
         db.query(query, function (error, results, fields) {
             let total = 0;
@@ -105,9 +116,11 @@ function computeAccountBalanceIncludeInterest(investmentId) {
 }
 
 /** Function call to compute the current investment/savings account balance without interest **/
-function computeCurrentBalance(investmentId) {
+function computeCurrentBalance(id, isWallet) {
     return new Promise((resolve, reject) => {
-        let query = `Select amount, is_credit from investment_txns WHERE isWallet = 0 AND isInterest = 0 AND investmentId = ${investmentId} 
+        let query = (isWallet.toString() === '0') ? `Select amount, is_credit from investment_txns WHERE isWallet = 0 AND isInterest = 0 AND investmentId = ${id} 
+        AND isApproved = 1 AND postDone = 1`:
+            `Select amount, is_credit from investment_txns WHERE isWallet = 1 AND clientId = ${id} 
         AND isApproved = 1 AND postDone = 1`;
         db.query(query, function (error, results, fields) {
             let total = 0;
@@ -139,10 +152,10 @@ function getOrganisationDetails() {
     });
 }
 
-async function transactionalAlert(investmentId) {
-    let data = await getRecentTxns(investmentId);
-    let acctBalWithInterest = await computeAccountBalanceIncludeInterest(investmentId);
-    let acctBal = await computeCurrentBalance(investmentId);
+async function transactionalAlert(id, isWallet) {
+    let data = await getRecentTxns(id, isWallet);
+    let acctBalWithInterest = await computeAccountBalanceIncludeInterest(id);
+    let acctBal = await computeCurrentBalance(id, isWallet);
     const orgName = await getOrganisationDetails();
 
     if (data.length > 0) {
@@ -156,20 +169,25 @@ async function transactionalAlert(investmentId) {
             fullname: data[0].fullname,
             recentTxnAmount: formater(data[0].amount.toString()),
             status: (data[0].is_credit.toString() === '1') ? 'Credited' : 'Debited',
-            acctNo: data[0].acctNo,
-            code: data[0].code,
+            acctNo: (isWallet.toString() === '0') ? data[0].acctNo : 'WALLET',
+            code: (isWallet.toString() === '0') ? data[0].code : '',
             description: data[0].description,
-            product: data[0].name,
+            product: (isWallet.toString() === '0') ? data[0].name : '',
             state: orgName[0].state,
             country: orgName[0].country,
             txnDate: data[0].txn_date,
             postDate: data[0].updated_date,
-            balance: (data[0].interest_moves_wallet.toString() === '1') ? formater(acctBal.toString()) : formater(acctBalWithInterest.toString()),
+            balance: (isWallet.toString() === '0') ?
+                ((data[0].interest_moves_wallet.toString() === '1') ?
+                    formater(acctBal.toString()) : formater(acctBalWithInterest.toString())) : formater(acctBal.toString()),
             transactions: data
         };
+        const emailAdress = data.find(x => x.email !== '' && x.email !== undefined && x.email !== null);
         emailService.send({
-            to: data[0].email,
-            subject: `${orgName[0].name} ${data[0].name} Transaction Alert`,
+            to: emailAdress.email,
+            subject: (isWallet.toString() === '0') ?
+                `${orgName[0].name} ${data[0].name} Transaction Alert` :
+                `${orgName[0].name} Wallet Transaction Alert`,
             template: 'txn-alert',
             context: emailObject
         });

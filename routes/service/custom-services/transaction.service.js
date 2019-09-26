@@ -756,7 +756,7 @@ router.post('/posts', function (req, res, next) {
                     let total_bal = 0;
 
 
-                    computeTotalBalance(data.clientId, data.investmentId, HOST).then(totalBalance_ => {
+                    computeTotalAccountBalance(data.clientId, data.investmentId, HOST).then(totalBalance_ => {
                         total_bal = (data.isWallet.toString() === '1') ?
                             totalBalance_.currentWalletBalance : totalBalance_.currentAcctBalance;
                         let bal = (data.isCredit.toString() === '1') ? (total_bal + parseFloat(data.amount.split(',').join(''))) :
@@ -767,15 +767,16 @@ router.post('/posts', function (req, res, next) {
                         //     _amountTxn = interest_payload.balance
                         // }
                         if (data.isInvestmentTerminated.toString() === '0') {
-                            const updateDate =(data.useTxnDateAsPostDate.toString() === '0') ? 
-                            moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'): data.created_date;
+                            const updateDate = (data.useTxnDateAsPostDate.toString() === '0') ?
+                                moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a') : data.created_date;
                             query = `UPDATE investment_txns SET isApproved = ${data.status}, 
                                         updated_date ='${updateDate}', createdBy = ${data.userId},postDone = ${data.status},
                                         amount = ${_amountTxn} , balance ='${Number(bal).toFixed(2)}'
                                         WHERE ID =${data.txnId}`;
                             endpoint = `/core-service/get`;
                             url = `${HOST}${endpoint}`;
-                            sRequest.UpdateAndAlert(query,data.investmentId)
+                            const _id_ = (data.isWallet.toString() === '0') ? data.investmentId : data.clientId;
+                            sRequest.UpdateAndAlert(query, _id_, data.isWallet)
                                 .then(function (response_) {
                                     if (data.isReversedTxn === '0') {
                                         debitWalletTxns(HOST, data).then(payld => {
@@ -984,7 +985,8 @@ function computeAccountBalanceIncludeInterest(investmentId, HOST) {
 /** Function call to compute the current investment/savings account balance without interest **/
 function computeCurrentBalance(investmentId, HOST) {
     return new Promise((resolve, reject) => {
-        let query = `Select amount, is_credit from investment_txns WHERE isWallet = 0 AND isInterest = 0 AND investmentId = ${investmentId} 
+        let query = `Select amount, is_credit from investment_txns WHERE isWallet = 0 AND isInterest = 0 
+        AND investmentId = ${investmentId} AND isWithHoldings = 0
         AND isApproved = 1 AND postDone = 1`;
         let endpoint = `/core-service/get`;
         let url = `${HOST}${endpoint}`;
@@ -1019,6 +1021,17 @@ async function computeTotalBalance(clientId, investmentId, HOST) {
     let walletBalance = 0;
     if (investmentId !== '' && investmentId !== undefined && investmentId !== null) {
         currentAcctBalance = await computeCurrentBalance(investmentId, HOST);
+    }
+    walletBalance = await computeWalletBalance(clientId, HOST);
+    return { currentAcctBalance: currentAcctBalance, currentWalletBalance: walletBalance.currentWalletBalance };
+}
+
+/** Function call to compute the current investment/savings account and client wallet balance (With interest txns) **/
+async function computeTotalAccountBalance(clientId, investmentId, HOST) {
+    let currentAcctBalance = 0;
+    let walletBalance = 0;
+    if (investmentId !== '' && investmentId !== undefined && investmentId !== null) {
+        currentAcctBalance = await computeAccountBalanceIncludeInterest(investmentId, HOST);
     }
     walletBalance = await computeWalletBalance(clientId, HOST);
     return { currentAcctBalance: currentAcctBalance, currentWalletBalance: walletBalance.currentWalletBalance };
