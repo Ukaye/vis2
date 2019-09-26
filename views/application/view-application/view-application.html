@@ -228,11 +228,12 @@
                             </div>
                             <button id="current_stage" class ="btn btn-warning btn-lg" style="float: right;" disabled="disabled"></button>
                             <button class ="previous btn btn-danger btn-lg" style="float: right;"><i class="fa fa-backward"></i></button>
+                            <button id="newOfferModalBtn" class ="btn btn-success btn-lg" style="float: right; margin-right: 5px; display: none;" data-toggle="modal" data-target="#newOfferModal"><i class="fa fa-check"></i> Make New Offer</button>
                             <button class ="cancel btn btn-danger btn-lg" style="float: right; margin-right: 5px;"><i class="fa fa-times"></i></button>
                             <span style="float: right; margin: 15px;">
-                                    <a href="#" class="pull-right transitions-toggle">Show Transitions <i class="fa fa-chevron-down"></i></a>
-                                    <a href="#" class="pull-right transitions-toggle" style="display: none;">Hide Transitions <i class="fa fa-chevron-up"></i></a>
-                                </span>
+                                <a href="#" class="pull-right transitions-toggle">Show Transitions <i class="fa fa-chevron-down"></i></a>
+                                <a href="#" class="pull-right transitions-toggle" style="display: none;">Hide Transitions <i class="fa fa-chevron-up"></i></a>
+                            </span>
                         </div>
                         <script type="text/javascript">
                             let $transitions_toggle = $('.transitions-toggle');
@@ -461,7 +462,7 @@
                                         <p id="schedule-error-message" class="amortization-div" style="display: none;"></p>
                                         <div class="row amortization-div" style="display: none;">
                                             <div class="col-sm-6 form-group">
-                                                <label class="form-control-label">Loan Requested</label><strong style="color:red"> *</strong><span id="amount-error" style="padding-left:50px; text-align: center"></span>
+                                                <label class="form-control-label">Loan Requested</label><strong style="color:red"> *</strong>
                                                 <div class="input-group">
                                                     <div class="input-group-addon"><i class="fa fa-money"></i></div>
                                                     <input type="number" id="amount" class="form-control" required="required" value="50000" min="1" max="100000000">
@@ -469,7 +470,7 @@
                                                 <small class="form-text text-muted">Min: <span id="loan_requested_min">1.00</span>(NGN) Max: <span id="loan_requested_max">100,000,000.00</span>(NGN)</small>
                                             </div>
                                             <div class="col-sm-6 form-group">
-                                                <label class="form-control-label">Interest Rate</label><strong style="color:red"> *</strong><span id="interest-rate-error" style="padding-left:50px; text-align: center"></span>
+                                                <label class="form-control-label">Interest Rate</label><strong style="color:red"> *</strong>
                                                 <div class="input-group">
                                                     <div class="input-group-addon"><i class="fa fa-plus"></i></div>
                                                     <input type="number" id="interest-rate" class="form-control" required="required" value="12" min="1" max="1000">
@@ -477,7 +478,7 @@
                                                 <small class="form-text text-muted">Min: <span id="interest_rate_min">1</span>%  Max: <span id="interest_rate_max">1000</span>% </small>
                                             </div>
                                             <div class="col-sm-6 form-group">
-                                                <label class="form-control-label">Tenor (monthly)</label><strong style="color:red"> *</strong><span id="term-error" style="padding-left:50px; text-align: center"></span>
+                                                <label class="form-control-label">Tenor (monthly)</label><strong style="color:red"> *</strong>
                                                 <div class="input-group">
                                                     <div class="input-group-addon"><i class="fa fa-money"></i></div>
                                                     <input type="number" id="term" class="form-control" required="required" value="12" min="1" max="60">
@@ -485,14 +486,14 @@
                                                 <small class="form-text text-muted">Min: <span id="tenor_min">1</span>  Max: <span id="tenor_max">60</span> </small>
                                             </div>
                                             <div class="col-sm-6 form-group">
-                                                <label class="form-control-label">Payment Amount (Monthly)</label><strong style="color:red"> *</strong><span id="payment-amount-error" style="padding-left:50px; text-align: center"></span>
+                                                <label class="form-control-label">Payment Amount (Monthly)</label><strong style="color:red"> *</strong>
                                                 <div class="input-group">
                                                     <div class="input-group-addon"><i class="fa fa-money"></i></div>
                                                     <input type="number" id="payment-amount" class="form-control" required="required" disabled="disabled">
                                                 </div>
                                             </div>
                                             <div class="col-sm-6 form-group">
-                                                <label class="form-control-label">First Repayment Date</label><span id="repayment-date-error" style="padding-left:50px; text-align: center"></span>
+                                                <label class="form-control-label">First Repayment Date</label>
                                                 <div class="input-group">
                                                     <div class="input-group-addon"><i class="fa fa-calendar"></i></div>
                                                     <input type="date" id="repayment-date" class="form-control" required="required">
@@ -554,6 +555,16 @@
                                             <p>Notifications would be sent to the user accounts related to this loan application to provide updates on this loan request.</p>
                                             <hr>
                                             <p class="mb-0">Please contact the admin for any related issues.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row setup-content" id="declined" style="display: none;">
+                                <div class="col-xs-12">
+                                    <div class="col-md-12 well">
+                                        <div class="alert alert-danger" role="alert" style="margin-top: 15px;">
+                                            <h3 class="alert-heading">Loan offer has been declined!</h3>
+                                            <p><strong>REASON: </strong><span id="decline-reason"></span></strong></p>
                                         </div>
                                     </div>
                                 </div>
@@ -634,7 +645,7 @@
             <div class="modal-body">
                 <form>
                     <div class="form-group">
-                        <label class="form-control-label">Comment</label><strong style="color:red"> *</strong><span id="comment-error" style="padding-left:50px; text-align: center"></span>
+                        <label class="form-control-label">Comment</label><strong style="color:red"> *</strong>
                         <textarea id="comment" class="form-control" required="required" maxlength="5000" placeholder="Brief message" style="min-height: 200px;"></textarea>
                         <small class="form-text text-muted">Maximum of 5000 characters</small>
                     </div>
@@ -699,7 +710,7 @@
             <div class="modal-body">
                 <form>
                     <div class="form-group">
-                        <label class="form-control-label">Document Title</label><strong style="color:red"> *</strong><span id="others-document-title-error" style="padding-left:50px; text-align: center"></span>
+                        <label class="form-control-label">Document Title</label><strong style="color:red"> *</strong>
                         <div class="input-group">
                             <div class="input-group-addon"><i class="fa fa-comment"></i></div>
                             <input id="others-document-title" class="form-control" placeholder="Document Title" />
@@ -732,7 +743,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-control-label">Choose a Funding Source</label><strong style="color:red"> *</strong><span id="funding-error" style="padding-left:50px; text-align: center"></span>
+                        <label class="form-control-label">Choose a Funding Source</label><strong style="color:red"> *</strong>
                         <div class="input-group">
                             <select id="funding" class="form-control" required="required">
                                 <option selected="selected">-- Select a Funding Source --</option>
@@ -742,7 +753,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-control-label">Choose a Disbursement Channel</label><strong style="color:red"> *</strong><span id="channel-error" style="padding-left:50px; text-align: center"></span>
+                        <label class="form-control-label">Choose a Disbursement Channel</label><strong style="color:red"> *</strong>
                         <div class="input-group">
                             <select id="channel" class="form-control" required="required">
                                 <option selected="selected">-- Select a Channel --</option>
@@ -753,7 +764,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-control-label">Disbursement Date</label><strong style="color:red"> *</strong><span id="disbursement-date-error" style="padding-left:50px; text-align: center"></span>
+                        <label class="form-control-label">Disbursement Date</label><strong style="color:red"> *</strong>
                         <div class="input-group">
                             <div class="input-group-addon"><i class="fa fa-calendar"></i></div>
                             <input type="date" id="disbursement-date" class="form-control" required="required">
@@ -1021,6 +1032,91 @@
                 </table>
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="newOfferModal" tabindex="-1" role="dialog" aria-labelledby="newOfferModalLabel">
+    <div class="modal-dialog modal-lg" role="document" style="min-width: 90%;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="newOfferModalLabel">New Loan Offer</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="col-md-12">
+                    <h2 class="text-center" style="text-align: center;">Loan Schedule</h2>
+                    <br>
+                    <div class="row">
+                        <div class="col-sm-6 form-group">
+                            <label class="form-control-label">Loan Requested</label><strong style="color:red"> *</strong>
+                            <div class="input-group">
+                                <div class="input-group-addon"><i class="fa fa-money"></i></div>
+                                <input type="number" id="amount2" class="form-control" required="required" value="50000" min="1" max="100000000">
+                            </div>
+                            <small class="form-text text-muted">Min: <span id="loan_requested_min">1.00</span>(NGN) Max: <span id="loan_requested_max">100,000,000.00</span>(NGN)</small>
+                        </div>
+                        <div class="col-sm-6 form-group">
+                            <label class="form-control-label">Interest Rate</label><strong style="color:red"> *</strong>
+                            <div class="input-group">
+                                <div class="input-group-addon"><i class="fa fa-plus"></i></div>
+                                <input type="number" id="interest-rate2" class="form-control" required="required" value="12" min="1" max="1000">
+                            </div>
+                            <small class="form-text text-muted">Min: <span id="interest_rate_min">1</span>%  Max: <span id="interest_rate_max">1000</span>% </small>
+                        </div>
+                        <div class="col-sm-6 form-group">
+                            <label class="form-control-label">Tenor (monthly)</label><strong style="color:red"> *</strong>
+                            <div class="input-group">
+                                <div class="input-group-addon"><i class="fa fa-money"></i></div>
+                                <input type="number" id="term2" class="form-control" required="required" value="12" min="1" max="60">
+                            </div>
+                            <small class="form-text text-muted">Min: <span id="tenor_min">1</span>  Max: <span id="tenor_max">60</span> </small>
+                        </div>
+                        <div class="col-sm-6 form-group">
+                            <label class="form-control-label">First Repayment Date</label>
+                            <div class="input-group">
+                                <div class="input-group-addon"><i class="fa fa-calendar"></i></div>
+                                <input type="date" id="repayment-date2" class="form-control" required="required">
+                            </div>
+                        </div>
+                        <div class="col-sm-6 form-group">
+                            <label class="form-control-label">Select Amortization Type</label><strong style="color:red"> *</strong>
+                            <select id="amortization2" class="form-control">
+                                <option value="custom" selected="selected">Custom (Manual)</option>
+                                <option value="standard">Standard (Automatic)</option>
+                            </select>
+                        </div>
+                        <div id="payment-amount-div" class="col-sm-6 form-group" style="display: none;">
+                            <label class="form-control-label">Payment Amount (Monthly)</label><strong style="color:red"> *</strong>
+                            <div class="input-group">
+                                <div class="input-group-addon"><i class="fa fa-money"></i></div>
+                                <input type="number" id="payment-amount2" class="form-control" required="required" disabled="disabled">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row amortization-div2">
+                        <div class="col-sm-4">
+                            <input type="file" id="loan-schedule" style="display: inline-block"/>
+                        </div>
+                        <div class="col-sm-2">
+                            <button id="previewScheduleBtn" class="btn btn-info" style="float: right;">Preview <i class="fa fa-eye-slash"></i></button>
+                        </div>
+                        <div class="col-sm-6">
+                            <a href="/Loan Schedule.csv" target="_blank" style="text-decoration: underline; float: right;">
+                                Download Loan Schedule Template <i class="fa fa-cloud-download"></i></a>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div id="schedule-preview" style="margin-top: 30px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="saveLoanOffer" type="button" class="btn btn-primary">Save</button>
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
             </div>
         </div>

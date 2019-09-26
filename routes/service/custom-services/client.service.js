@@ -739,7 +739,7 @@ router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
 
 router.get('/products', helperFunctions.verifyJWT, function(req, res) {
     let query = 'SELECT w.*, a.loan_requested_min, a.loan_requested_max, a.tenor_min, a.tenor_max, a.interest_rate_min, a.interest_rate_max, ' +
-        '(SELECT GROUP_CONCAT(s.document) FROM workflow_stages s WHERE w.ID = s.workflowID) document ' +
+        '(SELECT GROUP_CONCAT(NULLIF(s.document,'')) FROM workflow_stages s WHERE w.ID = s.workflowID) document ' +
         'FROM workflows w, application_settings a WHERE w.status <> 0 AND a.ID = (SELECT MAX(ID) FROM application_settings) ORDER BY w.ID desc';
     db.query(query, function (error, results) {
         if(error)
