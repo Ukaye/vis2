@@ -768,7 +768,7 @@ router.post('/posts', function (req, res, next) {
                         // }
                         if (data.isInvestmentTerminated.toString() === '0') {
                             const updateDate = (data.useTxnDateAsPostDate.toString() === '0') ?
-                                moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a') : data.created_date;
+                                moment().utcOffset('+0100').format('YYYY-MM-DD') : data.txn_date;
                             query = `UPDATE investment_txns SET isApproved = ${data.status}, 
                                         updated_date ='${updateDate}', createdBy = ${data.userId},postDone = ${data.status},
                                         amount = ${_amountTxn} , balance ='${Number(bal).toFixed(2)}'
@@ -2855,7 +2855,6 @@ async function computeInterestTxns2(HOST, data) {
             setInvestmentInterestPerDay(HOST, payload.dailyBalances).then(interestValues => {
                 if (data.interest_moves_wallet.toString() === '1') {
                     sumAllWalletInvestmentTxns(HOST, data.clientId).then(walletBalance_ => {
-
                         let amountValue = (data.interest_disbursement_time === "Up-Front" && (data.isInvestmentTerminated === '0' || data.isInvestmentTerminated === undefined))
                             ? 0 : payload.totalInterestAmount;
                         let bal_ = walletBalance_ + amountValue;
