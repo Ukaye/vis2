@@ -2852,15 +2852,9 @@ async function computeInterestTxns2(HOST, data) {
             investment_start_date: data.investment_start_date
         }
         getInvestmentDailyBalance(HOST, _data).then(payload => {
-            console.log('----------------payload-------------');
-            console.log(payload);
             setInvestmentInterestPerDay(HOST, payload.dailyBalances).then(interestValues => {
-                console.log('----------------interestValues-------------');
-                console.log(interestValues);
                 if (data.interest_moves_wallet.toString() === '1') {
                     sumAllWalletInvestmentTxns(HOST, data.clientId).then(walletBalance_ => {
-                        console.log('----------------walletBalance_-------------');
-                        console.log(walletBalance_);
                         let amountValue = (data.interest_disbursement_time === "Up-Front" && (data.isInvestmentTerminated === '0' || data.isInvestmentTerminated === undefined))
                             ? 0 : payload.totalInterestAmount;
                         let bal_ = walletBalance_ + amountValue;
