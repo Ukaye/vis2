@@ -2278,7 +2278,7 @@ function initNewLoanOffer(application, settings) {
                         $csvLoader.hide();
                         if (data.status === 200) {
                             notification(data.response,'','success');
-                            // window.location.reload();
+                            window.location.reload();
                         } else {
                             notification(data.response,'','error');
                         }
