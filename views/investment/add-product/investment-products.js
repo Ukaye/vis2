@@ -260,9 +260,13 @@ $("#min_days_termination").on('focusout',
             url: `/investment-txns/get-organisation-configs`,
             success: function (data) {
                 let _noticeDays = $("#min_days_termination").val();
-                if (_noticeDays < data[0].investment_termination_days) {
-                    $("#min_days_termination").val('');
-                    swal('Product termination notice can not be less than the system global notice days', '', 'error');
+                if (data[0] === undefined) {
+                    swal('Please set-up the investment settings before creating a Product', '', 'error');
+                } else {
+                    if (_noticeDays < data[0].investment_termination_days) {
+                        $("#min_days_termination").val('');
+                        swal('Product termination notice can not be less than the system global notice days', '', 'error');
+                    }
                 }
             }
         });
@@ -353,7 +357,7 @@ $("#forfeit_interest_on_withdrawal").on('change',
         if (status) {
             let _status = $('#forfeit_interest_on_withdrawal').is(':checked');
             activate_interest_penalty_controls(!_status);
-        }else{
+        } else {
             $('#forfeit_interest_on_withdrawal').attr('checked', false);
         }
     });
