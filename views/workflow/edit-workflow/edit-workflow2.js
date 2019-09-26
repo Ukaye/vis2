@@ -169,7 +169,8 @@ function addProcess() {
     $.ajax({
         type: 'POST',
         url: url+workflow_id,
-        data: data,
+        data: JSON.stringify(data),
+        contentType: "application/json",
         success: function (data) {
             localStorage.removeItem('local_stages');
             $('#process-name').val("");
@@ -211,6 +212,7 @@ function init(stages){
                     approverID: stagex.approverID,
                     description: stagex.description,
                     document: stagex.document,
+                    download: stagex.download,
                     name: stagex.name,
                     stageID: stagex.stageID,
                     stage_name: stagex.stage_name,
