@@ -142,6 +142,13 @@
                     $('a.grouped_elements').fancybox();
                     $('.thumbnail').tooltip();
                 }
+                if (response.repayment_date) {
+                    $('#repayment-date').val(response.repayment_date);
+                }
+                if (response.salary) {
+                    $('#salary-div').show();
+                    $('#salary').val(response.salary);
+                }
                 read_write_custom();
             }
         });
