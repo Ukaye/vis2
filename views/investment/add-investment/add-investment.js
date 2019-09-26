@@ -4,7 +4,7 @@ $(document).ready(function () {
     component_initializer();
     let currentDate = new Date();
     let _cmax = `${currentDate.getUTCFullYear()}-${pad(currentDate.getMonth() + 1)}-${pad(currentDate.getDate())}`;
-    $('#investment_date_start').attr('min', _cmax);
+    $('#investment_date_start').attr('max', _cmax);
 });
 var productsControl = {};
 var products = [];
