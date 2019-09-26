@@ -37,7 +37,7 @@ router.post('/create', function (req, res, next) {
         sRequest.post(query, _data)
             .then(function (response) {
                 let inv_txn = {
-                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                    txn_date: _data.investment_start_date,
                     description: "Opening Capital",
                     amount: parseFloat(data.amount.split(',').join('')),
                     is_credit: 1,

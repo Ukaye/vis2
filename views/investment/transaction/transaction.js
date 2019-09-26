@@ -1686,7 +1686,8 @@ function onPost(value, approvedId, txnId, id, isDeny) {
         useTxnDateAsPostDate: (postDateStatus) ? 1 : 0,
         // interest_rate: selectedInvestment.interest_rate,
         investment_mature_date: selectedInvestment.investment_mature_date,
-        investment_start_date: selectedInvestment.investment_start_date
+        investment_start_date: selectedInvestment.investment_start_date,
+        txn_date: data_row.txn_date
     }
     $.ajax({
         url: `investment-txns/posts`,
