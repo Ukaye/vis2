@@ -1176,7 +1176,13 @@ async function deductTransferCharge(data, HOST, amount) {
                 sRequest.get(query).then(response => {
                     if (response.status === undefined) {
                         let configData = response[0];
-                        let configAmount = (configData.transferChargeMethod == 'Fixed') ? configData.transferValue : (configData.transferValue * parseFloat(Number(amount).toFixed(2))) / 100;
+
+                        let _charge = (configData.transferValue === undefined ||
+                            configData.transferValue === null ||
+                            configData.transferValue === '') ? 0 : parseFloat(configData.transferValue.toString());
+                        
+
+                        let configAmount = (configData.transferChargeMethod == 'Fixed') ? _charge : (_charge * parseFloat(Number(amount).toFixed(2))) / 100;
                         let _refId = moment().utcOffset('+0100').format('x');
                         let balTransfer = currentBalance - configAmount;
                         let inv_txn = {
@@ -1282,7 +1288,9 @@ function chargeForceTerminate(data, HOST) {
                     sRequest.get(query).then(response => {
                         if (response.status === undefined) {
                             let configData = response[0];
-                            let _charge = (configData.min_days_termination_charge === null || configData.min_days_termination_charge === '') ? 0 : parseFloat(configData.min_days_termination_charge.toString());
+                            let _charge = (configData.min_days_termination_charge === undefined ||
+                                configData.min_days_termination_charge === null ||
+                                configData.min_days_termination_charge === '') ? 0 : parseFloat(configData.min_days_termination_charge.toString());
                             let configAmount = (configData.opt_on_min_days_termination === 'Fixed')
                                 ? _charge : ((_charge * balance) / 100);
                             let sumTotalBalance = balanceIncludingInterest - configAmount;
@@ -1493,7 +1501,11 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
             refId = moment().utcOffset('+0100').format('x');
             dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
             let configData = _getProductConfigInterests;
-            let configAmount = (configData.interest_forfeit_charge_opt == 'Fixed') ? configData.interest_forfeit_charge : (configData.interest_forfeit_charge * bal2CalTerminationChrg) / 100;//_payload_3.balance;
+
+            let _charge = (configData.interest_forfeit_charge === undefined ||
+                configData.interest_forfeit_charge === null ||
+                configData.interest_forfeit_charge === '') ? 0 : parseFloat(configData.interest_forfeit_charge.toString());
+            let configAmount = (configData.interest_forfeit_charge_opt == 'Fixed') ? _charge : (_charge * bal2CalTerminationChrg) / 100;//_payload_3.balance;
             const invSumBalance = await computeAccountBalanceIncludeInterest(data.investmentId, HOST);
             let sumBalance = invSumBalance - configAmount; //(totalInvestedAmount + interestAmount) - configAmount;
             inv_txn = {
@@ -1595,12 +1607,16 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
             }
 
         } else {
-            const _computeCurrentBalance = await currentBalanceForInterestCalculation(data.investmentId, HOST);
+            // const _computeCurrentBalance = await currentBalanceForInterestCalculation(data.investmentId, HOST);
             const _currentBalance = await computeAccountBalanceIncludeInterest(data.investmentId, HOST);
             let refId = moment().utcOffset('+0100').format('x');
             let configData = _getProductConfigInterests;
+
+            let _charge = (configData.interest_forfeit_charge === undefined ||
+                configData.interest_forfeit_charge === null ||
+                configData.interest_forfeit_charge === '') ? 0 : parseFloat(configData.interest_forfeit_charge.toString());
             configData.interest_forfeit_charge = (configData.interest_forfeit_charge !== null && configData.interest_forfeit_charge !== '') ? parseFloat(configData.interest_forfeit_charge.toString()) : 0;
-            let configAmount = (configData.interest_forfeit_charge_opt === 'Fixed') ? configData.interest_forfeit_charge : (configData.interest_forfeit_charge * bal2CalTerminationChrg) / 100;
+            let configAmount = (configData.interest_forfeit_charge_opt === 'Fixed') ? _charge : (_charge * bal2CalTerminationChrg) / 100;
             let sumBalance2 = _currentBalance - configAmount;
             let inv_txn = {
                 txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
@@ -1622,11 +1638,14 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                 isTerminationCharge: 1
             };
             await setInvestmentTxns(HOST, inv_txn);
+            
             await deductVatTax(HOST, data, configAmount, inv_txn, inv_txn.balance);
+            
             let query = `DELETE FROM investment_txns WHERE ID = ${data.txnId}`;
             let endpoint = `/core-service/get`;
             let url = `${HOST}${endpoint}`;
             const _res_ = await sRequest.get(query);
+            
             await getInterestEndOfTenure(HOST, data);
             if (_res_.status === undefined) {
                 refId = moment().utcOffset('+0100').format('x');
@@ -1693,7 +1712,7 @@ function debitWalletTxns(HOST, data) {
                 let walletCurrentBal = walletBal.currentWalletBalance - walletAmt;
                 let inv_txn = {
                     txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
-                    description: `Transfer to investment account`,
+                    description: `Investment/Savings Fund`,
                     amount: Number(walletAmt).toFixed(2),
                     is_credit: 0,
                     created_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
@@ -1759,8 +1778,11 @@ async function setcharges(data, HOST, isReversal) {
                                     let chargeForDeposit = response_product.filter(x => x.saving_fees !== '0' && x.saving_fees !== '');
                                     if (chargeForDeposit.length > 0) {
                                         let total = _total;
+                                        let _charge = (chargeForDeposit[0].saving_fees === undefined ||
+                                            chargeForDeposit[0].saving_fees === null ||
+                                            chargeForDeposit[0].saving_fees === '') ? 0 : parseFloat(chargeForDeposit[0].saving_fees.toString());
                                         //let total = parseFloat(chargeForDeposit[chargeForDeposit.length - 1].txnBalance.split(',').join(''))
-                                        const chargedCost = (chargeForDeposit[0].saving_charge_opt === 'Fixed') ? parseFloat(chargeForDeposit[0].saving_fees.split(',').join('')) : ((parseFloat(chargeForDeposit[0].saving_fees.split(',').join('')) / 100) * parseFloat(data.amount.split(',').join('')));
+                                        const chargedCost = (chargeForDeposit[0].saving_charge_opt === 'Fixed') ? _charge : ((_charge / 100) * parseFloat(data.amount.split(',').join('')));
                                         let inv_txn = {
                                             txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                             description: (isReversal === false) ? 'Charge: ' + chargeForDeposit[0].description : `Reverse: ${chargeForDeposit[0].description}`,
@@ -1806,10 +1828,16 @@ async function setcharges(data, HOST, isReversal) {
 
                                 } else {
                                     let getInvestBalance = response_product[response_product.length - 1];
-                                    getInvestBalance.minimum_bal_charges = (getInvestBalance.minimum_bal_charges === '') ? '0' : getInvestBalance.minimum_bal_charges;
+                                    // getInvestBalance.minimum_bal_charges = (getInvestBalance.minimum_bal_charges === '') ? '0' : getInvestBalance.minimum_bal_charges;
+                                    
+                                    let _charge = (getInvestBalance.minimum_bal_charges === undefined ||
+                                        getInvestBalance.minimum_bal_charges === null ||
+                                        getInvestBalance.minimum_bal_charges === '') ? 0 : parseFloat(getInvestBalance.minimum_bal_charges.toString());
+                                    
+                                    
                                     let chargedCostMinBal = (getInvestBalance.minimum_bal_charges_opt === 'Fixed')
-                                        ? parseFloat(getInvestBalance.minimum_bal_charges.split(',').join(''))
-                                        : ((parseFloat(getInvestBalance.minimum_bal_charges.split(',').join('')) / 100) * parseFloat(_total.toString()));
+                                        ? _charge
+                                        : ((_charge / 100) * parseFloat(_total.toString()));
                                     if ((parseFloat(_total.toString()) - parseFloat(data.amount.toString())) < parseFloat(getInvestBalance.minimum_bal.split(',').join(''))) {
 
                                         refId = moment().utcOffset('+0100').format('x');
@@ -2226,7 +2254,13 @@ function deductVatTax(HOST, data, _amount, txn, balance) {
             sRequest.get(query).then(response => {
                 if (response.status === undefined) {
                     let configData = response[0];
-                    let configAmount = (configData.vatChargeMethod === 'Fixed') ? configData.vat : (parseFloat(configData.vat.toString()) * parseFloat(_amount.toString())) / 100;
+                    
+                    let _charge = (configData.vat === undefined ||
+                        configData.vat === null ||
+                        configData.vat === '') ? 0 : parseFloat(configData.vat.toString());
+                    
+
+                    let configAmount = (configData.vatChargeMethod === 'Fixed') ? _charge : (_charge * parseFloat(_amount.toString())) / 100;
                     let _refId = moment().utcOffset('+0100').format('x');
                     let _mBalance = Number(parseFloat(balance)).toFixed(2) - parseFloat(configAmount);
                     let inv_txn = {
@@ -2546,13 +2580,15 @@ function sumInvestmentInterestPerDayRange(host, investmentId, inStartDate, start
         let url = `${host}${endpoint}`;
         sRequest.get(query).then(result => {
             let total = 0;
-            result.map(x => {
-                if (x.is_credit === 1) {
-                    total += parseFloat(x.amount.toString());
-                } else {
-                    total -= parseFloat(x.amount.toString());
-                }
-            });
+            if (result.length > 0) {
+                result.map(x => {
+                    if (x.is_credit === 1) {
+                        total += parseFloat(x.amount.toString());
+                    } else {
+                        total -= parseFloat(x.amount.toString());
+                    }
+                });
+            }
             let _result = parseFloat(Number(total).toFixed(2));
             resolve(_result);
         }, err => {
@@ -2650,7 +2686,10 @@ async function getInvestmentDailyBalance(HOST, data) {
         const balance = await sumInvestmentInterestPerDayRange(HOST, data.investmentId, data.investment_start_date, data.startDate, x)
         let totalInvestedAmount = parseFloat(balance.toString());
         monthlyOpeningBalance = (monthlyOpeningBalance === 0) ? totalInvestedAmount : monthlyOpeningBalance;
-        let interestInDays = parseFloat(data.interest_rate) / 100;
+        const _interest_rate = (data.interest_rate === '' ||
+            data.interest_rate === undefined ||
+            data.interest_rate === null) ? 0 : data.interest_rate;
+        let interestInDays = parseFloat(_interest_rate.toString()) / 100;
         let SI = (totalInvestedAmount * interestInDays * (1 / daysInYear));
         totalInterestAmount += SI;
         monthlyOpeningBalance += SI;
@@ -2782,9 +2821,7 @@ async function sumAllWalletInvestmentTxns(host, clientId) {
 /** Function call to save transaction **/
 function setInvestmentTxns(host, value) {
     return new Promise((resolve, reject) => {
-        if (parseInt(value.amount.toString()) === 0) {
-            resolve(0);
-        } else {
+        if (value.amount > 0) {
             let query = `INSERT INTO investment_txns SET ?`;
             let endpoint = `/core-service/post?query=${query}`;
             let url = `${host}${endpoint}`;
@@ -2793,6 +2830,8 @@ function setInvestmentTxns(host, value) {
             }, err => {
                 resolve({});
             });
+        } else {
+            resolve(0);
         }
     });
 }
@@ -2966,8 +3005,11 @@ function deductWithHoldingTax(HOST, data, _amount, total, bal_, clientId, isWall
             sRequest.get(query).then(response => {
                 if (response.status === undefined) {
                     let configData = response[0];
-                    let configAmount = (configData.withHoldingTaxChargeMethod == 'Fixed') ? configData.withHoldingTax
-                        : (configData.withHoldingTax * (total + parseFloat(Number(_amount).toFixed(2)))) / 100;
+                    let _charge = (configData.withHoldingTax === undefined ||
+                        configData.withHoldingTax === null ||
+                        configData.withHoldingTax === '') ? 0 : parseFloat(configData.withHoldingTax.toString());
+                    let configAmount = (configData.withHoldingTaxChargeMethod == 'Fixed') ? _charge
+                        : (_charge * (total + parseFloat(Number(_amount).toFixed(2)))) / 100;
                     let refId = moment().utcOffset('+0100').format('x');
                     let balTotal = bal_ - configAmount;
                     let inv_txn = {
