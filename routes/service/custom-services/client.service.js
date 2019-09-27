@@ -739,7 +739,7 @@ router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
 
 router.get('/products', helperFunctions.verifyJWT, function(req, res) {
     let query = 'SELECT w.*, a.loan_requested_min, a.loan_requested_max, a.tenor_min, a.tenor_max, a.interest_rate_min, a.interest_rate_max, ' +
-        '(SELECT GROUP_CONCAT(s.document) FROM workflow_stages s WHERE w.ID = s.workflowID) document ' +
+        '(SELECT GROUP_CONCAT(NULLIF(s.document,"")) FROM workflow_stages s WHERE w.ID = s.workflowID) document ' +
         'FROM workflows w, application_settings a WHERE w.status <> 0 AND a.ID = (SELECT MAX(ID) FROM application_settings) ORDER BY w.ID desc';
     db.query(query, function (error, results) {
         if(error)
@@ -2293,6 +2293,7 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
 });
 
 router.get('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req, res) => {
+    let query = `SELECT * FROM applications WHERE ID = ${req.params.loan_id} AND userID = ${req.params.id}`;
     let query1 = `SELECT COALESCE(SUM(payment_amount+interest_amount), 0) amount FROM application_schedules 
     WHERE applicationID = ${req.params.loan_id} AND interest_collect_date <= CURDATE() AND status = 1`;
     let query2 = `SELECT COALESCE(SUM(payment_amount), 0) amount FROM application_schedules 
@@ -2301,17 +2302,33 @@ router.get('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req,
         WHEN DAY(CURDATE()) > DAY(interest_collect_date) THEN DAY(CURDATE()) - DAY(interest_collect_date)
         WHEN DAY(CURDATE()) < DAY(interest_collect_date) THEN 30 - (DAY(interest_collect_date) - DAY(CURDATE()))
         ElSE 0 END)), 0) amount FROM application_schedules WHERE applicationID = ${req.params.loan_id} AND status = 1 
-        AND MONTH(interest_collect_date) = MONTH(CURDATE()) AND YEAR(interest_collect_date) = YEAR(CURDATE());`;
+        AND MONTH(interest_collect_date) = MONTH(CURDATE()) AND YEAR(interest_collect_date) = YEAR(CURDATE())`;
     let query4 = `SELECT COALESCE(SUM(payment_amount+interest_amount), 0) amount FROM schedule_history 
     WHERE applicationID = ${req.params.loan_id} AND clientID = ${req.params.id} AND status = 1`;
-    db.query(query1, (error, overdue) => {
-        db.query(query2, (error, not_due) => {
-            db.query(query3, (error, due) => {
-                db.query(query4, (error, paid) => {
-                    return res.send({
-                        "status": 200,
-                        "error": null,
-                        "response": overdue[0]['amount'] + not_due[0]['amount'] + due[0]['amount'] - paid[0]['amount']
+    db.query(query, (error, application) => {
+        if(error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+        if(!application[0]) return res.send({
+                "status": 500,
+                "error": null,
+                "response": 'Application does not exist!'
+            });
+        db.query(query1, (error, overdue) => {
+            console.log(overdue)
+            db.query(query2, (error, not_due) => {
+                console.log(not_due)
+                db.query(query3, (error, due) => {
+                    console.log(due)
+                    db.query(query4, (error, paid) => {
+                        console.log(paid)
+                        return res.send({
+                            "status": 200,
+                            "error": null,
+                            "response": overdue[0]['amount'] + not_due[0]['amount'] + due[0]['amount'] - paid[0]['amount']
+                        });
                     });
                 });
             });

@@ -94,6 +94,9 @@ function populateDataTable(data) {
         if (v.client_applications_status === 3 && v.status === 1){
             table[table.length-2] = table[table.length-2].concat('<span class="badge badge-pill badge-warning">Pending Client <br> Acceptance</span>');
         }
+        if (v.client_applications_status === 5 && v.status === 1){
+            table[table.length-2] = table[table.length-2].concat('<span class="badge badge-pill badge-danger">Client Declined</span>');
+        }
         if (v.comment){
             let view_comment_button = ' <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#viewCommentModal" onclick="openViewCommentModal('+v.ID+')"><i class="fa fa-eye"></i> View Comment</button>';
             table[table.length-1] = table[table.length-1].concat(view_comment_button);

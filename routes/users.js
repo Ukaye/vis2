@@ -1973,6 +1973,7 @@ users.get('/application-id/:id', function(req, res, next) {
             'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, a.interest_rate, a.duration, a.preapplicationID, ' +
             '(SELECT l.supervisor FROM users l WHERE l.ID = u.loan_officer) AS supervisor, ' +
             '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
+            '(SELECT status FROM client_applications WHERE ID = a.preapplicationID) AS client_applications_status, ' +
             'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
             'FROM clients AS u INNER JOIN applications AS a ON u.ID = a.userID LEFT JOIN remita_mandates r ' +
             'ON (r.applicationID = a.ID AND r.status = 1) WHERE a.ID = ?',
@@ -1983,6 +1984,7 @@ users.get('/application-id/:id', function(req, res, next) {
             'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, a.interest_rate, a.duration, a.preapplicationID, ' +
             '(SELECT l.supervisor FROM users l WHERE l.ID = c.loan_officer) AS supervisor, ' +
             '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
+            '(SELECT status FROM client_applications WHERE ID = a.preapplicationID) AS client_applications_status, ' +
             'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
             'FROM corporates AS u INNER JOIN applications AS a ON u.ID = a.userID INNER JOIN clients AS c ON u.clientID=c.ID LEFT JOIN remita_mandates r ' +
             'ON (r.applicationID = a.ID AND r.status = 1) WHERE a.ID = ?';
@@ -2531,7 +2533,7 @@ users.post('/application/comments/:id/:user_id', function(req, res, next) {
 });
 
 users.get('/application/comments/:id', function(req, res, next) {
-    db.query(`SELECT c.text, c.date_created, 
+    db.query(`SELECT c.text, c.date_created, c.user_type,
         (CASE WHEN c.user_type = 'admin' THEN (SELECT fullname FROM users WHERE ID = c.userID)
         WHEN c.user_type = 'client' THEN (SELECT fullname FROM clients WHERE ID = c.userID) END) fullname
         FROM application_comments c WHERE c.applicationID = ${req.params.id} ORDER BY c.ID DESC`, (error, comments) => {
@@ -2630,7 +2632,7 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                     if(error){
                         res.send({"status": 500, "error": error, "response": null});
                     } else {
-                        connection.query('UPDATE application_schedules SET status=0 WHERE applicationID = ? AND status = 1', [req.params.id], function (error, response, fields) {
+                        connection.query('UPDATE application_schedules SET status=0, date_modified=? WHERE applicationID = ? AND status = 1', [date_modified,req.params.id], function (error, response, fields) {
                             if (error) {
                                 res.send({"status": 500, "error": error, "response": null});
                             } else {
