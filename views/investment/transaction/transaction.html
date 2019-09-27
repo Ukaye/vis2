@@ -27,9 +27,12 @@
     <link rel="stylesheet" href="assets/scss/style.css">
 
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,800' rel='stylesheet' type='text/css'>
+
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
+
+
     <script>
         $(function () {
             $('#myModal1').on('hidden.bs.modal', function () {
@@ -158,6 +161,40 @@
                 margin-left: 100%;
             }
         }
+
+        ul.timeline {
+            list-style-type: none;
+            position: relative;
+        }
+
+        ul.timeline:before {
+            content: ' ';
+            background: #d4d9df;
+            display: inline-block;
+            position: absolute;
+            left: 3px;
+            width: 2px;
+            height: 100%;
+            z-index: 400;
+        }
+
+        ul.timeline>li {
+            margin: 20px 0;
+            padding-left: 20px;
+        }
+
+        ul.timeline>li:before {
+            content: ' ';
+            background: white;
+            display: inline-block;
+            position: absolute;
+            border-radius: 50%;
+            border: 3px solid #22c0e8;
+            left: -5px;
+            width: 20px;
+            height: 20px;
+            z-index: 400;
+        }
     </style>
 
     <aside id="left-panel" class="left-panel" include-html="/includes/sidebar.html">
@@ -243,6 +280,13 @@
                                                 <a href="#" style="text-decoration: underline;"
                                                     onclick="bindWalletTransaction()">View
                                                     Wallet Balance
+                                                </a>
+                                            </label>
+                                        </div>
+                                        <div class="row">
+                                            <label>
+                                                <a href="#" style="text-decoration: underline;" data-toggle="modal"
+                                                    data-target="#viewTxnTimeLineModal">View Transaction Timeline
                                                 </a>
                                             </label>
                                         </div>
@@ -773,6 +817,53 @@
                                 <label class="form-check-label">Force Termination</label>
                             </div>
                             <button type="submit" class="btn btn-primary" onclick="onTerminateInvest()">Submit</button>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="viewTxnTimeLineModal" role="dialog" aria-labelledby="viewTxnTimeLineModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Transaction Timeline</h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="container mt-5 mb-5">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h4>Latest News</h4>
+                                    <ul class="timeline">
+                                        <li>
+                                            <a target="_blank" href="https://www.totoprayogo.com/#">New Web Design</a>
+                                            <a href="#" class="float-right">21 March, 2014</a>
+                                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque
+                                                scelerisque diam non nisi semper, et elementum lorem ornare. Maecenas
+                                                placerat facilisis mollis. Duis sagittis ligula in sodales vehicula....
+                                            </p>
+                                        </li>
+                                        <li>
+                                            <a href="#">21 000 Job Seekers</a>
+                                            <a href="#" class="float-right">4 March, 2014</a>
+                                            <p>Curabitur purus sem, malesuada eu luctus eget, suscipit sed turpis. Nam
+                                                pellentesque felis vitae justo accumsan, sed semper nisi sollicitudin...
+                                            </p>
+                                        </li>
+                                        <li>
+                                            <a href="#">Awesome Employers</a>
+                                            <a href="#" class="float-right">1 April, 2014</a>
+                                            <p>Fusce ullamcorper ligula sit amet quam accumsan aliquet. Sed nulla odio,
+                                                tincidunt vitae nunc vitae, mollis pharetra velit. Sed nec tempor
+                                                nibh...</p>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">

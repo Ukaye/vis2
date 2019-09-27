@@ -494,20 +494,20 @@ function set_investment_product() {
     product_obj.name = $('#product_name').val();
     product_obj.investment_max = $('#product_investment_amount_max').val();
     product_obj.investment_min = $('#product_investment_amount_min').val();
-    product_obj.freq_withdrawal = ($('#withdrawal_conditions_value').val() !== '') ? parseInt($('#withdrawal_conditions_value').val()) : 0;
-    product_obj.saving_fees = $('#saving_fees').val();
+    product_obj.freq_withdrawal = ($('#withdrawal_conditions_value').val() !== '') ? parseInt($('#withdrawal_conditions_value').val().split(',').join('')) : 0;
+    product_obj.saving_fees = $('#saving_fees').val().split(',').join('');
     product_obj.saving_charge_opt = $('#opt_on_deposit').val();
-    product_obj.withdrawal_fees = $('#withdrawal_charge_freq').val();
+    product_obj.withdrawal_fees = $('#withdrawal_charge_freq').val().split(',').join('');
     product_obj.withdrawal_freq_duration = $('#withdrawal_charge_duration').val();
-    product_obj.minimum_bal = ($('#minimum_bal').val() !== '') ? $('#minimum_bal').val() : '0';
+    product_obj.minimum_bal = ($('#minimum_bal').val() !== '') ? $('#minimum_bal').val().split(',').join('') : '0';
     product_obj.code = $('#product_code').val();
-    product_obj.interest_rate = $('#interest_rate').val();
+    product_obj.interest_rate = $('#interest_rate').val().split(',').join('');
     product_obj.interest_disbursement_time = $('#condition_for_interest').val();
     // product_obj.interest_compute_time = $('#compute_interest_time').val();
     product_obj.is_forfeit = $('#forfeit_interest_on_withdrawal').is(':checked') ? 1 : 0;
-    product_obj.interest_forfeit_charge = $('#charge_interest_on_withdrawal').val();
+    product_obj.interest_forfeit_charge = $('#charge_interest_on_withdrawal').val().split(',').join('');
     product_obj.interest_forfeit_charge_opt = $('#opt_on_charge_interest_on_withdrawal').val();
-    product_obj.minimum_bal_charges = $('#minimum_bal_penalty_amount').val();
+    product_obj.minimum_bal_charges = $('#minimum_bal_penalty_amount').val().split(',').join('');
     product_obj.minimum_bal_charges_opt = $('#opt_on_minimum_bal_penalty_amount').val();
     product_obj.withdrawal_freq_fees_opt = $('#opt_on_freq_charge').val();
 
@@ -518,9 +518,9 @@ function set_investment_product() {
     product_obj.max_term = $('#max_term').val();
     // product_obj.histories = (product_obj.histories == null) ? [] : product_obj.histories;
 
-    product_obj.premature_interest_rate = $('#premature_interest_rate').val();
+    product_obj.premature_interest_rate = $('#premature_interest_rate').val().split(',').join('');
     product_obj.min_days_termination = $('#min_days_termination').val();
-    product_obj.min_days_termination_charge = $('#min_days_termination_charge').val();
+    product_obj.min_days_termination_charge = $('#min_days_termination_charge').val().split(',').join('');
     product_obj.opt_on_min_days_termination = $('#opt_on_min_days_termination').val();
     product_obj.createdby = (JSON.parse(localStorage.getItem("user_obj"))).ID.toString();
 

@@ -1153,7 +1153,7 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
                                                 $('#wait').hide();
                                                 $("#input_amount").val('');
                                                 $("#input_description").val('');
-                                                swal('Transaction reversed successfully!', '', 'success');
+                                                swal('Transaction reversed initiated successfully!', '', 'success');
                                                 // bindDataTable(selectedInvestment.investmentId, false);
                                                 table.ajax.reload(null, false);
                                             } else {
@@ -1787,7 +1787,7 @@ function onFundWalletOperation() {
         'data': investmentOps,
         'success': function (data) {
             $('#wait').hide();
-            swal('Transfer operation completed successfully', '', 'success');
+            swal('Transfer operation initiated successfully', '', 'success');
             $("#input_transfer_amount").val('');
             $("#input_transfer_description").val('');
             $("#chk_own_accounts").attr('checked', false);
@@ -1858,7 +1858,7 @@ function onTransferOperation() {
             'data': investmentOps,
             'success': function (data) {
                 $('#wait').hide();
-                swal('Transfer operation completed successfully', '', 'success');
+                swal('Transfer operation initiated successfully', '', 'success');
                 $("#input_transfer_amount").val('');
                 $("#input_transfer_description").val('');
                 $("#chk_own_accounts").attr('checked', false);
