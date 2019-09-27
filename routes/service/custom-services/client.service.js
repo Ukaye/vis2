@@ -2305,9 +2305,13 @@ router.get('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req,
     let query4 = `SELECT COALESCE(SUM(payment_amount+interest_amount), 0) amount FROM schedule_history 
     WHERE applicationID = ${req.params.loan_id} AND clientID = ${req.params.id} AND status = 1`;
     db.query(query1, (error, overdue) => {
+        console.log(overdue)
         db.query(query2, (error, not_due) => {
+            console.log(not_due)
             db.query(query3, (error, due) => {
+                console.log(due)
                 db.query(query4, (error, paid) => {
+                    console.log(paid)
                     return res.send({
                         "status": 200,
                         "error": null,
