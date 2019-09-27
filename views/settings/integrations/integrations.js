@@ -49,7 +49,10 @@ function getXeroConfig() {
             if (config.xero_client) $('#xero_client').prop('checked', true);
             if (config.xero_loan_account) $('#xero_loan_account').prop('checked', true);
             if (config.xero_collection_bank) $('#xero_collection_bank').prop('checked', true);
-            if (config.xero_escrow) $('#xero_escrow').prop('checked', true);
+            if (config.xero_escrow) {
+                $('#xero_escrow').prop('checked', true);
+                $('#xero_escrow_account').prop('disabled', false);
+            }
             if (config.xero_escrow_account) $('#xero_escrow_account').val(config.xero_escrow_account);
         },
         'error': function (err) {

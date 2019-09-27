@@ -397,23 +397,31 @@ router.get('/application/funding_source', function (req, res) {
 });
 
 router.get('/collection_bank', function (req, res) {
-    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
-        let xeroAccounts = await xeroClient.accounts.get();
+    xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
+        let xeroAccounts = [];
+        if (xeroClient) {
+            xeroAccounts_ = await xeroClient.accounts.get();
+            xeroAccounts = xeroAccounts_.Accounts.filter((e) => {return e.Type === 'BANK'});
+        }
         return res.send({
             "status": 200,
             "message": "Collection banks fetched successfully!",
-            "response": xeroAccounts.Accounts.filter((e) => {return e.Type === 'BANK'})
+            "response": xeroAccounts
         });
     });
 });
 
 router.get('/accounts', function (req, res) {
-    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
-        let xeroAccounts = await xeroClient.accounts.get();
+    xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient) => {
+        let xeroAccounts = [];
+        if (xeroClient) {
+            xeroAccounts_ = await xeroClient.accounts.get();
+            xeroAccounts = xeroAccounts_.Accounts;
+        }
         return res.send({
             "status": 200,
             "message": "Accounts fetched successfully!",
-            "response": xeroAccounts.Accounts
+            "response": xeroAccounts
         });
     });
 });

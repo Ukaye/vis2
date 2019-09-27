@@ -5,10 +5,12 @@ const
 
 router.get('/connect', async (req, res) => {
     xeroFunctions.authorizedOperation(req, res, req.headers.referer, async () => {
-        return res.send({
-            "status": 200,
-            "response": "Xero is already connected!"
-        });
+        if (xeroClient) {
+            return res.send({
+                "status": 200,
+                "response": "Xero is already connected!"
+            });
+        }
     })
 });
 
