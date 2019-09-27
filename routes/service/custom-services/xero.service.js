@@ -4,8 +4,15 @@ const
     xeroFunctions = require('../../xero');
 
 router.get('/connect', async (req, res) => {
-    xeroFunctions.authorizedOperation(req, res, '/integrations', async function(xeroClient) {
-        res.redirect('/integrations?x=1');
+    xeroFunctions.authorizedOperation(req, res, null, async (xeroClient) => {
+        if (xeroClient) {
+            res.send({
+                "status": 200,
+                "response": "Xero is already connected!"
+            });
+        } else {
+            xeroFunctions.authorizeRedirect(req, res);
+        }
     })
 });
 
