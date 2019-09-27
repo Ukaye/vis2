@@ -44,14 +44,26 @@ var sRequest = {
                         "response": null
                     });
                 } else {
-                    // transactionalAlert(data.investmentId, query).then(payload => {
-                    //     resolve(results);
-                    // });
-                    resolve(results);
+                    if (query.toLowerCase().includes('investment_txns') &&
+                        query.toLowerCase().includes('insert') &&
+                        data.isApproved === 1 &&
+                        data.postDone === 1) {
+                        const isWallet_ = (data.isWallet === undefined) ? 0 : data.isWallet;
+                        const _id = (isWallet_ === 0) ? data.investmentId : data.clientId;
+                        transactionalAlert(_id, isWallet_).then(payload => {
+                            resolve(results);
+                        });
+                    } else {
+                        resolve(results);
+                    }
                 }
             });
         });
     }
+}
+
+function investmentTimeLine(query) {
+
 }
 
 
