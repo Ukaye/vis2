@@ -2317,13 +2317,9 @@ router.get('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req,
                 "response": 'Application does not exist!'
             });
         db.query(query1, (error, overdue) => {
-            console.log(overdue)
             db.query(query2, (error, not_due) => {
-                console.log(not_due)
                 db.query(query3, (error, due) => {
-                    console.log(due)
                     db.query(query4, (error, paid) => {
-                        console.log(paid)
                         return res.send({
                             "status": 200,
                             "error": null,

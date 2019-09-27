@@ -312,7 +312,6 @@ function createClient(){
     obj.middle_name = $.trim($('#middle_name').val());
     obj.last_name = $.trim($('#last_name').val());
     obj.fullname = $.trim($('#first_name').val()) + ' '+ $.trim($('#middle_name').val()) + ' ' +$.trim($('#last_name').val());
-    // obj.phone = numbersOnly($('#phone').val());
     obj.phone = $('#phone').val();
     obj.address = $('#address').val();
     obj.email = $('#email').val();
@@ -321,9 +320,7 @@ function createClient(){
     obj.marital_status = $('#marital_status').find('option:selected').attr('value');
     obj.loan_officer = $('#loan_officer').find('option:selected').attr('id');
     obj.branch = $('#branch').find('option:selected').attr('id');
-    // obj.bvn= numbersOnly($("#bvn").val());
     obj.bvn= $("#bvn").val();
-    // obj.account= numbersOnly($("#account").val());
     obj.account= $("#account").val();
     obj.bank = $('#bank').find('option:selected').attr('id');
     obj.client_state = $('#client_state').find('option:selected').attr('id');
@@ -345,21 +342,12 @@ function createClient(){
     obj.years_known = numbersOnly($("#years_known").val());
     obj.guarantor_phone = $("#guarantor_phone").val();
     obj.guarantor_email = $("#guarantor_email").val();
-    // if ($.trim($('#guarantor_email').val()) !== ' ' || $.trim($('#guarantor_email').val()) !== 'null'){
-    //     if (validateEmail($('#guarantor_email').val())){
-    //         obj.guarantor_email = $("#guarantor_email").val();
-    //     }
-    //     else {
-    //         return swal('', 'Please Enter a Valid Email for the Reference', 'warning');
-    //     }
-    // }
     obj.guarantor_address = $("#guarantor_address").val();
     obj.gua_country = $('#gua_country').find('option:selected').attr('id');
     obj.kin_fullname = $('#ind_kin_fullname').val();
     obj.kin_phone = $('#ind_kin_phone').val();
     obj.kin_relationship = $('#ind_kin_relationship').val();
     obj.images_folder = obj.first_name + ' ' + obj.middle_name + ' ' + obj.last_name + '_' + obj.email;
-
 
     var test={};
     $.ajax({
@@ -376,16 +364,13 @@ function createClient(){
                     clients += ', '+test.response[i]["fullname"];
                 }
                 return swal({icon: 'info', text: "Information already exists for client(s)"+clients});
-                // window.location.href = "./add-client";
             }
             if(test.bvn_exists){
                 let client = test.response[0]['fullname'];
                 return swal({icon: 'info', text: "BVN already exists for client, "+client});
-                // window.location.href = "./add-client";
             }
             else if(test.status == 500){
                 return swal('Failed!', "Unable to Create Client.", 'error');
-                // window.location.href = "./add-client";
             }
             else{
                 swal('Success!', "Client Information Registered!", 'success');

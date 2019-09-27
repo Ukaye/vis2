@@ -3,6 +3,7 @@ const moment = require('moment');
 const db = require('../../../db');
 const express = require('express');
 const router = express.Router();
+const xeroFunctions = require('../../xero');
 
 router.post('/application', function (req, res, next) {
     let data = req.body;
@@ -379,6 +380,85 @@ router.delete('/application/bad_cheque_reason/:id', function (req, res, next) {
                         "response": results
                     });
                 }
+            });
+        }
+    });
+});
+
+router.get('/application/funding_source', function (req, res) {
+    xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient) => {
+        let xeroAccounts = await xeroClient.accounts.get();
+        return res.send({
+            "status": 200,
+            "message": "Funding sources fetched successfully!",
+            "response": xeroAccounts.Accounts.filter((e) => {return e.Class === 'REVENUE'})
+        });
+    });
+});
+
+router.get('/collection_bank', function (req, res) {
+    xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
+        let xeroAccounts = [];
+        if (xeroClient) {
+            xeroAccounts_ = await xeroClient.accounts.get();
+            xeroAccounts = xeroAccounts_.Accounts.filter((e) => {return e.Type === 'BANK'});
+        }
+        return res.send({
+            "status": 200,
+            "message": "Collection banks fetched successfully!",
+            "response": xeroAccounts
+        });
+    });
+});
+
+router.get('/accounts', function (req, res) {
+    xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient) => {
+        let xeroAccounts = [];
+        if (xeroClient) {
+            xeroAccounts_ = await xeroClient.accounts.get();
+            xeroAccounts = xeroAccounts_.Accounts;
+        }
+        return res.send({
+            "status": 200,
+            "message": "Accounts fetched successfully!",
+            "response": xeroAccounts
+        });
+    });
+});
+
+router.post('/xero', function (req, res, next) {
+    let data = req.body;
+    data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    db.query('INSERT INTO integrations SET ?', data, function (error, result) {
+        if (error) {
+            res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+        } else {
+            res.send({
+                "status": 200,
+                "message": "Xero configuration saved successfully!",
+                "response": result
+            });
+        }
+    });
+});
+
+router.get('/xero', function (req, res, next) {
+    db.query("SELECT * FROM integrations WHERE ID = (SELECT MAX(ID) FROM integrations)", function (error, results) {
+        if (error) {
+            res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+        } else {
+            res.send({
+                "status": 200,
+                "message": "Xero configuration fetched successfully!",
+                "response": results[0]
             });
         }
     });

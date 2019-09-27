@@ -2,7 +2,21 @@ $(document).ready(function() {
     loadComments();
     getInformationRequests();
     read_write_1();
+    getFundingSource();
 });
+
+function getFundingSource() {
+    $.ajax({
+        type: "GET",
+        url: "/settings/application/funding_source",
+        success: function (data) {
+            $.each(data.response, function (key, funding_source) {
+                $('#funding').append(`<option value="${funding_source.Code}">${funding_source.Name} 
+                    (${funding_source.Type})</option>`);
+            });
+        }
+    });
+}
 
 const urlParams = new URLSearchParams(window.location.search);
 const application_id = urlParams.get('id');
