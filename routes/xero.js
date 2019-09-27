@@ -1,4 +1,5 @@
 let xero = {},
+    db = require('../db'),
     XeroClient = require('xero-node').AccountingAPIClient;
 
 xero.getXeroClient = function (session) {
@@ -22,6 +23,10 @@ xero.authorizeRedirect = async function (req, res, returnTo) {
 };
 
 xero.authorizedOperation = function (req, res, returnTo, callback) {
+    db.query('SELECT * FROM integrations WHERE ID = (SELECT MAX(ID) FROM integrations)', 
+    (error, integration_) => {
+
+    });
     if (req.session.accessToken) {
         callback(xero.getXeroClient(req.session.accessToken));
     } else {
