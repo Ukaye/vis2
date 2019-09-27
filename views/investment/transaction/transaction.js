@@ -352,7 +352,7 @@ function bindDataTable(id) {
                         let total_balance_ = Number(data.txnCurrentBalance.toString().split(',').join('')).toFixed(2);
                         $("#inv_bal_amount").html(`${(parseInt(total_balance_.toString()) === 0) ? '' : sign}₦${formater(total_balance_.toString())}`);
 
-                        if (data.data[0].interest_disbursement_time === 'Up-Front') {
+                        if (data.data[0].interest_disbursement_time === 'Up-Front' && data.data[0].interest_disbursement_time === 'End-of-Tenure') {
                             $('#btnComputeInterest').attr('hidden', true);
                         }
 
@@ -1630,7 +1630,40 @@ function onReviewed(value, approvedId, txnId, id, isDeny) {
     });
 }
 
-
+function onTransactionTimeline() {
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+    let splittedDate = selectedInvestment.invCreatedAt.split(' ');
+    let dt = new Date(selectedInvestment.invCreatedAt);
+    $('#idInvestmentCreator').html(selectedInvestment.invCreator);
+    $('#idInvestmentCreatedAt').html(`${dt.getDate()} ${monthNames[dt.getMonth()]}, ${dt.getFullYear()} ${splittedDate[1]} ${splittedDate[2].toUpperCase()}`);
+    let timelineTags = '';
+    $.ajax({
+        url: `investment-txns/transaction-timelines/${selectedInvestment.investmentId}`,
+        'type': 'get',
+        'success': function (data) {
+            for (let index = 0; index < data.length; index++) {
+                const element = data[index];
+                const _splittedDate = element.createdAt.split(' ');
+                const _dt = new Date(element.createdAt);
+                element.method = element.method.toUpperCase();
+                timelineTags += `<li>
+                                            <a target="_blank">${element.method} OPERATION</a>
+                                            <a href="#" class="float-right">${_dt.getDate()} ${monthNames[_dt.getMonth()]}, ${_dt.getFullYear()} ${_splittedDate[1]} ${_splittedDate[2].toUpperCase()}</a>
+                                            <p>
+                                                <p><strong>Transaction by: </strong><span>${element.createdByName}</span></p>
+                                                <p><strong>Description: </strong><span>${element.description}</span></p>
+                                            </p>
+                                        </li>`;
+            }
+            $('#idTimeLine').html(timelineTags);
+        },
+        'error': function (err) {
+            $('#wait').hide();
+        }
+    });
+}
 
 
 
@@ -1644,8 +1677,6 @@ function onPost(value, approvedId, txnId, id, isDeny) {
             return;
         }
     }
-
-
     let priority = selectedOpsRequirement.find(x => x.ID === id).priority;
     let _data = {
         status: value,
