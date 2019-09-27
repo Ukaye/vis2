@@ -423,13 +423,14 @@ router.get('/client-investments/:id', function (req, res, next) {
     let query = `SELECT 
     v.ID,v.ref_no,c.fullname,v.description,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName, v.isDeny,
     v.approvalDone,v.reviewDone,v.created_date,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.updated_date,p.chkEnforceCount,
-    i.clientId,v.isMoveFundTransfer,v.isWallet,v.isWithdrawal,isDeposit,v.isDocUploaded,p.canTerminate,i.isPaymentMadeByWallet,p.acct_allows_withdrawal,p.min_days_termination,
+    i.clientId,v.isMoveFundTransfer,v.isWallet,u2.fullname as invCreator,i.date_created as invCreatedAt, v.isWithdrawal,isDeposit,v.isDocUploaded,p.canTerminate,i.isPaymentMadeByWallet,p.acct_allows_withdrawal,p.min_days_termination,
     v.is_capital,v.investmentId,i.isTerminated,i.isMatured,v.isForceTerminate,v.isReversedTxn,v.isInvestmentTerminated,v.expectedTerminationDate,p.inv_moves_wallet,
     v.isPaymentMadeByWallet,p.interest_disbursement_time,p.interest_moves_wallet,i.investment_mature_date,p.interest_rate,v.isInvestmentMatured,i.isClosed,p.premature_interest_rate,
     i.code as acctNo, v.isTransfer, v.beneficialInvestmentId FROM investment_txns v
     left join investments i on v.investmentId = i.ID
     left join clients c on i.clientId = c.ID
     left join users u on u.ID = v.createdBy
+    left join users u2 on u2.ID = i.createdBy
     left join investment_products p on i.productId = p.ID
     WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id} 
     AND (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%") LIMIT ${limit} OFFSET ${offset}`;
