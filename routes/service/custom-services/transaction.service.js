@@ -96,7 +96,7 @@ router.post('/create', function (req, res, next) {
             computeTotalBalance(data.clientId, data.investmentId, HOST).then(totalBalance_ => {
                 let total = (data.isWallet.toString() === '1') ? totalBalance_.currentWalletBalance : balanceIncludingInterest;
                 let inv_txn = {
-                    txn_date: (data.txn_date !== undefined) ? data.txn_date : moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                    txn_date: (data.txn_date !== undefined) ? data.txn_date : moment().utcOffset('+0100').format('YYYY-MM-DD'),
                     description: (data.isPaymentMadeByWallet !== undefined && data.isPaymentMadeByWallet === '1' && data.is_capital === '1') ? 'Opening balance from wallet' : data.description,
                     amount: Number(data.amount.split(',').join('')).toFixed(2),
                     is_credit: data.is_credit,
@@ -774,6 +774,7 @@ router.post('/posts', function (req, res, next) {
                                         amount = ${_amountTxn} , balance ='${Number(bal).toFixed(2)}'
                                         WHERE ID =${data.txnId}`;
                             endpoint = `/core-service/get`;
+                            data.txn_date = updateDate;
                             url = `${HOST}${endpoint}`;
                             const _id_ = (data.isWallet.toString() === '0') ? data.investmentId : data.clientId;
                             sRequest.UpdateAndAlert(query, _id_, data.isWallet)
@@ -1124,7 +1125,7 @@ async function upFrontInterest(data, HOST) {
                         total = balanceWithInterest + SI;
                     }
                     let _inv_txn = {
-                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                        txn_date: data.txn_date,
                         description: 'Total Up-Front interest',
                         amount: Number(SI).toFixed(2),
                         is_credit: 1,
@@ -1132,7 +1133,7 @@ async function upFrontInterest(data, HOST) {
                         balance: Number(total).toFixed(2),
                         is_capital: 0,
                         ref_no: moment().utcOffset('+0100').format('x'),
-                        updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                        updated_date: data.txn_date,
                         investmentId: data.investmentId,
                         createdBy: data.createdBy,
                         clientId: data.clientId,
@@ -1180,7 +1181,7 @@ async function deductTransferCharge(data, HOST, amount) {
                         let _charge = (configData.transferValue === undefined ||
                             configData.transferValue === null ||
                             configData.transferValue === '') ? 0 : parseFloat(configData.transferValue.toString());
-                        
+
 
                         let configAmount = (configData.transferChargeMethod == 'Fixed') ? _charge : (_charge * parseFloat(Number(amount).toFixed(2))) / 100;
                         let _refId = moment().utcOffset('+0100').format('x');
@@ -1309,7 +1310,7 @@ function chargeForceTerminate(data, HOST) {
                                 investmentId: data.investmentId,
                                 approvalDone: 1,
                                 ref_no: _refId,
-                                updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                 createdBy: data.createdBy,
                                 isTerminationCharge: 1
                             };
@@ -1462,7 +1463,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                 reviewDone: 1,
                 approvalDone: 1,
                 ref_no: `${refId}-R`,
-                updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                 investmentId: data.investmentId,
                 createdBy: data.createdBy
             };
@@ -1486,7 +1487,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                 reviewDone: 1,
                 approvalDone: 1,
                 ref_no: `${moment().utcOffset('+0100').format('x')}-R`,
-                updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                 investmentId: data.investmentId,
                 createdBy: data.createdBy
             };
@@ -1523,7 +1524,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                 investmentId: data.investmentId,
                 approvalDone: 1,
                 ref_no: refId,
-                updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                 createdBy: data.createdBy,
                 isTerminationCharge: 1
             };
@@ -1597,7 +1598,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                     investmentId: data.investmentId,
                     approvalDone: 1,
                     ref_no: refId,
-                    updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                    updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                     createdBy: data.createdBy,
                     isWallet: 1,
                     clientId: _getProductConfigInterests.clientId
@@ -1633,19 +1634,19 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                 investmentId: data.investmentId,
                 approvalDone: 1,
                 ref_no: refId,
-                updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                 createdBy: data.createdBy,
                 isTerminationCharge: 1
             };
             await setInvestmentTxns(HOST, inv_txn);
-            
+
             await deductVatTax(HOST, data, configAmount, inv_txn, inv_txn.balance);
-            
+
             let query = `DELETE FROM investment_txns WHERE ID = ${data.txnId}`;
             let endpoint = `/core-service/get`;
             let url = `${HOST}${endpoint}`;
             const _res_ = await sRequest.get(query);
-            
+
             await getInterestEndOfTenure(HOST, data);
             if (_res_.status === undefined) {
                 refId = moment().utcOffset('+0100').format('x');
@@ -1665,7 +1666,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                     investmentId: data.investmentId,
                     approvalDone: 1,
                     ref_no: data.refId,
-                    updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                    updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                     createdBy: data.createdBy
                 };
                 const __balance = await computeWalletBalance(data.clientId, HOST);
@@ -1687,7 +1688,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                     investmentId: data.investmentId,
                     approvalDone: 1,
                     ref_no: moment().utcOffset('+0100').format('x'),
-                    updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                    updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                     createdBy: data.createdBy,
                     isWallet: 1,
                     clientId: configData.clientId
@@ -1711,7 +1712,7 @@ function debitWalletTxns(HOST, data) {
                 let walletAmt = parseFloat(data.amount.toString());
                 let walletCurrentBal = walletBal.currentWalletBalance - walletAmt;
                 let inv_txn = {
-                    txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                    txn_date: data.txn_date,
                     description: `Investment/Savings Fund`,
                     amount: Number(walletAmt).toFixed(2),
                     is_credit: 0,
@@ -1724,7 +1725,7 @@ function debitWalletTxns(HOST, data) {
                     reviewDone: 1,
                     approvalDone: 1,
                     ref_no: moment().utcOffset('+0100').format('x'),
-                    updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                    updated_date: data.txn_date,
                     investmentId: data.investmentId,
                     isWallet: 1,
                     clientId: data.clientId,
@@ -1784,7 +1785,7 @@ async function setcharges(data, HOST, isReversal) {
                                         //let total = parseFloat(chargeForDeposit[chargeForDeposit.length - 1].txnBalance.split(',').join(''))
                                         const chargedCost = (chargeForDeposit[0].saving_charge_opt === 'Fixed') ? _charge : ((_charge / 100) * parseFloat(data.amount.split(',').join('')));
                                         let inv_txn = {
-                                            txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                                            txn_date: (isReversal === false) ? data.txn_date : moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                             description: (isReversal === false) ? 'Charge: ' + chargeForDeposit[0].description : `Reverse: ${chargeForDeposit[0].description}`,
                                             amount: Number(chargedCost).toFixed(2),
                                             is_credit: 0,
@@ -1797,7 +1798,7 @@ async function setcharges(data, HOST, isReversal) {
                                             reviewDone: 1,
                                             approvalDone: 1,
                                             ref_no: (isReversal === false) ? refId : `${chargeForDeposit[0].ref_no}-R`,
-                                            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                            updated_date: (isReversal === false) ? data.txn_date : moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                             investmentId: data.investmentId,
                                             createdBy: data.createdBy
                                         };
@@ -1829,12 +1830,12 @@ async function setcharges(data, HOST, isReversal) {
                                 } else {
                                     let getInvestBalance = response_product[response_product.length - 1];
                                     // getInvestBalance.minimum_bal_charges = (getInvestBalance.minimum_bal_charges === '') ? '0' : getInvestBalance.minimum_bal_charges;
-                                    
+
                                     let _charge = (getInvestBalance.minimum_bal_charges === undefined ||
                                         getInvestBalance.minimum_bal_charges === null ||
                                         getInvestBalance.minimum_bal_charges === '') ? 0 : parseFloat(getInvestBalance.minimum_bal_charges.toString());
-                                    
-                                    
+
+
                                     let chargedCostMinBal = (getInvestBalance.minimum_bal_charges_opt === 'Fixed')
                                         ? _charge
                                         : ((_charge / 100) * parseFloat(_total.toString()));
@@ -1856,7 +1857,7 @@ async function setcharges(data, HOST, isReversal) {
                                             reviewDone: 1,
                                             approvalDone: 1,
                                             ref_no: refId,
-                                            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                             investmentId: data.investmentId,
                                             createdBy: data.createdBy
                                         };
@@ -1920,7 +1921,7 @@ async function setcharges(data, HOST, isReversal) {
                                                             reviewDone: 1,
                                                             approvalDone: 1,
                                                             ref_no: refId,
-                                                            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                                            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                                             investmentId: data.investmentId,
                                                             createdBy: data.createdBy
                                                         };
@@ -1988,7 +1989,7 @@ async function setcharges(data, HOST, isReversal) {
                                                             reviewDone: 1,
                                                             approvalDone: 1,
                                                             ref_no: refId,
-                                                            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                                            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                                             investmentId: data.investmentId,
                                                             createdBy: data.createdBy
                                                         };
@@ -2059,7 +2060,7 @@ async function setcharges(data, HOST, isReversal) {
                                                             reviewDone: 1,
                                                             approvalDone: 1,
                                                             ref_no: refId,
-                                                            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                                            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                                             investmentId: data.investmentId,
                                                             createdBy: data.createdBy
                                                         };
@@ -2131,7 +2132,7 @@ async function setcharges(data, HOST, isReversal) {
                                                             reviewDone: 1,
                                                             approvalDone: 1,
                                                             ref_no: refId,
-                                                            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                                            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                                             investmentId: data.investmentId,
                                                             createdBy: data.createdBy
                                                         };
@@ -2202,7 +2203,7 @@ async function setcharges(data, HOST, isReversal) {
                                                             reviewDone: 1,
                                                             approvalDone: 1,
                                                             ref_no: refId,
-                                                            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                                            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                                             investmentId: data.investmentId,
                                                             createdBy: data.createdBy
                                                         };
@@ -2254,17 +2255,17 @@ function deductVatTax(HOST, data, _amount, txn, balance) {
             sRequest.get(query).then(response => {
                 if (response.status === undefined) {
                     let configData = response[0];
-                    
+
                     let _charge = (configData.vat === undefined ||
                         configData.vat === null ||
                         configData.vat === '') ? 0 : parseFloat(configData.vat.toString());
-                    
+
 
                     let configAmount = (configData.vatChargeMethod === 'Fixed') ? _charge : (_charge * parseFloat(_amount.toString())) / 100;
                     let _refId = moment().utcOffset('+0100').format('x');
                     let _mBalance = Number(parseFloat(balance)).toFixed(2) - parseFloat(configAmount);
                     let inv_txn = {
-                        txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
+                        txn_date: data.txn_date,
                         description: `VAT ON CHARGE TRANSACTION WITH REF.: <strong>${txn.ref_no}</strong>`,
                         amount: Number(parseFloat(configAmount)).toFixed(2),
                         is_credit: 0,
@@ -2278,7 +2279,7 @@ function deductVatTax(HOST, data, _amount, txn, balance) {
                         investmentId: data.investmentId,
                         approvalDone: 1,
                         ref_no: _refId,
-                        updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                        updated_date: data.txn_date,
                         createdBy: data.createdBy,
                         isVat: 1,
                         isTerminationCharge: (txn.isTerminationCharge === 1) ? 1 : 0
@@ -2911,7 +2912,7 @@ async function computeInterestTxns2(HOST, data) {
                             reviewDone: 1,
                             approvalDone: 1,
                             ref_no: refId,
-                            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                             investmentId: data.investmentId,
                             createdBy: data.createdBy,
                             clientId: data.clientId,
@@ -2960,7 +2961,7 @@ async function computeInterestTxns2(HOST, data) {
                                 reviewDone: 1,
                                 approvalDone: 1,
                                 ref_no: refId,
-                                updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                                updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                                 investmentId: data.investmentId,
                                 createdBy: data.createdBy,
                                 isInterest: 1
@@ -3028,7 +3029,7 @@ function deductWithHoldingTax(HOST, data, _amount, total, bal_, clientId, isWall
                         reviewDone: 1,
                         approvalDone: 1,
                         ref_no: refId,
-                        updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+                        updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                         investmentId: data.investmentId,
                         createdBy: data.createdBy,
                         clientId: clientId,
@@ -3126,6 +3127,17 @@ router.get('/client-wallet-balance/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     computeWalletBalance(req.params.id, HOST).then(balance => {
         res.send(balance);
+    });
+});
+
+
+router.get('/transaction-timelines/:id', function (req, res, next) {
+    let query = `SELECT o.*, u.fullname as createdByName, i.description FROM investment_op_approvals o 
+    left join users u on u.ID = o.createdBy 
+    left join investment_txns i on i.ID = o.txnId 
+    WHERE o.investmentId = ${req.params.id}`;
+    sRequest.get(query).then(response => {
+        res.send(response);
     });
 });
 
@@ -3340,7 +3352,7 @@ async function closeMatureInvestmentAccount(HOST, data) {
             postDone: 1,
             reviewDone: 1,
             approvalDone: 1,
-            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
+            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
         };
         await setInvestmentTxns(HOST, inv_txn);
 
@@ -3360,7 +3372,7 @@ async function closeMatureInvestmentAccount(HOST, data) {
             postDone: 1,
             reviewDone: 1,
             approvalDone: 1,
-            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
+            updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
         };
         await setInvestmentTxns(HOST, inv_txn2);
         await closeInvestmentWallet(element1.ID, HOST);

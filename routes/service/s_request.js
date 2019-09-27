@@ -27,9 +27,8 @@ var sRequest = {
                         "response": null
                     });
                 } else {
-                    transactionalAlert(id, isWallet).then(payload => {
-                        resolve(results);
-                    });
+                    transactionalAlert(id, isWallet);
+                    resolve(results);
                 }
             });
         });
@@ -50,9 +49,8 @@ var sRequest = {
                         data.postDone === 1) {
                         const isWallet_ = (data.isWallet === undefined) ? 0 : data.isWallet;
                         const _id = (isWallet_ === 0) ? data.investmentId : data.clientId;
-                        transactionalAlert(_id, isWallet_).then(payload => {
-                            resolve(results);
-                        });
+                        transactionalAlert(_id, isWallet_);
+                        resolve(results);
                     } else {
                         resolve(results);
                     }
