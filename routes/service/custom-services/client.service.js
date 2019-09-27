@@ -2293,7 +2293,7 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
 });
 
 router.get('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req, res) => {
-    let query = `SELECT * FROM applications WHERE ID = ${req.params.loan_id} AND userID = ${req.params.loan_id}`;
+    let query = `SELECT * FROM applications WHERE ID = ${req.params.loan_id} AND userID = ${req.params.id}`;
     let query1 = `SELECT COALESCE(SUM(payment_amount+interest_amount), 0) amount FROM application_schedules 
     WHERE applicationID = ${req.params.loan_id} AND interest_collect_date <= CURDATE() AND status = 1`;
     let query2 = `SELECT COALESCE(SUM(payment_amount), 0) amount FROM application_schedules 
