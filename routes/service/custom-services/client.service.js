@@ -2293,7 +2293,7 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
 });
 
 router.get('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req, res) => {
-    let query = `SELECT * FROM applications WHERE ID = ${req.params.loan_id} AND userID = ${req.params.id}`;
+    let query = `SELECT * FROM applications WHERE ID = ${req.params.loan_id} AND userID = ${req.params.loan_id}`;
     let query1 = `SELECT COALESCE(SUM(payment_amount+interest_amount), 0) amount FROM application_schedules 
     WHERE applicationID = ${req.params.loan_id} AND interest_collect_date <= CURDATE() AND status = 1`;
     let query2 = `SELECT COALESCE(SUM(payment_amount), 0) amount FROM application_schedules 
@@ -2317,13 +2317,9 @@ router.get('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req,
                 "response": 'Application does not exist!'
             });
         db.query(query1, (error, overdue) => {
-            console.log(overdue)
             db.query(query2, (error, not_due) => {
-                console.log(not_due)
                 db.query(query3, (error, due) => {
-                    console.log(due)
                     db.query(query4, (error, paid) => {
-                        console.log(paid)
                         return res.send({
                             "status": 200,
                             "error": null,
