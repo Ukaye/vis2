@@ -387,11 +387,15 @@ router.delete('/application/bad_cheque_reason/:id', function (req, res, next) {
 
 router.get('/application/funding_source', function (req, res) {
     xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient) => {
-        let xeroAccounts = await xeroClient.accounts.get();
+        let xeroAccounts = [];
+        if (xeroClient) {
+            let xeroAccounts_ = await xeroClient.accounts.get();
+            xeroAccounts = xeroAccounts_.Accounts.filter((e) => {return e.Class === 'REVENUE'});
+        }
         return res.send({
             "status": 200,
             "message": "Funding sources fetched successfully!",
-            "response": xeroAccounts.Accounts.filter((e) => {return e.Class === 'REVENUE'})
+            "response": xeroAccounts
         });
     });
 });
@@ -400,7 +404,7 @@ router.get('/collection_bank', function (req, res) {
     xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
         let xeroAccounts = [];
         if (xeroClient) {
-            xeroAccounts_ = await xeroClient.accounts.get();
+            let xeroAccounts_ = await xeroClient.accounts.get();
             xeroAccounts = xeroAccounts_.Accounts.filter((e) => {return e.Type === 'BANK'});
         }
         return res.send({
@@ -415,7 +419,7 @@ router.get('/accounts', function (req, res) {
     xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient) => {
         let xeroAccounts = [];
         if (xeroClient) {
-            xeroAccounts_ = await xeroClient.accounts.get();
+            let xeroAccounts_ = await xeroClient.accounts.get();
             xeroAccounts = xeroAccounts_.Accounts;
         }
         return res.send({

@@ -3226,6 +3226,13 @@ users.post('/application/escrow', function(req, res, next) {
             db.query(`SELECT fullname FROM clients WHERE ID = ${data.clientID}`, (error, client) => {
                 if (data.type === 'debit') {
                     //Allocating Overpayment in xero
+                    db.query('INSERT INTO escrow SET ?', data, function (error, result, fields) {
+                        if(error){
+                            res.send({"status": 500, "error": error, "response": null});
+                        } else {
+                            res.send({"status": 200, "message": "Escrow saved successfully!"});
+                        }
+                    });
                 } else {
                     xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async (xeroClient) => {
                         if (xeroClient && integrations[0] && integrations[0]['xero_escrow_account']) {

@@ -9,6 +9,7 @@ function getCollectionBank() {
         type: "GET",
         url: "/settings/collection_bank",
         success: function (data) {
+            if (data.response[0]) $('#collection-bank-div').show();
             $.each(data.response, function (key, collection_bank) {
                 $('#collection_bank').append(`<option value="${collection_bank.Code}">${collection_bank.Name}</option>`);
             });
