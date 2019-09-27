@@ -386,7 +386,7 @@ router.delete('/application/bad_cheque_reason/:id', function (req, res, next) {
 });
 
 router.get('/application/funding_source', function (req, res) {
-    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
+    xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient) => {
         let xeroAccounts = await xeroClient.accounts.get();
         return res.send({
             "status": 200,

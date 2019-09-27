@@ -268,7 +268,7 @@ users.post('/new-user', function(req, res, next) {
 
 /* Add New Client */
 users.post('/new-client', function(req, res, next) {
-    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async () => {
+    xeroFunctions.authorizedOperation(req, res, 'xero_client', async () => {
         let id;
         let postData = req.body,
             query =  'INSERT INTO clients Set ?',
@@ -288,22 +288,24 @@ users.post('/new-client', function(req, res, next) {
                         if (rest && rest[0]){
                             return res.send(JSON.stringify({"status": 200, "error": null, "response": rest, "bvn_exists": "Yes"}));
                         }
-                        xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
-                            let contact = {
-                                Name: postData.fullname,
-                                ContactNumber: postData.phone,
-                                ContactStatus: 'ACTIVE',
-                                EmailAddress: postData.email,
-                                Phones: [{
-                                    PhoneType: 'MOBILE',
-                                    PhoneNumber: postData.phone
-                                }]
-                            };
-                            if (postData.first_name) contact.FirstName = postData.first_name;
-                            if (postData.last_name) contact.LastName = postData.last_name;
-                            if (postData.account) contact.BankAccountDetails = postData.account;
-                            let xeroContact = await xeroClient.contacts.create(contact);
-                            postData.xeroContactID = xeroContact.Contacts[0]['ContactNumber'];
+                        xeroFunctions.authorizedOperation(req, res, 'xero_client', async (xeroClient) => {
+                            if (xeroClient) {
+                                let contact = {
+                                    Name: postData.fullname,
+                                    ContactNumber: postData.phone,
+                                    ContactStatus: 'ACTIVE',
+                                    EmailAddress: postData.email,
+                                    Phones: [{
+                                        PhoneType: 'MOBILE',
+                                        PhoneNumber: postData.phone
+                                    }]
+                                };
+                                if (postData.first_name) contact.FirstName = postData.first_name;
+                                if (postData.last_name) contact.LastName = postData.last_name;
+                                if (postData.account) contact.BankAccountDetails = postData.account;
+                                let xeroContact = await xeroClient.contacts.create(contact);
+                                postData.xeroContactID = xeroContact.Contacts[0]['ContactNumber'];
+                            }
                             connection.query(query,postData, function (error, re, fields) {
                                 if(error){
                                     console.log(error);
@@ -337,22 +339,24 @@ users.post('/new-client', function(req, res, next) {
                         });
                     });
                 } else {
-                    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
-                        let contact = {
-                            Name: postData.fullname,
-                            ContactNumber: postData.phone,
-                            ContactStatus: 'ACTIVE',
-                            EmailAddress: postData.email,
-                            Phones: [{
-                                PhoneType: 'MOBILE',
-                                PhoneNumber: postData.phone
-                            }]
-                        };
-                        if (postData.first_name) contact.FirstName = postData.first_name;
-                        if (postData.last_name) contact.LastName = postData.last_name;
-                        if (postData.account) contact.BankAccountDetails = postData.account;
-                        let xeroContact = await xeroClient.contacts.create(contact);
-                        postData.xeroContactID = xeroContact.Contacts[0]['ContactNumber'];
+                    xeroFunctions.authorizedOperation(req, res, 'xero_client', async (xeroClient) => {
+                        if (xeroClient) {
+                            let contact = {
+                                Name: postData.fullname,
+                                ContactNumber: postData.phone,
+                                ContactStatus: 'ACTIVE',
+                                EmailAddress: postData.email,
+                                Phones: [{
+                                    PhoneType: 'MOBILE',
+                                    PhoneNumber: postData.phone
+                                }]
+                            };
+                            if (postData.first_name) contact.FirstName = postData.first_name;
+                            if (postData.last_name) contact.LastName = postData.last_name;
+                            if (postData.account) contact.BankAccountDetails = postData.account;
+                            let xeroContact = await xeroClient.contacts.create(contact);
+                            postData.xeroContactID = xeroContact.Contacts[0]['ContactNumber'];
+                        }
                         connection.query(query,postData, function (error, re, fields) {
                             if(error){
                                 res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
@@ -1610,7 +1614,7 @@ users.post('/edit-user/:id/:user', function(req, res, next) {
 });
 
 users.post('/edit-client/:id', function(req, res, next) {
-    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
+    xeroFunctions.authorizedOperation(req, res, 'xero_client', async (xeroClient) => {
         let date = Date.now(),
             postData = req.body;
         postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -1624,7 +1628,7 @@ users.post('/edit-client/:id', function(req, res, next) {
             'client_state=?, postcode=?, client_country=?, years_add=?, ownership=?, employer_name=?, industry=?, job=?, salary=?, job_country=?, off_address=?, off_state=?, ' +
             'doe=?, guarantor_name=?, guarantor_occupation=?, relationship=?, years_known=?, guarantor_phone=?, guarantor_email=?, guarantor_address=?, gua_country=?, ' +
             'product_sold =? , capital_invested = ?, market_name =? , market_years = ?, market_address =? , kin_fullname = ?, kin_phone =? , kin_relationship = ?, images_folder = ?, date_modified = ? where ID=?';
-        if (postData.xeroContactID) {
+        if (xeroClient && postData.xeroContactID) {
             let contact = {
                 Name: postData.fullname,
                 ContactNumber: postData.phone,
@@ -1755,13 +1759,13 @@ users.post('/en-user/:id', function(req, res, next) {
 
 // Change Client Status
 users.post('/del-client/:id', function(req, res, next) {
-    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
+    xeroFunctions.authorizedOperation(req, res, 'xero_client', async (xeroClient) => {
         let date = Date.now(),
             postData = req.body;
         postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
         let payload = [postData.date_modified, req.params.id],
             query = 'Update clients SET status = 0, date_modified = ? where ID=?';
-        if (postData.xeroContactID) {
+        if (xero_client && postData.xeroContactID) {
             let xeroContact = await xeroClient.contacts.update({
                 ContactNumber: postData.xeroContactID,
                 ContactStatus: 'ARCHIVED'
@@ -1779,13 +1783,13 @@ users.post('/del-client/:id', function(req, res, next) {
 
 // Enable Client
 users.post('/en-client/:id', function(req, res, next) {
-    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
+    xeroFunctions.authorizedOperation(req, res, 'xero_client', async (xeroClient) => {
         let date = Date.now(),
             postData = req.body;
         postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
         let payload = [postData.date_modified, req.params.id],
             query = 'Update clients SET status = 1, date_modified = ? where ID=?';
-        // if (postData.xeroContactID) {
+        // if (xeroClient && postData.xeroContactID) {
         //     let xeroContact = await xeroClient.contacts.update({
         //         ContactNumber: postData.xeroContactID,
         //         ContactStatus: 'ACTIVE'
@@ -1846,7 +1850,7 @@ users.post('/new-owner', function(req, res, next) {
  */
 
 users.post('/apply', function(req, res) {
-    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async () => {
+    xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async () => {
         let data = {},
             workflow_id = req.body.workflowID,
             postData = Object.assign({},req.body),
@@ -2614,7 +2618,7 @@ users.get('/application/comments/:id', function(req, res, next) {
 });
 
 users.post('/application/schedule/:id', function(req, res, next) {
-    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async () => {
+    xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async () => {
         db.getConnection(function(err, connection) {
             if (err) throw err;
 
@@ -2631,23 +2635,25 @@ users.post('/application/schedule/:id', function(req, res, next) {
                             let obj2 = {};
                             async.forEach(invoices, function (old_invoice, callback) {
                                 if (old_invoice.interest_invoice_no && client[0]['funding_source']) {
-                                    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
-                                        let xeroInterest2 = await xeroClient.invoices.update({
-                                            Type: 'ACCREC',
-                                            Contact: {
-                                                Name: client[0]['fullname']
-                                            },
-                                            Date: old_invoice.interest_create_date,
-                                            DueDate: old_invoice.interest_collect_date,
-                                            LineItems: [{
-                                                Description: `LOAN ID: ${helperFunctions.padWithZeroes(old_invoice.applicationID, 6)}`,
-                                                Quantity: '1',
-                                                UnitAmount: old_invoice.interest_amount,
-                                                AccountCode: client[0]['funding_source']
-                                            }],
-                                            InvoiceNumber: old_invoice.interest_invoice_no,
-                                            Status: "VOIDED"
-                                        });
+                                    xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient) => {
+                                        if (xeroClient) {
+                                            let xeroInterest2 = await xeroClient.invoices.update({
+                                                Type: 'ACCREC',
+                                                Contact: {
+                                                    Name: client[0]['fullname']
+                                                },
+                                                Date: old_invoice.interest_create_date,
+                                                DueDate: old_invoice.interest_collect_date,
+                                                LineItems: [{
+                                                    Description: `LOAN ID: ${helperFunctions.padWithZeroes(old_invoice.applicationID, 6)}`,
+                                                    Quantity: '1',
+                                                    UnitAmount: old_invoice.interest_amount,
+                                                    AccountCode: client[0]['funding_source']
+                                                }],
+                                                InvoiceNumber: old_invoice.interest_invoice_no,
+                                                Status: "VOIDED"
+                                            });
+                                        }
                                     });
                                 }
                                 obj2.date_modified = date_modified;
@@ -2671,8 +2677,8 @@ users.post('/application/schedule/:id', function(req, res, next) {
                                         });
                                     }
                                 }
-                                xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
-                                    if (client[0]['funding_source']) {
+                                xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient) => {
+                                    if (xeroClient && client[0]['funding_source']) {
                                         let xeroPrincipal = await xeroClient.invoices.create({
                                             Type: 'ACCREC',
                                             Contact: {
@@ -2686,9 +2692,9 @@ users.post('/application/schedule/:id', function(req, res, next) {
                                     }
                                     let count = 0;
                                     async.forEach(schedule, (obj, callback2) => {
-                                        xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
+                                        xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient) => {
                                             obj.applicationID = req.params.id;
-                                            if (client[0]['funding_source']) {
+                                            if (xeroClient && client[0]['funding_source']) {
                                                 let xeroInterest = await xeroClient.invoices.create({
                                                     Type: 'ACCREC',
                                                     Contact: {
@@ -2727,7 +2733,7 @@ users.post('/application/schedule/:id', function(req, res, next) {
 });
 
 users.post('/application/approve-schedule/:id', function(req, res, next) {
-    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async () => {
+    xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async () => {
         db.getConnection(function(err, connection) {
             if (err) throw err;
 
@@ -2751,23 +2757,25 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                 let obj2 = {};
                                 async.forEach(old_schedule, (old_invoice, callback2) => {
                                     if (old_invoice.interest_invoice_no && application.funding_source) {
-                                        xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
-                                            let xeroInterest2 = await xeroClient.invoices.update({
-                                                Type: 'ACCREC',
-                                                Contact: {
-                                                    Name: application.fullname
-                                                },
-                                                Date: old_invoice.interest_create_date,
-                                                DueDate: old_invoice.interest_collect_date,
-                                                LineItems: [{
-                                                    Description: `LOAN ID: ${helperFunctions.padWithZeroes(old_invoice.applicationID, 6)}`,
-                                                    Quantity: '1',
-                                                    UnitAmount: old_invoice.interest_amount,
-                                                    AccountCode: application.funding_source
-                                                }],
-                                                InvoiceNumber: old_invoice.interest_invoice_no,
-                                                Status: "VOIDED"
-                                            });
+                                        xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient) => {
+                                            if (xeroClient) {
+                                                let xeroInterest2 = await xeroClient.invoices.update({
+                                                    Type: 'ACCREC',
+                                                    Contact: {
+                                                        Name: application.fullname
+                                                    },
+                                                    Date: old_invoice.interest_create_date,
+                                                    DueDate: old_invoice.interest_collect_date,
+                                                    LineItems: [{
+                                                        Description: `LOAN ID: ${helperFunctions.padWithZeroes(old_invoice.applicationID, 6)}`,
+                                                        Quantity: '1',
+                                                        UnitAmount: old_invoice.interest_amount,
+                                                        AccountCode: application.funding_source
+                                                    }],
+                                                    InvoiceNumber: old_invoice.interest_invoice_no,
+                                                    Status: "VOIDED"
+                                                });
+                                            }
                                         });
                                     }
                                     obj2.date_modified = date_modified;
@@ -2791,8 +2799,8 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                 });
                                             }
                                         }
-                                        xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
-                                            if (application.funding_source) {
+                                        xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient) => {
+                                            if (xeroClient && application.funding_source) {
                                                 let xeroPrincipal = await xeroClient.invoices.create({
                                                     Type: 'ACCREC',
                                                     Contact: {
@@ -2807,8 +2815,8 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                             let obj = {},
                                                 count = 0;
                                             async.forEach(new_schedule, (new_invoice, callback) => {
-                                                xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
-                                                    if (application.funding_source) {
+                                                xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient) => {
+                                                    if (xeroClient && application.funding_source) {
                                                         let xeroInterest = await xeroClient.invoices.create({
                                                             Type: 'ACCREC',
                                                             Contact: {
@@ -3061,7 +3069,7 @@ users.get('/application/schedule-history/write-off/:id', function(req, res, next
 });
 
 users.post('/application/confirm-payment/:id/:application_id/:agent_id', function(req, res, next) {
-    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async () => {
+    xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async () => {
         db.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID, 
             s.principal_invoice_no, s.interest_invoice_no FROM applications a, clients c, application_schedules s 
             WHERE a.ID = ${req.params.application_id} AND a.userID = c.ID AND a.ID = s.applicationID`, function (error, app, fields) {
@@ -3112,8 +3120,8 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                 invoice.type = 'penalty';
                             }
                         }
-                        xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
-                            if (invoice.payment_amount > 0 && invoice.xeroCollectionBankID) {
+                        xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
+                            if (xeroClient && invoice.payment_amount > 0 && invoice.xeroCollectionBankID) {
                                 let xeroPayment = await xeroClient.payments.create({
                                     Invoice: {
                                         InvoiceNumber: application.principal_invoice_no
@@ -3127,7 +3135,7 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                 });
                                 invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
                             }
-                            if (invoice.interest_amount > 0 && invoice.xeroCollectionBankID) {
+                            if (xeroClient && invoice.interest_amount > 0 && invoice.xeroCollectionBankID) {
                                 let xeroPayment = await xeroClient.payments.create({
                                     Invoice: {
                                         InvoiceNumber: application.interest_invoice_no
@@ -3173,7 +3181,7 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
 });
 
 users.post('/application/escrow', function(req, res, next) {
-    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async () => {
+    xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async () => {
         let data = req.body;
         data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
         db.query(`SELECT xero_escrow_account FROM integrations WHERE ID = (SELECT MAX(ID) FROM integrations)`, (error, integrations) => {
@@ -3181,8 +3189,8 @@ users.post('/application/escrow', function(req, res, next) {
                 if (data.type === 'debit') {
                     //Allocating Overpayment in xero
                 } else {
-                    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
-                        if (integrations[0] && integrations[0]['xero_escrow_account']) {
+                    xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async (xeroClient) => {
+                        if (xeroClient && integrations[0] && integrations[0]['xero_escrow_account']) {
                             let xeroPayment = await xeroClient.bankTransactions.create({
                                 Type: 'RECEIVE-OVERPAYMENT',
                                 Contact: {
@@ -3284,7 +3292,7 @@ users.get('/application/invoice-history/:id', function(req, res, next) {
 });
 
 users.get('/application/payment-reversal/:id/:invoice_id', function(req, res, next) {
-    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async () => {
+    xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async () => {
         let id;
         db.query('UPDATE schedule_history SET status=0 WHERE ID=?', [req.params.id], function (error, history, fields) {
             if(error){
@@ -3298,8 +3306,8 @@ users.get('/application/payment-reversal/:id/:invoice_id', function(req, res, ne
                     else {
                         id = result[0]['applicationID'];
                         if (result[0]['xeroPrincipalPaymentID'] || result[0]['xeroInterestPaymentID']) {
-                            xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
-                                if (result[0]['xeroPrincipalPaymentID']) {
+                            xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
+                                if (xeroClient && result[0]['xeroPrincipalPaymentID']) {
                                     let xeroPayment = await xeroClient.payments.update(
                                         {
                                             Status: 'DELETED'
@@ -3309,7 +3317,7 @@ users.get('/application/payment-reversal/:id/:invoice_id', function(req, res, ne
                                         }
                                     );
                                 }
-                                if (result[0]['xeroInterestPaymentID']) {
+                                if (xeroClient && result[0]['xeroInterestPaymentID']) {
                                     let xeroPayment = await xeroClient.payments.update(
                                         {
                                             Status: 'DELETED'
@@ -3342,7 +3350,7 @@ users.get('/application/payment-reversal/:id/:invoice_id', function(req, res, ne
 });
 
 users.get('/application/escrow-payment-reversal/:id', function(req, res, next) {
-    xeroFunctions.authorizedOperation(req, res, req.headers.referer, async () => {
+    xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async () => {
         let update = {};
         update.status = 0,
         update.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -3352,18 +3360,20 @@ users.get('/application/escrow-payment-reversal/:id', function(req, res, next) {
                     res.send({"status": 500, "error": error, "response": null});
                 } else {
                     if (escrow[0]['xeroOverpaymentID'] && integrations[0] && integrations[0]['xero_escrow_account']) {
-                        xeroFunctions.authorizedOperation(req, res, req.headers.referer, async (xeroClient) => {
-                            let xeroPayment = await xeroClient.payments.update({
-                                Overpayment: {
-                                    OverpaymentID: escrow[0]['xeroOverpaymentID']
-                                },
-                                Account: {
-                                    Code: integrations[0]['xero_escrow_account']
-                                },
-                                Date: update.date_modified,
-                                Amount: escrow[0]['amount'],
-                                Reference: `CLIENT ID: ${helperFunctions.padWithZeroes(escrow[0]['clientID'], 6)}`
-                            });
+                        xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async (xeroClient) => {
+                            if (xeroClient) {
+                                let xeroPayment = await xeroClient.payments.update({
+                                    Overpayment: {
+                                        OverpaymentID: escrow[0]['xeroOverpaymentID']
+                                    },
+                                    Account: {
+                                        Code: integrations[0]['xero_escrow_account']
+                                    },
+                                    Date: update.date_modified,
+                                    Amount: escrow[0]['amount'],
+                                    Reference: `CLIENT ID: ${helperFunctions.padWithZeroes(escrow[0]['clientID'], 6)}`
+                                });
+                            }
                         });
                     }
                     db.query(`UPDATE escrow SET ? WHERE ID = ${req.params.id}`, update, function (error, response, fields) {
