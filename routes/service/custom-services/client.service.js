@@ -2301,7 +2301,7 @@ router.get('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req,
         WHEN DAY(CURDATE()) > DAY(interest_collect_date) THEN DAY(CURDATE()) - DAY(interest_collect_date)
         WHEN DAY(CURDATE()) < DAY(interest_collect_date) THEN 30 - (DAY(interest_collect_date) - DAY(CURDATE()))
         ElSE 0 END)), 0) amount FROM application_schedules WHERE applicationID = ${req.params.loan_id} AND status = 1 
-        AND MONTH(interest_collect_date) = MONTH(CURDATE()) AND YEAR(interest_collect_date) = YEAR(CURDATE());`;
+        AND MONTH(interest_collect_date) = MONTH(CURDATE()) AND YEAR(interest_collect_date) = YEAR(CURDATE())`;
     let query4 = `SELECT COALESCE(SUM(payment_amount+interest_amount), 0) amount FROM schedule_history 
     WHERE applicationID = ${req.params.loan_id} AND clientID = ${req.params.id} AND status = 1`;
     db.query(query1, (error, overdue) => {
