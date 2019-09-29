@@ -26,11 +26,11 @@ $('#xero_escrow').click(function (e) {
     }
 });
 
-$('#xero_paidoff').click(function (e) {
-    if ($('#xero_paidoff').is(':checked')) {
-        $('#xero_paidoff_account').prop('disabled', false);
+$('#xero_payoff').click(function (e) {
+    if ($('#xero_payoff').is(':checked')) {
+        $('#xero_payoff_account').prop('disabled', false);
     } else {
-        $('#xero_paidoff_account').prop('disabled', true);
+        $('#xero_payoff_account').prop('disabled', true);
     }
 });
 
@@ -50,12 +50,11 @@ function getAccounts() {
             $.each(data.response, function (key, account) {
                 $('#xero_escrow_account').append(`<option value="${account.Code}">${account.Name} 
                     (${account.Type})</option>`);
-                if (account.Class === 'EXPENSE') {
-                    $('#xero_paidoff_account').append(`<option value="${account.Code}">${account.Name} 
-                        (${account.Type})</option>`);
+                if (account.Type === 'BANK')
+                    $('#xero_payoff_account').append(`<option value="${account.Code}">${account.Name}</option>`);
+                if (account.Class === 'EXPENSE')
                     $('#xero_writeoff_account').append(`<option value="${account.Code}">${account.Name} 
                         (${account.Type})</option>`);
-                }
             });
             getXeroConfig();
         }
@@ -76,11 +75,11 @@ function getXeroConfig() {
                 $('#xero_escrow_account').prop('disabled', false);
             }
             if (config.xero_escrow_account) $('#xero_escrow_account').val(config.xero_escrow_account);
-            if (config.xero_paidoff) {
-                $('#xero_paidoff').prop('checked', true);
-                $('#xero_paidoff_account').prop('disabled', false);
+            if (config.xero_payoff) {
+                $('#xero_payoff').prop('checked', true);
+                $('#xero_payoff_account').prop('disabled', false);
             }
-            if (config.xero_paidoff_account) $('#xero_paidoff_account').val(config.xero_paidoff_account);
+            if (config.xero_payoff_account) $('#xero_payoff_account').val(config.xero_payoff_account);
             if (config.xero_writeoff) {
                 $('#xero_writeoff').prop('checked', true);
                 $('#xero_writeoff_account').prop('disabled', false);
@@ -101,11 +100,11 @@ function saveXeroConfig() {
         config.xero_escrow = 1;
         config.xero_escrow_account = $('#xero_escrow_account').val();
     }
-    if ($('#xero_paidoff').is(':checked')) {
-        if ($('#xero_paidoff_account').val() === '000')
+    if ($('#xero_payoff').is(':checked')) {
+        if ($('#xero_payoff_account').val() === '000')
             return notification('Kindly select a pay off account!', '', 'warning');
-        config.xero_paidoff = 1;
-        config.xero_paidoff_account = $('#xero_paidoff_account').val();
+        config.xero_payoff = 1;
+        config.xero_payoff_account = $('#xero_payoff_account').val();
     }
     if ($('#xero_writeoff').is(':checked')) {
         if ($('#xero_writeoff_account').val() === '000')

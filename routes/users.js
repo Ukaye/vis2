@@ -3195,7 +3195,7 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
     xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async () => {
         db.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID, 
             s.principal_invoice_no, s.interest_invoice_no FROM applications a, clients c, application_schedules s 
-            WHERE a.ID = ${req.params.application_id} AND a.userID = c.ID AND a.ID = s.applicationID`, function (error, app, fields) {
+            WHERE a.ID = ${req.params.application_id} AND a.userID = c.ID AND a.ID = s.applicationID AND s.ID = ${req.params.id}`, (error, app) => {
             if (error) {
                 res.send({"status": 500, "error": error, "response": null});
             } else if (!app[0]) {
@@ -3244,7 +3244,8 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                             }
                         }
                         xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
-                            if (xeroClient && invoice.payment_amount > 0 && invoice.xeroCollectionBankID) {
+                            if (xeroClient && invoice.payment_amount > 0 && 
+                                application.principal_invoice_no && invoice.xeroCollectionBankID) {
                                 let xeroPayment = await xeroClient.payments.create({
                                     Invoice: {
                                         InvoiceNumber: application.principal_invoice_no
@@ -3258,7 +3259,8 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                 });
                                 invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
                             }
-                            if (xeroClient && invoice.interest_amount > 0 && invoice.xeroCollectionBankID) {
+                            if (xeroClient && invoice.interest_amount > 0 && 
+                                application.interest_invoice_no && invoice.xeroCollectionBankID) {
                                 let xeroPayment = await xeroClient.payments.create({
                                     Invoice: {
                                         InvoiceNumber: application.interest_invoice_no
@@ -3531,47 +3533,109 @@ users.post('/application/loancirrus-id/:application_id', function(req, res, next
 });
 
 users.post('/application/pay-off/:id/:agentID', function(req, res, next) {
-    let data = req.body;
-    data.close_status = 1;
-    db.getConnection(function(err, connection) {
-        if (err) throw err;
+    xeroFunctions.authorizedOperation(req, res, 'xero_payoff', async () => {
+        let data = req.body;
+        data.close_status = 1;
+        db.getConnection(function(err, connection) {
+            if (err) throw err;
 
-        connection.query('UPDATE applications SET ? WHERE ID = '+req.params.id, data, function (error, result, fields) {
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
-            } else {
-                connection.query('SELECT * FROM application_schedules WHERE applicationID = ? AND status = 1 AND payment_status = 0', [req.params.id], function (error, invoices, fields) {
-                    if(error){
+            connection.query(`SELECT xero_payoff_account FROM integrations WHERE ID = (SELECT MAX(ID) FROM integrations)`, (error, integrations) => {
+                connection.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID 
+                    FROM applications a, clients c WHERE a.ID = ${req.params.id} AND a.userID = c.ID`, (error, app) => {
+                    if (error) {
                         res.send({"status": 500, "error": error, "response": null});
+                    } else if (!app[0]) {
+                        res.send({"status": 500, "error": "Application does not exist!", "response": null});
                     } else {
-                        async.forEach(invoices, function (invoice_obj, callback) {
-                            let invoice = {};
-                            invoice.invoiceID = invoice_obj.ID;
-                            invoice.applicationID = req.params.id;
-                            invoice.payment_amount = invoice_obj.payment_amount;
-                            invoice.interest_amount = invoice_obj.interest_amount;
-                            invoice.fees_amount = invoice_obj.fees_amount;
-                            invoice.penalty_amount = invoice_obj.penalty_amount;
-                            invoice.agentID = req.params.agentID;
-                            invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                            connection.query('UPDATE application_schedules SET payment_status=1 WHERE ID = ?', [invoice_obj.ID], function (error, result, fields) {
-                                connection.query('INSERT INTO schedule_history SET ?', invoice, function (error, response, fields) {
-                                    callback();
+                        let application = app[0];
+                        connection.query('UPDATE applications SET ? WHERE ID = '+req.params.id, data, function (error, result, fields) {
+                            if(error){
+                                res.send({"status": 500, "error": error, "response": null});
+                            } else {
+                                connection.query('SELECT * FROM application_schedules WHERE applicationID = ? AND status = 1 AND payment_status = 0', [req.params.id], function (error, invoices, fields) {
+                                    if(error){
+                                        res.send({"status": 500, "error": error, "response": null});
+                                    } else {
+                                        async.forEach(invoices, function (invoice_obj, callback) {
+                                            let invoice = {};
+                                            invoice.invoiceID = invoice_obj.ID;
+                                            invoice.applicationID = req.params.id;
+                                            invoice.payment_amount = invoice_obj.payment_amount;
+                                            invoice.interest_amount = invoice_obj.interest_amount;
+                                            invoice.fees_amount = invoice_obj.fees_amount;
+                                            invoice.penalty_amount = invoice_obj.penalty_amount;
+                                            invoice.agentID = req.params.agentID;
+                                            invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                                            invoice.clientID = application.clientID;
+                                            invoice.loan_officerID = application.loan_officerID;
+                                            invoice.branchID = application.branchID;
+                                            if (invoice.payment_amount > 0 && invoice.interest_amount > 0) {
+                                                invoice.type = 'multiple';
+                                            } else {
+                                                if (invoice.payment_amount > 0) {
+                                                    invoice.type = 'principal';
+                                                } else if (invoice.interest_amount > 0) {
+                                                    invoice.type = 'interest';
+                                                } else if (invoice.fees_amount > 0) {
+                                                    invoice.type = 'fees';
+                                                } else if (invoice.penalty_amount > 0) {
+                                                    invoice.type = 'penalty';
+                                                }
+                                            }
+                                            xeroFunctions.authorizedOperation(req, res, 'xero_payoff', async (xeroClient) => {
+                                                if (xeroClient && invoice.payment_amount > 0 && invoice_obj.principal_invoice_no && 
+                                                integrations[0] && integrations[0]['xero_payoff_account']) {
+                                                    let xeroPayment = await xeroClient.payments.create({
+                                                        Invoice: {
+                                                            InvoiceNumber: invoice_obj.principal_invoice_no
+                                                        },
+                                                        Account: {
+                                                            Code: integrations[0]['xero_payoff_account']
+                                                        },
+                                                        Date: invoice.date_created,
+                                                        Amount: invoice.payment_amount,
+                                                        IsReconciled: true
+                                                    });
+                                                    invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                                                }
+                                                if (xeroClient && invoice.interest_amount > 0 && invoice_obj.interest_invoice_no && 
+                                                integrations[0] && integrations[0]['xero_payoff_account']) {
+                                                    let xeroPayment = await xeroClient.payments.create({
+                                                        Invoice: {
+                                                            InvoiceNumber: invoice_obj.interest_invoice_no
+                                                        },
+                                                        Account: {
+                                                            Code: integrations[0]['xero_payoff_account']
+                                                        },
+                                                        Date: invoice.date_created,
+                                                        Amount: invoice.interest_amount,
+                                                        IsReconciled: true
+                                                    });
+                                                    invoice.xeroInterestPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                                                }
+                                                connection.query('UPDATE application_schedules SET payment_status=1 WHERE ID = ?', [invoice_obj.ID], function (error, result, fields) {
+                                                    connection.query('INSERT INTO schedule_history SET ?', invoice, function (error, response, fields) {
+                                                        callback();
+                                                    });
+                                                });
+                                            });
+                                        }, function (data) {
+                                            connection.release();
+                                            let payload = {};
+                                            payload.category = 'Application';
+                                            payload.userid = req.cookies.timeout;
+                                            payload.description = 'Loan Application Paid Off';
+                                            payload.affected = req.params.id;
+                                            notificationsService.log(req, payload);
+                                            res.send({"status": 200, "message": "Application pay off successful!"});
+                                        });
+                                    }
                                 });
-                            });
-                        }, function (data) {
-                            connection.release();
-                            let payload = {}
-                            payload.category = 'Application'
-                            payload.userid = req.cookies.timeout
-                            payload.description = 'Loan Application Paid Off'
-                            payload.affected = req.params.id
-                            notificationsService.log(req, payload)
-                            res.send({"status": 200, "message": "Application pay off successful!"});
+                            }
                         });
                     }
                 });
-            }
+            });
         });
     });
 });
