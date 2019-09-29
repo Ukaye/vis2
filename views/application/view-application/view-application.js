@@ -1743,7 +1743,7 @@ function payOffLoan() {
         'data': payoff,
         'success': function (data) {
             notification('Loan closed successfully','','success');
-            // window.location.reload();
+            window.location.reload();
         },
         'error': function (err) {
             notification('Oops! An error occurred while closing loan','','error');
