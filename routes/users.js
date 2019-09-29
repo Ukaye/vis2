@@ -3136,12 +3136,58 @@ users.get('/application/edit-schedule-history/:id', function(req, res, next) {
 });
 
 users.get('/application/schedule-history/write-off/:id', function(req, res, next) {
-    db.query('UPDATE application_schedules SET ? WHERE ID = '+req.params.id, {payment_status:2,date_modified:moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')}, function (error, result, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
-        } else {
-            res.send({"status": 200, "message": "Schedule write off successful!"});
-        }
+    xeroFunctions.authorizedOperation(req, res, 'xero_writeoff', async () => {
+        db.query(`SELECT xero_writeoff_account FROM integrations WHERE ID = (SELECT MAX(ID) FROM integrations)`, (error, integrations) => {
+            db.query('SELECT s.interest_invoice_no, s.interest_amount, a.ID applicationID, c.fullname FROM application_schedules s, applications a, clients c '+
+            'WHERE s.ID = '+req.params.id+' AND s.applicationID = a.ID AND a.userID = c.ID', function (error, invoice, fields) {
+                if(error){
+                    res.send({"status": 500, "error": error, "response": null});
+                } else {
+                    let update = {
+                        payment_status: 2,
+                        date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
+                    };
+                    db.query('UPDATE application_schedules SET ? WHERE ID = '+req.params.id, update, function (error, result, fields) {
+                        if(error){
+                            res.send({"status": 500, "error": error, "response": null});
+                        } else {
+                            xeroFunctions.authorizedOperation(req, res, 'xero_writeoff', async (xeroClient) => {
+                                if (xeroClient && invoice[0]['interest_invoice_no'] && integrations[0] && integrations[0]['xero_writeoff_account']) {
+                                    let xeroWriteOff = await xeroClient.creditNotes.create({
+                                        Type: 'ACCRECCREDIT',
+                                        Status: 'AUTHORISED',
+                                        Contact: {
+                                            Name: invoice[0]['fullname']
+                                        },
+                                        Date: update.date_modified,
+                                        LineItems: [{
+                                            Description: `LoanID: ${helperFunctions.padWithZeroes(invoice[0]['applicationID'], 6)}`,
+                                            Quantity: '1',
+                                            UnitAmount: invoice[0]['interest_amount'],
+                                            AccountCode: integrations[0]['xero_writeoff_account'],
+                                            TaxType: 'NONE'
+                                        }]
+                                    });
+                                    let xeroWriteOff2 = await xeroClient.creditNotes.update({
+                                        Type: 'ACCRECCREDIT',
+                                        CreditNoteNumber: xeroWriteOff.CreditNotes[0]['CreditNoteNumber'],
+                                        Contact: {
+                                            Name: invoice[0]['fullname']
+                                        },
+                                        Amount: invoice[0]['interest_amount'],
+                                        Invoice: {
+                                            InvoiceNumber: invoice[0]['interest_invoice_no']
+                                        },
+                                        Date: update.date_modified
+                                    });
+                                }
+                            });
+                            res.send({"status": 200, "message": "Schedule write off successful!"});
+                        }
+                    });
+                }
+            });
+        });
     });
 });
 
@@ -3531,20 +3577,64 @@ users.post('/application/pay-off/:id/:agentID', function(req, res, next) {
 });
 
 users.post('/application/write-off/:id/:agentID', function(req, res, next) {
-    let data = req.body;
-    data.close_status = 2;
-    db.query('UPDATE applications SET ? WHERE ID = '+req.params.id, data, function (error, result, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
-        } else {
-            let payload = {}
-            payload.category = 'Application'
-            payload.userid = req.cookies.timeout
-            payload.description = 'Loan Application Written Off'
-            payload.affected = req.params.id
-            notificationsService.log(req, payload)
-            res.send({"status": 200, "message": "Application write off successful!"});
-        }
+    xeroFunctions.authorizedOperation(req, res, 'xero_writeoff', async () => {
+        db.query(`SELECT xero_writeoff_account FROM integrations WHERE ID = (SELECT MAX(ID) FROM integrations)`, (error, integrations) => {
+            db.query('SELECT s.principal_invoice_no, c.fullname FROM applications a, application_schedules s, clients c '+
+            'WHERE a.ID = '+req.params.id+' AND s.ID = (SELECT MIN(ID) FROM application_schedules WHERE a.ID = applicationID AND status = 1) '+
+            'AND a.userID = c.ID', function (error, invoice, fields) {
+                if(error){
+                    res.send({"status": 500, "error": error, "response": null});
+                } else {
+                    let data = req.body;
+                    data.close_status = 2;
+                    data.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                    db.query('UPDATE applications SET ? WHERE ID = '+req.params.id, data, function (error, result, fields) {
+                        if(error){
+                            res.send({"status": 500, "error": error, "response": null});
+                        } else {
+                            xeroFunctions.authorizedOperation(req, res, 'xero_writeoff', async (xeroClient) => {
+                                if (xeroClient && invoice[0]['principal_invoice_no'] && integrations[0] && integrations[0]['xero_writeoff_account']) {
+                                    let xeroWriteOff = await xeroClient.creditNotes.create({
+                                        Type: 'ACCRECCREDIT',
+                                        Status: 'AUTHORISED',
+                                        Contact: {
+                                            Name: invoice[0]['fullname']
+                                        },
+                                        Date: data.date_modified,
+                                        LineItems: [{
+                                            Description: `LoanID: ${helperFunctions.padWithZeroes(req.params.id, 6)}`,
+                                            Quantity: '1',
+                                            UnitAmount: data.close_amount,
+                                            AccountCode: integrations[0]['xero_writeoff_account'],
+                                            TaxType: 'NONE'
+                                        }]
+                                    });
+                                    let xeroWriteOff2 = await xeroClient.creditNotes.update({
+                                        Type: 'ACCRECCREDIT',
+                                        CreditNoteNumber: xeroWriteOff.CreditNotes[0]['CreditNoteNumber'],
+                                        Contact: {
+                                            Name: invoice[0]['fullname']
+                                        },
+                                        Amount: data.close_amount,
+                                        Invoice: {
+                                            InvoiceNumber: invoice[0]['principal_invoice_no']
+                                        },
+                                        Date: data.date_modified
+                                    });
+                                }
+                            });
+                            let payload = {};
+                            payload.category = 'Application';
+                            payload.userid = req.cookies.timeout;
+                            payload.description = 'Loan Application Written Off';
+                            payload.affected = req.params.id;
+                            notificationsService.log(req, payload);
+                            res.send({"status": 200, "message": "Application write off successful!"});
+                        }
+                    });
+                }
+            });
+        });
     });
 });
 
