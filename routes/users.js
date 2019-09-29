@@ -2987,37 +2987,52 @@ users.get('/application/schedule/:id', function(req, res, next) {
 });
 
 users.post('/application/add-payment/:id/:agent_id', function(req, res, next) {
-    let data = req.body;
-    data.applicationID = req.params.id;
-    data.payment_status = 1;
-    data.payment_collect_date = data.interest_collect_date;
-    db.query('INSERT INTO application_schedules SET ?', data, function (error, response, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
-        } else {
-            let payload = {}
-            payload.category = 'Application'
-            payload.userid = req.cookies.timeout
-            payload.description = 'New Loan Application Payment'
-            payload.affected = req.params.id
-            notificationsService.log(req, payload)
-            return res.send({"status": 200, "message": "Payment added successfully!"});
-            // db.query('SELECT MAX(ID) AS ID from application_schedules', function(err, invoice_obj, fields) {
-            //     let invoice = {};
-            //     invoice.agentID = req.params.agent_id;
-            //     invoice.applicationID = req.params.id;
-            //     invoice.invoiceID = invoice_obj[0]['ID'];
-            //     invoice.interest_amount = data.actual_interest_amount;
-            //     invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-            //     db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response, fields) {
-            //         if(error){
-            //             res.send({"status": 500, "error": error, "response": null});
-            //         } else {
-            //             res.send({"status": 200, "message": "Payment added successfully!"});
-            //         }
-            //     });
-            // });
-        }
+    xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async () => {
+        db.query('SELECT a.funding_source, c.fullname FROM applications a, clients c '+
+        'WHERE a.ID = ? AND a.userID = c.ID', [req.params.id], function (error, application, fields) {
+            if(error){
+                res.send({"status": 500, "error": error, "response": null});
+            } else {
+                let data = req.body;
+                data.applicationID = req.params.id;
+                data.payment_create_date = data.interest_create_date;
+                data.payment_collect_date = data.interest_collect_date;
+                data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient) => {
+                    if (xeroClient && application[0]['funding_source']) {
+                        let xeroInterest = await xeroClient.invoices.create({
+                            Type: 'ACCREC',
+                            Contact: {
+                                Name: application[0]['fullname']
+                            },
+                            Date: data.interest_create_date,
+                            DueDate: data.interest_collect_date,
+                            LineItems: [{
+                                Description: `LOAN ID: ${helperFunctions.padWithZeroes(data.applicationID, 6)}`,
+                                Quantity: '1',
+                                UnitAmount: data.interest_amount,
+                                AccountCode: application[0]['funding_source']
+                            }],
+                            Status: "AUTHORISED"
+                        });
+                        data.interest_invoice_no = xeroInterest.Invoices[0]['InvoiceNumber'];
+                    }
+                    db.query('INSERT INTO application_schedules SET ?', data, function (error, response, fields) {
+                        if(error){
+                            res.send({"status": 500, "error": error, "response": null});
+                        } else {
+                            let payload = {}
+                            payload.category = 'Application'
+                            payload.userid = req.cookies.timeout
+                            payload.description = 'New Loan Application Payment'
+                            payload.affected = req.params.id
+                            notificationsService.log(req, payload)
+                            return res.send({"status": 200, "message": "Payment added successfully!"});
+                        }
+                    });
+                });
+            }
+        });
     });
 });
 
@@ -3032,55 +3047,79 @@ users.get('/application/confirm-payment/:id', function(req, res, next) {
 });
 
 users.post('/application/edit-schedule/:id/:modifier_id', function(req, res, next) {
-    let data = req.body;
-    data.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    data.modifierID = req.params.modifier_id;
-    db.getConnection(function(err, connection) {
-        if (err) throw err;
+    xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async () => {
+        let data = req.body;
+        data.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        data.modifierID = req.params.modifier_id;
+        db.getConnection(function(err, connection) {
+            if (err) throw err;
 
-        connection.query('UPDATE application_schedules SET ? WHERE ID = '+req.params.id, data, function (error, response, fields) {
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
-            } else {
-                connection.query('SELECT * FROM application_schedules WHERE ID = ?',[req.params.id], function (error, invoice_obj, fields) {
-                    if(error){
-                        res.send({"status": 500, "error": error, "response": null});
-                    } else {
-                        let invoice = {
-                            invoiceID: invoice_obj[0].ID,
-                            applicationID: invoice_obj[0].applicationID,
-                            interest_amount: invoice_obj[0].interest_amount,
-                            payment_amount: invoice_obj[0].payment_amount,
-                            payment_collect_date: invoice_obj[0].payment_collect_date,
-                            payment_create_date: invoice_obj[0].payment_create_date,
-                            interest_collect_date: invoice_obj[0].interest_collect_date,
-                            interest_create_date: invoice_obj[0].interest_create_date,
-                            fees_amount: invoice_obj[0].fees_amount,
-                            penalty_amount: invoice_obj[0].penalty_amount,
-                            date_modified: invoice_obj[0].date_modified,
-                            modifierID: invoice_obj[0].modifierID
-                        };
-                        if (invoice_obj[0]['interest_invoice_no'])
-                            invoice['interest_invoice_no'] = invoice_obj[0]['interest_invoice_no'];
-                        if (invoice_obj[0]['payment_invoice_no'])
-                            invoice['payment_invoice_no'] = invoice_obj[0]['payment_invoice_no'];
-                        connection.query('INSERT INTO edit_schedule_history SET ? ', invoice, function (error, response, fields) {
-                            connection.release();
-                            if(error){
-                                res.send({"status": 500, "error": error, "response": null});
-                            } else {
-                                let payload = {}
-                                payload.category = 'Application'
-                                payload.userid = req.cookies.timeout
-                                payload.description = 'Loan Application Schedule updated'
-                                payload.affected = req.params.id
-                                notificationsService.log(req, payload)
-                                res.send({"status": 200, "message": "Schedule updated successfully!"});
-                            }
-                        });
-                    }
-                });
-            }
+            connection.query('UPDATE application_schedules SET ? WHERE ID = '+req.params.id, data, function (error, response, fields) {
+                if(error){
+                    res.send({"status": 500, "error": error, "response": null});
+                } else {
+                    connection.query('SELECT s.*, a.funding_source, c.fullname FROM application_schedules s, applications a, clients c '+
+                    'WHERE s.ID = ? AND a.ID = s.applicationID AND c.ID = a.userID',[req.params.id], function (error, invoice_obj, fields) {
+                        if(error){
+                            res.send({"status": 500, "error": error, "response": null});
+                        } else {
+                            let invoice = {
+                                invoiceID: invoice_obj[0].ID,
+                                applicationID: invoice_obj[0].applicationID,
+                                interest_amount: invoice_obj[0].interest_amount,
+                                payment_amount: invoice_obj[0].payment_amount,
+                                payment_collect_date: invoice_obj[0].payment_collect_date,
+                                payment_create_date: invoice_obj[0].payment_create_date,
+                                interest_collect_date: invoice_obj[0].interest_collect_date,
+                                interest_create_date: invoice_obj[0].interest_create_date,
+                                fees_amount: invoice_obj[0].fees_amount,
+                                penalty_amount: invoice_obj[0].penalty_amount,
+                                date_modified: invoice_obj[0].date_modified,
+                                modifierID: invoice_obj[0].modifierID
+                            };
+                            if (invoice_obj[0]['interest_invoice_no'])
+                                invoice['interest_invoice_no'] = invoice_obj[0]['interest_invoice_no'];
+                            if (invoice_obj[0]['payment_invoice_no'])
+                                invoice['payment_invoice_no'] = invoice_obj[0]['payment_invoice_no'];
+                            connection.query('INSERT INTO edit_schedule_history SET ? ', invoice, function (error, response, fields) {
+                                connection.release();
+                                if(error){
+                                    res.send({"status": 500, "error": error, "response": null});
+                                } else {
+                                    if (invoice.interest_invoice_no && invoice_obj[0]['funding_source']) {
+                                        xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient) => {
+                                            if (xeroClient) {
+                                                let xeroInterest = await xeroClient.invoices.update({
+                                                    Type: 'ACCREC',
+                                                    Contact: {
+                                                        Name: invoice_obj[0]['fullname']
+                                                    },
+                                                    Date: invoice.interest_create_date,
+                                                    DueDate: invoice.interest_collect_date,
+                                                    LineItems: [{
+                                                        Description: `LOAN ID: ${helperFunctions.padWithZeroes(invoice.applicationID, 6)}`,
+                                                        Quantity: '1',
+                                                        UnitAmount: invoice.interest_amount,
+                                                        AccountCode: invoice_obj[0]['funding_source']
+                                                    }],
+                                                    InvoiceNumber: invoice.interest_invoice_no
+                                                });
+                                            }
+                                        });
+                                    }
+                                    let payload = {}
+                                    payload.category = 'Application'
+                                    payload.userid = req.cookies.timeout
+                                    payload.description = 'Loan Application Schedule updated'
+                                    payload.affected = req.params.id
+                                    notificationsService.log(req, payload)
+                                    res.send({"status": 200, "message": "Schedule updated successfully!"});
+                                }
+                            });
+                        }
+                    });
+                }
+            });
         });
     });
 });
