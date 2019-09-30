@@ -433,7 +433,7 @@ router.get('/client-investments/:id', function (req, res, next) {
     left join users u2 on u2.ID = i.createdBy
     left join investment_products p on i.productId = p.ID
     WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id} 
-    AND (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%") LIMIT ${limit} OFFSET ${offset}`;
+    AND (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%") ORDER BY ID LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     var data = [];
