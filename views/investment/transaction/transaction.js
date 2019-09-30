@@ -352,7 +352,7 @@ function bindDataTable(id) {
                         let total_balance_ = Number(data.txnCurrentBalance.toString().split(',').join('')).toFixed(2);
                         $("#inv_bal_amount").html(`${(parseInt(total_balance_.toString()) === 0) ? '' : sign}₦${formater(total_balance_.toString())}`);
 
-                        if (data.data[0].interest_disbursement_time === 'Up-Front' && data.data[0].interest_disbursement_time === 'End-of-Tenure') {
+                        if (data.data[0].interest_disbursement_time === 'Up-Front' || data.data[0].interest_disbursement_time === 'End-of-Tenure') {
                             $('#btnComputeInterest').attr('hidden', true);
                         }
 
