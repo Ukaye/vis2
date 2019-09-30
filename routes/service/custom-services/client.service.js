@@ -2316,14 +2316,18 @@ router.get('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req,
                 "error": null,
                 "response": 'Application does not exist!'
             });
-        db.query(query1, (error, overdue) => {
-            db.query(query2, (error, not_due) => {
-                db.query(query3, (error, due) => {
-                    db.query(query4, (error, paid) => {
+        db.query(query1, (error, response) => {
+            let overdue = (response[0])? response[0]['amount'] : 0;
+            db.query(query2, (error, response) => {
+                let not_due = (response[0])? response[0]['amount'] : 0;
+                db.query(query3, (error, response) => {
+                    let due = (response[0])? response[0]['amount'] : 0;
+                    db.query(query4, (error, response) => {
+                        let paid = (response[0])? response[0]['amount'] : 0;
                         return res.send({
                             "status": 200,
                             "error": null,
-                            "response": overdue[0]['amount'] + not_due[0]['amount'] + due[0]['amount'] - paid[0]['amount']
+                            "response": overdue + not_due + due - paid
                         });
                     });
                 });
