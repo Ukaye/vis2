@@ -103,9 +103,11 @@ function getExistingConfigs() {
                 $('#idTransferCharge').val(data.transferValue);
                 if (data.transferChargeMethod !== null)
                     $('#idTransferMethod').val(data.transferChargeMethod);
+                if (data.walletProductId !== undefined && data.walletProductId !== null) {
+                    $("#investment_product").val(null).trigger('change');
+                    $("#investment_product").append(new Option(`${data.productName} (${data.code})`, data.walletProductId, true, true)).trigger('change');
+                }
 
-                $("#investment_product").val(null).trigger('change');
-                $("#investment_product").append(new Option(`${data.productName} (${data.code})`, data.walletProductId, true, true)).trigger('change');
             }
         },
         'error': function (err) {
