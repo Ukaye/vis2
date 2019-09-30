@@ -53,8 +53,7 @@ function getAccounts() {
                 if (account.Type === 'BANK')
                     $('#xero_payoff_account').append(`<option value="${account.Code}">${account.Name}</option>`);
                 if (account.Class === 'EXPENSE')
-                    $('#xero_writeoff_account').append(`<option value="${account.Code}">${account.Name} 
-                        (${account.Type})</option>`);
+                    $('#xero_writeoff_account').append(`<option value="${account.Code}">${account.Name} (${account.Type})</option>`);
             });
             getXeroConfig();
         }
