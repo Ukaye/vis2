@@ -1765,7 +1765,9 @@ function onComputeInterest(value) {
         productId: selectedInvestment.productId,
         startDate: value.startDate,
         endDate: value.endDate,
-        interest_rate: selectedInvestment.interest_rate
+        interest_rate: selectedInvestment.interest_rate,
+        acctNo: selectedInvestment.acctNo,
+        InvestmentName: selectedInvestment.name
     }
     $.ajax({
         url: `investment-txns/compute-interest`,

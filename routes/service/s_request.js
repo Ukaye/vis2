@@ -92,7 +92,7 @@ function getRecentTxns(id, isWallet) {
     WHERE v.isWallet = 1 AND AND v.postDone = 1 AND v.clientId = ${id} ORDER BY ID DESC LIMIT 5 OFFSET 0`;
         db.query(query, function (error, results, fields) {
             if (error && error !== null) {
-                resolve([{ interest_moves_wallet: undefined }]);
+                resolve([]);
             } else {
                 resolve(results);
             }
@@ -167,7 +167,6 @@ async function transactionalAlert(id, isWallet) {
     let acctBalWithInterest = await computeAccountBalanceIncludeInterest(id);
     let acctBal = await computeCurrentBalance(id, isWallet);
     const orgName = await getOrganisationDetails();
-
     if (data.length > 0) {
         data.map(x => {
             x.amount = formater(x.amount.toString());
