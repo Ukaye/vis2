@@ -9,6 +9,7 @@ function getCollectionBank() {
         type: "GET",
         url: "/settings/collection_bank",
         success: function (data) {
+            if (data.response[0]) $('#collection-bank-div').show();
             $.each(data.response, function (key, collection_bank) {
                 $('#collection_bank').append(`<option value="${collection_bank.Code}">${collection_bank.Name}</option>`);
             });
@@ -784,9 +785,10 @@ function reverseEscrowPayment(payment_id) {
 function addPayment() {
     let payment = {};
     payment.interest_amount = $('#payment-interest').val();
-    // payment.actual_interest_amount = $('#payment-interest').val();
-    payment.interest_collect_date = $('#payment-date').val();
-    payment.comment = $('#payment-notes').val();
+    payment.interest_create_date = $('#payment-date').val();
+    payment.interest_collect_date = payment.interest_create_date;
+    if ($('#payment-notes').val())
+        payment.comment = $('#payment-notes').val();
     if (!payment.interest_amount || !payment.interest_collect_date)
         return notification('Kindly fill all required fields!','','warning');
     $.ajax({
@@ -795,7 +797,7 @@ function addPayment() {
         'data': payment,
         'success': function (data) {
             notification('Payment added successfully','','success');
-            window.location.reload();
+            // window.location.reload();
         },
         'error': function (err) {
             notification('No internet connection','','error');

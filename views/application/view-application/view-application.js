@@ -1712,7 +1712,10 @@ function writeOffLoan() {
     $.ajax({
         'url': '/user/application/write-off/'+application_id+'/'+(JSON.parse(localStorage.user_obj)).ID,
         'type': 'post',
-        'data': {close_comment:$('#writeoff-notes').val()},
+        'data': {
+            close_amount: currencyToNumberformatter($('#writeoff-amount').val()),
+            close_comment:$('#writeoff-notes').val()
+        },
         'success': function (data) {
             notification('Loan closed successfully','','success');
             window.location.reload();
