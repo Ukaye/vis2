@@ -22,14 +22,18 @@ router.get('/all', function (req, res) {
     let page = ((req.query.page - 1) * 10 < 0) ? 0 : (req.query.page - 1) * 10;
     let search_string = (req.query.search_string === undefined) ? "" : req.query.search_string.toUpperCase();
     let query = `SELECT ID,fullname FROM clients WHERE status = 1 AND (upper(email) LIKE "${search_string}%" OR 
-    upper(fullname) LIKE "${search_string}%") ORDER BY ID desc LIMIT ${limit} OFFSET ${page}`;
+    upper(fullname) LIKE "${search_string}%")
+    UNION
+    SELECT ID,name FROM corporates WHERE status = 1 AND (upper(email) LIKE "${search_string}%" OR 
+    upper(name) LIKE "${search_string}%") ORDER BY ID desc LIMIT ${limit} OFFSET ${page}`;
     const endpoint = "/core-service/get";
+    console.log(query);
     const url = `${HOST}${endpoint}`;
     axios.get(url, {
-            params: {
-                query: query
-            }
-        })
+        params: {
+            query: query
+        }
+    })
         .then(function (response) {
             res.send(response.data);
         }, err => {
@@ -123,7 +127,7 @@ router.post('/mandate/setup', function (req, res) {
 
 router.get('/mandate/stop/:applicationID', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query =  `SELECT mandateId, requestId FROM remita_mandates WHERE applicationID = ${req.params.applicationID} AND status = 1`,
+    let query = `SELECT mandateId, requestId FROM remita_mandates WHERE applicationID = ${req.params.applicationID} AND status = 1`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -133,29 +137,29 @@ router.get('/mandate/stop/:applicationID', function (req, res) {
     }).then(response => {
         let remita_mandate = response.data[0];
         if (remita_mandate) {
-            query =  `UPDATE remita_mandates Set ? WHERE applicationID = ${req.params.applicationID} AND status = 1`;
+            query = `UPDATE remita_mandates Set ? WHERE applicationID = ${req.params.applicationID} AND status = 1`;
             endpoint = `/core-service/post?query=${query}`;
             url = `${HOST}${endpoint}`;
-            axios.post(url, {status : 0})
+            axios.post(url, { status: 0 })
                 .then(function (response_) {
                     helperFunctions.stopMandate({
                         mandateId: remita_mandate.mandateId,
                         requestId: remita_mandate.requestId
                     }, function (mandate_response) {
                         if (mandate_response && mandate_response.statuscode === '00') {
-                            res.send({status: 200, error: null, response: mandate_response});
+                            res.send({ status: 200, error: null, response: mandate_response });
                         } else {
-                            res.send({status: 500, error: mandate_response, response: null});
+                            res.send({ status: 500, error: mandate_response, response: null });
                         }
                     })
                 }, err => {
-                    res.send({status: 500, error: err, response: null});
+                    res.send({ status: 500, error: err, response: null });
                 })
                 .catch(function (error) {
-                    res.send({status: 500, error: error, response: null});
+                    res.send({ status: 500, error: error, response: null });
                 });
         } else {
-            res.send({status: 500, error: 'There is no remita mandate setup for this application', response: null});
+            res.send({ status: 500, error: 'There is no remita mandate setup for this application', response: null });
         }
     });
 });
@@ -167,40 +171,40 @@ router.post('/corporate/create', function (req, res) {
         endpoint = `/core-service/get`,
         url = `${HOST}${endpoint}`;
     axios.get(url, {
-            params: {
-                query: query
-            }
-        }).then(function (response) {
-            if (response['data'][0]) {
-                res.send({
-                    status: 500,
-                    error: 'Corporate already exists!',
-                    response: response['data']
-                });
-            } else {
-                query = 'INSERT INTO corporates Set ?';
-                endpoint = `/core-service/post?query=${query}`;
-                url = `${HOST}${endpoint}`;
-                postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                db.query(query, postData, function (error, response_) {
-                    if (error) {
-                        res.send({
-                            status: 500,
-                            error: error,
-                            response: null
-                        });
-                    } else {
-                        return res.send(response_);
-                    }
-                });
-            }
-        }, err => {
+        params: {
+            query: query
+        }
+    }).then(function (response) {
+        if (response['data'][0]) {
             res.send({
                 status: 500,
-                error: err,
-                response: null
+                error: 'Corporate already exists!',
+                response: response['data']
             });
-        })
+        } else {
+            query = 'INSERT INTO corporates Set ?';
+            endpoint = `/core-service/post?query=${query}`;
+            url = `${HOST}${endpoint}`;
+            postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+            db.query(query, postData, function (error, response_) {
+                if (error) {
+                    res.send({
+                        status: 500,
+                        error: error,
+                        response: null
+                    });
+                } else {
+                    return res.send(response_);
+                }
+            });
+        }
+    }, err => {
+        res.send({
+            status: 500,
+            error: err,
+            response: null
+        });
+    })
         .catch(function (error) {
             res.send({
                 status: 500,
@@ -416,7 +420,7 @@ router.delete('/bad_cheque/:id', function (req, res) {
     });
 });
 
-router.get('/corporates-v2/get', function(req, res) {
+router.get('/corporates-v2/get', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT ID, name, email, status, date_created from corporates WHERE status = 1 ORDER BY name asc`,
         endpoint = '/core-service/get',
@@ -431,43 +435,43 @@ router.get('/corporates-v2/get', function(req, res) {
 });
 
 /* Add New Client */
-router.post('/create', function(req, res) {
+router.post('/create', function (req, res) {
     let id;
     let postData = req.body,
-        query =  'INSERT INTO clients Set ?',
+        query = 'INSERT INTO clients Set ?',
         query2 = 'select * from clients where username = ? or email = ? or phone = ?';
     postData.status = enums.CLIENT.STATUS.ACTIVE;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     if (!postData.username || !postData.password || !postData.first_name || !postData.last_name || !postData.phone || !postData.email
         || !postData.bvn || !postData.loan_officer || !postData.branch)
-        return res.send({"status": 200, "error": null, "response": "Required parameter(s) not sent!"});
+        return res.send({ "status": 200, "error": null, "response": "Required parameter(s) not sent!" });
 
     postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
     postData.password = bcrypt.hashSync(postData.password, parseInt(process.env.SALT_ROUNDS));
     postData.images_folder = postData.email;
-    db.getConnection(function(err, connection) {
+    db.getConnection(function (err, connection) {
         if (err) throw err;
-        connection.query(query2,[postData.username, postData.email, postData.phone], function (error, results) {
-            if (results && results[0]){
-                return res.send({"status": 200, "error": null, "response": "Information in use by existing client!"});
+        connection.query(query2, [postData.username, postData.email, postData.phone], function (error, results) {
+            if (results && results[0]) {
+                return res.send({ "status": 200, "error": null, "response": "Information in use by existing client!" });
             }
             let bvn = postData.bvn;
-            if (bvn.trim() !== ''){
-                connection.query('select * from clients where bvn = ? and status = 1 limit 1', [bvn], function (error, rest, foelds){
-                    if (rest && rest[0]){
-                        return res.send({"status": 200, "error": null, "response": rest, "bvn_exists": "Yes"});
+            if (bvn.trim() !== '') {
+                connection.query('select * from clients where bvn = ? and status = 1 limit 1', [bvn], function (error, rest, foelds) {
+                    if (rest && rest[0]) {
+                        return res.send({ "status": 200, "error": null, "response": rest, "bvn_exists": "Yes" });
                     }
-                    connection.query(query,postData, function (error, re) {
-                        if(error){
+                    connection.query(query, postData, function (error, re) {
+                        if (error) {
                             console.log(error);
-                            res.send({"status": 500, "error": error, "response": null});
+                            res.send({ "status": 500, "error": error, "response": null });
                         } else {
-                            connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function(err, re) {
-                                if (!err){
+                            connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function (err, re) {
+                                if (!err) {
                                     id = re[0]['ID'];
-                                    connection.query('INSERT into wallets Set ?', {client_id: id}, function(er, r) {
+                                    connection.query('INSERT into wallets Set ?', { client_id: id }, function (er, r) {
                                         connection.release();
-                                        if (!er){
+                                        if (!er) {
                                             let payload = {};
                                             payload.category = 'Clients';
                                             payload.userid = req.cookies.timeout;
@@ -480,13 +484,13 @@ router.post('/create', function(req, res) {
                                                 template: 'client',
                                                 context: postData
                                             });
-                                            res.send({"status": 200, "error": null, "response": re});
+                                            res.send({ "status": 200, "error": null, "response": re });
                                         } else {
-                                            res.send({"status": 500, "error": er, "response": "Error creating client wallet!"});
+                                            res.send({ "status": 500, "error": er, "response": "Error creating client wallet!" });
                                         }
                                     });
                                 } else {
-                                    res.send({"status": 500, "error": err, "response": "Error retrieving client details. Please try a new username!"});
+                                    res.send({ "status": 500, "error": err, "response": "Error retrieving client details. Please try a new username!" });
                                 }
                             });
                         }
@@ -494,16 +498,16 @@ router.post('/create', function(req, res) {
                 });
             }
             else {
-                connection.query(query,postData, function (error, re) {
-                    if(error){
-                        res.send({"status": 500, "error": error, "response": null});
+                connection.query(query, postData, function (error, re) {
+                    if (error) {
+                        res.send({ "status": 500, "error": error, "response": null });
                     } else {
-                        connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function(err, re) {
-                            if (!err){
+                        connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function (err, re) {
+                            if (!err) {
                                 id = re[0]['ID'];
-                                connection.query('INSERT into wallets Set ?', {client_id: id}, function(er, r) {
+                                connection.query('INSERT into wallets Set ?', { client_id: id }, function (er, r) {
                                     connection.release();
-                                    if (!er){
+                                    if (!er) {
                                         let payload = {};
                                         payload.category = 'Clients';
                                         payload.userid = req.cookies.timeout;
@@ -516,13 +520,13 @@ router.post('/create', function(req, res) {
                                             template: 'client',
                                             context: postData
                                         });
-                                        res.send({"status": 200, "error": null, "response": re});
+                                        res.send({ "status": 200, "error": null, "response": re });
                                     } else {
-                                        res.send({"status": 500, "error": er, "response": "Error creating client wallet!"});
+                                        res.send({ "status": 500, "error": er, "response": "Error creating client wallet!" });
                                     }
                                 });
                             } else {
-                                res.send({"status": 500, "error": err, "response": "Error retrieving client details. Please try a new username!"});
+                                res.send({ "status": 500, "error": err, "response": "Error retrieving client details. Please try a new username!" });
                             }
                         });
                     }
@@ -561,12 +565,12 @@ router.post('/login', function (req, res) {
         let user = client[0];
         if (bcrypt.compareSync(password, user.password)) {
             user.token = jwt.sign({
-                    ID: user.ID,
-                    username: user.username,
-                    fullname: user.fullname,
-                    email: user.email,
-                    phone: user.phone
-                },
+                ID: user.ID,
+                username: user.username,
+                fullname: user.fullname,
+                email: user.email,
+                phone: user.phone
+            },
                 process.env.SECRET_KEY,
                 {
                     expiresIn: 60 * 60 * 24
@@ -594,7 +598,7 @@ router.post('/login', function (req, res) {
     });
 });
 
-router.put('/update/:id', helperFunctions.verifyJWT, function(req, res) {
+router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
     let postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `Update clients SET ? where ID = ${req.params.id}`;
@@ -603,7 +607,7 @@ router.put('/update/:id', helperFunctions.verifyJWT, function(req, res) {
     delete postData.password;
     delete postData.email;
     db.query(query, postData, function (error, results) {
-        if(error)
+        if (error)
             return res.send({
                 "status": 500,
                 "error": error,
@@ -624,13 +628,13 @@ router.put('/update/:id', helperFunctions.verifyJWT, function(req, res) {
     });
 });
 
-router.get('/enable/:id', helperFunctions.verifyJWT, function(req, res) {
+router.get('/enable/:id', helperFunctions.verifyJWT, function (req, res) {
     let postData = req.body;
     postData.status = enums.CLIENT.STATUS.ACTIVE;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `Update clients SET ? where ID = ${req.params.id}`;
     db.query(query, postData, function (error, results) {
-        if(error)
+        if (error)
             return res.send({
                 "status": 500,
                 "error": error,
@@ -654,13 +658,13 @@ router.get('/enable/:id', helperFunctions.verifyJWT, function(req, res) {
     });
 });
 
-router.delete('/disable/:id', helperFunctions.verifyJWT, function(req, res) {
+router.delete('/disable/:id', helperFunctions.verifyJWT, function (req, res) {
     let postData = req.body;
     postData.status = enums.CLIENT.STATUS.INACTIVE;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `Update clients SET ? where ID = ${req.params.id}`;
     db.query(query, postData, function (error, results) {
-        if(error)
+        if (error)
             return res.send({
                 "status": 500,
                 "error": error,
@@ -717,14 +721,14 @@ router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
                 "response": result
             });
         } else {
-            fs.readdir(path, function (err, files){
+            fs.readdir(path, function (err, files) {
                 files = helperFunctions.removeFileDuplicates(path, files);
-                async.forEach(files, function (file, callback){
+                async.forEach(files, function (file, callback) {
                     let filename = file.split('.')[1].split('_');
                     filename.shift();
                     obj[filename.join('_')] = `${req.HOST}/${path}${file}`;
                     callback();
-                }, function(data){
+                }, function (data) {
                     result.files = obj;
                     return res.send({
                         "status": 200,
@@ -737,12 +741,12 @@ router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
     });
 });
 
-router.get('/products', helperFunctions.verifyJWT, function(req, res) {
+router.get('/products', helperFunctions.verifyJWT, function (req, res) {
     let query = 'SELECT w.*, a.loan_requested_min, a.loan_requested_max, a.tenor_min, a.tenor_max, a.interest_rate_min, a.interest_rate_max, ' +
         '(SELECT GROUP_CONCAT(NULLIF(s.document,"")) FROM workflow_stages s WHERE w.ID = s.workflowID) document ' +
         'FROM workflows w, application_settings a WHERE w.status <> 0 AND a.ID = (SELECT MAX(ID) FROM application_settings) ORDER BY w.ID desc';
     db.query(query, function (error, results) {
-        if(error)
+        if (error)
             return res.send({
                 "status": 500,
                 "error": error,
@@ -758,22 +762,22 @@ router.get('/products', helperFunctions.verifyJWT, function(req, res) {
 });
 
 //File Upload - New Client (Image and Signature)
-router.post('/upload/:id/:item', helperFunctions.verifyJWT, function(req, res) {
+router.post('/upload/:id/:item', helperFunctions.verifyJWT, function (req, res) {
     if (!req.files) return res.status(500).send('No file was found!');
     if (!req.params.id || !req.params.item) return res.status(500).send('Required parameter(s) not sent!');
 
     db.query(`SELECT * FROM clients WHERE ID = ${req.params.id}`, function (error, client) {
-        if(error) return res.send({
-                "status": 500,
-                "error": error,
-                "response": null
-            });
+        if (error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
 
-        if(!client[0]) return res.send({
-                "status": 500,
-                "error": null,
-                "response": 'User does not exist!'
-            });
+        if (!client[0]) return res.send({
+            "status": 500,
+            "error": null,
+            "response": 'User does not exist!'
+        });
 
         let user = client[0],
             item = req.params.item,
@@ -785,20 +789,20 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function(req, res) {
         const folder_url = `files/users/${folder}/`;
         switch (item) {
             case '1': {
-                item ="Image";
+                item = "Image";
                 break;
             }
             case '2': {
-                item ="Signature";
+                item = "Signature";
                 break;
             }
             case '3': {
-                item ="ID Card";
+                item = "ID Card";
                 break;
             }
         }
         const file_url = `${folder_url}${folder}_${item}.${extension}`;
-        fs.stat(folder_url, function(err) {
+        fs.stat(folder_url, function (err) {
             if (!err) {
                 console.log('file or directory exists');
             } else if (err.code === 'ENOENT') {
@@ -808,7 +812,7 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function(req, res) {
 
         fs.stat(file_url, function (err) {
             if (err) {
-                sampleFile.mv(file_url, function(err) {
+                sampleFile.mv(file_url, function (err) {
                     if (err) return res.send({
                         "status": 500,
                         "error": err,
@@ -821,14 +825,14 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function(req, res) {
                     });
                 });
             } else {
-                fs.unlink(file_url,function(err){
-                    if(err) return res.send({
+                fs.unlink(file_url, function (err) {
+                    if (err) return res.send({
                         "status": 500,
                         "error": err,
                         "response": null
                     });
 
-                    sampleFile.mv(file_url, function(err) {
+                    sampleFile.mv(file_url, function (err) {
                         if (err) return res.send({
                             "status": 500,
                             "error": err,
@@ -850,7 +854,7 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function(req, res) {
 router.post('/application/create/:id', helperFunctions.verifyJWT, function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let postData = req.body,
-        query =  'INSERT INTO client_applications Set ?',
+        query = 'INSERT INTO client_applications Set ?',
         endpoint = `/core-service/post?query=${query}`,
         url = `${HOST}${endpoint}`;
     postData.userID = req.user.ID;
@@ -860,11 +864,11 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, function (req,
     postData.status = enums.CLIENT_APPLICATION.STATUS.ACTIVE;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query(query, postData, function (error, results) {
-        if(error) return res.send({
-                "status": 500,
-                "error": error,
-                "response": null
-            });
+        if (error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
 
         query = `SELECT * from client_applications WHERE ID = (SELECT MAX(ID) from client_applications)`;
         endpoint = `/core-service/get`;
@@ -883,12 +887,12 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, function (req,
                     message: 'Your loan request has been received successfully!'
                 }
             });
-            res.send({status: 200, error: null, response: response_['data'][0]});
+            res.send({ status: 200, error: null, response: response_['data'][0] });
         }, err => {
-            res.send({status: 500, error: err, response: null});
+            res.send({ status: 500, error: err, response: null });
         })
             .catch(error => {
-                res.send({status: 500, error: error, response: null});
+                res.send({ status: 500, error: error, response: null });
             });
     });
 });
@@ -1008,72 +1012,72 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
             result = Object.assign({}, result, result2);
             db.query('SELECT * FROM application_schedules WHERE applicationID=?', [result.loanID], function (error, schedule, fields) {
                 if (error) {
-                    res.send({"status": 500, "error": error, "response": null});
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
                     result.schedule = schedule;
-                    db.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', 
-                    [result.loanID], function (error, payment_history, fields) {
-                        if (error) {
-                            res.send({"status": 500, "error": error, "response": null});
-                        } else {
-                            result.payment_history = payment_history;
-                            db.query('SELECT * FROM application_information_requests WHERE applicationID=? ORDER BY ID desc', 
-                            [result.loanID], function (error, information_requests, fields) {
-                                if (error) {
-                                    res.send({"status": 500, "error": error, "response": null});
-                                } else {
-                                    result.information_requests = information_requests;
-                                    let path = `files/client_application-${result.ID}/`,
-                                        path2 = `files/application-${result.loanID}/`,
-                                        path3 = `files/application_download-${result.loanID}/`;
-                                    result.files = {};
-                                    fs.readdir(path, function (err, files){
-                                        if (err) files = [];
-                                        files = helperFunctions.removeFileDuplicates(path, files);
-                                        async.forEach(files, function (file, callback){
-                                            let filename = file.split('.')[0].split('_');
-                                            filename.shift();
-                                            obj[filename.join('_')] = `${req.HOST}/${path}${file}`;
-                                            callback();
-                                        }, function(data){
-                                            result.files = Object.assign({}, result.files, obj);
-                                            obj = {};
-                                            fs.readdir(path2, function (err, files){
+                    db.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc',
+                        [result.loanID], function (error, payment_history, fields) {
+                            if (error) {
+                                res.send({ "status": 500, "error": error, "response": null });
+                            } else {
+                                result.payment_history = payment_history;
+                                db.query('SELECT * FROM application_information_requests WHERE applicationID=? ORDER BY ID desc',
+                                    [result.loanID], function (error, information_requests, fields) {
+                                        if (error) {
+                                            res.send({ "status": 500, "error": error, "response": null });
+                                        } else {
+                                            result.information_requests = information_requests;
+                                            let path = `files/client_application-${result.ID}/`,
+                                                path2 = `files/application-${result.loanID}/`,
+                                                path3 = `files/application_download-${result.loanID}/`;
+                                            result.files = {};
+                                            fs.readdir(path, function (err, files) {
                                                 if (err) files = [];
-                                                files = helperFunctions.removeFileDuplicates(path2, files);
-                                                async.forEach(files, function (file, callback){
+                                                files = helperFunctions.removeFileDuplicates(path, files);
+                                                async.forEach(files, function (file, callback) {
                                                     let filename = file.split('.')[0].split('_');
                                                     filename.shift();
-                                                    obj[filename.join('_')] = `${req.HOST}/${path2}${file}`;
+                                                    obj[filename.join('_')] = `${req.HOST}/${path}${file}`;
                                                     callback();
-                                                }, function(data){
+                                                }, function (data) {
                                                     result.files = Object.assign({}, result.files, obj);
                                                     obj = {};
-                                                    fs.readdir(path3, function (err, files){
+                                                    fs.readdir(path2, function (err, files) {
                                                         if (err) files = [];
-                                                        files = helperFunctions.removeFileDuplicates(path3, files);
-                                                        async.forEach(files, function (file, callback){
+                                                        files = helperFunctions.removeFileDuplicates(path2, files);
+                                                        async.forEach(files, function (file, callback) {
                                                             let filename = file.split('.')[0].split('_');
                                                             filename.shift();
-                                                            obj[filename.join('_')] = `${req.HOST}/${path3}${file}`;
+                                                            obj[filename.join('_')] = `${req.HOST}/${path2}${file}`;
                                                             callback();
-                                                        }, function(data){
-                                                            result.file_downloads = obj;
-                                                            return res.send({
-                                                                "status": 200,
-                                                                "error": null,
-                                                                "response": result
+                                                        }, function (data) {
+                                                            result.files = Object.assign({}, result.files, obj);
+                                                            obj = {};
+                                                            fs.readdir(path3, function (err, files) {
+                                                                if (err) files = [];
+                                                                files = helperFunctions.removeFileDuplicates(path3, files);
+                                                                async.forEach(files, function (file, callback) {
+                                                                    let filename = file.split('.')[0].split('_');
+                                                                    filename.shift();
+                                                                    obj[filename.join('_')] = `${req.HOST}/${path3}${file}`;
+                                                                    callback();
+                                                                }, function (data) {
+                                                                    result.file_downloads = obj;
+                                                                    return res.send({
+                                                                        "status": 200,
+                                                                        "error": null,
+                                                                        "response": result
+                                                                    });
+                                                                });
                                                             });
                                                         });
                                                     });
                                                 });
                                             });
-                                        });
+                                        }
                                     });
-                                }
-                            });
-                        }
-                    });
+                            }
+                        });
                 }
             });
         });
@@ -1084,16 +1088,16 @@ router.get('/application/accept/:id/:application_id', helperFunctions.verifyJWT,
     let payload = {},
         id = req.params.id,
         application_id = req.params.application_id,
-        query =  `UPDATE client_applications Set ? WHERE ID = ${application_id} AND userID = ${id}`;
+        query = `UPDATE client_applications Set ? WHERE ID = ${application_id} AND userID = ${id}`;
     payload.status = enums.CLIENT_APPLICATION.STATUS.ACCEPTED;
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
     db.query(`SELECT * FROM client_applications WHERE ID = ${application_id} AND userID = ${id}`, function (err, application) {
         if (err) return res.send({
-                "status": 500,
-                "error": err,
-                "response": null
-            });
+            "status": 500,
+            "error": err,
+            "response": null
+        });
 
         if (!application[0]) return res.send({
             "status": 500,
@@ -1110,7 +1114,7 @@ router.get('/application/accept/:id/:application_id', helperFunctions.verifyJWT,
 
         db.query(query, payload, function (error, response) {
             if (error)
-                return res.send({status: 500, error: error, response: null});
+                return res.send({ status: 500, error: error, response: null });
             emailService.send({
                 to: req.user.email,
                 subject: 'Loan Offer Accepted',
@@ -1120,7 +1124,7 @@ router.get('/application/accept/:id/:application_id', helperFunctions.verifyJWT,
                     message: 'Your loan offer acceptance was successful!'
                 }
             });
-            return res.send({status: 200, error: null, response: 'Loan offer accepted successfully!'});
+            return res.send({ status: 200, error: null, response: 'Loan offer accepted successfully!' });
         });
     });
 });
@@ -1129,7 +1133,7 @@ router.get('/application/decline/:id/:application_id', helperFunctions.verifyJWT
     let payload = {},
         id = req.params.id,
         application_id = req.params.application_id,
-        query =  `UPDATE client_applications Set ? WHERE ID = ${application_id} AND userID = ${id}`;
+        query = `UPDATE client_applications Set ? WHERE ID = ${application_id} AND userID = ${id}`;
     payload.status = enums.CLIENT_APPLICATION.STATUS.DECLINED;
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
@@ -1155,7 +1159,7 @@ router.get('/application/decline/:id/:application_id', helperFunctions.verifyJWT
 
         db.query(query, payload, function (error, response) {
             if (error)
-                return res.send({status: 500, error: error, response: null});
+                return res.send({ status: 500, error: error, response: null });
             emailService.send({
                 to: req.user.email,
                 subject: 'Loan Offer Declined',
@@ -1165,13 +1169,13 @@ router.get('/application/decline/:id/:application_id', helperFunctions.verifyJWT
                     message: 'Your loan offer rejection was successful!'
                 }
             });
-            return res.send({status: 200, error: null, response: 'Loan offer declined successfully!'});
+            return res.send({ status: 200, error: null, response: 'Loan offer declined successfully!' });
         });
     });
 });
 
-router.post('/application/upload/:id/:application_id/:name', helperFunctions.verifyJWT, function(req, res) {
-    let	id = req.params.id,
+router.post('/application/upload/:id/:application_id/:name', helperFunctions.verifyJWT, function (req, res) {
+    let id = req.params.id,
         name = req.params.name,
         sampleFile = req.files.file,
         extArray = sampleFile.name.split("."),
@@ -1198,14 +1202,14 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
             });
         } else {
             const file_folder = `files/client_application-${application_id}/`;
-            fs.stat(file_folder, function(err) {
+            fs.stat(file_folder, function (err) {
                 if (err && (err.code === 'ENOENT'))
                     fs.mkdirSync(file_folder);
 
                 const file_url = `${file_folder}${application_id}_${name.trim().replace(/ /g, '_')}.${extension}`;
                 fs.stat(file_url, function (err) {
                     if (err) {
-                        sampleFile.mv(file_url, function(err) {
+                        sampleFile.mv(file_url, function (err) {
                             if (err) return res.status(500).send(err);
                             res.send({
                                 "status": 200,
@@ -1214,11 +1218,11 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
                             });
                         });
                     } else {
-                        fs.unlink(file_url,function(err){
-                            if(err){
+                        fs.unlink(file_url, function (err) {
+                            if (err) {
                                 return console.log(err);
                             } else {
-                                sampleFile.mv(file_url, function(err) {
+                                sampleFile.mv(file_url, function (err) {
                                     if (err)
                                         return res.status(500).send(err);
                                     res.send({
@@ -1302,64 +1306,64 @@ router.get('/loan/get/:id/:application_id', helperFunctions.verifyJWT, function 
             'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
             'FROM corporates AS u INNER JOIN applications AS a ON u.ID = a.userID INNER JOIN clients AS c ON u.clientID=c.ID LEFT JOIN remita_mandates r ' +
             'ON (r.applicationID = a.ID AND r.status = 1) WHERE a.ID = ? AND a.userID = ?';
-    db.getConnection(function(err, connection) {
+    db.getConnection(function (err, connection) {
         if (err) throw err;
 
         connection.query('SELECT client_type FROM applications WHERE ID = ? AND userID = ?', [application_id, id], function (error, app, fields) {
             if (error || !app[0]) {
-                res.send({"status": 500, "error": error, "response": null});
+                res.send({ "status": 500, "error": error, "response": null });
             } else {
                 if (app[0]['client_type'] === 'corporate')
                     query = query2;
                 connection.query(query, [application_id, id], function (error, result, fields) {
-                    if(error){
-                        res.send({"status": 500, "error": error, "response": null});
+                    if (error) {
+                        res.send({ "status": 500, "error": error, "response": null });
                     } else {
-                        result = (result[0])? result[0] : {};
-                        if (!fs.existsSync(path)){
+                        result = (result[0]) ? result[0] : {};
+                        if (!fs.existsSync(path)) {
                             result.files = {};
                             connection.query('SELECT * FROM application_schedules WHERE applicationID=?', [application_id], function (error, schedule, fields) {
                                 if (error) {
-                                    res.send({"status": 500, "error": error, "response": null});
+                                    res.send({ "status": 500, "error": error, "response": null });
                                 } else {
                                     result.schedule = schedule;
-                                    connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', 
-                                    [application_id], function (error, payment_history, fields) {
-                                        connection.release();
-                                        if (error) {
-                                            res.send({"status": 500, "error": error, "response": null});
-                                        } else {
-                                            result.payment_history = payment_history;
-                                            return res.send({"status": 200, "error": null, "response": result});
-                                        }
-                                    });
+                                    connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc',
+                                        [application_id], function (error, payment_history, fields) {
+                                            connection.release();
+                                            if (error) {
+                                                res.send({ "status": 500, "error": error, "response": null });
+                                            } else {
+                                                result.payment_history = payment_history;
+                                                return res.send({ "status": 200, "error": null, "response": result });
+                                            }
+                                        });
                                 }
                             });
                         } else {
-                            fs.readdir(path, function (err, files){
+                            fs.readdir(path, function (err, files) {
                                 files = helperFunctions.removeFileDuplicates(path, files);
-                                async.forEach(files, function (file, callback){
+                                async.forEach(files, function (file, callback) {
                                     let filename = file.split('.')[0].split('_');
                                     filename.shift();
                                     obj[filename.join('_')] = `${req.HOST}/${path}${file}`;
                                     callback();
-                                }, function(data){
+                                }, function (data) {
                                     result.files = obj;
                                     connection.query('SELECT * FROM application_schedules WHERE applicationID=?', [application_id], function (error, schedule, fields) {
                                         if (error) {
-                                            res.send({"status": 500, "error": error, "response": null});
+                                            res.send({ "status": 500, "error": error, "response": null });
                                         } else {
                                             result.schedule = schedule;
-                                            connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', 
-                                            [application_id], function (error, payment_history, fields) {
-                                                connection.release();
-                                                if (error) {
-                                                    res.send({"status": 500, "error": error, "response": null});
-                                                } else {
-                                                    result.payment_history = payment_history;
-                                                    return res.send({"status": 200, "error": null, "response": result});
-                                                }
-                                            });
+                                            connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc',
+                                                [application_id], function (error, payment_history, fields) {
+                                                    connection.release();
+                                                    if (error) {
+                                                        res.send({ "status": 500, "error": error, "response": null });
+                                                    } else {
+                                                        result.payment_history = payment_history;
+                                                        return res.send({ "status": 200, "error": null, "response": result });
+                                                    }
+                                                });
                                         }
                                     });
                                 });
@@ -1375,13 +1379,13 @@ router.get('/loan/get/:id/:application_id', helperFunctions.verifyJWT, function 
 router.post('/application/createV2', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let postData = req.body,
-        query =  'INSERT INTO client_applications Set ?',
+        query = 'INSERT INTO client_applications Set ?',
         endpoint = `/core-service/post?query=${query}`,
         url = `${HOST}${endpoint}`;
     postData.status = enums.CLIENT_APPLICATION.STATUS.ACTIVE;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query(query, postData, function (error, results) {
-        if(error) return res.send({
+        if (error) return res.send({
             "status": 500,
             "error": error,
             "response": null
@@ -1395,12 +1399,12 @@ router.post('/application/createV2', function (req, res) {
                 query: query
             }
         }).then(response_ => {
-            res.send({status: 200, error: null, response: response_['data'][0]});
+            res.send({ status: 200, error: null, response: response_['data'][0] });
         }, err => {
-            res.send({status: 500, error: err, response: null});
+            res.send({ status: 500, error: err, response: null });
         })
             .catch(error => {
-                res.send({status: 500, error: error, response: null});
+                res.send({ status: 500, error: error, response: null });
             });
     });
 });
@@ -1473,14 +1477,14 @@ router.get('/application/getV2/:application_id', function (req, res) {
             result.files = {};
             res.send(result);
         } else {
-            fs.readdir(path, function (err, files){
+            fs.readdir(path, function (err, files) {
                 files = helperFunctions.removeFileDuplicates(path, files);
-                async.forEach(files, function (file, callback){
+                async.forEach(files, function (file, callback) {
                     let filename = file.split('.')[0].split('_');
                     filename.shift();
-                    obj[filename.join('_')] = path+file;
+                    obj[filename.join('_')] = path + file;
                     callback();
-                }, function(data){
+                }, function (data) {
                     result.files = obj;
                     res.send({
                         "status": 200,
@@ -1497,7 +1501,7 @@ router.get('/application/complete/:application_id', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let payload = {},
         id = req.params.application_id,
-        query =  `UPDATE client_applications Set ? WHERE ID = ${id}`,
+        query = `UPDATE client_applications Set ? WHERE ID = ${id}`,
         endpoint = `/core-service/post?query=${query}`,
         url = `${HOST}${endpoint}`;
     payload.status = enums.CLIENT_APPLICATION.STATUS.COMPLETED;
@@ -1505,8 +1509,8 @@ router.get('/application/complete/:application_id', function (req, res) {
 
     db.query(query, payload, function (error, response) {
         if (error)
-            return res.send({status: 500, error: error, response: null});
-        return res.send({status: 200, error: null, response: response});
+            return res.send({ status: 500, error: error, response: null });
+        return res.send({ status: 200, error: null, response: response });
     });
 });
 
@@ -1514,7 +1518,7 @@ router.post('/application/approve/:application_id', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let payload = req.body,
         id = req.params.application_id,
-        query =  `UPDATE client_applications Set ? WHERE ID = ${id}`,
+        query = `UPDATE client_applications Set ? WHERE ID = ${id}`,
         endpoint = `/core-service/post?query=${query}`,
         url = `${HOST}${endpoint}`;
     payload.status = enums.CLIENT_APPLICATION.STATUS.APPROVED;
@@ -1522,8 +1526,8 @@ router.post('/application/approve/:application_id', function (req, res) {
 
     db.query(query, payload, function (error, response) {
         if (error)
-            return res.send({status: 500, error: error, response: null});
-        return res.send({status: 200, error: null, response: response});
+            return res.send({ status: 500, error: error, response: null });
+        return res.send({ status: 200, error: null, response: response });
     });
 });
 
@@ -1531,7 +1535,7 @@ router.get('/application/reject/:application_id', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let payload = {},
         id = req.params.application_id,
-        query =  `UPDATE client_applications Set ? WHERE ID = ${id}`,
+        query = `UPDATE client_applications Set ? WHERE ID = ${id}`,
         endpoint = `/core-service/post?query=${query}`,
         url = `${HOST}${endpoint}`;
     payload.status = enums.CLIENT_APPLICATION.STATUS.REJECTED;
@@ -1539,21 +1543,21 @@ router.get('/application/reject/:application_id', function (req, res) {
 
     db.query(query, payload, function (error, response) {
         if (error)
-            return res.send({status: 500, error: error, response: null});
-        return res.send({status: 200, error: null, response: response});
+            return res.send({ status: 500, error: error, response: null });
+        return res.send({ status: 200, error: null, response: response });
     });
 });
 
-router.put('/change-password/:id', helperFunctions.verifyJWT, function(req, res) {
+router.put('/change-password/:id', helperFunctions.verifyJWT, function (req, res) {
     let payload = {},
         query = `UPDATE clients SET ? WHERE ID = ${req.params.id}`;
     payload.password = bcrypt.hashSync(req.body.password, parseInt(process.env.SALT_ROUNDS));
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query(query, payload, function (error, results, fields) {
-        if(error) {
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": "Client password updated!"});
+            res.send({ "status": 200, "error": null, "response": "Client password updated!" });
         }
     });
 });
@@ -1599,7 +1603,7 @@ router.post('/verify/email/:id', helperFunctions.verifyJWT, function (req, res) 
 
 router.get('/verify/email/:token', function (req, res) {
     if (!req.params.token) return res.status(500).send('Required parameter(s) not sent!');
-    jwt.verify(req.params.token, process.env.SECRET_KEY, function(err, decoded) {
+    jwt.verify(req.params.token, process.env.SECRET_KEY, function (err, decoded) {
         if (err) return res.send({
             "status": 500,
             "error": err,
@@ -1607,7 +1611,7 @@ router.get('/verify/email/:token', function (req, res) {
         });
 
         let payload = {},
-            query =  `UPDATE clients Set ? WHERE ID = ${decoded.ID}`;
+            query = `UPDATE clients Set ? WHERE ID = ${decoded.ID}`;
         payload.verify_email = enums.VERIFY_EMAIL.STATUS.VERIFIED;
         payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
@@ -1640,40 +1644,40 @@ router.get('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, functi
     return res.send('This api has been deprecated!');
     db.query(`SELECT s.*, a.status app_status, a.close_status, ROUND((s.interest_amount + s.payment_amount), 2) 
         amount FROM application_schedules s, applications a WHERE s.ID = ${req.params.invoice_id} 
-        AND s.applicationID = a.ID AND a.userID = ${req.params.id}`, function(error, schedule) {
-            if(error) return res.send({
+        AND s.applicationID = a.ID AND a.userID = ${req.params.id}`, function (error, schedule) {
+        if (error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+
+        if (!schedule[0]) return res.send({
+            "status": 500,
+            "error": null,
+            "response": 'Invoice does not exist for this client!'
+        });
+
+        const invoice = schedule[0];
+
+        if (invoice.app_status !== 2 || invoice.close_status !== 0)
+            return res.send({
                 "status": 500,
-                "error": error,
-                "response": null
+                "error": null,
+                "response": 'Invoice is not active!'
             });
 
-            if(!schedule[0]) return res.send({
-                    "status": 500,
-                    "error": null,
-                    "response": 'Invoice does not exist for this client!'
-                });
+        if (invoice.payment_status !== 0)
+            return res.send({
+                "status": 500,
+                "error": null,
+                "response": 'Invoice already has a payment!'
+            });
 
-            const invoice = schedule[0];
-
-            if(invoice.app_status !== 2 || invoice.close_status !== 0)
-                return res.send({
-                    "status": 500,
-                    "error": null,
-                    "response": 'Invoice is not active!'
-                });
-
-            if(invoice.payment_status !== 0)
-                return res.send({
-                    "status": 500,
-                    "error": null,
-                    "response": 'Invoice already has a payment!'
-                });
-
-            paystack.transaction.initialize({
-                email: req.user.email,
-                amount: parseFloat(invoice.amount) * 100
-            })
-            .then(function(body){
+        paystack.transaction.initialize({
+            email: req.user.email,
+            amount: parseFloat(invoice.amount) * 100
+        })
+            .then(function (body) {
                 if (body.status) {
                     return res.send({
                         "status": 200,
@@ -1688,38 +1692,38 @@ router.get('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, functi
                     });
                 }
             })
-            .catch(function(error){
-                if(error) return res.send({
+            .catch(function (error) {
+                if (error) return res.send({
                     "status": 500,
                     "error": error,
                     "response": null
                 });
             });
-        });    
+    });
 });
 
 router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, function (req, res) {
     db.query(`SELECT s.*, a.ID app_id, a.userID, ROUND((s.interest_amount + s.payment_amount), 2) amount, 
     c.loan_officer, c.branch FROM application_schedules s, applications a, clients c WHERE s.ID = ${req.params.invoice_id} 
-    AND s.applicationID = a.ID AND a.userID = ${req.params.id} AND a.userID = c.ID`, function(error, schedule) {
-            if(error) return res.send({
-                "status": 500,
-                "error": error,
-                "response": null
-            });
+    AND s.applicationID = a.ID AND a.userID = ${req.params.id} AND a.userID = c.ID`, function (error, schedule) {
+        if (error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
 
-            if(!schedule[0]) return res.send({
-                    "status": 500,
-                    "error": null,
-                    "response": 'Invoice does not exist!'
-                });
+        if (!schedule[0]) return res.send({
+            "status": 500,
+            "error": null,
+            "response": 'Invoice does not exist!'
+        });
 
-            const invoice_ = schedule[0]
-            
-            paystack.transaction.verify(req.body.reference)
-            .then(function(body){
+        const invoice_ = schedule[0]
+
+        paystack.transaction.verify(req.body.reference)
+            .then(function (body) {
                 if (body.status) {
-                    if(body.data.amount !== parseFloat(invoice_.amount) * 100)
+                    if (body.data.amount !== parseFloat(invoice_.amount) * 100)
                         return res.send({
                             "status": 500,
                             "error": null,
@@ -1727,61 +1731,64 @@ router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, fun
                         });
                     if (body.data.status === 'success') {
                         let data = {
-                                actual_payment_amount: invoice_.payment_amount,
-                                actual_interest_amount: invoice_.interest_amount,
-                                actual_fees_amount: invoice_.fees_amount || 0,
-                                actual_penalty_amount: invoice_.penalty_amount || 0,
-                                payment_source: 'paystack',
-                                payment_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
-                            },
+                            actual_payment_amount: invoice_.payment_amount,
+                            actual_interest_amount: invoice_.interest_amount,
+                            actual_fees_amount: invoice_.fees_amount || 0,
+                            actual_penalty_amount: invoice_.penalty_amount || 0,
+                            payment_source: 'paystack',
+                            payment_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
+                        },
                             postData = Object.assign({}, data);
                         postData.payment_status = 1;
                         delete postData.payment_source;
                         delete postData.payment_date;
-                        db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`, 
+                        db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`,
                             postData, function (error, schedule) {
-                            if (error) {
-                                res.send({
-                                    "status": 500, 
-                                    "error": error, 
-                                    "response": null});
-                            } else {
-                                let invoice = {};
-                                invoice.invoiceID = req.params.invoice_id;
-                                invoice.agentID = 1;
-                                invoice.applicationID = invoice_.app_id;
-                                invoice.payment_amount = data.actual_payment_amount;
-                                invoice.interest_amount = data.actual_interest_amount;
-                                invoice.fees_amount = data.actual_fees_amount;
-                                invoice.penalty_amount = data.actual_penalty_amount;
-                                invoice.payment_source = data.payment_source;
-                                invoice.payment_date = data.payment_date;
-                                invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                                invoice.clientID = invoice_.userID;
-                                invoice.loan_officerID = invoice_.loan_officer;
-                                invoice.branchID = invoice_.branch;
-                                invoice.type = 'multiple';
-                                db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response) {
-                                    if (error) {
-                                        res.send({
-                                            "status": 500, 
-                                            "error": error, 
-                                            "response": null});
-                                    } else {
-                                        let payload = {};
-                                        payload.category = 'Application';
-                                        payload.userid = req.cookies.timeout;
-                                        payload.description = 'Loan Application Payment Confirmed';
-                                        payload.affected = invoice_.app_id;
-                                        notificationsService.log(req, payload);
-                                        return res.send({
-                                            "status": 200, 
-                                            "error": null, 
-                                            "response": "Invoice payment confirmed successfully!"});
-                                    }
-                                });
-                            }
-                        });
+                                if (error) {
+                                    res.send({
+                                        "status": 500,
+                                        "error": error,
+                                        "response": null
+                                    });
+                                } else {
+                                    let invoice = {};
+                                    invoice.invoiceID = req.params.invoice_id;
+                                    invoice.agentID = 1;
+                                    invoice.applicationID = invoice_.app_id;
+                                    invoice.payment_amount = data.actual_payment_amount;
+                                    invoice.interest_amount = data.actual_interest_amount;
+                                    invoice.fees_amount = data.actual_fees_amount;
+                                    invoice.penalty_amount = data.actual_penalty_amount;
+                                    invoice.payment_source = data.payment_source;
+                                    invoice.payment_date = data.payment_date;
+                                    invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                                    invoice.clientID = invoice_.userID;
+                                    invoice.loan_officerID = invoice_.loan_officer;
+                                    invoice.branchID = invoice_.branch;
+                                    invoice.type = 'multiple';
+                                    db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response) {
+                                        if (error) {
+                                            res.send({
+                                                "status": 500,
+                                                "error": error,
+                                                "response": null
+                                            });
+                                        } else {
+                                            let payload = {};
+                                            payload.category = 'Application';
+                                            payload.userid = req.cookies.timeout;
+                                            payload.description = 'Loan Application Payment Confirmed';
+                                            payload.affected = invoice_.app_id;
+                                            notificationsService.log(req, payload);
+                                            return res.send({
+                                                "status": 200,
+                                                "error": null,
+                                                "response": "Invoice payment confirmed successfully!"
+                                            });
+                                        }
+                                    });
+                                }
+                            });
                     } else {
                         return res.send({
                             "status": 500,
@@ -1797,14 +1804,14 @@ router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, fun
                     });
                 }
             })
-            .catch(function(error){
-                if(error) return res.send({
+            .catch(function (error) {
+                if (error) return res.send({
                     "status": 500,
                     "error": error,
                     "response": null
                 });
             });
-        });
+    });
 });
 
 /**
@@ -1815,13 +1822,13 @@ router.get('/preapproved-loan/create/:id/:loan_id', helperFunctions.verifyJWT, f
     db.query(`SELECT a.userID, a.workflowID, a.loan_amount, a.interest_rate, a.duration, a.repayment_date, c.fullname client, 
     c.email, (SELECT u.phone FROM users u WHERE u.ID = (SELECT c.loan_officer FROM clients c WHERE c.ID = a.userID)) AS contact 
     FROM applications a, clients c WHERE a.ID = ${req.params.loan_id} AND a.userID = ${req.params.id} AND a.userID = c.ID`, (error, app) => {
-        if(error) return res.send({
+        if (error) return res.send({
             "status": 500,
             "error": error,
             "response": null
         });
 
-        if(!app[0]) return res.send({
+        if (!app[0]) return res.send({
             "status": 500,
             "error": null,
             "response": 'Loan does not exist for this client!'
@@ -1852,8 +1859,8 @@ router.get('/preapproved-loan/create/:id/:loan_id', helperFunctions.verifyJWT, f
         preapproved_loan.expiry_date = moment().add(5, 'days').utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
         preapproved_loan.hash = bcrypt.hashSync(preapproved_loan.userID, parseInt(process.env.SALT_ROUNDS));
         db.query('INSERT INTO preapproved_loans Set ?', preapproved_loan, function (error, response__) {
-            if(error){
-                res.send({status: 500, error: error, response: null});
+            if (error) {
+                res.send({ status: 500, error: error, response: null });
             } else {
                 data.name = preapproved_loan.client;
                 data.date = date_created;
@@ -1896,7 +1903,7 @@ router.get('/preapproved-loan/get/:id/:loan_id/:key?', helperFunctions.verifyJWT
             query: query
         }
     }).then(response => {
-        if (response['data'][0]){
+        if (response['data'][0]) {
             const status_payload = {
                 mandateId: response['data'][0]['mandateId'],
                 requestId: response['data'][0]['requestId']
@@ -1928,7 +1935,7 @@ router.get('/preapproved-loan/get/:id/:loan_id/:key?', helperFunctions.verifyJWT
 router.put('/application/update/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
     db.query(`UPDATE client_applications Set ? WHERE ID = ${req.params.application_id}
         AND userID = ${req.params.id}`, req.body, function (error, response) {
-        if(error){
+        if (error) {
             return res.send({
                 "status": 500,
                 "error": error,
@@ -1949,45 +1956,45 @@ router.get('/payment-method/initiate/:id', helperFunctions.verifyJWT, function (
         email: req.user.email,
         amount: 5000
     })
-    .then(function(body){
-        if (body.status) {
-            return res.send({
-                "status": 200,
-                "error": null,
-                "response": body.data
-            });
-        } else {
-            return res.send({
+        .then(function (body) {
+            if (body.status) {
+                return res.send({
+                    "status": 200,
+                    "error": null,
+                    "response": body.data
+                });
+            } else {
+                return res.send({
+                    "status": 500,
+                    "error": null,
+                    "response": body.message
+                });
+            }
+        })
+        .catch(function (error) {
+            if (error) return res.send({
                 "status": 500,
-                "error": null,
-                "response": body.message
+                "error": error,
+                "response": null
             });
-        }
-    })
-    .catch(function(error){
-        if(error) return res.send({
-            "status": 500,
-            "error": error,
-            "response": null
         });
-    }); 
 });
 
 router.post('/payment-method/create/:id', helperFunctions.verifyJWT, function (req, res) {
     db.query(`SELECT * FROM client_payment_methods WHERE reference = '${req.body.reference}' 
     AND userID = ${req.params.id}`, (error, payment_method) => {
-        if(error) return res.send({
+        if (error) return res.send({
             "status": 500,
             "error": error,
             "response": null
         });
-        if(payment_method[0]) return res.send({
+        if (payment_method[0]) return res.send({
             "status": 500,
             "error": null,
             "response": 'Payment method already exists!'
         });
         paystack.transaction.verify(req.body.reference)
-            .then(function(body){
+            .then(function (body) {
                 if (body.status) {
                     if (body.data.status === 'success') {
                         let data = body.data.authorization;
@@ -2000,14 +2007,14 @@ router.post('/payment-method/create/:id', helperFunctions.verifyJWT, function (r
                         db.query('INSERT INTO client_payment_methods SET ?', data, function (error, response) {
                             if (error) {
                                 res.send({
-                                    "status": 500, 
-                                    "error": error, 
+                                    "status": 500,
+                                    "error": error,
                                     "response": null
                                 });
                             } else {
                                 return res.send({
-                                    "status": 200, 
-                                    "error": null, 
+                                    "status": 200,
+                                    "error": null,
                                     "response": "Payment method added successfully!"
                                 });
                             }
@@ -2027,8 +2034,8 @@ router.post('/payment-method/create/:id', helperFunctions.verifyJWT, function (r
                     });
                 }
             })
-            .catch(function(error){
-                if(error) return res.send({
+            .catch(function (error) {
+                if (error) return res.send({
                     "status": 500,
                     "error": error,
                     "response": null
@@ -2038,72 +2045,72 @@ router.post('/payment-method/create/:id', helperFunctions.verifyJWT, function (r
 });
 
 router.get('/payment-method/get/:id', helperFunctions.verifyJWT, function (req, res) {
-    db.query(`SELECT * FROM client_payment_methods WHERE userID = ${req.params.id} AND status = 1`, 
-    (error, payment_methods) => {
-        if(error) return res.send({
-            "status": 500,
-            "error": error,
-            "response": null
+    db.query(`SELECT * FROM client_payment_methods WHERE userID = ${req.params.id} AND status = 1`,
+        (error, payment_methods) => {
+            if (error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+            return res.send({
+                "status": 200,
+                "error": null,
+                "response": payment_methods
+            });
         });
-        return res.send({
-            "status": 200, 
-            "error": null, 
-            "response": payment_methods
-        });
-    });
 });
 
 router.delete('/payment-method/delete/:id/:payment_method_id', helperFunctions.verifyJWT, function (req, res) {
     db.query(`UPDATE client_payment_methods SET status = 0 
-    WHERE ID = ${req.params.payment_method_id} AND userID = ${req.params.id}`, 
-    (error, response) => {
-        if(error) return res.send({
-            "status": 500,
-            "error": error,
-            "response": null
+    WHERE ID = ${req.params.payment_method_id} AND userID = ${req.params.id}`,
+        (error, response) => {
+            if (error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+            return res.send({
+                "status": 200,
+                "error": null,
+                "response": 'Payment method deleted successfully!'
+            });
         });
-        return res.send({
-            "status": 200, 
-            "error": null, 
-            "response": 'Payment method deleted successfully!'
-        });
-    });
 });
 
 router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, function (req, res) {
     db.query(`SELECT s.*, a.ID app_id, a.userID, ROUND((s.interest_amount + s.payment_amount), 2) amount, 
     c.loan_officer, c.branch FROM application_schedules s, applications a, clients c WHERE s.ID = ${req.params.invoice_id} 
-    AND s.applicationID = a.ID AND a.userID = ${req.params.id} AND a.userID = c.ID`, function(error, schedule) {
-        if(error) return res.send({
+    AND s.applicationID = a.ID AND a.userID = ${req.params.id} AND a.userID = c.ID`, function (error, schedule) {
+        if (error) return res.send({
             "status": 500,
             "error": error,
             "response": null
         });
 
-        if(!schedule[0]) return res.send({
-                "status": 500,
-                "error": null,
-                "response": 'Invoice does not exist!'
-            });
+        if (!schedule[0]) return res.send({
+            "status": 500,
+            "error": null,
+            "response": 'Invoice does not exist!'
+        });
 
         const invoice_ = schedule[0],
             amount = parseFloat(invoice_.amount) * 100;
-        
+
         paystack.transaction.charge({
             authorization_code: req.body.authorization_code,
             email: req.user.email,
             amount: amount
         })
-        .then(function(body){
-            if (body.status) {
-                if(body.data.amount !== amount)
-                    return res.send({
-                        "status": 500,
-                        "error": null,
-                        "response": 'Payment amount does not match the invoice amount!'
-                    });
-                if (body.data.status === 'success') {
-                    let data = {
+            .then(function (body) {
+                if (body.status) {
+                    if (body.data.amount !== amount)
+                        return res.send({
+                            "status": 500,
+                            "error": null,
+                            "response": 'Payment amount does not match the invoice amount!'
+                        });
+                    if (body.data.status === 'success') {
+                        let data = {
                             actual_payment_amount: invoice_.payment_amount,
                             actual_interest_amount: invoice_.interest_amount,
                             actual_fees_amount: invoice_.fees_amount || 0,
@@ -2111,79 +2118,79 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
                             payment_source: 'paystack',
                             payment_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
                         },
-                        postData = Object.assign({}, data);
-                    postData.payment_status = 1;
-                    delete postData.payment_source;
-                    delete postData.payment_date;
-                    db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`, 
-                        postData, function (error, schedule) {
-                        if (error) {
-                            res.send({
-                                "status": 500, 
-                                "error": error, 
-                                "response": null
-                            });
-                        } else {
-                            let invoice = {};
-                            invoice.invoiceID = req.params.invoice_id;
-                            invoice.agentID = 1;
-                            invoice.applicationID = invoice_.app_id;
-                            invoice.payment_amount = data.actual_payment_amount;
-                            invoice.interest_amount = data.actual_interest_amount;
-                            invoice.fees_amount = data.actual_fees_amount;
-                            invoice.penalty_amount = data.actual_penalty_amount;
-                            invoice.payment_source = data.payment_source;
-                            invoice.payment_date = data.payment_date;
-                            invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                            invoice.clientID = invoice_.userID;
-                            invoice.loan_officerID = invoice_.loan_officer;
-                            invoice.branchID = invoice_.branch;
-                            invoice.type = 'multiple';
-                            db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response) {
+                            postData = Object.assign({}, data);
+                        postData.payment_status = 1;
+                        delete postData.payment_source;
+                        delete postData.payment_date;
+                        db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`,
+                            postData, function (error, schedule) {
                                 if (error) {
                                     res.send({
-                                        "status": 500, 
-                                        "error": error, 
+                                        "status": 500,
+                                        "error": error,
                                         "response": null
                                     });
                                 } else {
-                                    let payload = {};
-                                    payload.category = 'Application';
-                                    payload.userid = req.cookies.timeout;
-                                    payload.description = 'Loan Application Payment Confirmed';
-                                    payload.affected = invoice_.app_id;
-                                    notificationsService.log(req, payload);
-                                    return res.send({
-                                        "status": 200, 
-                                        "error": null, 
-                                        "response": "Invoice payment confirmed successfully!"
+                                    let invoice = {};
+                                    invoice.invoiceID = req.params.invoice_id;
+                                    invoice.agentID = 1;
+                                    invoice.applicationID = invoice_.app_id;
+                                    invoice.payment_amount = data.actual_payment_amount;
+                                    invoice.interest_amount = data.actual_interest_amount;
+                                    invoice.fees_amount = data.actual_fees_amount;
+                                    invoice.penalty_amount = data.actual_penalty_amount;
+                                    invoice.payment_source = data.payment_source;
+                                    invoice.payment_date = data.payment_date;
+                                    invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                                    invoice.clientID = invoice_.userID;
+                                    invoice.loan_officerID = invoice_.loan_officer;
+                                    invoice.branchID = invoice_.branch;
+                                    invoice.type = 'multiple';
+                                    db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response) {
+                                        if (error) {
+                                            res.send({
+                                                "status": 500,
+                                                "error": error,
+                                                "response": null
+                                            });
+                                        } else {
+                                            let payload = {};
+                                            payload.category = 'Application';
+                                            payload.userid = req.cookies.timeout;
+                                            payload.description = 'Loan Application Payment Confirmed';
+                                            payload.affected = invoice_.app_id;
+                                            notificationsService.log(req, payload);
+                                            return res.send({
+                                                "status": 200,
+                                                "error": null,
+                                                "response": "Invoice payment confirmed successfully!"
+                                            });
+                                        }
                                     });
                                 }
                             });
-                        }
-                    });
+                    } else {
+                        return res.send({
+                            "status": 500,
+                            "error": null,
+                            "response": body.data.gateway_response
+                        });
+                    }
                 } else {
                     return res.send({
                         "status": 500,
                         "error": null,
-                        "response": body.data.gateway_response
+                        "response": body.message
                     });
                 }
-            } else {
-                return res.send({
+            })
+            .catch(function (error) {
+                if (error) return res.send({
                     "status": 500,
-                    "error": null,
-                    "response": body.message
+                    "error": error,
+                    "response": null
                 });
-            }
-        })
-        .catch(function(error){
-            if(error) return res.send({
-                "status": 500,
-                "error": error,
-                "response": null
             });
-        });
     });
 });
 
@@ -2196,7 +2203,7 @@ router.post('/application/comment/:id/:loan_id', helperFunctions.verifyJWT, (req
     payload.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('INSERT INTO application_comments SET ?', payload,
         (error, response) => {
-            if(error) return res.send({
+            if (error) return res.send({
                 "status": 500,
                 "error": error,
                 "response": null
@@ -2213,7 +2220,7 @@ router.get('/application/comment/:id/:loan_id', (req, res) => {
     db.query(`SELECT c.text, c.date_created, (SELECT fullname FROM clients WHERE ID = c.userID) fullname
     FROM application_comments c WHERE c.applicationID = ${req.params.loan_id} AND c.userID = ${req.params.id} 
         AND c.user_type = 'client' ORDER BY c.ID DESC`, (error, comments) => {
-        if(error) return res.send({
+        if (error) return res.send({
             "status": 500,
             "error": error,
             "response": null
@@ -2226,8 +2233,8 @@ router.get('/application/comment/:id/:loan_id', (req, res) => {
     });
 });
 
-router.post('/application/upload/:id/:application_id/:name', helperFunctions.verifyJWT, function(req, res) {
-    let	id = req.params.id,
+router.post('/application/upload/:id/:application_id/:name', helperFunctions.verifyJWT, function (req, res) {
+    let id = req.params.id,
         name = req.params.name,
         sampleFile = req.files.file,
         extArray = sampleFile.name.split("."),
@@ -2254,14 +2261,14 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
             });
         } else {
             const file_folder = `files/client_application-${application_id}/`;
-            fs.stat(file_folder, function(err) {
+            fs.stat(file_folder, function (err) {
                 if (err && (err.code === 'ENOENT'))
                     fs.mkdirSync(file_folder);
 
                 const file_url = `${file_folder}${application_id}_${name.trim().replace(/ /g, '_')}.${extension}`;
                 fs.stat(file_url, function (err) {
                     if (err) {
-                        sampleFile.mv(file_url, function(err) {
+                        sampleFile.mv(file_url, function (err) {
                             if (err) return res.status(500).send(err);
                             res.send({
                                 "status": 200,
@@ -2270,11 +2277,11 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
                             });
                         });
                     } else {
-                        fs.unlink(file_url,function(err){
-                            if(err){
+                        fs.unlink(file_url, function (err) {
+                            if (err) {
                                 return console.log(err);
                             } else {
-                                sampleFile.mv(file_url, function(err) {
+                                sampleFile.mv(file_url, function (err) {
                                     if (err)
                                         return res.status(500).send(err);
                                     res.send({
@@ -2306,24 +2313,24 @@ router.get('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req,
     let query4 = `SELECT COALESCE(SUM(payment_amount+interest_amount), 0) amount FROM schedule_history 
     WHERE applicationID = ${req.params.loan_id} AND clientID = ${req.params.id} AND status = 1`;
     db.query(query, (error, application) => {
-        if(error) return res.send({
+        if (error) return res.send({
             "status": 500,
             "error": error,
             "response": null
         });
-        if(!application[0]) return res.send({
-                "status": 500,
-                "error": null,
-                "response": 'Application does not exist!'
-            });
+        if (!application[0]) return res.send({
+            "status": 500,
+            "error": null,
+            "response": 'Application does not exist!'
+        });
         db.query(query1, (error, response) => {
-            let overdue = (response[0])? response[0]['amount'] : 0;
+            let overdue = (response[0]) ? response[0]['amount'] : 0;
             db.query(query2, (error, response) => {
-                let not_due = (response[0])? response[0]['amount'] : 0;
+                let not_due = (response[0]) ? response[0]['amount'] : 0;
                 db.query(query3, (error, response) => {
-                    let due = (response[0])? response[0]['amount'] : 0;
+                    let due = (response[0]) ? response[0]['amount'] : 0;
                     db.query(query4, (error, response) => {
-                        let paid = (response[0])? response[0]['amount'] : 0;
+                        let paid = (response[0]) ? response[0]['amount'] : 0;
                         return res.send({
                             "status": 200,
                             "error": null,
@@ -2336,97 +2343,97 @@ router.get('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req,
     });
 });
 
-router.post('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, function (req, res) {    
+router.post('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, function (req, res) {
     paystack.transaction.charge({
         authorization_code: req.body.authorization_code,
         email: req.user.email,
         amount: parseFloat(req.body.close_amount) * 100
     })
-    .then(function(body){
-        if (body.status) {
-            if (body.data.status === 'success') {
-                db.getConnection(function(err, connection) {
-                    if (err) throw err;
-            
-                    connection.query(`SELECT COALESCE(SUM(interest_amount), 0) amount FROM application_schedules 
+        .then(function (body) {
+            if (body.status) {
+                if (body.data.status === 'success') {
+                    db.getConnection(function (err, connection) {
+                        if (err) throw err;
+
+                        connection.query(`SELECT COALESCE(SUM(interest_amount), 0) amount FROM application_schedules 
                     WHERE applicationID = ${req.params.loan_id} AND payment_status = 0 AND status = 1`, (error, close_interest) => {
-                        let data = {
-                            close_amount: req.body.close_amount,
-                            close_comment: req.body.close_comment
-                        };
-                        data.close_interest = close_interest[0]['amount'];
-                        data.close_date = moment().utcOffset('+0100').format('YYYY-MM-DD');
-                        data.close_channel = 'card';
-                        data.close_status = 1;
-            
-                        connection.query(`UPDATE applications SET ? WHERE ID = ${req.params.loan_id}`, data, (error, result) => {
-                            if(error) return res.send({
-                                "status": 500,
-                                "error": error,
-                                "response": null
-                            });
-                            connection.query(`SELECT * FROM application_schedules WHERE applicationID = ${req.params.loan_id} 
-                                AND status = 1 AND payment_status = 0`, function (error, invoices) {
-                                if(error) return res.send({
+                            let data = {
+                                close_amount: req.body.close_amount,
+                                close_comment: req.body.close_comment
+                            };
+                            data.close_interest = close_interest[0]['amount'];
+                            data.close_date = moment().utcOffset('+0100').format('YYYY-MM-DD');
+                            data.close_channel = 'card';
+                            data.close_status = 1;
+
+                            connection.query(`UPDATE applications SET ? WHERE ID = ${req.params.loan_id}`, data, (error, result) => {
+                                if (error) return res.send({
                                     "status": 500,
                                     "error": error,
                                     "response": null
                                 });
-                                async.forEach(invoices, function (invoice_obj, callback) {
-                                    let invoice = {};
-                                    invoice.invoiceID = invoice_obj.ID;
-                                    invoice.applicationID = req.params.loan_id;
-                                    invoice.payment_amount = invoice_obj.payment_amount;
-                                    invoice.interest_amount = invoice_obj.interest_amount;
-                                    invoice.fees_amount = invoice_obj.fees_amount;
-                                    invoice.penalty_amount = invoice_obj.penalty_amount;
-                                    invoice.agentID = 1;
-                                    invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                                    connection.query(`UPDATE application_schedules SET payment_status=1 WHERE ID = ${invoice_obj.ID}`, () => {
-                                        connection.query('INSERT INTO schedule_history SET ?', invoice, () => {
-                                            callback();
-                                        });
+                                connection.query(`SELECT * FROM application_schedules WHERE applicationID = ${req.params.loan_id} 
+                                AND status = 1 AND payment_status = 0`, function (error, invoices) {
+                                    if (error) return res.send({
+                                        "status": 500,
+                                        "error": error,
+                                        "response": null
                                     });
-                                }, function (data) {
-                                    connection.release();
-                                    let payload = {}
-                                    payload.category = 'Application';
-                                    payload.userid = req.cookies.timeout;
-                                    payload.description = 'Loan Application Paid Off';
-                                    payload.affected = req.params.id;
-                                    notificationsService.log(req, payload);
-                                    res.send({
-                                        "status": 200,
-                                        "error": null,
-                                        "response": "Application pay off successful!"
+                                    async.forEach(invoices, function (invoice_obj, callback) {
+                                        let invoice = {};
+                                        invoice.invoiceID = invoice_obj.ID;
+                                        invoice.applicationID = req.params.loan_id;
+                                        invoice.payment_amount = invoice_obj.payment_amount;
+                                        invoice.interest_amount = invoice_obj.interest_amount;
+                                        invoice.fees_amount = invoice_obj.fees_amount;
+                                        invoice.penalty_amount = invoice_obj.penalty_amount;
+                                        invoice.agentID = 1;
+                                        invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                                        connection.query(`UPDATE application_schedules SET payment_status=1 WHERE ID = ${invoice_obj.ID}`, () => {
+                                            connection.query('INSERT INTO schedule_history SET ?', invoice, () => {
+                                                callback();
+                                            });
+                                        });
+                                    }, function (data) {
+                                        connection.release();
+                                        let payload = {}
+                                        payload.category = 'Application';
+                                        payload.userid = req.cookies.timeout;
+                                        payload.description = 'Loan Application Paid Off';
+                                        payload.affected = req.params.id;
+                                        notificationsService.log(req, payload);
+                                        res.send({
+                                            "status": 200,
+                                            "error": null,
+                                            "response": "Application pay off successful!"
+                                        });
                                     });
                                 });
                             });
                         });
                     });
-                });
+                } else {
+                    return res.send({
+                        "status": 500,
+                        "error": null,
+                        "response": body.data.gateway_response
+                    });
+                }
             } else {
                 return res.send({
                     "status": 500,
                     "error": null,
-                    "response": body.data.gateway_response
+                    "response": body.message
                 });
             }
-        } else {
-            return res.send({
+        })
+        .catch(function (error) {
+            if (error) return res.send({
                 "status": 500,
-                "error": null,
-                "response": body.message
+                "error": error,
+                "response": null
             });
-        }
-    })
-    .catch(function(error){
-        if(error) return res.send({
-            "status": 500,
-            "error": error,
-            "response": null
         });
-    });
 });
 
 router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, (req, res) => {
@@ -2441,11 +2448,11 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
             "response": null
         });
 
-        if(!schedule[0]) return res.send({
-                "status": 500,
-                "error": null,
-                "response": 'Invoice does not exist!'
-            });
+        if (!schedule[0]) return res.send({
+            "status": 500,
+            "error": null,
+            "response": 'Invoice does not exist!'
+        });
 
         const invoice_ = schedule[0],
             amount = parseFloat(req.body.amount) * 100,
@@ -2475,109 +2482,109 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
                             payment_source: 'paystack',
                             payment_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
                         },
-                        postData = Object.assign({}, data);
-                    postData.payment_status = 1;
-                    delete postData.payment_source;
-                    delete postData.payment_date;
-                    db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`, 
-                        postData, function (error, schedule) {
-                        if (error) {
-                            res.send({
-                                "status": 500, 
-                                "error": error, 
-                                "response": null
-                            });
-                        } else {
-                            let invoice = {};
-                            invoice.invoiceID = req.params.invoice_id;
-                            invoice.agentID = 1;
-                            invoice.applicationID = invoice_.app_id;
-                            invoice.payment_amount = data.actual_payment_amount;
-                            invoice.interest_amount = data.actual_interest_amount;
-                            invoice.fees_amount = data.actual_fees_amount;
-                            invoice.penalty_amount = data.actual_penalty_amount;
-                            invoice.payment_source = data.payment_source;
-                            invoice.payment_date = data.payment_date;
-                            invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                            invoice.clientID = invoice_.userID;
-                            invoice.loan_officerID = invoice_.loan_officer;
-                            invoice.branchID = invoice_.branch;
-                            if (invoice.payment_amount > 0 && invoice.interest_amount > 0) {
-                                invoice.type = 'multiple';
-                            } else {
-                                if (invoice.payment_amount > 0) {
-                                    invoice.type = 'principal';
-                                } else if (invoice.interest_amount > 0) {
-                                    invoice.type = 'interest';
-                                } else if (invoice.fees_amount > 0) {
-                                    invoice.type = 'fees';
-                                } else if (invoice.penalty_amount > 0) {
-                                    invoice.type = 'penalty';
-                                }
-                            }
-                            db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response) {
+                            postData = Object.assign({}, data);
+                        postData.payment_status = 1;
+                        delete postData.payment_source;
+                        delete postData.payment_date;
+                        db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`,
+                            postData, function (error, schedule) {
                                 if (error) {
                                     res.send({
-                                        "status": 500, 
-                                        "error": error, 
+                                        "status": 500,
+                                        "error": error,
                                         "response": null
                                     });
                                 } else {
-                                    let payload = {};
-                                    payload.category = 'Application';
-                                    payload.userid = req.cookies.timeout;
-                                    payload.description = 'Loan Application Payment Confirmed';
-                                    payload.affected = invoice_.app_id;
-                                    notificationsService.log(req, payload);
-                                    return res.send({
-                                        "status": 200, 
-                                        "error": null, 
-                                        "response": "Invoice payment confirmed successfully!"
+                                    let invoice = {};
+                                    invoice.invoiceID = req.params.invoice_id;
+                                    invoice.agentID = 1;
+                                    invoice.applicationID = invoice_.app_id;
+                                    invoice.payment_amount = data.actual_payment_amount;
+                                    invoice.interest_amount = data.actual_interest_amount;
+                                    invoice.fees_amount = data.actual_fees_amount;
+                                    invoice.penalty_amount = data.actual_penalty_amount;
+                                    invoice.payment_source = data.payment_source;
+                                    invoice.payment_date = data.payment_date;
+                                    invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                                    invoice.clientID = invoice_.userID;
+                                    invoice.loan_officerID = invoice_.loan_officer;
+                                    invoice.branchID = invoice_.branch;
+                                    if (invoice.payment_amount > 0 && invoice.interest_amount > 0) {
+                                        invoice.type = 'multiple';
+                                    } else {
+                                        if (invoice.payment_amount > 0) {
+                                            invoice.type = 'principal';
+                                        } else if (invoice.interest_amount > 0) {
+                                            invoice.type = 'interest';
+                                        } else if (invoice.fees_amount > 0) {
+                                            invoice.type = 'fees';
+                                        } else if (invoice.penalty_amount > 0) {
+                                            invoice.type = 'penalty';
+                                        }
+                                    }
+                                    db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response) {
+                                        if (error) {
+                                            res.send({
+                                                "status": 500,
+                                                "error": error,
+                                                "response": null
+                                            });
+                                        } else {
+                                            let payload = {};
+                                            payload.category = 'Application';
+                                            payload.userid = req.cookies.timeout;
+                                            payload.description = 'Loan Application Payment Confirmed';
+                                            payload.affected = invoice_.app_id;
+                                            notificationsService.log(req, payload);
+                                            return res.send({
+                                                "status": 200,
+                                                "error": null,
+                                                "response": "Invoice payment confirmed successfully!"
+                                            });
+                                        }
                                     });
                                 }
                             });
-                        }
-                    });
+                    } else {
+                        return res.send({
+                            "status": 500,
+                            "error": null,
+                            "response": body.data.gateway_response
+                        });
+                    }
                 } else {
                     return res.send({
                         "status": 500,
                         "error": null,
-                        "response": body.data.gateway_response
+                        "response": body.message
                     });
                 }
-            } else {
-                return res.send({
+            })
+            .catch(function (error) {
+                if (error) return res.send({
                     "status": 500,
-                    "error": null,
-                    "response": body.message
+                    "error": error,
+                    "response": null
                 });
-            }
-        })
-        .catch(function(error){
-            if(error) return res.send({
-                "status": 500,
-                "error": error,
-                "response": null
             });
-        });
     });
 });
 
 router.get('/kyc', (req, res) => {
-    db.query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='test'"+
-    "AND TABLE_NAME='clients' AND NOT (COLUMN_NAME = 'ID' OR COLUMN_NAME = 'status' "+
-    "OR COLUMN_NAME = 'date_created' OR COLUMN_NAME = 'images_folder')", (error, response) => {
-        if(error) return res.send({
-            "status": 500,
-            "error": error,
-            "response": null
+    db.query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='test'" +
+        "AND TABLE_NAME='clients' AND NOT (COLUMN_NAME = 'ID' OR COLUMN_NAME = 'status' " +
+        "OR COLUMN_NAME = 'date_created' OR COLUMN_NAME = 'images_folder')", (error, response) => {
+            if (error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+            res.send({
+                "status": 200,
+                "error": null,
+                "response": response
+            });
         });
-        res.send({
-            "status": 200,
-            "error": null,
-            "response": response
-        });
-    });
 });
 
 module.exports = router;
