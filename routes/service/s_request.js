@@ -78,7 +78,7 @@ function getRecentTxns(id, isWallet) {
     left join clients c on i.clientId = c.ID
     left join users u on u.ID = v.createdBy
     left join investment_products p on i.productId = p.ID
-    WHERE v.isWallet = 0 AND v.investmentId = ${id} ORDER BY ID DESC LIMIT 5 OFFSET 0` :
+    WHERE v.isWallet = 0 AND v.postDone = 1 AND v.investmentId = ${id} ORDER BY ID DESC LIMIT 5 OFFSET 0` :
             `SELECT 
     v.ID,v.ref_no,c.fullname,c.email,v.description,v.created_date,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName,
     v.isDeny,v.isPaymentMadeByWallet,v.isReversedTxn,v.isTransfer,v.isMoveFundTransfer,v.beneficialInvestmentId,p.interest_disbursement_time,p.interest_moves_wallet,
@@ -89,7 +89,7 @@ function getRecentTxns(id, isWallet) {
     left join clients c on i.clientId = c.ID
     left join users u on u.ID = v.createdBy
     left join investment_products p on i.productId = p.ID
-    WHERE v.isWallet = 1 AND v.clientId = ${id} ORDER BY ID DESC LIMIT 5 OFFSET 0`;
+    WHERE v.isWallet = 1 AND AND v.postDone = 1 AND v.clientId = ${id} ORDER BY ID DESC LIMIT 5 OFFSET 0`;
         db.query(query, function (error, results, fields) {
             if (error && error !== null) {
                 resolve([{ interest_moves_wallet: undefined }]);
@@ -183,8 +183,8 @@ async function transactionalAlert(id, isWallet) {
             code: (isWallet.toString() === '0') ? data[0].code : '',
             description: data[0].description,
             product: (isWallet.toString() === '0') ? data[0].name : '',
-            state: orgName[0].state,
-            country: orgName[0].country,
+            state: (orgName[0] !== undefined) ? orgName[0].state : '',
+            country: (orgName[0] !== undefined) ? orgName[0].country : '',
             txnDate: data[0].txn_date,
             postDate: data[0].updated_date,
             balance: (isWallet.toString() === '0') ?

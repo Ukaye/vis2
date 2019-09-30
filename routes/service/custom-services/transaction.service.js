@@ -2949,7 +2949,7 @@ async function computeInterestTxns2(HOST, data) {
 
                             let inv_txn = {
                                 txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
-                                description: `Investment interest@ ${data.endDate}`,
+                                description: `${data.acctNo}(${data.investmentName}) Investment interest@ ${data.endDate}`,
                                 amount: Number(_amt).toFixed(2),
                                 is_credit: 1,
                                 created_date: dt,
@@ -3068,7 +3068,7 @@ router.get('/client-wallets/:id', function (req, res, next) {
     left join clients c on i.clientId = c.ID
     left join users u on u.ID = v.createdBy
     left join investment_products p on i.productId = p.ID
-    WHERE v.isWallet = 1 AND v.clientId = ${req.params.id} LIMIT ${limit} OFFSET ${offset}`;
+    WHERE v.isWallet = 1 AND v.clientId = ${req.params.id} ORDER BY ID LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     var data = [];
