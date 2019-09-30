@@ -138,7 +138,9 @@ function getInvestmentMaturity() {
                             isWallet: isWalletPage,
                             isInvestmentMatured: (selectedInvestment.maturityDays === true) ? 1 : 0,
                             interest_disbursement_time: selectedInvestment.interest_disbursement_time,
-                            isInvestmentTerminated: 0
+                            isInvestmentTerminated: 0,
+                            acctNo: data_row.acctNo,
+                            InvestmentName: data_row.name
                         };
                         $.ajax({
                             url: `investment-txns/compute-mature-investment`,
@@ -318,6 +320,7 @@ function bindDataTable(id) {
                     order: tableHeaders[aoData[2].value[0].column].query
                 },
                 success: function (data) {
+                    console.log(data);
                     if (data.data.length > 0) {
                         selectedInvestment = (isWalletPage === 1) ? data.data[0] : data.data[data.data.length - 1];
 
@@ -1724,7 +1727,9 @@ function onPost(value, approvedId, txnId, id, isDeny) {
         // interest_rate: selectedInvestment.interest_rate,
         investment_mature_date: selectedInvestment.investment_mature_date,
         investment_start_date: selectedInvestment.investment_start_date,
-        txn_date: data_row.txn_date
+        txn_date: data_row.txn_date,
+        acctNo: data_row.acctNo,
+        InvestmentName: data_row.name
     }
     $.ajax({
         url: `investment-txns/posts`,
