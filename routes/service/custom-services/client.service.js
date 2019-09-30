@@ -2429,10 +2429,12 @@ router.post('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, func
     });
 });
 
-router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, function (req, res) {
+router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, (req, res) => {
     db.query(`SELECT s.*, a.ID app_id, a.userID, ROUND((s.interest_amount + s.payment_amount), 2) amount, 
-    c.loan_officer, c.branch FROM application_schedules s, applications a, clients c WHERE s.ID = ${req.params.invoice_id} 
-    AND s.applicationID = a.ID AND a.userID = ${req.params.id} AND a.userID = c.ID`, function(error, schedule) {
+    c.loan_officer, c.branch, COALESCE(ROUND(SUM(p.interest_amount), 2), 0) interest_paid, COALESCE(ROUND(SUM(p.payment_amount), 2), 0) principal_paid, 
+    ROUND((s.interest_amount - COALESCE(ROUND(SUM(p.interest_amount), 2), 0)), 2) interest_owed, ROUND((s.payment_amount - COALESCE(ROUND(SUM(p.payment_amount), 2), 0)), 2) principal_owed 
+    FROM application_schedules s, applications a, clients c, schedule_history p WHERE s.ID = ${req.params.invoice_id} 
+    AND s.applicationID = a.ID AND a.userID = ${req.params.id} AND a.userID = c.ID AND p.invoiceID = s.ID AND p.status = 1`, (error, schedule) => {
         if(error) return res.send({
             "status": 500,
             "error": error,
@@ -2446,8 +2448,17 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
             });
 
         const invoice_ = schedule[0],
-            amount = (parseFloat(req.body.principal_amount) + parseFloat(req.body.interest_amount)) * 100;
+            amount = parseFloat(req.body.amount) * 100,
+            interest_amount = (req.body.amount >= invoice_.interest_owed)? invoice_.interest_owed : req.body.amount,
+            principal_amount = (req.body.amount > interest_amount)? (req.body.amount - interest_amount) : 0;
         
+        if (req.body.amount > (invoice_.interest_owed + invoice_.principal_owed))
+            return res.send({
+                "status": 500,
+                "error": null,
+                "response": 'Amount is more than the repayment due for this invoice!'
+            });
+
         paystack.transaction.charge({
             authorization_code: req.body.authorization_code,
             email: req.user.email,
@@ -2457,8 +2468,8 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
             if (body.status) {
                 if (body.data.status === 'success') {
                     let data = {
-                            actual_payment_amount: req.body.principal_amount,
-                            actual_interest_amount: req.body.interest_amount,
+                            actual_payment_amount: principal_amount,
+                            actual_interest_amount: interest_amount,
                             actual_fees_amount: 0,
                             actual_penalty_amount: 0,
                             payment_source: 'paystack',
