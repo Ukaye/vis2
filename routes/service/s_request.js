@@ -183,8 +183,8 @@ async function transactionalAlert(id, isWallet) {
             code: (isWallet.toString() === '0') ? data[0].code : '',
             description: data[0].description,
             product: (isWallet.toString() === '0') ? data[0].name : '',
-            state: (orgName[0]!== undefined)?orgName[0].state:'',
-            country: (orgName[0]!== undefined)?orgName[0].country:'',
+            state: (orgName[0] !== undefined) ? orgName[0].state : '',
+            country: (orgName[0] !== undefined) ? orgName[0].country : '',
             txnDate: data[0].txn_date,
             postDate: data[0].updated_date,
             balance: (isWallet.toString() === '0') ?
