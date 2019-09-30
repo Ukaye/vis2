@@ -78,7 +78,7 @@ function getRecentTxns(id, isWallet) {
     left join clients c on i.clientId = c.ID
     left join users u on u.ID = v.createdBy
     left join investment_products p on i.productId = p.ID
-    WHERE v.isWallet = 0 AND v.investmentId = ${id} ORDER BY ID DESC LIMIT 5 OFFSET 0` :
+    WHERE v.isWallet = 0 AND v.postDone = 1 AND v.investmentId = ${id} ORDER BY ID DESC LIMIT 5 OFFSET 0` :
             `SELECT 
     v.ID,v.ref_no,c.fullname,c.email,v.description,v.created_date,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName,
     v.isDeny,v.isPaymentMadeByWallet,v.isReversedTxn,v.isTransfer,v.isMoveFundTransfer,v.beneficialInvestmentId,p.interest_disbursement_time,p.interest_moves_wallet,
@@ -89,7 +89,7 @@ function getRecentTxns(id, isWallet) {
     left join clients c on i.clientId = c.ID
     left join users u on u.ID = v.createdBy
     left join investment_products p on i.productId = p.ID
-    WHERE v.isWallet = 1 AND v.clientId = ${id} ORDER BY ID DESC LIMIT 5 OFFSET 0`;
+    WHERE v.isWallet = 1 AND AND v.postDone = 1 AND v.clientId = ${id} ORDER BY ID DESC LIMIT 5 OFFSET 0`;
         db.query(query, function (error, results, fields) {
             if (error && error !== null) {
                 resolve([{ interest_moves_wallet: undefined }]);

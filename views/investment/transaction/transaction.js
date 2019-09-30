@@ -252,8 +252,8 @@ function getMaturedMonths() {
                 $('#wait').hide();
                 if (data.length > 0) {
                     $("#maturedInterestMonths").html('');
-                    data.forEach(element => {
-                        $("#maturedInterestMonths").append(`<button class="dropdown-item"  onclick="onComputeInterest({startDate:'${element.startDate}',endDate:'${element.endDate}'})">${element.startDate + ' - ' + element.endDate}</button>`).trigger('change');
+                    data.forEach((element, i) => {
+                        $("#maturedInterestMonths").append(`<button id="btnCmptInt_${i}" class="dropdown-item"  onclick="onComputeInterest({startDate:'${element.startDate}',endDate:'${element.endDate}',btnName:'btnCmptInt_${i}'})">${element.startDate + ' - ' + element.endDate}</button>`).trigger('change');
                     });
                 }
             }
@@ -716,6 +716,7 @@ function onTerminateInvest() {
     })
         .then((willDelete) => {
             if (willDelete) {
+                $("#idBtnTerminate").attr('disabled', true);
                 let _mRoleId = [];
                 let withdrawalOperation = 3;
                 let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === withdrawalOperation && status === 1);
@@ -754,6 +755,7 @@ function onTerminateInvest() {
                     'type': 'post',
                     'data': investmentOps,
                     'success': function (data) {
+                        $("#idBtnTerminate").attr('disabled', false);
                         if (data.status === undefined) {
                             $('#wait').hide();
                             $("#input_amount").val('');
@@ -767,6 +769,7 @@ function onTerminateInvest() {
                         }
                     },
                     'error': function (err) {
+                        $("#idBtnTerminate").attr('disabled', false);
                         $('#wait').hide();
                         swal('Oops! An error occurred while executing investment termination', '', 'error');
                     }
@@ -1005,7 +1008,7 @@ async function onExecutiveTransaction() {
         swal('Invalid amount', '', 'error');
         return;
     }
-
+    $("#btnTransaction").attr('disabled', true);
     if ($("#input_amount").val() !== '' &&
         $("#input_amount").val() !== ' ' &&
         $("#input_txn_date").val() !== '' &&
@@ -1051,6 +1054,7 @@ async function onExecutiveTransaction() {
                 'type': 'post',
                 'data': investmentOps,
                 'success': function (data) {
+                    $("#btnTransaction").attr('disabled', false);
                     if (data.status === undefined) {
                         $('#wait').hide();
                         $("#input_amount").val('');
@@ -1069,9 +1073,11 @@ async function onExecutiveTransaction() {
                 }
             });
         } else {
+            $("#btnTransaction").attr('disabled', false);
             swal('Oops! Withdrawal limit exceded, please uncheck enforce count to proceed  ', '', 'error');
         }
     } else {
+        $("#btnTransaction").attr('disabled', false);
         swal('Oops! Missing required field(s)', '', 'error');
     }
 }
@@ -1745,6 +1751,7 @@ function onPost(value, approvedId, txnId, id, isDeny) {
 }
 
 function onComputeInterest(value) {
+    $(`#${value.btnName}`).attr('disabled', true);
     let _data = {
         interest_moves_wallet: selectedInvestment.interest_moves_wallet,
         clientId: selectedInvestment.clientId,
@@ -1761,6 +1768,7 @@ function onComputeInterest(value) {
         'type': 'post',
         'data': _data,
         'success': function (data) {
+            $(`#${value.btnName}`).attr('disabled', false);
             if (data.status === undefined) {
                 $('#wait').hide();
                 swal('Interest computed successfully', '', 'success');
@@ -1772,6 +1780,7 @@ function onComputeInterest(value) {
             }
         },
         'error': function (err) {
+            $(`#${value.btnName}`).attr('disabled', false);
             $('#wait').hide();
             swal('Oops! An error occurred while computing interest', '', 'error');
         }
@@ -1848,10 +1857,11 @@ function onTransferOperation() {
         return;
     }
 
-
+    $("#btnTransferModal").attr('disabled', true);
 
     if ($('#chk_client_wallet').is(':checked') === true) {
         onFundWalletOperation();
+        $("#btnTransferModal").attr('disabled', false);
     } else {
         let desc = $("#input_transfer_description").val();
         selectedAccount = products.find(x => x.ID.toString() === $("#list_accounts").val());
@@ -1888,6 +1898,7 @@ function onTransferOperation() {
             'type': 'post',
             'data': investmentOps,
             'success': function (data) {
+                $("#btnTransferModal").attr('disabled', false);
                 $('#wait').hide();
                 swal('Transfer operation initiated successfully', '', 'success');
                 $("#input_transfer_amount").val('');
@@ -1899,6 +1910,7 @@ function onTransferOperation() {
                 table.ajax.reload(null, false);
             },
             'error': function (err) {
+                $("#btnTransferModal").attr('disabled', false);
                 $('#wait').hide();
                 swal('Something went wrong while executing transfer operation', '', 'error');
             }
