@@ -322,7 +322,7 @@ function bindDataTable(id) {
                 success: function (data) {
                     if (data.data.length > 0) {
                         selectedInvestment = (isWalletPage === 1) ? data.data[0] : data.data[data.data.length - 1];
-
+                        console.log(selectedInvestment);
                         if (selectedInvestment.canTerminate === 0 || selectedInvestment.canTerminate === null) {
                             $('#btnTerminateInvestment').attr('disabled', true);
                         }
@@ -1765,7 +1765,9 @@ function onComputeInterest(value) {
         productId: selectedInvestment.productId,
         startDate: value.startDate,
         endDate: value.endDate,
-        interest_rate: selectedInvestment.interest_rate
+        interest_rate: selectedInvestment.interest_rate,
+        acctNo: selectedInvestment.acctNo,
+        InvestmentName: selectedInvestment.name
     }
     $.ajax({
         url: `investment-txns/compute-interest`,

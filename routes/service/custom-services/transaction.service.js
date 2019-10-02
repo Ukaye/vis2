@@ -2949,7 +2949,7 @@ async function computeInterestTxns2(HOST, data) {
 
                             let inv_txn = {
                                 txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
-                                description: `${data.acctNo}(${data.investmentName}) Investment interest@ ${data.endDate}`,
+                                description: `${data.acctNo} Investment interest@ ${data.endDate}`,
                                 amount: Number(_amt).toFixed(2),
                                 is_credit: 1,
                                 created_date: dt,
