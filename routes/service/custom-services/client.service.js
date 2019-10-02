@@ -880,7 +880,9 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, function (req,
                 template: 'default',
                 context: {
                     name: req.user.fullname,
-                    message: 'Your loan request has been received successfully!'
+                    message: `Your loan request of ₦${helperFunctions.numberToCurrencyFormatter(postData.loan_amount)} 
+                    has been received successfully!. Please note that we typically respond in less than one (1) minute.
+                    Check back by logging into your profile for update.`
                 }
             });
             res.send({status: 200, error: null, response: response_['data'][0]});
