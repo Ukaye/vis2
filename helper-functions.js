@@ -103,8 +103,6 @@ functions.setUpMandate = function (payload, callback) {
 functions.mandateStatus = function (payload, callback) {
     payload.merchantId = process.env.REMITA_MERCHANT_ID;
     payload.hash = SHA512(payload.mandateId + payload.merchantId + payload.requestId + process.env.REMITA_API_KEY);
-    console.log(payload)
-    console.log(process.env)
     if (!payload.mandateId || !payload.requestId)
         return callback({});
     request.post(
