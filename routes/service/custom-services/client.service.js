@@ -881,7 +881,9 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, function (req,
                 template: 'default',
                 context: {
                     name: req.user.fullname,
-                    message: 'Your loan request has been received successfully!'
+                    message: `Your loan request of ₦${helperFunctions.numberToCurrencyFormatter(postData.loan_amount)} 
+                    has been received successfully!. Please note that we typically respond in less than one (1) minute.
+                    Check back by logging into your profile for update.`
                 }
             });
             res.send({ status: 200, error: null, response: response_['data'][0] });
@@ -2386,6 +2388,8 @@ router.post('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, func
                                         invoice.penalty_amount = invoice_obj.penalty_amount;
                                         invoice.agentID = 1;
                                         invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                                        invoice.payment_date = moment().utcOffset('+0100').format('YYYY-MM-DD');
+                                        invoice.payment_source = 'paystack';
                                         connection.query(`UPDATE application_schedules SET payment_status=1 WHERE ID = ${invoice_obj.ID}`, () => {
                                             connection.query('INSERT INTO schedule_history SET ?', invoice, () => {
                                                 callback();

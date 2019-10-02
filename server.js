@@ -96,6 +96,7 @@ app.post('/login', function (req, res) {
         if (err)
             return res.send({
                 "status": 500,
+                "error": err,
                 "response": "Connection Error!"
             });
 
@@ -148,6 +149,7 @@ app.post('/login', function (req, res) {
                     } else {
                         res.send({
                             "status": 500,
+                            "error": error,
                             "response": "No permissions set for this user"
                         })
                     }
