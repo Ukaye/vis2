@@ -797,7 +797,7 @@ function addPayment() {
         'data': payment,
         'success': function (data) {
             notification('Payment added successfully','','success');
-            // window.location.reload();
+            window.location.reload();
         },
         'error': function (err) {
             notification('No internet connection','','error');
