@@ -86,6 +86,8 @@ functions.setUpMandate = function (payload, callback) {
     payload.serviceTypeId = process.env.REMITA_SERVICE_TYPE_ID;
     payload.requestId = date.getTime();
     payload.hash = SHA512(payload.merchantId + payload.serviceTypeId + payload.requestId + payload.amount + process.env.REMITA_API_KEY);
+    console.log(payload)
+    console.log(process.env)
     request.post(
         {
             url: `${process.env.REMITA_BASE_URL}/setup`,
