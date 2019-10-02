@@ -595,6 +595,8 @@ function createCorporate() {
     if (!obj.name || !obj.business_name || (obj.clientID === '-- Choose Client --')) {
         return notification('Kindly fill all required fields!', '', 'warning');
     }
+    obj.username = obj.business_name;
+    obj.client_type = $('#client_type').val();
 
     $.ajax({
         'url': '/client/corporate/create',
