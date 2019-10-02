@@ -2392,7 +2392,7 @@ router.post('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, func
                                         invoice.agentID = 1;
                                         invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                                         invoice.payment_date = moment().utcOffset('+0100').format('YYYY-MM-DD');
-                                        invoice.payment_source = 'cash';
+                                        invoice.payment_source = 'paystack';
                                         connection.query(`UPDATE application_schedules SET payment_status=1 WHERE ID = ${invoice_obj.ID}`, () => {
                                             connection.query('INSERT INTO schedule_history SET ?', invoice, () => {
                                                 callback();
