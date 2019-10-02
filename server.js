@@ -96,6 +96,7 @@ app.post('/login', function (req, res) {
         if (err)
             return res.send({
                 "status": 500,
+                "error": err,
                 "response": "Connection Error!"
             });
 
@@ -117,8 +118,6 @@ app.post('/login', function (req, res) {
             db.query('SELECT id,module_id, (select module_name from modules m where m.id = module_id) as module_name, (select menu_name from modules m where m.id = module_id) as menu_name, read_only, editable ' +
                 'FROM permissions where role_id = ? and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?)) group by module_id', [parseInt(user.user_role), parseInt(user.user_role), parseInt(user.user_role)],
                 function (error, perm, fields) {
-                    console.log(user);
-                    console.log(error)
                     if (!error) {
                         user.permissions = perm;
                         let modules = [],
@@ -150,6 +149,7 @@ app.post('/login', function (req, res) {
                     } else {
                         res.send({
                             "status": 500,
+                            "error": error,
                             "response": "No permissions set for this user"
                         })
                     }
