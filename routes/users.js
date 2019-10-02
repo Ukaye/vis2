@@ -3485,6 +3485,8 @@ users.post('/application/pay-off/:id/:agentID', function(req, res, next) {
                                             invoice.penalty_amount = invoice_obj.penalty_amount;
                                             invoice.agentID = req.params.agentID;
                                             invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                                            invoice.payment_date = moment().utcOffset('+0100').format('YYYY-MM-DD');
+                                            invoice.payment_source = 'cash';
                                             invoice.clientID = application.clientID;
                                             invoice.loan_officerID = application.loan_officerID;
                                             invoice.branchID = application.branchID;
