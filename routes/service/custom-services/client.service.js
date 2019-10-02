@@ -2462,11 +2462,8 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
             amount = parseFloat(req.body.amount) * 100,
             interest_amount = (req.body.amount >= invoice_.interest_owed)? invoice_.interest_owed : req.body.amount,
             principal_amount = (req.body.amount > interest_amount)? (req.body.amount - interest_amount) : 0;
-        console.log(req.body.amount)
-        console.log(invoice_.interest_owed)
-        console.log(invoice_.principal_owed)
-        console.log(invoice_.interest_owed + invoice_.principal_owed)
-        if (req.body.amount > (invoice_.interest_owed + invoice_.principal_owed))
+        
+        if (req.body.amount > (invoice_.interest_owed + invoice_.principal_owed).round(2))
             return res.send({
                 "status": 500,
                 "error": null,
