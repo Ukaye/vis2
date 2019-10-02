@@ -138,9 +138,7 @@ function getInvestmentMaturity() {
                             isWallet: isWalletPage,
                             isInvestmentMatured: (selectedInvestment.maturityDays === true) ? 1 : 0,
                             interest_disbursement_time: selectedInvestment.interest_disbursement_time,
-                            isInvestmentTerminated: 0,
-                            acctNo: data_row.acctNo,
-                            InvestmentName: data_row.name
+                            isInvestmentTerminated: 0
                         };
                         $.ajax({
                             url: `investment-txns/compute-mature-investment`,
@@ -320,6 +318,7 @@ function bindDataTable(id) {
                     order: tableHeaders[aoData[2].value[0].column].query
                 },
                 success: function (data) {
+                    console.log(data);
                     if (data.data.length > 0) {
                         selectedInvestment = (isWalletPage === 1) ? data.data[0] : data.data[data.data.length - 1];
                         console.log(selectedInvestment);
@@ -1389,7 +1388,7 @@ function uploadDocRequirement(data) {
 
 $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemReview', function () {
     data_row = table.row($(this).parents('tr')).data();
-    if (isWalletPage === 0) {
+    if (isWalletPage === 0 || isWalletPage === 1) {
         let mOperationId = 0;
         if (data_row.isDeposit === 1) {
             mOperationId = 1;
@@ -1398,11 +1397,13 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemReview', function ()
         } else if (data_row.isWithdrawal === 1) {
             mOperationId = 3;
         }
+        console.log(data_row);
         $("#post_list_group").html('');
         $.ajax({
             url: `investment-txns/verify-doc-uploads?productId=${data_row.productId}&operationId=${mOperationId}&txnId=${data_row.ID}`,
             'type': 'get',
             'success': function (data) {
+                console.log(data);
                 if (data.status === undefined) {
                     if (data[0].total_doc_required === data[0].total_uploaded) {
                         setReviewRequirements(data_row);
@@ -1413,10 +1414,11 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemReview', function ()
                 }
             }
         });
-    } else {
-        setReviewRequirements(data_row);
-        getProductDocRequirements(1);
     }
+    // else {
+    //     setReviewRequirements(data_row);
+    //     getProductDocRequirements(1);
+    // }
 });
 
 $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemApproval', function () {
@@ -1655,13 +1657,13 @@ function onTransactionTimeline() {
                 const element = data[index];
                 const _splittedDate = element.createdAt.split(' ');
                 const _dt = new Date(element.createdAt);
+
                 element.method = element.method.toUpperCase();
                 timelineTags += `<li>
                                             <a target="_blank">${element.method} OPERATION</a>
                                             <a href="#" class="float-right">${_dt.getDate()} ${monthNames[_dt.getMonth()]}, ${_dt.getFullYear()} ${_splittedDate[1]} ${_splittedDate[2].toUpperCase()}</a>
-                                            <p>
-                                                <p><strong>Transaction by: </strong><span>${element.createdByName}</span></p>
-                                                <p><strong>Description: </strong><span>${element.description}</span></p>
+                                            <p><strong>Transaction by: </strong><span>${element.createdByName}</span><br/>
+                                            <strong>Description: </strong><span>${element.description}</span>
                                             </p>
                                         </li>`;
             }
@@ -1726,9 +1728,7 @@ function onPost(value, approvedId, txnId, id, isDeny) {
         // interest_rate: selectedInvestment.interest_rate,
         investment_mature_date: selectedInvestment.investment_mature_date,
         investment_start_date: selectedInvestment.investment_start_date,
-        txn_date: data_row.txn_date,
-        acctNo: data_row.acctNo,
-        InvestmentName: data_row.name
+        txn_date: data_row.txn_date
     }
     $.ajax({
         url: `investment-txns/posts`,
@@ -1765,9 +1765,7 @@ function onComputeInterest(value) {
         productId: selectedInvestment.productId,
         startDate: value.startDate,
         endDate: value.endDate,
-        interest_rate: selectedInvestment.interest_rate,
-        acctNo: selectedInvestment.acctNo,
-        InvestmentName: selectedInvestment.name
+        interest_rate: selectedInvestment.interest_rate
     }
     $.ajax({
         url: `investment-txns/compute-interest`,
