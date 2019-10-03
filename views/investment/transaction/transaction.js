@@ -1507,15 +1507,6 @@ function setPostRequirements(value) {
                                             <small>Transaction Dated: </small><small class="text-muted">${element.txn_date}</small>
                                         </div>
                                         
-                                        <small>
-                                        <div class="form-control-label" style=padding-top:1.0rem>
-                                            <div class="custom-control custom-checkbox">
-                                                <input type="checkbox" class="custom-control-input" id="postDateCheck1" checked ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isPosted === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''}>
-                                                <label class="custom-control-label" for="postDateCheck1">Use Transaction Date as Post Date</label>
-                                            </div>
-                                            </div>
-                                        </small>
-                                        
                                     </div>
                                 </div>
                                 <div class="form-group col-4" style="vertical-align: middle">
@@ -1672,7 +1663,6 @@ function onTransactionTimeline() {
 
 
 function onPost(value, approvedId, txnId, id, isDeny) {
-    const postDateStatus = $('#postDateCheck1').is(':checked');
     if (data_row.is_credit === 0) {
         const _mAmt = data_row.amount.toString().split(',').join('');
         const _mBal = data_row.txnBalance.toString().split(',').join('');
@@ -1718,8 +1708,7 @@ function onPost(value, approvedId, txnId, id, isDeny) {
         investment_start_date: data_row.investment_start_date,
         interest_rate: (data_row.isInvestmentTerminated === 1) ? data_row.premature_interest_rate : data_row.interest_rate,
         isInvestmentMatured: data_row.isInvestmentMatured,
-        useTxnDateAsPostDate: (postDateStatus) ? 1 : 0,
-        // interest_rate: selectedInvestment.interest_rate,
+        useTxnDateAsPostDate: 1,
         investment_mature_date: selectedInvestment.investment_mature_date,
         investment_start_date: selectedInvestment.investment_start_date,
         txn_date: data_row.txn_date
@@ -1994,13 +1983,12 @@ function read_write_custom(isWalletPage) {
     let lblViewWalletTxns = ($.grep(perms, function (e) { return e.module_name === 'lblViewWalletTxns'; }))[0];
     let investment_transactions = ($.grep(perms, function (e) { return e.module_name === 'client-investment-transactions'; }))[0];
     let investment_wallet = ($.grep(perms, function (e) { return e.module_name === 'client-investment-wallet'; }))[0];
-    let investment_wallet = ($.grep(perms, function (e) { return e.module_name === 'client-investment-wallet'; }))[0];
-    let btnMandateInvestment = ($.grep(perms, function(e){return e.module_name === 'btnMandateInvestment';}))[0];
-    let btnInvestmentStatement = ($.grep(perms, function(e){return e.module_name === 'btnInvestmentStatement';}))[0];
-    let btnComputeInterest = ($.grep(perms, function(e){return e.module_name === 'btnComputeInterest';}))[0];
-    let btnTransfer = ($.grep(perms, function(e){return e.module_name === 'btnTransfer';}))[0];
-    let btnWithdrawal = ($.grep(perms, function(e){return e.module_name === 'btnWithdrawal';}))[0];
-    let btnDeposit = ($.grep(perms, function(e){return e.module_name === 'btnDeposit';}))[0];
+    let btnMandateInvestment = ($.grep(perms, function (e) { return e.module_name === 'btnMandateInvestment'; }))[0];
+    let btnInvestmentStatement = ($.grep(perms, function (e) { return e.module_name === 'btnInvestmentStatement'; }))[0];
+    let btnComputeInterest = ($.grep(perms, function (e) { return e.module_name === 'btnComputeInterest'; }))[0];
+    let btnTransfer = ($.grep(perms, function (e) { return e.module_name === 'btnTransfer'; }))[0];
+    let btnWithdrawal = ($.grep(perms, function (e) { return e.module_name === 'btnWithdrawal'; }))[0];
+    let btnDeposit = ($.grep(perms, function (e) { return e.module_name === 'btnDeposit'; }))[0];
     $('#btnMandateInvestment').hide();
     if (btnMandateInvestment && btnMandateInvestment['read_only'] === '1') $('#btnMandateInvestment').show();
     $('#btnInvestmentStatement').hide();
