@@ -210,10 +210,10 @@ function getInvestmentProducts(id) {
 $("#acct_allows_withdrawal").on('change',
     function () {
         let status = $('#acct_allows_withdrawal').is(':checked');
-        if (status) {
-            $('#inv_moves_wallet').attr("checked", false);
-            $('#interest_moves_wallet').attr("checked", false);
-        }
+        // if (status) {
+        //     $('#inv_moves_wallet').attr("checked", false);
+        //     $('#interest_moves_wallet').attr("checked", false);
+        // }
         setWalletControlStatus(status);
     });
 
@@ -238,7 +238,7 @@ $("#inv_moves_wallet").on('change',
     function () {
         let status = $('#inv_moves_wallet').is(':checked');
         if (status) {
-            $('#acct_allows_withdrawal').attr("checked", false);
+            // $('#acct_allows_withdrawal').attr("checked", false);
             setWalletControlStatus(false);
         }
     });
@@ -247,7 +247,7 @@ $("#interest_moves_wallet").on('change',
     function () {
         let status = $('#interest_moves_wallet').is(':checked');
         if (status) {
-            $('#acct_allows_withdrawal').attr("checked", false);
+            // $('#acct_allows_withdrawal').attr("checked", false);
             setWalletControlStatus(false);
         }
     });

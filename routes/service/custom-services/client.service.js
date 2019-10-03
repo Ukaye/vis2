@@ -22,12 +22,8 @@ router.get('/all', function (req, res) {
     let page = ((req.query.page - 1) * 10 < 0) ? 0 : (req.query.page - 1) * 10;
     let search_string = (req.query.search_string === undefined) ? "" : req.query.search_string.toUpperCase();
     let query = `SELECT ID,fullname FROM clients WHERE status = 1 AND (upper(email) LIKE "${search_string}%" OR 
-    upper(fullname) LIKE "${search_string}%")
-    UNION
-    SELECT ID,name FROM corporates WHERE status = 1 AND (upper(email) LIKE "${search_string}%" OR 
-    upper(name) LIKE "${search_string}%") ORDER BY ID desc LIMIT ${limit} OFFSET ${page}`;
+    upper(fullname) LIKE "${search_string}%") ORDER BY ID desc LIMIT ${limit} OFFSET ${page}`;
     const endpoint = "/core-service/get";
-    console.log(query);
     const url = `${HOST}${endpoint}`;
     axios.get(url, {
         params: {

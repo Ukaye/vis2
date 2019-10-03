@@ -27,7 +27,6 @@ var isLastDayOfMonth = require('date-fns/is_last_day_of_month');
 
 /**End Point returns list of roles assign to a specific user **/
 router.get('/get-txn-user-roles/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT t.ID,t.txn_date,t.description,t.amount,u.fullname, t.isDeny,
     t.is_credit,t.ref_no,a.ID as approvalId,a.*,r.role_name, r.id as roleId,ut.user_role as userViewRole,
     a.ID as txnApprovadId FROM investment_txns t
@@ -37,8 +36,6 @@ router.get('/get-txn-user-roles/:id', function (req, res, next) {
     left join users u on u.ID = a.approvedBy
     left join users ut on ut.ID = ${req.query.userId}
     WHERE a.txnId = ${req.params.id} AND a.method = ${req.query.method}`;
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query).then(response => {
         res.send(response);
     }, err => {
@@ -52,12 +49,9 @@ router.get('/get-txn-user-roles/:id', function (req, res, next) {
 
 /**End point returns the details of a specific product **/
 router.get('/get-product-configs/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT v.ID as investmentId, v.amount,p.* FROM investments v
     left join investment_products p on p.ID = v.productId
     WHERE v.ID =${req.params.id}`;
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query).then(response => {
         res.send(response);
     }, err => {
@@ -70,12 +64,10 @@ router.get('/get-product-configs/:id', function (req, res, next) {
 });
 
 /**Function returns organisation info and settings **/
-function organisationSettings(HOST) {
+function organisationSettings() {
     return new Promise((resolve, reject) => {
-        let query = `SELECT c.*, p.min_days_termination, p.name as productName, p.code FROM investment_config c
+        let query = `SELECT c.*, p.min_days_termination,p.name as productName, p.code FROM investment_config c
                     left join investment_products p on p.ID = c.walletProductId ORDER BY ID DESC LIMIT 1`;
-        let endpoint = '/core-service/get';
-        let url = `${HOST}${endpoint}`;
         sRequest.get(query).then(response => {
             resolve(response[0].walletProductId);
         }, err => {
@@ -86,14 +78,13 @@ function organisationSettings(HOST) {
 
 /**End point to create investment/savings transaction and it also enforces product requirement on the transaction **/
 router.post('/create', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     var data = req.body
     const dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let refId = moment().utcOffset('+0100').format('x');
-    organisationSettings(HOST).then(config => {
+    organisationSettings().then(config => {
         data.productId = (data.isWallet === '1') ? config : data.productId;
-        computeAccountBalanceIncludeInterest(data.investmentId, HOST).then(balanceIncludingInterest => {
-            computeTotalBalance(data.clientId, data.investmentId, HOST).then(totalBalance_ => {
+        computeAccountBalanceIncludeInterest(data.investmentId).then(balanceIncludingInterest => {
+            computeTotalBalance(data.clientId, data.investmentId).then(totalBalance_ => {
                 let total = (data.isWallet.toString() === '1') ? totalBalance_.currentWalletBalance : balanceIncludingInterest;
                 let inv_txn = {
                     txn_date: (data.txn_date !== undefined) ? data.txn_date : moment().utcOffset('+0100').format('YYYY-MM-DD'),
@@ -122,15 +113,11 @@ router.post('/create', function (req, res, next) {
                     isInvestmentMatured: (data.isInvestmentMatured === undefined) ? 0 : data.isInvestmentMatured
                 };
                 let query = `INSERT INTO investment_txns SET ?`;
-                endpoint = `/core-service/post?query=${query}`;
-                url = `${HOST}${endpoint}`;
                 sRequest.post(query, inv_txn)
                     .then(function (_response) {
                         if (_response.status === undefined) {
                             query = `SELECT * FROM investment_product_requirements
                                     WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
-                            endpoint = "/core-service/get";
-                            url = `${HOST}${endpoint}`;
                             sRequest.get(query)
                                 .then(function (response2) {
                                     if (response2.length > 0) {
@@ -158,8 +145,6 @@ router.post('/create', function (req, res, next) {
                                             }
 
                                             query = `INSERT INTO investment_op_approvals SET ?`;
-                                            endpoint = `/core-service/post?query=${query}`;
-                                            url = `${HOST}${endpoint}`;
                                             sRequest.post(query, invOps).then(p => {
                                             }, er22 => { });
 
@@ -177,8 +162,6 @@ router.post('/create', function (req, res, next) {
                                         };
 
                                         query = `INSERT INTO investment_op_approvals SET ?`;
-                                        endpoint = `/core-service/post?query=${query}`;
-                                        url = `${HOST}${endpoint}`;
                                         sRequest.post(query, invOps).then(p => {
                                         }, er22 => { });
                                     }
@@ -188,9 +171,7 @@ router.post('/create', function (req, res, next) {
 
 
                             query = `SELECT * FROM investment_product_reviews
-                                    WHERE productId = ${data.productId} AND operationId = ${(data.isWallet === '0') ? data.operationId : 0} AND status = 1`;
-                            endpoint = "/core-service/get";
-                            url = `${HOST}${endpoint}`;
+                                    WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
                             sRequest.get(query)
                                 .then(function (response2) {
                                     if (response2.length > 0) {
@@ -217,8 +198,6 @@ router.post('/create', function (req, res, next) {
                                                 }
                                             }
                                             query = `INSERT INTO investment_op_approvals SET ?`;
-                                            endpoint = `/core-service/post?query=${query}`;
-                                            url = `${HOST}${endpoint}`;
                                             sRequest.post(query, invOps).then(p => { }, er22 => {
                                             });
                                         });
@@ -235,8 +214,6 @@ router.post('/create', function (req, res, next) {
                                         };
 
                                         query = `INSERT INTO investment_op_approvals SET ?`;
-                                        endpoint = `/core-service/post?query=${query}`;
-                                        url = `${HOST}${endpoint}`;
                                         sRequest.post(query, invOps).then(p => { }, er22 => {
                                         });
                                     }
@@ -245,9 +222,7 @@ router.post('/create', function (req, res, next) {
                                 });
 
                             query = `SELECT * FROM investment_product_posts
-                                    WHERE productId = ${data.productId} AND operationId = ${(data.isWallet === '0') ? data.operationId : 0} AND status = 1`;
-                            endpoint = "/core-service/get";
-                            url = `${HOST}${endpoint}`;
+                                    WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
                             sRequest.get(query)
                                 .then(function (response2) {
                                     if (response2.length > 0) {
@@ -276,8 +251,6 @@ router.post('/create', function (req, res, next) {
                                             }
 
                                             query = `INSERT INTO investment_op_approvals SET ?`;
-                                            endpoint = `/core-service/post?query=${query}`;
-                                            url = `${HOST}${endpoint}`;
                                             sRequest.post(query, invOps).then(p => { }, er22 => {
                                             });
                                         });
@@ -294,8 +267,6 @@ router.post('/create', function (req, res, next) {
                                         };
 
                                         query = `INSERT INTO investment_op_approvals SET ?`;
-                                        endpoint = `/core-service/post?query=${query}`;
-                                        url = `${HOST}${endpoint}`;
                                         sRequest.post(query, invOps).then(p => { }, er22 => {
                                         });
                                     }
@@ -303,7 +274,7 @@ router.post('/create', function (req, res, next) {
                                 .catch(function (error) {
                                 });
 
-                            setDocRequirement(HOST, data, _response.insertId);
+                            setDocRequirement(data, _response.insertId);
                             res.send({});
                         } else {
                             res.send({
@@ -332,11 +303,9 @@ router.post('/create', function (req, res, next) {
 });
 
 /**Function call to create investment/savings transaction document requirement **/
-function setDocRequirement(HOST, data, txnId) {
+function setDocRequirement(data, txnId) {
     let query = `SELECT * FROM investment_doc_requirement
                 WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
-    let endpoint = "/core-service/get";
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query)
         .then(function (response2) {
             if (response2.length > 0) {
@@ -347,8 +316,6 @@ function setDocRequirement(HOST, data, txnId) {
                         createdAt: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
                     }
                     query = `INSERT INTO investment_txn_doc_requirements SET ?`;
-                    endpoint = `/core-service/post?query=${query}`;
-                    url = `${HOST}${endpoint}`;
                     try {
                         sRequest.post(query, doc);
                     } catch (error) { }
@@ -360,13 +327,10 @@ function setDocRequirement(HOST, data, txnId) {
 
 /**End point to verify the number of uploaded investment/savings transaction document **/
 router.get('/verify-doc-uploads', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.query;
     let query = `Select 
     (Select Count(*) as total_doc_required from investment_doc_requirement where productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1) as total_doc_required,
     (Select Count(*) as total_uploaded from investment_txn_doc_requirements where txnId = ${data.txnId} AND isReplaced = 0 AND status = 1) as total_uploaded`;
-    let endpoint = `/core-service/get`;
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query)
         .then(function (response) {
             if (response.status === undefined) {
@@ -391,13 +355,10 @@ router.get('/verify-doc-uploads', function (req, res, next) {
 
 /**End point to create transfer **/
 router.post('/create-transfers', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     var data = req.body
     const dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let refId = moment().utcOffset('+0100').format('x');
     let query = `SELECT amount,is_credit,isApproved FROM investment_txns WHERE clientId = ${data.debitedClientId} AND isApproved = 1`;
-    let endpoint = "/core-service/get";
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query)
         .then(function (response) {
             if (response.length > 0) {
@@ -433,15 +394,11 @@ router.post('/create-transfers', function (req, res, next) {
                     updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
                 };
                 query = `INSERT INTO investment_txns SET ?`;
-                endpoint = `/core-service/post?query=${query}`;
-                url = `${HOST}${endpoint}`;
                 sRequest.post(query, inv_txn)
                     .then(function (_response) {
                         if (_response.status === undefined) {
                             let queryString = (data.investmentId === '') ? `clientId = ${data.creditedClientId}` : `investmentId = ${data.investmentId}`;
                             query = `SELECT amount,is_credit,isApproved FROM investment_txns WHERE ${queryString} AND isApproved = 1`;
-                            let endpoint = "/core-service/get";
-                            let url = `${HOST}${endpoint}`;
                             sRequest.get(query)
                                 .then(function (response2) {
                                     total = 0;
@@ -479,8 +436,6 @@ router.post('/create-transfers', function (req, res, next) {
                                         updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
                                     };
                                     query = `INSERT INTO investment_txns SET ?`;
-                                    endpoint = `/core-service/post?query=${query}`;
-                                    url = `${HOST}${endpoint}`;
                                     sRequest.post(query, inv_txn)
                                         .then(function (_response2) {
                                             if (_response2.status === undefined) {
@@ -546,11 +501,8 @@ router.post('/create-transfers', function (req, res, next) {
 /**End point to approve an investment/savings transaction **/
 router.post('/approves', function (req, res, next) {
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.body
     let query = `UPDATE investment_op_approvals SET isApproved = ${data.status},isCompleted = ${1}, approvedBy=${data.userId}, updatedAt ='${dt.toString()}' WHERE ID =${data.id}`;
-    let endpoint = `/core-service/get`;
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query)
         .then(function (response) {
             if (response.status === undefined) {
@@ -560,14 +512,10 @@ router.post('/approves', function (req, res, next) {
                         (Select Count(*) as priorityTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL' AND priority IS NOT NULL) as priorityTotal,
                         (Select Count(*) as priorityItemTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL' AND priority = '${data.priority}') as priorityItemTotal,
                         (Select Count(*) as total_approvedBy from investment_op_approvals where txnId = ${data.txnId} AND method = 'APPROVAL') as total_approvedBy`;
-                endpoint = '/core-service/get';
-                url = `${HOST}${endpoint}`;
                 sRequest.get(query).then(counter => {
                     if (((counter[0].total_approvedBy === counter[0].total_approved) || (counter[0].isOptional > 0) ||
                         (counter[0].priorityTotal !== 0 && counter[0].priorityTotal === counter[0].priorityItemTotal)) && data.status === '1') {
                         query = `UPDATE investment_txns SET approvalDone = ${1} WHERE ID =${data.txnId}`;
-                        endpoint = `/core-service/get`;
-                        url = `${HOST}${endpoint}`;
                         sRequest.get(query)
                             .then(function (response_) {
                                 res.send(response);
@@ -587,8 +535,6 @@ router.post('/approves', function (req, res, next) {
                             });
                     } else {
                         query = `UPDATE investment_txns SET approvalDone = ${0}, isDeny = ${data.isDeny} WHERE ID =${data.txnId}`;
-                        endpoint = `/core-service/get`;
-                        url = `${HOST}${endpoint}`;
                         sRequest.get(query)
                             .then(function (response_) {
                                 res.send(response);
@@ -640,11 +586,8 @@ router.post('/approves', function (req, res, next) {
 /**End point to reviews an investment/savings transaction **/
 router.post('/reviews', function (req, res, next) {
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.body
     let query = `UPDATE investment_op_approvals SET isReviewed = ${data.status}, reviewedBy=${data.userId},isCompleted = ${1}, updatedAt ='${dt.toString()}' WHERE ID =${data.id}`;
-    let endpoint = `/core-service/get`;
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query)
         .then(function (response) {
 
@@ -655,14 +598,10 @@ router.post('/reviews', function (req, res, next) {
                         (Select Count(*) as priorityTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'REVIEW' AND priority IS NOT NULL) as priorityTotal,
                         (Select Count(*) as priorityItemTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'REVIEW' AND priority = '${data.priority}') as priorityItemTotal,
                         (Select Count(*) as total_reviewedBy from investment_op_approvals where txnId = ${data.txnId} AND method = 'REVIEW') as total_reviewedBy`;
-                endpoint = '/core-service/get';
-                url = `${HOST}${endpoint}`;
                 sRequest.get(query).then(counter => {
                     if (((counter[0].total_reviewedBy === counter[0].total_reviewed) || (counter[0].isOptional > 0) ||
                         (counter[0].priorityTotal !== 0 && counter[0].priorityTotal === counter[0].priorityItemTotal)) && data.status === '1') {
                         query = `UPDATE investment_txns SET reviewDone = ${1} WHERE ID =${data.txnId}`;
-                        endpoint = `/core-service/get`;
-                        url = `${HOST}${endpoint}`;
                         sRequest.get(query)
                             .then(function (response_) {
                                 res.send(response);
@@ -682,8 +621,6 @@ router.post('/reviews', function (req, res, next) {
                             });
                     } else {
                         query = `UPDATE investment_txns SET reviewDone = ${0}, isDeny = ${data.isDeny} WHERE ID =${data.txnId}`;
-                        endpoint = `/core-service/get`;
-                        url = `${HOST}${endpoint}`;
                         sRequest.get(query)
                             .then(function (response_) {
                                 res.send(response);
@@ -735,11 +672,8 @@ router.post('/reviews', function (req, res, next) {
 /**End point to post an investment/savings transaction **/
 router.post('/posts', function (req, res, next) {
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.body
     let query = `UPDATE investment_op_approvals SET isPosted = ${data.status}, postedBy=${data.userId},isCompleted = ${1}, updatedAt ='${dt.toString()}' WHERE ID =${data.id}`;
-    let endpoint = `/core-service/get`;
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query).then(function (response) {
         if (response.status === undefined) {
             query = `Select 
@@ -748,15 +682,13 @@ router.post('/posts', function (req, res, next) {
                 (Select Count(*) as priorityTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'POST' AND priority IS NOT NULL) as priorityTotal,
                 (Select Count(*) as priorityItemTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'POST' AND priority = '${data.priority}') as priorityItemTotal,
                 (Select Count(*) as total_postedBy from investment_op_approvals where txnId = ${data.txnId} AND method = 'POST') as total_postedBy`;
-            endpoint = '/core-service/get';
-            url = `${HOST}${endpoint}`;
             sRequest.get(query).then(counter => {
                 if (((counter[0].total_postedBy === counter[0].total_posted) || (counter[0].isOptional > 0) ||
                     (counter[0].priorityTotal !== 0 && counter[0].priorityTotal === counter[0].priorityItemTotal)) && data.status === '1') {
                     let total_bal = 0;
 
 
-                    computeTotalAccountBalance(data.clientId, data.investmentId, HOST).then(totalBalance_ => {
+                    computeTotalAccountBalance(data.clientId, data.investmentId).then(totalBalance_ => {
                         total_bal = (data.isWallet.toString() === '1') ?
                             totalBalance_.currentWalletBalance : totalBalance_.currentAcctBalance;
                         let bal = (data.isCredit.toString() === '1') ? (total_bal + parseFloat(data.amount.split(',').join(''))) :
@@ -773,16 +705,13 @@ router.post('/posts', function (req, res, next) {
                                         updated_date ='${updateDate}', createdBy = ${data.userId},postDone = ${data.status},
                                         amount = ${_amountTxn} , balance ='${Number(bal).toFixed(2)}'
                                         WHERE ID =${data.txnId}`;
-                            endpoint = `/core-service/get`;
-                            data.txn_date = updateDate;
-                            url = `${HOST}${endpoint}`;
                             const _id_ = (data.isWallet.toString() === '0') ? data.investmentId : data.clientId;
                             sRequest.UpdateAndAlert(query, _id_, data.isWallet)
                                 .then(function (response_) {
                                     if (data.isReversedTxn === '0') {
-                                        debitWalletTxns(HOST, data).then(payld => {
-                                            setcharges(data, HOST, false).then(payload => {
-                                                upFrontInterest(data, HOST).then(payld2 => {
+                                        debitWalletTxns(data).then(payld => {
+                                            setcharges(data, false).then(payload => {
+                                                upFrontInterest(data).then(payld2 => {
                                                     res.send(response);
                                                 }, __err => {
                                                 });
@@ -807,7 +736,7 @@ router.post('/posts', function (req, res, next) {
                                     });
                                 });
                         } else if (data.isInvestmentTerminated.toString() === '1') {
-                            fundBeneficialAccount(data, HOST).then(_payload_2 => {
+                            fundBeneficialAccount(data).then(_payload_2 => {
                                 res.send({});
                             }, err => {
                                 res.send({
@@ -824,11 +753,9 @@ router.post('/posts', function (req, res, next) {
                         query = `UPDATE investment_txns SET isApproved = ${0}, updated_date ='${updateDate_}', postDone = ${0}, isDeny = ${data.isDeny},
                             amount = ${Number(data.amount.split(',').join('')).toFixed(2)} , balance ='${Number(data.amount.split(',').join('')).toFixed(2)}'
                             WHERE ID =${data.txnId}`;
-                        endpoint = `/core-service/get`;
-                        url = `${HOST}${endpoint}`;
                         sRequest.get(query)
                             .then(function (response_) {
-                                fundBeneficialAccount(data, HOST).then(payloadf => {
+                                fundBeneficialAccount(data).then(payloadf => {
                                     res.send(response);
                                 });
                             }, err => {
@@ -846,7 +773,7 @@ router.post('/posts', function (req, res, next) {
                                 });
                             });
                     } else if (data.isInvestmentTerminated.toString() === '1') {
-                        fundBeneficialAccount(data, HOST).then(_payload_2 => {
+                        fundBeneficialAccount(data).then(_payload_2 => {
                             res.send(_payload_2);
                         }, err => {
                             res.send({
@@ -889,9 +816,8 @@ router.post('/posts', function (req, res, next) {
 
 
 router.post('/transfer-fund-wallet', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     const data = req.body;
-    moveFundWallet(data, HOST).then(payload => {
+    moveFundWallet(data).then(payload => {
         return payload;
     }, err_2 => {
         return {};
@@ -899,11 +825,11 @@ router.post('/transfer-fund-wallet', function (req, res, next) {
 });
 
 /**Function call to fund to client wallet and investment/savings account **/
-async function fundBeneficialAccount(data, HOST) {
+async function fundBeneficialAccount(data) {
     if (data.isTransfer === '1') {
         return new Promise((resolve, reject) => {
-            computeAccountBalanceIncludeInterest(data.beneficialInvestmentId, HOST).then(balanceIncludingInterest => {
-                computeTotalBalance(data.clientId, data.beneficialInvestmentId, HOST).then(computedBalanceAmt => {
+            computeAccountBalanceIncludeInterest(data.beneficialInvestmentId).then(balanceIncludingInterest => {
+                computeTotalBalance(data.clientId, data.beneficialInvestmentId).then(computedBalanceAmt => {
                     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                     let refId = moment().utcOffset('+0100').format('x');
                     let total_bal = (data.isMoveFundTransfer.toString() === '1')
@@ -931,13 +857,11 @@ async function fundBeneficialAccount(data, HOST) {
                     };
 
                     let query = `INSERT INTO investment_txns SET ?`;
-                    let endpoint = `/core-service/post?query=${query}`;
-                    let url = `${HOST}${endpoint}`;
                     sRequest.post(query, inv_txn)
                         .then(function (payload) {
                             if (payload.status === undefined) {
                                 //Charge for Transfer
-                                deductTransferCharge(data, HOST, data.amount).then(result => {
+                                deductTransferCharge(data, data.amount).then(result => {
                                     resolve(result);
                                 }, err => {
                                     resolve({});
@@ -950,20 +874,18 @@ async function fundBeneficialAccount(data, HOST) {
             });
         });
     } else if (data.isInvestmentTerminated === '1') {
-        const bal2CalTerminationChrg = await chargeForceTerminate(data, HOST);
-        let result = await reverseEarlierInterest(data, HOST, bal2CalTerminationChrg);
+        const bal2CalTerminationChrg = await chargeForceTerminate(data);
+        let result = await reverseEarlierInterest(data, bal2CalTerminationChrg);
         return result;
     }
 }
 
 /** Function call to compute the current investment/savings account balance with interest **/
-function computeAccountBalanceIncludeInterest(investmentId, HOST) {
+function computeAccountBalanceIncludeInterest(investmentId) {
     return new Promise((resolve, reject) => {
         let query = `Select amount, is_credit from investment_txns 
         WHERE isWallet = 0 AND investmentId = ${investmentId} 
         AND isApproved = 1 AND postDone = 1`;
-        let endpoint = `/core-service/get`;
-        let url = `${HOST}${endpoint}`;
         sRequest.get(query).then(response_prdt_ => {
             let total = 0;
             if (response_prdt_.status === undefined) {
@@ -984,13 +906,10 @@ function computeAccountBalanceIncludeInterest(investmentId, HOST) {
 }
 
 /** Function call to compute the current investment/savings account balance without interest **/
-function computeCurrentBalance(investmentId, HOST) {
+function computeCurrentBalance(investmentId) {
     return new Promise((resolve, reject) => {
-        let query = `Select amount, is_credit from investment_txns WHERE isWallet = 0 AND isInterest = 0 
-        AND investmentId = ${investmentId} AND isWithHoldings = 0
-        AND isApproved = 1 AND postDone = 1`;
-        let endpoint = `/core-service/get`;
-        let url = `${HOST}${endpoint}`;
+        let query = `Select amount, is_credit from investment_txns WHERE isWallet = 0  
+        AND investmentId = ${investmentId} AND isApproved = 1 AND postDone = 1`;
         sRequest.get(query).then(response_prdt_ => {
             let total = 0;
             response_prdt_.map(x => {
@@ -1008,43 +927,41 @@ function computeCurrentBalance(investmentId, HOST) {
     });
 }
 
-function currentBalanceForInterestCalculation(investmentId, HOST) {
+function currentBalanceForInterestCalculation(investmentId) {
     return new Promise((resolve, reject) => {
-        computeCurrentBalance(investmentId, HOST).then(balance => {
+        computeCurrentBalance(investmentId).then(balance => {
             resolve(balance);
         });
     });
 }
 
 /** Function call to compute the current investment/savings account and client wallet balance **/
-async function computeTotalBalance(clientId, investmentId, HOST) {
+async function computeTotalBalance(clientId, investmentId) {
     let currentAcctBalance = 0;
     let walletBalance = 0;
     if (investmentId !== '' && investmentId !== undefined && investmentId !== null) {
-        currentAcctBalance = await computeCurrentBalance(investmentId, HOST);
+        currentAcctBalance = await computeCurrentBalance(investmentId);
     }
-    walletBalance = await computeWalletBalance(clientId, HOST);
+    walletBalance = await computeWalletBalance(clientId);
     return { currentAcctBalance: currentAcctBalance, currentWalletBalance: walletBalance.currentWalletBalance };
 }
 
 /** Function call to compute the current investment/savings account and client wallet balance (With interest txns) **/
-async function computeTotalAccountBalance(clientId, investmentId, HOST) {
+async function computeTotalAccountBalance(clientId, investmentId) {
     let currentAcctBalance = 0;
     let walletBalance = 0;
     if (investmentId !== '' && investmentId !== undefined && investmentId !== null) {
-        currentAcctBalance = await computeAccountBalanceIncludeInterest(investmentId, HOST);
+        currentAcctBalance = await computeAccountBalanceIncludeInterest(investmentId);
     }
-    walletBalance = await computeWalletBalance(clientId, HOST);
+    walletBalance = await computeWalletBalance(clientId);
     return { currentAcctBalance: currentAcctBalance, currentWalletBalance: walletBalance.currentWalletBalance };
 }
 
 /** Function call to compute current client wallet balance **/
-function computeWalletBalance(clientId, HOST) {
+function computeWalletBalance(clientId) {
     return new Promise((resolve, reject) => {
         let query = `Select amount, is_credit from investment_txns WHERE isWallet = 1 AND clientId = ${clientId} 
         AND isApproved = 1 AND postDone = 1`;
-        let endpoint = '/core-service/get';
-        let url = `${HOST}${endpoint}`;
         sRequest.get(query).then(payload2 => {
             let total = 0;
             payload2.map(x => {
@@ -1062,11 +979,27 @@ function computeWalletBalance(clientId, HOST) {
     });
 }
 
-function getTerminatedOrMaturedInvestment(investmentId, HOST) {
+
+function getInvestmentDetails(investmentId) {
+    return new Promise((resolve, reject) => {
+        let query = `Select i.code, p.name as investmentName from investments i 
+        left join investment_products p on i.productId = p.ID
+        WHERE i.ID = ${investmentId}`;
+        sRequest.get(query).then(response_prdt_ => {
+            if (response_prdt_[0] !== undefined)
+                resolve(response_prdt_[0]);
+            else
+                resolve({});
+        }, err => {
+            resolve({});
+        });
+    });
+}
+
+
+function getTerminatedOrMaturedInvestment(investmentId) {
     return new Promise((resolve, reject) => {
         let query = `Select investmentId,isInvestmentMatured from investment_txns where investmentId = ${(investmentId === '' || investmentId === undefined || investmentId === null) ? 0 : investmentId} AND (isInvestmentMatured = 1 or isInvestmentTerminated = 1) Limit 1`;
-        let endpoint = '/core-service/get';
-        let url = `${HOST}${endpoint}`;
         sRequest.get(query).then(payload2 => {
             if (payload2.length > 0) {
                 resolve(payload2[0]);
@@ -1079,13 +1012,11 @@ function getTerminatedOrMaturedInvestment(investmentId, HOST) {
     });
 }
 
-function updateTerminatedOrMaturedInvestment(investmentId, HOST, isInvestmentMatured) {
+function updateTerminatedOrMaturedInvestment(investmentId, isInvestmentMatured) {
     return new Promise((resolve, reject) => {
         if (investmentId !== undefined && investmentId !== null && investmentId !== ''
             && isInvestmentMatured !== undefined && isInvestmentMatured !== null && isInvestmentMatured !== '') {
             let query = `UPDATE investments SET isClosed = 1, isMatured = 1 WHERE ID = ${investmentId}`;
-            let endpoint = '/core-service/get';
-            let url = `${HOST}${endpoint}`;
             sRequest.get(query).then(payload2 => {
                 if (payload2.length > 0) {
                     resolve({});
@@ -1102,11 +1033,11 @@ function updateTerminatedOrMaturedInvestment(investmentId, HOST, isInvestmentMat
 }
 
 /** Function call to compute investment up-front interest **/
-async function upFrontInterest(data, HOST) {
+async function upFrontInterest(data) {
     if (data.interest_disbursement_time.toString() === 'Up-Front' && data.is_capital.toString() === '1') {
         return new Promise((resolve, reject) => {
-            computeAccountBalanceIncludeInterest(data.investmentId, HOST).then(balanceWithInterest => {
-                computeTotalBalance(data.clientId, data.investmentId, HOST).then(totalAmt => {
+            computeAccountBalanceIncludeInterest(data.investmentId).then(balanceWithInterest => {
+                computeTotalBalance(data.clientId, data.investmentId).then(totalAmt => {
                     let T = differenceInCalendarDays(
                         new Date(data.investment_mature_date.toString()),
                         new Date(data.investment_start_date.toString())
@@ -1145,12 +1076,10 @@ async function upFrontInterest(data, HOST) {
                         approvalDone: 1,
                     };
                     let query = `INSERT INTO investment_txns SET ?`;
-                    let endpoint = `/core-service/post?query=${query}`;
-                    let url = `${HOST}${endpoint}`;
                     sRequest.post(query, _inv_txn)
                         .then(function (_payload_) {
                             _inv_txn.ID = _payload_.insertId;
-                            deductWithHoldingTax(HOST, data, _inv_txn.amount, 0, _inv_txn.balance, data.clientId, data.interest_moves_wallet, _inv_txn)
+                            deductWithHoldingTax(data, _inv_txn.amount, 0, _inv_txn.balance, data.clientId, data.interest_moves_wallet, _inv_txn)
                                 .then(p__ => {
                                     resolve({});
                                 });
@@ -1166,14 +1095,12 @@ async function upFrontInterest(data, HOST) {
 }
 
 /** Function call to compute and deduct transfer charge **/
-async function deductTransferCharge(data, HOST, amount) {
+async function deductTransferCharge(data, amount) {
     return new Promise((resolve, reject) => {
         if (data.isInvestmentMatured.toString() === '0') {
-            computeAccountBalanceIncludeInterest(data.investmentId, HOST).then(currentBalance => {
+            computeAccountBalanceIncludeInterest(data.investmentId).then(currentBalance => {
                 let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                 let query = `SELECT * FROM investment_config ORDER BY ID DESC LIMIT 1`;
-                let endpoint = '/core-service/get';
-                let url = `${HOST}${endpoint}`;
                 sRequest.get(query).then(response => {
                     if (response.status === undefined) {
                         let configData = response[0];
@@ -1205,8 +1132,8 @@ async function deductTransferCharge(data, HOST, amount) {
                             updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
                             createdBy: data.createdBy
                         };
-                        setInvestmentTxns(HOST, inv_txn).then(payload => {
-                            deductVatTax(HOST, data, configAmount, inv_txn, inv_txn.balance).then(payload_1 => {
+                        setInvestmentTxns(inv_txn).then(payload => {
+                            deductVatTax(data, configAmount, inv_txn, inv_txn.balance).then(payload_1 => {
                                 resolve({});
                             }, err_1 => {
                                 resolve({});
@@ -1227,9 +1154,9 @@ async function deductTransferCharge(data, HOST, amount) {
     });
 }
 
-function fundWallet(value, HOST) {
+function fundWallet(value) {
     return new Promise((resolve, reject) => {
-        setInvestmentTxns(HOST, value).then(payload => {
+        setInvestmentTxns(value).then(payload => {
             resolve(payload);
         }, err => {
             reject(0);
@@ -1238,7 +1165,7 @@ function fundWallet(value, HOST) {
 }
 
 /** Function call to close an investment account after maturity or termination operation **/
-function closeInvestmentWallet(investmentId, HOST) {
+function closeInvestmentWallet(investmentId) {
     return new Promise((resolve, reject) => {
         let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
         let query = `UPDATE investments SET
@@ -1248,8 +1175,6 @@ function closeInvestmentWallet(investmentId, HOST) {
         isMatured = 1,
         isClosed = 1
         WHERE ID = ${investmentId}`;
-        let endpoint = `/core-service/get`;
-        let url = `${HOST}${endpoint}`;
         sRequest.get(query).then(response_prdt_ => {
             resolve(response_prdt_);
         }, err => {
@@ -1258,25 +1183,13 @@ function closeInvestmentWallet(investmentId, HOST) {
     });
 }
 
-// async function moveFundWallet(data, HOST) {
-//     return new Promise((resolve, reject) => {
-//         let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-//         let currentBalance = await computeCurrentBalance(investmentId, HOST);
-//         data.balance = currentBalance - data.amount;
-//         setInvestmentTxns(HOST, data).then(payload => {
-//             resolve(payload);
-//         }, err => {
-//             resolve({});
-//         });
-//     });
-// }
 
 /** Function call to compute and charge for force termination of investment **/
-function chargeForceTerminate(data, HOST) {
+function chargeForceTerminate(data) {
     return new Promise((resolve, reject) => {
         if (data.isInvestmentTerminated.toString() === '1' && data.isForceTerminate.toString() === '1') {
-            computeAccountBalanceIncludeInterest(data.investmentId, HOST).then(balanceIncludingInterest => {
-                computeCurrentBalance(data.investmentId, HOST).then(balance => {
+            computeAccountBalanceIncludeInterest(data.investmentId).then(balanceIncludingInterest => {
+                computeCurrentBalance(data.investmentId).then(balance => {
                     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                     let _refId = moment().utcOffset('+0100').format('x');
                     let query = `SELECT t.*,p.*,v.description,v.amount as txnAmount,
@@ -1284,8 +1197,6 @@ function chargeForceTerminate(data, HOST) {
                     left join investment_products p on p.ID = t.productId
                     left join investment_txns v on v.investmentId = t.ID
                     WHERE v.investmentId = ${data.investmentId} AND v.isApproved = 1 ORDER BY v.ID DESC LIMIT 1`;
-                    let endpoint = '/core-service/get';
-                    let url = `${HOST}${endpoint}`;
                     sRequest.get(query).then(response => {
                         if (response.status === undefined) {
                             let configData = response[0];
@@ -1315,11 +1226,9 @@ function chargeForceTerminate(data, HOST) {
                                 isTerminationCharge: 1
                             };
                             query = `INSERT INTO investment_txns SET ?`;
-                            endpoint = `/core-service/post?query=${query}`;
-                            url = `${HOST}${endpoint}`;
                             try {
                                 sRequest.post(query, inv_txn).then(response__ => {
-                                    deductVatTax(HOST, data, configAmount, inv_txn, inv_txn.balance).then(payload___ => {
+                                    deductVatTax(data, configAmount, inv_txn, inv_txn.balance).then(payload___ => {
                                         resolve(balance);
                                     }, err => {
                                         resolve(balance);
@@ -1338,7 +1247,7 @@ function chargeForceTerminate(data, HOST) {
                 });
             });
         } else {
-            computeCurrentBalance(data.investmentId, HOST).then(balance => {
+            computeCurrentBalance(data.investmentId).then(balance => {
                 resolve(balance);
             });
         }
@@ -1346,15 +1255,13 @@ function chargeForceTerminate(data, HOST) {
 }
 
 /** Function call to compute all existing interest on an account **/
-function getExistingInterests(data, HOST) {
+function getExistingInterests(data) {
     return new Promise((resolve, reject) => {
         let query = `SELECT v.ID,v.isWithHoldings, v.description,v.is_credit,v.amount as txnAmount,v.balance as txnBalance,v.isApproved,
         v.isInterest,v.isInterestCharged,v.is_credit,p.premature_interest_rate FROM investment_txns v
         LEFT JOIN investments i on i.ID = v.investmentId
         left join investment_products p on p.ID = i.productId
         WHERE (v.isInterest = 1 OR v.isWithHoldings = 1) AND investmentId = ${data.investmentId} AND isApproved = 1`;
-        let endpoint = `/core-service/get`;
-        let url = `${HOST}${endpoint}`;
         sRequest.get(query).then(payload => {
             const result = (payload.length === 0) ? [{ premature_interest_rate: 0 }] : payload;
             resolve(result);
@@ -1362,14 +1269,12 @@ function getExistingInterests(data, HOST) {
     });
 }
 
-function getProductConfigInterests(data, HOST) {
+function getProductConfigInterests(data) {
     return new Promise((resolve, reject) => {
         let query = `SELECT t.*,p.*,c.ID as clientId FROM investments t 
         left join investment_products p on p.ID = t.productId
         left join clients c on c.ID = t.clientId
         WHERE t.ID = ${data.investmentId}`;
-        let endpoint = `/core-service/get`;
-        let url = `${HOST}${endpoint}`;
         sRequest.get(query).then(payload => {
             resolve(payload[0]);
         });
@@ -1377,8 +1282,8 @@ function getProductConfigInterests(data, HOST) {
 }
 
 /** Function call to compute interest when investment mature or after termination **/
-async function getInterestEndOfTenure(HOST, data) {
-    const matureMonths = await getValidInvestmentMatureMonths(HOST, data.investmentId, 0);
+async function getInterestEndOfTenure(data) {
+    const matureMonths = await getValidInvestmentMatureMonths(data.investmentId, 0);
     try {
         for (let index = 0; index < matureMonths.length; index++) {
             const element = matureMonths[index];
@@ -1395,7 +1300,7 @@ async function getInterestEndOfTenure(HOST, data) {
                 interest_disbursement_time: data.interest_disbursement_time,
                 isInvestmentTerminated: data.isInvestmentTerminated
             }
-            await computeInterestTxns2(HOST, _data);
+            await computeInterestTxns2(_data);
         }
         return {};
     } catch (error) {
@@ -1405,16 +1310,14 @@ async function getInterestEndOfTenure(HOST, data) {
 }
 
 /** Function call to compute and update investment account after termination **/
-function updateTerminatedInterest(HOST, data) {
+function updateTerminatedInterest(data) {
     return new Promise((resolve, reject) => {
         let query = `UPDATE investment_interests SET isTerminated = 1 
         WHERE id <> 0 AND investmentId = ${data.investmentId}`;
 
-        let endpoint = '/core-service/get';
-        let url = `${HOST}${endpoint}`;
         sRequest.get(query).then(axio_callback => {
-            getDatedTxns(HOST, data).then(datedTxns => {
-                updateDatedTxns(HOST, datedTxns, 0).then(updatedDates => {
+            getDatedTxns(data).then(datedTxns => {
+                updateDatedTxns(datedTxns, 0).then(updatedDates => {
                     resolve({});
                 });
             });
@@ -1423,9 +1326,9 @@ function updateTerminatedInterest(HOST, data) {
 }
 
 /** Function call to compute and reverse investment interest after termination **/
-async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
-    const _getExistingInterests = await getExistingInterests(data, HOST);
-    const _getProductConfigInterests = await getProductConfigInterests(data, HOST);
+async function reverseEarlierInterest(data, bal2CalTerminationChrg) {
+    const _getExistingInterests = await getExistingInterests(data);
+    const _getProductConfigInterests = await getProductConfigInterests(data);
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let totalInterestAmount = 0;
     let totalInterestAmountWHT = 0;
@@ -1444,9 +1347,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                     }
                 }
             });
-            const totalBal = await computeCurrentBalance(data.investmentId, HOST);
-            const balanceIncludingInterest = await computeAccountBalanceIncludeInterest(data.investmentId, HOST);
-            let total = totalBal;
+            const balanceIncludingInterest = await computeAccountBalanceIncludeInterest(data.investmentId);
             let refId = moment().utcOffset('+0100').format('x');
             let sumTotalBalance = balanceIncludingInterest - parseFloat(Number(totalInterestAmount).toFixed(2));
             let inv_txn = {
@@ -1469,8 +1370,6 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
             };
 
             let query = `INSERT INTO investment_txns SET ?`;
-            let endpoint = `/core-service/post?query=${query}`;
-            let url = `${HOST}${endpoint}`;
             await sRequest.post(query, inv_txn);
             const nextBalance = parseFloat(Number(sumTotalBalance).toFixed(2)) + parseFloat(Number(totalInterestAmountWHT).toFixed(2));
             inv_txn = {
@@ -1491,14 +1390,14 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                 investmentId: data.investmentId,
                 createdBy: data.createdBy
             };
-            await setInvestmentTxns(HOST, inv_txn);
+            await setInvestmentTxns(inv_txn);
             let mdata = {
                 investmentId: data.investmentId,
                 endDate: data.investment_mature_date,
                 startDate: data.investment_start_date
             }
-            await updateTerminatedInterest(HOST, mdata);
-            // const totalInvestedAmount = await computeCurrentBalance(data.investmentId, HOST);
+            await updateTerminatedInterest(mdata);
+
             refId = moment().utcOffset('+0100').format('x');
             dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
             let configData = _getProductConfigInterests;
@@ -1507,7 +1406,7 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                 configData.interest_forfeit_charge === null ||
                 configData.interest_forfeit_charge === '') ? 0 : parseFloat(configData.interest_forfeit_charge.toString());
             let configAmount = (configData.interest_forfeit_charge_opt == 'Fixed') ? _charge : (_charge * bal2CalTerminationChrg) / 100;//_payload_3.balance;
-            const invSumBalance = await computeAccountBalanceIncludeInterest(data.investmentId, HOST);
+            const invSumBalance = await computeAccountBalanceIncludeInterest(data.investmentId);
             let sumBalance = invSumBalance - configAmount; //(totalInvestedAmount + interestAmount) - configAmount;
             inv_txn = {
                 txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
@@ -1528,12 +1427,12 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                 createdBy: data.createdBy,
                 isTerminationCharge: 1
             };
-            await setInvestmentTxns(HOST, inv_txn);
-            await deductVatTax(HOST, data, configAmount, inv_txn, inv_txn.balance);
+            await setInvestmentTxns(inv_txn);
+            await deductVatTax(data, configAmount, inv_txn, inv_txn.balance);
             dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-            const ids = await getInvestmentInterestIDs(HOST, data.investmentId);
-            await updateInvestmentInterestIDs(HOST, ids);
-            const matureMonths = await getValidInvestmentMatureMonths(HOST, data.investmentId, 0);
+            const ids = await getInvestmentInterestIDs(data.investmentId);
+            await updateInvestmentInterestIDs(ids);
+            const matureMonths = await getValidInvestmentMatureMonths(data.investmentId, 0);
             for (let index = 0; index < matureMonths.length; index++) {
                 const element = matureMonths[index];
                 let _data = {
@@ -1549,14 +1448,12 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                     interest_disbursement_time: data.interest_disbursement_time,
                     isInvestmentTerminated: data.isInvestmentTerminated
                 }
-                await computeInterestTxns2(HOST, _data);
+                await computeInterestTxns2(_data);
             }
             query = `DELETE FROM investment_txns WHERE ID=${data.txnId}`;
-            endpoint = `/core-service/get`;
-            url = `${HOST}${endpoint}`;
             const _res_ = await sRequest.get(query);
             if (_res_.status === undefined) {
-                const currentBal = await computeAccountBalanceIncludeInterest(data.investmentId, HOST);
+                const currentBal = await computeAccountBalanceIncludeInterest(data.investmentId);
                 inv_txn = {
                     txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                     description: `TERMINATE INVESTMENT`,
@@ -1577,8 +1474,8 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                     createdBy: data.createdBy
                 };
 
-                await setInvestmentTxns(HOST, inv_txn);
-                const __balance = await computeWalletBalance(data.clientId, HOST);
+                await setInvestmentTxns(inv_txn);
+                const __balance = await computeWalletBalance(data.clientId);
 
                 refId = moment().utcOffset('+0100').format('x');
                 let wBalance = __balance.currentWalletBalance;
@@ -1603,13 +1500,12 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                     isWallet: 1,
                     clientId: _getProductConfigInterests.clientId
                 };
-                await fundWallet(inv_txn, HOST);
-                await closeInvestmentWallet(data.investmentId, HOST);
+                await fundWallet(inv_txn);
+                await closeInvestmentWallet(data.investmentId);
             }
 
         } else {
-            // const _computeCurrentBalance = await currentBalanceForInterestCalculation(data.investmentId, HOST);
-            const _currentBalance = await computeAccountBalanceIncludeInterest(data.investmentId, HOST);
+            const _currentBalance = await computeAccountBalanceIncludeInterest(data.investmentId);
             let refId = moment().utcOffset('+0100').format('x');
             let configData = _getProductConfigInterests;
 
@@ -1638,19 +1534,17 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                 createdBy: data.createdBy,
                 isTerminationCharge: 1
             };
-            await setInvestmentTxns(HOST, inv_txn);
+            await setInvestmentTxns(inv_txn);
 
-            await deductVatTax(HOST, data, configAmount, inv_txn, inv_txn.balance);
+            await deductVatTax(data, configAmount, inv_txn, inv_txn.balance);
 
             let query = `DELETE FROM investment_txns WHERE ID = ${data.txnId}`;
-            let endpoint = `/core-service/get`;
-            let url = `${HOST}${endpoint}`;
             const _res_ = await sRequest.get(query);
 
-            await getInterestEndOfTenure(HOST, data);
+            await getInterestEndOfTenure(data);
             if (_res_.status === undefined) {
                 refId = moment().utcOffset('+0100').format('x');
-                const mBalance = await computeAccountBalanceIncludeInterest(data.investmentId, HOST);
+                const mBalance = await computeAccountBalanceIncludeInterest(data.investmentId);
                 inv_txn = {
                     txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                     description: `TERMINATE INVESTMENT`,
@@ -1669,10 +1563,10 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                     updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                     createdBy: data.createdBy
                 };
-                const __balance = await computeWalletBalance(data.clientId, HOST);
+                const __balance = await computeWalletBalance(data.clientId);
                 let wBalance = __balance.currentWalletBalance;
                 let _totalBalance = wBalance + mBalance;
-                await setInvestmentTxns(HOST, inv_txn);
+                await setInvestmentTxns(inv_txn);
                 inv_txn = {
                     txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
                     description: `WALLET FUNDED BY TERMINATING INVESTMENT`,
@@ -1693,8 +1587,8 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
                     isWallet: 1,
                     clientId: configData.clientId
                 };
-                await fundWallet(inv_txn, HOST);
-                await closeInvestmentWallet(data.investmentId, HOST);
+                await fundWallet(inv_txn);
+                await closeInvestmentWallet(data.investmentId);
             }
 
         }
@@ -1705,10 +1599,10 @@ async function reverseEarlierInterest(data, HOST, bal2CalTerminationChrg) {
 }
 
 /** Function call to raise a debit transaction on client wallet **/
-function debitWalletTxns(HOST, data) {
+function debitWalletTxns(data) {
     return new Promise((resolve, reject) => {
         if (data.isPaymentMadeByWallet.toString() === '1') {
-            computeWalletBalance(data.clientId, HOST).then(walletBal => {
+            computeWalletBalance(data.clientId).then(walletBal => {
                 let walletAmt = parseFloat(data.amount.toString());
                 let walletCurrentBal = walletBal.currentWalletBalance - walletAmt;
                 let inv_txn = {
@@ -1732,8 +1626,6 @@ function debitWalletTxns(HOST, data) {
                     createdBy: data.createdBy
                 };
                 query = `INSERT INTO investment_txns SET ?`;
-                endpoint = `/core-service/post?query=${query}`;
-                let url = `${HOST}${endpoint}`;
                 sRequest.post(query, inv_txn)
                     .then(function (__paylod__) {
                         resolve({});
@@ -1748,17 +1640,17 @@ function debitWalletTxns(HOST, data) {
 }
 
 /** Function call to compute and post any form of charge related to a transaction **/
-async function setcharges(data, HOST, isReversal) {
+async function setcharges(data, isReversal) {
     return new Promise((resolve, reject) => {
         if (data.isInvestmentTerminated === '1' || data.isTransfer === '1') {
-            fundBeneficialAccount(data, HOST).then(fundBene => {
+            fundBeneficialAccount(data).then(fundBene => {
                 resolve(fundBene);
             }, err => {
                 resolve({});
             });
         } else {
-            computeAccountBalanceIncludeInterest(data.investmentId, HOST).then(balanceIncludingInterest_ => {
-                computeTotalBalance(data.clientId, data.investmentId, HOST).then(computedTotalBalance => {
+            computeAccountBalanceIncludeInterest(data.investmentId).then(balanceIncludingInterest_ => {
+                computeTotalBalance(data.clientId, data.investmentId).then(computedTotalBalance => {
                     let _total = (data.isWallet.toString() === '1') ? computedTotalBalance.currentWalletBalance : computedTotalBalance.currentAcctBalance;
                     let acctSumBalance = (data.isWallet.toString() === '1') ? computedTotalBalance.currentWalletBalance : balanceIncludingInterest_;
                     data.amount = data.amount.split(',').join('');
@@ -1770,8 +1662,6 @@ async function setcharges(data, HOST, isReversal) {
                         FROM investments t left join investment_products p on p.ID = t.productId
                         left join investment_txns v on v.investmentId = t.ID
                         WHERE t.ID = ${data.investmentId} AND v.ID = ${data.txnId}`;
-                        let endpoint = `/core-service/get`;
-                        let url = `${HOST}${endpoint}`;
                         sRequest.get(query).then(response_product => {
                             if (response_product[0].isInterest.toString() === '0') {
                                 if (data.isCredit.toString() === '1') {
@@ -1803,15 +1693,12 @@ async function setcharges(data, HOST, isReversal) {
                                             createdBy: data.createdBy
                                         };
                                         query = `INSERT INTO investment_txns SET ?`;
-                                        endpoint = `/core-service/post?query=${query}`;
-                                        let url = `${HOST}${endpoint}`;
                                         sRequest.post(query, inv_txn)
                                             .then(function (payload) {
                                                 if (payload.status === undefined) {
                                                     if (isReversal === false) {
                                                         let txnAmount2 = Number(chargedCost).toFixed(2);
-                                                        let txnBal = Number(total - chargedCost).toFixed(2);
-                                                        deductVatTax(HOST, data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
+                                                        deductVatTax(data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
                                                             resolve(result);
                                                         }, err => {
                                                             resolve({});
@@ -1862,14 +1749,11 @@ async function setcharges(data, HOST, isReversal) {
                                             createdBy: data.createdBy
                                         };
                                         query = `INSERT INTO investment_txns SET ?`;
-                                        endpoint = `/core-service/post?query=${query}`;
-                                        let url = `${HOST}${endpoint}`;
                                         sRequest.post(query, inv_txn)
                                             .then(function (payload) {
                                                 if (payload.status === undefined) {
                                                     let txnAmount2 = Number(chargedCostMinBal).toFixed(2);
-                                                    let txnBal = Number(getInvestBalance.txnBalance - chargedCostMinBal).toFixed(2);
-                                                    deductVatTax(HOST, data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
+                                                    deductVatTax(data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
                                                         resolve(result);
                                                     }, err => {
                                                         resolve({});
@@ -1878,8 +1762,8 @@ async function setcharges(data, HOST, isReversal) {
                                             }, err => { });
                                     }
 
-                                    computeAccountBalanceIncludeInterest(data.investmentId, HOST).then(balanceIncludingInterest_2 => {
-                                        computeTotalBalance(data.clientId, data.investmentId, HOST).then(computedTotalBalance2 => {
+                                    computeAccountBalanceIncludeInterest(data.investmentId).then(balanceIncludingInterest_2 => {
+                                        computeTotalBalance(data.clientId, data.investmentId).then(computedTotalBalance2 => {
                                             _total = (data.isWallet.toString() === '1') ? computedTotalBalance2.currentWalletBalance : computedTotalBalance.currentAcctBalance;
                                             const sum_Total = _total = (data.isWallet.toString() === '1') ? computedTotalBalance2.currentWalletBalance : balanceIncludingInterest_2;
                                             let currentDate = new Date();
@@ -1892,8 +1776,6 @@ async function setcharges(data, HOST, isReversal) {
                                                     if (response_product_.length === parseInt(response_product[0].freq_withdrawal)
                                                         && response_product[0].chkEnforceCount === 1) {
                                                         query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
-                                                        endpoint = `/core-service/get`;
-                                                        url = `${HOST}${endpoint}`;
                                                         sRequest.get(query);
                                                     }
 
@@ -1927,14 +1809,11 @@ async function setcharges(data, HOST, isReversal) {
                                                         };
 
                                                         query = `INSERT INTO investment_txns SET ?`;
-                                                        endpoint = `/core-service/post?query=${query}`;
-                                                        let url = `${HOST}${endpoint}`;
                                                         sRequest.post(query, inv_txn)
                                                             .then(function (payload) {
                                                                 if (payload.status === undefined) {
                                                                     let txnAmount2 = Number(_chargedCostMinBal).toFixed(2);
-                                                                    let txnBal = Number(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
-                                                                    deductVatTax(HOST, data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
+                                                                    deductVatTax(data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
                                                                         resolve(result);
                                                                     }, err => {
                                                                         resolve({});
@@ -1960,8 +1839,6 @@ async function setcharges(data, HOST, isReversal) {
                                                     if (response_product_.length === parseInt(response_product[0].freq_withdrawal)
                                                         && response_product[0].chkEnforceCount === 1) {
                                                         query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
-                                                        endpoint = `/core-service/get`;
-                                                        url = `${HOST}${endpoint}`;
                                                         sRequest.get(query);
                                                     }
 
@@ -1995,14 +1872,11 @@ async function setcharges(data, HOST, isReversal) {
                                                         };
 
                                                         query = `INSERT INTO investment_txns SET ?`;
-                                                        endpoint = `/core-service/post?query=${query}`;
-                                                        let url = `${HOST}${endpoint}`;
                                                         sRequest.post(query, inv_txn)
                                                             .then(function (payload) {
                                                                 if (payload.status === undefined) {
                                                                     let txnAmount2 = Number(_chargedCostMinBal).toFixed(2);
-                                                                    let txnBal = Number(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
-                                                                    deductVatTax(HOST, data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
+                                                                    deductVatTax(data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
                                                                         resolve(result);
                                                                     }, err => {
                                                                         resolve({});
@@ -2024,15 +1898,11 @@ async function setcharges(data, HOST, isReversal) {
                                                 STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${monthStartDateFormat}' 
                                                 AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${endOfTheMonthFormat}' 
                                                 AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
-                                                let endpoint = `/core-service/get`;
-                                                url = `${HOST}${endpoint}`;
                                                 sRequest.get(query).then(response_product_ => {
 
                                                     if (response_product_.length === parseInt(response_product[0].freq_withdrawal)
                                                         && response_product[0].chkEnforceCount === 1) {
                                                         query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
-                                                        endpoint = `/core-service/get`;
-                                                        url = `${HOST}${endpoint}`;
                                                         sRequest.get(query);
                                                     }
 
@@ -2066,14 +1936,12 @@ async function setcharges(data, HOST, isReversal) {
                                                         };
 
                                                         query = `INSERT INTO investment_txns SET ?`;
-                                                        endpoint = `/core-service/post?query=${query}`;
-                                                        let url = `${HOST}${endpoint}`;
                                                         sRequest.post(query, inv_txn)
                                                             .then(function (payload) {
                                                                 if (payload.status === undefined) {
                                                                     let txnAmount2 = Number(_chargedCostMinBal).toFixed(2);
                                                                     let txnBal = Number(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
-                                                                    deductVatTax(HOST, data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
+                                                                    deductVatTax(data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
                                                                         resolve(result);
                                                                     }, err => {
                                                                         resolve({});
@@ -2096,15 +1964,11 @@ async function setcharges(data, HOST, isReversal) {
                                                 STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${quaterStartDateFormat}' 
                                                 AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${quaterEndDateFormat}' 
                                                 AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
-                                                let endpoint = `/core-service/get`;
-                                                url = `${HOST}${endpoint}`;
                                                 sRequest.get(query).then(response_product_ => {
 
                                                     if (response_product_.length === parseInt(response_product[0].freq_withdrawal)
                                                         && response_product[0].chkEnforceCount === 1) {
                                                         query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
-                                                        endpoint = `/core-service/get`;
-                                                        url = `${HOST}${endpoint}`;
                                                         sRequest.get(query);
                                                     }
 
@@ -2138,14 +2002,11 @@ async function setcharges(data, HOST, isReversal) {
                                                         };
 
                                                         query = `INSERT INTO investment_txns SET ?`;
-                                                        endpoint = `/core-service/post?query=${query}`;
-                                                        let url = `${HOST}${endpoint}`;
                                                         sRequest.post(query, inv_txn)
                                                             .then(function (payload) {
                                                                 if (payload.status === undefined) {
                                                                     let txnAmount2 = Number(_chargedCostMinBal).toFixed(2);
-                                                                    let txnBal = Number(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
-                                                                    deductVatTax(HOST, data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
+                                                                    deductVatTax(data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
                                                                         resolve(result);
                                                                     }, err => {
                                                                         resolve({});
@@ -2168,14 +2029,10 @@ async function setcharges(data, HOST, isReversal) {
                                                 STR_TO_DATE(updated_date, '%Y-%m-%d') >= '${yearStartDateFormat}' 
                                                 AND  STR_TO_DATE(updated_date, '%Y-%m-%d') <= '${yearEndDateFormat}' 
                                                 AND investmentId = ${data.investmentId} AND isWithdrawal = 1 AND isApproved = 1 AND is_credit = 0`;
-                                                let endpoint = `/core-service/get`;
-                                                url = `${HOST}${endpoint}`;
                                                 sRequest.get(query).then(response_product_ => {
                                                     if (response_product_.length === parseInt(response_product[0].freq_withdrawal)
                                                         && response_product[0].chkEnforceCount === 1) {
                                                         query = `UPDATE investments SET canWithdraw = 0 WHERE ID =${data.investmentId}`;
-                                                        endpoint = `/core-service/get`;
-                                                        url = `${HOST}${endpoint}`;
                                                         sRequest.get(query);
                                                     }
 
@@ -2209,14 +2066,11 @@ async function setcharges(data, HOST, isReversal) {
                                                         };
 
                                                         query = `INSERT INTO investment_txns SET ?`;
-                                                        endpoint = `/core-service/post?query=${query}`;
-                                                        let url = `${HOST}${endpoint}`;
                                                         sRequest.post(query, inv_txn)
                                                             .then(function (payload) {
                                                                 if (payload.status === undefined) {
                                                                     let txnAmount2 = Number(_chargedCostMinBal).toFixed(2);
-                                                                    let txnBal = Number(parseFloat(_getInvestBalance.txnBalance.split(',').join('')) - _chargedCostMinBal).toFixed(2);
-                                                                    deductVatTax(HOST, data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
+                                                                    deductVatTax(data, txnAmount2, inv_txn, inv_txn.balance).then(result => {
                                                                         resolve(result);
                                                                     }, err => {
                                                                         resolve({});
@@ -2245,13 +2099,11 @@ async function setcharges(data, HOST, isReversal) {
 }
 
 /** Function call to compute and post VAT **/
-function deductVatTax(HOST, data, _amount, txn, balance) {
+function deductVatTax(data, _amount, txn, balance) {
     return new Promise((resolve, reject) => {
         if (data.isInvestmentMatured.toString() === '0') {
             let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
             let query = `SELECT * FROM investment_config ORDER BY ID DESC LIMIT 1`;
-            let endpoint = '/core-service/get';
-            let url = `${HOST}${endpoint}`;
             sRequest.get(query).then(response => {
                 if (response.status === undefined) {
                     let configData = response[0];
@@ -2284,7 +2136,7 @@ function deductVatTax(HOST, data, _amount, txn, balance) {
                         isVat: 1,
                         isTerminationCharge: (txn.isTerminationCharge === 1) ? 1 : 0
                     };
-                    setInvestmentTxns(HOST, inv_txn).then(result => {
+                    setInvestmentTxns(inv_txn).then(result => {
                         let result_ = balance - configAmount;
                         resolve(result_);
                     }, err_ => {
@@ -2303,9 +2155,8 @@ function deductVatTax(HOST, data, _amount, txn, balance) {
 
 /** End point to compute interest **/
 router.post('/compute-interest', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.body;
-    computeInterestTxns2(HOST, data).then(payload => {
+    computeInterestTxns2(data).then(payload => {
         res.send(payload);
     }, err => {
         res.send(err);
@@ -2314,14 +2165,7 @@ router.post('/compute-interest', function (req, res, next) {
 
 /** End point to return fully mature months in an investment account**/
 router.get('/mature-interest-months/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
-    // monthlyMaturedInvestmentDate(HOST, req.params.id).then(payload => {
-    //     const data = payload.data.filter(x => isPast(endOfMonth(`${x.year}-${x.month}`)));
-    //     res.send(data);
-    // }, err => {
-    //     res.send(err);
-    // });
-    getValidInvestmentMatureMonths(HOST, req.params.id, 1).then(payload => {
+    getValidInvestmentMatureMonths(req.params.id, 1).then(payload => {
         const result = payload.filter(x => isLastDayOfMonth(x.endDate));
         res.send(result);
     });
@@ -2329,7 +2173,6 @@ router.get('/mature-interest-months/:id', function (req, res, next) {
 
 /** End point to return an investment daily list of interest **/
 router.get('/client-interests/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
     let draw = req.query.draw;
@@ -2339,19 +2182,12 @@ router.get('/client-interests/:id', function (req, res, next) {
     WHERE isTerminated = 0 AND investmentId = ${req.params.id} 
     AND amount LIKE "${search_string}%" ${order} LIMIT ${limit} OFFSET ${offset}`;
 
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
-    var data = [];
     sRequest.get(query).then(response => {
         query = `SELECT count(*) as recordsFiltered FROM investment_interests 
         WHERE investmentId = ${req.params.id}
         AND amount LIKE "${search_string}%"`;
-        endpoint = '/core-service/get';
-        url = `${HOST}${endpoint}`;
         sRequest.get(query).then(payload => {
             query = `SELECT count(*) as recordsTotal FROM investment_interests WHERE investmentId = ${req.params.id}`;
-            endpoint = '/core-service/get';
-            url = `${HOST}${endpoint}`;
             sRequest.get(query).then(payload2 => {
                 res.send({
                     draw: draw,
@@ -2366,7 +2202,6 @@ router.get('/client-interests/:id', function (req, res, next) {
 
 /** End point to return an investment transactions within a date range **/
 router.get('/investment-statements/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
     let draw = req.query.draw;
@@ -2381,9 +2216,6 @@ router.get('/investment-statements/:id', function (req, res, next) {
     left join investment_products p on i.productId = p.ID
     WHERE v.investmentId = ${req.params.id} AND STR_TO_DATE(v.updated_date, '%Y-%m-%d')>= '${req.query.startDate}' AND STR_TO_DATE(v.updated_date, '%Y-%m-%d')<= '${req.query.endDate}' AND (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%") LIMIT ${limit} OFFSET ${offset}`;
 
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
-    var data = [];
     sRequest.get(query).then(response => {
         query = `SELECT count(*) as recordsFiltered FROM investment_txns v 
     left join investments i on v.investmentId = i.ID
@@ -2392,13 +2224,9 @@ router.get('/investment-statements/:id', function (req, res, next) {
     WHERE v.investmentId = ${req.params.id} AND STR_TO_DATE(v.updated_date, '%Y-%m-%d')>= '${req.query.startDate}' 
     AND STR_TO_DATE(v.updated_date, '%Y-%m-%d')<= '${req.query.endDate}'
     AND (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%")`;
-        endpoint = '/core-service/get';
-        url = `${HOST}${endpoint}`;
         sRequest.get(query).then(payload => {
             query = `SELECT count(*) as recordsTotal FROM investment_txns WHERE investmentId = ${req.params.id} 
             AND STR_TO_DATE(updated_date, '%Y-%m-%d')>= '${req.query.startDate}' AND STR_TO_DATE(updated_date, '%Y-%m-%d')<= '${req.query.endDate}'`;
-            endpoint = '/core-service/get';
-            url = `${HOST}${endpoint}`;
             sRequest.get(query).then(payload2 => {
                 res.send({
                     draw: draw,
@@ -2413,12 +2241,10 @@ router.get('/investment-statements/:id', function (req, res, next) {
 
 
 //Functions
-async function monthlyMaturedInvestmentDate(host, investmentId) {
+async function monthlyMaturedInvestmentDate(investmentId) {
     let query = `SELECT DAY(updated_date) as day, MONTH(updated_date) AS month, YEAR(updated_date) AS year
     FROM investment_txns WHERE investmentId = ${investmentId} AND isApproved = 1 AND isInterestCharged = 0 AND isInterest = 0
     GROUP BY MONTH(updated_date), YEAR(updated_date)`;
-    let endpoint = '/core-service/get';
-    let url = `${host}${endpoint}`;
     try {
         const months = await sRequest.get(query);
         return months;
@@ -2428,11 +2254,9 @@ async function monthlyMaturedInvestmentDate(host, investmentId) {
 }
 
 /** Function call to return number of mature months and investment start date **/
-function investmentMonths(host, investmentId) {
+function investmentMonths(investmentId) {
     return new Promise((resolve, reject) => {
         let query = `SELECT investment_start_date, investment_mature_date FROM investments WHERE ID = ${investmentId}`;
-        let endpoint = '/core-service/get';
-        let url = `${host}${endpoint}`;
         const currentDate = new Date();
         let currentDt = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}`;
         sRequest.get(query).then(payload => {
@@ -2479,7 +2303,7 @@ function investmentStartAndEndOfMonths(diffInCalendarMonths, investment_start_da
 }
 
 
-async function dailyMaturedInvestmentTxns(host, investmentId, firstDate, date) {
+async function dailyMaturedInvestmentTxns(investmentId, firstDate, date) {
     let query = `SELECT t.*,a.investment_mature_date,a.investment_start_date, a.clientId,
     p.interest_rate, p.ID as productId, p.interest_moves_wallet FROM investment_txns t
     left join investments a on a.ID = t.investmentId
@@ -2487,8 +2311,6 @@ async function dailyMaturedInvestmentTxns(host, investmentId, firstDate, date) {
     WHERE t.isWallet = 0 AND t.investmentId = ${investmentId} AND STR_TO_DATE(t.updated_date, '%Y-%m-%d') <= '${date}' 
     AND t.isApproved = 1 ORDER BY t.ID DESC LIMIT 1`;
 
-    let endpoint = '/core-service/get';
-    let url = `${host}${endpoint}`;
     try {
         const result = await sRequest.get(query);
         return result;
@@ -2497,12 +2319,10 @@ async function dailyMaturedInvestmentTxns(host, investmentId, firstDate, date) {
     }
 }
 
-async function sumUpInvestmentInterest(host, investmentId, isPosted, isTerminated) {
+async function sumUpInvestmentInterest(investmentId, isPosted, isTerminated) {
     return new Promise((resolve, reject) => {
         let query = `SELECT SUM(amount) as total FROM investment_interests
     WHERE investmentId = ${investmentId} AND isPosted = ${isPosted} AND isTerminated = ${isTerminated}`;
-        let endpoint = '/core-service/get';
-        let url = `${host}${endpoint}`;
         sRequest.get(query).then(result => {
             if (result[0] === undefined) {
                 resolve('0');
@@ -2515,14 +2335,12 @@ async function sumUpInvestmentInterest(host, investmentId, isPosted, isTerminate
     });
 }
 
-async function sumInvestmentInterestRange(host, investmentId, startDate, endDate) {
+async function sumInvestmentInterestRange(investmentId, startDate, endDate) {
     return new Promise((resolve, reject) => {
         let query = `SELECT SUM(amount) as total FROM investment_interests
         WHERE investmentId = ${investmentId} AND isPosted = 0 
         AND STR_TO_DATE(interestDate, '%Y-%m-%d') >='${startDate}'
         AND STR_TO_DATE(interestDate, '%Y-%m-%d') <='${endDate}'`;
-        let endpoint = '/core-service/get';
-        let url = `${host}${endpoint}`;
         sRequest.get(query).then(result => {
             resolve(result[0].total);
         }, err => {
@@ -2532,12 +2350,10 @@ async function sumInvestmentInterestRange(host, investmentId, startDate, endDate
 }
 
 /** Function call to return all IDs of an investment daily computed interests**/
-function getInvestmentInterestIDs(host, investmentId) {
+function getInvestmentInterestIDs(investmentId) {
     return new Promise((resolve, reject) => {
         let query = `SELECT ID FROM investment_interests
         WHERE investmentId = ${investmentId}`;
-        let endpoint = '/core-service/get';
-        let url = `${host}${endpoint}`;
         sRequest.get(query).then(result => {
             resolve(result);
         }, err => {
@@ -2547,7 +2363,7 @@ function getInvestmentInterestIDs(host, investmentId) {
 }
 
 /** Function call to update all previously computed interests during investment termination**/
-function updateInvestmentInterestIDs(host, ids) {
+function updateInvestmentInterestIDs(ids) {
     return new Promise((resolve, reject) => {
         let baseQuery = `UPDATE investment_txns SET isTerminated = 1 WHERE`;
         let bodyQuery = '';
@@ -2559,8 +2375,6 @@ function updateInvestmentInterestIDs(host, ids) {
         }
         let query = baseQuery + bodyQuery;
 
-        let endpoint = '/core-service/get';
-        let url = `${host}${endpoint}`;
         sRequest.get(query).then(result => {
             resolve(result);
         }, err => {
@@ -2570,15 +2384,13 @@ function updateInvestmentInterestIDs(host, ids) {
 }
 
 /** Function call to compute and return daily last balance without considering interest**/
-function sumInvestmentInterestPerDayRange(host, investmentId, inStartDate, startDate, date) {
+function sumInvestmentInterestPerDayRange(investmentId, inStartDate, startDate, date) {
     return new Promise((resolve, reject) => {
         let query = `SELECT amount, is_credit FROM investment_txns
         WHERE investmentId = ${investmentId} AND isApproved = 1 AND postDone = 1 AND isTerminationCharge = 0 
-        AND isInterest = 0 AND isWallet = 0 AND (STR_TO_DATE(updated_date, '%Y-%m-%d') >='${inStartDate}'
+        AND isWallet = 0 AND (STR_TO_DATE(updated_date, '%Y-%m-%d') >='${inStartDate}'
         OR STR_TO_DATE(updated_date, '%Y-%m-%d') >='${startDate}')
         AND STR_TO_DATE(updated_date, '%Y-%m-%d') <='${date}'`;
-        let endpoint = '/core-service/get';
-        let url = `${host}${endpoint}`;
         sRequest.get(query).then(result => {
             let total = 0;
             if (result.length > 0) {
@@ -2599,7 +2411,7 @@ function sumInvestmentInterestPerDayRange(host, investmentId, inStartDate, start
 }
 
 /** Function call to compute and return daily last balance without considering interest**/
-function setInvestmentInterestPerDay(host, values) {
+function setInvestmentInterestPerDay(values) {
     return new Promise((resolve, reject) => {
         let baseQuery = `INSERT INTO
         investment_interests(
@@ -2632,11 +2444,9 @@ function setInvestmentInterestPerDay(host, values) {
 }
 
 /** Function call to return the maturity date for an investment account **/
-function getInvestmentMaturityDate(host, investmentId) {
+function getInvestmentMaturityDate(investmentId) {
     return new Promise((resolve, reject) => {
         let query = `SELECT investment_mature_date FROM investments WHERE ID = ${investmentId}`;
-        let endpoint = '/core-service/get';
-        let url = `${host}${endpoint}`;
         sRequest.get(query).then(payload => {
             resolve(payload[0]);
         }, err => {
@@ -2646,9 +2456,9 @@ function getInvestmentMaturityDate(host, investmentId) {
 }
 
 /** Function call to return date(days) within two dates of an investment account **/
-function getInvestmentMonthDatesRange(HOST, startDate, maturityDate, investmentId) {
+function getInvestmentMonthDatesRange(startDate, maturityDate, investmentId) {
     return new Promise((resolve, reject) => {
-        getInvestmentMaturityDate(HOST, investmentId).then(iv_maturityDate => {
+        getInvestmentMaturityDate(investmentId).then(iv_maturityDate => {
             let daysInInvestmentDuration = differenceInCalendarDays(
                 new Date(maturityDate),
                 new Date(startDate)
@@ -2672,9 +2482,9 @@ function getInvestmentMonthDatesRange(HOST, startDate, maturityDate, investmentI
 }
 
 /** Function call to compute and return investment daily interest **/
-async function getInvestmentDailyBalance(HOST, data) {
+async function getInvestmentDailyBalance(data) {
     let dailyBalances = [];
-    const payload = await getInvestmentMonthDatesRange(HOST, data.startDate, data.maturityDate, data.investmentId);
+    const payload = await getInvestmentMonthDatesRange(data.startDate, data.maturityDate, data.investmentId);
     let daysInYear = 365;
     if (isLeapYear(new Date())) {
         daysInYear = 366;
@@ -2684,7 +2494,7 @@ async function getInvestmentDailyBalance(HOST, data) {
     let isLocked = false;
     for (let index = 0; index < payload.length; index++) {
         const x = payload[index];
-        const balance = await sumInvestmentInterestPerDayRange(HOST, data.investmentId, data.investment_start_date, data.startDate, x)
+        const balance = await sumInvestmentInterestPerDayRange(data.investmentId, data.investment_start_date, data.startDate, x)
         let totalInvestedAmount = parseFloat(balance.toString());
         monthlyOpeningBalance = (monthlyOpeningBalance === 0) ? totalInvestedAmount : monthlyOpeningBalance;
         const _interest_rate = (data.interest_rate === '' ||
@@ -2710,34 +2520,16 @@ async function getInvestmentDailyBalance(HOST, data) {
 
 /** End point to return list of an investment maturity months and date(Written for TEST purpose) **/
 router.post('/investment-durations', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     const data = req.body;
-    // getInvestmentDailyBalance(HOST, data).then(payload => {
-    //     setInvestmentInterestPerDay(HOST, payload.dailyBalances).then(interestValues => {
-    //         let result = {
-    //             dailyInterest: payload.dailyBalances,
-    //             totalInterestAmount: payload.totalInterestAmount,
-    //             insertIds: interestValues
-    //         }
-    //         res.send(result);
-    //     })
-    // });
-
-    // monthlyMaturedInvestmentDate(HOST, data.investmentId).then(payload => {
-    //     const data = payload.data.filter(x => isPast(endOfMonth(`${x.year}-${x.month}`)));
-    //     res.send(data);
-    // }, err => {
-    //     res.send(err);
-    // });
-    getValidInvestmentMatureMonths(HOST, data.investmentId, 0).then(payload => {
+    getValidInvestmentMatureMonths(data.investmentId, 0).then(payload => {
         res.send(payload);
     });
 });
 
 /** Function call to only return mature month and date that interest has not been computed on **/
-async function getValidInvestmentMatureMonths(HOST, investmentId, isMonthly) {
+async function getValidInvestmentMatureMonths(investmentId, isMonthly) {
     let results = [];
-    const payload = await investmentMonths(HOST, investmentId);
+    const payload = await investmentMonths(investmentId);
     const payload2 = await investmentStartAndEndOfMonths(payload.months, payload.investment_start_date);
     let matureMonths = payload2.filter(x => isPast(new Date(x.endDate)));
     let currentDate = new Date();
@@ -2755,7 +2547,7 @@ async function getValidInvestmentMatureMonths(HOST, investmentId, isMonthly) {
     for (let index = 0; index < matureMonths.length; index++) {
         const element = matureMonths[index];
         const dt = element.endDate.split('-');
-        const validate = await monthlyValidMaturedInvestmentDate(HOST, investmentId, dt[1], dt[0]);
+        const validate = await monthlyValidMaturedInvestmentDate(investmentId, dt[1], dt[0]);
         if (validate) {
             results.push(element);
         }
@@ -2763,13 +2555,11 @@ async function getValidInvestmentMatureMonths(HOST, investmentId, isMonthly) {
     return results;
 }
 
-/** Sub Function in getValidInvestmentMatureMonths(HOST, investmentId, isMonthly) **/
-function monthlyValidMaturedInvestmentDate(host, investmentId, month, year) {
+/** Sub Function in getValidInvestmentMatureMonths(investmentId, isMonthly) **/
+function monthlyValidMaturedInvestmentDate(investmentId, month, year) {
     return new Promise((resolve, reject) => {
         let query = `SELECT count(id) as counter FROM investment_interests WHERE investmentId = ${investmentId} 
         AND isPosted = 1 AND isTerminated = 0 AND month = ${month} AND year = ${year}`;
-        let endpoint = '/core-service/get';
-        let url = `${host}${endpoint}`;
         sRequest.get(query).then(payload => {
             if (payload[0].counter === 0) {
                 resolve(true);
@@ -2783,10 +2573,8 @@ function monthlyValidMaturedInvestmentDate(host, investmentId, month, year) {
 }
 
 
-async function setInvestmentInterest(host, value) {
+async function setInvestmentInterest(value) {
     let query = `INSERT INTO investment_interests SET ?`;
-    let endpoint = `/core-service/post?query=${query}`;
-    let url = `${host}${endpoint}`;
     try {
         const result = await sRequest.post(query, value);
         return result;
@@ -2796,12 +2584,10 @@ async function setInvestmentInterest(host, value) {
 }
 
 /** Function call to return the total sum of amount in a client wallet **/
-async function sumAllWalletInvestmentTxns(host, clientId) {
+async function sumAllWalletInvestmentTxns(clientId) {
     return new Promise((resolve, reject) => {
         let query = `SELECT amount, is_credit FROM investment_txns
         WHERE clientId = ${clientId} AND isWallet = ${1} AND isApproved = 1 AND postDone =1`;
-        let endpoint = '/core-service/get';
-        let url = `${host}${endpoint}`;
         sRequest.get(query).then(result => {
             let total = 0;
             result.map(x => {
@@ -2820,12 +2606,10 @@ async function sumAllWalletInvestmentTxns(host, clientId) {
 }
 
 /** Function call to save transaction **/
-function setInvestmentTxns(host, value) {
+function setInvestmentTxns(value) {
     return new Promise((resolve, reject) => {
         if (value.amount > 0) {
             let query = `INSERT INTO investment_txns SET ?`;
-            let endpoint = `/core-service/post?query=${query}`;
-            let url = `${host}${endpoint}`;
             sRequest.post(query, value).then(payload => {
                 resolve(payload);
             }, err => {
@@ -2838,15 +2622,13 @@ function setInvestmentTxns(host, value) {
 }
 
 /** Function call to get all investment/savings transaction within date range **/
-function getDatedTxns(host, data) {
+function getDatedTxns(data) {
     return new Promise((resolve, reject) => {
         let query = `SELECT ID FROM investment_txns
 WHERE investmentId = ${data.investmentId} 
 AND STR_TO_DATE(updated_date, '%Y-%m-%d') >='${data.startDate}'
 AND STR_TO_DATE(updated_date, '%Y-%m-%d') <='${data.endDate}'`;
 
-        let endpoint = '/core-service/get';
-        let url = `${host}${endpoint}`;
         sRequest.get(query).then(payload => {
             resolve(payload);
         }, err => {
@@ -2855,9 +2637,12 @@ AND STR_TO_DATE(updated_date, '%Y-%m-%d') <='${data.endDate}'`;
     });
 }
 
-/** Function call to update each transactions from getDatedTxns(host, data) **/
-async function updateDatedTxns(host, value, isInterestCharged) {
+/** Function call to update each transactions from getDatedTxns(data) **/
+async function updateDatedTxns(value, isInterestCharged) {
     return new Promise((resolve, reject) => {
+        if (value.length === 0) {
+            resolve({});
+        }
         let baseQuery = `UPDATE investment_txns SET isInterestCharged = ${isInterestCharged} WHERE `;
         let subQuery = '';
         for (let index = 0; index < value.length; index++) {
@@ -2867,8 +2652,6 @@ async function updateDatedTxns(host, value, isInterestCharged) {
                 subQuery += ' OR ';
         }
         let query = baseQuery + subQuery;
-        let endpoint = '/core-service/get';
-        let url = `${host}${endpoint}`;
         sRequest.get(query).then(payload => {
             resolve(payload);
         }, err => {
@@ -2878,7 +2661,7 @@ async function updateDatedTxns(host, value, isInterestCharged) {
 }
 
 /** Function call that houses all of the functions related to computing and posting of interest **/
-async function computeInterestTxns2(HOST, data) {
+async function computeInterestTxns2(data) {
     return new Promise((resolve, reject) => {
         let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
         let refId = moment().utcOffset('+0100').format('x');
@@ -2891,10 +2674,10 @@ async function computeInterestTxns2(HOST, data) {
             clientId: data.clientId,
             investment_start_date: data.investment_start_date
         }
-        getInvestmentDailyBalance(HOST, _data).then(payload => {
-            setInvestmentInterestPerDay(HOST, payload.dailyBalances).then(interestValues => {
+        getInvestmentDailyBalance(_data).then(payload => {
+            setInvestmentInterestPerDay(payload.dailyBalances).then(interestValues => {
                 if (data.interest_moves_wallet.toString() === '1') {
-                    sumAllWalletInvestmentTxns(HOST, data.clientId).then(walletBalance_ => {
+                    sumAllWalletInvestmentTxns(data.clientId).then(walletBalance_ => {
                         let amountValue = (data.interest_disbursement_time === "Up-Front" && (data.isInvestmentTerminated === '0' || data.isInvestmentTerminated === undefined))
                             ? 0 : payload.totalInterestAmount;
                         let bal_ = walletBalance_ + amountValue;
@@ -2920,19 +2703,17 @@ async function computeInterestTxns2(HOST, data) {
                             isInterest: 1
                         };
 
-                        setInvestmentTxns(HOST, inv_txn).then(setInv => {
+                        setInvestmentTxns(inv_txn).then(setInv => {
                             inv_txn.ID = setInv.insertId;
-                            deductWithHoldingTax(HOST, data, inv_txn.amount, 0, inv_txn.balance, data.clientId, 1, inv_txn).then(deductWithHoldingTax_ => {
+                            deductWithHoldingTax(data, inv_txn.amount, 0, inv_txn.balance, data.clientId, 1, inv_txn).then(deductWithHoldingTax_ => {
                                 let query = `UPDATE investment_interests SET isPosted = 1 
                                                             WHERE id <> 0 AND investmentId = ${data.investmentId} 
                                                             AND month = ${monthNyear[1]} 
                                                             AND year = ${monthNyear[0]}`;
 
-                                endpoint = '/core-service/get';
-                                url = `${HOST}${endpoint}`;
                                 sRequest.get(query).then(axio_callback => {
-                                    getDatedTxns(HOST, data).then(datedTxns => {
-                                        updateDatedTxns(HOST, datedTxns, 1).then(updatedDates => {
+                                    getDatedTxns(data).then(datedTxns => {
+                                        updateDatedTxns(datedTxns, 1).then(updatedDates => {
                                             resolve({});
                                         });
                                     });
@@ -2941,15 +2722,15 @@ async function computeInterestTxns2(HOST, data) {
                         });
                     });
                 } else {
-                    computeAccountBalanceIncludeInterest(data.investmentId, HOST).then(balanceIncludingInterestm => {
-                        computeCurrentBalance(data.investmentId, HOST).then(totalInvestedAmount => {
+                    computeAccountBalanceIncludeInterest(data.investmentId).then(balanceIncludingInterestm => {
+                        getInvestmentDetails(data.investmentId).then(invDetails => {
                             const _status = (data.isInvestmentTerminated === '0' || data.isInvestmentTerminated === undefined) ? 0 : 1;
                             let _amt = (data.interest_disbursement_time === "Up-Front" && _status === 0) ? 0 : payload.totalInterestAmount;
                             let sumTotalBalance = balanceIncludingInterestm + _amt;
 
                             let inv_txn = {
                                 txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
-                                description: `${data.acctNo} Investment interest@ ${data.endDate}`,
+                                description: `${invDetails.code}(${invDetails.investmentName}) Investment interest@ ${data.endDate}`,
                                 amount: Number(_amt).toFixed(2),
                                 is_credit: 1,
                                 created_date: dt,
@@ -2966,19 +2747,16 @@ async function computeInterestTxns2(HOST, data) {
                                 createdBy: data.createdBy,
                                 isInterest: 1
                             };
-                            setInvestmentTxns(HOST, inv_txn).then(getTxnValue => {
-                                // let bal2 = totalInvestedAmount + (payload1.data[0].total + parseFloat(Number(_amount).toFixed(2)));
+                            setInvestmentTxns(inv_txn).then(getTxnValue => {
                                 inv_txn.ID = getTxnValue.insertId;
-                                deductWithHoldingTax(HOST, data, inv_txn.amount, 0, inv_txn.balance, '', 0, inv_txn).then(deductWithHoldingTax_ => {
+                                deductWithHoldingTax(data, inv_txn.amount, 0, inv_txn.balance, '', 0, inv_txn).then(deductWithHoldingTax_ => {
                                     let query = `UPDATE investment_interests SET isPosted = 1 
                                                         WHERE id <> 0 AND investmentId = ${data.investmentId} 
                                                         AND month = ${monthNyear[1]} 
                                                         AND year = ${monthNyear[0]}`;
-                                    endpoint = '/core-service/get';
-                                    url = `${HOST}${endpoint}`;
                                     sRequest.get(query).then(axio_callback => {
-                                        getDatedTxns(HOST, data).then(datedTxns => {
-                                            updateDatedTxns(HOST, datedTxns, 1).then(updatedDates => {
+                                        getDatedTxns(data).then(datedTxns => {
+                                            updateDatedTxns(datedTxns, 1).then(updatedDates => {
                                                 resolve({});
                                             });
                                         });
@@ -2994,15 +2772,13 @@ async function computeInterestTxns2(HOST, data) {
 }
 
 /** Function call to compute and post With-Holding Tax **/
-function deductWithHoldingTax(HOST, data, _amount, total, bal_, clientId, isWallet, txn) {
+function deductWithHoldingTax(data, _amount, total, bal_, clientId, isWallet, txn) {
     return new Promise((resolve, reject) => {
         if (parseInt(_amount.toString()) === 0) {
             resolve({});
         } else {
             let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
             let query = `SELECT * FROM investment_config ORDER BY ID DESC LIMIT 1`;
-            let endpoint = '/core-service/get';
-            let url = `${HOST}${endpoint}`;
             sRequest.get(query).then(response => {
                 if (response.status === undefined) {
                     let configData = response[0];
@@ -3035,7 +2811,7 @@ function deductWithHoldingTax(HOST, data, _amount, total, bal_, clientId, isWall
                         clientId: clientId,
                         isWallet: isWallet
                     };
-                    setInvestmentTxns(HOST, inv_txn).then(result => {
+                    setInvestmentTxns(inv_txn).then(result => {
                         result.balance = inv_txn.balance;
                         resolve(result);
                     }, err => {
@@ -3051,7 +2827,6 @@ function deductWithHoldingTax(HOST, data, _amount, total, bal_, clientId, isWall
 
 /** End point to get client wallet transactions **/
 router.get('/client-wallets/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
     let draw = req.query.draw;
@@ -3061,17 +2836,14 @@ router.get('/client-wallets/:id', function (req, res, next) {
     let query = `SELECT 
     v.ID,v.ref_no,c.fullname,v.description,v.created_date,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName,
     v.isDeny,v.isPaymentMadeByWallet,v.isReversedTxn,v.isTransfer,v.isMoveFundTransfer,v.beneficialInvestmentId,p.interest_disbursement_time,p.interest_moves_wallet,
-    v.approvalDone,v.reviewDone,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.isInvestmentTerminated,
+    v.approvalDone,v.reviewDone,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no,v.isWithdrawal,isDeposit,v.isDocUploaded,v.isApproved,v.is_credit,v.isInvestmentTerminated,
     p.acct_allows_withdrawal,i.investment_mature_date,p.interest_rate,v.isForceTerminate,v.isInvestmentMatured,p.inv_moves_wallet,p.chkEnforceCount,p.premature_interest_rate,
     i.clientId,p.canTerminate,v.is_capital,v.investmentId,i.isTerminated,v.isWallet, v.updated_date, i.isMatured FROM investment_txns v 
     left join investments i on v.investmentId = i.ID 
     left join clients c on i.clientId = c.ID
     left join users u on u.ID = v.createdBy
-    left join investment_products p on i.productId = p.ID
+    left join investment_products p on p.ID = i.productId
     WHERE v.isWallet = 1 AND v.clientId = ${req.params.id} ORDER BY ID LIMIT ${limit} OFFSET ${offset}`;
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
-    var data = [];
     sRequest.get(query).then(response => {
         let uniqueTxns = [];
         response.map(d => {
@@ -3096,24 +2868,24 @@ router.get('/client-wallets/:id', function (req, res, next) {
         query = `SELECT count(*) as recordsFiltered FROM investment_txns 
         WHERE isWallet = 1 AND clientId = ${req.params.id}
         AND (upper(description) LIKE "${search_string}%" OR upper(ref_no) LIKE "${search_string}%")`;
-        endpoint = '/core-service/get';
-        url = `${HOST}${endpoint}`;
         sRequest.get(query).then(payload => {
-            computeWalletBalance(req.params.id, HOST).then(txnCurrentBalance => {
+            computeWalletBalance(req.params.id).then(txnCurrentBalance => {
                 query = `SELECT count(*) as recordsTotal FROM investment_txns WHERE isWallet = 1 AND clientId = ${req.params.id}`;
-                // query = `SELECT count(*) as recordsTotal FROM investment_txns WHERE clientId = ${req.params.id}`;
-                endpoint = '/core-service/get';
-                url = `${HOST}${endpoint}`;
                 sRequest.get(query).then(payload2 => {
                     uniqueTxns.map(x => {
                         x.balance = txnCurrentBalance.currentWalletBalance;
                     });
-                    res.send({
-                        draw: draw,
-                        txnCurrentBalance: txnCurrentBalance.currentWalletBalance,
-                        recordsTotal: payload2[0].recordsTotal,
-                        recordsFiltered: payload[0].recordsFiltered,
-                        data: (uniqueTxns === undefined) ? [] : uniqueTxns
+                    organisationSettings().then(settingsProductId => {
+                        uniqueTxns.map(x => {
+                            x.productId = settingsProductId;
+                        });
+                        res.send({
+                            draw: draw,
+                            txnCurrentBalance: txnCurrentBalance.currentWalletBalance,
+                            recordsTotal: payload2[0].recordsTotal,
+                            recordsFiltered: payload[0].recordsFiltered,
+                            data: (uniqueTxns === undefined) ? [] : uniqueTxns
+                        });
                     });
                 }, err => {
                 });
@@ -3124,8 +2896,7 @@ router.get('/client-wallets/:id', function (req, res, next) {
 
 /** End point to get client wallet balance **/
 router.get('/client-wallet-balance/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
-    computeWalletBalance(req.params.id, HOST).then(balance => {
+    computeWalletBalance(req.params.id).then(balance => {
         res.send(balance);
     });
 });
@@ -3143,7 +2914,6 @@ router.get('/transaction-timelines/:id', function (req, res, next) {
 
 
 router.get('/investment-accounts/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let page = ((req.query.page - 1) * 10 < 0) ? 0 : (req.query.page - 1) * 10;
     let search_string = (req.query.search_string === undefined) ? "" : req.query.search_string.toUpperCase();
@@ -3161,8 +2931,6 @@ router.get('/investment-accounts/:id', function (req, res, next) {
         WHERE v.isClosed = 0 AND c.ID != ${req.query.clientId} AND upper(v.code) LIKE "${search_string}%" AND upper(c.fullname) 
         LIKE "${search_string}%" AND upper(p.name) LIKE "${search_string}%" ORDER BY v.ID desc LIMIT ${limit} OFFSET ${page}`;
     }
-    const endpoint = "/core-service/get";
-    const url = `${HOST}${endpoint}`;
     sRequest.get(query)
         .then(function (response) {
             res.send(response);
@@ -3176,7 +2944,6 @@ router.get('/investment-accounts/:id', function (req, res, next) {
 
 /** End point to return an investment/savings transaction statement **/
 router.get('/inv-statements/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.query;
     let query = `SELECT v.ID,v.ref_no,c.fullname,v.description,v.amount,v.txn_date,p.ID as productId,u.fullname as createdByName,
     v.approvalDone,v.reviewDone,v.postDone,p.code,p.name,i.investment_start_date,i.investment_mature_date, v.ref_no, v.isApproved,v.is_credit,i.clientId,
@@ -3186,8 +2953,6 @@ router.get('/inv-statements/:id', function (req, res, next) {
     left join users u on u.ID = v.createdBy
     left join investment_products p on i.productId = p.ID
     WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id} AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') >= '${data.startDate}' AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') <= '${data.endDate}' AND v.isApproved = 1 ORDER BY v.ID`;
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query).then(response => {
         if (response.status === undefined) {
             res.send(response);
@@ -3201,10 +2966,7 @@ router.get('/inv-statements/:id', function (req, res, next) {
 
 /** End point to return organisation details and configuration **/
 router.get('/get-organisation-configs', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT * FROM investment_config ORDER BY ID DESC LIMIT 1`;
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query).then(response => {
         if (response.status === undefined) {
             res.send(response);
@@ -3218,7 +2980,6 @@ router.get('/get-organisation-configs', function (req, res, next) {
 
 /** End point to return all tax transactions **/
 router.get('/get-organisation-taxes', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
     let draw = req.query.draw;
@@ -3228,21 +2989,15 @@ router.get('/get-organisation-taxes', function (req, res, next) {
     WHERE isCharge = 1 || isVat = 1 || isWithHoldings = 1
     AND (upper(description) LIKE "${search_string}%" OR upper(amount) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
 
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query).then(response => {
         query = `SELECT count(*) as recordsFiltered 
         FROM investment_txns 
         WHERE isCharge = 1 || isVat = 1 || isWithHoldings = 1
         AND (upper(description) LIKE "${search_string}%" OR upper(amount) LIKE "${search_string}%")`;
-        endpoint = '/core-service/get';
-        url = `${HOST}${endpoint}`;
         sRequest.get(query).then(payload => {
             query = `SELECT count(*) as recordsTotal 
             FROM investment_txns 
             WHERE isCharge = 1 || isVat = 1 || isWithHoldings = 1`;
-            endpoint = '/core-service/get';
-            url = `${HOST}${endpoint}`;
             sRequest.get(query).then(payload2 => {
                 res.send({
                     draw: draw,
@@ -3257,11 +3012,8 @@ router.get('/get-organisation-taxes', function (req, res, next) {
 
 /** End point to return sum of every form of charge transactions **/
 router.get('/get-sum-charges', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT * FROM investment_txns 
     WHERE isCharge = 1 || isVat = 1 || isWithHoldings = 1`;
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query).then(response => {
         if (response.status === undefined) {
             let chargeTotal = 0;
@@ -3293,11 +3045,8 @@ router.get('/get-sum-charges', function (req, res, next) {
 
 /** End point to return the status of a reversed transaction **/
 router.get('/check-reverse-txns/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT isApproved FROM investment_txns 
     WHERE isReversedTxn = 1 AND parentTxnId = ${req.params.id}`;
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query).then(response => {
         if (response.status === undefined) {
             res.send(response[0]);
@@ -3310,10 +3059,10 @@ router.get('/check-reverse-txns/:id', function (req, res, next) {
 });
 
 /** Function call to close an account after completing maturity opertion **/
-async function closeMatureInvestmentAccount(HOST, data) {
+async function closeMatureInvestmentAccount(data) {
     for (let index1 = 0; index1 < data.value.length; index1++) {
         const element1 = data.value[index1];
-        const matureMonths = await getValidInvestmentMatureMonths(HOST, element1.ID, 0);
+        const matureMonths = await getValidInvestmentMatureMonths(element1.ID, 0);
         for (let index = 0; index < matureMonths.length; index++) {
             const element = matureMonths[index];
             let _data = {
@@ -3329,11 +3078,10 @@ async function closeMatureInvestmentAccount(HOST, data) {
                 interest_disbursement_time: element1.interest_disbursement_time,
                 isInvestmentTerminated: element1.isInvestmentTerminated
             }
-            await computeInterestTxns2(HOST, _data);
+            await computeInterestTxns2(_data);
         }
-        // const totalSumInterest = await sumUpInvestmentInterest(HOST, element1.ID, 1, 0);
-        const totalSumAmount = await computeAccountBalanceIncludeInterest(element1.ID, HOST);
-        const walletBal = await computeWalletBalance(element1.clientId, HOST)
+        const totalSumAmount = await computeAccountBalanceIncludeInterest(element1.ID);
+        const walletBal = await computeWalletBalance(element1.clientId)
         const balTotal = parseFloat(walletBal.currentWalletBalance.toString()) + parseFloat(totalSumAmount.toString());
         let inv_txn = {
             txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
@@ -3354,7 +3102,7 @@ async function closeMatureInvestmentAccount(HOST, data) {
             approvalDone: 1,
             updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
         };
-        await setInvestmentTxns(HOST, inv_txn);
+        await setInvestmentTxns(inv_txn);
 
         let inv_txn2 = {
             txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
@@ -3374,8 +3122,8 @@ async function closeMatureInvestmentAccount(HOST, data) {
             approvalDone: 1,
             updated_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
         };
-        await setInvestmentTxns(HOST, inv_txn2);
-        await closeInvestmentWallet(element1.ID, HOST);
+        await setInvestmentTxns(inv_txn2);
+        await closeInvestmentWallet(element1.ID);
     }
 
     return {};
@@ -3383,24 +3131,22 @@ async function closeMatureInvestmentAccount(HOST, data) {
 
 /** End point to close an account **/
 router.post('/close-mature-investments', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     const data = req.body;
-    closeMatureInvestmentAccount(HOST, data).then(payld => {
+    closeMatureInvestmentAccount(data).then(payld => {
         res.send(payld);
     });
 });
 
 /** End point that houses functions around maturity operation **/
 router.post('/compute-mature-investment', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     const data = req.body;
-    computeInterestBalance(data, HOST).then(payload => {
+    computeInterestBalance(data).then(payload => {
         res.send({});
     });
 });
 
 /** function that houses functions around maturity operation **/
-async function computeInterestBalance(data, HOST) {
+async function computeInterestBalance(data) {
     if (data.isInvestmentMatured.toString() === '1') {
         let items = {
             value: [{
@@ -3416,7 +3162,7 @@ async function computeInterestBalance(data, HOST) {
                 interest_disbursement_time: data.interest_disbursement_time
             }]
         };
-        const payld = await closeMatureInvestmentAccount(HOST, items);
+        const payld = await closeMatureInvestmentAccount(items);
         return payld;
     } else {
         return {};

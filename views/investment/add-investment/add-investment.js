@@ -155,10 +155,18 @@ $("#investment_product").on("change", function (event) {
                             let _m2 = maxDate.getUTCMonth() + 1;
                             const _cmax_2 = `${maxDate.getUTCFullYear()}-${pad(_m2)}-${pad(maxDate.getUTCDate())}`;
 
-                            $('#investment_mature_date').attr('min', _cmax_1);
-                            $('#investment_mature_date').attr('max', _cmax_2);
+                            if (data.min !== null) {
+                                $('#investment_mature_date').attr('min', _cmax_1);
+                            }
+                            if (data.max !== null) {
+                                $('#investment_mature_date').attr('max', _cmax_2);
+                            }
                             if (!isNaN(minDate.getDate()) && !isNaN(maxDate.getDate())) {
-                                $("#duration_info").html(`Min.: ${pad(minDate.getUTCDate())}-${minDate.getUTCMonth() + 1}-${minDate.getUTCFullYear()} Max.: ${pad(maxDate.getUTCDate() + 1)}-${pad(maxDate.getUTCMonth())}-${maxDate.getUTCFullYear()}`);
+                                $("#duration_info").html(`Min.: ${(data.min !== null) ?
+                                    `${pad(minDate.getUTCDate())}-${pad(minDate.getUTCMonth() + 1)}-${minDate.getUTCFullYear()}` :
+                                    'None'} Max.: ${(data.max !== null) ?
+                                        `${pad(maxDate.getUTCDate())}-${pad(maxDate.getUTCMonth() + 1)}-${maxDate.getUTCFullYear()}` :
+                                        'None'} `);
                             }
                         } else {
                             $('#wait').hide();
@@ -214,11 +222,18 @@ $("#investment_date_start").on("change", function (event) {
                     const maxDate = new Date(data.max);
                     let _m2 = maxDate.getUTCMonth() + 1;
                     const _cmax_2 = `${maxDate.getUTCFullYear()}-${pad(_m2)}-${pad(maxDate.getUTCDate())}`;
-
-                    $('#investment_mature_date').attr('min', _cmax_1);
-                    $('#investment_mature_date').attr('max', _cmax_2);
+                    if (data.min !== null) {
+                        $('#investment_mature_date').attr('min', _cmax_1);
+                    }
+                    if (data.max !== null) {
+                        $('#investment_mature_date').attr('max', _cmax_2);
+                    }
                     if (!isNaN(minDate.getDate()) && !isNaN(maxDate.getDate())) {
-                        $("#duration_info").html(`Min.: ${pad(minDate.getUTCDate())}-${pad(minDate.getUTCMonth() + 1)}-${minDate.getUTCFullYear()} Max.: ${pad(maxDate.getUTCDate())}-${pad(maxDate.getUTCMonth() + 1)}-${maxDate.getUTCFullYear()}`);
+                        $("#duration_info").html(`Min.: ${(data.min !== null) ?
+                            `${pad(minDate.getUTCDate())}-${pad(minDate.getUTCMonth() + 1)}-${minDate.getUTCFullYear()}` :
+                            'None'} Max.: ${(data.max !== null) ?
+                                `${pad(maxDate.getUTCDate())}-${pad(maxDate.getUTCMonth() + 1)}-${maxDate.getUTCFullYear()}` :
+                                'None'} `);
                     }
                 } else {
                     $('#wait').hide();
@@ -237,7 +252,7 @@ $("#investment_date_start").on("change", function (event) {
 });
 
 $("#btn_save_product").on("click", function (event) {
-
+    $("#btn_save_product").attr('disabled', true);
     let selectedValue = products.find(x => x.ID.toString() === $("#investment_product").val().toString());
     var data = {
         clientId: $('#client').on('select2:select').val(),
@@ -248,11 +263,12 @@ $("#btn_save_product").on("click", function (event) {
         code: selectedValue.code,
         selectedProduct: selectedValue,
         createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
-        isPaymentMadeByWallet: $('#opt_payment_made_by').val()
+        isPaymentMadeByWallet: $('#opt_payment_made_by').val(),
     };
 
     if (selectedValue.interest_disbursement_time === 'Up-Front') {
         if (data.investment_start_date === '' && data.investment_mature_date === '') {
+            $("#btn_save_product").attr('disabled', false);
             swal('Oops! Product configured for Up-Front interest, Investment Start and Maturity date is required', '', 'error');
             return;
         }
@@ -264,6 +280,7 @@ $("#btn_save_product").on("click", function (event) {
                 'type': 'post',
                 'data': data,
                 'success': function (data) {
+                    $("#btn_save_product").attr('disabled', false);
                     if (data.error) {
                         $('#wait').hide();
                         swal('Oops! An error occurred while creating Investment; Required field(s) missing',
@@ -292,6 +309,7 @@ $("#btn_save_product").on("click", function (event) {
             'type': 'post',
             'data': data,
             'success': function (data) {
+                $("#btn_save_product").attr('disabled', false);
                 if (data.error) {
                     $('#wait').hide();
                     swal('Oops! An error occurred while creating Investment; Required field(s) missing',

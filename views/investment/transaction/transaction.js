@@ -138,9 +138,7 @@ function getInvestmentMaturity() {
                             isWallet: isWalletPage,
                             isInvestmentMatured: (selectedInvestment.maturityDays === true) ? 1 : 0,
                             interest_disbursement_time: selectedInvestment.interest_disbursement_time,
-                            isInvestmentTerminated: 0,
-                            acctNo: data_row.acctNo,
-                            InvestmentName: data_row.name
+                            isInvestmentTerminated: 0
                         };
                         $.ajax({
                             url: `investment-txns/compute-mature-investment`,
@@ -321,8 +319,7 @@ function bindDataTable(id) {
                 },
                 success: function (data) {
                     if (data.data.length > 0) {
-                        selectedInvestment = (isWalletPage === 1) ? data.data[0] : data.data[data.data.length - 1];
-                        console.log(selectedInvestment);
+                        selectedInvestment = data.data[data.data.length - 1];
                         if (selectedInvestment.canTerminate === 0 || selectedInvestment.canTerminate === null) {
                             $('#btnTerminateInvestment').attr('disabled', true);
                         }
@@ -1389,34 +1386,33 @@ function uploadDocRequirement(data) {
 
 $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemReview', function () {
     data_row = table.row($(this).parents('tr')).data();
-    if (isWalletPage === 0) {
-        let mOperationId = 0;
-        if (data_row.isDeposit === 1) {
-            mOperationId = 1;
-        } else if (data_row.isTransfer === 1) {
-            mOperationId = 2;
-        } else if (data_row.isWithdrawal === 1) {
-            mOperationId = 3;
-        }
-        $("#post_list_group").html('');
-        $.ajax({
-            url: `investment-txns/verify-doc-uploads?productId=${data_row.productId}&operationId=${mOperationId}&txnId=${data_row.ID}`,
-            'type': 'get',
-            'success': function (data) {
-                if (data.status === undefined) {
-                    if (data[0].total_doc_required === data[0].total_uploaded) {
-                        setReviewRequirements(data_row);
-                        getProductDocRequirements(1);
-                    } else {
-                        swal('Oops! Please kindly upload required document(s) before REVIEW', '', 'error');
-                    }
+    let mOperationId = 0;
+    if (data_row.isDeposit === 1) {
+        mOperationId = 1;
+    } else if (data_row.isTransfer === 1) {
+        mOperationId = 2;
+    } else if (data_row.isWithdrawal === 1) {
+        mOperationId = 3;
+    }
+    $("#post_list_group").html('');
+    $.ajax({
+        url: `investment-txns/verify-doc-uploads?productId=${data_row.productId}&operationId=${mOperationId}&txnId=${data_row.ID}`,
+        'type': 'get',
+        'success': function (data) {
+            if (data.status === undefined) {
+                if (data[0].total_doc_required === data[0].total_uploaded) {
+                    setReviewRequirements(data_row);
+                    getProductDocRequirements(1);
+                } else {
+                    swal('Oops! Please kindly upload required document(s) before REVIEW', '', 'error');
                 }
             }
-        });
-    } else {
-        setReviewRequirements(data_row);
-        getProductDocRequirements(1);
-    }
+        }
+    });
+    // else {
+    //     setReviewRequirements(data_row);
+    //     getProductDocRequirements(1);
+    // }
 });
 
 $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemApproval', function () {
@@ -1510,15 +1506,6 @@ function setPostRequirements(value) {
                                         <div class="form-control-label">
                                             <small>Transaction Dated: </small><small class="text-muted">${element.txn_date}</small>
                                         </div>
-                                        
-                                        <small>
-                                        <div class="form-control-label" style=padding-top:1.0rem>
-                                            <div class="custom-control custom-checkbox">
-                                                <input type="checkbox" class="custom-control-input" id="postDateCheck1" checked ${(element.isDeny === 1) ? 'disabled' : ''} ${(element.isPosted === 1) ? 'disabled' : ''} ${(element.roleId !== null && parseInt(element.userViewRole) !== element.roleId) ? 'disabled' : ''}>
-                                                <label class="custom-control-label" for="postDateCheck1">Use Transaction Date as Post Date</label>
-                                            </div>
-                                            </div>
-                                        </small>
                                         
                                     </div>
                                 </div>
@@ -1655,13 +1642,13 @@ function onTransactionTimeline() {
                 const element = data[index];
                 const _splittedDate = element.createdAt.split(' ');
                 const _dt = new Date(element.createdAt);
+
                 element.method = element.method.toUpperCase();
                 timelineTags += `<li>
                                             <a target="_blank">${element.method} OPERATION</a>
                                             <a href="#" class="float-right">${_dt.getDate()} ${monthNames[_dt.getMonth()]}, ${_dt.getFullYear()} ${_splittedDate[1]} ${_splittedDate[2].toUpperCase()}</a>
-                                            <p>
-                                                <p><strong>Transaction by: </strong><span>${element.createdByName}</span></p>
-                                                <p><strong>Description: </strong><span>${element.description}</span></p>
+                                            <p><strong>Transaction by: </strong><span>${element.createdByName}</span><br/>
+                                            <strong>Description: </strong><span>${element.description}</span>
                                             </p>
                                         </li>`;
             }
@@ -1676,7 +1663,6 @@ function onTransactionTimeline() {
 
 
 function onPost(value, approvedId, txnId, id, isDeny) {
-    const postDateStatus = $('#postDateCheck1').is(':checked');
     if (data_row.is_credit === 0) {
         const _mAmt = data_row.amount.toString().split(',').join('');
         const _mBal = data_row.txnBalance.toString().split(',').join('');
@@ -1722,13 +1708,10 @@ function onPost(value, approvedId, txnId, id, isDeny) {
         investment_start_date: data_row.investment_start_date,
         interest_rate: (data_row.isInvestmentTerminated === 1) ? data_row.premature_interest_rate : data_row.interest_rate,
         isInvestmentMatured: data_row.isInvestmentMatured,
-        useTxnDateAsPostDate: (postDateStatus) ? 1 : 0,
-        // interest_rate: selectedInvestment.interest_rate,
+        useTxnDateAsPostDate: 1,
         investment_mature_date: selectedInvestment.investment_mature_date,
         investment_start_date: selectedInvestment.investment_start_date,
-        txn_date: data_row.txn_date,
-        acctNo: data_row.acctNo,
-        InvestmentName: data_row.name
+        txn_date: data_row.txn_date
     }
     $.ajax({
         url: `investment-txns/posts`,
@@ -1765,9 +1748,7 @@ function onComputeInterest(value) {
         productId: selectedInvestment.productId,
         startDate: value.startDate,
         endDate: value.endDate,
-        interest_rate: selectedInvestment.interest_rate,
-        acctNo: selectedInvestment.acctNo,
-        InvestmentName: selectedInvestment.name
+        interest_rate: selectedInvestment.interest_rate
     }
     $.ajax({
         url: `investment-txns/compute-interest`,
@@ -2002,14 +1983,29 @@ function read_write_custom(isWalletPage) {
     let lblViewWalletTxns = ($.grep(perms, function (e) { return e.module_name === 'lblViewWalletTxns'; }))[0];
     let investment_transactions = ($.grep(perms, function (e) { return e.module_name === 'client-investment-transactions'; }))[0];
     let investment_wallet = ($.grep(perms, function (e) { return e.module_name === 'client-investment-wallet'; }))[0];
+    let btnMandateInvestment = ($.grep(perms, function (e) { return e.module_name === 'btnMandateInvestment'; }))[0];
+    let btnInvestmentStatement = ($.grep(perms, function (e) { return e.module_name === 'btnInvestmentStatement'; }))[0];
+    let btnComputeInterest = ($.grep(perms, function (e) { return e.module_name === 'btnComputeInterest'; }))[0];
+    let btnTransfer = ($.grep(perms, function (e) { return e.module_name === 'btnTransfer'; }))[0];
+    let btnWithdrawal = ($.grep(perms, function (e) { return e.module_name === 'btnWithdrawal'; }))[0];
+    let btnDeposit = ($.grep(perms, function (e) { return e.module_name === 'btnDeposit'; }))[0];
+    $('#btnMandateInvestment').hide();
+    if (btnMandateInvestment && btnMandateInvestment['read_only'] === '1') $('#btnMandateInvestment').show();
+    $('#btnInvestmentStatement').hide();
+    if (btnInvestmentStatement && btnInvestmentStatement['read_only'] === '1') $('#btnInvestmentStatement').show();
+    $('#btnComputeInterest').hide();
+    if (btnComputeInterest && btnComputeInterest['read_only'] === '1') $('#btnComputeInterest').show();
+    $('#btnTransfer').hide();
+    if (btnTransfer && btnTransfer['read_only'] === '1') $('#btnTransfer').show();
+    $('#btnWithdrawal').hide();
+    if (btnWithdrawal && btnWithdrawal['read_only'] === '1') $('#btnWithdrawal').show();
+    $('#btnDeposit').hide();
+    if (btnDeposit && btnDeposit['read_only'] === '1') $('#btnDeposit').show();
     $('#lblViewWalletTxns').hide();
-    if (lblViewWalletTxns && lblViewWalletTxns['read_only'] === '1')
-        $('#lblViewWalletTxns').show();
+    if (lblViewWalletTxns && lblViewWalletTxns['read_only'] === '1') $('#lblViewWalletTxns').show();
     if (isWalletPage === 1) {
-        if (!investment_wallet || investment_wallet['read_only'] !== '1')
-            return window.location.href = '/';
+        if (!investment_wallet || investment_wallet['read_only'] !== '1') return window.location.href = '/';
     } else {
-        if (!investment_transactions || investment_transactions['read_only'] !== '1')
-            return window.location.href = '/';
+        if (!investment_transactions || investment_transactions['read_only'] !== '1') return window.location.href = '/';
     }
 }
