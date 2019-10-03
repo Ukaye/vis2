@@ -2658,18 +2658,10 @@ users.get('/application/information-request/:id', function(req, res, next) {
 });
 
 users.post('/application/schedule/:id', function(req, res, next) {
-    db.getConnection(function(err, connection) {
-        if (err) throw err;
+    xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async () => {
+        db.getConnection(function(err, connection) {
+            if (err) throw err;
 
-<<<<<<< HEAD
-        connection.query('SELECT * FROM application_schedules WHERE applicationID = ? AND status = 1', [req.params.id], function (error, invoices, fields) {
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
-            } else {
-                async.forEach(invoices, function (invoice, callback) {
-                    connection.query('UPDATE application_schedules SET status=0 WHERE ID = ?', [invoice.ID], function (error, response, fields) {
-                        callback();
-=======
             connection.query(`SELECT c.fullname, a.funding_source FROM applications a, clients c WHERE a.ID = ${req.params.id} 
             AND a.userID = c.ID`, function (error, client) {
                 if(error){
@@ -2751,26 +2743,9 @@ users.post('/application/schedule/:id', function(req, res, next) {
                                 });
                             });
                         }
->>>>>>> xero2
                     });
-                }, function (data) {
-                    let count = 0;
-                    async.forEach(req.body.schedule, function (obj, callback2) {
-                        obj.applicationID = req.params.id;
-                        connection.query('INSERT INTO application_schedules SET ?', obj, function (error, response, fields) {
-                            if(!error) {
-                                count++;
-                            } else {
-                                // xeroFunctions.authorizedOperation(req, res, '', )
-                            }
-                            callback2();
-                        });
-                    }, function (data) {
-                        connection.release();
-                        res.send({"status": 200, "message": "Application scheduled with "+count+" invoices successfully!", "response": null});
-                    });
-                });
-            }
+                }
+            });
         });
     });
 });
