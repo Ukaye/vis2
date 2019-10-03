@@ -24,7 +24,6 @@ router.get('/all', function (req, res) {
     let query = `SELECT ID,fullname FROM clients WHERE status = 1 AND (upper(email) LIKE "${search_string}%" OR 
     upper(fullname) LIKE "${search_string}%") ORDER BY ID desc LIMIT ${limit} OFFSET ${page}`;
     const endpoint = "/core-service/get";
-    console.log(query);
     const url = `${HOST}${endpoint}`;
     axios.get(url, {
         params: {

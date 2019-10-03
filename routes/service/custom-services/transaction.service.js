@@ -984,7 +984,7 @@ function getInvestmentDetails(investmentId) {
     return new Promise((resolve, reject) => {
         let query = `Select i.code, p.name as investmentName from investments i 
         left join investment_products p on i.productId = p.ID
-        WHERE id = ${investmentId}`;
+        WHERE i.ID = ${investmentId}`;
         sRequest.get(query).then(response_prdt_ => {
             if (response_prdt_[0] !== undefined)
                 resolve(response_prdt_[0]);
@@ -1397,7 +1397,7 @@ async function reverseEarlierInterest(data, bal2CalTerminationChrg) {
                 startDate: data.investment_start_date
             }
             await updateTerminatedInterest(mdata);
-            
+
             refId = moment().utcOffset('+0100').format('x');
             dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
             let configData = _getProductConfigInterests;
@@ -2640,6 +2640,9 @@ AND STR_TO_DATE(updated_date, '%Y-%m-%d') <='${data.endDate}'`;
 /** Function call to update each transactions from getDatedTxns(data) **/
 async function updateDatedTxns(value, isInterestCharged) {
     return new Promise((resolve, reject) => {
+        if (value.length === 0) {
+            resolve({});
+        }
         let baseQuery = `UPDATE investment_txns SET isInterestCharged = ${isInterestCharged} WHERE `;
         let subQuery = '';
         for (let index = 0; index < value.length; index++) {
@@ -2727,7 +2730,7 @@ async function computeInterestTxns2(data) {
 
                             let inv_txn = {
                                 txn_date: moment().utcOffset('+0100').format('YYYY-MM-DD'),
-                                description: `${invDetails.code}(${invDetails.name}) Investment interest@ ${data.endDate}`,
+                                description: `${invDetails.code}(${invDetails.investmentName}) Investment interest@ ${data.endDate}`,
                                 amount: Number(_amt).toFixed(2),
                                 is_credit: 1,
                                 created_date: dt,
@@ -2745,7 +2748,6 @@ async function computeInterestTxns2(data) {
                                 isInterest: 1
                             };
                             setInvestmentTxns(inv_txn).then(getTxnValue => {
-                                // let bal2 = totalInvestedAmount + (payload1.data[0].total + parseFloat(Number(_amount).toFixed(2)));
                                 inv_txn.ID = getTxnValue.insertId;
                                 deductWithHoldingTax(data, inv_txn.amount, 0, inv_txn.balance, '', 0, inv_txn).then(deductWithHoldingTax_ => {
                                     let query = `UPDATE investment_interests SET isPosted = 1 

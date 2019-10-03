@@ -76,16 +76,13 @@ function getRecentTxns(id, isWallet) {
     left join investment_products p on i.productId = p.ID
     WHERE v.isWallet = 0 AND v.postDone = 1 AND v.investmentId = ${id} ORDER BY ID DESC LIMIT 5 OFFSET 0` :
             `SELECT 
-    v.ID,v.ref_no,c.fullname,c.email,v.description,v.created_date,v.amount,v.balance as txnBalance,v.txn_date,p.ID as productId,u.fullname as createdByName,
-    v.isDeny,v.isPaymentMadeByWallet,v.isReversedTxn,v.isTransfer,v.isMoveFundTransfer,v.beneficialInvestmentId,p.interest_disbursement_time,p.interest_moves_wallet,
-    v.approvalDone,v.reviewDone,v.postDone,p.code,p.name,i.investment_start_date, v.ref_no, v.isApproved,v.is_credit,v.isInvestmentTerminated,
-    p.acct_allows_withdrawal,i.investment_mature_date,p.interest_rate,v.isForceTerminate,v.isInvestmentMatured,p.inv_moves_wallet,p.chkEnforceCount,p.premature_interest_rate,
-    i.clientId,p.canTerminate,v.is_capital,v.investmentId,i.isTerminated,v.isWallet, v.updated_date, i.isMatured FROM investment_txns v 
-    left join investments i on v.investmentId = i.ID 
-    left join clients c on i.clientId = c.ID
-    left join users u on u.ID = v.createdBy
-    left join investment_products p on i.productId = p.ID
-    WHERE v.isWallet = 1 AND v.postDone = 1 AND v.clientId = ${id} ORDER BY ID DESC LIMIT 5 OFFSET 0`;
+            v.ID,v.ref_no,c.fullname,c.email,v.description,v.created_date,v.amount,v.balance as txnBalance,v.txn_date,u.fullname as createdByName,
+            v.isDeny,v.isPaymentMadeByWallet,v.isReversedTxn,v.isTransfer,v.isMoveFundTransfer,v.beneficialInvestmentId,
+            v.approvalDone,v.reviewDone,v.postDone,v.ref_no, v.isApproved,v.is_credit,v.isInvestmentTerminated,
+            v.isForceTerminate,v.isInvestmentMatured,v.clientId,v.is_capital,v.investmentId,v.isWallet, v.updated_date FROM investment_txns v 
+            left join clients c on v.clientId = c.ID
+            left join users u on u.ID = v.createdBy
+            WHERE v.isWallet = 1 AND v.postDone = 1 AND v.clientId = ${id} ORDER BY ID DESC LIMIT 5 OFFSET 0`;
         db.query(query, function (error, results, fields) {
             if (error && error !== null) {
                 resolve([]);
@@ -171,7 +168,7 @@ async function transactionalAlert(id, isWallet) {
             x.referenceId = (_description.length > 1) ? x.ref_no : '';
         });
         let emailObject = {
-            fullname: data[0].fullname,
+            fullname: (data[0].fullname !== '') ? data[0].fullname : data[data.length - 1].fullname,
             recentTxnAmount: formater(data[0].amount.toString()),
             status: (data[0].is_credit.toString() === '1') ? 'Credited' : 'Debited',
             acctNo: (isWallet.toString() === '0') ? data[0].acctNo : 'WALLET',
@@ -187,6 +184,7 @@ async function transactionalAlert(id, isWallet) {
                     formater(acctBal.toString()) : formater(acctBalWithInterest.toString())) : formater(acctBal.toString()),
             transactions: data
         };
+
         const emailAdress = data.find(x => x.email !== '' && x.email !== undefined && x.email !== null);
         emailService.send({
             to: emailAdress.email,
