@@ -777,7 +777,7 @@
             'type': 'post',
             'data': {schedule:schedule},
             'success': function (data) {
-                // updatePreapplicationStatus(application_id);
+                updatePreapplicationStatus(application_id);
             },
             'error': function (err) {
                 $('#wait').hide();
