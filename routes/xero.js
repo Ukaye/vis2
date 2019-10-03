@@ -23,18 +23,24 @@ xero.authorizeRedirect = async function (req, res) {
 };
 
 xero.authorizedOperation = function (req, res, module, callback) {
-    db.query('SELECT * FROM integrations WHERE ID = (SELECT MAX(ID) FROM integrations)', 
-    (error, integration_) => {
-        const integration = integration_[0];
-        if (!module || (module && integration && integration[module] === 1)) {
-            if (req.session.accessToken) {
-                callback(xero.getXeroClient(req.session.accessToken));
+    return new Promise ((resolve, reject) => {
+        db.query('SELECT * FROM integrations WHERE ID = (SELECT MAX(ID) FROM integrations)', 
+        (error, integration_) => {
+            const integration = integration_[0];
+            if (!module || (module && integration && integration[module] === 1)) {
+                if (req.session.accessToken) {
+                    if (typeof callback === "function")
+                        callback(xero.getXeroClient(req.session.accessToken));
+                    resolve(xero.getXeroClient(req.session.accessToken));
+                } else {
+                    xero.authorizeRedirect(req, res);
+                }
             } else {
-                xero.authorizeRedirect(req, res);
+                if (typeof callback === "function")
+                    callback(false);
+                resolve(false);
             }
-        } else {
-            callback(false);
-        }
+        });
     });
 };
 
