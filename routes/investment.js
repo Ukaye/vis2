@@ -83,7 +83,6 @@ router.post('/products/:id', function (req, res, next) {
     data = req.body;
     data.date_modified = dt;
     delete data.ID;
-    const HOST = `${req.protocol}://${req.get('host')}`;
     db.query(`UPDATE investment_products SET status = 0 WHERE ID = ${req.params.id}`, function (error, result, fields) {
         if (error) {
             res.send({
@@ -102,7 +101,7 @@ router.post('/products/:id', function (req, res, next) {
                         "response": null
                     });
                 } else {
-                    productCloneOps(HOST, req.params.id, result.insertId).then(payload => {
+                    productCloneOps(req.params.id, result.insertId).then(payload => {
                         res.send({
                             "status": 200,
                             "message": "Investment product saved successfully!"
@@ -115,12 +114,10 @@ router.post('/products/:id', function (req, res, next) {
 });
 
 /** Function use to get investment/savings product requirement **/
-function getOriginalProductRequirement(productId, HOST, table) {
+function getOriginalProductRequirement(productId, table) {
     return new Promise((resolve, reject) => {
         let query = `Select * from ${table} 
         WHERE productId = ${productId} AND status = 1`;
-        let endpoint = `/core-service/get`;
-        let url = `${HOST}${endpoint}`;
         sRequest.get(query).then(response_prdt_ => {
             resolve(response_prdt_);
         }, err => {
@@ -175,8 +172,8 @@ function createClonedProductRequirement(values, isDoc, newProductId, table) {
     });
 }
 
-/** Function housing both getOriginalProductRequirement(productId, HOST, table) and createClonedProductRequirement(values, isDoc, newProductId, table) **/
-async function productCloneOps(HOST, originalProductId, newProductId) {
+/** Function housing both getOriginalProductRequirement(productId, table) and createClonedProductRequirement(values, isDoc, newProductId, table) **/
+async function productCloneOps(originalProductId, newProductId) {
     let tableNames = [{ name: 'investment_product_reviews', isDoc: false },
     { name: 'investment_product_posts', isDoc: false },
     { name: 'investment_product_requirements', isDoc: false },
@@ -184,7 +181,7 @@ async function productCloneOps(HOST, originalProductId, newProductId) {
     let results = [];
     for (let index = 0; index < tableNames.length; index++) {
         const table = tableNames[index];
-        const data = await getOriginalProductRequirement(originalProductId, HOST, table.name);
+        const data = await getOriginalProductRequirement(originalProductId, table.name);
         if (data.length > 0) {
             const clonedProduct = await createClonedProductRequirement(data, table.isDoc, newProductId, table.name);
             results.push(clonedProduct);

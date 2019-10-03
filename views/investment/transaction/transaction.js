@@ -318,10 +318,8 @@ function bindDataTable(id) {
                     order: tableHeaders[aoData[2].value[0].column].query
                 },
                 success: function (data) {
-                    console.log(data);
                     if (data.data.length > 0) {
-                        selectedInvestment = (isWalletPage === 1) ? data.data[0] : data.data[data.data.length - 1];
-                        console.log(selectedInvestment);
+                        selectedInvestment = data.data[data.data.length - 1];
                         if (selectedInvestment.canTerminate === 0 || selectedInvestment.canTerminate === null) {
                             $('#btnTerminateInvestment').attr('disabled', true);
                         }
@@ -1388,33 +1386,29 @@ function uploadDocRequirement(data) {
 
 $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemReview', function () {
     data_row = table.row($(this).parents('tr')).data();
-    if (isWalletPage === 0 || isWalletPage === 1) {
-        let mOperationId = 0;
-        if (data_row.isDeposit === 1) {
-            mOperationId = 1;
-        } else if (data_row.isTransfer === 1) {
-            mOperationId = 2;
-        } else if (data_row.isWithdrawal === 1) {
-            mOperationId = 3;
-        }
-        console.log(data_row);
-        $("#post_list_group").html('');
-        $.ajax({
-            url: `investment-txns/verify-doc-uploads?productId=${data_row.productId}&operationId=${mOperationId}&txnId=${data_row.ID}`,
-            'type': 'get',
-            'success': function (data) {
-                console.log(data);
-                if (data.status === undefined) {
-                    if (data[0].total_doc_required === data[0].total_uploaded) {
-                        setReviewRequirements(data_row);
-                        getProductDocRequirements(1);
-                    } else {
-                        swal('Oops! Please kindly upload required document(s) before REVIEW', '', 'error');
-                    }
+    let mOperationId = 0;
+    if (data_row.isDeposit === 1) {
+        mOperationId = 1;
+    } else if (data_row.isTransfer === 1) {
+        mOperationId = 2;
+    } else if (data_row.isWithdrawal === 1) {
+        mOperationId = 3;
+    }
+    $("#post_list_group").html('');
+    $.ajax({
+        url: `investment-txns/verify-doc-uploads?productId=${data_row.productId}&operationId=${mOperationId}&txnId=${data_row.ID}`,
+        'type': 'get',
+        'success': function (data) {
+            if (data.status === undefined) {
+                if (data[0].total_doc_required === data[0].total_uploaded) {
+                    setReviewRequirements(data_row);
+                    getProductDocRequirements(1);
+                } else {
+                    swal('Oops! Please kindly upload required document(s) before REVIEW', '', 'error');
                 }
             }
-        });
-    }
+        }
+    });
     // else {
     //     setReviewRequirements(data_row);
     //     getProductDocRequirements(1);
@@ -2000,14 +1994,30 @@ function read_write_custom(isWalletPage) {
     let lblViewWalletTxns = ($.grep(perms, function (e) { return e.module_name === 'lblViewWalletTxns'; }))[0];
     let investment_transactions = ($.grep(perms, function (e) { return e.module_name === 'client-investment-transactions'; }))[0];
     let investment_wallet = ($.grep(perms, function (e) { return e.module_name === 'client-investment-wallet'; }))[0];
+    let investment_wallet = ($.grep(perms, function (e) { return e.module_name === 'client-investment-wallet'; }))[0];
+    let btnMandateInvestment = ($.grep(perms, function(e){return e.module_name === 'btnMandateInvestment';}))[0];
+    let btnInvestmentStatement = ($.grep(perms, function(e){return e.module_name === 'btnInvestmentStatement';}))[0];
+    let btnComputeInterest = ($.grep(perms, function(e){return e.module_name === 'btnComputeInterest';}))[0];
+    let btnTransfer = ($.grep(perms, function(e){return e.module_name === 'btnTransfer';}))[0];
+    let btnWithdrawal = ($.grep(perms, function(e){return e.module_name === 'btnWithdrawal';}))[0];
+    let btnDeposit = ($.grep(perms, function(e){return e.module_name === 'btnDeposit';}))[0];
+    $('#btnMandateInvestment').hide();
+    if (btnMandateInvestment && btnMandateInvestment['read_only'] === '1') $('#btnMandateInvestment').show();
+    $('#btnInvestmentStatement').hide();
+    if (btnInvestmentStatement && btnInvestmentStatement['read_only'] === '1') $('#btnInvestmentStatement').show();
+    $('#btnComputeInterest').hide();
+    if (btnComputeInterest && btnComputeInterest['read_only'] === '1') $('#btnComputeInterest').show();
+    $('#btnTransfer').hide();
+    if (btnTransfer && btnTransfer['read_only'] === '1') $('#btnTransfer').show();
+    $('#btnWithdrawal').hide();
+    if (btnWithdrawal && btnWithdrawal['read_only'] === '1') $('#btnWithdrawal').show();
+    $('#btnDeposit').hide();
+    if (btnDeposit && btnDeposit['read_only'] === '1') $('#btnDeposit').show();
     $('#lblViewWalletTxns').hide();
-    if (lblViewWalletTxns && lblViewWalletTxns['read_only'] === '1')
-        $('#lblViewWalletTxns').show();
+    if (lblViewWalletTxns && lblViewWalletTxns['read_only'] === '1') $('#lblViewWalletTxns').show();
     if (isWalletPage === 1) {
-        if (!investment_wallet || investment_wallet['read_only'] !== '1')
-            return window.location.href = '/';
+        if (!investment_wallet || investment_wallet['read_only'] !== '1') return window.location.href = '/';
     } else {
-        if (!investment_transactions || investment_transactions['read_only'] !== '1')
-            return window.location.href = '/';
+        if (!investment_transactions || investment_transactions['read_only'] !== '1') return window.location.href = '/';
     }
 }

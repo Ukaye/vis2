@@ -60,10 +60,6 @@ var sRequest = {
     }
 }
 
-function investmentTimeLine(query) {
-
-}
-
 
 function getRecentTxns(id, isWallet) {
     return new Promise((resolve, reject) => {
@@ -89,7 +85,7 @@ function getRecentTxns(id, isWallet) {
     left join clients c on i.clientId = c.ID
     left join users u on u.ID = v.createdBy
     left join investment_products p on i.productId = p.ID
-    WHERE v.isWallet = 1 AND AND v.postDone = 1 AND v.clientId = ${id} ORDER BY ID DESC LIMIT 5 OFFSET 0`;
+    WHERE v.isWallet = 1 AND v.postDone = 1 AND v.clientId = ${id} ORDER BY ID DESC LIMIT 5 OFFSET 0`;
         db.query(query, function (error, results, fields) {
             if (error && error !== null) {
                 resolve([]);

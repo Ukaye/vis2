@@ -7,14 +7,11 @@ const sRequest = require('../s_request');
 
 /** End point to return all investment product filtered by isWalletApproval (The property differentiate if a product is for wallet or not) **/
 router.get('/all/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let page = ((req.query.page - 1) * 10 < 0) ? 0 : (req.query.page - 1) * 10;
     let search_string = (req.query.search_string === undefined) ? "" : req.query.search_string.toUpperCase();
     let query = `SELECT ID,name,code,investment_max,investment_min,min_term,max_term,interest_disbursement_time 
     FROM investment_products WHERE isWalletApproval = ${req.params.id} AND status = 1 AND isDeactivated = 0 AND (upper(code) LIKE "${search_string}%" OR upper(name) LIKE "${search_string}%") ORDER BY ID desc LIMIT ${limit} OFFSET ${page}`;
-    const endpoint = "/core-service/get";
-    const url = `${HOST}${endpoint}`;
     sRequest.get(query)
         .then(function (response) {
             res.send(response);
@@ -28,10 +25,7 @@ router.get('/all/:id', function (req, res, next) {
 
 /** End point to validate investment product code **/
 router.get('/validate-code/:code', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT count(*) as counter FROM investment_products WHERE code = '${req.params.code.toUpperCase()}'`;
-    const endpoint = "/core-service/get";
-    const url = `${HOST}${endpoint}`;
     sRequest.get(query)
         .then(function (response) {
             res.send(response[0]);
@@ -45,13 +39,10 @@ router.get('/validate-code/:code', function (req, res, next) {
 
 /** End point to return system roles **/
 router.get('/roles', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let page = ((req.query.page - 1) * 10 < 0) ? 0 : (req.query.page - 1) * 10;
     let search_string = (req.query.search_string === undefined) ? "" : req.query.search_string.toUpperCase();
     let query = `SELECT ID,role_name FROM user_roles WHERE status = 1 AND upper(role_name) LIKE "${search_string}%" ORDER BY ID desc LIMIT ${limit} OFFSET ${page}`;
-    const endpoint = "/core-service/get";
-    const url = `${HOST}${endpoint}`;
     sRequest.get(query)
         .then(function (response) {
             res.send(response);
@@ -65,7 +56,6 @@ router.get('/roles', function (req, res, next) {
 
 /** End point to return all products **/
 router.get('/get-products', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
     let draw = req.query.draw;
@@ -76,16 +66,12 @@ router.get('/get-products', function (req, res, next) {
     let query = `SELECT ID,name,code,investment_max,investment_min,interest_rate,status, date_created, isDeactivated
     FROM investment_products WHERE status = 1 AND (code LIKE "${search_string}%" OR name LIKE "${search_string}%")
     ${order} LIMIT ${limit} OFFSET ${offset}`;
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query).then(response => {
         query = `SELECT
         (SELECT count(*) AS recordsTotal FROM investment_products WHERE  status = 1) AS recordsTotal,
         (SELECT count(*) AS recordsFiltered FROM investment_products WHERE  status = 1 
         AND (code LIKE "${search_string}%" OR name LIKE "${search_string}%"))
         as recordsFiltered`;
-        endpoint = '/core-service/get';
-        url = `${HOST}${endpoint}`;
         sRequest.get(query).then(payload => {
             res.send({
                 draw: draw,
@@ -99,15 +85,12 @@ router.get('/get-products', function (req, res, next) {
 
 /** End point to create product requirement **/
 router.post('/requirements', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     var data = req.body
     if (data.priority === '[]') {
         delete data.priority;
     }
     data.createdDate = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `INSERT INTO investment_product_requirements SET ?`;
-    let endpoint = `/core-service/post?query=${query}`;
-    let url = `${HOST}${endpoint}`;
     sRequest.post(query, data)
         .then(function (response) {
             res.send(response);
@@ -128,11 +111,9 @@ router.post('/requirements', function (req, res, next) {
 });
 
 /** End point to return product approval requirement items **/
-async function getProductApprovalItems(HOST, search_string, order, offset, limit, id, draw) {
+async function getProductApprovalItems(search_string, order, offset, limit, id, draw) {
     let query = `SELECT ID, operationId,roleId,isAllRoles,priority FROM investment_product_requirements WHERE status = 1 AND productId = ${id} AND 
         (operationId LIKE "${search_string}%" OR roleId LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
-    let endpoint = "/core-service/get";
-    let url = `${HOST}${endpoint}`;
     try {
         let response = await sRequest.get(query);
         let roles = [];
@@ -144,7 +125,7 @@ async function getProductApprovalItems(HOST, search_string, order, offset, limit
                 x.roleId = JSON.parse(x.roleId);
                 x.priority = JSON.parse(x.priority);
                 for (let index2 = 0; index2 < x.roleId.length; index2++) {
-                    let roleIds = await getRoleUserDetails(x, index2, HOST);
+                    let roleIds = await getRoleUserDetails(x, index2);
                     roles.push(roleIds);
                 }
             }
@@ -167,16 +148,15 @@ async function getProductApprovalItems(HOST, search_string, order, offset, limit
     }
 }
 
-/** End point that uses ductApprovalItems(HOST, search_string, order, offset, limit, id, draw) **/
+/** End point that uses ductApprovalItems(search_string, order, offset, limit, id, draw) **/
 router.get('/requirements/:id', function (req, res, next) {
-    let HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
     let draw = req.query.draw;
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
 
-    getProductApprovalItems(HOST, search_string, order, offset, limit, req.params.id, draw).then(payload => {
+    getProductApprovalItems(search_string, order, offset, limit, req.params.id, draw).then(payload => {
         res.send(payload);
     }, err => {
         res.send(err);
@@ -185,12 +165,9 @@ router.get('/requirements/:id', function (req, res, next) {
 
 /** End point to update product requirement **/
 router.post('/requirements/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.body
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `UPDATE investment_product_requirements SET isAllRoles = ${data.isAllRoles} , updatedDate = '${dt}' WHERE ID =${req.params.id}`;
-    let endpoint = `/core-service/post?query=${query}`;
-    let url = `${HOST}${endpoint}`;
     sRequest.post(query, data)
         .then(function (response) {
             res.send(response);
@@ -212,11 +189,8 @@ router.post('/requirements/:id', function (req, res, next) {
 
 /** End point that returns product requirement **/
 router.get('/required-roles', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT ID, roleId FROM investment_product_requirements WHERE productId = ${req.query.productId} AND 
     operationId = ${req.query.operationId} AND status = 1`;
-    let endpoint = "/core-service/get";
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query)
         .then(function (response) {
             if (response.length > 0) {
@@ -224,8 +198,6 @@ router.get('/required-roles', function (req, res, next) {
                 let roleId = JSON.parse(response[0].roleId);
                 roleId.forEach((r, index) => {
                     query = `SELECT role_name FROM user_roles WHERE id = ${r}`;
-                    endpoint = "/core-service/get";
-                    url = `${HOST}${endpoint}`;
                     sRequest.get(query)
                         .then(function (response2) {
                             _roles.push({
@@ -260,10 +232,7 @@ router.get('/required-roles', function (req, res, next) {
 router.post('/update-requirements/:id', function (req, res, next) {
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     data = req.body;
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `UPDATE investment_product_requirements SET roleId =${JSON.stringify(data.roleId)}, updatedDate ='${dt.toString()}' WHERE ID =${req.params.id}`;
-    let endpoint = `/core-service/post?query=${query}`;
-    let url = `${HOST}${endpoint}`;
     sRequest.post(query, data)
         .then(function (response) {
             res.send(response);
@@ -286,10 +255,7 @@ router.post('/update-requirements/:id', function (req, res, next) {
 /** End point use to remove a product requirement **/
 router.get('/remove-requirements/:id', function (req, res, next) {
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `UPDATE investment_product_requirements SET status = 0, updatedDate ='${dt.toString()}' WHERE ID =${req.params.id}`;
-    let endpoint = `/core-service/get`;
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query)
         .then(function (response) {
             res.send(response);
@@ -311,12 +277,9 @@ router.get('/remove-requirements/:id', function (req, res, next) {
 
 /** End point use to update a product approval **/
 router.post('/update-approval/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.body
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `UPDATE investment_product_requirements SET priority = '${data.priority}' , updatedDate = '${dt}' WHERE ID =${req.params.id}`;
-    let endpoint = `/core-service/post?query=${query}`;
-    let url = `${HOST}${endpoint}`;
     sRequest.post(query, data)
         .then(function (response) {
             res.send(response);
@@ -338,15 +301,12 @@ router.post('/update-approval/:id', function (req, res, next) {
 
 /** End point use to create a product review **/
 router.post('/reviews', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     var data = req.body;
     if (data.priority === '[]') {
         delete data.priority;
     }
     data.createdDate = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `INSERT INTO investment_product_reviews SET ?`;
-    let endpoint = `/core-service/post?query=${query}`;
-    let url = `${HOST}${endpoint}`;
     sRequest.post(query, data)
         .then(function (response) {
             res.send(response);
@@ -367,11 +327,9 @@ router.post('/reviews', function (req, res, next) {
 });
 
 /** Function use to get user role details **/
-async function getRoleUserDetails(x, index2, HOST) {
+async function getRoleUserDetails(x, index2) {
     let r = x.roleId[index2];
     let query = `SELECT ID,role_name FROM user_roles WHERE id = ${r}`;
-    let endpoint = "/core-service/get";
-    let url = `${HOST}${endpoint}`;
     try {
         let response2 = await sRequest.get(query);
         x.roles.push({
@@ -386,11 +344,9 @@ async function getRoleUserDetails(x, index2, HOST) {
 }
 
 /** Function use to get product review **/
-async function getProductReviewItems(HOST, search_string, order, offset, limit, id, draw) {
+async function getProductReviewItems(search_string, order, offset, limit, id, draw) {
     let query = `SELECT ID, operationId,roleId,isAllRoles,priority FROM investment_product_reviews WHERE status = 1 AND productId = ${id} AND 
         (operationId LIKE "${search_string}%" OR roleId LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
-    let endpoint = "/core-service/get";
-    let url = `${HOST}${endpoint}`;
     try {
         let response = await sRequest.get(query);
         let roles = [];
@@ -402,7 +358,7 @@ async function getProductReviewItems(HOST, search_string, order, offset, limit, 
                 x.roleId = JSON.parse(x.roleId);
                 x.priority = JSON.parse(x.priority);
                 for (let index2 = 0; index2 < x.roleId.length; index2++) {
-                    let roleIds = await getRoleUserDetails(x, index2, HOST);
+                    let roleIds = await getRoleUserDetails(x, index2);
                     roles.push(roleIds);
                 }
             }
@@ -427,13 +383,12 @@ async function getProductReviewItems(HOST, search_string, order, offset, limit, 
 
 /** End point use to get a product review **/
 router.get('/reviews/:id', function (req, res, next) {
-    let HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
     let draw = req.query.draw;
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
-    getProductReviewItems(HOST, search_string, order, offset, limit, req.params.id, draw).then(payload => {
+    getProductReviewItems(search_string, order, offset, limit, req.params.id, draw).then(payload => {
         res.send(payload);
     }, err => {
         res.send(err);
@@ -442,12 +397,9 @@ router.get('/reviews/:id', function (req, res, next) {
 
 /** End point use to create a product review **/
 router.post('/reviews/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.body
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `UPDATE investment_product_reviews SET isAllRoles = ${data.isAllRoles} , updatedDate = '${dt}' WHERE ID =${req.params.id}`;
-    let endpoint = `/core-service/post?query=${query}`;
-    let url = `${HOST}${endpoint}`;
     sRequest.post(query, data)
         .then(function (response) {
             res.send(response);
@@ -469,11 +421,8 @@ router.post('/reviews/:id', function (req, res, next) {
 
 /** End point use to get product review role **/
 router.get('/required-review-roles', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT ID, roleId FROM investment_product_reviews WHERE productId = ${req.query.productId} AND 
     operationId = ${req.query.operationId} AND status = 1`;
-    let endpoint = "/core-service/get";
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query)
         .then(function (response) {
             if (response.length > 0) {
@@ -481,8 +430,6 @@ router.get('/required-review-roles', function (req, res, next) {
                 let roleId = JSON.parse(response[0].roleId);
                 roleId.forEach((r, index) => {
                     query = `SELECT role_name FROM user_roles WHERE id = ${r}`;
-                    endpoint = "/core-service/get";
-                    url = `${HOST}${endpoint}`;
                     sRequest.get(query)
                         .then(function (response2) {
                             _roles.push({
@@ -517,10 +464,7 @@ router.get('/required-review-roles', function (req, res, next) {
 router.post('/update-reviews/:id', function (req, res, next) {
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     data = req.body;
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `UPDATE investment_product_reviews SET roleId =${JSON.stringify(data.roleId)}, updatedDate ='${dt.toString()}' WHERE ID =${req.params.id}`;
-    let endpoint = `/core-service/post?query=${query}`;
-    let url = `${HOST}${endpoint}`;
     sRequest.post(query, data)
         .then(function (response) {
             res.send(response);
@@ -543,10 +487,7 @@ router.post('/update-reviews/:id', function (req, res, next) {
 /** End point use to remove product review requirement **/
 router.get('/remove-reviews/:id', function (req, res, next) {
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `UPDATE investment_product_reviews SET status = 0, updatedDate ='${dt.toString()}' WHERE ID =${req.params.id}`;
-    let endpoint = `/core-service/get`;
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query)
         .then(function (response) {
             res.send(response);
@@ -569,10 +510,7 @@ router.get('/remove-reviews/:id', function (req, res, next) {
 /** End point use to get product review requirement **/
 router.get('/get-product-reviews/:id', function (req, res, next) {
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT * FROM investment_product_reviews WHERE id = ${req.params.id}`;
-    let endpoint = `/core-service/get`;
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query)
         .then(function (response) {
             res.send(response);
@@ -594,12 +532,9 @@ router.get('/get-product-reviews/:id', function (req, res, next) {
 
 /** End point use to update product review priority **/
 router.post('/update-review-priority/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.body
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `UPDATE investment_product_reviews SET priority = '${data.priority}' , updatedDate = '${dt}' WHERE ID =${req.params.id}`;
-    let endpoint = `/core-service/post?query=${query}`;
-    let url = `${HOST}${endpoint}`;
     sRequest.post(query, data)
         .then(function (response) {
             res.send(response);
@@ -621,15 +556,12 @@ router.post('/update-review-priority/:id', function (req, res, next) {
 
 /** End point use to create product post requirement **/
 router.post('/posts', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     var data = req.body;
     if (data.priority === '[]') {
         delete data.priority;
     }
     data.createdDate = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `INSERT INTO investment_product_posts SET ?`;
-    let endpoint = `/core-service/post?query=${query}`;
-    let url = `${HOST}${endpoint}`;
     sRequest.post(query, data)
         .then(function (response) {
             res.send(response);
@@ -650,11 +582,9 @@ router.post('/posts', function (req, res, next) {
 });
 
 /** Function use to get product post requirement **/
-async function getProductPostItems(HOST, search_string, order, offset, limit, id, draw) {
+async function getProductPostItems(search_string, order, offset, limit, id, draw) {
     let query = `SELECT ID, operationId,roleId,isAllRoles,priority FROM investment_product_posts WHERE status = 1 AND productId = ${id} AND 
         (operationId LIKE "${search_string}%" OR roleId LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
-    let endpoint = "/core-service/get";
-    let url = `${HOST}${endpoint}`;
     try {
         let response = await sRequest.get(query);
         let roles = [];
@@ -666,7 +596,7 @@ async function getProductPostItems(HOST, search_string, order, offset, limit, id
                 x.roleId = JSON.parse(x.roleId);
                 x.priority = JSON.parse(x.priority);
                 for (let index2 = 0; index2 < x.roleId.length; index2++) {
-                    let roleIds = await getRoleUserDetails(x, index2, HOST);
+                    let roleIds = await getRoleUserDetails(x, index2);
                     roles.push(roleIds);
                 }
             }
@@ -689,15 +619,14 @@ async function getProductPostItems(HOST, search_string, order, offset, limit, id
     }
 }
 
-/** End point use to call getProductPostItems(HOST, search_string, order, offset, limit, id, draw) **/
+/** End point use to call getProductPostItems(search_string, order, offset, limit, id, draw) **/
 router.get('/posts/:id', function (req, res, next) {
-    let HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
     let draw = req.query.draw;
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
-    getProductPostItems(HOST, search_string, order, offset, limit, req.params.id, draw).then(payload => {
+    getProductPostItems(search_string, order, offset, limit, req.params.id, draw).then(payload => {
         res.send(payload);
     }, err => {
         res.send(err);
@@ -706,12 +635,9 @@ router.get('/posts/:id', function (req, res, next) {
 
 /** End point use to update product post requirement **/
 router.post('/post/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.body
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `UPDATE investment_product_posts SET isAllRoles = ${data.isAllRoles} , updatedDate = '${dt}' WHERE ID =${req.params.id}`;
-    let endpoint = `/core-service/post?query=${query}`;
-    let url = `${HOST}${endpoint}`;
     sRequest.post(query, data)
         .then(function (response) {
             res.send(response);
@@ -733,11 +659,8 @@ router.post('/post/:id', function (req, res, next) {
 
 /** End point use to get product post role **/
 router.get('/required-post-roles', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT ID, roleId FROM investment_product_posts WHERE productId = ${req.query.productId} AND 
     operationId = ${req.query.operationId} AND status = 1`;
-    let endpoint = "/core-service/get";
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query)
         .then(function (response) {
             if (response.length > 0) {
@@ -745,8 +668,6 @@ router.get('/required-post-roles', function (req, res, next) {
                 let roleId = JSON.parse(response[0].roleId);
                 roleId.forEach((r, index) => {
                     query = `SELECT role_name FROM user_roles WHERE id = ${r}`;
-                    endpoint = "/core-service/get";
-                    url = `${HOST}${endpoint}`;
                     sRequest.get(query)
                         .then(function (response2) {
                             _roles.push({
@@ -781,10 +702,7 @@ router.get('/required-post-roles', function (req, res, next) {
 router.post('/update-posts/:id', function (req, res, next) {
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     data = req.body;
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `UPDATE investment_product_posts SET roleId =${JSON.stringify(data.roleId)}, updatedDate ='${dt.toString()}' WHERE ID =${req.params.id}`;
-    let endpoint = `/core-service/post?query=${query}`;
-    let url = `${HOST}${endpoint}`;
     sRequest.post(query, data)
         .then(function (response) {
             res.send(response);
@@ -807,10 +725,7 @@ router.post('/update-posts/:id', function (req, res, next) {
 /** End point use to remove product post role**/
 router.get('/remove-posts/:id', function (req, res, next) {
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `UPDATE investment_product_posts SET status = 0, updatedDate ='${dt.toString()}' WHERE ID =${req.params.id}`;
-    let endpoint = `/core-service/get`;
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query)
         .then(function (response) {
             res.send(response);
@@ -832,12 +747,9 @@ router.get('/remove-posts/:id', function (req, res, next) {
 
 /** End point use to update product post role priority**/
 router.post('/update-post-priority/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.body
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `UPDATE investment_product_posts SET priority = '${data.priority}' , updatedDate = '${dt}' WHERE ID =${req.params.id}`;
-    let endpoint = `/core-service/post?query=${query}`;
-    let url = `${HOST}${endpoint}`;
     sRequest.post(query, data)
         .then(function (response) {
             res.send(response);
@@ -859,12 +771,9 @@ router.post('/update-post-priority/:id', function (req, res, next) {
 
 /** End point use to create product document requirement **/
 router.post('/create-docs', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     var data = req.body;
     data.createdAt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `INSERT INTO investment_doc_requirement SET ?`;
-    let endpoint = `/core-service/post?query=${query}`;
-    let url = `${HOST}${endpoint}`;
     sRequest.post(query, data)
         .then(function (response) {
             res.send(response);
@@ -894,15 +803,12 @@ router.post('/get-maturity-dates', function (req, res, next) {
 
 /** End point use to get product document requirement **/
 router.get('/get-doc-requirements/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let option = '';
     if (req.query.operationId !== undefined) {
         option = `AND operationId = ${req.query.operationId}`;
     }
 
     let query = `SELECT * FROM investment_doc_requirement WHERE productId = ${req.params.id} ${option} AND status = 1`;
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query).then(response => {
         res.send(response);
     }, err => {
@@ -916,12 +822,9 @@ router.get('/get-doc-requirements/:id', function (req, res, next) {
 
 /** End point use to get product document requirement on an investment/savings account **/
 router.get('/get-txn-doc-requirements/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT d.*,r.name FROM investment_doc_requirement r
     left join investment_txn_doc_requirements d on d.docRequirementId = r.Id
     WHERE d.txnId = ${req.params.id} AND r.status = 1`;
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query).then(response => {
         res.send(response);
     }, err => {
@@ -935,10 +838,7 @@ router.get('/get-txn-doc-requirements/:id', function (req, res, next) {
 
 /** End point use to remove product document requirement on an investment/savings account **/
 router.get('/remove-doc-requirements/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `UPDATE investment_doc_requirement SET status = ${0} WHERE ID =${req.params.id}`;
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query).then(response => {
         res.send(response);
     }, err => {
@@ -952,7 +852,6 @@ router.get('/remove-doc-requirements/:id', function (req, res, next) {
 
 /** End point use to update product document requirement on an investment/savings account **/
 router.post('/update-txn-doc-requirements', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let data = req.body;
     if (data.isReplaced.toString() === '0') {
         let query = `UPDATE investment_txn_doc_requirements
@@ -961,8 +860,6 @@ router.post('/update-txn-doc-requirements', function (req, res, next) {
         status = ${data.status}
         WHERE id = ${data.id}`;
 
-        let endpoint = '/core-service/get';
-        let url = `${HOST}${endpoint}`;
         sRequest.get(query).then(response => {
             res.send(response);
         }, err => {
@@ -983,8 +880,6 @@ router.post('/update-txn-doc-requirements', function (req, res, next) {
         };
 
         let query = `INSERT INTO investment_txn_doc_requirements SET ?`;
-        let endpoint = `/core-service/post?query=${query}`;
-        let url = `${HOST}${endpoint}`;
         sRequest.post(query, data_)
             .then(function (response) {
                 res.send(response);

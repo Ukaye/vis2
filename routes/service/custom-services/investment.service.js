@@ -10,7 +10,6 @@ const sRequest = require('../s_request');
 /** End point to create investment/savings account **/
 router.post('/create', function (req, res, next) {
     let _date = new Date();
-    const HOST = `${req.protocol}://${req.get('host')}`;
     var data = req.body
     const is_after = isAfter(new Date(data.investment_mature_date.toString()), new Date(data.investment_start_date.toString()))
     if (is_after || data.investment_start_date === '' || data.investment_mature_date === '') {
@@ -29,8 +28,6 @@ router.post('/create', function (req, res, next) {
         }
 
         let query = `INSERT INTO investments SET ?`;
-        let endpoint = `/core-service/post?query=${query}`;
-        let url = `${HOST}${endpoint}`;
         let dt_ = moment().utcOffset('+0100').format('x');
         let _data = JSON.parse(JSON.stringify(data));
         delete _data.selectedProduct;
@@ -52,14 +49,10 @@ router.post('/create', function (req, res, next) {
                 };
 
                 query = `INSERT INTO investment_txns SET ?`;
-                endpoint = `/core-service/post?query=${query}`;
-                url = `${HOST}${endpoint}`;
                 sRequest.post(query, inv_txn)
                     .then(function (response_) {
                         query = `SELECT * FROM investment_product_requirements
                             WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
-                        endpoint = "/core-service/get";
-                        url = `${HOST}${endpoint}`;
                         sRequest.get(query, {
                             params: {
                                 query: query
@@ -88,8 +81,6 @@ router.post('/create', function (req, res, next) {
                                         }
 
                                         query = `INSERT INTO investment_op_approvals SET ?`;
-                                        endpoint = `/core-service/post?query=${query}`;
-                                        url = `${HOST}${endpoint}`;
                                         try {
                                             sRequest.post(query, invOps);
                                         } catch (error) { }
@@ -107,8 +98,6 @@ router.post('/create', function (req, res, next) {
                                         method: 'APPROVAL'
                                     };
                                     query = `INSERT INTO investment_op_approvals SET ?`;
-                                    endpoint = `/core-service/post?query=${query}`;
-                                    url = `${HOST}${endpoint}`;
                                     try {
                                         sRequest.post(query, invOps);
                                     } catch (error) { }
@@ -117,8 +106,6 @@ router.post('/create', function (req, res, next) {
                             .catch(function (error) { });
                         query = `SELECT * FROM investment_product_reviews
                             WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
-                        endpoint = "/core-service/get";
-                        url = `${HOST}${endpoint}`;
                         sRequest.get(query)
                             .then(function (response2) {
                                 if (response2.length > 0) {
@@ -143,8 +130,6 @@ router.post('/create', function (req, res, next) {
                                         }
 
                                         query = `INSERT INTO investment_op_approvals SET ?`;
-                                        endpoint = `/core-service/post?query=${query}`;
-                                        url = `${HOST}${endpoint}`;
                                         try {
                                             sRequest.post(query, invOps);
                                         } catch (error) { }
@@ -162,8 +147,6 @@ router.post('/create', function (req, res, next) {
                                         method: 'REVIEW'
                                     };
                                     query = `INSERT INTO investment_op_approvals SET ?`;
-                                    endpoint = `/core-service/post?query=${query}`;
-                                    url = `${HOST}${endpoint}`;
                                     try {
                                         sRequest.post(query, invOps);
                                     } catch (error) { }
@@ -172,8 +155,6 @@ router.post('/create', function (req, res, next) {
                             .catch(function (error) { });
                         query = `SELECT * FROM investment_product_posts
                             WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
-                        endpoint = "/core-service/get";
-                        url = `${HOST}${endpoint}`;
                         sRequest.get(query)
                             .then(function (response2) {
                                 if (response2.length > 0) {
@@ -199,8 +180,6 @@ router.post('/create', function (req, res, next) {
                                         }
 
                                         query = `INSERT INTO investment_op_approvals SET ?`;
-                                        endpoint = `/core-service/post?query=${query}`;
-                                        url = `${HOST}${endpoint}`;
                                         try {
                                             sRequest.post(query, invOps);
                                         } catch (error) { }
@@ -217,8 +196,6 @@ router.post('/create', function (req, res, next) {
                                         method: 'POST'
                                     };
                                     query = `INSERT INTO investment_op_approvals SET ?`;
-                                    endpoint = `/core-service/post?query=${query}`;
-                                    url = `${HOST}${endpoint}`;
                                     try {
                                         sRequest.post(query, invOps);
                                     } catch (error) { }
@@ -226,7 +203,7 @@ router.post('/create', function (req, res, next) {
                             })
                             .catch(function (error) { });
 
-                        setDocRequirement(HOST, data, response_.insertId);
+                        setDocRequirement(data, response_.insertId);
                         res.send({});
                     }, err => {
                         res.send({
@@ -269,11 +246,9 @@ router.post('/create', function (req, res, next) {
 });
 
 /** Function to set document requirement for investment/savings account **/
-function setDocRequirement(HOST, data, txnId) {
+function setDocRequirement(data, txnId) {
     let query = `SELECT * FROM investment_doc_requirement
                 WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
-    let endpoint = "/core-service/get";
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query)
         .then(function (response2) {
             if (response2.length > 0) {
@@ -284,8 +259,6 @@ function setDocRequirement(HOST, data, txnId) {
                         createdAt: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
                     }
                     query = `INSERT INTO investment_txn_doc_requirements SET ?`;
-                    endpoint = `/core-service/post?query=${query}`;
-                    url = `${HOST}${endpoint}`;
                     try {
                         sRequest.post(query, doc).then(p => {
                         });
@@ -298,7 +271,6 @@ function setDocRequirement(HOST, data, txnId) {
 
 /** End point to get investment/savings accounts **/
 router.get('/get-investments', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
     let draw = req.query.draw;
@@ -311,16 +283,11 @@ router.get('/get-investments', function (req, res, next) {
     v.productId = p.ID left join clients c on
     v.clientId = c.ID WHERE (v.investment_mature_date = '' OR STR_TO_DATE(v.investment_mature_date, '%Y-%m-%d') > '${formatedDate}') AND v.isMatured = 0 AND v.isClosed = 0 AND (upper(v.code) LIKE "${search_string}%" OR upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%" 
     OR upper(c.fullname) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
-    var data = [];
     sRequest.get(query).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM investments v 
                     left join investment_products p on v.productId = p.ID left join clients c on
                     v.clientId = c.ID WHERE (v.investment_mature_date = '' OR STR_TO_DATE(v.investment_mature_date, '%Y-%m-%d') > '${formatedDate}') AND v.isMatured = 0 AND v.isClosed = 0 AND upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%" 
                     OR upper(c.fullname) LIKE "${search_string}%") as recordsFiltered FROM investments`;
-        endpoint = '/core-service/get';
-        url = `${HOST}${endpoint}`;
         sRequest.get(query).then(payload => {
             res.send({
                 draw: draw,
@@ -334,7 +301,6 @@ router.get('/get-investments', function (req, res, next) {
 
 /** End point to get mature investment/savings accounts **/
 router.get('/get-mature-investments', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
     let draw = req.query.draw;
@@ -351,9 +317,6 @@ router.get('/get-mature-investments', function (req, res, next) {
     STR_TO_DATE(v.investment_mature_date, '%Y-%m-%d') <= '${formatedDate}' 
     AND (upper(v.code) LIKE "${search_string}%" OR upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%" 
     OR upper(c.fullname) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
-    var data = [];
     sRequest.get(query).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM investments v 
                     left join investment_products p on v.productId = p.ID 
@@ -363,8 +326,6 @@ router.get('/get-mature-investments', function (req, res, next) {
                     (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%" 
                     OR upper(c.fullname) LIKE "${search_string}%")) as recordsFiltered FROM investments
                     WHERE isMatured = 0 AND isClosed = 0 AND investment_mature_date <> '' AND STR_TO_DATE(investment_mature_date, '%Y-%m-%d') <= '${formatedDate}'`;
-        endpoint = '/core-service/get';
-        url = `${HOST}${endpoint}`;
         sRequest.get(query).then(payload => {
             res.send({
                 draw: draw,
@@ -378,7 +339,6 @@ router.get('/get-mature-investments', function (req, res, next) {
 
 /** End point to get transactions of an investment/savings accounts **/
 router.get('/get-investments/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
     let draw = req.query.draw;
@@ -387,19 +347,12 @@ router.get('/get-investments/:id', function (req, res, next) {
     let query = `SELECT v.ID,clientId,p.name AS investment, amount, investment_start_date, investment_mature_date
     FROM investments v left join investment_products p on v.productId = p.ID WHERE clientId = ${req.params.id}
     AND (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
-    var data = [];
     sRequest.get(query).then(response => {
         query = `SELECT count(*) as recordsFiltered FROM investments v 
                     left join investment_products p on v.productId = p.ID
                     WHERE v.clientId = ${req.params.id} AND (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%")`;
-        endpoint = '/core-service/get';
-        url = `${HOST}${endpoint}`;
         sRequest.get(query).then(payload => {
             query = `SELECT count(*) as recordsTotal FROM investments WHERE clientId = ${req.params.id}`;
-            endpoint = '/core-service/get';
-            url = `${HOST}${endpoint}`;
             sRequest.get(query).then(payload2 => {
                 res.send({
                     draw: draw,
@@ -414,7 +367,6 @@ router.get('/get-investments/:id', function (req, res, next) {
 
 
 router.get('/client-investments/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
     let draw = req.query.draw;
@@ -434,9 +386,6 @@ router.get('/client-investments/:id', function (req, res, next) {
     left join investment_products p on i.productId = p.ID
     WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id} 
     AND (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%") LIMIT ${limit} OFFSET ${offset}`;
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
-    var data = [];
     sRequest.get(query).then(response => {
         let uniqueTxns = [];
         response.map(d => {
@@ -464,25 +413,19 @@ router.get('/client-investments/:id', function (req, res, next) {
     left join investment_products p on i.productId = p.ID
     WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id}
     AND (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%")`;
-        endpoint = '/core-service/get';
-        url = `${HOST}${endpoint}`;
         sRequest.get(query).then(payload => {
-            investmentBalanceWithInterest(HOST, req.params.id, 0).then(txnCurrentBalanceWithoutInterest => {
-                investmentBalanceWithInterest(HOST, req.params.id, 1).then(txnCurrentBalance => {
+            investmentBalanceWithInterest(req.params.id, 0).then(txnCurrentBalanceWithoutInterest => {
+                investmentBalanceWithInterest(req.params.id, 1).then(txnCurrentBalance => {
                     query = `Select 
                         (SELECT count(*) as recordsTotal FROM investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id}) as recordsTotal,
                         (SELECT count(*) as maturedInventmentTxn FROM investment_txns WHERE isWallet = 0 AND investmentId = ${req.params.id} AND isInvestmentMatured = 1) as maturedInventmentTxn`;
 
-                    endpoint = '/core-service/get';
-                    url = `${HOST}${endpoint}`;
                     sRequest.get(query).then(payload2 => {
                         if (uniqueTxns.length > 0) {
                             const currentDate = new Date();
                             const maturityDate = new Date(uniqueTxns[0].investment_mature_date);
                             if (maturityDate <= currentDate) {
                                 query = `UPDATE investments SET isMatured = 1 WHERE ID = ${req.params.id}`;
-                                endpoint = '/core-service/get';
-                                url = `${HOST}${endpoint}`;
                                 sRequest.get(query).then(respons_e => {
 
                                     res.send({
@@ -530,10 +473,7 @@ router.get('/client-investments/:id', function (req, res, next) {
 /** End point to create organisation configuration **/
 router.post('/create-configs', function (req, res, next) {
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `INSERT INTO investment_config SET ?`;
-    let endpoint = `/core-service/post?query=${query}`;
-    let url = `${HOST}${endpoint}`;
     let data = req.body;
     data.createdAt = dt;
     sRequest.post(query, data)
@@ -549,14 +489,12 @@ router.post('/create-configs', function (req, res, next) {
 });
 
 /** Function to return investment balance with interest **/
-function investmentBalanceWithInterest(HOST, investmentId, isInterest) {
+function investmentBalanceWithInterest(investmentId, isInterest) {
     return new Promise((resolve, reject) => {
         let conditionalQuery = (isInterest === 0) ? ' AND isInterest = 0' : '';
         let query = `Select amount, is_credit from investment_txns WHERE isWallet = 0 
         AND investmentId = ${investmentId} 
         AND isApproved = 1 AND postDone = 1 ${conditionalQuery}`;
-        let endpoint = "/core-service/get";
-        let url = `${HOST}${endpoint}`;
         sRequest.get(query).then(function (payload) {
             let totalBalance = 0;
 
@@ -575,13 +513,11 @@ function investmentBalanceWithInterest(HOST, investmentId, isInterest) {
     });
 }
 
-function investmentStatus(HOST, investmentId) {
+function investmentStatus(investmentId) {
     return new Promise((resolve, reject) => {
         let query = `Select count(ID) from investments 
         WHERE (isTerminated = 1 OR isMatured = 1)
         AND id = ${investmentId}`;
-        let endpoint = "/core-service/get";
-        let url = `${HOST}${endpoint}`;
         sRequest.get(query).then(function (payload) {
             if (payload.length > 0)
                 resolve(0);
@@ -593,10 +529,7 @@ function investmentStatus(HOST, investmentId) {
 
 /** End point to create investment/savings mandate **/
 router.post('/create-mandates', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `INSERT INTO investment_mandate SET ?`;
-    let endpoint = `/core-service/post?query=${query}`;
-    let url = `${HOST}${endpoint}`;
     let data = req.body;
     data.createdAt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     sRequest.post(query, data)
@@ -614,12 +547,9 @@ router.post('/create-mandates', function (req, res, next) {
 
 /** End point to get investment/savings mandate **/
 router.get('/get-mandates/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT * FROM investment_mandate 
     WHERE investmentId = ${req.params.id} AND status = 1`;
 
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query).then(response => {
         res.send(response);
     }, err => {
@@ -633,12 +563,9 @@ router.get('/get-mandates/:id', function (req, res, next) {
 
 /** End point to get investment/savings withdrawal status **/
 router.get('/get-investment-withdrawal-status/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT canWithdraw FROM investments 
     WHERE ID = ${req.params.id}`;
 
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query).then(response => {
         res.send(response[0]);
     }, err => {
@@ -652,11 +579,8 @@ router.get('/get-investment-withdrawal-status/:id', function (req, res, next) {
 
 /** End point to get investment/savings remove mandates **/
 router.get('/remove-mandates/:id', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `UPDATE investment_mandate SET status = 0 WHERE id = ${req.params.id}`;
 
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query).then(response => {
         res.send(response);
     }, err => {
@@ -670,11 +594,8 @@ router.get('/remove-mandates/:id', function (req, res, next) {
 
 /** End point to get organisation configuration **/
 router.get('/get-configs', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT c.*, p.min_days_termination, p.name as productName, p.code FROM investment_config c
                 left join investment_products p on p.ID = c.walletProductId ORDER BY ID DESC LIMIT 1`;
-    let endpoint = '/core-service/get';
-    let url = `${HOST}${endpoint}`;
     sRequest.get(query).then(response => {
         res.send(response[0]);
     }, err => {
