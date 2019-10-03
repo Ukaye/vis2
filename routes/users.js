@@ -2728,45 +2728,15 @@ users.post('/application/schedule/:id', function(req, res, next) {
                                             Status: "AUTHORISED"
                                         });
                                     }
-                                    let count = 0;
-                                    for (let i=0; i<schedule.length; i++) {
-                                        let obj = schedule[i];
-                                        console.log('before',i)
-                                        xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient) => {
-                                            console.log('after',i)
-                                            console.log('=================')
-                                            obj.applicationID = req.params.id;
-                                            if (xeroClient && client[0]['funding_source']) {
-                                                let xeroInterest = await xeroClient.invoices.create({
-                                                    Type: 'ACCREC',
-                                                    Contact: {
-                                                        Name: client[0]['fullname']
-                                                    },
-                                                    Date: obj.interest_create_date,
-                                                    DueDate: obj.interest_collect_date,
-                                                    LineItems: [{
-                                                        Description: `LOAN ID: ${helperFunctions.padWithZeroes(obj.applicationID, 6)}`,
-                                                        Quantity: '1',
-                                                        UnitAmount: obj.interest_amount,
-                                                        AccountCode: client[0]['funding_source']
-                                                    }],
-                                                    Status: "AUTHORISED"
-                                                });
-                                                obj.principal_invoice_no = xeroPrincipal.Invoices[0]['InvoiceNumber'];
-                                                obj.interest_invoice_no = xeroInterest.Invoices[0]['InvoiceNumber'];
-                                            }
-                                            console.log(obj)
-                                            // callback2();
-                                            // connection.query('INSERT INTO application_schedules SET ?', obj, function (error, response, fields) {
-                                            //     if(!error) count++;
-                                            //     callback2();
-                                            // });
+                                    syncXeroSchedule(req, res, connection, client, schedule, xeroPrincipal)
+                                    .then(response => {
+                                        connection.release();
+                                        res.send({
+                                            "status": 200,
+                                            "message": `Application scheduled with ${schedule.length} invoices successfully!`,
+                                            "response": null
                                         });
-                                    }
-                                    // , function (data) {
-                                    //     connection.release();
-                                    //     res.send({"status": 200, "message": "Application scheduled with "+count+" invoices successfully!", "response": null});
-                                    // });
+                                    })
                                 });
                             });
                         }
@@ -2776,6 +2746,40 @@ users.post('/application/schedule/:id', function(req, res, next) {
         });
     });
 });
+
+async function syncXeroSchedule (req, res, connection, client, schedule, xeroPrincipal) {
+    for (let i=0; i <schedule.length; i++)
+        await postXeroSchedule(req, res, connection, schedule[i], client, xeroPrincipal);
+    return;
+}
+
+async function postXeroSchedule (req, res, connection, obj, client, xeroPrincipal) {
+    const xeroClient = await xeroFunctions.authorizedOperation(req, res, 'xero_loan_account');
+    obj.applicationID = req.params.id;
+    if (xeroClient && client[0]['funding_source']) {
+        let xeroInterest = await xeroClient.invoices.create({
+            Type: 'ACCREC',
+            Contact: {
+                Name: client[0]['fullname']
+            },
+            Date: obj.interest_create_date,
+            DueDate: obj.interest_collect_date,
+            LineItems: [{
+                Description: `LOAN ID: ${helperFunctions.padWithZeroes(obj.applicationID, 6)}`,
+                Quantity: '1',
+                UnitAmount: obj.interest_amount,
+                AccountCode: client[0]['funding_source']
+            }],
+            Status: "AUTHORISED"
+        });
+        obj.principal_invoice_no = xeroPrincipal.Invoices[0]['InvoiceNumber'];
+        obj.interest_invoice_no = xeroInterest.Invoices[0]['InvoiceNumber'];
+    }
+    connection.query('INSERT INTO application_schedules SET ?', obj, error => {
+        if(!error) count++;
+    });
+    return;
+}
 
 users.post('/application/approve-schedule/:id', function(req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async () => {
