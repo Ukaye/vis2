@@ -279,6 +279,8 @@ users.post('/new-client', function(req, res, next) {
         db.getConnection(function(err, connection) {
             if (err) throw err;
             connection.query(query2,[req.body.username, req.body.email, req.body.phone], function (error, results, fields) {
+                console.log(error)
+                console.log(results)
                 if (results && results[0]){
                     return res.send(JSON.stringify({"status": 200, "error": null, "response": results, "message": "Information in use by existing client!"}));
                 }

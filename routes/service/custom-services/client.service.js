@@ -164,9 +164,11 @@ router.get('/mandate/stop/:applicationID', function (req, res) {
 router.post('/corporate/create', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let postData = req.body,
-        query = `SELECT * FROM corporates WHERE name = '${req.body.name}'`,
+        query = `SELECT * FROM clients WHERE name = '${postData.name}'`,
         endpoint = `/core-service/get`,
         url = `${HOST}${endpoint}`;
+    if (postData.email) query = query.concat(` OR email = ${postData.email}`)
+    if (postData.phone) query = query.concat(` OR phone = ${postData.phone}`)
     axios.get(url, {
         params: {
             query: query
@@ -179,7 +181,7 @@ router.post('/corporate/create', function (req, res) {
                 response: response['data']
             });
         } else {
-            query = 'INSERT INTO corporates Set ?';
+            query = 'INSERT INTO clients Set ?';
             endpoint = `/core-service/post?query=${query}`;
             url = `${HOST}${endpoint}`;
             postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -218,9 +220,9 @@ router.get('/corporates/get', function (req, res) {
     let draw = req.query.draw;
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
-    let query = `SELECT *, (SELECT fullname FROM clients WHERE ID = p.clientID) client FROM corporates p 
-                 WHERE upper(p.name) LIKE "${search_string}%" OR upper(p.business_name) LIKE "${search_string}%" 
-                 OR upper(p.ID) LIKE "${search_string}%" ${order} LIMIT ${limit} OFFSET ${offset}`;
+    let query = `SELECT *, (SELECT fullname FROM clients WHERE ID = p.clientID) client FROM clients p 
+        WHERE p.client_type = 'corporate' AND (upper(p.name) LIKE "${search_string}%" OR upper(p.business_name) LIKE "${search_string}%" 
+        OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -228,9 +230,9 @@ router.get('/corporates/get', function (req, res) {
             query: query
         }
     }).then(response => {
-        query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM corporates p 
-                 WHERE upper(p.name) LIKE "${search_string}%" OR upper(p.business_name) LIKE "${search_string}%" 
-                 OR upper(p.ID) LIKE "${search_string}%") as recordsFiltered FROM corporates`;
+        query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM clients p 
+            WHERE p.client_type = 'corporate' AND (upper(p.name) LIKE "${search_string}%" OR upper(p.business_name) LIKE "${search_string}%" 
+            OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM clients WHERE client_type = 'corporate'`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {
@@ -257,7 +259,8 @@ router.get('/corporates/get', function (req, res) {
 
 router.get('/corporate/get/:id', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query = `SELECT *, (SELECT fullname FROM clients WHERE ID = p.clientID) client FROM corporates p WHERE ID = ${req.params.id}`,
+    let query = `SELECT *, (SELECT fullname FROM clients WHERE ID = p.clientID) client FROM clients 
+        WHERE ID = ${req.params.id} AND client_type = 'corporate'`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -273,7 +276,7 @@ router.get('/corporate/get/:id', function (req, res) {
 
 router.post('/corporate/disable/:id', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query = `UPDATE corporates Set ? WHERE ID = ${req.params.id}`;
+    let query = `UPDATE clients Set ? WHERE ID = ${req.params.id} AND client_type = 'corporate'`;
     let endpoint = `/core-service/post?query=${query}`;
     let url = `${HOST}${endpoint}`;
     let payload = {
@@ -299,7 +302,7 @@ router.post('/corporate/disable/:id', function (req, res) {
 
 router.post('/corporate/enable/:id', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query = `UPDATE corporates Set ? WHERE ID = ${req.params.id}`;
+    let query = `UPDATE clients Set ? WHERE ID = ${req.params.id} AND client_type = 'corporate'`;
     let endpoint = `/core-service/post?query=${query}`;
     let url = `${HOST}${endpoint}`;
     let payload = {
@@ -419,7 +422,7 @@ router.delete('/bad_cheque/:id', function (req, res) {
 
 router.get('/corporates-v2/get', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query = `SELECT ID, name, email, status, date_created from corporates WHERE status = 1 ORDER BY name asc`,
+    let query = `SELECT ID, name, email, status, date_created from clients WHERE status = 1 AND client_type = 'corporate' ORDER BY name asc`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -2459,8 +2462,8 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
             amount = parseFloat(req.body.amount) * 100,
             interest_amount = (req.body.amount >= invoice_.interest_owed)? invoice_.interest_owed : req.body.amount,
             principal_amount = (req.body.amount > interest_amount)? (req.body.amount - interest_amount) : 0;
-        
-        if (req.body.amount > (invoice_.interest_owed + invoice_.principal_owed))
+
+        if (req.body.amount > (invoice_.interest_owed + invoice_.principal_owed).round(2))
             return res.send({
                 "status": 500,
                 "error": null,

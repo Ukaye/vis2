@@ -412,6 +412,7 @@ router.get('/get/:id', function (req, res, next) {
                 requestId: response['data'][0]['requestId']
             };
             helperFunctions.mandateStatus(status_payload, function (remita_mandate_status) {
+                console.log(remita_mandate_status)
                 query = `SELECT * FROM application_schedules WHERE applicationID = ${response['data'][0]['applicationID']} AND status = 1`;
                 endpoint = '/core-service/get';
                 url = `${HOST}${endpoint}`;
