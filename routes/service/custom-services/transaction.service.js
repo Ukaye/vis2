@@ -2945,14 +2945,14 @@ router.get('/investment-accounts/:id', function (req, res, next) {
 /** End point to return an investment/savings transaction statement **/
 router.get('/inv-statements/:id', function (req, res, next) {
     let data = req.query;
-    let query = `SELECT v.ID,v.ref_no,c.fullname,v.description,v.amount,v.txn_date,p.ID as productId,u.fullname as createdByName,
+    let query = `SELECT v.ID,v.ref_no,c.fullname,v.description,v.amount,v.created_date,v.txn_date,p.ID as productId,u.fullname as createdByName,
     v.approvalDone,v.reviewDone,v.postDone,p.code,p.name,i.investment_start_date,i.investment_mature_date, v.ref_no, v.isApproved,v.is_credit,i.clientId,
     v.balance,v.is_capital,v.investmentId,i.isTerminated, i.isMatured FROM investment_txns v 
     left join investments i on v.investmentId = i.ID
     left join clients c on i.clientId = c.ID
     left join users u on u.ID = v.createdBy
     left join investment_products p on i.productId = p.ID
-    WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id} AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') >= '${data.startDate}' AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') <= '${data.endDate}' AND v.isApproved = 1 ORDER BY v.ID`;
+    WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id} AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') >= '${data.startDate}' AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') <= '${data.endDate}' AND v.isApproved = 1 AND v.postDone = 1 ORDER BY v.ID`;
     sRequest.get(query).then(response => {
         if (response.status === undefined) {
             res.send(response);
