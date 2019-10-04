@@ -443,17 +443,21 @@ function bindDataTable(id) {
         {//selectedInvestment.isMatured === 1 || selectedInvestment.isTerminated === 1
             width: "auto",
             "mRender": function (data, type, full) {
-                return `<div class="dropdown dropleft">
-                        <i class="fa fa-ellipsis-v" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        </i> 
-                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                          <button class="dropdown-item" id="dropdownItemDoc" data-toggle="modal" data-target="#viewListDocModal">Document</button>
-                          <button ${(selectedInvestment.isMatured === 1 || selectedInvestment.isTerminated === 1) ? 'disabled' : ''}  class="dropdown-item" id="dropdownItemRevert" ${(selectedInvestment.maturityDays === true) ? 'disabled' : ''} ${(full.isWallet === 1 || full.isTransfer === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 1 && full.is_capital === 0) ? '' : 'disabled'}>Reverse</button>
-                          <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 0) ? '' : 'disabled'}>Review</button>
-                          <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1) ? '' : 'disabled'} ${(full.approvalDone === 0) ? '' : 'disabled'}>Approval</button>
-                          <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1 && full.approvalDone === 1) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Post</button>
+                return `<div class="btn-group">
+                            <button class="btn btn-primary btn-sm" type="button">
+                                more
+                            </button>
+                        <button type="button" class="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="sr-only">Toggle Dropdown</span>
+                        </button>
+                        <div class="dropdown-menu">
+                            <button class="dropdown-item" id="dropdownItemDoc" data-toggle="modal" data-target="#viewListDocModal">Document</button>
+                            <button ${(selectedInvestment.isMatured === 1 || selectedInvestment.isTerminated === 1) ? 'disabled' : ''}  class="dropdown-item" id="dropdownItemRevert" ${(selectedInvestment.maturityDays === true) ? 'disabled' : ''} ${(full.isWallet === 1 || full.isTransfer === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 1 && full.is_capital === 0) ? '' : 'disabled'}>Reverse</button>
+                            <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 0) ? '' : 'disabled'}>Review</button>
+                            <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1) ? '' : 'disabled'} ${(full.approvalDone === 0) ? '' : 'disabled'}>Approval</button>
+                            <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1 && full.approvalDone === 1) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Post</button>
                         </div>
-                      </div>`;
+                    </div>`;
             }
         }]
     });
