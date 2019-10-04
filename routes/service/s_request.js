@@ -186,14 +186,16 @@ async function transactionalAlert(id, isWallet) {
         };
 
         const emailAdress = data.find(x => x.email !== '' && x.email !== undefined && x.email !== null);
-        emailService.send({
-            to: emailAdress.email,
-            subject: (isWallet.toString() === '0') ?
-                `${orgName[0].name} ${data[0].name} Transaction Alert` :
-                `${orgName[0].name} Wallet Transaction Alert`,
-            template: 'txn-alert',
-            context: emailObject
-        });
+        if (emailAdress.email) {
+            emailService.send({
+                to: emailAdress.email,
+                subject: (isWallet.toString() === '0') ?
+                    `${orgName[0].name} ${data[0].name} Transaction Alert` :
+                    `${orgName[0].name} Wallet Transaction Alert`,
+                template: 'txn-alert',
+                context: emailObject
+            });
+        }
     }
 
     return {};
