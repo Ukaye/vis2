@@ -186,7 +186,7 @@ async function transactionalAlert(id, isWallet) {
         };
 
         const emailAdress = data.find(x => x.email !== '' && x.email !== undefined && x.email !== null);
-        if (!emailAdress.email) {
+        if (emailAdress.email) {
             emailService.send({
                 to: emailAdress.email,
                 subject: (isWallet.toString() === '0') ?
