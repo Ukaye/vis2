@@ -1400,7 +1400,7 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemReview', function ()
     }
     $("#post_list_group").html('');
     $.ajax({
-        url: `investment-txns/verify-doc-uploads?productId=${data_row.productId}&operationId=${mOperationId}&txnId=${data_row.ID}`,
+        url: `investment-txns/verify-doc-uploads?productId=${(data_row.productId) ? data_row.productId : 0}&operationId=${mOperationId}&txnId=${data_row.ID}`,
         'type': 'get',
         'success': function (data) {
             if (data.status === undefined) {
@@ -1408,6 +1408,11 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemReview', function ()
                     setReviewRequirements(data_row);
                     getProductDocRequirements(1);
                 } else {
+                    $("#transactionDetails").empty();
+                    $("#review_list_group").html('');
+                    $("#tbodyDocs").html('');
+                    $("#tbodyUploadedDocs").html('');
+                    $("#review_list_doc").html('');
                     swal('Oops! Please kindly upload required document(s) before REVIEW', '', 'error');
                 }
             }

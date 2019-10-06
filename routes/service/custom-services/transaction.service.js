@@ -117,7 +117,7 @@ router.post('/create', function (req, res, next) {
                     .then(function (_response) {
                         if (_response.status === undefined) {
                             query = `SELECT * FROM investment_product_requirements
-                                    WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
+                                    WHERE productId = ${(data.productId) ? data.productId : 0} AND operationId = ${data.operationId} AND status = 1`;
                             sRequest.get(query)
                                 .then(function (response2) {
                                     if (response2.length > 0) {
@@ -160,7 +160,6 @@ router.post('/create', function (req, res, next) {
                                             txnId: _response.insertId,
                                             method: 'APPROVAL'
                                         };
-
                                         query = `INSERT INTO investment_op_approvals SET ?`;
                                         sRequest.post(query, invOps).then(p => {
                                         }, er22 => { });
@@ -171,7 +170,7 @@ router.post('/create', function (req, res, next) {
 
 
                             query = `SELECT * FROM investment_product_reviews
-                                    WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
+                                    WHERE productId = ${(data.productId) ? data.productId : 0} AND operationId = ${data.operationId} AND status = 1`;
                             sRequest.get(query)
                                 .then(function (response2) {
                                     if (response2.length > 0) {
@@ -222,7 +221,7 @@ router.post('/create', function (req, res, next) {
                                 });
 
                             query = `SELECT * FROM investment_product_posts
-                                    WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
+                                    WHERE productId = ${(data.productId) ? data.productId : 0} AND operationId = ${data.operationId} AND status = 1`;
                             sRequest.get(query)
                                 .then(function (response2) {
                                     if (response2.length > 0) {
@@ -2165,9 +2164,15 @@ router.post('/compute-interest', function (req, res, next) {
 
 /** End point to return fully mature months in an investment account**/
 router.get('/mature-interest-months/:id', function (req, res, next) {
-    getValidInvestmentMatureMonths(req.params.id, 1).then(payload => {
-        const result = payload.filter(x => isLastDayOfMonth(x.endDate));
-        res.send(result);
+    computeCurrentBalance(req.params.id).then(_bal => {
+        if (_bal > 0) {
+            getValidInvestmentMatureMonths(req.params.id, 1).then(payload => {
+                const result = payload.filter(x => isLastDayOfMonth(x.endDate));
+                res.send(result);
+            });
+        } else {
+            res.send([]);
+        }
     });
 });
 

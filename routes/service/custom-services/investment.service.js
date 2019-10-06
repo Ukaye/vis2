@@ -33,6 +33,7 @@ router.post('/create', function (req, res, next) {
         delete _data.selectedProduct;
         sRequest.post(query, _data)
             .then(function (response) {
+                console.log(data);
                 let inv_txn = {
                     txn_date: _data.investment_start_date,
                     description: "Opening Capital",
@@ -220,6 +221,7 @@ router.post('/create', function (req, res, next) {
                         });
                     });
             }, err => {
+                console.log(err);
                 res.send({
                     status: 500,
                     error: err,
@@ -227,6 +229,7 @@ router.post('/create', function (req, res, next) {
                 });
             })
             .catch(function (error) {
+                console.log(error);
                 res.send({
                     status: 500,
                     error: error,
@@ -386,6 +389,7 @@ router.get('/client-investments/:id', function (req, res, next) {
     left join investment_products p on i.productId = p.ID
     WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id} 
     AND (upper(p.code) LIKE "${search_string}%" OR upper(p.name) LIKE "${search_string}%") LIMIT ${limit} OFFSET ${offset}`;
+    console.log(query);
     sRequest.get(query).then(response => {
         let uniqueTxns = [];
         response.map(d => {
@@ -432,7 +436,7 @@ router.get('/client-investments/:id', function (req, res, next) {
                                         draw: draw,
                                         maturityDays: true,
                                         txnCurrentBalance: txnCurrentBalance,
-                                        txnCurrentBalanceWithoutInterest:txnCurrentBalanceWithoutInterest,
+                                        txnCurrentBalanceWithoutInterest: txnCurrentBalanceWithoutInterest,
                                         isLastMaturedTxnExist: (payload2[0].maturedInventmentTxn > 0) ? 1 : 0,
                                         recordsTotal: payload2[0].recordsTotal,
                                         recordsFiltered: payload[0].recordsFiltered,
@@ -445,7 +449,7 @@ router.get('/client-investments/:id', function (req, res, next) {
                                     draw: draw,
                                     maturityDays: false,
                                     txnCurrentBalance: txnCurrentBalance,
-                                    txnCurrentBalanceWithoutInterest:txnCurrentBalanceWithoutInterest,
+                                    txnCurrentBalanceWithoutInterest: txnCurrentBalanceWithoutInterest,
                                     isLastMaturedTxnExist: (payload2[0].maturedInventmentTxn > 0) ? 1 : 0,
                                     recordsTotal: payload2[0].recordsTotal,
                                     recordsFiltered: payload[0].recordsFiltered,
@@ -457,7 +461,7 @@ router.get('/client-investments/:id', function (req, res, next) {
                                 draw: draw,
                                 maturityDays: false,
                                 txnCurrentBalance: txnCurrentBalance,
-                                txnCurrentBalanceWithoutInterest:txnCurrentBalanceWithoutInterest,
+                                txnCurrentBalanceWithoutInterest: txnCurrentBalanceWithoutInterest,
                                 recordsTotal: payload2[0].recordsTotal,
                                 recordsFiltered: payload[0].recordsFiltered,
                                 data: (uniqueTxns === undefined) ? [] : uniqueTxns
