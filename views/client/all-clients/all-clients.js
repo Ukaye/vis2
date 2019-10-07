@@ -250,7 +250,7 @@ function populateDataTable(data) {
     let processed_data = [];
     $.each(data, function(k, v){
         let actions;
-        if (v.status === "1"){
+        if (v.status === 1){
             actions = '<a href="./client-info?id='+v.ID+'" class="write btn btn-primary "><i class="fa fa-tasks"></i> View Profile</a>'+
                 '<button onclick="disableClient('+v.ID+',\'non_corporate\','+v.xeroContactID+')" '+
                 'class="write btn btn-danger "><i class="fa fa-trash"></i> Disable Client</button>'
@@ -291,7 +291,7 @@ function disableClient(id, type, xeroContactID){
         function(isConfirm) {
             if (isConfirm){
                 let test = {}, data = {},
-                    url = (type === 'corporate')? `/client/corporate/disable/${id}` : `/user/del-client/${id}`;
+                    url = `/user/del-client/${id}`;
                 if (xeroContactID) data.xeroContactID = xeroContactID;
                 $.ajax({
                     'url': url,
@@ -330,7 +330,7 @@ function enableClient(id, type, xeroContactID){
         function(isConfirm) {
             if (isConfirm){
                 let test = {}, data = {},
-                    url = (type === 'corporate')? `/client/corporate/enable/${id}` : `/user/en-client/${id}`;
+                    url = `/user/en-client/${id}`;
                 if (xeroContactID) data.xeroContactID = xeroContactID;
                 $.ajax({
                     'url': url,

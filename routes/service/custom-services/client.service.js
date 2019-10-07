@@ -183,6 +183,7 @@ router.post('/corporate/create', function (req, res) {
             query = 'INSERT INTO clients Set ?';
             endpoint = `/core-service/post?query=${query}`;
             url = `${HOST}${endpoint}`;
+            postData.fullname = postData.username;
             postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
             db.query(query, postData, function (error, response_) {
                 if (error) {
