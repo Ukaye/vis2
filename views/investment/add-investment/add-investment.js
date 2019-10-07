@@ -126,6 +126,8 @@ $("#investment_amount").on("focusout", function (event) {
 $("#investment_product").on("change", function (event) {
     const selectedID = $("#investment_product").val();
     let selectedValue = products.find(x => x.ID.toString() === selectedID.toString());
+    $('#interest_rate').val(selectedValue.interest_rate);
+    $('#premature_interest_rate').val(selectedValue.premature_interest_rate);
     if (selectedValue !== undefined) {
         $("#amount_info").html(`Min.: ${(selectedValue.investment_min === '') ? 'N/A' : selectedValue.investment_min} Max.:${(selectedValue.investment_max === '') ? 'N/A' : selectedValue.investment_max}`);
         let start_with = $("#investment_date_start").val();
@@ -264,6 +266,8 @@ $("#btn_save_product").on("click", function (event) {
         selectedProduct: selectedValue,
         createdBy: (JSON.parse(localStorage.getItem("user_obj"))).ID,
         isPaymentMadeByWallet: $('#opt_payment_made_by').val(),
+        interest_rate: $('#interest_rate').val(),
+        premature_interest_rate: $('#premature_interest_rate').val()
     };
 
     if (selectedValue.interest_disbursement_time === 'Up-Front') {
