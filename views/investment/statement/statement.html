@@ -23,7 +23,7 @@
             padding: 30px;
             border: 1px solid #eee;
             box-shadow: 0 0 10px rgba(0, 0, 0, .15);
-            font-size: 16px;
+            font-size: 14px;
             line-height: 24px;
             font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
             color: #555;
@@ -48,7 +48,7 @@
             text-align: right;
         }
 
-        .invoice-box table tr td:nth-child(3) {
+        .invoice-box table tr td:nth-child(7) {
             text-align: right;
         }
 
@@ -66,10 +66,12 @@
             padding-bottom: 40px;
         }
 
-        .invoice-box table tr.heading td {
-            background: #eee;
+        .invoice-box table tr.heading th {
+            background: #303030;
+            /*background: #2e3192;*/
             border-bottom: 1px solid #ddd;
             font-weight: bold;
+            padding: 10px 5px;
         }
 
         .title {
@@ -97,8 +99,8 @@
         /*border-top: 2px solid #eee;*/
         /*font-weight: bold;*/
         /*}*/
-        .invoice-box table tr.item td:nth-child(3) {
-            color: red;
+        .invoice-box table tr.item td:nth-child(6) {
+            color: #ff0000a6;
         }
 
         .stamp {
@@ -152,9 +154,9 @@
     <div class="invoice-box">
         <table cellpadding="0" cellspacing="0">
             <tr class="top" style="box-shadow: 0 0 10px rgba(0, 0, 0, .15);
-    border-radius: 5px;
-    padding: 20px;">
-                <td colspan="3" style="padding: 28px;">
+            border-radius: 5px;
+            padding: 20px;">
+                <td colspan="7" style="padding: 28px;">
                     <table>
                         <tr>
                             <td class="title">
@@ -162,10 +164,11 @@
                             </td>
 
                             <td>
-                                <b>Client Name:</b> <span id="clientName"></span><br>
-                                <b>Account Type:</b> <span id="inventmentName">Savings Account</span><br>
-                                <b>Period: </b><span id="period"></span><br>
-                                <b>Date Printed:</b> <span id="printedDate"></span>
+                                <span id="name"></span>,<br>
+                                <span id="address"></span>,<br>
+                                <span id="state_poCode"></span>.<br>
+                                <span id="phone"></span><br>
+                                <span id="email"></span>
                             </td>
                         </tr>
                     </table>
@@ -173,17 +176,15 @@
             </tr>
 
             <tr class="information">
-                <td colspan="3">
+                <td colspan="7">
                     <table>
                         <tr>
                             <td>
-                                <span id="name"></span>,<br>
-                                <span id="address"></span>,<br>
-                                <span id="state_poCode"></span>.<br>
-                                <span id="phone"></span><br>
-                                <span id="email"></span>
+                                <b>Client Name:</b> <span id="clientName"></span><br>
+                                <b>Account Type:</b> <span id="inventmentName">Savings Account</span><br>
+                                <b>Period: </b><span id="period"></span><br>
+                                <b>Date Printed:</b> <span id="printedDate"></span>
                             </td>
-
                             <td>
                                 <b>Opening Balance:</b>₦<span id="openingBal"></span><br>
                                 <b>Closing Balance:</b>₦<span id="closingBal"></span><br>
@@ -195,41 +196,42 @@
                 </td>
             </tr>
 
-            <tr class="heading">
-                <td class="col-6">
+            <tr class="heading" style="color: #fafafa">
+                <th>
                     Description
-                </td>
-
-                <td class="col-3">
+                </th>
+                <th>
+                    Reference
+                </th>
+                <th>
+                    TimeStamp
+                </th>
+                <th>
+                    Trans Date
+                </th>
+                <th>
                     Credit
-                </td>
-
-                <td class="col-3">
+                </th>
+                <th>
                     Debit
-                </td>
+                </th>
+                <th>
+                    Balance
+                </th>
             </tr>
-
             <tbody id="statementTable">
             </tbody>
 
-            <tr class="total">
-                <td></td>
-                <td></td>
-
-                <td class="title stamp">
-                    <img id="idStamp"
-                        style="width:150px; max-width:300px; margin-top: -166px; position: absolute; margin-left: -140px">
-                </td>
-            </tr>
-            <tr class="total">
-                <td></td>
-                <td></td>
-
-                <td class="title stamp">
-                    <img id="idSign"
-                        style="width:130px; max-width:300px; margin-top: -121px; position: absolute; margin-left: -130px;">
-                </td>
-            </tr>
+        </table>
+        <table>
+            <tbody>
+                <tr>
+                    <td style="float: right">
+                        <img id="idSign" width="90" alt="" style="position: relative; top: -184px; right: -148px">
+                        <img id="idStamp" width="260" alt="" style="position: relative; top: -128px;">
+                    </td>
+                </tr>
+            </tbody>
         </table>
     </div>
     <script src="../../assets/js/vendor/jquery-2.1.4.min.js"></script>

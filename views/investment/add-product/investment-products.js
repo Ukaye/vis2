@@ -226,10 +226,12 @@ function setWalletControlStatus(status) {
         $('#opt_on_freq_charge').attr("disabled", false);
     } else {
         $('#withdrawal_conditions_value').attr("disabled", true);
+        $('#withdrawal_conditions_value').val(0);
         $('#chk_enforce_count').attr("checked", false);
         $('#chk_enforce_count').attr("disabled", true);
         $('#withdrawal_charge_duration').attr("disabled", true);
         $('#withdrawal_charge_freq').attr("disabled", true);
+        $('#withdrawal_charge_freq').val(0);
         $('#opt_on_freq_charge').attr("disabled", true);
     }
 }
@@ -237,19 +239,21 @@ function setWalletControlStatus(status) {
 $("#inv_moves_wallet").on('change',
     function () {
         let status = $('#inv_moves_wallet').is(':checked');
-        if (status) {
-            // $('#acct_allows_withdrawal').attr("checked", false);
-            setWalletControlStatus(false);
-        }
+        // setWalletControlStatus1(status);
+        // if (status) {
+        // $('#acct_allows_withdrawal').attr("checked", false);
+        // setWalletControlStatus(false);
+        // }
     });
 
 $("#interest_moves_wallet").on('change',
     function () {
         let status = $('#interest_moves_wallet').is(':checked');
-        if (status) {
-            // $('#acct_allows_withdrawal').attr("checked", false);
-            setWalletControlStatus(false);
-        }
+        // setWalletControlStatus1(status);
+        // if (status) {
+        // $('#acct_allows_withdrawal').attr("checked", false);
+        // setWalletControlStatus(false);
+        // }
     });
 
 

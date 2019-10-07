@@ -117,7 +117,7 @@ router.post('/create', function (req, res, next) {
                     .then(function (_response) {
                         if (_response.status === undefined) {
                             query = `SELECT * FROM investment_product_requirements
-                                    WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
+                                    WHERE productId = ${(data.productId) ? data.productId : 0} AND operationId = ${data.operationId} AND status = 1`;
                             sRequest.get(query)
                                 .then(function (response2) {
                                     if (response2.length > 0) {
@@ -160,7 +160,6 @@ router.post('/create', function (req, res, next) {
                                             txnId: _response.insertId,
                                             method: 'APPROVAL'
                                         };
-
                                         query = `INSERT INTO investment_op_approvals SET ?`;
                                         sRequest.post(query, invOps).then(p => {
                                         }, er22 => { });
@@ -171,7 +170,7 @@ router.post('/create', function (req, res, next) {
 
 
                             query = `SELECT * FROM investment_product_reviews
-                                    WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
+                                    WHERE productId = ${(data.productId) ? data.productId : 0} AND operationId = ${data.operationId} AND status = 1`;
                             sRequest.get(query)
                                 .then(function (response2) {
                                     if (response2.length > 0) {
@@ -222,7 +221,7 @@ router.post('/create', function (req, res, next) {
                                 });
 
                             query = `SELECT * FROM investment_product_posts
-                                    WHERE productId = ${data.productId} AND operationId = ${data.operationId} AND status = 1`;
+                                    WHERE productId = ${(data.productId) ? data.productId : 0} AND operationId = ${data.operationId} AND status = 1`;
                             sRequest.get(query)
                                 .then(function (response2) {
                                     if (response2.length > 0) {
@@ -2165,9 +2164,15 @@ router.post('/compute-interest', function (req, res, next) {
 
 /** End point to return fully mature months in an investment account**/
 router.get('/mature-interest-months/:id', function (req, res, next) {
-    getValidInvestmentMatureMonths(req.params.id, 1).then(payload => {
-        const result = payload.filter(x => isLastDayOfMonth(x.endDate));
-        res.send(result);
+    computeCurrentBalance(req.params.id).then(_bal => {
+        if (_bal > 0) {
+            getValidInvestmentMatureMonths(req.params.id, 1).then(payload => {
+                const result = payload.filter(x => isLastDayOfMonth(x.endDate));
+                res.send(result);
+            });
+        } else {
+            res.send([]);
+        }
     });
 });
 
@@ -2945,14 +2950,14 @@ router.get('/investment-accounts/:id', function (req, res, next) {
 /** End point to return an investment/savings transaction statement **/
 router.get('/inv-statements/:id', function (req, res, next) {
     let data = req.query;
-    let query = `SELECT v.ID,v.ref_no,c.fullname,v.description,v.amount,v.txn_date,p.ID as productId,u.fullname as createdByName,
+    let query = `SELECT v.ID,v.ref_no,c.fullname,v.description,v.amount,v.created_date,v.txn_date,p.ID as productId,u.fullname as createdByName,
     v.approvalDone,v.reviewDone,v.postDone,p.code,p.name,i.investment_start_date,i.investment_mature_date, v.ref_no, v.isApproved,v.is_credit,i.clientId,
     v.balance,v.is_capital,v.investmentId,i.isTerminated, i.isMatured FROM investment_txns v 
     left join investments i on v.investmentId = i.ID
     left join clients c on i.clientId = c.ID
     left join users u on u.ID = v.createdBy
     left join investment_products p on i.productId = p.ID
-    WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id} AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') >= '${data.startDate}' AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') <= '${data.endDate}' AND v.isApproved = 1 ORDER BY v.ID`;
+    WHERE v.isWallet = 0 AND v.investmentId = ${req.params.id} AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') >= '${data.startDate}' AND STR_TO_DATE(v.txn_date, '%Y-%m-%d') <= '${data.endDate}' AND v.isApproved = 1 AND v.postDone = 1 ORDER BY v.ID`;
     sRequest.get(query).then(response => {
         if (response.status === undefined) {
             res.send(response);

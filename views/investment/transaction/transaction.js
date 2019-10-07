@@ -443,17 +443,21 @@ function bindDataTable(id) {
         {//selectedInvestment.isMatured === 1 || selectedInvestment.isTerminated === 1
             width: "auto",
             "mRender": function (data, type, full) {
-                return `<div class="dropdown dropleft">
-                        <i class="fa fa-ellipsis-v" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        </i> 
-                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                          <button class="dropdown-item" id="dropdownItemDoc" data-toggle="modal" data-target="#viewListDocModal">Document</button>
-                          <button ${(selectedInvestment.isMatured === 1 || selectedInvestment.isTerminated === 1) ? 'disabled' : ''}  class="dropdown-item" id="dropdownItemRevert" ${(selectedInvestment.maturityDays === true) ? 'disabled' : ''} ${(full.isWallet === 1 || full.isTransfer === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 1 && full.is_capital === 0) ? '' : 'disabled'}>Reverse</button>
-                          <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 0) ? '' : 'disabled'}>Review</button>
-                          <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1) ? '' : 'disabled'} ${(full.approvalDone === 0) ? '' : 'disabled'}>Approval</button>
-                          <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1 && full.approvalDone === 1) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Post</button>
+                return `<div class="btn-group">
+                            <button class="btn btn-primary btn-sm" type="button">
+                                more
+                            </button>
+                        <button type="button" class="btn btn-sm btn-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="sr-only">Toggle Dropdown</span>
+                        </button>
+                        <div class="dropdown-menu">
+                            <button class="dropdown-item" id="dropdownItemDoc" data-toggle="modal" data-target="#viewListDocModal">Document</button>
+                            <button ${(selectedInvestment.isMatured === 1 || selectedInvestment.isTerminated === 1) ? 'disabled' : ''}  class="dropdown-item" id="dropdownItemRevert" ${(selectedInvestment.maturityDays === true) ? 'disabled' : ''} ${(full.isWallet === 1 || full.isTransfer === 1) ? 'disabled' : ''} ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.postDone === 1 && full.is_capital === 0) ? '' : 'disabled'}>Reverse</button>
+                            <button class="dropdown-item" id="dropdownItemReview" data-toggle="modal" data-target="#viewReviewModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 0) ? '' : 'disabled'}>Review</button>
+                            <button class="dropdown-item" id="dropdownItemApproval" data-toggle="modal" data-target="#viewListApprovalModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1) ? '' : 'disabled'} ${(full.approvalDone === 0) ? '' : 'disabled'}>Approval</button>
+                            <button class="dropdown-item" id="dropdownItemPost" data-toggle="modal" data-target="#viewPostModal" ${(full.isDeny === 0) ? '' : 'disabled'} ${(full.reviewDone === 1 && full.approvalDone === 1) ? '' : 'disabled'} ${(full.postDone === 0) ? '' : 'disabled'}>Post</button>
                         </div>
-                      </div>`;
+                    </div>`;
             }
         }]
     });
@@ -1396,7 +1400,7 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemReview', function ()
     }
     $("#post_list_group").html('');
     $.ajax({
-        url: `investment-txns/verify-doc-uploads?productId=${data_row.productId}&operationId=${mOperationId}&txnId=${data_row.ID}`,
+        url: `investment-txns/verify-doc-uploads?productId=${(data_row.productId) ? data_row.productId : 0}&operationId=${mOperationId}&txnId=${data_row.ID}`,
         'type': 'get',
         'success': function (data) {
             if (data.status === undefined) {
@@ -1404,6 +1408,11 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemReview', function ()
                     setReviewRequirements(data_row);
                     getProductDocRequirements(1);
                 } else {
+                    $("#transactionDetails").empty();
+                    $("#review_list_group").html('');
+                    $("#tbodyDocs").html('');
+                    $("#tbodyUploadedDocs").html('');
+                    $("#review_list_doc").html('');
                     swal('Oops! Please kindly upload required document(s) before REVIEW', '', 'error');
                 }
             }

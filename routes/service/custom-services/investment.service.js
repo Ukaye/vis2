@@ -10,229 +10,233 @@ const sRequest = require('../s_request');
 /** End point to create investment/savings account **/
 router.post('/create', function (req, res, next) {
     let _date = new Date();
-    var data = req.body
+    let data = JSON.parse(JSON.stringify(req.body));
     const is_after = isAfter(new Date(data.investment_mature_date.toString()), new Date(data.investment_start_date.toString()))
     if (is_after || data.investment_start_date === '' || data.investment_mature_date === '') {
-        data.status = 1;
-        let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-        data.date_created = dt;
-        let _code = moment().utcOffset('+0100').format('YY/MMDDhmm');
-        data.code = `${data.code}/${_code}`;
-        if (data.selectedProduct.interest_disbursement_time === 'Monthly') {
-            data.interestAt = new Date(_date.getUTCFullYear(), _date.getUTCMonth() + 1, _date.getDate());
-            data.nextInterestAt = new Date(_date.getUTCFullYear(), _date.getUTCMonth() + 2, _date.getDate());
-        } else if (data.selectedProduct.interest_disbursement_time.toString().toLowerCase() === 'Up-Front') {
-            data.isInterestCleared = 1;
-        } else if (data.selectedProduct.interest_disbursement_time.toString().toLowerCase() === 'End of Tenure') {
+        editedProductOps(data).then(payld => {
+            data = payld;
+            let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+            data.date_created = dt;
+            let _code = moment().utcOffset('+0100').format('YY/MMDDhmm');
+            data.code = `${data.code}/${_code}`;
+            if (data.selectedProduct.interest_disbursement_time === 'Monthly') {
+                data.interestAt = new Date(_date.getUTCFullYear(), _date.getUTCMonth() + 1, _date.getDate());
+                data.nextInterestAt = new Date(_date.getUTCFullYear(), _date.getUTCMonth() + 2, _date.getDate());
+            } else if (data.selectedProduct.interest_disbursement_time.toString().toLowerCase() === 'Up-Front') {
+                data.isInterestCleared = 1;
+            } else if (data.selectedProduct.interest_disbursement_time.toString().toLowerCase() === 'End of Tenure') {
 
-        }
+            }
 
-        let query = `INSERT INTO investments SET ?`;
-        let dt_ = moment().utcOffset('+0100').format('x');
-        let _data = JSON.parse(JSON.stringify(data));
-        delete _data.selectedProduct;
-        sRequest.post(query, _data)
-            .then(function (response) {
-                let inv_txn = {
-                    txn_date: _data.investment_start_date,
-                    description: "Opening Capital",
-                    amount: parseFloat(data.amount.split(',').join('')),
-                    is_credit: 1,
-                    created_date: dt,
-                    balance: 0,
-                    isDeposit: 1,
-                    is_capital: 1,
-                    createdBy: data.createdBy,
-                    ref_no: dt_,
-                    investmentId: response.insertId,
-                    isPaymentMadeByWallet: data.isPaymentMadeByWallet
-                };
+            let query = `INSERT INTO investments SET ?`;
+            let dt_ = moment().utcOffset('+0100').format('x');
+            let _data = JSON.parse(JSON.stringify(data));
+            delete _data.selectedProduct;
+            delete _data.interest_rate;
+            delete _data.premature_interest_rate;
+            sRequest.post(query, _data)
+                .then(function (response) {
+                    let inv_txn = {
+                        txn_date: _data.investment_start_date,
+                        description: "Opening Capital",
+                        amount: parseFloat(data.amount.split(',').join('')),
+                        is_credit: 1,
+                        created_date: dt,
+                        balance: 0,
+                        isDeposit: 1,
+                        is_capital: 1,
+                        createdBy: data.createdBy,
+                        ref_no: dt_,
+                        investmentId: response.insertId,
+                        isPaymentMadeByWallet: data.isPaymentMadeByWallet
+                    };
 
-                query = `INSERT INTO investment_txns SET ?`;
-                sRequest.post(query, inv_txn)
-                    .then(function (response_) {
-                        query = `SELECT * FROM investment_product_requirements
-                            WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
-                        sRequest.get(query, {
-                            params: {
-                                query: query
-                            }
-                        })
-                            .then(function (response2) {
-                                if (response2.length > 0) {
-                                    let result = response2[0];
-                                    let pasrsedData = JSON.parse(result.roleId);
-                                    pasrsedData.map(role => {
+                    query = `INSERT INTO investment_txns SET ?`;
+                    sRequest.post(query, inv_txn)
+                        .then(function (response_) {
+                            query = `SELECT * FROM investment_product_requirements
+                                WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
+                            sRequest.get(query, {
+                                params: {
+                                    query: query
+                                }
+                            })
+                                .then(function (response2) {
+                                    if (response2.length > 0) {
+                                        let result = response2[0];
+                                        let pasrsedData = JSON.parse(result.roleId);
+                                        pasrsedData.map(role => {
+                                            let invOps = {
+                                                investmentId: response.insertId,
+                                                operationId: 1,
+                                                roleId: role,
+                                                isAllRoles: result.isAllRoles,
+                                                createdAt: dt,
+                                                updatedAt: dt,
+                                                createdBy: data.createdBy,
+                                                txnId: response_.insertId,
+                                                priority: result.priority,
+                                                method: 'APPROVAL'
+                                            };
+
+                                            if (invOps.priority === '[]') {
+                                                delete invOps.priority;
+                                            }
+
+                                            query = `INSERT INTO investment_op_approvals SET ?`;
+                                            try {
+                                                sRequest.post(query, invOps);
+                                            } catch (error) { }
+
+                                        });
+                                    } else {
                                         let invOps = {
                                             investmentId: response.insertId,
                                             operationId: 1,
-                                            roleId: role,
-                                            isAllRoles: result.isAllRoles,
+                                            roleId: '',
                                             createdAt: dt,
                                             updatedAt: dt,
                                             createdBy: data.createdBy,
                                             txnId: response_.insertId,
-                                            priority: result.priority,
                                             method: 'APPROVAL'
                                         };
-
-                                        if (invOps.priority === '[]') {
-                                            delete invOps.priority;
-                                        }
-
                                         query = `INSERT INTO investment_op_approvals SET ?`;
                                         try {
                                             sRequest.post(query, invOps);
                                         } catch (error) { }
+                                    }
+                                })
+                                .catch(function (error) { });
+                            query = `SELECT * FROM investment_product_reviews
+                                WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
+                            sRequest.get(query)
+                                .then(function (response2) {
+                                    if (response2.length > 0) {
+                                        let result = response2[0];
+                                        let pasrsedData = JSON.parse(result.roleId);
+                                        pasrsedData.map((role) => {
+                                            let invOps = {
+                                                investmentId: response.insertId,
+                                                operationId: 1,
+                                                roleId: role,
+                                                isAllRoles: result.isAllRoles,
+                                                createdAt: dt,
+                                                updatedAt: dt,
+                                                createdBy: data.createdBy,
+                                                txnId: response_.insertId,
+                                                priority: result.priority,
+                                                method: 'REVIEW'
+                                            };
 
-                                    });
-                                } else {
-                                    let invOps = {
-                                        investmentId: response.insertId,
-                                        operationId: 1,
-                                        roleId: '',
-                                        createdAt: dt,
-                                        updatedAt: dt,
-                                        createdBy: data.createdBy,
-                                        txnId: response_.insertId,
-                                        method: 'APPROVAL'
-                                    };
-                                    query = `INSERT INTO investment_op_approvals SET ?`;
-                                    try {
-                                        sRequest.post(query, invOps);
-                                    } catch (error) { }
-                                }
-                            })
-                            .catch(function (error) { });
-                        query = `SELECT * FROM investment_product_reviews
-                            WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
-                        sRequest.get(query)
-                            .then(function (response2) {
-                                if (response2.length > 0) {
-                                    let result = response2[0];
-                                    let pasrsedData = JSON.parse(result.roleId);
-                                    pasrsedData.map((role) => {
+                                            if (invOps.priority === '[]') {
+                                                delete invOps.priority;
+                                            }
+
+                                            query = `INSERT INTO investment_op_approvals SET ?`;
+                                            try {
+                                                sRequest.post(query, invOps);
+                                            } catch (error) { }
+
+                                        });
+                                    } else {
                                         let invOps = {
                                             investmentId: response.insertId,
                                             operationId: 1,
-                                            roleId: role,
-                                            isAllRoles: result.isAllRoles,
+                                            roleId: '',
                                             createdAt: dt,
                                             updatedAt: dt,
                                             createdBy: data.createdBy,
                                             txnId: response_.insertId,
-                                            priority: result.priority,
                                             method: 'REVIEW'
                                         };
-
-                                        if (invOps.priority === '[]') {
-                                            delete invOps.priority;
-                                        }
-
                                         query = `INSERT INTO investment_op_approvals SET ?`;
                                         try {
                                             sRequest.post(query, invOps);
                                         } catch (error) { }
+                                    }
+                                })
+                                .catch(function (error) { });
+                            query = `SELECT * FROM investment_product_posts
+                                WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
+                            sRequest.get(query)
+                                .then(function (response2) {
+                                    if (response2.length > 0) {
+                                        let result = response2[0];
+                                        let pasrsedData = JSON.parse(result.roleId);
+                                        pasrsedData.map(role => {
+                                            let invOps = {
+                                                investmentId: response.insertId,
+                                                operationId: 1,
+                                                roleId: role,
+                                                isAllRoles: result.isAllRoles,
+                                                createdAt: dt,
+                                                updatedAt: dt,
+                                                createdBy: data.createdBy,
+                                                txnId: response_.insertId,
+                                                priority: result.priority,
+                                                method: 'POST'
+                                            };
 
-                                    });
-                                } else {
-                                    let invOps = {
-                                        investmentId: response.insertId,
-                                        operationId: 1,
-                                        roleId: '',
-                                        createdAt: dt,
-                                        updatedAt: dt,
-                                        createdBy: data.createdBy,
-                                        txnId: response_.insertId,
-                                        method: 'REVIEW'
-                                    };
-                                    query = `INSERT INTO investment_op_approvals SET ?`;
-                                    try {
-                                        sRequest.post(query, invOps);
-                                    } catch (error) { }
-                                }
-                            })
-                            .catch(function (error) { });
-                        query = `SELECT * FROM investment_product_posts
-                            WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
-                        sRequest.get(query)
-                            .then(function (response2) {
-                                if (response2.length > 0) {
-                                    let result = response2[0];
-                                    let pasrsedData = JSON.parse(result.roleId);
-                                    pasrsedData.map(role => {
+
+                                            if (invOps.priority === '[]') {
+                                                delete invOps.priority;
+                                            }
+
+                                            query = `INSERT INTO investment_op_approvals SET ?`;
+                                            try {
+                                                sRequest.post(query, invOps);
+                                            } catch (error) { }
+                                        });
+                                    } else {
                                         let invOps = {
                                             investmentId: response.insertId,
                                             operationId: 1,
-                                            roleId: role,
-                                            isAllRoles: result.isAllRoles,
+                                            roleId: '',
                                             createdAt: dt,
                                             updatedAt: dt,
                                             createdBy: data.createdBy,
                                             txnId: response_.insertId,
-                                            priority: result.priority,
                                             method: 'POST'
                                         };
-
-
-                                        if (invOps.priority === '[]') {
-                                            delete invOps.priority;
-                                        }
-
                                         query = `INSERT INTO investment_op_approvals SET ?`;
                                         try {
                                             sRequest.post(query, invOps);
                                         } catch (error) { }
-                                    });
-                                } else {
-                                    let invOps = {
-                                        investmentId: response.insertId,
-                                        operationId: 1,
-                                        roleId: '',
-                                        createdAt: dt,
-                                        updatedAt: dt,
-                                        createdBy: data.createdBy,
-                                        txnId: response_.insertId,
-                                        method: 'POST'
-                                    };
-                                    query = `INSERT INTO investment_op_approvals SET ?`;
-                                    try {
-                                        sRequest.post(query, invOps);
-                                    } catch (error) { }
-                                }
-                            })
-                            .catch(function (error) { });
+                                    }
+                                })
+                                .catch(function (error) { });
 
-                        setDocRequirement(data, response_.insertId);
-                        res.send({});
-                    }, err => {
-                        res.send({
-                            status: 500,
-                            error: err,
-                            response: null
+                            setDocRequirement(data.productId, response_.insertId);
+                            res.send({});
+                        }, err => {
+                            res.send({
+                                status: 500,
+                                error: err,
+                                response: null
+                            });
+                        })
+                        .catch(function (error) {
+                            res.send({
+                                status: 500,
+                                error: error,
+                                response: null
+                            });
                         });
-                    })
-                    .catch(function (error) {
-                        res.send({
-                            status: 500,
-                            error: error,
-                            response: null
-                        });
+                }, err => {
+                    res.send({
+                        status: 500,
+                        error: err,
+                        response: null
                     });
-            }, err => {
-                res.send({
-                    status: 500,
-                    error: err,
-                    response: null
+                })
+                .catch(function (error) {
+                    res.send({
+                        status: 500,
+                        error: error,
+                        response: null
+                    });
                 });
-            })
-            .catch(function (error) {
-                res.send({
-                    status: 500,
-                    error: error,
-                    response: null
-                });
-            });
+        });
     } else {
         res.send({
             status: 500,
@@ -245,10 +249,133 @@ router.post('/create', function (req, res, next) {
 
 });
 
+function getProductItem(id) {
+    return new Promise((resolve, reject) => {
+        let query = `SELECT * FROM investment_products WHERE id = ${id}`;
+        sRequest.get(query)
+            .then(function (response2) {
+                resolve(response2[0]);
+            })
+    });
+}
+
+function cloneProductItem(item) {
+    return new Promise((resolve, reject) => {
+        let query = `INSERT INTO investment_products SET ?`;
+        const _item = JSON.parse(JSON.stringify(item));
+        delete _item.ID;
+        _item.status = 0;
+        sRequest.post(query, _item)
+            .then(function (response2) {
+                resolve(response2.insertId);
+            });
+    });
+}
+
+async function editedProductOps(data) {
+    if (data.interest_rate.toString() !== data.selectedProduct.interest_rate.toString() ||
+        data.premature_interest_rate.toString() !== data.selectedProduct.premature_interest_rate.toString()) {
+        const product = await getProductItem(data.productId);
+        const clonedProductId = await cloneProductItem(product);
+        await productCloneOps(data.productId, clonedProductId);
+
+        let _data = {
+            clientId: data.clientId,
+            productId: clonedProductId,
+            amount: data.amount,
+            investment_start_date: data.investment_start_date,
+            investment_mature_date: data.investment_mature_date,
+            code: data.code,
+            selectedProduct: data.selectedProduct,
+            createdBy: data.createdBy,
+            isPaymentMadeByWallet: data.isPaymentMadeByWallet
+        };
+        return _data;
+    } else {
+        data.status = 1;
+        return data;
+    }
+}
+
+async function productCloneOps(originalProductId, newProductId) {
+    let tableNames = [{ name: 'investment_product_reviews', isDoc: false },
+    { name: 'investment_product_posts', isDoc: false },
+    { name: 'investment_product_requirements', isDoc: false },
+    { name: 'investment_doc_requirement', isDoc: true }];
+    let results = [];
+    for (let index = 0; index < tableNames.length; index++) {
+        const table = tableNames[index];
+        const data = await getOriginalProductRequirement(originalProductId, table.name);
+        if (data.length > 0) {
+            const clonedProduct = await createClonedProductRequirement(data, table.isDoc, newProductId, table.name);
+            results.push(clonedProduct);
+        }
+    }
+    return results;
+}
+
+function getOriginalProductRequirement(productId, table) {
+    return new Promise((resolve, reject) => {
+        let query = `Select * from ${table} 
+        WHERE productId = ${productId} AND status = 1`;
+        sRequest.get(query).then(response_prdt_ => {
+            resolve(response_prdt_);
+        }, err => {
+            resolve([]);
+        });
+    });
+}
+
+/** Function use to create investment/savings product requirement **/
+function createClonedProductRequirement(values, isDoc, newProductId, table) {
+    return new Promise((resolve, reject) => {
+        let baseQuery = (!isDoc) ? `INSERT INTO
+        ${table}(
+            roleId,
+            operationId,
+            productId,
+            createdDate,
+            updatedDate,
+            createdBy,
+            status,
+            isAllRoles,
+            priority
+        )VALUES ` : `INSERT INTO
+        ${table}(
+            productId,
+            name,
+            createdBy,
+            createdAt,
+            operationId,
+            status
+        )VALUES `;
+        let bodyQuery = '';
+        for (let i = 0; i < values.length; i++) {
+            const item = values[i];
+            const dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+            if (!isDoc)
+                bodyQuery += `('${item.roleId}',${item.operationId},${newProductId},'${item.createdDate}','${dt}',${item.createdBy},${1},'${item.isAllRoles}','${item.priority}')`;
+            else
+                bodyQuery += `(${newProductId},'${item.name}',${item.createdBy},'${dt}',${item.operationId},${1})`;
+
+            if (values.length !== i + 1) {
+                bodyQuery += ',';
+            }
+        }
+
+        let query = baseQuery + bodyQuery;
+        sRequest.get(query).then(result => {
+            resolve(result);
+        }, err => {
+            reject(err);
+        });
+    });
+}
+
 /** Function to set document requirement for investment/savings account **/
-function setDocRequirement(data, txnId) {
+function setDocRequirement(productId, txnId) {
     let query = `SELECT * FROM investment_doc_requirement
-                WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
+                WHERE productId = ${productId} AND operationId = ${1} AND status = 1`;
     sRequest.get(query)
         .then(function (response2) {
             if (response2.length > 0) {
@@ -432,7 +559,7 @@ router.get('/client-investments/:id', function (req, res, next) {
                                         draw: draw,
                                         maturityDays: true,
                                         txnCurrentBalance: txnCurrentBalance,
-                                        txnCurrentBalanceWithoutInterest:txnCurrentBalanceWithoutInterest,
+                                        txnCurrentBalanceWithoutInterest: txnCurrentBalanceWithoutInterest,
                                         isLastMaturedTxnExist: (payload2[0].maturedInventmentTxn > 0) ? 1 : 0,
                                         recordsTotal: payload2[0].recordsTotal,
                                         recordsFiltered: payload[0].recordsFiltered,
@@ -445,7 +572,7 @@ router.get('/client-investments/:id', function (req, res, next) {
                                     draw: draw,
                                     maturityDays: false,
                                     txnCurrentBalance: txnCurrentBalance,
-                                    txnCurrentBalanceWithoutInterest:txnCurrentBalanceWithoutInterest,
+                                    txnCurrentBalanceWithoutInterest: txnCurrentBalanceWithoutInterest,
                                     isLastMaturedTxnExist: (payload2[0].maturedInventmentTxn > 0) ? 1 : 0,
                                     recordsTotal: payload2[0].recordsTotal,
                                     recordsFiltered: payload[0].recordsFiltered,
@@ -457,7 +584,7 @@ router.get('/client-investments/:id', function (req, res, next) {
                                 draw: draw,
                                 maturityDays: false,
                                 txnCurrentBalance: txnCurrentBalance,
-                                txnCurrentBalanceWithoutInterest:txnCurrentBalanceWithoutInterest,
+                                txnCurrentBalanceWithoutInterest: txnCurrentBalanceWithoutInterest,
                                 recordsTotal: payload2[0].recordsTotal,
                                 recordsFiltered: payload[0].recordsFiltered,
                                 data: (uniqueTxns === undefined) ? [] : uniqueTxns
