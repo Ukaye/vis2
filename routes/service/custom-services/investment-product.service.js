@@ -10,7 +10,7 @@ router.get('/all/:id', function (req, res, next) {
     let limit = req.query.limit;
     let page = ((req.query.page - 1) * 10 < 0) ? 0 : (req.query.page - 1) * 10;
     let search_string = (req.query.search_string === undefined) ? "" : req.query.search_string.toUpperCase();
-    let query = `SELECT ID,name,code,investment_max,investment_min,min_term,max_term,interest_disbursement_time 
+    let query = `SELECT ID,name,code,investment_max,investment_min,min_term,max_term,interest_disbursement_time,interest_rate,premature_interest_rate
     FROM investment_products WHERE isWalletApproval = ${req.params.id} AND status = 1 AND isDeactivated = 0 AND (upper(code) LIKE "${search_string}%" OR upper(name) LIKE "${search_string}%") ORDER BY ID desc LIMIT ${limit} OFFSET ${page}`;
     sRequest.get(query)
         .then(function (response) {
