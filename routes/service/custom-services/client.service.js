@@ -689,7 +689,6 @@ router.delete('/disable/:id', helperFunctions.verifyJWT, function (req, res) {
 });
 
 router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT *, (select fullname from users u where u.ID = clients.loan_officer) loan_officer,
         (select branch_name from branches b where b.ID = clients.branch) branch, 
         (select count(*) from applications where userID = clients.ID and not (status = 0 and close_status = 0)) total_active_loan_count, 
@@ -697,16 +696,16 @@ router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
         (select (select sum(loan_amount) from applications where userID = clients.ID and not (status = 0 and close_status = 0)) - 
         sum(payment_amount) from schedule_history where applicationID in (select id from applications where userid = clients.ID and 
         not (status = 0 and close_status = 0)) and status = 1) total_active_loan_balance
-        FROM clients WHERE ID = ${req.params.id}`,
-        endpoint = '/core-service/get',
-        url = `${HOST}${endpoint}`;
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(response => {
+        FROM clients WHERE ID = ${req.params.id}`;
+    db.query(query, (error, response) => {
+        if (error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+        
         let obj = {},
-            result = (response.data === undefined) ? {} : response.data[0];
+            result = response[0];
         if (!result) return res.send({
             "status": 500,
             "error": 'User does not exist!',
