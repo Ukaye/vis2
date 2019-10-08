@@ -228,7 +228,8 @@
                             </div>
                             <button id="current_stage" class ="btn btn-warning btn-lg" style="float: right;" disabled="disabled"></button>
                             <button class ="previous btn btn-danger btn-lg" style="float: right;"><i class="fa fa-backward"></i></button>
-                            <button id="newOfferModalBtn" class ="btn btn-success btn-lg" style="float: right; margin-right: 5px; display: none;" data-toggle="modal" data-target="#newOfferModal"><i class="fa fa-check"></i> Make New Offer</button>
+                            <button id="newOfferModalBtn" class ="btn btn-success btn-lg" style="float: right; margin-right: 5px; display: none;" 
+                                data-toggle="modal" data-target="#newOfferModal" onclick="setDefaultOffer()"><i class="fa fa-check"></i> Make New Offer</button>
                             <button class ="cancel btn btn-danger btn-lg" style="float: right; margin-right: 5px;"><i class="fa fa-times"></i></button>
                             <span style="float: right; margin: 15px;">
                                 <a href="#" class="pull-right transitions-toggle">Show Transitions <i class="fa fa-chevron-down"></i></a>
@@ -804,6 +805,8 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button id="newOfferModalBtn" class ="btn btn-warning" data-toggle="modal" 
+                    data-target="#newOfferModal" onclick="setDefaultOffer()"> Edit Loan Offer</button>
                 <button type="button" class="btn btn-primary" onclick="disburse()">Disburse</button>
             </div>
         </div>

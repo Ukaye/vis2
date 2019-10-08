@@ -2041,6 +2041,14 @@ function uploadFile() {
     });
 };
 
+function setDefaultOffer() {
+    $('#amount2').val(application.loan_amount);
+    $('#interest-rate2').val(application.interest_rate);
+    $('#term2').val(application.duration);
+    $('#repayment-date2').val(application.repayment_date);
+    $('#amortization2').val('standard').trigger('change');
+}
+
 $('#term2').keyup(function () {
     triggerAmortization2();
 });

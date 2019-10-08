@@ -3366,49 +3366,105 @@ Number.prototype.round = function(p) {
 };
 
 users.post('/application/disburse/:id', function(req, res, next) {
-    db.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID 
-        FROM applications a, clients c WHERE a.ID=${req.params.id} AND a.userID=c.ID`, function (error, app, fields) {
-        if (error) {
-            res.send({"status": 500, "error": error, "response": null});
-        } else if (!app[0]) {
-            res.send({"status": 500, "error": "Application does not exist!", "response": null});
-        } else {
-            let data = req.body,
-                application = app[0];
-            data.status = 2;
-            data.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-            db.query(`UPDATE applications SET ? WHERE ID = ${req.params.id}`, data, function (error, result, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
-                } else {
-                    let disbursement = {
-                        loan_id: application.ID,
-                        amount: application.amount,
-                        client_id: application.clientID,
-                        loan_officer: application.loan_officerID,
-                        branch: application.branchID,
-                        date_disbursed: data.disbursement_date,
-                        status: 1,
-                        date_created: data.date_modified
-                    };
-                    db.query(`INSERT INTO disbursement_history SET ?`, disbursement, function (error, result, fields) {
-                        if(error){
-                            res.send({"status": 500, "error": error, "response": null});
-                        } else {
-                            let payload = {};
-                            payload.category = 'Application';
-                            payload.userid = req.cookies.timeout;
-                            payload.description = 'Loan Disbursed';
-                            payload.affected = req.params.id;
-                            notificationsService.log(req, payload);
-                            res.send({"status": 200, "message": "Loan disbursed successfully!"});
-                        }
-                    });
-                }
-            });
-        }
+    xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async () => {
+        db.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID 
+            FROM applications a, clients c WHERE a.ID=${req.params.id} AND a.userID=c.ID`, function (error, app, fields) {
+            if (error) {
+                res.send({"status": 500, "error": error, "response": null});
+            } else if (!app[0]) {
+                res.send({"status": 500, "error": "Application does not exist!", "response": null});
+            } else {
+                let data = req.body,
+                    application = app[0];
+                data.status = 2;
+                data.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                db.query(`UPDATE applications SET ? WHERE ID = ${req.params.id}`, data, function (error, result, fields) {
+                    if(error){
+                        res.send({"status": 500, "error": error, "response": null});
+                    } else {
+                        let disbursement = {
+                            loan_id: application.ID,
+                            amount: application.amount,
+                            client_id: application.clientID,
+                            loan_officer: application.loan_officerID,
+                            branch: application.branchID,
+                            date_disbursed: data.disbursement_date,
+                            status: 1,
+                            date_created: data.date_modified
+                        };
+                        db.query(`INSERT INTO disbursement_history SET ?`, disbursement, function (error, result, fields) {
+                            if(error){
+                                res.send({"status": 500, "error": error, "response": null});
+                            } else {
+                                let payload = {};
+                                payload.category = 'Application';
+                                payload.userid = req.cookies.timeout;
+                                payload.description = 'Loan Disbursed';
+                                payload.affected = req.params.id;
+                                notificationsService.log(req, payload);
+                                createXeroSchedule(req, res);
+                                res.send({"status": 200, "message": "Loan disbursed successfully!"});
+                            }
+                        });
+                    }
+                });
+            }
+        });
     });
 });
+
+function createXeroSchedule (req, res) {
+    db.getConnection(function(err, connection) {
+        if (err) throw err;
+
+        connection.query(`SELECT c.fullname, a.funding_source FROM applications a, clients c WHERE a.ID = ${req.params.id} 
+        AND a.userID = c.ID`, function (error, client) {
+            if(error){
+                res.send({"status": 500, "error": error, "response": null});
+            } else {
+                connection.query(`SELECT * FROM application_schedules WHERE applicationID = ${req.params.id} 
+                AND status = 1`, function (error, invoices) {
+                    if(error){
+                        res.send({"status": 500, "error": error, "response": null});
+                    } else {
+                        let LineItems = [],
+                            schedule = invoices;
+                        if (client[0]['funding_source']) {
+                            for (let i=0; i<schedule.length; i++) {
+                                let invoice = schedule[i];
+                                LineItems.push({
+                                    Description: `LOAN ID: ${helperFunctions.padWithZeroes(req.params.id, 6)}`,
+                                    Quantity: '1',
+                                    UnitAmount: invoice.payment_amount,
+                                    AccountCode: client[0]['funding_source']
+                                });
+                            }
+                        }
+                        xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient) => {
+                            let xeroPrincipal;
+                            if (xeroClient && client[0]['funding_source']) {
+                                xeroPrincipal = await xeroClient.invoices.create({
+                                    Type: 'ACCREC',
+                                    Contact: {
+                                        Name: client[0]['fullname']
+                                    },
+                                    Date: schedule[0]['payment_create_date'],
+                                    DueDate: schedule[0]['payment_collect_date'],
+                                    LineItems: LineItems,
+                                    Status: "AUTHORISED"
+                                });
+                            }
+                            syncXeroSchedule(req, res, connection, client[0], schedule, xeroPrincipal, 'put')
+                            .then(response => {
+                                connection.release();
+                            });
+                        });
+                    }
+                });
+            }
+        });
+    });
+}
 
 users.get('/application/invoice-history/:id', function(req, res, next) {
     db.query('SELECT s.ID, s.invoiceID, s.payment_amount, s.interest_amount, s.fees_amount, s.penalty_amount, s.payment_date, s.date_created, s.status,' +
