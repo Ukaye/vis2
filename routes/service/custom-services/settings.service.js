@@ -468,4 +468,19 @@ router.get('/xero', function (req, res, next) {
     });
 });
 
+router.get('/contacts', function (req, res) {
+    xeroFunctions.authorizedOperation(req, res, null, async (xeroClient) => {
+        let xeroContacts = [];
+        if (xeroClient) {
+            let xeroContacts_ = await xeroClient.contacts.get();
+            xeroContacts = xeroContacts_.Contacts;
+        }
+        return res.send({
+            "status": 200,
+            "message": "Contacts fetched successfully!",
+            "response": xeroContacts
+        });
+    });
+});
+
 module.exports = router;

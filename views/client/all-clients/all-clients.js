@@ -852,12 +852,13 @@ function upload(i){
         var formData = new FormData();
         formData.append('file', file); formData.append('type', i);
         $.ajax({
-            url: "/user/upload-file/"+folder_name+'/'+item,
+            url: `http://localhost:4000/user/upload-file/Mercy%20Favour%20Oriaku_itaukemeabasi%40yahoo.com/ID%20Card`,
             type: "POST",
             data: formData,
             processData: false,
             contentType: false,
             success: function(response) {
+                console.log(response)
                 swal('Success', "File Uploaded Successfully!", 'success');
             },
             error: function() {

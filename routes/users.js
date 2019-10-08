@@ -501,6 +501,7 @@ users.post('/upload/:id', function(req, res) {
 
 //File Upload - New Client (Image and Signature)
 users.post('/upload-file/:id/:item', function(req, res) {
+    console.log('here')
     if (!req.files) return res.status(400).send('No files were uploaded.');
     if (!req.params) return res.status(400).send('No Number Plate specified!');
     let sampleFile = req.files.file,
@@ -509,6 +510,7 @@ users.post('/upload-file/:id/:item', function(req, res) {
         extension = extArray[extArray.length - 1];
     if (extension) extension = extension.toLowerCase();
     fs.stat('files/users/'+req.params.id+'/', function(err) {
+        console.log(err)
         if (!err) {
             console.log('file or directory exists');
         }
