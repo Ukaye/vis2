@@ -703,7 +703,7 @@ router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
             "error": error,
             "response": null
         });
-        
+
         let obj = {},
             result = response[0];
         if (!result) return res.send({
@@ -721,7 +721,9 @@ router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
             });
         } else {
             fs.readdir(path, function (err, files) {
+                console.log(files)
                 files = helperFunctions.removeFileDuplicates(path, files);
+                console.log(files)
                 async.forEach(files, function (file, callback) {
                     let filename = file.split('.')[1].split('_');
                     filename.shift();
@@ -802,9 +804,7 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function (req, res) 
         }
         const file_url = `${folder_url}${folder}_${item}.${extension}`;
         fs.stat(folder_url, function (err) {
-            if (!err) {
-                console.log('file or directory exists');
-            } else if (err.code === 'ENOENT') {
+            if (err && err.code === 'ENOENT') {
                 fs.mkdirSync(`files/users/${folder}/`);
             }
         });
