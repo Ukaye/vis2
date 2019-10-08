@@ -349,6 +349,10 @@ functions.removeFileDuplicates = (folder_path, files) => {
         file_.shift();
         name = file_.join('_');
         datetime = fs.statSync(path.join(folder_path, file)).ctime;
+        console.log(check)
+        console.log(name)
+        console.log(datetime)
+        console.log('===============')
         if (check.name === name) {
             if ((new Date(datetime) > new Date(check.datetime))) {
                 files_[files_.indexOf(check.file)] = file;
