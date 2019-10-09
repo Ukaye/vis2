@@ -47,15 +47,27 @@ function getAccounts() {
         'type': 'get',
         'url': "/settings/accounts",
         'success': function (data) {
-            $.each(data.response, function (key, account) {
-                $('#xero_escrow_account').append(`<option value="${account.Code}">${account.Name} 
-                    (${account.Type})</option>`);
-                if (account.Type === 'BANK')
-                    $('#xero_payoff_account').append(`<option value="${account.Code}">${account.Name}</option>`);
-                if (account.Class === 'EXPENSE')
-                    $('#xero_writeoff_account').append(`<option value="${account.Code}">${account.Name} (${account.Type})</option>`);
-            });
-            getXeroConfig();
+            if (data && data.response && data.response[0]) {
+                $.each(data.response, function (key, account) {
+                    $('#xero_escrow_account').append(`<option value="${account.Code}">${account.Name} 
+                        (${account.Type})</option>`);
+                    if (account.Type === 'BANK')
+                        $('#xero_payoff_account').append(`<option value="${account.Code}">${account.Name}</option>`);
+                    if (account.Class === 'EXPENSE')
+                        $('#xero_writeoff_account').append(`<option value="${account.Code}">${account.Name} (${account.Type})</option>`);
+                });
+                getXeroConfig();
+            } else {
+                $('#xeroConfig .modal-footer .btn-primary').hide();
+                $('#xeroConfig .modal-body').html(`      
+                    <div class="alert alert-danger" role="alert" style="margin-top: 15px;">
+                        <h3 class="alert-heading">Xero is not connected yet!</h3>
+                        <p>Your account needs to be connected to xero before setting up configurations.</p>
+                        <hr>
+                        <p class="mb-0">Please contact the admin for any related issues.</p>
+                    </div>
+                `);
+            }
         }
     });
 }
