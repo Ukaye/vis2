@@ -1771,7 +1771,7 @@ users.post('/del-client/:id', function(req, res, next) {
         postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
         let payload = [postData.date_modified, req.params.id],
             query = 'Update clients SET status = 0, date_modified = ? where ID=?';
-        if (xero_client && postData.xeroContactID) {
+        if (xeroClient && postData.xeroContactID) {
             let xeroContact = await xeroClient.contacts.update({
                 ContactNumber: postData.xeroContactID,
                 ContactStatus: 'ARCHIVED'
