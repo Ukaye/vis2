@@ -2950,7 +2950,7 @@ users.post('/application/add-payment/:id/:agent_id', function(req, res, next) {
                             DueDate: data.interest_collect_date,
                             LineItems: [{
                                 Description: `LOAN ID: ${helperFunctions.padWithZeroes(data.applicationID, 9)} | 
-                                    Interest receivable for this on ${invoice.interest_collect_date}`,
+                                    Interest receivable for this on ${data.interest_collect_date}`,
                                 Quantity: '1',
                                 UnitAmount: data.interest_amount,
                                 AccountCode: integration.xero_interest_account
@@ -3314,36 +3314,33 @@ function allocateXeroOverpayment(req, res, client) {
                 let balance = parseFloat(xeroOverpayments[index]['RemainingCredit']);
                 if (principal_amount > 0) {
                     if (principal_amount < balance) {
+                        let xeroInvoice = await xeroClient.invoices.get({
+                            InvoiceNumber: data.schedule.principal_invoice_no
+                        });
                         let xeroOverpayment = await xeroClient.overpayments.allocations.create({
                             Invoice: {
-                                InvoiceNumber: data.schedule.principal_invoice_no
+                                InvoiceID: xeroInvoice.Invoices[0]['InvoiceID']
                             },
                             Amount: principal_amount
-                            // LineItems: [{
-                            //     Description: `INVOICE ID: ${data.schedule.principal_invoice_no}`,
-                            //     UnitAmount: principal_amount,
-                            //     AccountCode: data.invoice.xeroCollectionBankID
-                            // }]
                         },
                         {
                             OverpaymentID: xeroOverpayments[index]['OverpaymentID']
                         });
-                        console.log('p < b')
-                        console.log(xeroOverpayment);
                         balance -= principal_amount;
                         principal_amount = 0;
                     } else {
+                        let xeroInvoice = await xeroClient.invoices.get({
+                            InvoiceNumber: data.schedule.principal_invoice_no
+                        });
                         let xeroOverpayment = await xeroClient.overpayments.allocations.create({
                             Invoice: {
-                                InvoiceNumber: data.schedule.principal_invoice_no
+                                InvoiceID: xeroInvoice.Invoices[0]['InvoiceID']
                             },
                             Amount: balance
                         },
                         {
                             OverpaymentID: xeroOverpayments[index]['OverpaymentID']
                         });
-                        console.log('p >= b')
-                        console.log(xeroOverpayment);
                         principal_amount -= balance;
                         index++;
                         balance = parseFloat(xeroOverpayments[index]['RemainingCredit']);
@@ -3352,31 +3349,33 @@ function allocateXeroOverpayment(req, res, client) {
 
                 if (interest_amount > 0) {
                     if (interest_amount < balance) {
+                        let xeroInvoice = await xeroClient.invoices.get({
+                            InvoiceNumber: data.schedule.interest_invoice_no
+                        });
                         let xeroOverpayment = await xeroClient.overpayments.allocations.create({
                             Invoice: {
-                                InvoiceNumber: data.schedule.interest_invoice_no
+                                InvoiceID: xeroInvoice.Invoices[0]['InvoiceID']
                             },
                             Amount: interest_amount
                         },
                         {
                             OverpaymentID: xeroOverpayments[index]['OverpaymentID']
                         });
-                        console.log('i < b')
-                        console.log(xeroOverpayment);
                         balance -= interest_amount;
                         interest_amount = 0;
                     } else {
+                        let xeroInvoice = await xeroClient.invoices.get({
+                            InvoiceNumber: data.schedule.interest_invoice_no
+                        });
                         let xeroOverpayment = await xeroClient.overpayments.allocations.create({
                             Invoice: {
-                                InvoiceNumber: data.schedule.interest_invoice_no
+                                InvoiceID: xeroInvoice.Invoices[0]['InvoiceID']
                             },
                             Amount: balance
                         },
                         {
                             OverpaymentID: xeroOverpayments[index]['OverpaymentID']
                         });
-                        console.log('i >= b')
-                        console.log(xeroOverpayment);
                         interest_amount -= balance;
                         index++;
                         balance = parseFloat(xeroOverpayments[index]['RemainingCredit']);

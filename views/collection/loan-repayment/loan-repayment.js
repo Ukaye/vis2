@@ -511,7 +511,7 @@ function confirmPayment() {
     $('#wait').show();
     $('#confirmPayment').modal('hide');
     if (invoice.payment_source === 'remita' && remita_id) invoice.remitaPaymentID = remita_id;
-    invoice.xeroCollectionBankID = $('#collection_bank').val();
+    if ($('#collection_bank').val() !== '000') invoice.xeroCollectionBankID = $('#collection_bank').val();
     updateEscrow(invoice, total_payment, function () {
         let overpayment = (payment - (parseFloat(invoice.actual_payment_amount) + parseFloat(invoice.actual_interest_amount))).round(2);
         if (overpayment > 0){
@@ -573,7 +573,7 @@ function updateEscrow(invoice, amount, callback) {
                 invoice: invoice
             },
             'success': function (data) {
-                // callback();
+                callback();
             },
             'error': function (err) {
                 notification('Oops! An error occurred while processing escrow payment','','error');
