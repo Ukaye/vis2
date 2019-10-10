@@ -3220,7 +3220,7 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                 });
                                 console.log('here')
                                 console.log('xeroPayment', xeroPayment)
-                                console.log(xeroPayment)
+                                console.log(xeroPayment.Payments[0])
                                 invoice.xeroInterestPaymentID = xeroPayment.Payments[0]['PaymentID'];
                             }
                             db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response, fields) {
