@@ -2,13 +2,13 @@ $(document).ready(function() {
     loadComments();
     getInformationRequests();
     read_write_1();
-    getFundingSources();
+    getCollectionBank();
 });
 
-function getFundingSources() {
+function getCollectionBank() {
     $.ajax({
         type: "GET",
-        url: "/settings/application/funding_source",
+        url: "/settings/collection_bank",
         success: function (data) {
             $.each(data.response, function (key, funding_source) {
                 $('#funding').append(`<option value="${funding_source.Code}">${funding_source.Name} 

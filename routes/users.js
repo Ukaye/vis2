@@ -3650,7 +3650,7 @@ users.post('/application/loancirrus-id/:application_id', function(req, res, next
 });
 
 users.post('/application/pay-off/:id/:agentID', function(req, res, next) {
-    xeroFunctions.authorizedOperation(req, res, 'xero_payoff', async () => {
+    xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async () => {
         let data = req.body;
         data.close_status = 1;
         db.getConnection(function(err, connection) {
@@ -3700,7 +3700,7 @@ users.post('/application/pay-off/:id/:agentID', function(req, res, next) {
                                                 invoice.type = 'penalty';
                                             }
                                         }
-                                        xeroFunctions.authorizedOperation(req, res, 'xero_payoff', async (xeroClient) => {
+                                        xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
                                             if (xeroClient && invoice.payment_amount > 0 && 
                                                 invoice_obj.principal_invoice_no && data.close_bank) {
                                                 let xeroPayment = await xeroClient.payments.create({

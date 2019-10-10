@@ -68,10 +68,10 @@ function getAccounts() {
         'url': "/settings/accounts",
         'success': function (data) {
             $.each(data.response, function (key, account) {
-                if (account.Type === 'BANK')
+                if (account.Type === 'CURRENT')
                     $('#xero_disbursement_account').append(`<option value="${account.Code}">${account.Name}</option>`);
+                    $('#xero_principal_account').append(`<option value="${account.Code}">${account.Name}</option>`);
                 if (account.Class === 'REVENUE') {
-                    $('#xero_principal_account').append(`<option value="${account.Code}">${account.Name} (${account.Type})</option>`);
                     $('#xero_interest_account').append(`<option value="${account.Code}">${account.Name} (${account.Type})</option>`);
                 }
                 if (account.Class === 'EXPENSE')
@@ -102,7 +102,6 @@ function getXeroConfig() {
             if (config.xero_interest_account) $('#xero_interest_account').val(config.xero_interest_account);
             if (config.xero_collection_bank) $('#xero_collection_bank').prop('checked', true);
             if (config.xero_escrow) $('#xero_escrow').prop('checked', true);
-            if (config.xero_payoff) $('#xero_payoff').prop('checked', true);
             if (config.xero_writeoff) {
                 $('#xero_writeoff').prop('checked', true);
                 $('#xero_writeoff_account').prop('disabled', false);
@@ -139,7 +138,6 @@ function saveXeroConfig() {
     if ($('#xero_client').is(':checked')) config.xero_client = 1;
     if ($('#xero_collection_bank').is(':checked')) config.xero_collection_bank = 1;
     if ($('#xero_escrow').is(':checked')) config.xero_escrow = 1;
-    if ($('#xero_payoff').is(':checked')) config.xero_payoff = 1;
     config.created_by = (JSON.parse(localStorage.user_obj)).ID;
     $('#wait').show();
     $.ajax({

@@ -390,7 +390,7 @@ router.get('/application/funding_source', function (req, res) {
         let xeroAccounts = [];
         if (xeroClient) {
             let xeroAccounts_ = await xeroClient.accounts.get();
-            xeroAccounts = xeroAccounts_.Accounts.filter(e => {return e.Class === 'EXPENSE'});
+            xeroAccounts = xeroAccounts_.Accounts.filter(e => {return e.Class === 'CURRENT'});
         }
         return res.send({
             "status": 200,
