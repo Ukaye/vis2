@@ -3439,12 +3439,12 @@ users.post('/application/disburse/:id', function(req, res, next) {
                                         Name: application.fullname
                                     },
                                     BankAccount: {
-                                        Code: integration.xero_disbursement_account
+                                        Code: data.funding_source
                                     },
                                     LineItems: [{
                                         Description: `LOAN ID: ${helperFunctions.padWithZeroes(application.ID, 9)}`,
                                         UnitAmount: application.amount,
-                                        AccountCode: data.funding_source,
+                                        AccountCode: integration.xero_disbursement_account,
                                         TaxType: 'NONE'
                                     }],
                                     Date: data.disbursement_date,
