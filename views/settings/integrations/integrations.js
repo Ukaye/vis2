@@ -68,9 +68,10 @@ function getAccounts() {
         'url': "/settings/accounts",
         'success': function (data) {
             $.each(data.response, function (key, account) {
-                if (account.Type === 'CURRENT')
+                if (account.Type === 'CURRENT') {
                     $('#xero_disbursement_account').append(`<option value="${account.Code}">${account.Name}</option>`);
                     $('#xero_principal_account').append(`<option value="${account.Code}">${account.Name}</option>`);
+                }
                 if (account.Class === 'REVENUE') {
                     $('#xero_interest_account').append(`<option value="${account.Code}">${account.Name} (${account.Type})</option>`);
                 }
