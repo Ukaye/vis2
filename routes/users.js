@@ -3328,6 +3328,7 @@ function allocateXeroOverpayment(req, res, client) {
                         });
                         balance -= principal_amount;
                         principal_amount = 0;
+                        console.log(xeroOverpayment)
                     } else {
                         let xeroInvoice = await xeroClient.invoices.get({
                             InvoiceNumber: data.schedule.principal_invoice_no
