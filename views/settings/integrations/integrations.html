@@ -130,6 +130,31 @@
                             <input id="xero_loan_account" type="checkbox">
                             Loan Applications Module
                         </label>
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <select id="xero_disbursement_account" class="form-control" disabled="disabled">
+                                    <option value="000" selected="selected">-- Select Disbursement/GL Account --</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-4">
+                                <select id="xero_loan_account_status" class="form-control" disabled="disabled">
+                                    <option selected="selected">DRAFT</option>
+                                    <option>AUTHORISED</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top: 5px;">
+                            <div class="col-lg-6">
+                                <select id="xero_principal_account" class="form-control" disabled="disabled">
+                                    <option value="000" selected="selected">-- Select Principal Acct --</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-6">
+                                <select id="xero_interest_account" class="form-control" disabled="disabled">
+                                    <option value="000" selected="selected">-- Select Interest Acct --</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     <hr>
                     <div class="form-group">
@@ -142,17 +167,14 @@
                     <div class="form-group">
                         <label class="form-control-label">
                             <input id="xero_escrow" type="checkbox">
-                            Escrow (Overpayment) Module
+                            Overpayments Module
                         </label>
-                        <select id="xero_escrow_account" class="form-control" disabled="disabled">
-                            <option value="000" selected="selected">-- Select Escrow Account --</option>
-                        </select>
                     </div>
                     <hr>
                     <div class="form-group">
                         <label class="form-control-label">
                             <input id="xero_writeoff" type="checkbox">
-                            Write Off Module
+                            Write Off Account
                         </label>
                         <select id="xero_writeoff_account" class="form-control" disabled="disabled">
                             <option value="000" selected="selected">-- Select Write Off Account --</option>
@@ -162,11 +184,8 @@
                     <div class="form-group">
                         <label class="form-control-label">
                             <input id="xero_payoff" type="checkbox">
-                            Pay Off Module
+                            Pay Off Account
                         </label>
-                        <select id="xero_payoff_account" class="form-control" disabled="disabled">
-                            <option value="000" selected="selected">-- Select Pay Off Account --</option>
-                        </select>
                     </div>
                 </form>
             </div>

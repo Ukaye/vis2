@@ -2,10 +2,10 @@ $(document).ready(function() {
     loadComments();
     getInformationRequests();
     read_write_1();
-    getFundingSource();
+    getFundingSources();
 });
 
-function getFundingSource() {
+function getFundingSources() {
     $.ajax({
         type: "GET",
         url: "/settings/application/funding_source",
@@ -1175,9 +1175,8 @@ function checkTotalDue() {
 function disburse() {
     let disbursal = {};
     disbursal.funding_source = $('#funding').val();
-    disbursal.disbursement_channel = $('#channel').val();
     disbursal.disbursement_date = $('#disbursement-date').val();
-    if (disbursal.funding_source === "-- Select a Funding Source --" || disbursal.disbursement_channel === "-- Select a Channel --" || !disbursal.disbursement_date)
+    if (disbursal.funding_source === "-- Select a Disbursement Bank --" || !disbursal.disbursement_date)
         return notification('Kindly fill all required fields!','','warning');
     if ($('#fees-check').is(':checked')) {
         let $fees = $('#disbursement-fees');
@@ -1731,11 +1730,11 @@ function payOffLoan() {
     payoff.close_amount = currencyToNumberformatter($('#payoff-amount').val());
     payoff.close_interest = $('#payoff-interest').val();
     payoff.close_date = $('#payoff-date').val();
-    payoff.close_channel = $('#payoff-channel').val();
+    payoff.close_bank = $('#payoff-bank').val();
     payoff.close_comment = $('#payoff-notes').val();
     if ($('input[name=payoff-include-interest]:checked').val())
         payoff.close_include_interest = $('input[name=payoff-include-interest]:checked').val();
-    if (!payoff.close_amount || !payoff.close_interest || !payoff.close_date || !payoff.close_channel)
+    if (!payoff.close_amount || !payoff.close_interest || !payoff.close_date)
         return notification('Kindly fill all required inputs to close loan','','warning');
     $.ajax({
         'url': '/user/application/pay-off/'+application_id+'/'+(JSON.parse(localStorage.user_obj)).ID,
@@ -2041,12 +2040,22 @@ function uploadFile() {
     });
 };
 
-function setDefaultOffer() {
+function setDefaultOffer(type) {
     $('#amount2').val(application.loan_amount);
     $('#interest-rate2').val(application.interest_rate);
     $('#term2').val(application.duration);
     $('#repayment-date2').val(application.repayment_date);
     $('#amortization2').val('standard').trigger('change');
+    $('#amount2').prop('disabled', false);
+    $('#interest-rate2').prop('disabled', false);
+    $('#term2').prop('disabled', false);
+    $('#amortization2').prop('disabled', false);
+    if (type === 'edit_repayment_date') {
+        $('#amount2').prop('disabled', true);
+        $('#interest-rate2').prop('disabled', true);
+        $('#term2').prop('disabled', true);
+        $('#amortization2').prop('disabled', true);
+    }
 }
 
 $('#term2').keyup(function () {

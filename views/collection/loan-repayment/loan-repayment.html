@@ -147,7 +147,7 @@
                             <button class="btn btn-primary" onclick="goToLoanOverview()" style="float: right;">Loan Overview <i class="fa fa-forward"></i></button>
                             <button id="remitaPaymentButton" class="btn btn-warning" data-toggle="modal" data-target="#remitaPaymentModal" style="float: right; display: none;">Remita Payment</button>
                             <button class="btn btn-success" data-toggle="modal" data-target="#addPaymentModal" style="float: right;">Add Additional Interest</button>
-                            <a href="#" style="float: right; margin: 8px; text-decoration: underline;" data-toggle="modal" data-target="#escrowHistory" onclick="escrowHistory()">Escrow Balance: ₦<span class="escrow-balance">0</span></a>
+                            <a href="#" style="float: right; margin: 8px; text-decoration: underline;" data-toggle="modal" data-target="#escrowHistory" onclick="escrowHistory()">Overpayments: ₦<span class="escrow-balance">0</span></a>
                         </div>
                         <div class="card-body">
                             <div id="loanCollectionSchedule" style="margin-top: 30px; overflow-x: scroll; max-width: 1200px"></div>
@@ -225,7 +225,7 @@
                                 <option value="remita">Remita</option>
                             </select>
                         </div>
-                        <small class="form-text text-muted">Escrow Balance available is ₦<span class="escrow-balance">0</span></small>
+                        <small class="form-text text-muted">Overpayments available is ₦<span class="escrow-balance">0</span></small>
                     </div>
                     <div id="collection-bank-div" class="form-group" style="display: none;">
                         <label class="form-control-label">Collection Bank</label>

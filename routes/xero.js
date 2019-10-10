@@ -28,9 +28,9 @@ xero.authorizedOperation = function (req, res, module, callback) {
         (error, integration_) => {
             const integration = integration_[0];
             if (!module || (module && integration && integration[module] === 1)) {
-                if (req.session.accessToken) {
+                if (req.session.accessToken && (new Date() <= new Date(req.session.accessToken.oauth_expires_at))) {
                     if (typeof callback === "function")
-                        callback(xero.getXeroClient(req.session.accessToken));
+                        callback(xero.getXeroClient(req.session.accessToken), integration);
                     resolve(xero.getXeroClient(req.session.accessToken));
                 } else {
                     xero.authorizeRedirect(req, res);
