@@ -3203,6 +3203,8 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                     Amount: (parseFloat(invoice.payment_amount) + parseFloat(invoice.interest_amount)),
                                     IsReconciled: true
                                 });
+                                console.log('here')
+                                console.log('xeroPayment', xeroPayment)
                                 console.log(xeroPayment)
                                 invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
                             }
