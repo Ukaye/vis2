@@ -3190,11 +3190,26 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                             }
                         }
                         xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
-                            if (xeroClient && invoice.payment_amount > 0 && 
-                                application.principal_invoice_no && invoice.xeroCollectionBankID) {
+                            // if (xeroClient && invoice.payment_amount > 0 && 
+                            //     application.principal_invoice_no && invoice.xeroCollectionBankID) {
+                            //     let xeroPayment = await xeroClient.payments.create({
+                            //         Invoice: {
+                            //             InvoiceNumber: application.principal_invoice_no
+                            //         },
+                            //         Account: {
+                            //             Code: invoice.xeroCollectionBankID
+                            //         },
+                            //         Date: invoice.date_created,
+                            //         Amount: (parseFloat(invoice.payment_amount) + parseFloat(invoice.interest_amount)),
+                            //         IsReconciled: true
+                            //     });
+                            //     invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                            // }
+                            if (xeroClient && invoice.interest_amount > 0 && 
+                                application.interest_invoice_no && invoice.xeroCollectionBankID) {
                                 let xeroPayment = await xeroClient.payments.create({
                                     Invoice: {
-                                        InvoiceNumber: application.principal_invoice_no
+                                        InvoiceNumber: application.interest_invoice_no
                                     },
                                     Account: {
                                         Code: invoice.xeroCollectionBankID
@@ -3206,23 +3221,8 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                 console.log('here')
                                 console.log('xeroPayment', xeroPayment)
                                 console.log(xeroPayment)
-                                invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                                invoice.xeroInterestPaymentID = xeroPayment.Payments[0]['PaymentID'];
                             }
-                            // if (xeroClient && invoice.interest_amount > 0 && 
-                            //     application.interest_invoice_no && invoice.xeroCollectionBankID) {
-                            //     let xeroPayment = await xeroClient.payments.create({
-                            //         Invoice: {
-                            //             InvoiceNumber: application.interest_invoice_no
-                            //         },
-                            //         Account: {
-                            //             Code: invoice.xeroCollectionBankID
-                            //         },
-                            //         Date: invoice.date_created,
-                            //         Amount: invoice.interest_amount,
-                            //         IsReconciled: true
-                            //     });
-                            //     invoice.xeroInterestPaymentID = xeroPayment.Payments[0]['PaymentID'];
-                            // }
                             db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response, fields) {
                                 if(error){
                                     res.send({"status": 500, "error": error, "response": null});
