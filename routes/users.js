@@ -3452,6 +3452,7 @@ users.post('/application/disburse/:id', function(req, res, next) {
                                     IsReconciled: 'true'
                                 });
                                 console.log(xeroDisbursement)
+                                console.log(xeroDisbursement.BankTransactions[0])
                                 disbursement.xeroDisbursementID = xeroDisbursement.BankTransactions[0]['BankTransactionID'];
                             }
                             db.query(`INSERT INTO disbursement_history SET ?`, disbursement, function (error, result, fields) {
