@@ -1,15 +1,33 @@
 $(document).ready(function() {
     getApplication();
     getComments();
-    getCollectionBank();
+    getXeroConfig();
 });
 
-function getCollectionBank() {
+let xero_config;
+function getXeroConfig() {
+    $.ajax({
+        type: "GET",
+        url: "/settings/xero",
+        success: function (data) {
+            if (data.status === 200) {
+                xero_config = data.response;
+                if (xero_config.xero_collection_description === 1) 
+                    $('#collection-description-div').show();
+                if (xero_config.xero_collection_bank === 1) {
+                    getCollectionBanks();
+                    $('#collection-bank-div').show();
+                }
+            }
+        }
+    });
+}
+
+function getCollectionBanks() {
     $.ajax({
         type: "GET",
         url: "/settings/collection_bank",
         success: function (data) {
-            if (data.response[0]) $('#collection-bank-div').show();
             $.each(data.response, function (key, collection_bank) {
                 $('#collection_bank').append(`<option value="${collection_bank.Code}">${collection_bank.Name}</option>`);
             });
@@ -428,13 +446,16 @@ function applyRemitaPayment(obj) {
 $('#source').change(function () {
     let $payment = $('#payment'),
         $message2 = $('#overpayment-message');
+        $collection_bank = $('#collection_bank');
     validation();
     if (this.value === 'escrow'){
         $payment.val(0);
         $message2.text('');
         $payment.prop('disabled',true);
+        $collection_bank.prop('disabled',true);
     } else {
         $payment.prop('disabled',false);
+        $collection_bank.prop('disabled',false);
     }
 });
 
@@ -508,10 +529,15 @@ function confirmPayment() {
     application.escrow = application.escrow || "0";
     if (invoice.payment_source === 'escrow' && (total_payment > (parseFloat(application.escrow)).round(2)))
         return notification('Insufficient escrow funds ('+parseFloat(application.escrow).round(2)+')','','warning');
-    $('#wait').show();
-    $('#confirmPayment').modal('hide');
     if (invoice.payment_source === 'remita' && remita_id) invoice.remitaPaymentID = remita_id;
     if ($('#collection_bank').val() !== '000') invoice.xeroCollectionBankID = $('#collection_bank').val();
+    if (xero_config.xero_collection_description === 1) {
+        if (!$('#collection_description').val())
+            return notification('Kindly specify a payment description to proceed','','warning');
+        invoice.xeroCollectionDescription = $('#collection_description').val();
+    }
+    $('#wait').show();
+    $('#confirmPayment').modal('hide');
     updateEscrow(invoice, total_payment, function () {
         let overpayment = (payment - (parseFloat(invoice.actual_payment_amount) + parseFloat(invoice.actual_interest_amount))).round(2);
         if (overpayment > 0){

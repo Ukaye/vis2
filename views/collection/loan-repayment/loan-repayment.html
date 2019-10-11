@@ -221,7 +221,7 @@
                             <select id="source" class="form-control" required="required">
                                 <option value="0" selected="selected">-- Select Payment Source --</option>
                                 <option value="cash">Cash</option>
-                                <option value="escrow">Escrow</option>
+                                <option value="escrow">Overpayment</option>
                                 <option value="remita">Remita</option>
                             </select>
                         </div>
@@ -279,6 +279,11 @@
                             <div class="input-group-addon"><i class="fa fa-calendar"></i></div>
                             <input id="repayment-date" type="date" class="form-control" required="required">
                         </div>
+                    </div>
+                    <div id="collection-description-div" class="form-group" style="display: none;">                        
+                        <label for="collection_description" class="form-control-label">Description</label><strong style="color:red"> *</strong>
+                        <textarea id="collection_description" class="form-control" required="required" maxlength="250" placeholder="Brief description"></textarea>
+                        <small class="form-text text-muted">Maximum of 250 characters</small>
                     </div>
                 </form>
             </div>
@@ -416,7 +421,7 @@
     <div class="modal-dialog modal-lg" role="document" style="width: 1005%;">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title" id="escrowHistoryLabel">Escrow History</h4>
+                <h4 class="modal-title" id="escrowHistoryLabel">Overpayment History</h4>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">

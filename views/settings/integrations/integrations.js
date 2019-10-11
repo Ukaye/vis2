@@ -62,6 +62,14 @@ $('#xero_writeoff').click(function (e) {
     }
 });
 
+$('#xero_collection_bank').click(function (e) {
+    if ($('#xero_collection_bank').is(':checked')) {
+        $('#xero_collection_description').parent().show();
+    } else {
+        $('#xero_collection_description').parent().hide();
+    }
+});
+
 function getAccounts() {
     $.ajax({
         'type': 'get',
@@ -101,7 +109,11 @@ function getXeroConfig() {
             if (config.xero_disbursement_account) $('#xero_disbursement_account').val(config.xero_disbursement_account);
             if (config.xero_principal_account) $('#xero_principal_account').val(config.xero_principal_account);
             if (config.xero_interest_account) $('#xero_interest_account').val(config.xero_interest_account);
-            if (config.xero_collection_bank) $('#xero_collection_bank').prop('checked', true);
+            if (config.xero_collection_bank) {
+                $('#xero_collection_bank').prop('checked', true);
+                $('#xero_collection_description').parent().show();
+            }
+            if (config.xero_collection_description) $('#xero_collection_description').prop('checked', true);
             if (config.xero_escrow) $('#xero_escrow').prop('checked', true);
             if (config.xero_writeoff) {
                 $('#xero_writeoff').prop('checked', true);
@@ -137,7 +149,10 @@ function saveXeroConfig() {
         config.xero_writeoff_account = $('#xero_writeoff_account').val();
     }
     if ($('#xero_client').is(':checked')) config.xero_client = 1;
-    if ($('#xero_collection_bank').is(':checked')) config.xero_collection_bank = 1;
+    if ($('#xero_collection_bank').is(':checked')) {
+        config.xero_collection_bank = 1;
+        if ($('#xero_collection_description').is(':checked')) config.xero_collection_description = 1;
+    }
     if ($('#xero_escrow').is(':checked')) config.xero_escrow = 1;
     config.created_by = (JSON.parse(localStorage.user_obj)).ID;
     $('#wait').show();
