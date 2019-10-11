@@ -2079,7 +2079,7 @@ router.delete('/payment-method/delete/:id/:payment_method_id', helperFunctions.v
 });
 
 router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, function (req, res) {
-    db.query(`SELECT s.*, a.ID app_id, a.userID, ROUND((s.interest_amount + s.payment_amount), 2) amount, 
+    db.query(`SELECT s.*, a.ID app_id, a.userID, ROUND((COALESCE(s.interest_amount, 0) + COALESCE(s.payment_amount, 0)), 2) amount, 
     c.loan_officer, c.branch FROM application_schedules s, applications a, clients c WHERE s.ID = ${req.params.invoice_id} 
     AND s.applicationID = a.ID AND a.userID = ${req.params.id} AND a.userID = c.ID`, function (error, schedule) {
         if (error) return res.send({
