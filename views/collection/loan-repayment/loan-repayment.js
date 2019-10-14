@@ -535,9 +535,9 @@ function confirmPayment() {
     if ($('#collection_bank').val() !== '000') invoice.xeroCollectionBankID = $('#collection_bank').val();
     if (xero_config.xero_collection_description === 1) {
         if (!$('#collection_description').val())
-            return notification('Kindly specify a payment description to proceed','','warning');
-        invoice.xeroCollectionDescription = $('#collection_description').val();
+            return notification('Kindly specify a statement description to proceed','','warning');
     }
+    if ($('#collection_description').val()) invoice.xeroCollectionDescription = $('#collection_description').val();
     $('#wait').show();
     $('#confirmPayment').modal('hide');
     updateEscrow(invoice, total_payment, function () {
