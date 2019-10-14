@@ -13,7 +13,7 @@ function getXeroConfig() {
             if (data.status === 200) {
                 xero_config = data.response;
                 if (xero_config.xero_collection_description === 1) 
-                    $('#collection-description-div').show();
+                    $('#collection-description-required').show();
                 if (xero_config.xero_collection_bank === 1) {
                     getCollectionBanks();
                     $('#collection-bank-div').show();
@@ -510,6 +510,8 @@ function validation() {
 }
 
 function confirmPayment() {
+    if (!selected_schedule.principal_invoice_no || !selected_schedule.interest_invoice_no)
+        return notification('Xero invoice no is required','Kindly update this invoice with the xero invoice no','warning');
     let invoice = {},
         payment = parseFloat($('#payment').val() || '0');
     invoice.actual_payment_amount = $('#principal').val() || '0';

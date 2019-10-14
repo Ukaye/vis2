@@ -280,8 +280,9 @@
                             <input id="repayment-date" type="date" class="form-control" required="required">
                         </div>
                     </div>
-                    <div id="collection-description-div" class="form-group" style="display: none;">                        
-                        <label for="collection_description" class="form-control-label">Description</label><strong style="color:red"> *</strong>
+                    <div class="form-group">                        
+                        <label for="collection_description" class="form-control-label">Statement Description</label>
+                        <strong id="collection-description-required" style="color:red; display: none;"> *</strong>
                         <textarea id="collection_description" class="form-control" required="required" maxlength="250" placeholder="Brief description"></textarea>
                         <small class="form-text text-muted">Maximum of 250 characters</small>
                     </div>
