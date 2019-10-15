@@ -3398,7 +3398,10 @@ function allocateXeroOverpayment(req, res, client) {
                 xeroOverpayments = xeroOverpayments_.Overpayments.filter(e => {
                     return e.RemainingCredit > 0 && e.Contact.ContactNumber === client.xeroContactID
                 });
+                console.log(xeroOverpayments)
             do {
+                console.log(index)
+                console.log(xeroOverpayments[index])
                 let balance = parseFloat(xeroOverpayments[index]['RemainingCredit']);
                 if (principal_amount > 0) {
                     if (principal_amount < balance) {
