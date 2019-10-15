@@ -2,8 +2,8 @@ $(document).ready(() => {
     $.ajaxSetup({
         beforeSend: function(xhr) {
             if (localStorage.user_obj)
-                xhr.setRequestHeader('user_id', JSON.parse(localStorage.user_obj)['ID']);
-                xhr.setRequestHeader('uudusiudsiudsd', '2');
+                xhr.setRequestHeader('user_id', JSON.parse(localStorage.user_obj)['ID'].toString());
+                xhr.setRequestHeader('uudusiudsiudsd', JSON.parse(localStorage.user_obj)['ID'].toString());
         },
         complete: (response) => {
             if (response && response.responseJSON && response.responseJSON.code === 'xero')
