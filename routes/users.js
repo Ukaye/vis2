@@ -3369,7 +3369,8 @@ users.post('/application/escrow', function(req, res, next) {
                                 Description: `ClientID: ${helperFunctions.padWithZeroes(data.clientID, 6)}`,
                                 LineAmount: data.amount
                             }],
-                            Reference: helperFunctions.padWithZeroes(data.clientID, 6)
+                            Reference: helperFunctions.padWithZeroes(data.clientID, 6),
+                            IsReconciled: true
                         });
                         data.xeroOverpaymentID = xeroPayment.BankTransactions[0]['OverpaymentID'];
                     }
