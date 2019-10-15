@@ -401,7 +401,6 @@ router.get('/application/funding_source', function (req, res) {
 });
 
 router.get('/collection_bank', function (req, res) {
-    // console.log(req.headers)
     xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
         let xeroAccounts = [];
         if (xeroClient) {

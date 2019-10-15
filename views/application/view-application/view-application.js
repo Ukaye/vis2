@@ -9,7 +9,6 @@ function getCollectionBank() {
     $.ajax({
         type: "GET",
         url: "/settings/collection_bank",
-        headers: JSON.parse(localStorage.user_obj),
         success: function (data) {
             $.each(data.response, function (key, funding_source) {
                 $('#funding').append(`<option value="${funding_source.Code}">${funding_source.Name} 
