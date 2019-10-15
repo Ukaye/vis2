@@ -3400,8 +3400,6 @@ function allocateXeroOverpayment(req, res, client) {
                 });
             do {
                 let balance = (xeroOverpayments[index])? parseFloat(xeroOverpayments[index]['RemainingCredit']) : 0;
-                console.log(principal_amount)
-                console.log(balance)
                 if (principal_amount > 0) {
                     let xeroInvoice = await xeroClient.invoices.get({
                         InvoiceNumber: data.schedule.principal_invoice_no
@@ -3416,7 +3414,6 @@ function allocateXeroOverpayment(req, res, client) {
                         {
                             OverpaymentID: xeroOverpayments[index]['OverpaymentID']
                         });
-                        console.log(xeroOverpayment)
                         balance -= principal_amount;
                         principal_amount = 0;
                     } else {
@@ -3429,7 +3426,6 @@ function allocateXeroOverpayment(req, res, client) {
                         {
                             OverpaymentID: xeroOverpayments[index]['OverpaymentID']
                         });
-                        console.log(xeroOverpayment)
                         principal_amount -= balance;
                         index++;
                         balance = parseFloat(xeroOverpayments[index]['RemainingCredit']);
