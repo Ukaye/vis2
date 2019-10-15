@@ -3398,6 +3398,8 @@ function allocateXeroOverpayment(req, res, client) {
                 xeroOverpayments = xeroOverpayments_.Overpayments.filter(e => {
                     return e.RemainingCredit > 0 && e.Contact.ContactNumber === client.xeroContactID
                 });
+                console.log(xeroOverpayments_)
+                console.log(client.xeroContactID)
                 console.log(xeroOverpayments)
             do {
                 console.log(index)
