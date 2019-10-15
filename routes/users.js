@@ -352,7 +352,7 @@ users.post('/new-client', function(req, res, next) {
                                 if (postData.last_name) contact.LastName = postData.last_name;
                                 if (postData.account) contact.BankAccountDetails = postData.account;
                                 let xeroContact = await xeroClient.contacts.create(contact);
-                                postData.xeroContactID = xeroContact.Contacts[0]['ContactNumber'];
+                                postData.xeroContactID = xeroContact.Contacts[0]['ContactID'];
                             }
                             connection.query(query,postData, function (error, re, fields) {
                                 if(error){
@@ -403,7 +403,7 @@ users.post('/new-client', function(req, res, next) {
                             if (postData.last_name) contact.LastName = postData.last_name;
                             if (postData.account) contact.BankAccountDetails = postData.account;
                             let xeroContact = await xeroClient.contacts.create(contact);
-                            postData.xeroContactID = xeroContact.Contacts[0]['ContactNumber'];
+                            postData.xeroContactID = xeroContact.Contacts[0]['ContactID'];
                         }
                         connection.query(query,postData, function (error, re, fields) {
                             if(error){
@@ -3396,7 +3396,7 @@ function allocateXeroOverpayment(req, res, client) {
                 interest_amount = parseFloat(data.invoice.actual_interest_amount),
                 xeroOverpayments_ = await xeroClient.overpayments.get(),
                 xeroOverpayments = xeroOverpayments_.Overpayments.filter(e => {
-                    return e.RemainingCredit > 0 && e.Contact.ContactNumber === client.xeroContactID
+                    return e.RemainingCredit > 0 && e.Contact.ContactID === client.xeroContactID
                 });
                 console.log(xeroOverpayments_)
                 console.log(client.xeroContactID)
@@ -3404,7 +3404,7 @@ function allocateXeroOverpayment(req, res, client) {
             do {
                 console.log(index)
                 console.log(xeroOverpayments[index])
-                let balance = parseFloat(xeroOverpayments[index]['RemainingCredit']);
+                let balance = (xeroOverpayments[index])? parseFloat(xeroOverpayments[index]['RemainingCredit']) : 0;
                 if (principal_amount > 0) {
                     if (principal_amount < balance) {
                         let xeroInvoice = await xeroClient.invoices.get({
