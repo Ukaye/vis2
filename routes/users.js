@@ -3398,18 +3398,15 @@ function allocateXeroOverpayment(req, res, client) {
                 xeroOverpayments = xeroOverpayments_.Overpayments.filter(e => {
                     return e.RemainingCredit > 0 && e.Contact.ContactID === client.xeroContactID
                 });
-                console.log(xeroOverpayments_)
-                console.log(client.xeroContactID)
-                console.log(xeroOverpayments)
             do {
-                console.log(index)
-                console.log(xeroOverpayments[index])
                 let balance = (xeroOverpayments[index])? parseFloat(xeroOverpayments[index]['RemainingCredit']) : 0;
+                console.log(principal_amount)
+                console.log(balance)
                 if (principal_amount > 0) {
+                    let xeroInvoice = await xeroClient.invoices.get({
+                        InvoiceNumber: data.schedule.principal_invoice_no
+                    });
                     if (principal_amount < balance) {
-                        let xeroInvoice = await xeroClient.invoices.get({
-                            InvoiceNumber: data.schedule.principal_invoice_no
-                        });
                         let xeroOverpayment = await xeroClient.overpayments.allocations.create({
                             Invoice: {
                                 InvoiceID: xeroInvoice.Invoices[0]['InvoiceID']
@@ -3419,12 +3416,10 @@ function allocateXeroOverpayment(req, res, client) {
                         {
                             OverpaymentID: xeroOverpayments[index]['OverpaymentID']
                         });
+                        console.log(xeroOverpayment)
                         balance -= principal_amount;
                         principal_amount = 0;
                     } else {
-                        let xeroInvoice = await xeroClient.invoices.get({
-                            InvoiceNumber: data.schedule.principal_invoice_no
-                        });
                         let xeroOverpayment = await xeroClient.overpayments.allocations.create({
                             Invoice: {
                                 InvoiceID: xeroInvoice.Invoices[0]['InvoiceID']
@@ -3434,6 +3429,7 @@ function allocateXeroOverpayment(req, res, client) {
                         {
                             OverpaymentID: xeroOverpayments[index]['OverpaymentID']
                         });
+                        console.log(xeroOverpayment)
                         principal_amount -= balance;
                         index++;
                         balance = parseFloat(xeroOverpayments[index]['RemainingCredit']);
@@ -3441,10 +3437,10 @@ function allocateXeroOverpayment(req, res, client) {
                 }
 
                 if (interest_amount > 0) {
+                    let xeroInvoice = await xeroClient.invoices.get({
+                        InvoiceNumber: data.schedule.interest_invoice_no
+                    });
                     if (interest_amount < balance) {
-                        let xeroInvoice = await xeroClient.invoices.get({
-                            InvoiceNumber: data.schedule.interest_invoice_no
-                        });
                         let xeroOverpayment = await xeroClient.overpayments.allocations.create({
                             Invoice: {
                                 InvoiceID: xeroInvoice.Invoices[0]['InvoiceID']
@@ -3457,9 +3453,6 @@ function allocateXeroOverpayment(req, res, client) {
                         balance -= interest_amount;
                         interest_amount = 0;
                     } else {
-                        let xeroInvoice = await xeroClient.invoices.get({
-                            InvoiceNumber: data.schedule.interest_invoice_no
-                        });
                         let xeroOverpayment = await xeroClient.overpayments.allocations.create({
                             Invoice: {
                                 InvoiceID: xeroInvoice.Invoices[0]['InvoiceID']
@@ -3475,7 +3468,7 @@ function allocateXeroOverpayment(req, res, client) {
                     }
                 }
             }
-            while (principal_amount > 0 && interest_amount > 0);
+            while (principal_amount > 0 || interest_amount > 0);
         }
     });
 }
