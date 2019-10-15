@@ -16,6 +16,7 @@
     <link rel="shortcut icon" href="favicon.png">
     <link rel="stylesheet" href="assets/css/normalize.css">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.15/css/bootstrap-multiselect.css">
     <link rel="stylesheet" href="assets/css/font-awesome.min.css">
     <link rel="stylesheet" href="assets/css/themify-icons.css">
     <link rel="stylesheet" href="assets/css/flag-icon.min.css">
@@ -40,6 +41,18 @@
         }
         input[type="checkbox"] {
             margin-right: 15px;
+        }
+        .multiselect-native-select{
+            width: 90%;
+        }
+        .multiselect-native-select div.btn-group, .multiselect-native-select button.multiselect, ul.multiselect-container{
+            width: 100%;
+        }
+        .multiselect-native-select button.multiselect{
+            background: #ffffff;
+            color: #495057;
+            border: 1px solid #ced4da;
+            border-radius: .25rem;
         }
     </style>
 </head>
@@ -197,6 +210,11 @@
                             </div>
                         </div>
                     </div>
+                    <hr>
+                    <div class="form-group">
+                        <label for="xero_users" class="form-control-label">Assign Users</label>
+                        <select id="xero_users" class="multiselect-ui form-control" multiple="multiple" required="required"></select>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -216,6 +234,7 @@
 <script src="assets/js/plugins.js"></script>
 <script src="assets/js/main.js"></script>
 <script src="assets/js/lib/data-table/datatables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.15/js/bootstrap-multiselect.min.js"></script>
 <script src="../../js/helper-functions.js"></script>
 <script src="../../menus/menu-items.js"></script>
 <script type="text/javascript" src="../../settings/integrations/integrations.js"></script>

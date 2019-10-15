@@ -86,6 +86,22 @@ function getAccounts() {
                 if (account.Class === 'EXPENSE')
                     $('#xero_writeoff_account').append(`<option value="${account.Code}">${account.Name} (${account.Type})</option>`);
             });
+            getUsers();
+        }
+    });
+}
+
+function getUsers(){
+    $.ajax({
+        'type': 'get',
+        'url': '/user/get',
+        'success': function (data) {
+            $.each(data.response, function (key, val) {
+                $("#xero_users").append(`<option value = "${val.ID}">${val.fullname}</option>`);
+            });
+            $('#xero_users').multiselect({
+                includeSelectAllOption: true
+            });
             getXeroConfig();
         }
     });
@@ -120,6 +136,10 @@ function getXeroConfig() {
                 $('#xero_writeoff_account').prop('disabled', false);
             }
             if (config.xero_writeoff_account) $('#xero_writeoff_account').val(config.xero_writeoff_account);
+            if (config.xero_users) {
+                $('#xero_users').val(config.xero_users.split(','));
+                $('#xero_users').multiselect("refresh");
+            }
         },
         'error': function (err) {
             console.log(err);
@@ -154,6 +174,7 @@ function saveXeroConfig() {
         if ($('#xero_collection_description').is(':checked')) config.xero_collection_description = 1;
     }
     if ($('#xero_escrow').is(':checked')) config.xero_escrow = 1;
+    if ($('#xero_users').val()) config.xero_users = ($('#xero_users').val()).join();
     config.created_by = (JSON.parse(localStorage.user_obj)).ID;
     $('#wait').show();
     $.ajax({

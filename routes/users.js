@@ -1383,6 +1383,25 @@ users.get('/users-list-v2', function(req, res, next) {
     });
 });
 
+users.get('/get', (req, res) => {
+    let query = 'SELECT ID, username, fullname, email, status, date_created from users where status = 1 order by fullname asc';
+    db.query(query, (error, results) => {
+        if(error){
+            res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+        } else {
+            res.send({
+                "status": 200,
+                "error": null,
+                "response": results
+            });
+        }
+    });
+});
+
 users.get('/user-dets/:id', function(req, res, next) {
     let query = 'SELECT *, (select u.role_name from user_roles u where u.ID = user_role) as Role, (select fullname from users where users.ID = u.supervisor) as Super from users u where id = ? order by ID desc ';
     db.query(query, req.params.id, function (error, results, fields) {
@@ -3068,8 +3087,8 @@ users.post('/application/edit-schedule/:id/:modifier_id', function(req, res, nex
                             };
                             if (invoice_obj[0]['interest_invoice_no'])
                                 invoice['interest_invoice_no'] = invoice_obj[0]['interest_invoice_no'];
-                            if (invoice_obj[0]['payment_invoice_no'])
-                                invoice['payment_invoice_no'] = invoice_obj[0]['payment_invoice_no'];
+                            if (invoice_obj[0]['principal_invoice_no'])
+                                invoice['principal_invoice_no'] = invoice_obj[0]['principal_invoice_no'];
                             connection.query('INSERT INTO edit_schedule_history SET ? ', invoice, function (error, response, fields) {
                                 connection.release();
                                 if(error){
@@ -3095,6 +3114,19 @@ users.post('/application/edit-schedule/:id/:modifier_id', function(req, res, nex
                                                     InvoiceNumber: invoice.interest_invoice_no,
                                                     Reference: helperFunctions.padWithZeroes(invoice.applicationID, 9)
                                                 });
+                                            }
+                                        });
+                                    }
+                                    if (invoice.principal_invoice_no) {
+                                        xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
+                                            if (xeroClient && integration && integration.xero_principal_account) {
+                                                let xeroPrincipal_ = await xeroClient.invoices.update({
+                                                    InvoiceNumber: invoice.principal_invoice_no
+                                                });
+                                                let principal = xeroPrincipal_.Invoices[0];
+                                                principal.Date = invoice.payment_create_date;
+                                                principal.DueDate = invoice.payment_collect_date;
+                                                let xeroPrincipal = await xeroClient.invoices.update(principal);
                                             }
                                         });
                                     }

@@ -445,17 +445,20 @@ function applyRemitaPayment(obj) {
 
 $('#source').change(function () {
     let $payment = $('#payment'),
-        $message2 = $('#overpayment-message');
-        $collection_bank = $('#collection_bank');
+        $message2 = $('#overpayment-message'),
+        $collection_bank = $('#collection_bank'),
+        $collection_description_div = $('#collection-description-div');
     validation();
     if (this.value === 'escrow'){
         $payment.val(0);
         $message2.text('');
         $payment.prop('disabled',true);
         $collection_bank.prop('disabled',true);
+        $collection_description_div.hide();
     } else {
         $payment.prop('disabled',false);
         $collection_bank.prop('disabled',false);
+        $collection_description_div.show();
     }
 });
 
@@ -533,8 +536,9 @@ function confirmPayment() {
         return notification('Insufficient escrow funds ('+parseFloat(application.escrow).round(2)+')','','warning');
     if (invoice.payment_source === 'remita' && remita_id) invoice.remitaPaymentID = remita_id;
     if ($('#collection_bank').val() !== '000') invoice.xeroCollectionBankID = $('#collection_bank').val();
-    if (xero_config.xero_collection_description === 1) {
-        if (!$('#collection_description').val())
+    if (xero_config.xero_collection_description === 1 && 
+        invoice.payment_source !== 'escrow' &&
+        !$('#collection_description').val()) {
             return notification('Kindly specify a statement description to proceed','','warning');
     }
     if ($('#collection_description').val()) invoice.xeroCollectionDescription = $('#collection_description').val();
