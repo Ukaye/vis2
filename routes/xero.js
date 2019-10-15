@@ -27,6 +27,10 @@ xero.authorizedOperation = function (req, res, module, callback) {
         db.query('SELECT * FROM integrations WHERE ID = (SELECT MAX(ID) FROM integrations)', 
         (error, integration_) => {
             const integration = integration_[0];
+            console.log(integration)
+            console.log(req.headers)
+            console.log(!module || (module && integration && integration[module] === 1 && integration.xero_users && 
+                integration.xero_users.split(',').indexOf(req.headers.user_id) > -1))
             if (!module || (module && integration && integration[module] === 1 && integration.xero_users && 
                 integration.xero_users.split(',').indexOf(req.headers.user_id) > -1)) {
                 if (req.session.accessToken && (new Date() <= new Date(req.session.accessToken.oauth_expires_at))) {
