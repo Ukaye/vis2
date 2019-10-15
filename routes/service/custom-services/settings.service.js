@@ -483,4 +483,19 @@ router.get('/contacts', function (req, res) {
     });
 });
 
+router.get('/overpayments', function (req, res) {
+    xeroFunctions.authorizedOperation(req, res, null, async (xeroClient) => {
+        let xeroOverpayments = [];
+        if (xeroClient) {
+            let xeroOverpayments_ = await xeroClient.overpayments.get();
+            xeroOverpayments = xeroOverpayments_.Overpayments.filter(e => {return e.Status === 'AUTHORISED'});
+        }
+        return res.send({
+            "status": 200,
+            "message": "Overpayments fetched successfully!",
+            "response": xeroOverpayments
+        });
+    });
+});
+
 module.exports = router;
