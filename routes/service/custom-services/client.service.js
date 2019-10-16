@@ -966,7 +966,7 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
 });
 var os = require("os");
 var hostname = os.hostname();
-console.log(os)
+console.log(hostname)
 router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     console.log(req)
