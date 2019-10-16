@@ -972,6 +972,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
     console.log(req.hostname)
     console.log(req.headers)
     console.log(HOST)
+    console.log(req.protocol + '://' + req.get('host') + req.originalUrl)
     let query = `SELECT p.*, c.fullname, c.email, c.phone FROM client_applications p 
                 INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.application_id} AND p.userID = ${req.params.id}`,
         query2 = `SELECT u.ID userID, u.fullname, u.phone, u.email, u.address, cast(u.loan_officer as unsigned) loan_officer,
