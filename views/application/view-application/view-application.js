@@ -2331,7 +2331,7 @@ function initNewLoanOffer(application, settings) {
 }
 
 function printLoanSchedule() {
-    const loanFile = {
+    const loanSchedule = {
         id: application_id,
         request_date: application.date_created,
         customer_name: application.fullname,
