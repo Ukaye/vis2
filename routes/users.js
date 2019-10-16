@@ -82,9 +82,7 @@ users.get('/bulk-update-clients', function(req, res) {
                     errors.push(client);
                 } else {
                     count++;
-                    console.log(count);
                     console.log(client.email || client.fullname);
-                    console.log('======================================')
                 }
                 callback();
             });
@@ -124,7 +122,6 @@ users.get('/bulk-import-escrow', function(req, res) {
                                 errors.push(esc);
                             } else {
                                 count++;
-                                console.log(count);
                                 console.log(esc.Contact.Name);
                             }
                             callback();
@@ -148,7 +145,6 @@ users.get('/update-request-client', function(req, res) {
         errors = [];
     db.getConnection(function(err, connection) {
         async.forEach(users, function (user, callback) {
-            console.log(user.fullname);
             connection.query('SELECT * FROM clients WHERE username = ?', [user.username], function (err, client, field) {
                 if (client && client[0]){
                     connection.query('UPDATE requests SET userID = ? WHERE userID = ?', [client[0]['ID'],user['ID']], function (err, result, fields) {
@@ -157,6 +153,7 @@ users.get('/update-request-client', function(req, res) {
                             errors.push(user);
                         } else {
                             count++;
+                            console.log(user.fullname);
                         }
                         callback();
                     })
@@ -168,64 +165,6 @@ users.get('/update-request-client', function(req, res) {
         }, function (data) {
             connection.release();
             res.json({count: count, errors: errors})
-        });
-    });
-});
-
-users.get('/update-confirm-payment', function(req, res) {
-    let count=0,
-        errors = [];
-    db.getConnection(function(err, connection) {
-        connection.query('SELECT * FROM schedule_history', function (error, payments, field) {
-            if (error || !payments) {
-                res.send({"status": 500, "error": error, "response": null});
-            } else {
-                async.forEach(payments, function (payment, callback) {
-                    console.log(payment.ID);
-                    connection.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID 
-                        FROM applications a, clients c WHERE a.ID=${payment.applicationID} AND a.userID=c.ID`, function (error, app, fields) {
-                        if (error) {
-                            console.log(error);
-                            errors.push(payment);
-                            callback();
-                        } else if (app[0]) {
-                            let invoice = {},
-                                application = app[0];
-                            invoice.clientID = application.clientID;
-                            invoice.loan_officerID = application.loan_officerID;
-                            invoice.branchID = application.branchID;
-                            if (payment.payment_amount > 0 && payment.interest_amount > 0) {
-                                invoice.type = 'multiple';
-                            } else {
-                                if (payment.payment_amount > 0) {
-                                    invoice.type = 'principal';
-                                } else if (payment.interest_amount > 0) {
-                                    invoice.type = 'interest';
-                                } else if (payment.fees_amount > 0) {
-                                    invoice.type = 'fees';
-                                } else if (payment.penalty_amount > 0) {
-                                    invoice.type = 'penalty';
-                                }
-                            }
-                            connection.query(`UPDATE schedule_history SET ? WHERE ID = ${payment.ID}`, invoice, function (err, result, fields) {
-                                if (err) {
-                                    console.log(err);
-                                    errors.push(payment);
-                                } else {
-                                    count++;
-                                }
-                                callback();
-                            })
-                        } else {
-                            console.log('No Application found for '+payment.ID);
-                            callback();
-                        }
-                    });
-                }, function (data) {
-                    connection.release();
-                    res.json({count: count, errors: errors})
-                });
-            }
         });
     });
 });
@@ -325,8 +264,6 @@ users.post('/new-client', function(req, res, next) {
         db.getConnection(function(err, connection) {
             if (err) throw err;
             connection.query(query2,[req.body.username, req.body.email, req.body.phone], function (error, results, fields) {
-                console.log(error)
-                console.log(results)
                 if (results && results[0]){
                     return res.send(JSON.stringify({"status": 200, "error": null, "response": results, "message": "Information in use by existing client!"}));
                 }
@@ -356,7 +293,6 @@ users.post('/new-client', function(req, res, next) {
                             }
                             connection.query(query,postData, function (error, re, fields) {
                                 if(error){
-                                    console.log(error);
                                     res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
                                 } else {
                                     connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function(err, re, fields) {
@@ -1492,86 +1428,6 @@ users.get('/incomplete-records', function(req, res, next){
         }
     });
 });
-
-/* Custom APIs to update all clients' first_name, middle_name and last_name*/
-users.get('/update-records', function(req, res, next){
-    let query = `select ID, fullname from clients `
-    // where (first_name = ' ' or first_name is null) or
-    // (middle_name = ' ' or middle_name is null) or
-    // (last_name = ' ' or last_name is null)`
-    db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
-        } else {
-            db.getConnection(function(err, connect) {
-                if (err) throw err;
-                for (let i = 0; i < results.length; i++){
-                    let id = results[i]['ID'];
-                    let fullname = (results[i]['fullname'] === null) ? ' ' : results[i]['fullname'];
-                    let first_name = fullname.split(' ')[0].trim();
-                    let middle_name = fullname.split(' ')[1].trim();
-                    let last_name = fullname.split(' ')[2].trim();
-                    console.log(fullname + ': ')
-                    console.log(first_name + middle_name + last_name + '\n')
-                    let dets = {};
-                    let query = 'update clients set first_name = ?, middle_name = ?, last_name = ? where ID = ?  ';
-                    connect.query(query, [first_name, middle_name, last_name, id], function (error, results, fields) {
-                        if (error) {
-                            console.log(error)
-                            // res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
-                        } else {
-                            console.log(id);
-                            console.log(results);
-                            // res.send(JSON.stringify({"status": 200, "error": null, "response": "Category Disabled!"}));
-                        }
-                        if (i === results.length-1)
-                            return connect.release();
-                    });
-                }
-            });
-            // res.send(results);
-        }
-    });
-});
-
-users.get('/update-folders', function(req, res, next){
-    let query = `select ID, first_name, middle_name, last_name, email from clients`
-    db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
-        } else {
-            db.getConnection(function(err, connect) {
-                if (err) throw err;
-                for (let i = 0; i < results.length; i++){
-                    let id = results[i]['ID'];
-                    let first_name = (results[i]['first_name'] === null) ? '' : results[i]['first_name'].trim();
-                    let middle_name = (results[i]['middle_name'] === null) ? '' : results[i]['middle_name'].trim();
-                    let last_name = (results[i]['last_name'] === null) ? '' : results[i]['last_name'].trim();
-                    let email = results[i]['email'];
-                    let folder_name = first_name + ' ' + middle_name + ' ' + last_name + '_' + email
-                    console.log(folder_name)
-                    let dets = {};
-                    let query = 'update clients set images_folder = ? where ID = ?  ';
-                    // console.log(query)
-                    connect.query(query, [folder_name, id], function (error, results, fields) {
-                        if (error) {
-                            console.log(error)
-                            // res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
-                        } else {
-                            console.log(id);
-                            console.log(results);
-                            // res.send(JSON.stringify({"status": 200, "error": null, "response": "Category Disabled!"}));
-                        }
-                        if (i === results.length-1)
-                            return connect.release();
-                    });
-                }
-            });
-            // res.send(results);
-        }
-    });
-});
-/* */
 
 users.get('/user-roles', function(req, res, next) {
     let query = 'SELECT * from user_roles where status = 1 and id not in (1, 3, 4)';
@@ -3116,9 +2972,6 @@ users.post('/application/edit-schedule/:id/:modifier_id', function(req, res, nex
                                                     InvoiceNumber: invoice.interest_invoice_no,
                                                     Reference: helperFunctions.padWithZeroes(invoice.applicationID, 9)
                                                 });
-                                                console.log(invoice)
-                                                console.log(xeroInterest)
-                                                console.log(xeroInterest.Invoices[0])
                                             }
                                         });
                                     }
@@ -3374,7 +3227,6 @@ users.post('/application/escrow', function(req, res, next) {
                             }],
                             Reference: helperFunctions.padWithZeroes(data.clientID, 6)
                         });
-                        console.log(xeroPayment.BankTransactions[0])
                         data.xeroOverpaymentID = xeroPayment.BankTransactions[0]['OverpaymentID'];
                     }
                     db.query('INSERT INTO escrow SET ?', data, function (error, result, fields) {
@@ -3971,7 +3823,6 @@ users.get('/forgot-password/:username', function(req, res) {
         };
 
         transporter.sendMail(mailOptions, function(error, info){
-            console.log(info)
             if(error)
                 return res.send({"status": 500, "message": "Oops! An error occurred while sending request", "response": error});
             return res.send({"status": 200, "message": "Forgot Password request sent successfully!"});
@@ -7267,7 +7118,6 @@ users.get('/multi-analytics', function (req, res, next){
                         'group by Date_format(Payment_date, \'%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
                 if (freq == '4' && y == '0'){
-                    console.log('In Here')
                     query1 = 'select distinct(concat(\'Q\',quarter(payment_date),\'-\', year(payment_date))) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
                         ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                     query2 = 'select sum(interest_amount) interest_received, sum(payment_amount) principal_received,\n' +
@@ -9246,7 +9096,7 @@ users.get('/investment-interests', function(req, res, next){
                 and (select extract(year_month from investment_mature_date) from investments i where i.id = investmentid) = extract(year_month from curdate())
                 group by investmentid
                 `;
-    }console.log(capitalQuery)
+    }
     db.query(capitalQuery, function(error, results, fields){
         if (error){
             res.send({"status": 500, "error": error, "response": null});
@@ -10063,27 +9913,6 @@ users.get('/application/commission-process-reversal/:id', function(req, res, nex
         } else {
             res.send({"status": 200, "message": "Process reversed successfully!"});
         }
-    });
-});
-
-users.get('/target-mail', function(req, res) {
-    // let data = req.body;
-    // if (!data.name || !data.email || !data.company || !data.phone || !data.title || !data.location || !data.description || !data.lead)
-    //     return res.send("Required Parameters not sent!");
-    // data.date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    let mailOptions = {
-        from: process.env.TENANT+' Target <noreply@finratus.com>',
-        to: 'itaukemeabasi@gmail.com',
-        subject: 'Target',
-        template: 'target'
-    };
-
-    transporter.sendMail(mailOptions, function(error, info){
-        console.log(error)
-        console.log(info)
-        if(error)
-            return res.send("Error");
-        return res.send("OK");
     });
 });
 
