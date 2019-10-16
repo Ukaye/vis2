@@ -2696,7 +2696,6 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                         IsReconciled: true,
                                                         Reference: `Reschedule adjustment for LOAN ID: ${helperFunctions.padWithZeroes(old_invoice.applicationID, 9)}`
                                                     });
-                                                    console.log(xeroPrincipal2.Payments[0]);
                                                 }
                                             }
                                         });
