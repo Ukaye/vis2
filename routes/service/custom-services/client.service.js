@@ -965,10 +965,8 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
     });
 });
 
-console.log(process.env.HOST)
 router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    console.log(process.env.HOST)
     let query = `SELECT p.*, c.fullname, c.email, c.phone FROM client_applications p 
                 INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.application_id} AND p.userID = ${req.params.id}`,
         query2 = `SELECT u.ID userID, u.fullname, u.phone, u.email, u.address, cast(u.loan_officer as unsigned) loan_officer,
@@ -1916,7 +1914,7 @@ router.get('/preapproved-loan/get/:id/:loan_id/:key?', helperFunctions.verifyJWT
                 preapproved_loan.remita = remita_mandate_status;
                 preapproved_loan.merchantId = process.env.REMITA_MERCHANT_ID;
                 preapproved_loan.hash = encodeURIComponent(preapproved_loan.hash);
-                preapproved_loan.url = `${HOST}/offer?t=${preapproved_loan.hash}&i=${preapproved_loan.applicationID}`;
+                preapproved_loan.url = `${process.env.HOST}/offer?t=${preapproved_loan.hash}&i=${preapproved_loan.applicationID}`;
                 if (response['data'][0]['requestId'])
                     preapproved_loan.remita_hash = SHA512(preapproved_loan.merchantId + process.env.REMITA_API_KEY + response['data'][0]['requestId']);
                 return res.send({
