@@ -3374,6 +3374,7 @@ users.post('/application/escrow', function(req, res, next) {
                             }],
                             Reference: helperFunctions.padWithZeroes(data.clientID, 6)
                         });
+                        console.log(xeroPayment.BankTransactions[0])
                         data.xeroOverpaymentID = xeroPayment.BankTransactions[0]['OverpaymentID'];
                     }
                     db.query('INSERT INTO escrow SET ?', data, function (error, result, fields) {
