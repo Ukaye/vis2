@@ -2761,8 +2761,8 @@ async function syncXeroSchedule (req, res, connection, client, schedule, xeroPri
 async function postXeroSchedule (req, res, connection, obj, client, xeroPrincipal, method) {
     const xeroClient = await xeroFunctions.authorizedOperation(req, res, 'xero_loan_account');
     const date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    if (xeroClient && client.integration && 
-        client.integration.xero_interest_account && client.integration.xero_loan_account_status) {
+    if (xeroClient && client.integration && client.integration.xero_interest_account && 
+        client.integration.xero_loan_account_status && client.xeroContactID) {
         let xeroInterest = await xeroClient.invoices.create({
             Type: 'ACCREC',
             Contact: {
@@ -2824,7 +2824,8 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                 async.forEach(old_schedule, (old_invoice, callback2) => {
                                     if (old_invoice.interest_invoice_no) {
                                         xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
-                                            if (xeroClient && integration && integration.xero_interest_account) {
+                                            if (xeroClient && integration && 
+                                                integration.xero_interest_account && application.xeroContactID) {
                                                 let xeroInterest2 = await xeroClient.invoices.update({
                                                     Type: 'ACCREC',
                                                     Contact: {
@@ -2857,7 +2858,8 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                     connection.query(`SELECT * FROM application_schedules WHERE applicationID = ${req.params.id} AND status = 2`, (error, new_schedule) => {
                                         xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
                                             let xeroPrincipal;
-                                            if (xeroClient && integration && integration.xero_principal_account) {
+                                            if (xeroClient && integration && 
+                                                integration.xero_principal_account && application.xeroContactID) {
                                                 let LineItems = [];
                                                 for (let i=0; i<new_schedule.length; i++) {
                                                     let invoice = new_schedule[i];
@@ -3005,7 +3007,8 @@ users.post('/application/add-payment/:id/:agent_id', function(req, res, next) {
                 data.payment_collect_date = data.interest_collect_date;
                 data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                 xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
-                    if (xeroClient && integration && integration.xero_interest_account) {
+                    if (xeroClient && integration && 
+                        integration.xero_interest_account && application[0]['xeroContactID']) {
                         let xeroInterest = await xeroClient.invoices.create({
                             Type: 'ACCREC',
                             Contact: {
@@ -3096,7 +3099,8 @@ users.post('/application/edit-schedule/:id/:modifier_id', function(req, res, nex
                                 } else {
                                     if (invoice.interest_invoice_no) {
                                         xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
-                                            if (xeroClient && integration && integration.xero_interest_account) {
+                                            if (xeroClient && integration && 
+                                                integration.xero_interest_account && invoice_obj[0]['xeroContactID']) {
                                                 let xeroInterest = await xeroClient.invoices.update({
                                                     Type: 'ACCREC',
                                                     Contact: {
@@ -3178,7 +3182,8 @@ users.get('/application/schedule-history/write-off/:id', function(req, res, next
                             res.send({"status": 500, "error": error, "response": null});
                         } else {
                             xeroFunctions.authorizedOperation(req, res, 'xero_writeoff', async (xeroClient) => {
-                                if (xeroClient && invoice[0]['interest_invoice_no'] && integrations[0] && integrations[0]['xero_writeoff_account']) {
+                                if (xeroClient && invoice[0]['interest_invoice_no'] && integrations[0] && 
+                                    integrations[0]['xero_writeoff_account'] && invoice[0]['xeroContactID']) {
                                     let xeroWriteOff = await xeroClient.creditNotes.create({
                                         Type: 'ACCRECCREDIT',
                                         Status: 'AUTHORISED',
@@ -3356,7 +3361,7 @@ users.post('/application/escrow', function(req, res, next) {
                 });
             } else {
                 xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async (xeroClient) => {
-                    if (xeroClient && data.xeroCollectionBankID) {
+                    if (xeroClient && data.xeroCollectionBankID && client[0]['xeroContactID']) {
                         let xeroPayment = await xeroClient.bankTransactions.create({
                             Type: 'RECEIVE-OVERPAYMENT',
                             Contact: {
@@ -3514,7 +3519,8 @@ users.post('/application/disburse/:id', function(req, res, next) {
                                     status: 1,
                                     date_created: data.date_modified
                                 };
-                            if (xeroClient && integration && integration.xero_disbursement_account) {
+                            if (xeroClient && integration && 
+                                integration.xero_disbursement_account && application.xeroContactID) {
                                 xeroDisbursement = await xeroClient.bankTransactions.create({
                                     Type: 'SPEND',
                                     Status: 'AUTHORISED',
@@ -3576,7 +3582,8 @@ function createXeroSchedule (req, res) {
                         xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
                             let xeroPrincipal,
                                 schedule = invoices;
-                            if (xeroClient && integration && integration.xero_principal_account) {
+                            if (xeroClient && integration && 
+                                integration.xero_principal_account && client[0]['xeroContactID']) {
                                 let LineItems = [];
                                 for (let i=0; i<schedule.length; i++) {
                                     let invoice = schedule[i];
@@ -3858,7 +3865,8 @@ users.post('/application/write-off/:id/:agentID', function(req, res, next) {
                             res.send({"status": 500, "error": error, "response": null});
                         } else {
                             xeroFunctions.authorizedOperation(req, res, 'xero_writeoff', async (xeroClient) => {
-                                if (xeroClient && invoice[0]['principal_invoice_no'] && integrations[0] && integrations[0]['xero_writeoff_account']) {
+                                if (xeroClient && invoice[0]['principal_invoice_no'] && integrations[0] && 
+                                    integrations[0]['xero_writeoff_account'] && invoice[0]['xeroContactID']) {
                                     let xeroWriteOff = await xeroClient.creditNotes.create({
                                         Type: 'ACCRECCREDIT',
                                         Status: 'AUTHORISED',
