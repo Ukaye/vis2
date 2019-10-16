@@ -964,7 +964,12 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
         });
     });
 });
+var child_process = require("child_process");
 
+child_process.exec("hostname -f", function(err, stdout, stderr) {
+  var hostname = stdout.trim();
+  console.log(hostname)
+});
 router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     console.log(req)
