@@ -966,6 +966,9 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
 });
 
 router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
+    console.log(req)
+    console.log(req.HOST)
+    console.log(HOST)
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT p.*, c.fullname, c.email, c.phone FROM client_applications p 
                 INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.application_id} AND p.userID = ${req.params.id}`,

@@ -638,6 +638,12 @@ app.get('/loan-file/:id?', requireLogin, function (req, res) {
     });
 });
 
+app.get('/loan-schedule/:id?', requireLogin, function (req, res) {
+    res.sendFile('/application/loan-schedule/loan-schedule.html', {
+        root: __dirname + '/views'
+    });
+});
+
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
     res.status(404);

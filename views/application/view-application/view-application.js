@@ -2330,6 +2330,32 @@ function initNewLoanOffer(application, settings) {
     });
 }
 
+function printLoanSchedule() {
+    const loanFile = {
+        id: application_id,
+        request_date: application.date_created,
+        customer_name: application.fullname,
+        incorporation_date: application.incorporation_date,
+        line_of_business: application.industry,
+        initiating_officer: workflow_processes[0]['agent'],
+        client_date_created: application.client_date_created,
+        registration_number: application.registration_number,
+        loan_amount: application.loan_amount,
+        interest_rate: application.interest_rate,
+        fees: application.fees,
+        tenor: application.duration,
+        loan_purpose: application.loan_purpose,
+        documents: application.documents,
+        customer_details_request: (workflow_comments[0])? workflow_comments[0]['text'] : '',
+        transaction_dynamics: (workflow_comments[1])? workflow_comments[1]['text'] : '',
+        kyc: `${($.isEmptyObject(application.files))? 'Not':'Yes'} Attached`,
+        security: `${($.isEmptyObject(application.files))? 'Not':'Yes'} Attached`,
+        workflow_processes: workflow_processes
+    };
+    localStorage.loanSchedule = encodeURIComponent(JSON.stringify(loanSchedule));
+    return window.open(`/loan-schedule?id=${application_id}`, '_blank');
+}
+
 function read_write_1(){
     let perms = JSON.parse(localStorage.getItem("permissions")),
         applicationView = ($.grep(perms, function(e){return e.module_name === 'app-page';}))[0];
