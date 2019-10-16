@@ -1868,7 +1868,7 @@ router.get('/preapproved-loan/create/:id/:loan_id', helperFunctions.verifyJWT, f
                 data.expiry = preapproved_loan.expiry_date;
                 data.contact = contact;
                 data.amount = helperFunctions.numberToCurrencyFormatter(preapproved_loan.loan_amount);
-                data.offer_url = `${HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}&i=${req.params.loan_id}`;
+                data.offer_url = `${process.env.HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}&i=${req.params.loan_id}`;
                 emailService.send({
                     to: email,
                     subject: `${process.env.TENANT} Mandate Setup`,
