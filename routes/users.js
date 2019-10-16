@@ -2766,7 +2766,7 @@ async function postXeroSchedule (req, res, connection, obj, client, xeroPrincipa
         let xeroInterest = await xeroClient.invoices.create({
             Type: 'ACCREC',
             Contact: {
-                Name: client.fullname
+                ContactID: client.xeroContactID
             },
             Date: obj.interest_create_date,
             DueDate: obj.interest_collect_date,
@@ -2803,7 +2803,7 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
         db.getConnection(function(err, connection) {
             if (err) throw err;
 
-            connection.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID, c.fullname 
+            connection.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID, c.fullname, c.xeroContactID 
                 FROM applications a, clients c WHERE a.ID=${req.params.id} AND a.userID=c.ID`, function (error, app, fields) {
                 if (error) {
                     res.send({"status": 500, "error": error, "response": null});
@@ -2828,7 +2828,7 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                 let xeroInterest2 = await xeroClient.invoices.update({
                                                     Type: 'ACCREC',
                                                     Contact: {
-                                                        Name: application.fullname
+                                                        ContactID: application.xeroContactID
                                                     },
                                                     Date: old_invoice.interest_create_date,
                                                     DueDate: old_invoice.interest_collect_date,
@@ -2872,7 +2872,7 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                 xeroPrincipal = await xeroClient.invoices.create({
                                                     Type: 'ACCREC',
                                                     Contact: {
-                                                        Name: application.fullname
+                                                        ContactID: application.xeroContactID
                                                     },
                                                     Date: new_schedule[0]['payment_create_date'],
                                                     DueDate: new_schedule[0]['payment_collect_date'],
@@ -2994,7 +2994,7 @@ users.get('/application/schedule/:id', function(req, res, next) {
 
 users.post('/application/add-payment/:id/:agent_id', function(req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async () => {
-        db.query('SELECT c.fullname FROM applications a, clients c '+
+        db.query('SELECT c.fullname, c.xeroContactID FROM applications a, clients c '+
         'WHERE a.ID = ? AND a.userID = c.ID', [req.params.id], function (error, application, fields) {
             if(error){
                 res.send({"status": 500, "error": error, "response": null});
@@ -3009,7 +3009,7 @@ users.post('/application/add-payment/:id/:agent_id', function(req, res, next) {
                         let xeroInterest = await xeroClient.invoices.create({
                             Type: 'ACCREC',
                             Contact: {
-                                Name: application[0]['fullname']
+                                ContactID: application[0]['xeroContactID']
                             },
                             Date: data.interest_create_date,
                             DueDate: data.interest_collect_date,
@@ -3066,7 +3066,7 @@ users.post('/application/edit-schedule/:id/:modifier_id', function(req, res, nex
                 if(error){
                     res.send({"status": 500, "error": error, "response": null});
                 } else {
-                    connection.query('SELECT s.*, c.fullname FROM application_schedules s, applications a, clients c '+
+                    connection.query('SELECT s.*, c.fullname, c.xeroContactID FROM application_schedules s, applications a, clients c '+
                     'WHERE s.ID = ? AND a.ID = s.applicationID AND c.ID = a.userID',[req.params.id], function (error, invoice_obj, fields) {
                         if(error){
                             res.send({"status": 500, "error": error, "response": null});
@@ -3100,7 +3100,7 @@ users.post('/application/edit-schedule/:id/:modifier_id', function(req, res, nex
                                                 let xeroInterest = await xeroClient.invoices.update({
                                                     Type: 'ACCREC',
                                                     Contact: {
-                                                        Name: invoice_obj[0]['fullname']
+                                                        ContactID: invoice_obj[0]['xeroContactID']
                                                     },
                                                     Date: invoice.interest_create_date,
                                                     DueDate: invoice.interest_collect_date,
@@ -3164,7 +3164,7 @@ users.get('/application/edit-schedule-history/:id', function(req, res, next) {
 users.get('/application/schedule-history/write-off/:id', function(req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_writeoff', async () => {
         db.query(`SELECT xero_writeoff_account FROM integrations WHERE ID = (SELECT MAX(ID) FROM integrations)`, (error, integrations) => {
-            db.query('SELECT s.interest_invoice_no, s.interest_amount, a.ID applicationID, c.fullname FROM application_schedules s, applications a, clients c '+
+            db.query('SELECT s.interest_invoice_no, s.interest_amount, a.ID applicationID, c.fullname, c.xeroContactID FROM application_schedules s, applications a, clients c '+
             'WHERE s.ID = '+req.params.id+' AND s.applicationID = a.ID AND a.userID = c.ID', function (error, invoice, fields) {
                 if(error){
                     res.send({"status": 500, "error": error, "response": null});
@@ -3183,7 +3183,7 @@ users.get('/application/schedule-history/write-off/:id', function(req, res, next
                                         Type: 'ACCRECCREDIT',
                                         Status: 'AUTHORISED',
                                         Contact: {
-                                            Name: invoice[0]['fullname']
+                                            ContactID: invoice[0]['xeroContactID']
                                         },
                                         Date: update.date_modified,
                                         LineItems: [{
@@ -3199,7 +3199,7 @@ users.get('/application/schedule-history/write-off/:id', function(req, res, next
                                         Type: 'ACCRECCREDIT',
                                         CreditNoteNumber: xeroWriteOff.CreditNotes[0]['CreditNoteNumber'],
                                         Contact: {
-                                            Name: invoice[0]['fullname']
+                                            ContactID: invoice[0]['xeroContactID']
                                         },
                                         Amount: invoice[0]['interest_amount'],
                                         Invoice: {
@@ -3360,7 +3360,7 @@ users.post('/application/escrow', function(req, res, next) {
                         let xeroPayment = await xeroClient.bankTransactions.create({
                             Type: 'RECEIVE-OVERPAYMENT',
                             Contact: {
-                                Name: client[0]['fullname']
+                                ContactID: client[0]['xeroContactID']
                             },
                             BankAccount: {
                                 Code: data.xeroCollectionBankID
@@ -3487,7 +3487,7 @@ Number.prototype.round = function(p) {
 
 users.post('/application/disburse/:id', function(req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async () => {
-        db.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID, c.fullname  
+        db.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID, c.fullname, c.xeroContactID 
             FROM applications a, clients c WHERE a.ID=${req.params.id} AND a.userID=c.ID`, function (error, app, fields) {
             if (error) {
                 res.send({"status": 500, "error": error, "response": null});
@@ -3519,7 +3519,7 @@ users.post('/application/disburse/:id', function(req, res, next) {
                                     Type: 'SPEND',
                                     Status: 'AUTHORISED',
                                     Contact: {
-                                        Name: application.fullname
+                                        ContactID: application.xeroContactID
                                     },
                                     BankAccount: {
                                         Code: data.funding_source
@@ -3563,7 +3563,7 @@ function createXeroSchedule (req, res) {
     db.getConnection(function(err, connection) {
         if (err) throw err;
 
-        connection.query(`SELECT c.fullname FROM applications a, clients c WHERE a.ID = ${req.params.id} 
+        connection.query(`SELECT c.fullname, c.xeroContactID FROM applications a, clients c WHERE a.ID = ${req.params.id} 
         AND a.userID = c.ID`, function (error, client) {
             if(error){
                 res.send({"status": 500, "error": error, "response": null});
@@ -3591,7 +3591,7 @@ function createXeroSchedule (req, res) {
                                 xeroPrincipal = await xeroClient.invoices.create({
                                     Type: 'ACCREC',
                                     Contact: {
-                                        Name: client[0]['fullname']
+                                        ContactID: client[0]['xeroContactID']
                                     },
                                     Date: schedule[0]['payment_create_date'],
                                     DueDate: schedule[0]['payment_collect_date'],
@@ -3844,7 +3844,7 @@ users.post('/application/pay-off/:id/:agentID', function(req, res, next) {
 users.post('/application/write-off/:id/:agentID', function(req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_writeoff', async () => {
         db.query(`SELECT xero_writeoff_account FROM integrations WHERE ID = (SELECT MAX(ID) FROM integrations)`, (error, integrations) => {
-            db.query('SELECT s.principal_invoice_no, c.fullname FROM applications a, application_schedules s, clients c '+
+            db.query('SELECT s.principal_invoice_no, c.fullname, c.xeroContactID FROM applications a, application_schedules s, clients c '+
             'WHERE a.ID = '+req.params.id+' AND s.ID = (SELECT MIN(ID) FROM application_schedules WHERE a.ID = applicationID AND status = 1) '+
             'AND a.userID = c.ID', function (error, invoice, fields) {
                 if(error){
@@ -3863,7 +3863,7 @@ users.post('/application/write-off/:id/:agentID', function(req, res, next) {
                                         Type: 'ACCRECCREDIT',
                                         Status: 'AUTHORISED',
                                         Contact: {
-                                            Name: invoice[0]['fullname']
+                                            ContactID: invoice[0]['xeroContactID']
                                         },
                                         Date: data.date_modified,
                                         LineItems: [{
@@ -3879,7 +3879,7 @@ users.post('/application/write-off/:id/:agentID', function(req, res, next) {
                                         Type: 'ACCRECCREDIT',
                                         CreditNoteNumber: xeroWriteOff.CreditNotes[0]['CreditNoteNumber'],
                                         Contact: {
-                                            Name: invoice[0]['fullname']
+                                            ContactID: invoice[0]['xeroContactID']
                                         },
                                         Amount: data.close_amount,
                                         Invoice: {
