@@ -964,13 +964,13 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
         });
     });
 });
-var os = require("os");
-var hostname = os.hostname();
-console.log(hostname)
+
 router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     console.log(req)
     console.log(req.HOST)
+    console.log(req.hostname)
+    console.log(req.headers)
     console.log(HOST)
     let query = `SELECT p.*, c.fullname, c.email, c.phone FROM client_applications p 
                 INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.application_id} AND p.userID = ${req.params.id}`,
