@@ -2693,9 +2693,10 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                         },
                                                         Date: date_modified,
                                                         Amount: principal_due,
-                                                        IsReconciled: true
+                                                        IsReconciled: true,
+                                                        Reference: `Reschedule adjustment for LOAN ID: ${helperFunctions.padWithZeroes(old_invoice.applicationID, 9)}`
                                                     });
-                                                    console.log(xeroPrincipal2.Payments[0])
+                                                    console.log(xeroPrincipal2.Payments[0]);
                                                 }
                                             }
                                         });
@@ -3163,7 +3164,7 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                     Account: {
                                         Code: invoice.xeroCollectionBankID
                                     },
-                                    Date: invoice.date_created,
+                                    Date: invoice.payment_date,
                                     Amount: invoice.payment_amount,
                                     IsReconciled: true,
                                     Reference: (invoice.xeroCollectionDescription || '').concat(` | 
@@ -3180,7 +3181,7 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                     Account: {
                                         Code: invoice.xeroCollectionBankID
                                     },
-                                    Date: invoice.date_created,
+                                    Date: invoice.payment_date,
                                     Amount: invoice.interest_amount,
                                     IsReconciled: true,
                                     Reference: (invoice.xeroCollectionDescription || '').concat(` | 
