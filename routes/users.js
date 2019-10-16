@@ -1318,7 +1318,7 @@ users.get('/users-list-v2', function(req, res, next) {
 });
 
 users.get('/get', (req, res) => {
-    let query = 'SELECT ID, username, fullname, email, status, date_created from users where status = 1 order by fullname asc';
+    let query = 'SELECT ID, username, fullname, email, status, date_created from users where status = 1 AND user_role NOT IN (1, 3, 4) order by fullname asc';
     db.query(query, (error, results) => {
         if(error){
             res.send({
