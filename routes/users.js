@@ -2676,6 +2676,30 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                             connection.query(`SELECT * FROM application_schedules WHERE applicationID = ${req.params.id} AND status = 1`, (error, old_schedule) => {
                                 let obj2 = {};
                                 async.forEach(old_schedule, (old_invoice, callback2) => {
+                                    if (old_invoice.principal_invoice_no) {
+                                        xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
+                                            if (xeroClient && old_invoice.payment_amount > 0 && integration.xero_principal_account) {
+                                                let xeroInvoice = await xeroClient.invoices.get({
+                                                    InvoiceNumber: old_invoice.principal_invoice_no
+                                                });
+                                                let principal_due = xeroInvoice.Invoices[0]['AmountDue'];
+                                                if (principal_due > 0) {
+                                                    let xeroPrincipal2 = await xeroClient.payments.create({
+                                                        Invoice: {
+                                                            InvoiceNumber: old_invoice.principal_invoice_no
+                                                        },
+                                                        Account: {
+                                                            Code: integration.xero_principal_account
+                                                        },
+                                                        Date: date_modified,
+                                                        Amount: principal_due,
+                                                        IsReconciled: true
+                                                    });
+                                                    console.log(xeroPrincipal2.Payments[0])
+                                                }
+                                            }
+                                        });
+                                    }
                                     if (old_invoice.interest_invoice_no) {
                                         xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
                                             if (xeroClient && integration && 
