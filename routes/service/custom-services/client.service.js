@@ -721,9 +721,7 @@ router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
             });
         } else {
             fs.readdir(path, function (err, files) {
-                console.log(files)
                 files = helperFunctions.removeFileDuplicates(path, files);
-                console.log(files)
                 async.forEach(files, function (file, callback) {
                     let filename = file.split('.')[1].split('_');
                     filename.shift();
