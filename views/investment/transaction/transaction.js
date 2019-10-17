@@ -1656,7 +1656,7 @@ function onTransactionTimeline() {
                 timelineTags += `<li>
                                             <a target="_blank">${element.method} OPERATION</a>
                                             <a href="#" class="float-right">${_dt.getDate()} ${monthNames[_dt.getMonth()]}, ${_dt.getFullYear()} ${_splittedDate[1]} ${_splittedDate[2].toUpperCase()}</a>
-                                            <p><strong>Transaction by: </strong><span>${element.createdByName}</span><br/>
+                                            <p><strong>Transaction by: </strong><span>${element.postedByName || element.approvedByName || element.reviewedByName}</span><br/>
                                             <strong>Description: </strong><span>${element.description}</span>
                                             </p>
                                         </li>`;
@@ -1668,6 +1668,43 @@ function onTransactionTimeline() {
         }
     });
 }
+
+
+
+// function onTransactionTimeline() {
+//     const monthNames = ["January", "February", "March", "April", "May", "June",
+//         "July", "August", "September", "October", "November", "December"
+//     ];
+//     let splittedDate = selectedInvestment.invCreatedAt.split(' ');
+//     let dt = new Date(selectedInvestment.invCreatedAt);
+//     $('#idInvestmentCreator').html(selectedInvestment.invCreator);
+//     $('#idInvestmentCreatedAt').html(`${dt.getDate()} ${monthNames[dt.getMonth()]}, ${dt.getFullYear()} ${splittedDate[1]} ${splittedDate[2].toUpperCase()}`);
+//     let timelineTags = '';
+//     $.ajax({
+//         url: `investment-txns/transaction-timelines/${selectedInvestment.investmentId}`,
+//         'type': 'get',
+//         'success': function (data) {
+//             for (let index = 0; index < data.length; index++) {
+//                 const element = data[index];
+//                 const _splittedDate = element.createdAt.split(' ');
+//                 const _dt = new Date(element.createdAt);
+
+//                 element.method = element.method.toUpperCase();
+//                 timelineTags += `<li>
+//                                             <a target="_blank">${element.method} OPERATION</a>
+//                                             <a href="#" class="float-right">${_dt.getDate()} ${monthNames[_dt.getMonth()]}, ${_dt.getFullYear()} ${_splittedDate[1]} ${_splittedDate[2].toUpperCase()}</a>
+//                                             <p><strong>Transaction by: </strong><span>${element.createdByName}</span><br/>
+//                                             <strong>Description: </strong><span>${element.description}</span>
+//                                             </p>
+//                                         </li>`;
+//             }
+//             $('#idTimeLine').html(timelineTags);
+//         },
+//         'error': function (err) {
+//             $('#wait').hide();
+//         }
+//     });
+// }
 
 
 

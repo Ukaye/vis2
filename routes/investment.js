@@ -4,7 +4,6 @@ const db = require('../db');
 const router = express.Router();
 const axios = require('axios');
 const sRequest = require('./service/s_request');
-
 /** End point use to create investment/savings product **/
 router.post('/products', function (req, res, next) {
     let data = req.body;

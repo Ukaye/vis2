@@ -54,6 +54,58 @@ router.post('/create', function (req, res, next) {
                     query = `INSERT INTO investment_txns SET ?`;
                     sRequest.post(query, inv_txn)
                         .then(function (response_) {
+
+                            query = `SELECT * FROM investment_product_reviews
+                                WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
+                            sRequest.get(query)
+                                .then(function (response2) {
+                                    if (response2.length > 0) {
+                                        let result = response2[0];
+                                        let pasrsedData = JSON.parse(result.roleId);
+                                        pasrsedData.map((role) => {
+                                            let invOps = {
+                                                investmentId: response.insertId,
+                                                operationId: 1,
+                                                roleId: role,
+                                                isAllRoles: result.isAllRoles,
+                                                createdAt: dt,
+                                                updatedAt: dt,
+                                                createdBy: data.createdBy,
+                                                txnId: response_.insertId,
+                                                priority: result.priority,
+                                                method: 'REVIEW'
+                                            };
+
+                                            if (invOps.priority === '[]') {
+                                                delete invOps.priority;
+                                            }
+
+                                            query = `INSERT INTO investment_op_approvals SET ?`;
+                                            try {
+                                                sRequest.post(query, invOps);
+                                            } catch (error) { }
+
+                                        });
+                                    } else {
+                                        let invOps = {
+                                            investmentId: response.insertId,
+                                            operationId: 1,
+                                            roleId: '',
+                                            createdAt: dt,
+                                            updatedAt: dt,
+                                            createdBy: data.createdBy,
+                                            txnId: response_.insertId,
+                                            method: 'REVIEW'
+                                        };
+                                        query = `INSERT INTO investment_op_approvals SET ?`;
+                                        try {
+                                            sRequest.post(query, invOps);
+                                        } catch (error) { }
+                                    }
+                                })
+                                .catch(function (error) { });
+
+
                             query = `SELECT * FROM investment_product_requirements
                                 WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
                             sRequest.get(query, {
@@ -107,55 +159,7 @@ router.post('/create', function (req, res, next) {
                                     }
                                 })
                                 .catch(function (error) { });
-                            query = `SELECT * FROM investment_product_reviews
-                                WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
-                            sRequest.get(query)
-                                .then(function (response2) {
-                                    if (response2.length > 0) {
-                                        let result = response2[0];
-                                        let pasrsedData = JSON.parse(result.roleId);
-                                        pasrsedData.map((role) => {
-                                            let invOps = {
-                                                investmentId: response.insertId,
-                                                operationId: 1,
-                                                roleId: role,
-                                                isAllRoles: result.isAllRoles,
-                                                createdAt: dt,
-                                                updatedAt: dt,
-                                                createdBy: data.createdBy,
-                                                txnId: response_.insertId,
-                                                priority: result.priority,
-                                                method: 'REVIEW'
-                                            };
 
-                                            if (invOps.priority === '[]') {
-                                                delete invOps.priority;
-                                            }
-
-                                            query = `INSERT INTO investment_op_approvals SET ?`;
-                                            try {
-                                                sRequest.post(query, invOps);
-                                            } catch (error) { }
-
-                                        });
-                                    } else {
-                                        let invOps = {
-                                            investmentId: response.insertId,
-                                            operationId: 1,
-                                            roleId: '',
-                                            createdAt: dt,
-                                            updatedAt: dt,
-                                            createdBy: data.createdBy,
-                                            txnId: response_.insertId,
-                                            method: 'REVIEW'
-                                        };
-                                        query = `INSERT INTO investment_op_approvals SET ?`;
-                                        try {
-                                            sRequest.post(query, invOps);
-                                        } catch (error) { }
-                                    }
-                                })
-                                .catch(function (error) { });
                             query = `SELECT * FROM investment_product_posts
                                 WHERE productId = ${data.productId} AND operationId = ${1} AND status = 1`;
                             sRequest.get(query)

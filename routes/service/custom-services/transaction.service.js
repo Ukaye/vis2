@@ -116,6 +116,60 @@ router.post('/create', function (req, res, next) {
                 sRequest.post(query, inv_txn)
                     .then(function (_response) {
                         if (_response.status === undefined) {
+
+
+                            query = `SELECT * FROM investment_product_reviews
+                                    WHERE productId = ${(data.productId) ? data.productId : 0} AND operationId = ${data.operationId} AND status = 1`;
+                            sRequest.get(query)
+                                .then(function (response2) {
+                                    if (response2.length > 0) {
+                                        let result = response2[0];
+                                        let pasrsedData = JSON.parse(result.roleId);
+                                        let jsonPriority = JSON.parse(result.priority);
+                                        jsonPriority = (jsonPriority === null) ? [] : jsonPriority;
+                                        pasrsedData.map((role) => {
+                                            let invOps = {
+                                                investmentId: data.investmentId,
+                                                operationId: data.operationId,
+                                                roleId: role,
+                                                isAllRoles: result.isAllRoles,
+                                                createdAt: dt,
+                                                updatedAt: dt,
+                                                createdBy: data.createdBy,
+                                                txnId: _response.insertId,
+                                                method: 'REVIEW'
+                                            };
+                                            if (jsonPriority.length > 0) {
+                                                const check = jsonPriority.filter(x => x.id.toString() === role.toString());
+                                                if (check.length > 0) {
+                                                    invOps.priority = JSON.stringify(check);
+                                                }
+                                            }
+                                            query = `INSERT INTO investment_op_approvals SET ?`;
+                                            sRequest.post(query, invOps).then(p => { }, er22 => {
+                                            });
+                                        });
+                                    } else {
+                                        let invOps = {
+                                            investmentId: data.investmentId,
+                                            operationId: data.operationId,
+                                            roleId: '',
+                                            createdAt: dt,
+                                            updatedAt: dt,
+                                            createdBy: data.createdBy,
+                                            txnId: _response.insertId,
+                                            method: 'REVIEW'
+                                        };
+
+                                        query = `INSERT INTO investment_op_approvals SET ?`;
+                                        sRequest.post(query, invOps).then(p => { }, er22 => {
+                                        });
+                                    }
+                                })
+                                .catch(function (error) {
+                                });
+
+
                             query = `SELECT * FROM investment_product_requirements
                                     WHERE productId = ${(data.productId) ? data.productId : 0} AND operationId = ${data.operationId} AND status = 1`;
                             sRequest.get(query)
@@ -169,56 +223,7 @@ router.post('/create', function (req, res, next) {
                                 });
 
 
-                            query = `SELECT * FROM investment_product_reviews
-                                    WHERE productId = ${(data.productId) ? data.productId : 0} AND operationId = ${data.operationId} AND status = 1`;
-                            sRequest.get(query)
-                                .then(function (response2) {
-                                    if (response2.length > 0) {
-                                        let result = response2[0];
-                                        let pasrsedData = JSON.parse(result.roleId);
-                                        let jsonPriority = JSON.parse(result.priority);
-                                        jsonPriority = (jsonPriority === null) ? [] : jsonPriority;
-                                        pasrsedData.map((role) => {
-                                            let invOps = {
-                                                investmentId: data.investmentId,
-                                                operationId: data.operationId,
-                                                roleId: role,
-                                                isAllRoles: result.isAllRoles,
-                                                createdAt: dt,
-                                                updatedAt: dt,
-                                                createdBy: data.createdBy,
-                                                txnId: _response.insertId,
-                                                method: 'REVIEW'
-                                            };
-                                            if (jsonPriority.length > 0) {
-                                                const check = jsonPriority.filter(x => x.id.toString() === role.toString());
-                                                if (check.length > 0) {
-                                                    invOps.priority = JSON.stringify(check);
-                                                }
-                                            }
-                                            query = `INSERT INTO investment_op_approvals SET ?`;
-                                            sRequest.post(query, invOps).then(p => { }, er22 => {
-                                            });
-                                        });
-                                    } else {
-                                        let invOps = {
-                                            investmentId: data.investmentId,
-                                            operationId: data.operationId,
-                                            roleId: '',
-                                            createdAt: dt,
-                                            updatedAt: dt,
-                                            createdBy: data.createdBy,
-                                            txnId: _response.insertId,
-                                            method: 'REVIEW'
-                                        };
 
-                                        query = `INSERT INTO investment_op_approvals SET ?`;
-                                        sRequest.post(query, invOps).then(p => { }, er22 => {
-                                        });
-                                    }
-                                })
-                                .catch(function (error) {
-                                });
 
                             query = `SELECT * FROM investment_product_posts
                                     WHERE productId = ${(data.productId) ? data.productId : 0} AND operationId = ${data.operationId} AND status = 1`;
@@ -2908,8 +2913,10 @@ router.get('/client-wallet-balance/:id', function (req, res, next) {
 
 
 router.get('/transaction-timelines/:id', function (req, res, next) {
-    let query = `SELECT o.*, u.fullname as createdByName, i.description FROM investment_op_approvals o 
-    left join users u on u.ID = o.createdBy 
+    let query = `SELECT o.*, u.fullname as reviewedByName, a.fullname as approvedByName, p.fullname as postedByName, i.description FROM investment_op_approvals o 
+    left join users u on u.ID = o.reviewedBy
+    left join users a on a.ID = o.approvedBy 
+    left join users p on p.ID = o.postedBy
     left join investment_txns i on i.ID = o.txnId 
     WHERE o.investmentId = ${req.params.id}`;
     sRequest.get(query).then(response => {
@@ -2917,6 +2924,16 @@ router.get('/transaction-timelines/:id', function (req, res, next) {
     });
 });
 
+
+// router.get('/transaction-timelines/:id', function (req, res, next) {
+//     let query = `SELECT o.*, u.fullname as createdByName, i.description FROM investment_op_approvals o 
+//     left join users u on u.ID = o.createdBy 
+//     left join investment_txns i on i.ID = o.txnId 
+//     WHERE o.investmentId = ${req.params.id}`;
+//     sRequest.get(query).then(response => {
+//         res.send(response);
+//     });
+// });
 
 router.get('/investment-accounts/:id', function (req, res, next) {
     let limit = req.query.limit;
