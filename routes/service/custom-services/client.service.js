@@ -83,7 +83,7 @@ router.post('/mandate/setup', function (req, res) {
                     delete payload.serviceTypeId;
                     axios.get(`${HOST}/core-service/get`, {
                         params: {
-                            query: `SELECT * FROM remita_mandates WHERE applicationID = ${application_id}`
+                            query: `SELECT * FROM remita_mandates WHERE applicationID = ${application_id} AND status = 1`
                         }
                     }).then(remita_mandate => {
                         if (remita_mandate.data[0]) {
