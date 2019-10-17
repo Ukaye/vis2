@@ -345,7 +345,7 @@ functions.removeFileDuplicates = (folder_path, files) => {
         files_ = [];
     for (let i=0; i<files.length; i++) {
         let file = files[i],
-            file_ = file.split('.')[1].split('_');
+            file_ = file.split('.')[(folder_path.indexOf('files/users/') > -1)? 1:0].split('_');
         file_.shift();
         name = file_.join('_');
         datetime = fs.statSync(path.join(folder_path, file)).ctime;
