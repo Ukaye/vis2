@@ -687,7 +687,7 @@ router.delete('/disable/:id', helperFunctions.verifyJWT, function (req, res) {
         });
     });
 });
-
+console.log(process.env.HOST)
 router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
     let query = `SELECT *, (select fullname from users u where u.ID = clients.loan_officer) loan_officer,
         (select branch_name from branches b where b.ID = clients.branch) branch, 

@@ -550,7 +550,7 @@ function confirmPayment() {
             $('#wait').hide();
             swal({
                 title: "Are you sure?",
-                text: `Overpayment of ₦${numberToCurrencyformatter(overpayment)} would be saved to escrow`,
+                text: `Overpayment of ₦${numberToCurrencyformatter(overpayment)} would be saved to overpayment`,
                 icon: "warning",
                 buttons: true,
                 dangerMode: true

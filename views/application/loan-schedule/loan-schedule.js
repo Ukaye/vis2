@@ -33,7 +33,7 @@ function init() {
         $('#process_value').append(`<b>${workflow_process.agent || 'N/A'} (${workflow_process.role || 'N/A'})</b><br>`);
     }
 
-    return window.print();
+    // return window.print();
 }
 
 function formatDate_(date) {
