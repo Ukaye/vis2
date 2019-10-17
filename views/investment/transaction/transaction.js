@@ -548,6 +548,7 @@ function bindInterestDataTable() {
     });
 }
 
+//Segun Commented this part
 // function bindStatementDataTable() {
 //     let _dt = new Date($('#dtStatementStart').val());
 //     let _dt2 = new Date($('#dtStatementEnds').val());
