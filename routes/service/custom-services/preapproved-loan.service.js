@@ -97,7 +97,7 @@ router.get('/recommendations/get', function (req, res, next) {
 			,2) AS loan_amount
 
         FROM application_schedules a, applications apps WHERE a.status=1 AND apps.status=2
-        AND (SELECT p.ID FROM preapproved_loans p WHERE p.userID = apps.userID) IS NULL
+        AND (SELECT count(p.ID) FROM preapproved_loans p WHERE p.userID = apps.userID) = 0
         AND a.applicationID = apps.ID AND a.payment_collect_date < CURDATE()
         AND round((round(((SELECT count(a2.ID) FROM application_schedules a2, applications apps2 WHERE a2.status=1 AND apps2.status=2
             AND a2.applicationID = apps2.ID AND a2.payment_collect_date < CURDATE() AND apps2.userID = apps.userID)
@@ -225,7 +225,7 @@ router.get('/recommendations/get/:id', function (req, res, next) {
 			,2) AS loan_amount
                 
         FROM application_schedules a, applications apps WHERE a.status=1 AND apps.status=2 
-        AND (SELECT p.ID FROM preapproved_loans p WHERE p.userID = apps.userID) IS NULL 
+        AND (SELECT count(p.ID) FROM preapproved_loans p WHERE p.userID = apps.userID) = 0 
         AND a.applicationID = apps.ID AND a.payment_collect_date < CURDATE() AND apps.userID = ${req.params.id}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
