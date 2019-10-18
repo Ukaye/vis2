@@ -3154,8 +3154,6 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                             }
                         }
                         xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
-                            console.log(invoice)
-                            console.log(application)
                             if (xeroClient && invoice.payment_amount > 0 && 
                                 application.principal_invoice_no && invoice.xeroCollectionBankID) {
                                 let xeroPayment = await xeroClient.payments.create({
@@ -3172,7 +3170,6 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                         ${application.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(application.ID, 9)} | `)
                                 });
                                 invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
-                                console.log(xeroPayment.Payments[0])
                             }
                             if (xeroClient && invoice.interest_amount > 0 && 
                                 application.interest_invoice_no && invoice.xeroCollectionBankID) {
@@ -3190,7 +3187,6 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                         ${application.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(application.ID, 9)} | `)
                                 });
                                 invoice.xeroInterestPaymentID = xeroPayment.Payments[0]['PaymentID'];
-                                console.log(xeroPayment.Payments[0])
                             }
                             db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response, fields) {
                                 if(error){
