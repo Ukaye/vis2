@@ -3312,7 +3312,7 @@ function allocateXeroOverpayment(req, res, client) {
                         });
                         principal_amount -= balance;
                         index++;
-                        balance = parseFloat(xeroOverpayments[index]['RemainingCredit']);
+                        balance = (xeroOverpayments[index])? parseFloat(xeroOverpayments[index]['RemainingCredit']) : 0;
                     }
                 }
 
@@ -3344,7 +3344,7 @@ function allocateXeroOverpayment(req, res, client) {
                         });
                         interest_amount -= balance;
                         index++;
-                        balance = parseFloat(xeroOverpayments[index]['RemainingCredit']);
+                        balance = (xeroOverpayments[index])? parseFloat(xeroOverpayments[index]['RemainingCredit']) : 0;
                     }
                 }
             }
