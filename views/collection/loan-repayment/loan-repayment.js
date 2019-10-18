@@ -513,7 +513,7 @@ function validation() {
 }
 
 function confirmPayment() {
-    if (!selected_schedule.interest_invoice_no)
+    if (xero_config.xero_collection_bank === 1 && !selected_schedule.interest_invoice_no)
         return notification('Xero invoice no is required','Kindly update this invoice with the xero invoice no','warning');
     let invoice = {},
         payment = parseFloat($('#payment').val() || '0');
