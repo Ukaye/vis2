@@ -97,7 +97,7 @@ router.get('/recommendations/get', function (req, res, next) {
 			,2) AS loan_amount
 
         FROM application_schedules a, applications apps WHERE a.status=1 AND apps.status=2
-        AND (SELECT p.ID FROM preapproved_loans p WHERE p.userID = apps.userID) IS NULL
+        AND (SELECT count(p.ID) FROM preapproved_loans p WHERE p.userID = apps.userID) = 0
         AND a.applicationID = apps.ID AND a.payment_collect_date < CURDATE()
         AND round((round(((SELECT count(a2.ID) FROM application_schedules a2, applications apps2 WHERE a2.status=1 AND apps2.status=2
             AND a2.applicationID = apps2.ID AND a2.payment_collect_date < CURDATE() AND apps2.userID = apps.userID)
@@ -225,7 +225,7 @@ router.get('/recommendations/get/:id', function (req, res, next) {
 			,2) AS loan_amount
                 
         FROM application_schedules a, applications apps WHERE a.status=1 AND apps.status=2 
-        AND (SELECT p.ID FROM preapproved_loans p WHERE p.userID = apps.userID) IS NULL 
+        AND (SELECT count(p.ID) FROM preapproved_loans p WHERE p.userID = apps.userID) = 0 
         AND a.applicationID = apps.ID AND a.payment_collect_date < CURDATE() AND apps.userID = ${req.params.id}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
@@ -389,17 +389,20 @@ router.get('/get', function (req, res, next) {
 
 router.get('/get/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, r.requestId, r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
-                LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) WHERE (p.ID = '${decodeURIComponent(req.params.id)}' OR p.hash = '${decodeURIComponent(req.params.id)}')`,
+    let query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, 
+        r.requestId, r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
+        LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) WHERE (p.ID = '${decodeURIComponent(req.params.id)}' OR p.hash = '${decodeURIComponent(req.params.id)}') AND p.status = 1`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
     if (req.query.key === 'userID') {
-        query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, r.requestId, r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
-                LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) WHERE p.userID = '${req.params.id}'`;
+        query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, 
+        r.requestId, r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
+        LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) WHERE p.userID = '${req.params.id}' AND p.status = 1`;
     }
     if (req.query.key === 'applicationID') {
-        query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, r.requestId, r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
-                LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) WHERE p.applicationID = '${req.params.id}'`;
+        query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, 
+        r.requestId, r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
+        LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) WHERE p.applicationID = '${req.params.id}' AND p.status = 1`;
     }
     axios.get(url, {
         params: {

@@ -1,5 +1,9 @@
 $(document).ready(() => {
     $.ajaxSetup({
+        beforeSend: function(xhr) {
+            if (localStorage.user_obj)
+                xhr.setRequestHeader('userid', JSON.parse(localStorage.user_obj)['ID']);
+        },
         complete: (response) => {
             if (response && response.responseJSON && response.responseJSON.code === 'xero')
                 return window.location.href = response.responseJSON.url;

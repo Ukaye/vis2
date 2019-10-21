@@ -16,6 +16,7 @@
     <link rel="shortcut icon" href="favicon.png">
     <link rel="stylesheet" href="assets/css/normalize.css">
     <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.15/css/bootstrap-multiselect.css">
     <link rel="stylesheet" href="assets/css/font-awesome.min.css">
     <link rel="stylesheet" href="assets/css/themify-icons.css">
     <link rel="stylesheet" href="assets/css/flag-icon.min.css">
@@ -40,6 +41,18 @@
         }
         input[type="checkbox"] {
             margin-right: 15px;
+        }
+        .multiselect-native-select{
+            width: 90%;
+        }
+        .multiselect-native-select div.btn-group, .multiselect-native-select button.multiselect, ul.multiselect-container{
+            width: 100%;
+        }
+        .multiselect-native-select button.multiselect{
+            background: #ffffff;
+            color: #495057;
+            border: 1px solid #ced4da;
+            border-radius: .25rem;
         }
     </style>
 </head>
@@ -130,23 +143,57 @@
                             <input id="xero_loan_account" type="checkbox">
                             Loan Applications Module
                         </label>
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <label for="xero_disbursement_account" class="form-control-label">Disbursement/GL Account</label>
+                                <select id="xero_disbursement_account" class="form-control" disabled="disabled">
+                                    <option value="000" selected="selected">-- Select Disbursement/GL Account --</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-4">
+                                <label for="xero_loan_account_status" class="form-control-label">Document Status</label>
+                                <select id="xero_loan_account_status" class="form-control" disabled="disabled">
+                                    <option selected="selected">DRAFT</option>
+                                    <option>AUTHORISED</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top: 5px;">
+                            <div class="col-lg-6">
+                                <label for="xero_principal_account" class="form-control-label">Principal Account</label>
+                                <select id="xero_principal_account" class="form-control" disabled="disabled">
+                                    <option value="000" selected="selected">-- Select Principal Acct --</option>
+                                </select>
+                            </div>
+                            <div class="col-lg-6">
+                                <label for="xero_interest_account" class="form-control-label">Interest Account</label>
+                                <select id="xero_interest_account" class="form-control" disabled="disabled">
+                                    <option value="000" selected="selected">-- Select Interest Acct --</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     <hr>
                     <div class="form-group">
                         <label class="form-control-label">
                             <input id="xero_collection_bank" type="checkbox">
-                            Collections Module
+                            Collections & Pay Off Module
                         </label>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <label class="form-control-label" style="display: none;">
+                                    <input id="xero_collection_description" type="checkbox">
+                                    Request payment description for collections
+                                </label>
+                            </div>
+                        </div>
                     </div>
                     <hr>
                     <div class="form-group">
                         <label class="form-control-label">
                             <input id="xero_escrow" type="checkbox">
-                            Escrow (Overpayment) Module
+                            Overpayments Module
                         </label>
-                        <select id="xero_escrow_account" class="form-control" disabled="disabled">
-                            <option value="000" selected="selected">-- Select Escrow Account --</option>
-                        </select>
                     </div>
                     <hr>
                     <div class="form-group">
@@ -154,19 +201,19 @@
                             <input id="xero_writeoff" type="checkbox">
                             Write Off Module
                         </label>
-                        <select id="xero_writeoff_account" class="form-control" disabled="disabled">
-                            <option value="000" selected="selected">-- Select Write Off Account --</option>
-                        </select>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <label for="xero_writeoff_account" class="form-control-label">Write Off Account</label>
+                                <select id="xero_writeoff_account" class="form-control" disabled="disabled">
+                                    <option value="000" selected="selected">-- Select Write Off Account --</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     <hr>
                     <div class="form-group">
-                        <label class="form-control-label">
-                            <input id="xero_payoff" type="checkbox">
-                            Pay Off Module
-                        </label>
-                        <select id="xero_payoff_account" class="form-control" disabled="disabled">
-                            <option value="000" selected="selected">-- Select Pay Off Account --</option>
-                        </select>
+                        <label for="xero_users" class="form-control-label">Assign Users</label>
+                        <select id="xero_users" class="multiselect-ui form-control" multiple="multiple" required="required"></select>
                     </div>
                 </form>
             </div>
@@ -187,6 +234,7 @@
 <script src="assets/js/plugins.js"></script>
 <script src="assets/js/main.js"></script>
 <script src="assets/js/lib/data-table/datatables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.15/js/bootstrap-multiselect.min.js"></script>
 <script src="../../js/helper-functions.js"></script>
 <script src="../../menus/menu-items.js"></script>
 <script type="text/javascript" src="../../settings/integrations/integrations.js"></script>

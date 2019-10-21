@@ -5,7 +5,7 @@ let email = {},
     mailgunOptions = {
         auth: {
             api_key: process.env.MAILGUN_API_KEY,
-            domain: process.env.DOMAIN
+            domain: process.env.MAILGUN_DOMAIN
         }
     },
     transport = mailgunTransport(mailgunOptions),

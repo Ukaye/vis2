@@ -5,7 +5,7 @@ const
 
 router.get('/connect', async (req, res) => {
     xeroFunctions.authorizedOperation(req, res, null, async (xeroClient) => {
-        if (xeroClient) {
+        if (xeroClient && (new Date() <= new Date(xeroClient.oauth1Client._state.oauth_expires_at))) {
             res.send({
                 "status": 200,
                 "response": "Xero is already connected!"
@@ -13,7 +13,7 @@ router.get('/connect', async (req, res) => {
         } else {
             xeroFunctions.authorizeRedirect(req, res);
         }
-    })
+    });
 });
 
 router.get('/callback', async (req, res) => {
@@ -26,5 +26,19 @@ router.get('/callback', async (req, res) => {
     req.session.accessToken = accessToken;
     res.redirect(req.session.returnTo || '/');
 });
+
+router.get('/status/get', async (req, res) => {
+    if (req.session && req.session.accessToken) {
+        let xeroClient = await xeroFunctions.getXeroClient(req.session.accessToken);
+        if (xeroClient && (new Date() <= new Date(xeroClient.oauth1Client._state.oauth_expires_at))) {
+            res.send(true);
+        } else {
+            res.send(false);
+        }
+    } else {
+        res.send(false);
+    }
+});
+
 
 module.exports = router;

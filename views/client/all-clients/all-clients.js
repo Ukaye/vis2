@@ -797,7 +797,7 @@ function submitDetails(){
             }
             else {
                 swal('Success!', "Client Details Updated!", 'success');
-                // window.location.href = "./all-clients";
+                window.location.href = "./all-clients";
             }
         },
         'error': function (err) {
@@ -852,12 +852,13 @@ function upload(i){
         var formData = new FormData();
         formData.append('file', file); formData.append('type', i);
         $.ajax({
-            url: "/user/upload-file/"+folder_name+'/'+item,
+            url: `user/upload-file/${folder_name}/${item}`,
             type: "POST",
             data: formData,
             processData: false,
             contentType: false,
             success: function(response) {
+                console.log(response)
                 swal('Success', "File Uploaded Successfully!", 'success');
             },
             error: function() {

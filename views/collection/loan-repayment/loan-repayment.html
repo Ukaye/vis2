@@ -147,7 +147,7 @@
                             <button class="btn btn-primary" onclick="goToLoanOverview()" style="float: right;">Loan Overview <i class="fa fa-forward"></i></button>
                             <button id="remitaPaymentButton" class="btn btn-warning" data-toggle="modal" data-target="#remitaPaymentModal" style="float: right; display: none;">Remita Payment</button>
                             <button class="btn btn-success" data-toggle="modal" data-target="#addPaymentModal" style="float: right;">Add Additional Interest</button>
-                            <a href="#" style="float: right; margin: 8px; text-decoration: underline;" data-toggle="modal" data-target="#escrowHistory" onclick="escrowHistory()">Escrow Balance: ₦<span class="escrow-balance">0</span></a>
+                            <a href="#" style="float: right; margin: 8px; text-decoration: underline;" data-toggle="modal" data-target="#escrowHistory" onclick="escrowHistory()">Overpayments: ₦<span class="escrow-balance">0</span></a>
                         </div>
                         <div class="card-body">
                             <div id="loanCollectionSchedule" style="margin-top: 30px; overflow-x: scroll; max-width: 1200px"></div>
@@ -221,11 +221,11 @@
                             <select id="source" class="form-control" required="required">
                                 <option value="0" selected="selected">-- Select Payment Source --</option>
                                 <option value="cash">Cash</option>
-                                <option value="escrow">Escrow</option>
+                                <option value="escrow">Overpayment</option>
                                 <option value="remita">Remita</option>
                             </select>
                         </div>
-                        <small class="form-text text-muted">Escrow Balance available is ₦<span class="escrow-balance">0</span></small>
+                        <small class="form-text text-muted">Overpayments available is ₦<span class="escrow-balance">0</span></small>
                     </div>
                     <div id="collection-bank-div" class="form-group" style="display: none;">
                         <label class="form-control-label">Collection Bank</label>
@@ -279,6 +279,12 @@
                             <div class="input-group-addon"><i class="fa fa-calendar"></i></div>
                             <input id="repayment-date" type="date" class="form-control" required="required">
                         </div>
+                    </div>
+                    <div id="collection-description-div" class="form-group">                        
+                        <label for="collection_description" class="form-control-label">Statement Description</label>
+                        <strong id="collection-description-required" style="color:red; display: none;"> *</strong>
+                        <textarea id="collection_description" class="form-control" required="required" maxlength="250" placeholder="Brief description"></textarea>
+                        <small class="form-text text-muted">Maximum of 250 characters</small>
                     </div>
                 </form>
             </div>
@@ -416,7 +422,7 @@
     <div class="modal-dialog modal-lg" role="document" style="width: 1005%;">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title" id="escrowHistoryLabel">Escrow History</h4>
+                <h4 class="modal-title" id="escrowHistoryLabel">Overpayment History</h4>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">

@@ -245,7 +245,7 @@ function validatePayment() {
     if (selectedInvoices.length === 1 && overpayment > 0) {
         swal({
             title: 'Are you sure?',
-            text: `Overpayment of ₦${numberToCurrencyFormatter_(overpayment)} would be saved to escrow`,
+            text: `Overpayment of ₦${numberToCurrencyFormatter_(overpayment)} would be saved to overpayment`,
             icon:  'warning',
             buttons: true,
             dangerMode: true

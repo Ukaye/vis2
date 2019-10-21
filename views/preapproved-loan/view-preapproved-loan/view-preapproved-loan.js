@@ -212,9 +212,8 @@
     $("#disburse").click(function () {
         let disbursal = {};
         disbursal.funding_source = $('#funding').val();
-        disbursal.disbursement_channel = $('#channel').val();
-        disbursal.disbursement_date = $('#disbursement-date')  .val();
-        if (disbursal.funding_source === "-- Select a Funding Source --" || disbursal.disbursement_channel === "-- Select a Channel --" || !disbursal.disbursement_date)
+        disbursal.disbursement_date = $('#disbursement-date').val();
+        if (disbursal.funding_source === "-- Select a Disbursement Bank --" || !disbursal.disbursement_date)
             return notification('Kindly fill all required fields!','','warning');
         swal({
             title: "Are you sure?",

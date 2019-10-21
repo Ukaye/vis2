@@ -390,7 +390,7 @@ router.get('/application/funding_source', function (req, res) {
         let xeroAccounts = [];
         if (xeroClient) {
             let xeroAccounts_ = await xeroClient.accounts.get();
-            xeroAccounts = xeroAccounts_.Accounts.filter((e) => {return e.Class === 'REVENUE'});
+            xeroAccounts = xeroAccounts_.Accounts.filter(e => {return e.Class === 'CURRENT'});
         }
         return res.send({
             "status": 200,
@@ -405,7 +405,7 @@ router.get('/collection_bank', function (req, res) {
         let xeroAccounts = [];
         if (xeroClient) {
             let xeroAccounts_ = await xeroClient.accounts.get();
-            xeroAccounts = xeroAccounts_.Accounts.filter((e) => {return e.Type === 'BANK'});
+            xeroAccounts = xeroAccounts_.Accounts.filter(e => {return e.Type === 'BANK'});
         }
         return res.send({
             "status": 200,
@@ -416,7 +416,7 @@ router.get('/collection_bank', function (req, res) {
 });
 
 router.get('/accounts', function (req, res) {
-    xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient) => {
+    xeroFunctions.authorizedOperation(req, res, null, async (xeroClient) => {
         let xeroAccounts = [];
         if (xeroClient) {
             let xeroAccounts_ = await xeroClient.accounts.get();
@@ -465,6 +465,36 @@ router.get('/xero', function (req, res, next) {
                 "response": results[0]
             });
         }
+    });
+});
+
+router.get('/contacts', function (req, res) {
+    xeroFunctions.authorizedOperation(req, res, null, async (xeroClient) => {
+        let xeroContacts = [];
+        if (xeroClient) {
+            let xeroContacts_ = await xeroClient.contacts.get();
+            xeroContacts = xeroContacts_.Contacts;
+        }
+        return res.send({
+            "status": 200,
+            "message": "Contacts fetched successfully!",
+            "response": xeroContacts
+        });
+    });
+});
+
+router.get('/overpayments', function (req, res) {
+    xeroFunctions.authorizedOperation(req, res, null, async (xeroClient) => {
+        let xeroOverpayments = [];
+        if (xeroClient) {
+            let xeroOverpayments_ = await xeroClient.overpayments.get();
+            xeroOverpayments = xeroOverpayments_.Overpayments.filter(e => {return e.Status === 'AUTHORISED'});
+        }
+        return res.send({
+            "status": 200,
+            "message": "Overpayments fetched successfully!",
+            "response": xeroOverpayments
+        });
     });
 });
 

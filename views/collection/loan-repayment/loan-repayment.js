@@ -1,15 +1,33 @@
 $(document).ready(function() {
     getApplication();
     getComments();
-    getCollectionBank();
+    getXeroConfig();
 });
 
-function getCollectionBank() {
+let xero_config;
+function getXeroConfig() {
+    $.ajax({
+        type: "GET",
+        url: "/settings/xero",
+        success: function (data) {
+            if (data.status === 200) {
+                xero_config = data.response;
+                if (xero_config.xero_collection_description === 1) 
+                    $('#collection-description-required').show();
+                if (xero_config.xero_collection_bank === 1) {
+                    getCollectionBanks();
+                    $('#collection-bank-div').show();
+                }
+            }
+        }
+    });
+}
+
+function getCollectionBanks() {
     $.ajax({
         type: "GET",
         url: "/settings/collection_bank",
         success: function (data) {
-            if (data.response[0]) $('#collection-bank-div').show();
             $.each(data.response, function (key, collection_bank) {
                 $('#collection_bank').append(`<option value="${collection_bank.Code}">${collection_bank.Name}</option>`);
             });
@@ -386,11 +404,13 @@ function totalActualPayment(a){
 
 let remita_id,
     invoice_id,
-    expected_invoice;
+    expected_invoice,
+    selected_schedule;
 function confirmPaymentModal(id) {
     invoice_id = id;
     let invoice_obj = ($.grep(application.schedule, function (e) { return parseInt(e.ID) === parseInt(invoice_id) }))[0],
         invoice = $.extend({},invoice_obj);
+    selected_schedule = invoice_obj;
     let payment_history = $.grep(application.payment_history,function(e) {return (e.invoiceID===parseInt(invoice_id) && e.status===1)});
     for (let k = 0; k < payment_history.length; k++){
         invoice.payment_amount -= parseFloat(payment_history[k]['payment_amount']);
@@ -425,14 +445,20 @@ function applyRemitaPayment(obj) {
 
 $('#source').change(function () {
     let $payment = $('#payment'),
-        $message2 = $('#overpayment-message');
+        $message2 = $('#overpayment-message'),
+        $collection_bank = $('#collection_bank'),
+        $collection_description_div = $('#collection-description-div');
     validation();
     if (this.value === 'escrow'){
         $payment.val(0);
         $message2.text('');
         $payment.prop('disabled',true);
+        $collection_bank.prop('disabled',true);
+        $collection_description_div.hide();
     } else {
         $payment.prop('disabled',false);
+        $collection_bank.prop('disabled',false);
+        $collection_description_div.show();
     }
 });
 
@@ -443,11 +469,17 @@ $('.validate').keyup(function () {
 function validation() {
     let invoice = {},
         $message = $('#message'),
+        $payment = $('#payment'),
         $interest = $('#interest'),
         $principal = $('#principal'),
         $message2 = $('#overpayment-message'),
-        $button = $('#confirm-payment-button'),
-        payment = ($('#payment').val())? parseFloat($('#payment').val()) : 0;
+        $button = $('#confirm-payment-button');
+
+    if ($('#source').val() === 'escrow') {
+        $payment.val(parseFloat($principal.val() || 0) + parseFloat($('#interest').val() || 0));
+    }
+
+    let payment = ($('#payment').val())? parseFloat($('#payment').val()) : 0;
     invoice.actual_payment_amount = ($('#principal').val())? parseFloat($('#principal').val()) : 0;
     invoice.actual_interest_amount = ($('#interest').val())? parseFloat($('#interest').val()) : 0;
 
@@ -472,15 +504,17 @@ function validation() {
 
     let overpayment = (payment - (invoice.actual_payment_amount + invoice.actual_interest_amount)).round(2);
     if (overpayment > 0){
-        $message2.text('Overpayment = ₦'+(parseFloat(overpayment).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')));
+        $message2.text(`Overpayment = ₦${numberToCurrencyformatter(overpayment)}`);
     } else if (overpayment < 0){
-        $message2.text('Underpayment = ₦'+((-1*parseFloat(overpayment)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')));
+        $message2.text(`Underpayment = ₦${numberToCurrencyformatter(overpayment)}`);
     } else {
         $message2.text('');
     }
 }
 
 function confirmPayment() {
+    if (xero_config.xero_collection_bank === 1 && !selected_schedule.interest_invoice_no)
+        return notification('Xero invoice no is required','Kindly update this invoice with the xero invoice no','warning');
     let invoice = {},
         payment = parseFloat($('#payment').val() || '0');
     invoice.actual_payment_amount = $('#principal').val() || '0';
@@ -489,7 +523,10 @@ function confirmPayment() {
     invoice.actual_penalty_amount = $('#penalty').val() || '0';
     invoice.payment_source = $('#source').val();
     invoice.payment_date = $('#repayment-date').val();
-    let total_payment = (parseFloat(invoice.actual_payment_amount)+parseFloat(invoice.actual_interest_amount)+parseFloat(invoice.actual_fees_amount)+parseFloat(invoice.actual_penalty_amount)).round(2);
+    let total_payment = (parseFloat(invoice.actual_payment_amount) +
+                        parseFloat(invoice.actual_interest_amount) +
+                        parseFloat(invoice.actual_fees_amount) +
+                        parseFloat(invoice.actual_penalty_amount)).round(2);
     if (!invoice.payment_date)
         return notification('Kindly specify a payment date to proceed','','warning');
     if (invoice.payment_source === '0')
@@ -497,17 +534,23 @@ function confirmPayment() {
     application.escrow = application.escrow || "0";
     if (invoice.payment_source === 'escrow' && (total_payment > (parseFloat(application.escrow)).round(2)))
         return notification('Insufficient escrow funds ('+parseFloat(application.escrow).round(2)+')','','warning');
+    if (invoice.payment_source === 'remita' && remita_id) invoice.remitaPaymentID = remita_id;
+    if ($('#collection_bank').val() !== '000') invoice.xeroCollectionBankID = $('#collection_bank').val();
+    if (xero_config.xero_collection_description === 1 && 
+        invoice.payment_source !== 'escrow' &&
+        !$('#collection_description').val()) {
+            return notification('Kindly specify a statement description to proceed','','warning');
+    }
+    if ($('#collection_description').val()) invoice.xeroCollectionDescription = $('#collection_description').val();
     $('#wait').show();
     $('#confirmPayment').modal('hide');
-    if (invoice.payment_source === 'remita' && remita_id) invoice.remitaPaymentID = remita_id;
-    invoice.xeroCollectionBankID = $('#collection_bank').val();
-    updateEscrow(invoice.payment_source, total_payment, function () {
+    updateEscrow(invoice, total_payment, function () {
         let overpayment = (payment - (parseFloat(invoice.actual_payment_amount) + parseFloat(invoice.actual_interest_amount))).round(2);
         if (overpayment > 0){
             $('#wait').hide();
             swal({
                 title: "Are you sure?",
-                text: "Overpayment of ₦"+(parseFloat(overpayment).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'))+" would be saved to escrow",
+                text: `Overpayment of ₦${numberToCurrencyformatter(overpayment)} would be saved to overpayment`,
                 icon: "warning",
                 buttons: true,
                 dangerMode: true
@@ -521,7 +564,7 @@ function confirmPayment() {
                             'data': invoice,
                             'success': function (data) {
                                 $('#wait').hide();
-                                return escrow(overpayment);
+                                return escrow(overpayment, invoice.xeroCollectionBankID);
                             },
                             'error': function (err) {
                                 $('#wait').hide();
@@ -549,12 +592,18 @@ function confirmPayment() {
     });
 }
 
-function updateEscrow(source, amount, callback) {
-    if (source === 'escrow'){
+function updateEscrow(invoice, amount, callback) {
+    if (invoice.payment_source === 'escrow'){
         $.ajax({
             'url': '/user/application/escrow',
             'type': 'post',
-            'data': {clientID:application.userID,amount:amount*-1,type:'debit'},
+            'data': {
+                clientID:application.userID,
+                amount:amount*-1,
+                type:'debit',
+                schedule: selected_schedule,
+                invoice: invoice
+            },
             'success': function (data) {
                 callback();
             },
@@ -567,11 +616,15 @@ function updateEscrow(source, amount, callback) {
     }
 }
 
-function escrow(amount) {
+function escrow(amount, bank) {
     $.ajax({
         'url': '/user/application/escrow',
         'type': 'post',
-        'data': {clientID:application.userID,amount:amount},
+        'data': {
+            clientID:application.userID,
+            amount:amount,
+            xeroCollectionBankID: bank
+        },
         'success': function (data) {
             notification('Payment confirmed successfully',`Overpayment of ₦${numberToCurrencyformatter(amount)} has been credited to escrow`,'success');
             window.location.reload();
