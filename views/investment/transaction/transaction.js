@@ -319,6 +319,7 @@ function bindDataTable(id) {
                 },
                 success: function (data) {
                     if (data.data.length > 0) {
+                        //The value for selectedInvestment was assigned here
                         selectedInvestment = data.data[data.data.length - 1];
                         if (selectedInvestment.canTerminate === 0 || selectedInvestment.canTerminate === null) {
                             $('#btnTerminateInvestment').attr('disabled', true);
@@ -338,6 +339,7 @@ function bindDataTable(id) {
                         $("#client_name").html((isWalletPage === 1) ? sPageURL.split('=')[2].split('%20').join(' ') : data.data[0].fullname);
                         $("#inv_name").html(`${data.data[0].name} (${data.data[0].code})`);
                         $("#inv_acct_no").html(`${data.data[0].acctNo}`);
+                        //More values for selectedInvestment was assigned here
                         selectedInvestment.txnCurrentBalance = data.txnCurrentBalance;
                         selectedInvestment.isLastMaturedTxnExist = data.isLastMaturedTxnExist;
                         selectedInvestment.maturityDays = data.maturityDays;
@@ -803,9 +805,9 @@ function getClientAccountBalance() {
     });
 }
 
-async function onOpenMode(name, operationId, is_credit) {
+async function onOpenMode(operationType, operationId, is_credit) {
 
-    if (name === 'Transfer') {
+    if (operationType === 'Transfer') {
         // $("#chk_own_accounts").attr('checked', false);
         // $("#chk_own_accounts").attr('hidden', true);
         // $("#lbl_chk_own_accounts").attr('hidden', true);
@@ -815,10 +817,10 @@ async function onOpenMode(name, operationId, is_credit) {
             $("#lbl_chk_client_wallet").attr('hidden', true);
         }
         $('#opt_payment_made_by').attr('disabled', true);
-    } else if (name === 'Withdraw') {
+    } else if (operationType === 'Withdraw') {
         $('#opt_payment_made_by').html('');
         $('#opt_payment_made_by').attr('disabled', true);
-    } else if (name === 'Deposit') {
+    } else if (operationType === 'Deposit') {
         $('#opt_payment_made_by').attr('disabled', false);
         $('#opt_payment_made_by').html('');
         const _acctBal = await getClientAccountBalance();
@@ -833,14 +835,15 @@ async function onOpenMode(name, operationId, is_credit) {
         $('<option/>').val('0').html(`Cash`).appendTo(
             '#opt_payment_made_by');
     }
-
+    //More selectedInvestment values were assigned here
     selectedInvestment._operationId = operationId;
     selectedInvestment._is_credit = is_credit;
+    //opsObj values was assigned here
     opsObj.is_credit = is_credit;
     opsObj.operationId = operationId;
 
-    $("#viewOperationModalHeader").html(name + " Operation");
-    $("#btnTransaction").html(name);
+    $("#viewOperationModalHeader").html(operationType + " Operation");
+    $("#btnTransaction").html(operationType);
     $("#role_list_group").empty();
 
     $.ajax({
@@ -875,7 +878,7 @@ async function onOpenMode(name, operationId, is_credit) {
                     $("#btnTransaction").attr('disabled', true);
                     $("#input_description").attr('disabled', true);
                     $("#input_txn_date").attr('disabled', true);
-                    swal(`Oops! An error occurred while initiating ${name} dialog, please refresh your this page`, '', 'error');
+                    swal(`Oops! An error occurred while initiating ${operationType} dialog, please refresh your this page`, '', 'error');
                 }
             }
         },
@@ -1636,13 +1639,16 @@ function onReviewed(value, approvedId, txnId, id, isDeny) {
 }
 
 function onTransactionTimeline() {
-    const monthNames = ["January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
+    const monthNames = ["Null", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     ];
-    let splittedDate = selectedInvestment.invCreatedAt.split(' ');
-    let dt = new Date(selectedInvestment.invCreatedAt);
+    let splittedDateAndTime = selectedInvestment.invCreatedAt.split(' ');
+    const splitDate = splittedDateAndTime[0].split('-')
+    // let dt = new Date(selectedInvestment.invCreatedAt);
+
     $('#idInvestmentCreator').html(selectedInvestment.invCreator);
-    $('#idInvestmentCreatedAt').html(`${dt.getDate()} ${monthNames[dt.getMonth()]}, ${dt.getFullYear()} ${splittedDate[1]} ${splittedDate[2].toUpperCase()}`);
+    // $('#idInvestmentCreatedAt').html(`${dt.getDate()} ${monthNames[dt.getMonth()]}, ${dt.getFullYear()} ${splittedDate[1]} ${splittedDate[2].toUpperCase()}`);
+    $('#idInvestmentCreatedAt').html(`${splitDate[2]} ${monthNames[splitDate[1]]},  ${splitDate[0]} ${splittedDateAndTime[1]} ${splittedDateAndTime[2].toUpperCase()}`);
     let timelineTags = '';
     $.ajax({
         url: `investment-txns/transaction-timelines/${selectedInvestment.investmentId}`,
@@ -1650,14 +1656,29 @@ function onTransactionTimeline() {
         'success': function (data) {
             for (let index = 0; index < data.length; index++) {
                 const element = data[index];
-                const _splittedDate = element.createdAt.split(' ');
+                // const _splittedDate = element.createdAt.split(' ');
                 const _dt = new Date(element.createdAt);
+                const _splittedDateAndTime = element.updatedAt.split(' ');
+                const _splitDate = _splittedDateAndTime[0].split('-')
+                let status = "N/A";
+                let method = element.method
 
-                element.method = element.method.toUpperCase();
+                if(method == 'REVIEW' && element.isReviewed){
+                    status = 'Reviewed'
+                }else if(method == 'APPROVAL' && element.isApproved){
+                    status = 'Approved'
+                }else if(method == 'POST' && element.isPosted){
+                    status = 'Posted'
+                }else if(((element.reviewedBy && !element.isReviewed) || (element.approvedBy && !element.isApproved) || (element.postedBy && !element.isPosted)) && element.isDeny==1){
+                    status = 'Denied'
+                }
+
+                method = method.toUpperCase();
                 timelineTags += `<li>
-                                            <a target="_blank">${element.method} OPERATION</a>
-                                            <a href="#" class="float-right">${_dt.getDate()} ${monthNames[_dt.getMonth()]}, ${_dt.getFullYear()} ${_splittedDate[1]} ${_splittedDate[2].toUpperCase()}</a>
-                                            <p><strong>Transaction by: </strong><span>${element.postedByName || element.approvedByName || element.reviewedByName}</span><br/>
+                                            <a target="_blank">${method} OPERATION</a>
+                                            <a href="#" class="float-right">${_splitDate[2]} ${monthNames[_splitDate[1]]},  ${_splitDate[0]} ${_splittedDateAndTime[1]} ${_splittedDateAndTime[2].toUpperCase()}</a>
+                                            <p><strong>Status: </strong><span>${status}</span><br/>
+                                            <strong>Performed by: </strong><span>${element.postedByName || element.approvedByName || element.reviewedByName || 'N/A'}</span><br/>
                                             <strong>Description: </strong><span>${element.description}</span>
                                             </p>
                                         </li>`;
@@ -1824,6 +1845,7 @@ function onComputeInterest(value) {
 function onFundWalletOperation() {
     let amount = $("#input_transfer_amount").val();
     let desc = $("#input_transfer_description").val();
+    //Commented by Segun
     // selectedAccount = products.find(x => x.ID.toString() === $("#list_accounts").val());
     let _mRoleId = [];
     let mRoleId = selectedInvestment.roleIds.filter(x => x.operationId === 2 && status === 1);

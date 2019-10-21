@@ -594,7 +594,7 @@ router.post('/reviews', function (req, res, next) {
     let query = `UPDATE investment_op_approvals SET isReviewed = ${data.status}, reviewedBy=${data.userId},isCompleted = ${1}, updatedAt ='${dt.toString()}' WHERE ID =${data.id}`;
     sRequest.get(query)
         .then(function (response) {
-
+console.log(response, 'ooooo')
             if (response.status === undefined) {
                 query = `Select 
                         (Select Count(*) as total_reviewed from investment_op_approvals where txnId = ${data.txnId} AND (isReviewed = 1 || isCompleted = 1) AND method = 'REVIEW') as total_reviewed,
@@ -603,9 +603,11 @@ router.post('/reviews', function (req, res, next) {
                         (Select Count(*) as priorityItemTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'REVIEW' AND priority = '${data.priority}') as priorityItemTotal,
                         (Select Count(*) as total_reviewedBy from investment_op_approvals where txnId = ${data.txnId} AND method = 'REVIEW') as total_reviewedBy`;
                 sRequest.get(query).then(counter => {
+                    console.log(counter, 'iiii')
                     if (((counter[0].total_reviewedBy === counter[0].total_reviewed) || (counter[0].isOptional > 0) ||
                         (counter[0].priorityTotal !== 0 && counter[0].priorityTotal === counter[0].priorityItemTotal)) && data.status === '1') {
                         query = `UPDATE investment_txns SET reviewDone = ${1} WHERE ID =${data.txnId}`;
+                        console.log(5555)
                         sRequest.get(query)
                             .then(function (response_) {
                                 res.send(response);
@@ -624,6 +626,7 @@ router.post('/reviews', function (req, res, next) {
                                 });
                             });
                     } else {
+                        console.log(7777)
                         query = `UPDATE investment_txns SET reviewDone = ${0}, isDeny = ${data.isDeny} WHERE ID =${data.txnId}`;
                         sRequest.get(query)
                             .then(function (response_) {
@@ -2913,12 +2916,13 @@ router.get('/client-wallet-balance/:id', function (req, res, next) {
 
 
 router.get('/transaction-timelines/:id', function (req, res, next) {
-    let query = `SELECT o.*, u.fullname as reviewedByName, a.fullname as approvedByName, p.fullname as postedByName, i.description FROM investment_op_approvals o 
+    let query = `SELECT o.*, isDeny, u.fullname as reviewedByName, a.fullname as approvedByName, p.fullname as postedByName, i.description FROM investment_op_approvals o 
     left join users u on u.ID = o.reviewedBy
     left join users a on a.ID = o.approvedBy 
     left join users p on p.ID = o.postedBy
     left join investment_txns i on i.ID = o.txnId 
-    WHERE o.investmentId = ${req.params.id}`;
+    WHERE o.investmentId = ${req.params.id}
+    ORDER BY ID DESC`;
     sRequest.get(query).then(response => {
         res.send(response);
     });

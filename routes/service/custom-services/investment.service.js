@@ -9,6 +9,7 @@ const sRequest = require('../s_request');
 
 /** End point to create investment/savings account **/
 router.post('/create', function (req, res, next) {
+    console.log(987)
     let _date = new Date();
     let data = JSON.parse(JSON.stringify(req.body));
     const is_after = isAfter(new Date(data.investment_mature_date.toString()), new Date(data.investment_start_date.toString()))
