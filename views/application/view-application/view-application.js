@@ -23,6 +23,7 @@ const application_id = urlParams.get('id');
 
 let workflow,
     application,
+    reschedule_status = false,
     settings_obj = {
         loan_requested_min: 1,
         loan_requested_max: 100000000,
@@ -31,6 +32,10 @@ let workflow,
         interest_rate_min: 1,
         interest_rate_max: 1000
     };
+
+function approveRescheduleModal() {
+    reschedule_status = true;
+}
 
 $("#disbursement-fees").on("keyup", function () {
     let val = $("#disbursement-fees").val();
