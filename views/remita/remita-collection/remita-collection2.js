@@ -1,5 +1,8 @@
 $(document).ready(function() {
     getInvoices();
+    $('#min_balance').keyup(e => {
+        $("#min_balance").val(numberToCurrencyformatter($("#min_balance").val()));
+    });
 });
 
 let allInvoices_,
@@ -33,9 +36,10 @@ $('#status').change((e) => {
 function getInvoices(){
     $('#wait').show();
     $.ajax({
-        type: 'GET',
-        url: '/collection/remita/invoices/due',
+        type: 'get',
+        url: `/collection/remita/invoices/due/${JSON.parse(localStorage.user_obj).ID}`,
         success: function (data) {
+            getMinBalance();
             let response = data.response;
             allInvoices = response;
             allInvoices_ = allInvoices;
@@ -44,6 +48,19 @@ function getInvoices(){
             $.each(response, function (key, val) {
                 displayInvoice(val);
             });
+            $('#wait').hide();
+        }
+    });
+}
+
+function getMinBalance(){
+    $.ajax({
+        type: 'get',
+        url: `/collection/remita/settings/${JSON.parse(localStorage.user_obj).ID}`,
+        success: function (data) {
+            let settings = data.response,
+                min_balance = settings.min_balance || '0';
+            $('#min_balance').val(numberToCurrencyFormatter_(min_balance));
         }
     });
 }
@@ -210,4 +227,26 @@ function disableMultipleRemita() {
                 });
             }
         });
+}
+
+function setMinBalance() {
+    if (!$('#min_balance').val())
+        return ('Kindly specify a value for minimum balance!', '', 'warning');
+    let payload = {};
+    payload.min_balance = currencyToNumberformatter($('#min_balance').val());
+    $('#wait').show();
+    $.ajax({
+        'url': `/collection/remita/settings/${JSON.parse(localStorage.user_obj).ID}`,
+        'type': 'post',
+        'data': payload,
+        'success': function (data) {
+            $('#wait').hide();
+            notification('Minimum balance updated successfully!', '', 'success');
+            window.location.reload();
+        },
+        'error': function (err) {
+            $('#wait').hide();
+            notification('Oops! An error occurred while setting minimum balance', '', 'error');
+        }
+    });
 }

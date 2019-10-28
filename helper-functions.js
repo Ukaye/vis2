@@ -216,7 +216,6 @@ functions.sendDebitInstruction = function (payload, callback) {
     payload.serviceTypeId = process.env.REMITA_SERVICE_TYPE_ID;
     payload.requestId = date.getTime();
     payload.hash = SHA512(payload.merchantId + payload.serviceTypeId + payload.requestId + payload.totalAmount + process.env.REMITA_API_KEY);
-    console.log(payload)
     request.post(
         {
             url: `${process.env.REMITA_BASE_URL}/payment/send`,

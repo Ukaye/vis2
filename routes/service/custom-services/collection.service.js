@@ -449,13 +449,17 @@ router.get('/invoices/due', function(req, res, next) {
     });
 });
 
-router.get('/remita/invoices/due', function(req, res, next) {
+router.get('/remita/invoices/due/:user_id', function(req, res, next) {
     let today = moment().utcOffset('+0100').format('YYYY-MM-DD'),
         query = "SELECT s.ID,c.fullname AS client, c.ID AS clientID, s.applicationID, s.status, s.payment_collect_date, s.payment_status, " +
-            "(ROUND((s.payment_amount + s.interest_amount), 2)) invoice_amount, l.response, r.mandateId, r.payerAccount fundingAccount, r.payerBankCode fundingBankCode, (ROUND((SELECT COALESCE(SUM(p.payment_amount + p.interest_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1), 2)) total_paid, " +
-            "(ROUND(((s.payment_amount + s.interest_amount) - (SELECT COALESCE(SUM(p.payment_amount + p.interest_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)), 2)) payment_amount FROM remita_mandates r, clients c, applications a, application_schedules s LEFT JOIN (SELECT l.* FROM remita_debits_log l WHERE l.ID = (SELECT max(l_.ID) from remita_debits_log l_ WHERE l_.invoiceID = l.invoiceID)) l ON (l.invoiceID = s.ID) " +
+            "(ROUND((s.payment_amount + s.interest_amount), 2)) invoice_amount, l.response, r.mandateId, r.payerAccount fundingAccount, r.payerBankCode fundingBankCode, "+
+            "(ROUND((SELECT COALESCE(SUM(p.payment_amount + p.interest_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1), 2)) total_paid, " +
+            "(ROUND(((s.payment_amount + s.interest_amount) - (SELECT COALESCE(SUM(p.payment_amount + p.interest_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)), 2)) payment_amount "+
+            "FROM remita_mandates r, clients c, applications a, application_schedules s LEFT JOIN (SELECT l.* FROM remita_debits_log l WHERE l.ID = (SELECT max(l_.ID) from remita_debits_log l_ WHERE l_.invoiceID = l.invoiceID)) l ON (l.invoiceID = s.ID) " +
             "WHERE s.status = 1 AND s.payment_status < 2 AND s.enable_remita = 1 AND a.ID = s.applicationID AND a.status = 2 AND r.applicationID = s.applicationID AND NOT EXISTS (SELECT p.ID FROM remita_payments p WHERE p.invoiceID = s.ID) " +
-            "AND ((ROUND(((s.payment_amount + s.interest_amount) - (SELECT COALESCE(SUM(p.payment_amount + p.interest_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)), 2)) > 0) = 1 AND c.ID = a.userID AND a.close_status = 0 AND (s.payment_amount + s.interest_amount) > 0 AND TIMESTAMP(s.payment_collect_date) <= TIMESTAMP('"+today+"') ORDER BY s.ID desc";
+            "AND ((ROUND(((s.payment_amount + s.interest_amount) - (SELECT COALESCE(SUM(p.payment_amount + p.interest_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)), 2)) > "+
+            "(SELECT COALESCE(MAX(min_balance), 0) FROM user_remita_settings WHERE userID = "+req.params.user_id+")) = 1 AND c.ID = a.userID AND a.close_status = 0 "+
+            "AND (s.payment_amount + s.interest_amount) > 0 AND TIMESTAMP(s.payment_collect_date) <= TIMESTAMP('"+today+"') ORDER BY s.ID desc";
 
     db.query(query, function (error, results, fields) {
         if(error) {
@@ -467,6 +471,34 @@ router.get('/remita/invoices/due', function(req, res, next) {
                 response: _.orderBy(results, ['ID'], ['desc'])
             });
         }
+    });
+});
+
+router.post('/remita/settings/:user_id', (req, res) => {
+    let userID = req.params.user_id;
+    db.query(`SELECT * FROM user_remita_settings WHERE userID = ${userID}`, (error, settings) => {
+        if (error) return res.send({status: 500, error: error, response: null});
+        let payload = req.body,
+            query = `INSERT INTO user_remita_settings SET ?`,
+            date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        if (settings[0]) {
+            query = `UPDATE user_remita_settings SET ? WHERE userID = ${userID}`;
+            payload.date_modified = date;
+        } else {
+            payload.userID = userID;
+            payload.date_created = date;
+        }
+        db.query(query, payload, (error, response) => {
+            if (error) return res.send({status: 500, error: error, response: null});
+            return res.send({status: 200, error: null, response: response});
+        });
+    });
+});
+
+router.get('/remita/settings/:user_id', (req, res) => {
+    db.query(`SELECT * FROM user_remita_settings WHERE userID = ${req.params.user_id}`, (error, settings) => {
+        if (error) return res.send({status: 500, error: error, response: null});
+        return res.send({status: 200, error: null, response: settings[0] || {}});
     });
 });
 
