@@ -2665,6 +2665,7 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                     res.send({"status": 500, "error": "Application does not exist!", "response": null});
                 } else {
                     let application = app[0],
+                        disbursal = req.body.disbursal,
                         reschedule_amount = req.body.reschedule_amount,
                         loan_amount_update = req.body.loan_amount_update,
                         date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -2782,20 +2783,21 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                         ContactID: application.xeroContactID
                                                     },
                                                     BankAccount: {
-                                                        Code: data.funding_source
+                                                        Code: disbursal.funding_source
                                                     },
                                                     LineItems: [{
                                                         Description: `Loan disbursement for ${application.fullname} | 
                                                             LOAN ID: ${helperFunctions.padWithZeroes(application.ID, 9)}`,
-                                                        UnitAmount: application.amount,
+                                                        UnitAmount: disbursal.disbursement_amount,
                                                         AccountCode: integration.xero_disbursement_account,
                                                         TaxType: 'NONE'
                                                     }],
-                                                    Date: data.disbursement_date,
+                                                    Date: disbursal.disbursement_date,
                                                     Reference: helperFunctions.padWithZeroes(application.ID, 9),
                                                     IsReconciled: 'true'
                                                 });
                                                 disbursement.xeroDisbursementID = xeroDisbursement.BankTransactions[0]['BankTransactionID'];
+                                                console.log(xeroDisbursement.BankTransactions[0])
                                             }
                                             application.integration = integration;
                                             syncXeroSchedule(req, res, connection, application, new_schedule, xeroPrincipal, 'put')

@@ -35,7 +35,14 @@ let workflow,
 
 function approveRescheduleModal() {
     reschedule_status = true;
+    $('#editRepaymentDateBtn').hide();
+    $('#disbursement-amount').prop('disabled', false);
 }
+
+$("#disbursement-amount").on("keyup", function () {
+    let val = $("#disbursement-amount").val();
+    $("#disbursement-amount").val(numberToCurrencyformatter(val));
+});
 
 $("#disbursement-fees").on("keyup", function () {
     let val = $("#disbursement-fees").val();
@@ -176,7 +183,7 @@ function loadApplication(user_id){
             $('#application-id').text(padWithZeroes(application.ID, 9));
             if (application.reschedule_amount){
                 $('#reschedule-info').show();
-                $('#reschedule-info').text('Reschedule Add-on amount is ₦'+(parseFloat(application.reschedule_amount)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')+
+                $('#reschedule-info').text('Reschedule Add-on amount is ₦'+numberToCurrencyFormatter_(application.reschedule_amount)+
                     ' last updated on '+application.date_modified);
             }
 
@@ -452,7 +459,7 @@ function loadWorkflowStages(state) {
             if (stage.stage_name === 'Disbursal' || application.status === 2){
                 $('#infoRequestModalBtn').hide();
                 $('#downloadsForm').hide();
-                $('#disbursement-amount').val((parseFloat(application.loan_amount)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
+                $('#disbursement-amount').val(numberToCurrencyformatter(application.loan_amount));
                 $('#stage-actions').append('<a href="#" id="stage-action-0" class="dropdown-item" data-toggle="modal" data-target="#disburseModal">Disburse Loan</a>');
             }
 
@@ -1109,15 +1116,15 @@ function initLoanSummary(total_prinicipal) {
     let payment_history = [],
         total_principal = total_prinicipal,
         invoices = $.grep(application.schedule,function(e){return e.status===1});
-    $('#loan-amount-text').text('₦'+(parseFloat(application.loan_amount)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
-    $('#principal-total-text').text('Disbursed Amount: ₦'+total_principal.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
+    $('#loan-amount-text').text(`₦${numberToCurrencyFormatter_(application.loan_amount)}`);
+    $('#principal-total-text').text(`Disbursed Amount: ₦${numberToCurrencyFormatter_(total_principal)}`);
     for (let i=0; i<invoices.length; i++){
         let payments = $.grep(application.payment_history,function(e){return e.invoiceID===invoices[i]['ID']});
         payment_history = payment_history.concat(payments);
     }
     if (!payment_history || !payment_history[0]){
         total_due_amount = total_prinicipal;
-        $('#total-due-text').text('₦'+total_principal.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
+        $('#total-due-text').text(`₦${numberToCurrencyFormatter_(total_principal)}`);
         $('#last-payment-text').text('N/A');
     } else {
         let count = 0,
@@ -1127,7 +1134,7 @@ function initLoanSummary(total_prinicipal) {
             amount = (amount - parseFloat(payment.payment_amount)).round(2);
             if (count === payment_history.length){
                 total_due_amount = amount;
-                $('#total-due-text').text(`₦${numberToCurrencyformatter(amount)}`);
+                $('#total-due-text').text(`₦${numberToCurrencyFormatter_(amount)}`);
             }
         });
         $('#last-payment-text').text(((payment_history[0]['date_created']).split(' '))[0]);
@@ -1178,6 +1185,7 @@ function checkTotalDue() {
 }
 
 function disburse() {
+    if (reschedule_status) return;
     let disbursal = {};
     disbursal.funding_source = $('#funding').val();
     disbursal.disbursement_date = $('#disbursement-date').val();
@@ -1558,13 +1566,27 @@ function initCSVUpload2(application, settings) {
         $dvCSV.html('');
         $dvCSV.append(table);
         $('#amortization').hide();
-        $('#reschedule-total-text').text('Disbursed Amount: ₦'+total_new_schedule.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
+        $('#reschedule-total-text').text(`Disbursed Amount: ₦${numberToCurrencyFormatter_(total_new_schedule)}`);
     }
 
     $approveCSV.bind("click", function () {
         if (!new_reschedule || !new_reschedule[0])
             return notification('There is no reschedule available for approval!','','error');
-
+        let disbursal = {};
+        disbursal.funding_source = $('#funding').val();
+        disbursal.disbursement_date = $('#disbursement-date').val();
+        disbursal.disbursement_amount = currencyToNumberformatter($('#disbursement-amount').val());
+        if (disbursal.funding_source === "-- Select a Disbursement Bank --" || 
+            !disbursal.disbursement_date || !disbursal.disbursement_amount)
+            return notification('Kindly fill all required fields!','','warning');
+        if ($('#fees-check').is(':checked')) {
+            let $fees = $('#disbursement-fees');
+            if (!$fees.val())
+                return notification('The fees amount is not valid!','','warning');
+            disbursal.fees = currencyToNumberformatter($fees.val());
+            disbursal.vat = currencyToNumberformatter($('#disbursement-vat').val());
+            disbursal.fees_payment = $('#fees-payment').val();
+        }
         swal({
             title: "Are you sure?",
             text: "Once started, this process is not reversible!",
@@ -1574,16 +1596,17 @@ function initCSVUpload2(application, settings) {
         })
             .then((yes) => {
                 if (yes) {
-                    $('#disburseModal').modal('show');
-
-                    return;
                     $csvLoader.show();
                     let reschedule_amount = (total_new_schedule-total_due_amount).round(2),
                         loan_amount_update = (parseFloat(application.loan_amount)+reschedule_amount).round(2);
                     $.ajax({
                         'url': '/user/application/approve-schedule/'+application_id,
                         'type': 'post',
-                        'data': {reschedule_amount:reschedule_amount,loan_amount_update:loan_amount_update},
+                        'data': {
+                            disbursal: disbursal,
+                            reschedule_amount: reschedule_amount, 
+                            loan_amount_update: loan_amount_update
+                        },
                         'success': function (data) {
                             $csvLoader.hide();
                             notification('Reschedule approved successfully','','success');
