@@ -1569,6 +1569,9 @@ function initCSVUpload2(application, settings) {
         })
             .then((yes) => {
                 if (yes) {
+                    $('#disburseModal').modal('show');
+
+                    return;
                     $csvLoader.show();
                     let reschedule_amount = (total_new_schedule-total_due_amount).round(2),
                         loan_amount_update = (parseFloat(application.loan_amount)+reschedule_amount).round(2);

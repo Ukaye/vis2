@@ -2761,10 +2761,9 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                     Reference: helperFunctions.padWithZeroes(req.params.id, 9)
                                                 });
                                             }
-                                            application.integration = integration;
-                                            syncXeroSchedule(req, res, connection, application, new_schedule, xeroPrincipal, 'put')
-                                            .then(response => {
-                                                let disbursement = {
+
+                                            let xeroDisbursement,
+                                                disbursement = {
                                                     loan_id: application.ID,
                                                     amount: reschedule_amount,
                                                     client_id: application.clientID,
@@ -2774,6 +2773,33 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                     status: 1,
                                                     date_created: date_modified
                                                 };
+                                            if (xeroClient && integration && 
+                                                integration.xero_disbursement_account && application.xeroContactID) {
+                                                xeroDisbursement = await xeroClient.bankTransactions.create({
+                                                    Type: 'SPEND',
+                                                    Status: 'AUTHORISED',
+                                                    Contact: {
+                                                        ContactID: application.xeroContactID
+                                                    },
+                                                    BankAccount: {
+                                                        Code: data.funding_source
+                                                    },
+                                                    LineItems: [{
+                                                        Description: `Loan disbursement for ${application.fullname} | 
+                                                            LOAN ID: ${helperFunctions.padWithZeroes(application.ID, 9)}`,
+                                                        UnitAmount: application.amount,
+                                                        AccountCode: integration.xero_disbursement_account,
+                                                        TaxType: 'NONE'
+                                                    }],
+                                                    Date: data.disbursement_date,
+                                                    Reference: helperFunctions.padWithZeroes(application.ID, 9),
+                                                    IsReconciled: 'true'
+                                                });
+                                                disbursement.xeroDisbursementID = xeroDisbursement.BankTransactions[0]['BankTransactionID'];
+                                            }
+                                            application.integration = integration;
+                                            syncXeroSchedule(req, res, connection, application, new_schedule, xeroPrincipal, 'put')
+                                            .then(response => {
                                                 connection.query(`INSERT INTO disbursement_history SET ?`, disbursement, function (error, result, fields) {
                                                     if(error){
                                                         res.send({"status": 500, "error": error, "response": null});
