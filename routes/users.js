@@ -10,26 +10,10 @@ let token,
     moment  = require('moment'),
     bcrypt = require('bcryptjs'),
     jwt = require('jsonwebtoken'),
-    nodemailer = require('nodemailer'),
     xeroFunctions = require('../routes/xero'),
-    hbs = require('nodemailer-express-handlebars'),
     helperFunctions = require('../helper-functions'),
-    smtpTransport = require('nodemailer-smtp-transport'),
     notificationsService = require('./notifications-service'),
-    emailService = require('./service/custom-services/email.service'),
-    smtpConfig = smtpTransport({
-        service: 'Mailjet',
-        auth: {
-            user: process.env.MAILJET_KEY,
-            pass: process.env.MAILJET_SECRET
-        }
-    }),
-    options = {
-        viewPath: 'views/email',
-        extName: '.hbs'
-    };
-transporter = nodemailer.createTransport(smtpConfig);
-transporter.use('compile', hbs(options));
+    emailService = require('./service/custom-services/email.service');
 
 users.get('/import-bulk-clients', function(req, res) {
     let clients = [],
@@ -1791,39 +1775,35 @@ users.post('/apply', function(req, res) {
             data.name = req.body.username;
             data.date = postData.date_created;
             let mailOptions = {
-                from: process.env.TENANT+' <noreply@finratus.com>',
                 to: req.body.email,
-                subject: process.env.TENANT+' Application Successful',
+                subject: 'Application Successful',
                 template: 'application',
                 context: data
             };
             if (!workflow_id)
                 mailOptions.template =  'main';
-            transporter.sendMail(mailOptions, function(error, info){
-                if(error)
-                    console.log({"status": 500, "message": "Error occurred!", "response": error});
-                if (!workflow_id)
-                    return res.send({"status": 200, "message": "New Application Added!"});
-                helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process) {
-                    db.query('SELECT MAX(ID) AS ID from applications', function(err, application, fields) {
-                        process.workflowID = workflow_id;
-                        process.agentID = postData.agentID;
-                        process.applicationID = application[0]['ID'];
-                        process.date_created = postData.date_created;
+            emailService.send(mailOptions);
+            if (!workflow_id)
+                return res.send({"status": 200, "message": "New Application Added!"});
+            helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process) {
+                db.query('SELECT MAX(ID) AS ID from applications', function(err, application, fields) {
+                    process.workflowID = workflow_id;
+                    process.agentID = postData.agentID;
+                    process.applicationID = application[0]['ID'];
+                    process.date_created = postData.date_created;
 
-                        let payload = {}
-                        payload.category = 'Application'
-                        payload.userid = req.cookies.timeout
-                        payload.description = 'New Application Created'
-                        payload.affected = application[0]['ID']
-                        notificationsService.log(req, payload)
-                        db.query('INSERT INTO workflow_processes SET ?',process, function (error, results, fields) {
-                            if(error){
-                                return res.send({"status": 500, "error": error, "response": null});
-                            } else {
-                                return res.send({"status": 200, "message": "New Application Added!", "response": application[0]});
-                            }
-                        });
+                    let payload = {}
+                    payload.category = 'Application'
+                    payload.userid = req.cookies.timeout
+                    payload.description = 'New Application Created'
+                    payload.affected = application[0]['ID']
+                    notificationsService.log(req, payload)
+                    db.query('INSERT INTO workflow_processes SET ?',process, function (error, results, fields) {
+                        if(error){
+                            return res.send({"status": 500, "error": error, "response": null});
+                        } else {
+                            return res.send({"status": 200, "message": "New Application Added!", "response": application[0]});
+                        }
                     });
                 });
             });
@@ -1837,18 +1817,13 @@ users.post('/contact', function(req, res) {
         return res.send({"status": 500, "message": "Please send all required parameters"});
     data.date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let mailOptions = {
-        from: data.fullname+' <applications@loan35.com>',
         to: 'getloan@loan35.com',
         subject: 'Feedback: '+data.subject,
         template: 'contact',
         context: data
     };
-
-    transporter.sendMail(mailOptions, function(error, info){
-        if(error)
-            return res.send({"status": 500, "message": "Oops! An error occurred while sending feedback", "response": error});
-        return res.send({"status": 200, "message": "Feedback sent successfully!"});
-    });
+    emailService.send(mailOptions);
+    return res.send({"status": 200, "message": "Feedback sent successfully!"});
 });
 
 users.post('/sendmail', function(req, res) {
@@ -3902,19 +3877,13 @@ users.get('/forgot-password/:username', function(req, res) {
         user.forgot_url = req.protocol + '://' + req.get('host') + '/forgot-password?t=' + encodeURIComponent(user.username);
         user.date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
         let mailOptions = {
-            from: 'no-reply@loan35.com',
             to: user.email,
-            subject: process.env.TENANT+': Forgot Password Request',
+            subject: 'Forgot Password Request',
             template: 'forgot',
             context: user
         };
-
-        transporter.sendMail(mailOptions, function(error, info){
-            if(error)
-                return res.send({"status": 500, "message": "Oops! An error occurred while sending request", "response": error});
-            return res.send({"status": 200, "message": "Forgot Password request sent successfully!"});
-        });
-
+        emailService.send(mailOptions);
+        return res.send({"status": 200, "message": "Forgot Password request sent successfully!"});
     });
 });
 

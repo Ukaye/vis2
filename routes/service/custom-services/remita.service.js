@@ -6,23 +6,7 @@ const
     express = require('express'),
     router = express.Router(),
     enums = require('../../../enums'),
-    nodemailer = require('nodemailer'),
-    hbs = require('nodemailer-express-handlebars'),
-    smtpTransport = require('nodemailer-smtp-transport'),
-    helperFunctions = require('../../../helper-functions'),
-    smtpConfig = smtpTransport({
-        service: 'Mailjet',
-        auth: {
-            user: process.env.MAILJET_KEY,
-            pass: process.env.MAILJET_SECRET
-        }
-    }),
-    options = {
-        viewPath: 'views/email',
-        extName: '.hbs'
-    };
-transporter = nodemailer.createTransport(smtpConfig);
-transporter.use('compile', hbs(options));
+    helperFunctions = require('../../../helper-functions');
 
 router.post('/payment/create', function (req, res, next) {
     let invoice = req.body,

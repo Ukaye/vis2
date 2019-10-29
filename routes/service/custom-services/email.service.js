@@ -10,6 +10,12 @@ let email = {},
     },
     transport = mailgunTransport(mailgunOptions),
     options = {
+        viewEngine: {
+            extName: '.hbs',
+            partialsDir: 'views/email',
+            layoutsDir: 'views/email',
+            defaultLayout: 'default.hbs',
+        },
         viewPath: 'views/email',
         extName: '.hbs'
     },
