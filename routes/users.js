@@ -3579,13 +3579,15 @@ users.get('/application/escrow-payment-reversal/:id', function(req, res, next) {
                 if (escrow[0]['xeroOverpaymentID'] && escrow[0]['xeroCollectionBankID']) {
                     xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async (xeroClient) => {
                         if (xeroClient) {
-                            let xeroPayment = await xeroClient.payments.update({
-                                Overpayment: {
-                                    OverpaymentID: escrow[0]['xeroOverpaymentID']
+                            let xeroPayment = await xeroClient.payments.update(
+                                {
+                                    Status: 'DELETED'
                                 },
-                                Status: 'DELETED'
-                            });
-                            console.log(xeroPayment.Payments[0])
+                                {
+                                    OverpaymentID: escrow[0]['xeroOverpaymentID']
+                                }
+                            );
+                            return console.log(xeroPayment.Payments[0])
                         }
                     });
                 }

@@ -742,15 +742,17 @@ function escrowHistory() {
                     v.type,
                     v.date_created
                 ];
-                if (v.status === 0){
+                if (v.status === 0) {
                     table.push('Payment Unavailable');
-                } else if (v.status === 1){
-                    table.push('<button class="btn btn-danger reversePayment" onclick="reverseEscrowPayment('+v.ID+')"><i class="fa fa-remove"></i> Reverse</button>');
-                    table.push('<button class="btn btn-danger reversePayment" onclick="refundEscrowPayment('+v.ID+')"><i class="fa fa-reply"></i> Refund</button>');
+                } else if (v.status === 1) {
+                    table.push('<button class="btn btn-danger reversePayment" onclick="reverseEscrowPayment('+v.ID+')"><i class="fa fa-remove"></i> Reverse</button>'+
+                    '<button class="btn btn-warning refund reversePayment" onclick="refundEscrowPaymentModal('+v.ID+')" style="display: none;"><i class="fa fa-reply"></i> Refund</button>');
                 }
                 $('#escrow-history').dataTable().fnAddData(table);
                 $('#escrow-history').dataTable().fnSort([[2,'desc']]);
                 read_write_custom();
+                if (xero_config && xero_config.xero_collection_bank === 1)
+                    $('.refund').show();
             });
         },
         'error': function (err) {
@@ -830,7 +832,7 @@ function reverseEscrowPayment(payment_id) {
         'type': 'get',
         'success': function (data) {
             notification('Payment reversed successfully','','success');
-            window.location.reload();
+            // window.location.reload();
         },
         'error': function (err) {
             notification('No internet connection','','error');
@@ -838,12 +840,18 @@ function reverseEscrowPayment(payment_id) {
     });
 }
 
-function refundEscrowPayment(payment_id) {
+let overpayment_refund_id;
+function refundEscrowPaymentModal(payment_id) {
+    overpayment_refund_id = payment_id;
+    $('#refundOverpaymentModal').modal('show');
+}
+
+function refundEscrowPayment() {
     $.ajax({
-        'url': '/user/application/escrow-payment-refund/'+payment_id,
+        'url': '/user/application/escrow-payment-refund/'+overpayment_refund_id,
         'type': 'get',
         'success': function (data) {
-            notification('Payment reversed successfully','','success');
+            notification('Payment refunded successfully','','success');
             window.location.reload();
         },
         'error': function (err) {

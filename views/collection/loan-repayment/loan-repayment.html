@@ -631,6 +631,40 @@
     </div>
 </div>
 
+<div class="modal fade" id="refundOverpaymentModal" tabindex="-1" role="dialog" aria-labelledby="refundOverpaymentModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="refundOverpaymentModalLabel">Refund Overpayment</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label class="form-control-label">Amount</label><strong style="color:red"> *</strong>
+                        <div class="input-group">
+                            <input id="payment-interest" type="number" class="form-control" value="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label">Bank</label>
+                        <div class="input-group">
+                            <div class="input-group-addon"><i class="fa fa-bank"></i></div>
+                            <select id="collection_bank" class="form-control" required="required">
+                                <option value="000" selected="selected">-- Select Bank --</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="addPayment()">Add Payment</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Notification Panel -->
 <div id="panels" include-html="/includes/notifications.html"></div>
 
