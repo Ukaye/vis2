@@ -741,9 +741,10 @@ function escrowHistory() {
                     v.date_created
                 ];
                 if (v.status === 0){
-                    table.push('Payment Reversed');
+                    table.push('Payment Unavailable');
                 } else if (v.status === 1){
                     table.push('<button class="btn btn-danger reversePayment" onclick="reverseEscrowPayment('+v.ID+')"><i class="fa fa-remove"></i> Reverse</button>');
+                    table.push('<button class="btn btn-danger reversePayment" onclick="refundEscrowPayment('+v.ID+')"><i class="fa fa-reply"></i> Refund</button>');
                 }
                 $('#escrow-history').dataTable().fnAddData(table);
                 $('#escrow-history').dataTable().fnSort([[2,'desc']]);
@@ -824,6 +825,20 @@ function reversePayment(payment_id,invoice_id) {
 function reverseEscrowPayment(payment_id) {
     $.ajax({
         'url': '/user/application/escrow-payment-reversal/'+payment_id,
+        'type': 'get',
+        'success': function (data) {
+            notification('Payment reversed successfully','','success');
+            window.location.reload();
+        },
+        'error': function (err) {
+            notification('No internet connection','','error');
+        }
+    });
+}
+
+function refundEscrowPayment(payment_id) {
+    $.ajax({
+        'url': '/user/application/escrow-payment-refund/'+payment_id,
         'type': 'get',
         'success': function (data) {
             notification('Payment reversed successfully','','success');

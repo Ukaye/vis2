@@ -2797,7 +2797,6 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                     IsReconciled: 'true'
                                                 });
                                                 disbursement.xeroDisbursementID = xeroDisbursement.BankTransactions[0]['BankTransactionID'];
-                                                console.log(xeroDisbursement.BankTransactions[0])
                                             }
                                             application.integration = integration;
                                             syncXeroSchedule(req, res, connection, application, new_schedule, xeroPrincipal, 'put')
@@ -3593,6 +3592,47 @@ users.get('/application/payment-reversal/:id/:invoice_id', function(req, res, ne
 });
 
 users.get('/application/escrow-payment-reversal/:id', function(req, res, next) {
+    ///******* */
+    xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async () => {
+        let update = {};
+        update.status = 0,
+        update.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        db.query(`SELECT clientID, amount, xeroOverpaymentID, xeroCollectionBankID FROM escrow WHERE ID = ${req.params.id}`, 
+        [req.params.id], function (error, escrow, fields) {
+            if(error){
+                res.send({"status": 500, "error": error, "response": null});
+            } else {
+                if (escrow[0]['xeroOverpaymentID'] && escrow[0]['xeroCollectionBankID']) {
+                    xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async (xeroClient) => {
+                        if (xeroClient) {
+                            let xeroPayment = await xeroClient.payments.update({
+                                Overpayment: {
+                                    OverpaymentID: escrow[0]['xeroOverpaymentID']
+                                },
+                                Account: {
+                                    Code: escrow[0]['xeroCollectionBankID']
+                                },
+                                Date: update.date_modified,
+                                Amount: escrow[0]['amount'],
+                                Reference: `CLIENT ID: ${helperFunctions.padWithZeroes(escrow[0]['clientID'], 6)} | Overpayment refund`
+                            });
+                        }
+                    });
+                }
+                db.query(`UPDATE escrow SET ? WHERE ID = ${req.params.id}`, update, function (error, response, fields) {
+                    if(error){
+                        res.send({"status": 500, "error": error, "response": null});
+                    } else {
+                        
+                        res.send({"status": 200, "message": "Payment reversed successfully!"});
+                    }
+                });
+            }
+        });
+    });
+});
+
+users.get('/application/escrow-payment-refund/:id', function(req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async () => {
         let update = {};
         update.status = 0,
