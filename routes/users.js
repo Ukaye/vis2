@@ -3592,7 +3592,6 @@ users.get('/application/payment-reversal/:id/:invoice_id', function(req, res, ne
 });
 
 users.get('/application/escrow-payment-reversal/:id', function(req, res, next) {
-    ///******* */
     xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async () => {
         let update = {};
         update.status = 0,
@@ -3609,13 +3608,9 @@ users.get('/application/escrow-payment-reversal/:id', function(req, res, next) {
                                 Overpayment: {
                                     OverpaymentID: escrow[0]['xeroOverpaymentID']
                                 },
-                                Account: {
-                                    Code: escrow[0]['xeroCollectionBankID']
-                                },
-                                Date: update.date_modified,
-                                Amount: escrow[0]['amount'],
-                                Reference: `CLIENT ID: ${helperFunctions.padWithZeroes(escrow[0]['clientID'], 6)} | Overpayment refund`
+                                Status: 'DELETED'
                             });
+                            console.log(xeroPayment.Payments[0])
                         }
                     });
                 }
