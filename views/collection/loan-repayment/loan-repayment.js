@@ -12,11 +12,13 @@ function getXeroConfig() {
         success: function (data) {
             if (data.status === 200) {
                 xero_config = data.response;
-                if (xero_config.xero_collection_description === 1) 
-                    $('#collection-description-required').show();
-                if (xero_config.xero_collection_bank === 1) {
-                    getCollectionBanks();
-                    $('#collection-bank-div').show();
+                if (xero_config) {
+                    if (xero_config.xero_collection_description === 1) 
+                        $('#collection-description-required').show();
+                    if (xero_config.xero_collection_bank === 1) {
+                        getCollectionBanks();
+                        $('#collection-bank-div').show();
+                    }
                 }
             }
         }
@@ -513,7 +515,7 @@ function validation() {
 }
 
 function confirmPayment() {
-    if (xero_config.xero_collection_bank === 1 && !selected_schedule.interest_invoice_no)
+    if (xero_config && xero_config.xero_collection_bank === 1 && !selected_schedule.interest_invoice_no)
         return notification('Xero invoice no is required','Kindly update this invoice with the xero invoice no','warning');
     let invoice = {},
         payment = parseFloat($('#payment').val() || '0');
@@ -536,7 +538,7 @@ function confirmPayment() {
         return notification('Insufficient escrow funds ('+parseFloat(application.escrow).round(2)+')','','warning');
     if (invoice.payment_source === 'remita' && remita_id) invoice.remitaPaymentID = remita_id;
     if ($('#collection_bank').val() !== '000') invoice.xeroCollectionBankID = $('#collection_bank').val();
-    if (xero_config.xero_collection_description === 1 && 
+    if (xero_config && xero_config.xero_collection_description === 1 && 
         invoice.payment_source !== 'escrow' &&
         !$('#collection_description').val()) {
             return notification('Kindly specify a statement description to proceed','','warning');
