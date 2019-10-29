@@ -113,6 +113,7 @@ function getXeroConfig() {
         'url': '/settings/xero',
         'success': function (data) {
             let config = data.response;
+            if (!config) return;
             if (config.xero_client) $('#xero_client').prop('checked', true);
             if (config.xero_loan_account) {
                 $('#xero_loan_account').prop('checked', true);
