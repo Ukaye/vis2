@@ -3256,6 +3256,7 @@ users.post('/application/escrow', function(req, res, next) {
                         });
                         data.xeroOverpaymentID = xeroPayment.BankTransactions[0]['OverpaymentID'];
                     }
+                    delete data.payment_date;
                     db.query('INSERT INTO escrow SET ?', data, function (error, result, fields) {
                         if(error){
                             res.send({"status": 500, "error": error, "response": null});
