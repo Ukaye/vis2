@@ -548,14 +548,14 @@ function confirmPayment() {
             return notification('Kindly specify a statement description to proceed','','warning');
     }
     if ($('#collection_description').val()) invoice.xeroCollectionDescription = $('#collection_description').val();
+    let overpayment = (payment - (parseFloat(invoice.actual_payment_amount) + parseFloat(invoice.actual_interest_amount))).round(2);
+    if (overpayment < 0)
+        return notification(`Actual payment cannot be less than ₦${numberToCurrencyformatter((parseFloat(invoice.actual_payment_amount) + 
+            parseFloat(invoice.actual_interest_amount)).round(2))}`,'','warning');
     $('#wait').show();
     $('#confirmPayment').modal('hide');
     updateEscrow(invoice, total_payment, function () {
-        let overpayment = (payment - (parseFloat(invoice.actual_payment_amount) + parseFloat(invoice.actual_interest_amount))).round(2);
-        if (overpayment < 0){
-            return notification(`Actual payment cannot be less than ₦${numberToCurrencyformatter((parseFloat(invoice.actual_payment_amount) + 
-                parseFloat(invoice.actual_interest_amount)).round(2))}`,'','warning');
-        } else if (overpayment > 0){
+        if (overpayment > 0){
             $('#wait').hide();
             swal({
                 title: "Are you sure?",
