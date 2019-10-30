@@ -203,10 +203,19 @@
                         <div class="card-header">
                             <div style="float: left; margin: 0 15px;">
                                 <strong id="workflow-div-title" class="card-title">Workflow</strong>
-                                <button id="generateLoanFile" class="btn btn-primary btn-xs" onclick="generateLoanFile()" style="margin-left: 30px;">Generate Loan File</button>
-                                <button id="setupDirectDebit" class ="btn btn-primary btn-xs" style="float: right;">Setup Direct Debit</button>
-                                <button id="viewMandate" class ="btn btn-primary btn-xs" style="float: right; display: none;" data-toggle="modal" data-target="#viewMandateModal">View Mandate</button>
-                                <p><span id="client-id-label">Client ID#:</span> <a onclick="goToClientProfile()" style="text-decoration: underline; cursor: pointer;"><span id="client-id"></span></a> | LOAN ID#: <span id="application-id"></span> | L-CIRRUS ID#: <span id="loancirrus-id"></span></p>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-primary btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        More Actions
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="#" id="setupDirectDebit">Setup Direct Debit</a>
+                                        <a class="dropdown-item" href="#" id="viewMandate" data-toggle="modal" data-target="#viewMandateModal" style="display: none;">View Mandate</a>
+                                        <a class="dropdown-item" href="#" id="generateLoanFile" onclick="generateLoanFile()">Generate Loan File</a>
+                                        <a class="dropdown-item" href="#" onclick="printLoanSchedule()">Print Loan Schedule</a>
+                                    </div>
+                                </div>
+                                <p><span id="client-id-label">Client ID#:</span> <a onclick="goToClientProfile()" style="text-decoration: underline; cursor: pointer;"><span id="client-id"></span></a>
+                                     | LOAN ID#: <span id="application-id"></span> | L-CIRRUS ID#: <span id="loancirrus-id"></span></p>
                             </div>
                             <button id="loan_closed" class ="btn btn-warning btn-lg" style="float: right; margin-top: 5px; display: none;" disabled="disabled"></button>
                             <div id="close_loan" class="btn-group" style="float: right; display: none; margin-top: 5px;">
