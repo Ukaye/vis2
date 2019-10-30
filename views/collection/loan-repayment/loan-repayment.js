@@ -552,7 +552,10 @@ function confirmPayment() {
     $('#confirmPayment').modal('hide');
     updateEscrow(invoice, total_payment, function () {
         let overpayment = (payment - (parseFloat(invoice.actual_payment_amount) + parseFloat(invoice.actual_interest_amount))).round(2);
-        if (overpayment > 0){
+        if (overpayment < 0){
+            return notification(`Actual payment cannot be less than ₦${numberToCurrencyformatter((parseFloat(invoice.actual_payment_amount) + 
+                parseFloat(invoice.actual_interest_amount)).round(2))}`,'','warning');
+        } else if (overpayment > 0){
             $('#wait').hide();
             swal({
                 title: "Are you sure?",
@@ -634,8 +637,7 @@ function escrow(amount, bank, date) {
         },
         'success': function (data) {
             notification('Payment confirmed successfully',`Overpayment of ₦${numberToCurrencyformatter(amount)} has been credited to escrow`,'success');
-            console.log(data)
-            // window.location.reload();
+            window.location.reload();
         },
         'error': function (err) {
             notification('Oops! An error occurred while processing overpayment','','error');
