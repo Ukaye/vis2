@@ -2372,8 +2372,6 @@ function printLoanSchedule() {
         customer_address: application.address,
         initiating_officer: workflow_processes[0]['agent'],
         loan_amount: application.loan_amount,
-        interest_rate: application.interest_rate,
-        fees: application.fees,
         tenor: application.duration,
         workflow_processes: workflow_processes,
         schedule: application.schedule

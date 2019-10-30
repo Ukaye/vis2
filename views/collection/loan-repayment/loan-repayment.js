@@ -634,7 +634,8 @@ function escrow(amount, bank, date) {
         },
         'success': function (data) {
             notification('Payment confirmed successfully',`Overpayment of ₦${numberToCurrencyformatter(amount)} has been credited to escrow`,'success');
-            window.location.reload();
+            console.log(data)
+            // window.location.reload();
         },
         'error': function (err) {
             notification('Oops! An error occurred while processing overpayment','','error');
