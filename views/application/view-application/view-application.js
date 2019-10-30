@@ -33,12 +33,6 @@ let workflow,
         interest_rate_max: 1000
     };
 
-function approveRescheduleModal() {
-    reschedule_status = true;
-    $('#editRepaymentDateBtn').hide();
-    $('#disbursement-amount').prop('disabled', false);
-}
-
 $("#disbursement-amount").on("keyup", function () {
     let val = $("#disbursement-amount").val();
     $("#disbursement-amount").val(numberToCurrencyformatter(val));
@@ -1208,6 +1202,7 @@ function disburse() {
         'success': function (data) {
             $('#wait').hide();
             notification('Loan disbursed successfully','','success');
+            printLoanSchedule();
             window.location.reload();
         },
         'error': function (err) {
@@ -1569,9 +1564,16 @@ function initCSVUpload2(application, settings) {
         $('#reschedule-total-text').text(`Disbursed Amount: ₦${numberToCurrencyFormatter_(total_new_schedule)}`);
     }
 
-    $approveCSV.bind("click", function () {
+    $('#approveRescheduleModalBtn').bind('click', e => {
         if (!new_reschedule || !new_reschedule[0])
             return notification('There is no reschedule available for approval!','','error');
+        reschedule_status = true;
+        $('#editRepaymentDateBtn').hide();
+        $('#disbursement-amount').prop('disabled', false);
+        $('#disbursement-amount').val(numberToCurrencyformatter((total_new_schedule-total_due_amount).round(2)));
+    });
+
+    $approveCSV.bind("click", function () {
         let disbursal = {};
         disbursal.funding_source = $('#funding').val();
         disbursal.disbursement_date = $('#disbursement-date').val();
@@ -1610,6 +1612,7 @@ function initCSVUpload2(application, settings) {
                         'success': function (data) {
                             $csvLoader.hide();
                             notification('Reschedule approved successfully','','success');
+                            printLoanSchedule();
                             window.location.reload();
                         },
                         'error': function (err) {
@@ -2364,24 +2367,16 @@ function initNewLoanOffer(application, settings) {
 function printLoanSchedule() {
     const loanSchedule = {
         id: application_id,
-        request_date: application.date_created,
         customer_name: application.fullname,
-        incorporation_date: application.incorporation_date,
-        line_of_business: application.industry,
+        customer_phone: application.phone,
+        customer_address: application.address,
         initiating_officer: workflow_processes[0]['agent'],
-        client_date_created: application.client_date_created,
-        registration_number: application.registration_number,
         loan_amount: application.loan_amount,
         interest_rate: application.interest_rate,
         fees: application.fees,
         tenor: application.duration,
-        loan_purpose: application.loan_purpose,
-        documents: application.documents,
-        customer_details_request: (workflow_comments[0])? workflow_comments[0]['text'] : '',
-        transaction_dynamics: (workflow_comments[1])? workflow_comments[1]['text'] : '',
-        kyc: `${($.isEmptyObject(application.files))? 'Not':'Yes'} Attached`,
-        security: `${($.isEmptyObject(application.files))? 'Not':'Yes'} Attached`,
-        workflow_processes: workflow_processes
+        workflow_processes: workflow_processes,
+        schedule: application.schedule
     };
     localStorage.loanSchedule = encodeURIComponent(JSON.stringify(loanSchedule));
     return window.open(`/loan-schedule?id=${application_id}`, '_blank');

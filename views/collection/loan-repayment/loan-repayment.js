@@ -570,7 +570,7 @@ function confirmPayment() {
                             'data': invoice,
                             'success': function (data) {
                                 $('#wait').hide();
-                                return escrow(overpayment, invoice.xeroCollectionBankID);
+                                return escrow(overpayment, invoice.xeroCollectionBankID, invoice.payment_date);
                             },
                             'error': function (err) {
                                 $('#wait').hide();
@@ -622,14 +622,15 @@ function updateEscrow(invoice, amount, callback) {
     }
 }
 
-function escrow(amount, bank) {
+function escrow(amount, bank, date) {
     $.ajax({
         'url': '/user/application/escrow',
         'type': 'post',
         'data': {
             clientID:application.userID,
             amount:amount,
-            xeroCollectionBankID: bank
+            xeroCollectionBankID: bank,
+            payment_date: date
         },
         'success': function (data) {
             notification('Payment confirmed successfully',`Overpayment of ₦${numberToCurrencyformatter(amount)} has been credited to escrow`,'success');

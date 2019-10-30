@@ -2749,7 +2749,7 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                     status: 1,
                                                     date_created: date_modified
                                                 };
-                                            if (xeroClient && integration && 
+                                            if (xeroClient && integration && disbursal.disbursement_amount > 0 &&
                                                 integration.xero_disbursement_account && application.xeroContactID) {
                                                 xeroDisbursement = await xeroClient.bankTransactions.create({
                                                     Type: 'SPEND',
@@ -3251,6 +3251,7 @@ users.post('/application/escrow', function(req, res, next) {
                                 Description: `ClientID: ${helperFunctions.padWithZeroes(data.clientID, 6)}`,
                                 LineAmount: data.amount
                             }],
+                            Date: data.payment_date,
                             Reference: helperFunctions.padWithZeroes(data.clientID, 6)
                         });
                         data.xeroOverpaymentID = xeroPayment.BankTransactions[0]['OverpaymentID'];

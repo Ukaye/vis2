@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Facility Summary Report</title>
+    <title>Loan Schedule</title>
     <style>
 
         @import url(https://fonts.googleapis.com/css?family=Roboto:100,300,400,900,700,500,300,100);
@@ -214,7 +214,7 @@
     <div id="invoice-top" style="height: 130px">
         <div class="logo"></div>
         <div class="title">
-            <h1>FACILITY SUMMARY REPORT</h1>
+            <h1><span id="tenant"></span>: Loan Schedule</h1>
         </div><!--End Title-->
     </div>
     <div id="invoice-mid">
@@ -226,142 +226,90 @@
         <tbody>
         <tr>
             <td>
-                Request Date:
+                Name of Borrower:
                 <br>
-                Customer Name:
+                Phone Number of Borrower:
                 <br>
-                Inc. Date:
+                Address of Borrower:
                 <br>
-                Line of Business:
+                Amount Borrowed:
                 <br>
-                Unit Location:
+                Tenor:
             </td>
             <td>
-                <b id="request_date"></b>
-                <br>
                 <b id="customer_name"></b>
                 <br>
-                <b id="incorporation_date"></b>
+                <b id="customer_phone"></b>
                 <br>
-                <b id="line_of_business"></b>
+                <b id="customer_address"></b>
                 <br>
-                <b>Business Development</b>
+                <b id="loan_amount"></b>
+                <br>
+                <b id="tenor"></b>
             </td>
             <td>
-                Initiating Officer:
+                Finratus No:
                 <br>
-                A/c Op Date:
                 <br>
-                RC/Reg. No.:
                 <br>
+                <br>
+                <br>
+            </td>
+            <td>
+                <b id="loan_id"></b>
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <br>
+    <div id="invoice-mid">
+        <div class="info">
+            <h2>REPAYMENT SCHEDULE</h2>
+        </div>
+    </div>
+    <table style="margin: 0 15px; width: 96%;">
+        <tbody id="schedule">
+            <tr class="tabletitle">
+                <td class="item"><h2>S/N</h2></td>
+                <td class="item"><h2>Date</h2></td>
+                <td class="item"><h2>Beginning Balance (₦)</h2></td>
+                <td class="item"><h2>Interest Payable (₦)</h2></td>
+                <td class="item"><h2>Principal Payable (₦)</h2></td>
+                <td class="item"><h2>Ending Balance (₦)</h2></td>
+                <td class="item"><h2>Repayment Amount (₦)</h2></td>
+                <td class="item"><h2>Principal Invoice No</h2></td>
+                <td class="item"><h2>Interest Invoice No</h2></td>
+                <td class="item"><h2>Accounts Sign Off</h2></td>
+            </tr>
+        </tbody>
+    </table>
+    <br>
+    <table class="customer-details">
+        <tbody>
+        <tr>
+            <td>
+                Account Officer:
                 <br>
                 <br>
             </td>
             <td>
                 <b id="initiating_officer"></b>
                 <br>
-                <b id="client_date_created"></b>
-                <br>
-                <b id="registration_number"></b>
-                <br>
-                <br>
-                <br>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-    <table cellpadding="0" cellspacing="0"
-           style="width:100%; border:none; border-collapse:collapse;">
-        <tbody>
-        <tr>
-            <td>
-                <center>
-                    <table cellpadding="0" cellspacing="0"
-                           style="border-collapse:collapse">
-                        <tbody>
-                        <tr>
-                            <td colspan="2"
-                                style="padding:30px 15px; vertical-align:top; background:rgb(255,255,255); font-size:12px; line-height:16px; border: none;">
-                                <table style="width: 100%;">
-                                    <tbody>
-                                    <tr class="tabletitle">
-                                        <td class="item"><h2>S/N</h2></td>
-                                        <td class="item"><h2>Facility Type</h2></td>
-                                        <td class="item"><h2>Facility Amount (₦)</h2></td>
-                                        <td class="Hours"><h2>Previous amount (₦)</h2></td>
-                                        <td class="Rate"><h2>Interest rate (monthly)</h2></td>
-                                        <td class="subtotal"><h2>facility fees (flat)</h2></td>
-                                        <td class="subtotal"><h2>tenor (months)</h2></td>
-                                        <td class="subtotal tooltip-test">
-                                            <h2>purpose</h2></td>
-                                        <td class="subtotal tooltip-test">
-                                            <h2>security/comfort</h2></td>
-                                    </tr>
-
-                                    <tr class="service">
-                                        <td class="tableitem"><p class="itemtext">1</p></td>
-                                        <td class="tableitem"><p class="itemtext">Time Loan</p></td>
-                                        <td class="tableitem"><p class="itemtext" id="loan_amount"></p></td>
-                                        <td class="tableitem"><p class="itemtext">0.00</p></td>
-                                        <td class="tableitem"><p class="itemtext" id="interest_rate"></p></td>
-                                        <td class="tableitem"><p class="itemtext" id="fees"></p></td>
-                                        <td class="tableitem"><p class="itemtext" id="tenor"></p></td>
-                                        <td class="tableitem"><p class="itemtext" id="loan_purpose"></p></td>
-                                        <td class="tableitem tooltip-test">
-                                            <p class="itemtext" id="documents"></p></td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </center>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-
-    <div class="info" style="padding-left: 24px;">
-        <h2>CUSTOMER DETAILS & REQUEST</h2>
-
-    </div>
-    <div class="transaction-content">
-        <p id="customer_details_request"></p>
-    </div>
-    <br>
-    <div class="info" style="padding-left: 24px;">
-        <h2>TRANSACTION DYNAMICS</h2>
-    </div>
-    <div class="transaction-content">
-        <p id="transaction_dynamics"></p>
-    </div>
-    <!--<br>-->
-    <table class="customer-details">
-        <tbody>
-        <tr>
-            <td>
-                KYC:
-                <br>
-                Security:
                 <br>
             </td>
             <td>
-                <b id="kyc"></b>
+                MD's Approval:
                 <br>
-                <b id="security"></b>
-                <br>
-            </td>
-            <td>
-                Financial Information:
-                <br>
-                Expiry Date:
+                Accounts Sign Off:
                 <br>
             </td>
             <td>
-                <b>N/A</b>
                 <br>
-                <b>One Year</b>
                 <br>
             </td>
         </tr>
@@ -375,6 +323,6 @@
     <br>
 </div>
 <script src="/js/helper-functions.js"></script>
-<script src="/../application/loan-file/loan-schedule.js"></script>
+<script src="/../application/loan-schedule/loan-schedule.js"></script>
 </body>
 </html>
