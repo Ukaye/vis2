@@ -1202,8 +1202,8 @@ function disburse() {
         'success': function (data) {
             $('#wait').hide();
             notification('Loan disbursed successfully','','success');
-            // printLoanSchedule();
-            // window.location.reload();
+            printLoanSchedule();
+            window.location.reload();
         },
         'error': function (err) {
             $('#wait').hide();
