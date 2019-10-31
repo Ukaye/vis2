@@ -1202,8 +1202,8 @@ function disburse() {
         'success': function (data) {
             $('#wait').hide();
             notification('Loan disbursed successfully','','success');
-            printLoanSchedule();
-            window.location.reload();
+            // printLoanSchedule();
+            // window.location.reload();
         },
         'error': function (err) {
             $('#wait').hide();
@@ -1574,6 +1574,7 @@ function initCSVUpload2(application, settings) {
     });
 
     $approveCSV.bind("click", function () {
+        if (!reschedule_status) return;
         let disbursal = {};
         disbursal.funding_source = $('#funding').val();
         disbursal.disbursement_date = $('#disbursement-date').val();

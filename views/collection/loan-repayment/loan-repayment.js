@@ -543,8 +543,7 @@ function confirmPayment() {
     if (invoice.payment_source === 'remita' && remita_id) invoice.remitaPaymentID = remita_id;
     if ($('#collection_bank').val() !== '000') invoice.xeroCollectionBankID = $('#collection_bank').val();
     if (xero_config && xero_config.xero_collection_description === 1 && 
-        invoice.payment_source !== 'escrow' &&
-        !$('#collection_description').val()) {
+        invoice.payment_source !== 'escrow' && !$('#collection_description').val()) {
             return notification('Kindly specify a statement description to proceed','','warning');
     }
     if ($('#collection_description').val()) invoice.xeroCollectionDescription = $('#collection_description').val();
@@ -555,7 +554,7 @@ function confirmPayment() {
     $('#wait').show();
     $('#confirmPayment').modal('hide');
     updateEscrow(invoice, total_payment, function () {
-        if (overpayment > 0){
+        if (overpayment > 0) {
             $('#wait').hide();
             swal({
                 title: "Are you sure?",

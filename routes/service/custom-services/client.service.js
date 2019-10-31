@@ -851,7 +851,7 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function (req, res) 
 router.post('/application/create/:id', helperFunctions.verifyJWT, function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let postData = req.body,
-        query = 'INSERT INTO client_applications Set ?',
+        query = 'INSERT INTO preapplications Set ?',
         endpoint = `/core-service/post?query=${query}`,
         url = `${HOST}${endpoint}`;
     postData.userID = req.user.ID;
@@ -860,6 +860,7 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, function (req,
     postData.created_by = req.user.ID;
     postData.status = enums.CLIENT_APPLICATION.STATUS.ACTIVE;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    postData.creator_type = 'client';
     db.query(query, postData, function (error, results) {
         if (error) return res.send({
             "status": 500,
@@ -867,7 +868,7 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, function (req,
             "response": null
         });
 
-        query = `SELECT * from client_applications WHERE ID = (SELECT MAX(ID) from client_applications)`;
+        query = `SELECT * from preapplications WHERE ID = (SELECT MAX(ID) from preapplications)`;
         endpoint = `/core-service/get`;
         url = `${HOST}${endpoint}`;
         axios.get(url, {
@@ -914,7 +915,7 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
             WHEN (SELECT COUNT(*) FROM application_information_requests WHERE a.ID = applicationID) > 0 THEN 1
             ELSE 0
         END) information_request_status
-        FROM clients c, client_applications p LEFT JOIN applications a ON p.ID = a.preapplicationID AND a.userID = ${id} 
+        FROM clients c, preapplications p LEFT JOIN applications a ON p.ID = a.preapplicationID AND a.userID = ${id} 
         LEFT JOIN application_schedules s ON s.ID = (SELECT MIN(ID) FROM application_schedules WHERE a.ID = applicationID AND payment_status = 0)
         WHERE p.userID = ${id} AND p.userID = c.ID AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) 
         LIKE "${search_string}%" OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
@@ -925,9 +926,9 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
             query: query
         }
     }).then(response => {
-        query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM client_applications p 
+        query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM preapplications p 
                  WHERE p.userID = ${id} AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
-                 OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM client_applications WHERE userID = ${id}`;
+                 OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM preapplications WHERE userID = ${id}`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {
@@ -965,7 +966,7 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
 
 router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query = `SELECT p.*, c.fullname, c.email, c.phone FROM client_applications p 
+    let query = `SELECT p.*, c.fullname, c.email, c.phone FROM preapplications p 
                 INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.application_id} AND p.userID = ${req.params.id}`,
         query2 = `SELECT u.ID userID, u.fullname, u.phone, u.email, u.address, cast(u.loan_officer as unsigned) loan_officer,
             a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.interest_rate, a.repayment_date,
@@ -1087,11 +1088,11 @@ router.get('/application/accept/:id/:application_id', helperFunctions.verifyJWT,
     let payload = {},
         id = req.params.id,
         application_id = req.params.application_id,
-        query = `UPDATE client_applications Set ? WHERE ID = ${application_id} AND userID = ${id}`;
+        query = `UPDATE preapplications Set ? WHERE ID = ${application_id} AND userID = ${id}`;
     payload.status = enums.CLIENT_APPLICATION.STATUS.ACCEPTED;
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
-    db.query(`SELECT * FROM client_applications WHERE ID = ${application_id} AND userID = ${id}`, function (err, application) {
+    db.query(`SELECT * FROM preapplications WHERE ID = ${application_id} AND userID = ${id}`, function (err, application) {
         if (err) return res.send({
             "status": 500,
             "error": err,
@@ -1132,11 +1133,11 @@ router.get('/application/decline/:id/:application_id', helperFunctions.verifyJWT
     let payload = {},
         id = req.params.id,
         application_id = req.params.application_id,
-        query = `UPDATE client_applications Set ? WHERE ID = ${application_id} AND userID = ${id}`;
+        query = `UPDATE preapplications Set ? WHERE ID = ${application_id} AND userID = ${id}`;
     payload.status = enums.CLIENT_APPLICATION.STATUS.DECLINED;
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
-    db.query(`SELECT * FROM client_applications WHERE ID = ${application_id} AND userID = ${id}`, function (err, application) {
+    db.query(`SELECT * FROM preapplications WHERE ID = ${application_id} AND userID = ${id}`, function (err, application) {
         if (err) return res.send({
             "status": 500,
             "error": err,
@@ -1180,7 +1181,7 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
         extArray = sampleFile.name.split("."),
         extension = extArray[extArray.length - 1],
         application_id = req.params.application_id,
-        query = `SELECT * FROM client_applications WHERE ID = ${application_id} AND userID = ${id}`,
+        query = `SELECT * FROM preapplications WHERE ID = ${application_id} AND userID = ${id}`,
         endpoint = '/core-service/get',
         url = `${process.env.HOST}${endpoint}`;
     if (extension) extension = extension.toLowerCase();
@@ -1378,7 +1379,7 @@ router.get('/loan/get/:id/:application_id', helperFunctions.verifyJWT, function 
 router.post('/application/createV2', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let postData = req.body,
-        query = 'INSERT INTO client_applications Set ?',
+        query = 'INSERT INTO preapplications Set ?',
         endpoint = `/core-service/post?query=${query}`,
         url = `${HOST}${endpoint}`;
     postData.status = enums.CLIENT_APPLICATION.STATUS.ACTIVE;
@@ -1390,7 +1391,7 @@ router.post('/application/createV2', function (req, res) {
             "response": null
         });
 
-        query = `SELECT * from client_applications WHERE ID = (SELECT MAX(ID) from client_applications)`;
+        query = `SELECT * from preapplications WHERE ID = (SELECT MAX(ID) from preapplications)`;
         endpoint = `/core-service/get`;
         url = `${HOST}${endpoint}`;
         axios.get(url, {
@@ -1416,7 +1417,7 @@ router.get('/applications/get', function (req, res) {
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
     let query_status = `(${enums.CLIENT_APPLICATION.STATUS.ACTIVE},${enums.CLIENT_APPLICATION.STATUS.APPROVED})`;
-    let query = `SELECT p.*, c.fullname, c.phone FROM client_applications p, clients c WHERE p.userID = c.ID AND p.status in 
+    let query = `SELECT p.*, c.fullname, c.phone FROM preapplications p, clients c WHERE p.userID = c.ID AND p.status in 
      ${query_status} AND p.ID NOT IN (SELECT a.preapplicationID FROM applications a WHERE p.userID = a.userID) 
      AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
      OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
@@ -1427,10 +1428,10 @@ router.get('/applications/get', function (req, res) {
             query: query
         }
     }).then(response => {
-        query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM client_applications p WHERE p.status in 
+        query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM preapplications p WHERE p.status in 
          ${query_status} AND p.ID NOT IN (SELECT a.preapplicationID FROM applications a WHERE p.userID = a.userID) 
          AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
-         OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM client_applications WHERE status in ${query_status} 
+         OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM preapplications WHERE status in ${query_status} 
          AND ID NOT IN (SELECT a.preapplicationID FROM applications a WHERE userID = a.userID)`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
@@ -1456,7 +1457,7 @@ router.get('/applications/get', function (req, res) {
 router.get('/application/getV2/:application_id', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`,
         path = `files/client_application-${req.params.application_id}/`;
-    let query = `SELECT p.*, c.fullname, c.email, c.phone FROM client_applications p 
+    let query = `SELECT p.*, c.fullname, c.email, c.phone FROM preapplications p 
                 INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.application_id}`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
@@ -1500,7 +1501,7 @@ router.get('/application/complete/:application_id', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let payload = {},
         id = req.params.application_id,
-        query = `UPDATE client_applications Set ? WHERE ID = ${id}`,
+        query = `UPDATE preapplications Set ? WHERE ID = ${id}`,
         endpoint = `/core-service/post?query=${query}`,
         url = `${HOST}${endpoint}`;
     payload.status = enums.CLIENT_APPLICATION.STATUS.COMPLETED;
@@ -1517,7 +1518,7 @@ router.post('/application/approve/:application_id', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let payload = req.body,
         id = req.params.application_id,
-        query = `UPDATE client_applications Set ? WHERE ID = ${id}`,
+        query = `UPDATE preapplications Set ? WHERE ID = ${id}`,
         endpoint = `/core-service/post?query=${query}`,
         url = `${HOST}${endpoint}`;
     payload.status = enums.CLIENT_APPLICATION.STATUS.APPROVED;
@@ -1534,7 +1535,7 @@ router.get('/application/reject/:application_id', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let payload = {},
         id = req.params.application_id,
-        query = `UPDATE client_applications Set ? WHERE ID = ${id}`,
+        query = `UPDATE preapplications Set ? WHERE ID = ${id}`,
         endpoint = `/core-service/post?query=${query}`,
         url = `${HOST}${endpoint}`;
     payload.status = enums.CLIENT_APPLICATION.STATUS.REJECTED;
@@ -1932,7 +1933,7 @@ router.get('/preapproved-loan/get/:id/:loan_id/:key?', helperFunctions.verifyJWT
 });
 
 router.put('/application/update/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
-    db.query(`UPDATE client_applications Set ? WHERE ID = ${req.params.application_id}
+    db.query(`UPDATE preapplications Set ? WHERE ID = ${req.params.application_id}
         AND userID = ${req.params.id}`, req.body, function (error, response) {
         if (error) {
             return res.send({
@@ -2239,7 +2240,7 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
         extArray = sampleFile.name.split("."),
         extension = extArray[extArray.length - 1],
         application_id = req.params.application_id,
-        query = `SELECT * FROM client_applications WHERE ID = ${application_id} AND userID = ${id}`,
+        query = `SELECT * FROM preapplications WHERE ID = ${application_id} AND userID = ${id}`,
         endpoint = '/core-service/get',
         url = `${process.env.HOST}${endpoint}`;
     if (extension) extension = extension.toLowerCase();

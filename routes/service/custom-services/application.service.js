@@ -102,7 +102,7 @@ router.post('/loan-offer/:id', (req, res) => {
                     date_modified: date,
                     status: enums.CLIENT_APPLICATION.STATUS.COMPLETED
                 };
-                connection.query(`UPDATE client_applications Set ? WHERE ID = ${app[0]['preapplicationID']}`, preapplication, (error) => {
+                connection.query(`UPDATE preapplications Set ? WHERE ID = ${app[0]['preapplicationID']}`, preapplication, (error) => {
                     if(error) return res.send({
                             "status": 500,
                             "error": error,

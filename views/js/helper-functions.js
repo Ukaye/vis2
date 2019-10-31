@@ -128,14 +128,13 @@ function padWithZeroes(n, width, z) {
 function pmt(rate,nper,pv) {
     let pvif, pmt;
 
-    pvif = Math.pow( 1 + rate, nper);
+    pvif = Math.pow(1 + rate, nper);
     pmt = rate / (pvif - 1) * -(pv * pvif);
-console.log(pvif)
+
     return pmt;
 }
 
 function computeSchedule(loan_amount, interest_rate, payments_per_year, years, payment) {
-    console.log('yeah')
     let schedule = [],
         remaining = loan_amount,
         number_of_payments = payments_per_year * years;
