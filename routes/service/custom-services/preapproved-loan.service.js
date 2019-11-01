@@ -1,5 +1,5 @@
 const
-    axios = require('axios'),
+    axios = require('./axios'),
     moment = require('moment'),
     db = require('../../../db'),
     bcrypt = require('bcryptjs'),
