@@ -13,8 +13,7 @@ let email = {},
         viewEngine: {
             extName: '.hbs',
             partialsDir: 'views/email',
-            layoutsDir: 'views/email',
-            defaultLayout: 'default.hbs',
+            layoutsDir: 'views/email'
         },
         viewPath: 'views/email',
         extName: '.hbs'
