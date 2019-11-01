@@ -465,8 +465,9 @@
                                         <h2 class="text-center" style="margin: 0 0 15px 200px;">Loan Reschedule
                                             <span id="reschedule-total-text" style="font-size: 20px; float: right; margin: 5px 5px 0 0;"></span>
                                             <select id="amortization" class="form-control" style="width: 200px; float: right;">
-                                                <option value="custom" selected="selected">Custom (Manual)</option>
-                                                <option value="standard">Standard (Automatic)</option>
+                                                <option value="custom" selected="selected">Custom Balance (Manual)</option>
+                                                <option value="fixed">Fixed Balance (Automatic)</option>
+                                                <option value="standard">Reducing Balance (Automatic)</option>
                                             </select>
                                         </h2>
                                         <p id="schedule-error-message" class="amortization-div" style="display: none;"></p>
@@ -1081,8 +1082,9 @@
                         <div class="col-sm-6 form-group">
                             <label class="form-control-label">Select Amortization Type</label><strong style="color:red"> *</strong>
                             <select id="amortization2" class="form-control">
-                                <option value="custom" selected="selected">Custom (Manual)</option>
-                                <option value="standard">Standard (Automatic)</option>
+                                <option value="custom" selected="selected">Custom Balance (Manual)</option>
+                                <option value="fixed">Fixed Balance (Automatic)</option>
+                                <option value="standard">Reducing Balance (Automatic)</option>
                             </select>
                         </div>
                         <div id="payment-amount-div" class="col-sm-6 form-group" style="display: none;">

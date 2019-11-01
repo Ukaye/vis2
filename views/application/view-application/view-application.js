@@ -1226,6 +1226,8 @@ $('#repayment-date').change(function () {
 });
 
 function triggerAmortization() {
+    if ($('#amortization').val() === 'fixed')
+        $('#amortization').val('fixed').trigger('change');
     if ($('#amortization').val() === 'standard')
         $('#amortization').val('standard').trigger('change');
 }
@@ -1279,7 +1281,11 @@ function initCSVUpload2(application, settings) {
         $dvCSV.html('');
         schedule = [];
         loan_amount = 0;
-        if (this.value === 'standard'){
+        if (this.value === 'custom') {
+            $('#uploadCSV2').show();
+            $('#csvUpload2').show();
+            $('.amortization-div').hide();
+        } else {
             $('#uploadCSV2').hide();
             $('#csvUpload2').hide();
             $('.amortization-div').show();
@@ -1307,8 +1313,8 @@ function initCSVUpload2(application, settings) {
                 paymentsPerYear = 12,
                 rate_ = (interestRate/100)/paymentsPerYear,
                 numberOfPayments = paymentsPerYear * years,
-                payment = (pmt(rate_, numberOfPayments, -loanAmount)).toFixed(2),
-                schedule_ = computeSchedule(loanAmount, interestRate, paymentsPerYear, years, parseFloat(payment)),
+                payment = (pmt(rate_, numberOfPayments, -loanAmount, $amortization.val())).toFixed(2),
+                schedule_ = computeSchedule(loanAmount, interestRate, paymentsPerYear, years, parseFloat(payment), $amortization.val()),
                 table = $("<table border='1' style='text-align: center; width: 100%;'/>"),
                 rows = processSchedule(schedule_, loanAmount, repaymentDate);
             $('#payment-amount').val(payment);
@@ -1381,10 +1387,6 @@ function initCSVUpload2(application, settings) {
             }
             $dvCSV.html('');
             $dvCSV.append(table);
-        } else {
-            $('#uploadCSV2').show();
-            $('#csvUpload2').show();
-            $('.amortization-div').hide();
         }
     });
 
@@ -2128,7 +2130,10 @@ function initNewLoanOffer(application, settings) {
         $dvCSV.html('');
         schedule = [];
         loan_amount = 0;
-        if (this.value === 'standard') {
+        if (this.value === 'custom') {
+            $('.amortization-div2').show();
+            $('#payment-amount-div').hide();
+        } else {
             $('.amortization-div2').hide();
             $('#payment-amount-div').show();
             loanAmount = $('#amount2').val();
@@ -2154,8 +2159,8 @@ function initNewLoanOffer(application, settings) {
                 paymentsPerYear = 12,
                 rate_ = (interestRate/100)/paymentsPerYear,
                 numberOfPayments = paymentsPerYear * years,
-                payment = (pmt(rate_, numberOfPayments, -loanAmount)).toFixed(2),
-                schedule_ = computeSchedule(loanAmount, interestRate, paymentsPerYear, years, parseFloat(payment)),
+                payment = (pmt(rate_, numberOfPayments, -loanAmount, $amortization.val())).toFixed(2),
+                schedule_ = computeSchedule(loanAmount, interestRate, paymentsPerYear, years, parseFloat(payment), $amortization.val()),
                 table = $("<table border='1' style='text-align: center; width: 100%;'/>"),
                 rows = processSchedule(schedule_, loanAmount, repaymentDate);
             $('#payment-amount2').val(payment);
@@ -2228,9 +2233,6 @@ function initNewLoanOffer(application, settings) {
             }
             $dvCSV.html('');
             $dvCSV.append(table);
-        } else {
-            $('.amortization-div2').show();
-            $('#payment-amount-div').hide();
         }
     });
 
