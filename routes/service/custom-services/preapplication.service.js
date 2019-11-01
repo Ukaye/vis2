@@ -1,6 +1,6 @@
 const
     fs = require('fs'),
-    axios = require('axios'),
+    axios = require('./axios'),
     async = require('async'),
     moment = require('moment'),
     db = require('../../../db'),
