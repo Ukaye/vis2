@@ -1291,7 +1291,7 @@ users.get('/clients-list-full/:officerID', function(req, res, next) {
 });
 
 users.get('/users-list-v2', function(req, res, next) {
-    let query = 'SELECT ID, username, fullname, email, status, date_created from clients where status = 1 order by fullname asc';
+    let query = 'SELECT ID, username, fullname, email, status, date_created from clients where status = 1 AND client_type <> "corporate" order by fullname asc';
     db.query(query, function (error, results, fields) {
         if(error){
             res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
