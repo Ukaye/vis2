@@ -1,5 +1,4 @@
 const express = require('express');
-const axios = require('axios');
 const router = express.Router();
 const moment = require('moment');
 const addMonths = require('date-fns/add_months');

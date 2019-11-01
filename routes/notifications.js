@@ -1,5 +1,5 @@
 const express = require('express');
-const axios = require('axios');
+const axios = require('./service/custom-services/axios');
 const CronJob = require('cron').CronJob;
 let token,
     fs = require('fs'),
