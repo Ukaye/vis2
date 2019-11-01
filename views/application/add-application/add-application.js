@@ -395,7 +395,8 @@
             $dvCSV.html('');
             schedule = [];
             loan_amount = 0;
-            if (this.val === 'custom') {
+            console.log(this.value)
+            if (this.value === 'custom') {
                 $message.hide();
                 $('.amortization-div').show();
                 $('#payment-amount-div').hide();
