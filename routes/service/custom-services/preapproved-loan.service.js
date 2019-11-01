@@ -390,16 +390,12 @@ router.get('/get/:id', function (req, res, next) {
             query: query
         }
     }).then(response => {
-        console.log(response.data)
-        console.log('====================================')
         if (response['data'][0]){
             const status_payload = {
                 mandateId: response['data'][0]['mandateId'],
                 requestId: response['data'][0]['requestId']
             };
             helperFunctions.mandateStatus(status_payload, function (remita_mandate_status) {
-                console.log(remita_mandate_status)
-                console.log('====================================')
                 query = `SELECT * FROM application_schedules WHERE applicationID = ${response['data'][0]['applicationID']} AND status = 1`;
                 endpoint = '/core-service/get';
                 url = `${HOST}${endpoint}`;
@@ -408,14 +404,10 @@ router.get('/get/:id', function (req, res, next) {
                         query: query
                     }
                 }).then(response_ => {
-                    console.log(response_.data)
-                    console.log('====================================')
                     let preapproved_loan = (response.data === undefined) ? {} : response.data[0];
                     preapproved_loan.schedule = (response_.data === undefined) ? [] : response_.data;
                     preapproved_loan.remita = remita_mandate_status;
                     preapproved_loan.merchantId = process.env.REMITA_MERCHANT_ID;
-                    console.log(preapproved_loan)
-                    console.log('====================================')
                     if (response['data'][0]['requestId'])
                         preapproved_loan.remita_hash = SHA512(preapproved_loan.merchantId + process.env.REMITA_API_KEY + response['data'][0]['requestId']);
                     res.send({

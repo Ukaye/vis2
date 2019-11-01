@@ -2109,6 +2109,8 @@ $('#repayment-date2').change(function () {
 });
 
 function triggerAmortization2() {
+    if ($('#amortization2').val() === 'fixed')
+        $('#amortization2').val('fixed').trigger('change');
     if ($('#amortization2').val() === 'standard')
         $('#amortization2').val('standard').trigger('change');
 }
@@ -2121,12 +2123,13 @@ function initNewLoanOffer(application, settings) {
         $csvUpload = $("#loan-schedule"),
         $uploadCSV = $("#previewScheduleBtn"),
         $csvLoader = $("#wait"),
+        $amortization = $('#amortization2'),
         loanAmount = $('#amount2').val(),
         interestRate = $('#interest-rate2').val(),
         duration = $('#term2').val(),
         repaymentDate = $('#repayment-date2').val();
 
-    $('#amortization2').change(function () {
+    $amortization.change(function () {
         $dvCSV.html('');
         schedule = [];
         loan_amount = 0;
