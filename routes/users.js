@@ -10,6 +10,7 @@ let token,
     moment  = require('moment'),
     bcrypt = require('bcryptjs'),
     jwt = require('jsonwebtoken'),
+    auditLog = require('../routes/audit'),
     xeroFunctions = require('../routes/xero'),
     helperFunctions = require('../helper-functions'),
     notificationsService = require('./notifications-service'),
@@ -2672,6 +2673,13 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                         IsReconciled: true,
                                                         Reference: `Reschedule adjustment for LOAN ID: ${helperFunctions.padWithZeroes(old_invoice.applicationID, 9)}`
                                                     });
+                                                    auditLog.log({
+                                                        clientID: application.clientID,
+                                                        amount: principal_due,
+                                                        type: 'repayment',
+                                                        loanID: old_invoice.applicationID,
+                                                        module: 'collections'
+                                                    });
                                                 }
                                             }
                                         });
@@ -2772,6 +2780,13 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                     IsReconciled: 'true'
                                                 });
                                                 disbursement.xeroDisbursementID = xeroDisbursement.BankTransactions[0]['BankTransactionID'];
+                                                auditLog.log({
+                                                    clientID: application.clientID,
+                                                    amount: disbursal.disbursement_amount,
+                                                    type: 'disbursement',
+                                                    loanID: application.ID,
+                                                    module: 'collections'
+                                                });
                                             }
                                             application.integration = integration;
                                             syncXeroSchedule(req, res, connection, application, new_schedule, xeroPrincipal, 'put')
@@ -3172,6 +3187,13 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                         ${application.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(application.ID, 9)} | `)
                                 });
                                 invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                                auditLog.log({
+                                    clientID: application.clientID,
+                                    amount: invoice.payment_amount,
+                                    type: 'repayment',
+                                    loanID: application.ID,
+                                    module: 'collections'
+                                });
                             }
                             if (xeroClient && invoice.interest_amount > 0 && 
                                 application.interest_invoice_no && invoice.xeroCollectionBankID) {
@@ -3189,6 +3211,13 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                         ${application.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(application.ID, 9)} | `)
                                 });
                                 invoice.xeroInterestPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                                auditLog.log({
+                                    clientID: application.clientID,
+                                    amount: invoice.interest_amount,
+                                    type: 'repayment',
+                                    loanID: application.ID,
+                                    module: 'collections'
+                                });
                             }
                             db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response, fields) {
                                 if(error){
@@ -3255,6 +3284,12 @@ users.post('/application/escrow', function(req, res, next) {
                             Reference: helperFunctions.padWithZeroes(data.clientID, 6)
                         });
                         data.xeroOverpaymentID = xeroPayment.BankTransactions[0]['OverpaymentID'];
+                        auditLog.log({
+                            clientID: data.clientID,
+                            amount: data.amount,
+                            type: 'overpayment',
+                            module: 'collections'
+                        });
                     }
                     delete data.payment_date;
                     db.query('INSERT INTO escrow SET ?', data, function (error, result, fields) {
@@ -3420,6 +3455,13 @@ users.post('/application/disburse/:id', function(req, res, next) {
                                     IsReconciled: 'true'
                                 });
                                 disbursement.xeroDisbursementID = xeroDisbursement.BankTransactions[0]['BankTransactionID'];
+                                auditLog.log({
+                                    clientID: application.clientID,
+                                    amount: application.amount,
+                                    type: 'disbursement',
+                                    loanID: application.ID,
+                                    module: 'collections'
+                                });
                             }
                             db.query(`INSERT INTO disbursement_history SET ?`, disbursement, function (error, result, fields) {
                                 if(error){
@@ -3725,6 +3767,13 @@ users.post('/application/pay-off/:id/:agentID', function(req, res, next) {
                                                     IsReconciled: true
                                                 });
                                                 invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                                                auditLog.log({
+                                                    clientID: application.clientID,
+                                                    amount: invoice.payment_amount,
+                                                    type: 'repayment',
+                                                    loanID: invoice.applicationID,
+                                                    module: 'collections'
+                                                });
                                             }
                                             if (xeroClient && invoice.interest_amount > 0 && 
                                                 invoice_obj.interest_invoice_no && data.close_bank) {
@@ -3740,6 +3789,13 @@ users.post('/application/pay-off/:id/:agentID', function(req, res, next) {
                                                     IsReconciled: true
                                                 });
                                                 invoice.xeroInterestPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                                                auditLog.log({
+                                                    clientID: application.clientID,
+                                                    amount: invoice.interest_amount,
+                                                    type: 'repayment',
+                                                    loanID: invoice.applicationID,
+                                                    module: 'collections'
+                                                });
                                             }
                                             connection.query('UPDATE application_schedules SET payment_status=1 WHERE ID = ?', [invoice_obj.ID], function (error, result, fields) {
                                                 connection.query('INSERT INTO schedule_history SET ?', invoice, function (error, response, fields) {

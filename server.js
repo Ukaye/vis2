@@ -56,6 +56,7 @@ let app = express(),
     remita_service = require('./routes/service/custom-services/remita.service'),
     xero_service = require('./routes/service/custom-services/xero.service'),
     application_service = require('./routes/service/custom-services/application.service'),
+    audit_service = require('./routes/service/custom-services/audit.service'),
     notification = require('./routes/notifications'),
     index = require('./routes/index');
 
@@ -227,6 +228,7 @@ app.use('/investment-interests', investment_interest_service);
 app.use('/remita', remita_service);
 app.use('/xero', xero_service);
 app.use('/application', application_service);
+app.use('/audit', audit_service);
 app.use('/notifications', notification);
 app.use('/files', express.static(__dirname + '/files'));
 
@@ -640,6 +642,12 @@ app.get('/loan-file/:id?', requireLogin, function (req, res) {
 
 app.get('/loan-schedule/:id?', requireLogin, function (req, res) {
     res.sendFile('/application/loan-schedule/loan-schedule.html', {
+        root: __dirname + '/views'
+    });
+});
+
+app.get('/audit-logs/:id?', requireLogin, function (req, res) {
+    res.sendFile('/audit/audit-logs/audit-logs.html', {
         root: __dirname + '/views'
     });
 });
