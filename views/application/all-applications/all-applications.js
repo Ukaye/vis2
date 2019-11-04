@@ -184,27 +184,30 @@ function loadApplications() {
             {
                 width: "10%",
                 mRender: function (data, type, full) {
-                     let action = '<button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#myModal" onclick="openModal('+full.ID+')"><i class="fa fa-eye"></i> View Client</button>';
+                     let action = `<div class="dropdown-container"><button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown">
+                                        More </button><div class="dropdown-menu">`;
+                     action = action.concat(`<a class="dropdown-item" href="#" data-toggle="modal" data-target="#myModal" onclick="openModal(${full.ID})"><i class="fa fa-eye"></i> View Client</a>`);
                      if (full.comment){
-                        let view_comment_button = ' <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#viewCommentModal" onclick="openViewCommentModal('+full.ID+')"><i class="fa fa-eye"></i> View Comment</button>';
+                        let view_comment_button = `<a class="dropdown-item" href="#" data-toggle="modal" data-target="#viewCommentModal" onclick="openViewCommentModal(${full.ID})"><i class="fa fa-eye"></i> View Comment</a>`;
                         action = action.concat(view_comment_button);
                     } else {
-                        let add_comment_button = ' <button type="button" class="btn btn-success btn-sm write" data-toggle="modal" data-target="#addCommentModal" onclick="openAddCommentModal('+full.ID+')"><i class="fa fa-plus"></i> Add Comment</button>';
+                        let add_comment_button = `<a class="dropdown-item write" href="#" data-toggle="modal" data-target="#addCommentModal" onclick="openAddCommentModal(${full.ID})"><i class="fa fa-plus"></i> Add Comment</a>`;
                         action = action.concat(add_comment_button);
                     }
                     if (full.workflowID){
                         let view_workflow_button;
                         if (full.status === 2){
-                            view_workflow_button = ' <button type="button" class="btn btn-outline-primary btn-sm" data-toggle="modal" data-target="#viewWorkflowModal" onclick="openViewWorkflowModal('+full.ID+')"><i class="fa fa-eye"></i> View Loan</button>';
+                            view_workflow_button = `<a class="dropdown-item" href="#" data-toggle="modal" data-target="#viewWorkflowModal" onclick="openViewWorkflowModal(${full.ID})"><i class="fa fa-eye"></i> View Loan</a>`;
                         } else {
-                            view_workflow_button = ' <button type="button" class="btn btn-outline-primary btn-sm" data-toggle="modal" data-target="#viewWorkflowModal" onclick="openViewWorkflowModal('+full.ID+')"><i class="fa fa-eye"></i> View Application</button>';
+                            view_workflow_button = `<a class="dropdown-item" href="#" data-toggle="modal" data-target="#viewWorkflowModal" onclick="openViewWorkflowModal(${full.ID})"><i class="fa fa-eye"></i> View Application</a>`;
                         }
                         action = action.concat(view_workflow_button);
                     } else {
-                        let add_workflow_button = ' <button type="button" class="btn btn-outline-success btn-sm" data-toggle="modal" data-target="#addWorkflowModal" onclick="openAddWorkflowModal('+full.ID+')"><i class="fa fa-plus"></i> Assign Loan Process</button>';
+                        let add_workflow_button = `<a class="dropdown-item" href="#" data-toggle="modal" data-target="#addWorkflowModal" onclick="openAddWorkflowModal(${full.ID})"><i class="fa fa-plus"></i> Assign Loan Process</a>`;
                         action = action.concat(add_workflow_button);
                     }
 
+                    action = action.concat('</div></div>');
                     return action;
                 }
             }
