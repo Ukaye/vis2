@@ -203,7 +203,6 @@ function saveOrganisationData() {
         stampPath = "",
         signaturePath = "";
     if ($('#file-upload-logo')[0].files[0] !== undefined) {
-        console.log($('#file-upload-logo'), 'ppppp')
         imgId = `${dt.getFullYear()}${dt.getMonth()}${dt.getDate()}${dt.getHours()}${dt.getMinutes()}${dt.getSeconds()}${dt.getMilliseconds()}`;
         let ext_ = $('#file-upload-logo')[0].files[0].type.split('/')[1];
         ext_ = (ext_ === 'jpeg') ? 'jpg' : ext_;

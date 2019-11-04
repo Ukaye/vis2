@@ -77,6 +77,7 @@ function organisationSettings() {
 
 /**End point to create investment/savings transaction and it also enforces product requirement on the transaction **/
 router.post('/create', function (req, res, next) {
+    console.log(5678)
     var data = req.body
     const dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let refId = moment().utcOffset('+0100').format('x');
@@ -114,6 +115,7 @@ router.post('/create', function (req, res, next) {
                 let query = `INSERT INTO investment_txns SET ?`;
                 sRequest.post(query, inv_txn)
                     .then(function (_response) {
+                        // If insert succeeds, .status won't be part of _response object, thereby _response.status will be undefined
                         if (_response.status === undefined) {
 
 
@@ -677,6 +679,7 @@ console.log(response, 'ooooo')
 
 /**End point to post an investment/savings transaction **/
 router.post('/posts', function (req, res, next) {
+    console.log(34556, '/posts')
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let data = req.body
     let query = `UPDATE investment_op_approvals SET isPosted = ${data.status}, postedBy=${data.userId},isCompleted = ${1}, updatedAt ='${dt.toString()}' WHERE ID =${data.id}`;
@@ -689,6 +692,7 @@ router.post('/posts', function (req, res, next) {
                 (Select Count(*) as priorityItemTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'POST' AND priority = '${data.priority}') as priorityItemTotal,
                 (Select Count(*) as total_postedBy from investment_op_approvals where txnId = ${data.txnId} AND method = 'POST') as total_postedBy`;
             sRequest.get(query).then(counter => {
+                console.log(counter, 'tttttt')
                 if (((counter[0].total_postedBy === counter[0].total_posted) || (counter[0].isOptional > 0) ||
                     (counter[0].priorityTotal !== 0 && counter[0].priorityTotal === counter[0].priorityItemTotal)) && data.status === '1') {
                     let total_bal = 0;
@@ -704,7 +708,9 @@ router.post('/posts', function (req, res, next) {
                         //     bal = '0.00';
                         //     _amountTxn = interest_payload.balance
                         // }
+                        console.log(data, 't.s data')
                         if (data.isInvestmentTerminated.toString() === '0') {
+                            console.log('here')
                             const updateDate = (data.useTxnDateAsPostDate.toString() === '0') ?
                                 moment().utcOffset('+0100').format('YYYY-MM-DD') : data.txn_date;
                             query = `UPDATE investment_txns SET isApproved = ${data.status}, 
@@ -754,6 +760,7 @@ router.post('/posts', function (req, res, next) {
                         }
                     });
                 } else {
+                    console.log(12345)
                     if (data.isInvestmentTerminated.toString() === '0') {
                         const updateDate_ = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                         query = `UPDATE investment_txns SET isApproved = ${0}, updated_date ='${updateDate_}', postDone = ${0}, isDeny = ${data.isDeny},
@@ -2398,14 +2405,18 @@ function updateInvestmentInterestIDs(ids) {
 /** Function call to compute and return daily last balance without considering interest**/
 function sumInvestmentInterestPerDayRange(investmentId, inStartDate, startDate, date) {
     return new Promise((resolve, reject) => {
-        let query = `SELECT amount, is_credit FROM investment_txns
+        let query = `SELECT amount, is_credit, balance FROM investment_txns
         WHERE investmentId = ${investmentId} AND isApproved = 1 AND postDone = 1 AND isTerminationCharge = 0 
         AND isWallet = 0 AND (STR_TO_DATE(updated_date, '%Y-%m-%d') >='${inStartDate}'
         OR STR_TO_DATE(updated_date, '%Y-%m-%d') >='${startDate}')
         AND STR_TO_DATE(updated_date, '%Y-%m-%d') <='${date}'`;
         sRequest.get(query).then(result => {
             let total = 0;
+            // I added variable dailyBalance to mirror variable total Segun implemented
+            let dailyBalance = 0;
             if (result.length > 0) {
+                // Variable dailyBalance here gets the last balance each day
+               dailyBalance = Number(result[result.length-1].balance).toFixed(2);
                 result.map(x => {
                     if (x.is_credit === 1) {
                         total += parseFloat(x.amount.toString());
@@ -2414,13 +2425,48 @@ function sumInvestmentInterestPerDayRange(investmentId, inStartDate, startDate, 
                     }
                 });
             }
+            // let dailyBalance = parseFloat(Number(dailyBalance).toFixed(2));
             let _result = parseFloat(Number(total).toFixed(2));
-            resolve(_result);
+            resolve({_result, dailyBalance});
         }, err => {
             reject(err);
         });
     });
 }
+
+
+
+// I commented this part
+/** Function call to compute and return daily last balance without considering interest**/
+// function sumInvestmentInterestPerDayRange(investmentId, inStartDate, startDate, date) {
+//     return new Promise((resolve, reject) => {
+//         let query = `SELECT amount, is_credit FROM investment_txns
+//         WHERE investmentId = ${investmentId} AND isApproved = 1 AND postDone = 1 AND isTerminationCharge = 0 
+//         AND isWallet = 0 AND (STR_TO_DATE(updated_date, '%Y-%m-%d') >='${inStartDate}'
+//         OR STR_TO_DATE(updated_date, '%Y-%m-%d') >='${startDate}')
+//         AND STR_TO_DATE(updated_date, '%Y-%m-%d') <='${date}'`;
+//         sRequest.get(query).then(result => {
+//             let total = 0;
+//             if (result.length > 0) {
+//                 result.map(x => {
+//                     if (x.is_credit === 1) {
+//                         total += parseFloat(x.amount.toString());
+//                     } else {
+//                         total -= parseFloat(x.amount.toString());
+//                     }
+//                 });
+//             }
+//             let _result = parseFloat(Number(total).toFixed(2));
+//             console.log(_result, 'tttttt')
+//             resolve(_result);
+//         }, err => {
+//             reject(err);
+//         });
+//     });
+// }
+
+
+
 
 /** Function call to compute and return daily last balance without considering interest**/
 function setInvestmentInterestPerDay(values) {
@@ -2434,13 +2480,15 @@ function setInvestmentInterestPerDay(values) {
             month,
             year,
             balance,
-            interestDate
+            interestDate,
+            dailyBalanceAmount
         )
         VALUES `;
         let bodyQuery = '';
         for (let i = 0; i < values.length; i++) {
             const item = values[i];
-            bodyQuery += `(${item.amount},${item.clientId},${item.investmentId},'${item.createdAt}',${item.month},${item.year},${item.balance},'${item.date}')`;
+            console.log(item, 'item')
+            bodyQuery += `(${item.amount},${item.clientId},${item.investmentId},'${item.createdAt}',${item.month},${item.year},${item.balance},'${item.date}', ${item.dailyBalanceAmount})`;
             if (values.length !== i + 1) {
                 bodyQuery += ',';
             }
@@ -2454,6 +2502,45 @@ function setInvestmentInterestPerDay(values) {
         });
     });
 }
+
+
+
+
+// I commented this part
+/** Function call to compute and return daily last balance without considering interest**/
+// function setInvestmentInterestPerDay(values) {
+//     return new Promise((resolve, reject) => {
+//         let baseQuery = `INSERT INTO
+//         investment_interests(
+//             amount,
+//             clientId,
+//             investmentId,
+//             createdAt,
+//             month,
+//             year,
+//             balance,
+//             interestDate
+//         )
+//         VALUES `;
+//         let bodyQuery = '';
+//         for (let i = 0; i < values.length; i++) {
+//             const item = values[i];
+//             bodyQuery += `(${item.amount},${item.clientId},${item.investmentId},'${item.createdAt}',${item.month},${item.year},${item.balance},'${item.date}')`;
+//             if (values.length !== i + 1) {
+//                 bodyQuery += ',';
+//             }
+//         }
+
+//         let query = baseQuery + bodyQuery;
+//         sRequest.get(query).then(result => {
+//             resolve(result);
+//         }, err => {
+//             reject(err);
+//         });
+//     });
+// }
+
+
 
 /** Function call to return the maturity date for an investment account **/
 function getInvestmentMaturityDate(investmentId) {
@@ -2503,12 +2590,16 @@ async function getInvestmentDailyBalance(data) {
     }
     let totalInterestAmount = 0;
     let monthlyOpeningBalance = 0;
+    // I added daily balance
+    let dailyBalanceAmount = 0
     let isLocked = false;
     for (let index = 0; index < payload.length; index++) {
         const x = payload[index];
         const balance = await sumInvestmentInterestPerDayRange(data.investmentId, data.investment_start_date, data.startDate, x)
-        let totalInvestedAmount = parseFloat(balance.toString());
+        let totalInvestedAmount = parseFloat(balance._result.toString());
         monthlyOpeningBalance = (monthlyOpeningBalance === 0) ? totalInvestedAmount : monthlyOpeningBalance;
+        dailyBalanceAmount = balance.dailyBalance; 
+
         const _interest_rate = (data.interest_rate === '' ||
             data.interest_rate === undefined ||
             data.interest_rate === null) ? 0 : data.interest_rate;
@@ -2517,6 +2608,7 @@ async function getInvestmentDailyBalance(data) {
         totalInterestAmount += SI;
         monthlyOpeningBalance += SI;
         dailyBalances.push({
+            dailyBalanceAmount,
             date: x,
             balance: Number(monthlyOpeningBalance).toFixed(2),
             amount: Number(SI).toFixed(2),
@@ -2529,6 +2621,48 @@ async function getInvestmentDailyBalance(data) {
     }
     return ({ dailyBalances: dailyBalances, totalInterestAmount: totalInterestAmount });
 }
+
+
+// I commented this part
+/** Function call to compute and return investment daily interest **/
+// async function getInvestmentDailyBalance(data) {
+//     let dailyBalances = [];
+//     const payload = await getInvestmentMonthDatesRange(data.startDate, data.maturityDate, data.investmentId);
+//     let daysInYear = 365;
+//     if (isLeapYear(new Date())) {
+//         daysInYear = 366;
+//     }
+//     let totalInterestAmount = 0;
+//     let monthlyOpeningBalance = 0;
+//     let isLocked = false;
+//     for (let index = 0; index < payload.length; index++) {
+//         const x = payload[index];
+//         const balance = await sumInvestmentInterestPerDayRange(data.investmentId, data.investment_start_date, data.startDate, x)
+//         let totalInvestedAmount = parseFloat(balance.toString());
+//         monthlyOpeningBalance = (monthlyOpeningBalance === 0) ? totalInvestedAmount : monthlyOpeningBalance;
+//         const _interest_rate = (data.interest_rate === '' ||
+//             data.interest_rate === undefined ||
+//             data.interest_rate === null) ? 0 : data.interest_rate;
+//         let interestInDays = parseFloat(_interest_rate.toString()) / 100;
+//         let SI = (totalInvestedAmount * interestInDays * (1 / daysInYear));
+//         totalInterestAmount += SI;
+//         monthlyOpeningBalance += SI;
+//         dailyBalances.push({
+//             date: x,
+//             balance: Number(monthlyOpeningBalance).toFixed(2),
+//             amount: Number(SI).toFixed(2),
+//             clientId: data.clientId,
+//             investmentId: data.investmentId,
+//             createdAt: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a'),
+//             month: x.split('-')[1],
+//             year: x.split('-')[0]
+//         });
+//     }
+//     return ({ dailyBalances: dailyBalances, totalInterestAmount: totalInterestAmount });
+// }
+
+
+
 
 /** End point to return list of an investment maturity months and date(Written for TEST purpose) **/
 router.post('/investment-durations', function (req, res, next) {
