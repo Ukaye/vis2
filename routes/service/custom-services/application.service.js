@@ -9,6 +9,135 @@ const fs = require('fs'),
     notificationsService = require('../../notifications-service'),
     emailService = require('../../service/custom-services/email.service');
 
+router.get('/get', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let end = req.query.end;
+    let type = req.query.type;
+    let draw = req.query.draw;
+    let start = req.query.start;
+    let order = req.query.order;
+    let limit = req.query.limit;
+    let offset = req.query.offset;
+    let loan_officer = req.query.loan_officer;
+    let search_string = req.query.search_string.toUpperCase();
+    let query_condition = `FROM clients u, workflow_processes w, applications a LEFT JOIN corporates c ON a.userID = c.ID WHERE u.ID=a.userID 
+        AND a.status <> 0 AND w.ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=a.ID AND status=1)
+        AND (upper(a.ID) LIKE "${search_string}%" OR upper(u.fullname) LIKE "${search_string}%" OR upper(u.phone) LIKE "${search_string}%" 
+        OR upper(a.loan_amount) LIKE "${search_string}%" OR upper(a.date_created) LIKE "${search_string}%") `;
+    let endpoint = '/core-service/get';
+    let url = `${HOST}${endpoint}`;
+    end = moment(end).add(1, 'days').format("YYYY-MM-DD");
+
+    if (type){
+        switch (type){
+            case '1': {
+                //do nothing
+                break;
+            }
+            case '2': {
+                query_condition = query_condition.concat('AND a.status = 1 AND a.close_status = 0 AND w.current_stage <> 2  AND w.current_stage <> 3 ');
+                break;
+            }
+            case '3': {
+                query_condition = query_condition.concat('AND a.status = 1 AND a.close_status = 0 AND w.current_stage = 2 ');
+                break;
+            }
+            case '4': {
+                query_condition = query_condition.concat('AND a.status = 1 AND a.close_status = 0 AND w.current_stage = 3 ');
+                break;
+            }
+            case '5': {
+                query_condition = query_condition.concat('AND a.status = 2  AND a.close_status = 0 ');
+                break;
+            }
+            case '6': {
+                query_condition = query_condition.concat('AND a.close_status <> 0 ');
+                break;
+            }
+        }
+    }
+    if (start && end)
+        query_condition = query_condition.concat(`AND TIMESTAMP(a.date_created) < TIMESTAMP('${end}') AND TIMESTAMP(a.date_created) >= TIMESTAMP('${start}') `);
+
+    let query = `SELECT u.fullname, u.phone, u.email, u.address, c.name corporate_name, c.email corporate_email, c.phone corporate_phone, c.address corporate_address, 
+        a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.client_type, a.workflowID, a.loan_amount, a.date_modified, a.comment, 
+        a.close_status, a.loanCirrusID, a.reschedule_amount, w.current_stage, (SELECT product FROM preapplications WHERE ID = a.preapplicationID) product, 
+        (SELECT status FROM preapplications WHERE ID = a.preapplicationID AND creator_type = "client") client_applications_status, 
+        (CASE WHEN (SELECT COUNT(*) FROM application_information_requests WHERE applicationID = a.ID) > 0 THEN 1 ELSE 0 END) information_request_status, 
+        (SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) reschedule_status ${query_condition}`,
+        query2 = query.concat(`AND u.loan_officer = ${loan_officer} `),
+        query3 = query.concat(`AND (SELECT supervisor FROM users WHERE users.id = u.loan_officer) = ${loan_officer} `);
+    if (loan_officer)
+        query = query2;
+    query = query.concat(`${order} LIMIT ${limit} OFFSET ${offset}`);
+    if (loan_officer) {
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(response1 => {
+            let data1 = (response1.data === undefined) ? [] : response1.data;
+            query = `SELECT count(*) recordsTotal, (SELECT count(*) ${query_condition} AND u.loan_officer = ${loan_officer}) recordsFiltered 
+                FROM applications WHERE status <> 0`;
+            endpoint = '/core-service/get';
+            url = `${HOST}${endpoint}`;
+            axios.get(url, {
+                params: {
+                    query: query
+                }
+            }).then(payload1 => {
+                axios.get(url, {
+                    params: {
+                        query: query3
+                    }
+                }).then(response2 => {
+                    let data2 = (response2.data === undefined) ? [] : response2.data;
+                    query3 = `SELECT count(*) recordsTotal, (SELECT count(*) ${query_condition} 
+                        AND (SELECT supervisor FROM users WHERE users.id = u.loan_officer) = ${loan_officer}) recordsFiltered 
+                        FROM applications WHERE status <> 0`;
+                    endpoint = '/core-service/get';
+                    url = `${HOST}${endpoint}`;
+                    axios.get(url, {
+                        params: {
+                            query: query3
+                        }
+                    }).then(payload2 => {
+                        res.send({
+                            draw: draw,
+                            recordsTotal: payload1.data[0].recordsTotal,
+                            recordsFiltered: payload1.data[0].recordsFiltered + payload2.data[0].recordsFiltered,
+                            data: data1.concat(data2)
+                        });
+                    });
+                });
+            });
+        });
+    } else {
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(response => {
+            query = `SELECT count(*) recordsTotal, (SELECT count(*) ${query_condition}) recordsFiltered 
+                FROM applications WHERE status <> 0`;
+            endpoint = '/core-service/get';
+            url = `${HOST}${endpoint}`;
+            axios.get(url, {
+                params: {
+                    query: query
+                }
+            }).then(payload => {
+                res.send({
+                    draw: draw,
+                    recordsTotal: payload.data[0].recordsTotal,
+                    recordsFiltered: payload.data[0].recordsFiltered,
+                    data: (response.data === undefined) ? [] : response.data
+                });
+            });
+        });
+    }
+});
+
 router.post('/upload/:id/:name/:folder?', (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let	name = req.params.name,

@@ -1202,7 +1202,6 @@ function disburse() {
         'success': function (data) {
             $('#wait').hide();
             notification('Loan disbursed successfully','','success');
-            printLoanSchedule();
             window.location.reload();
         },
         'error': function (err) {
@@ -1615,7 +1614,6 @@ function initCSVUpload2(application, settings) {
                         'success': function (data) {
                             $csvLoader.hide();
                             notification('Reschedule approved successfully','','success');
-                            printLoanSchedule();
                             window.location.reload();
                         },
                         'error': function (err) {

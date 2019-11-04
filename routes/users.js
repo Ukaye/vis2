@@ -2056,7 +2056,7 @@ users.get('/applications/:officerID', function(req, res, next) {
         "(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status " +
         "FROM clients AS u, workflow_processes AS w, applications AS a LEFT JOIN corporates AS c ON a.userID = c.ID " +
         "WHERE u.ID=a.userID AND a.status <> 0 AND w.ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=a.ID AND status=1) ",
-        query2 = query.concat('AND loan_officer = '+id+' '),
+        query2 = query.concat('AND u.loan_officer = '+id+' '),
         query3 = query.concat('AND (select supervisor from users where users.id = u.loan_officer) =  '+id+' ');
     if (id)
         query = query2;
@@ -2068,29 +2068,37 @@ users.get('/applications/:officerID', function(req, res, next) {
             }
             case '2': {
                 query = query.concat("AND a.status = 1 AND a.close_status = 0 AND w.current_stage<>2  AND w.current_stage<>3 ");
+                query3 = query3.concat("AND a.status = 1 AND a.close_status = 0 AND w.current_stage<>2  AND w.current_stage<>3 ");
                 break;
             }
             case '3': {
                 query = query.concat("AND a.status = 1 AND a.close_status = 0 AND w.current_stage=2 ");
+                query3 = query3.concat("AND a.status = 1 AND a.close_status = 0 AND w.current_stage=2 ");
                 break;
             }
             case '4': {
                 query = query.concat("AND a.status = 1 AND a.close_status = 0 AND w.current_stage=3 ");
+                query3 = query3.concat("AND a.status = 1 AND a.close_status = 0 AND w.current_stage=3 ");
                 break;
             }
             case '5': {
                 query = query.concat("AND a.status = 2  AND a.close_status = 0 ");
+                query3 = query3.concat("AND a.status = 2  AND a.close_status = 0 ");
                 break;
             }
             case '6': {
                 query = query.concat("AND a.close_status <> 0 ");
+                query3 = query3.concat("AND a.close_status <> 0 ");
                 break;
             }
         }
     }
-    if (start && end)
+    if (start && end) {
         query = query.concat("AND TIMESTAMP(a.date_created) < TIMESTAMP('"+end+"') AND TIMESTAMP(a.date_created) >= TIMESTAMP('"+start+"') ");
+        query3 = query3.concat("AND TIMESTAMP(a.date_created) < TIMESTAMP('"+end+"') AND TIMESTAMP(a.date_created) >= TIMESTAMP('"+start+"') ");
+    }
     query = query.concat("ORDER BY a.ID desc");
+    query3 = query3.concat("ORDER BY a.ID desc");
     if (id){
         db.query(query, function (error, results1, fields) {
             if(error){
