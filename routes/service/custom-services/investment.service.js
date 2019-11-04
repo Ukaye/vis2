@@ -9,7 +9,7 @@ const sRequest = require('../s_request');
 
 /** End point to create investment/savings account **/
 router.post('/create', function (req, res, next) {
-    console.log(987)
+    console.log(req.body.interest_rate, 'interest_rate')
     let _date = new Date();
     let data = JSON.parse(JSON.stringify(req.body));
     const is_after = isAfter(new Date(data.investment_mature_date.toString()), new Date(data.investment_start_date.toString()))
@@ -278,9 +278,13 @@ function cloneProductItem(item) {
 }
 
 async function editedProductOps(data) {
-    if (data.interest_rate.toString() !== data.selectedProduct.interest_rate.toString() ||
-        data.premature_interest_rate.toString() !== data.selectedProduct.premature_interest_rate.toString()) {
-        const product = await getProductItem(data.productId);
+    const interest_rate = data.interest_rate.toString();
+    const premature_interest_rate = data.premature_interest_rate.toString();
+    if (interest_rate !== data.selectedProduct.interest_rate.toString() || 
+    premature_interest_rate !== data.selectedProduct.premature_interest_rate.toString()) {
+        let product = await getProductItem(data.productId);
+        product.interest_rate = interest_rate;
+        product.premature_interest_rate = premature_interest_rate;
         const clonedProductId = await cloneProductItem(product);
         await productCloneOps(data.productId, clonedProductId);
 
@@ -301,6 +305,34 @@ async function editedProductOps(data) {
         return data;
     }
 }
+
+
+// I commented this part
+// async function editedProductOps(data) {
+//     if (data.interest_rate.toString() !== data.selectedProduct.interest_rate.toString() ||
+//         data.premature_interest_rate.toString() !== data.selectedProduct.premature_interest_rate.toString()) {
+//         let product = await getProductItem(data.productId);
+//         product.interest_rate = data.interest_rate
+//         const clonedProductId = await cloneProductItem(product);
+//         await productCloneOps(data.productId, clonedProductId);
+
+//         let _data = {
+//             clientId: data.clientId,
+//             productId: clonedProductId,
+//             amount: data.amount,
+//             investment_start_date: data.investment_start_date,
+//             investment_mature_date: data.investment_mature_date,
+//             code: data.code,
+//             selectedProduct: data.selectedProduct,
+//             createdBy: data.createdBy,
+//             isPaymentMadeByWallet: data.isPaymentMadeByWallet
+//         };
+//         return _data;
+//     } else {
+//         data.status = 1;
+//         return data;
+//     }
+// }
 
 async function productCloneOps(originalProductId, newProductId) {
     let tableNames = [{ name: 'investment_product_reviews', isDoc: false },

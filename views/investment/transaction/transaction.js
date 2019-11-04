@@ -463,6 +463,7 @@ function bindDataTable(id) {
             }
         }]
     });
+    console.log(table, 'table')
 }
 let interestTable = {};
 let statementTable = {};
@@ -536,8 +537,11 @@ function bindInterestDataTable() {
         columns: [{
             width: "auto",
             "mRender": function (data, type, full) {
+                console.log(full, 'full')
                 let st = new Date(full.interestDate);
-                return `Balance as @${st.toDateString()} <strong>${formater(full.balance)}</strong>`;
+                return `Balance as @${st.toDateString()} <strong>${formater(full.dailyBalanceAmount)}</strong>`;
+                //I commented this part
+                // return `Balance as @${st.toDateString()} <strong>${formater(full.balance)}</strong>`;
             }
         },
         {
@@ -1197,6 +1201,7 @@ $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemRevert', function ()
 
 $('#bootstrap-data-table2 tbody').on('click', '#dropdownItemDoc', function () {
     data_row = table.row($(this).parents('tr')).data();
+    console.log(data_row, 'data_row')
     $("#viewListDocModalHeader").html(data_row.description);
     $("#viewListDocModalHeader2").html(data_row.ref_no);
     getProductDocRequirements(0);
@@ -1781,6 +1786,7 @@ function onPost(value, approvedId, txnId, id, isDeny) {
         investment_start_date: selectedInvestment.investment_start_date,
         txn_date: data_row.txn_date
     }
+    console.log(_data, 'post')
     $.ajax({
         url: `investment-txns/posts`,
         'type': 'post',
@@ -1803,6 +1809,7 @@ function onPost(value, approvedId, txnId, id, isDeny) {
             swal('Oops! An error occurred while  executing action', '', 'error');
         }
     });
+    console.log(_data, 'post data')
 }
 
 function onComputeInterest(value) {
