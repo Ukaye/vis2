@@ -1,28 +1,13 @@
 const
-    axios = require('axios'),
+    axios = require('./axios'),
     moment = require('moment'),
     db = require('../../../db'),
     bcrypt = require('bcryptjs'),
     express = require('express'),
     router = express.Router(),
     SHA512 = require('js-sha512'),
-    nodemailer = require('nodemailer'),
     helperFunctions = require('../../../helper-functions'),
-    hbs = require('nodemailer-express-handlebars'),
-    smtpTransport = require('nodemailer-smtp-transport'),
-    smtpConfig = smtpTransport({
-        service: 'Mailjet',
-        auth: {
-            user: process.env.MAILJET_KEY,
-            pass: process.env.MAILJET_SECRET
-        }
-    }),
-    options = {
-        viewPath: 'views/email',
-        extName: '.hbs'
-    };
-transporter = nodemailer.createTransport(smtpConfig);
-transporter.use('compile', hbs(options));
+    emailService = require('../custom-services/email.service');
 
 router.get('/recommendations/get', function (req, res, next) {
     let query =
@@ -292,21 +277,17 @@ router.post('/create', function (req, res, next) {
                         if (req.body.applicationID)
                             data.offer_url = data.offer_url.concat(`&i=${req.body.applicationID}`);
                         let mailOptions = {
-                            from: process.env.TENANT+' <noreply@finratus.com>',
                             to: req.body.email,
-                            subject: process.env.TENANT+' Loan Application Offer',
+                            subject: 'Loan Application Offer',
                             template: 'offer',
                             context: data
                         };
                         if (req.body.applicationID) {
                             mailOptions.template = 'mandate';
-                            mailOptions.subject = process.env.TENANT+' Mandate Setup';
+                            mailOptions.subject = 'Mandate Setup';
                         }
-                        transporter.sendMail(mailOptions, function(error, info){
-                            if(error)
-                                return res.send({status: 500, error: error, response: null});
-                            return res.send(response_['data'][0]);
-                        });
+                        emailService.send(mailOptions);
+                        return res.send(response_['data'][0]);
                     }
                 });
             }, err => {
@@ -502,33 +483,29 @@ router.post('/offer/accept/:id', function (req, res, next) {
                             res.send({status: 500, error: error, response: null});
                         } else {
                             let mailOptions = {
-                                from: process.env.TENANT+' <noreply@finratus.com>',
                                 to: email,
-                                subject: process.env.TENANT+' Application Successful',
+                                subject: 'Application Successful',
                                 template: 'main',
                                 context: {
                                     name: fullname,
                                     date: date
                                 }
                             };
-                            transporter.sendMail(mailOptions, function(error, info){
-                                if(error)
-                                    res.send({status: 500, error: error, response: null});
-                                helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process) {
-                                    query =  'INSERT INTO workflow_processes Set ?';
-                                    endpoint = `/core-service/post?query=${query}`;
-                                    url = `${HOST}${endpoint}`;
-                                    process.workflowID = workflow_id;
-                                    process.agentID = created_by;
-                                    process.applicationID = application_id;
-                                    process.date_created = date;
-                                    db.query(query, process, function (error, process_response) {
-                                        if(error) {
-                                            res.send({status: 500, error: error, response: null});
-                                        } else {
-                                            res.send(process_response);
-                                        }
-                                    });
+                            emailService.send(mailOptions);
+                            helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process) {
+                                query =  'INSERT INTO workflow_processes Set ?';
+                                endpoint = `/core-service/post?query=${query}`;
+                                url = `${HOST}${endpoint}`;
+                                process.workflowID = workflow_id;
+                                process.agentID = created_by;
+                                process.applicationID = application_id;
+                                process.date_created = date;
+                                db.query(query, process, function (error, process_response) {
+                                    if(error) {
+                                        res.send({status: 500, error: error, response: null});
+                                    } else {
+                                        res.send(process_response);
+                                    }
                                 });
                             });
                         }

@@ -10,26 +10,11 @@ let token,
     moment  = require('moment'),
     bcrypt = require('bcryptjs'),
     jwt = require('jsonwebtoken'),
-    nodemailer = require('nodemailer'),
+    auditLog = require('../routes/audit'),
     xeroFunctions = require('../routes/xero'),
-    hbs = require('nodemailer-express-handlebars'),
     helperFunctions = require('../helper-functions'),
-    smtpTransport = require('nodemailer-smtp-transport'),
     notificationsService = require('./notifications-service'),
-    emailService = require('./service/custom-services/email.service'),
-    smtpConfig = smtpTransport({
-        service: 'Mailjet',
-        auth: {
-            user: process.env.MAILJET_KEY,
-            pass: process.env.MAILJET_SECRET
-        }
-    }),
-    options = {
-        viewPath: 'views/email',
-        extName: '.hbs'
-    };
-transporter = nodemailer.createTransport(smtpConfig);
-transporter.use('compile', hbs(options));
+    emailService = require('./service/custom-services/email.service');
 
 users.get('/import-bulk-clients', function(req, res) {
     let clients = [],
@@ -1307,7 +1292,7 @@ users.get('/clients-list-full/:officerID', function(req, res, next) {
 });
 
 users.get('/users-list-v2', function(req, res, next) {
-    let query = 'SELECT ID, username, fullname, email, status, date_created from clients where status = 1 order by fullname asc';
+    let query = 'SELECT ID, username, fullname, email, status, date_created from clients where status = 1 AND client_type <> "corporate" order by fullname asc';
     db.query(query, function (error, results, fields) {
         if(error){
             res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
@@ -1791,39 +1776,35 @@ users.post('/apply', function(req, res) {
             data.name = req.body.username;
             data.date = postData.date_created;
             let mailOptions = {
-                from: process.env.TENANT+' <noreply@finratus.com>',
                 to: req.body.email,
-                subject: process.env.TENANT+' Application Successful',
+                subject: 'Application Successful',
                 template: 'application',
                 context: data
             };
             if (!workflow_id)
                 mailOptions.template =  'main';
-            transporter.sendMail(mailOptions, function(error, info){
-                if(error)
-                    console.log({"status": 500, "message": "Error occurred!", "response": error});
-                if (!workflow_id)
-                    return res.send({"status": 200, "message": "New Application Added!"});
-                helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process) {
-                    db.query('SELECT MAX(ID) AS ID from applications', function(err, application, fields) {
-                        process.workflowID = workflow_id;
-                        process.agentID = postData.agentID;
-                        process.applicationID = application[0]['ID'];
-                        process.date_created = postData.date_created;
+            emailService.send(mailOptions);
+            if (!workflow_id)
+                return res.send({"status": 200, "message": "New Application Added!"});
+            helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process) {
+                db.query('SELECT MAX(ID) AS ID from applications', function(err, application, fields) {
+                    process.workflowID = workflow_id;
+                    process.agentID = postData.agentID;
+                    process.applicationID = application[0]['ID'];
+                    process.date_created = postData.date_created;
 
-                        let payload = {}
-                        payload.category = 'Application'
-                        payload.userid = req.cookies.timeout
-                        payload.description = 'New Application Created'
-                        payload.affected = application[0]['ID']
-                        notificationsService.log(req, payload)
-                        db.query('INSERT INTO workflow_processes SET ?',process, function (error, results, fields) {
-                            if(error){
-                                return res.send({"status": 500, "error": error, "response": null});
-                            } else {
-                                return res.send({"status": 200, "message": "New Application Added!", "response": application[0]});
-                            }
-                        });
+                    let payload = {}
+                    payload.category = 'Application'
+                    payload.userid = req.cookies.timeout
+                    payload.description = 'New Application Created'
+                    payload.affected = application[0]['ID']
+                    notificationsService.log(req, payload)
+                    db.query('INSERT INTO workflow_processes SET ?',process, function (error, results, fields) {
+                        if(error){
+                            return res.send({"status": 500, "error": error, "response": null});
+                        } else {
+                            return res.send({"status": 200, "message": "New Application Added!", "response": application[0]});
+                        }
                     });
                 });
             });
@@ -1837,18 +1818,13 @@ users.post('/contact', function(req, res) {
         return res.send({"status": 500, "message": "Please send all required parameters"});
     data.date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let mailOptions = {
-        from: data.fullname+' <applications@loan35.com>',
         to: 'getloan@loan35.com',
         subject: 'Feedback: '+data.subject,
         template: 'contact',
         context: data
     };
-
-    transporter.sendMail(mailOptions, function(error, info){
-        if(error)
-            return res.send({"status": 500, "message": "Oops! An error occurred while sending feedback", "response": error});
-        return res.send({"status": 200, "message": "Feedback sent successfully!"});
-    });
+    emailService.send(mailOptions);
+    return res.send({"status": 200, "message": "Feedback sent successfully!"});
 });
 
 users.post('/sendmail', function(req, res) {
@@ -1878,7 +1854,7 @@ users.get('/applications', function(req, res, next) {
         'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.client_type, ' +
         'a.workflowID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.loanCirrusID, a.reschedule_amount, w.current_stage, ' +
         '(SELECT product FROM preapplications WHERE ID = a.preapplicationID) AS product, ' +
-        '(SELECT status FROM client_applications WHERE ID = a.preapplicationID) AS client_applications_status, ' +
+        '(SELECT status FROM preapplications WHERE ID = a.preapplicationID AND creator_type = "client") AS client_applications_status, ' +
         '(CASE WHEN (SELECT COUNT(*) FROM application_information_requests WHERE applicationID = a.ID) > 0 THEN 1 ELSE 0 END) information_request_status, ' +
         '(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status ' +
         'FROM clients AS u, workflow_processes AS w, applications AS a LEFT JOIN corporates AS c ON a.userID = c.ID ' +
@@ -1970,7 +1946,7 @@ users.get('/application-id/:id', function(req, res, next) {
             'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, a.interest_rate, a.duration, a.preapplicationID, ' +
             '(SELECT l.supervisor FROM users l WHERE l.ID = u.loan_officer) AS supervisor, ' +
             '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
-            '(SELECT status FROM client_applications WHERE ID = a.preapplicationID) AS client_applications_status, ' +
+            '(SELECT status FROM preapplications WHERE ID = a.preapplicationID AND creator_type = "client") AS client_applications_status, ' +
             'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
             'FROM clients AS u INNER JOIN applications AS a ON u.ID = a.userID LEFT JOIN remita_mandates r ' +
             'ON (r.applicationID = a.ID AND r.status = 1) WHERE a.ID = ?',
@@ -1981,7 +1957,7 @@ users.get('/application-id/:id', function(req, res, next) {
             'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, a.interest_rate, a.duration, a.preapplicationID, ' +
             '(SELECT l.supervisor FROM users l WHERE l.ID = c.loan_officer) AS supervisor, ' +
             '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
-            '(SELECT status FROM client_applications WHERE ID = a.preapplicationID) AS client_applications_status, ' +
+            '(SELECT status FROM preapplications WHERE ID = a.preapplicationID AND creator_type = "client") AS client_applications_status, ' +
             'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
             'FROM corporates AS u INNER JOIN applications AS a ON u.ID = a.userID INNER JOIN clients AS c ON u.clientID=c.ID LEFT JOIN remita_mandates r ' +
             'ON (r.applicationID = a.ID AND r.status = 1) WHERE a.ID = ?';
@@ -2075,7 +2051,7 @@ users.get('/applications/:officerID', function(req, res, next) {
         "a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.client_type, " +
         "a.loan_amount, a.date_modified, a.comment, a.close_status, a.workflowID, a.loanCirrusID, a.reschedule_amount, w.current_stage," +
         "(SELECT product FROM preapplications WHERE ID = a.preapplicationID) AS product," +
-        "(SELECT status FROM client_applications WHERE ID = a.preapplicationID) AS client_applications_status, " +
+        "(SELECT status FROM preapplications WHERE ID = a.preapplicationID AND creator_type = 'client') AS client_applications_status, " +
         "(CASE WHEN (SELECT COUNT(*) FROM application_information_requests WHERE a.ID = applicationID) > 0 THEN 1 ELSE 0 END) information_request_status," +
         "(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status " +
         "FROM clients AS u, workflow_processes AS w, applications AS a LEFT JOIN corporates AS c ON a.userID = c.ID " +
@@ -2665,6 +2641,7 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                     res.send({"status": 500, "error": "Application does not exist!", "response": null});
                 } else {
                     let application = app[0],
+                        disbursal = req.body.disbursal,
                         reschedule_amount = req.body.reschedule_amount,
                         loan_amount_update = req.body.loan_amount_update,
                         date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -2695,6 +2672,13 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                         Amount: principal_due,
                                                         IsReconciled: true,
                                                         Reference: `Reschedule adjustment for LOAN ID: ${helperFunctions.padWithZeroes(old_invoice.applicationID, 9)}`
+                                                    });
+                                                    auditLog.log({
+                                                        clientID: application.clientID,
+                                                        amount: principal_due,
+                                                        type: 'repayment',
+                                                        loanID: old_invoice.applicationID,
+                                                        module: 'collections'
                                                     });
                                                 }
                                             }
@@ -2761,10 +2745,9 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                     Reference: helperFunctions.padWithZeroes(req.params.id, 9)
                                                 });
                                             }
-                                            application.integration = integration;
-                                            syncXeroSchedule(req, res, connection, application, new_schedule, xeroPrincipal, 'put')
-                                            .then(response => {
-                                                let disbursement = {
+
+                                            let xeroDisbursement,
+                                                disbursement = {
                                                     loan_id: application.ID,
                                                     amount: reschedule_amount,
                                                     client_id: application.clientID,
@@ -2774,6 +2757,40 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                     status: 1,
                                                     date_created: date_modified
                                                 };
+                                            if (xeroClient && integration && disbursal.disbursement_amount > 0 &&
+                                                integration.xero_disbursement_account && application.xeroContactID) {
+                                                xeroDisbursement = await xeroClient.bankTransactions.create({
+                                                    Type: 'SPEND',
+                                                    Status: 'AUTHORISED',
+                                                    Contact: {
+                                                        ContactID: application.xeroContactID
+                                                    },
+                                                    BankAccount: {
+                                                        Code: disbursal.funding_source
+                                                    },
+                                                    LineItems: [{
+                                                        Description: `Loan disbursement for ${application.fullname} | 
+                                                            LOAN ID: ${helperFunctions.padWithZeroes(application.ID, 9)}`,
+                                                        UnitAmount: disbursal.disbursement_amount,
+                                                        AccountCode: integration.xero_disbursement_account,
+                                                        TaxType: 'NONE'
+                                                    }],
+                                                    Date: disbursal.disbursement_date,
+                                                    Reference: helperFunctions.padWithZeroes(application.ID, 9),
+                                                    IsReconciled: 'true'
+                                                });
+                                                disbursement.xeroDisbursementID = xeroDisbursement.BankTransactions[0]['BankTransactionID'];
+                                                auditLog.log({
+                                                    clientID: application.clientID,
+                                                    amount: disbursal.disbursement_amount,
+                                                    type: 'disbursement',
+                                                    loanID: application.ID,
+                                                    module: 'collections'
+                                                });
+                                            }
+                                            application.integration = integration;
+                                            syncXeroSchedule(req, res, connection, application, new_schedule, xeroPrincipal, 'put')
+                                            .then(response => {
                                                 connection.query(`INSERT INTO disbursement_history SET ?`, disbursement, function (error, result, fields) {
                                                     if(error){
                                                         res.send({"status": 500, "error": error, "response": null});
@@ -3170,6 +3187,13 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                         ${application.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(application.ID, 9)} | `)
                                 });
                                 invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                                auditLog.log({
+                                    clientID: application.clientID,
+                                    amount: invoice.payment_amount,
+                                    type: 'repayment',
+                                    loanID: application.ID,
+                                    module: 'collections'
+                                });
                             }
                             if (xeroClient && invoice.interest_amount > 0 && 
                                 application.interest_invoice_no && invoice.xeroCollectionBankID) {
@@ -3187,6 +3211,13 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                         ${application.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(application.ID, 9)} | `)
                                 });
                                 invoice.xeroInterestPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                                auditLog.log({
+                                    clientID: application.clientID,
+                                    amount: invoice.interest_amount,
+                                    type: 'repayment',
+                                    loanID: application.ID,
+                                    module: 'collections'
+                                });
                             }
                             db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response, fields) {
                                 if(error){
@@ -3249,10 +3280,18 @@ users.post('/application/escrow', function(req, res, next) {
                                 Description: `ClientID: ${helperFunctions.padWithZeroes(data.clientID, 6)}`,
                                 LineAmount: data.amount
                             }],
+                            Date: data.payment_date,
                             Reference: helperFunctions.padWithZeroes(data.clientID, 6)
                         });
                         data.xeroOverpaymentID = xeroPayment.BankTransactions[0]['OverpaymentID'];
+                        auditLog.log({
+                            clientID: data.clientID,
+                            amount: data.amount,
+                            type: 'overpayment',
+                            module: 'collections'
+                        });
                     }
+                    delete data.payment_date;
                     db.query('INSERT INTO escrow SET ?', data, function (error, result, fields) {
                         if(error){
                             res.send({"status": 500, "error": error, "response": null});
@@ -3416,6 +3455,13 @@ users.post('/application/disburse/:id', function(req, res, next) {
                                     IsReconciled: 'true'
                                 });
                                 disbursement.xeroDisbursementID = xeroDisbursement.BankTransactions[0]['BankTransactionID'];
+                                auditLog.log({
+                                    clientID: application.clientID,
+                                    amount: application.amount,
+                                    type: 'disbursement',
+                                    loanID: application.ID,
+                                    module: 'collections'
+                                });
                             }
                             db.query(`INSERT INTO disbursement_history SET ?`, disbursement, function (error, result, fields) {
                                 if(error){
@@ -3586,6 +3632,48 @@ users.get('/application/escrow-payment-reversal/:id', function(req, res, next) {
                                 },
                                 Date: update.date_modified,
                                 Amount: escrow[0]['amount'],
+                                Reference: `CLIENT ID: ${helperFunctions.padWithZeroes(escrow[0]['clientID'], 6)} | Overpayment reversal`
+                            });
+                        }
+                    });
+                }
+                db.query(`UPDATE escrow SET ? WHERE ID = ${req.params.id}`, update, function (error, response, fields) {
+                    if(error){
+                        res.send({"status": 500, "error": error, "response": null});
+                    } else {
+                        res.send({"status": 200, "message": "Payment reversed successfully!"});
+                    }
+                });
+            }
+        });
+    });
+});
+
+users.post('/application/escrow-payment-refund/:id', function(req, res, next) {
+    xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async () => {
+        let update = req.body,
+            bank = update.bank,
+            refund = update.refund;
+        update.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        delete update.bank;
+        delete update.refund;
+        db.query(`SELECT clientID, amount, xeroOverpaymentID FROM escrow WHERE ID = ${req.params.id}`, 
+        [req.params.id], function (error, escrow, fields) {
+            if(error){
+                res.send({"status": 500, "error": error, "response": null});
+            } else {
+                if (escrow[0]['xeroOverpaymentID']) {
+                    xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async (xeroClient) => {
+                        if (xeroClient) {
+                            let xeroPayment = await xeroClient.payments.update({
+                                Overpayment: {
+                                    OverpaymentID: escrow[0]['xeroOverpaymentID']
+                                },
+                                Account: {
+                                    Code: bank
+                                },
+                                Date: update.date_modified,
+                                Amount: refund,
                                 Reference: `CLIENT ID: ${helperFunctions.padWithZeroes(escrow[0]['clientID'], 6)} | Overpayment refund`
                             });
                         }
@@ -3595,8 +3683,7 @@ users.get('/application/escrow-payment-reversal/:id', function(req, res, next) {
                     if(error){
                         res.send({"status": 500, "error": error, "response": null});
                     } else {
-                        
-                        res.send({"status": 200, "message": "Payment reversed successfully!"});
+                        res.send({"status": 200, "message": "Payment refunded successfully!"});
                     }
                 });
             }
@@ -3680,6 +3767,13 @@ users.post('/application/pay-off/:id/:agentID', function(req, res, next) {
                                                     IsReconciled: true
                                                 });
                                                 invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                                                auditLog.log({
+                                                    clientID: application.clientID,
+                                                    amount: invoice.payment_amount,
+                                                    type: 'repayment',
+                                                    loanID: invoice.applicationID,
+                                                    module: 'collections'
+                                                });
                                             }
                                             if (xeroClient && invoice.interest_amount > 0 && 
                                                 invoice_obj.interest_invoice_no && data.close_bank) {
@@ -3695,6 +3789,13 @@ users.post('/application/pay-off/:id/:agentID', function(req, res, next) {
                                                     IsReconciled: true
                                                 });
                                                 invoice.xeroInterestPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                                                auditLog.log({
+                                                    clientID: application.clientID,
+                                                    amount: invoice.interest_amount,
+                                                    type: 'repayment',
+                                                    loanID: invoice.applicationID,
+                                                    module: 'collections'
+                                                });
                                             }
                                             connection.query('UPDATE application_schedules SET payment_status=1 WHERE ID = ?', [invoice_obj.ID], function (error, result, fields) {
                                                 connection.query('INSERT INTO schedule_history SET ?', invoice, function (error, response, fields) {
@@ -3839,19 +3940,13 @@ users.get('/forgot-password/:username', function(req, res) {
         user.forgot_url = req.protocol + '://' + req.get('host') + '/forgot-password?t=' + encodeURIComponent(user.username);
         user.date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
         let mailOptions = {
-            from: 'no-reply@loan35.com',
             to: user.email,
-            subject: process.env.TENANT+': Forgot Password Request',
+            subject: 'Forgot Password Request',
             template: 'forgot',
             context: user
         };
-
-        transporter.sendMail(mailOptions, function(error, info){
-            if(error)
-                return res.send({"status": 500, "message": "Oops! An error occurred while sending request", "response": error});
-            return res.send({"status": 200, "message": "Forgot Password request sent successfully!"});
-        });
-
+        emailService.send(mailOptions);
+        return res.send({"status": 200, "message": "Forgot Password request sent successfully!"});
     });
 });
 

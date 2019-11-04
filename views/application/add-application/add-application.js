@@ -336,6 +336,8 @@
     });
 
     function triggerAmortization() {
+        if ($('#amortization').val() === 'fixed')
+            $('#amortization').val('fixed').trigger('change');
         if ($('#amortization').val() === 'standard')
             $('#amortization').val('standard').trigger('change');
     }
@@ -379,31 +381,6 @@
         return result;
     }
 
-    function pmt(rate,nper,pv) {
-        let pvif, pmt;
-
-        pvif = Math.pow( 1 + rate, nper);
-        pmt = rate / (pvif - 1) * -(pv * pvif);
-
-        return pmt;
-    }
-
-    function computeSchedule(loan_amount, interest_rate, payments_per_year, years, payment) {
-        let schedule = [],
-            remaining = loan_amount,
-            number_of_payments = payments_per_year * years;
-
-        for (let i=0; i<=number_of_payments; i++) {
-            let interest = (remaining * (interest_rate/100/payments_per_year)).round(2),
-                principle = (payment-interest).round(2);
-            remaining = (remaining - principle).round(2);
-            let row = [i, principle>0?(principle<payment?principle:payment):0, interest>0?interest:0, remaining>0?remaining:0];
-            schedule.push(row);
-        }
-
-        return schedule;
-    }
-
     function initCSVUpload2(settings) {
         let schedule = [],
             loan_amount = 0,
@@ -418,7 +395,11 @@
             $dvCSV.html('');
             schedule = [];
             loan_amount = 0;
-            if (this.value === 'standard'){
+            if (this.value === 'custom') {
+                $message.hide();
+                $('.amortization-div').show();
+                $('#payment-amount-div').hide();
+            } else {
                 $message.show();
                 $('.amortization-div').hide();
                 $('#payment-amount-div').show();
@@ -445,8 +426,8 @@
                     paymentsPerYear = 12,
                     rate_ = (interestRate/100)/paymentsPerYear,
                     numberOfPayments = paymentsPerYear * years,
-                    payment = (pmt(rate_, numberOfPayments, -loanAmount)).toFixed(2),
-                    schedule_ = computeSchedule(loanAmount, interestRate, paymentsPerYear, years, parseFloat(payment)),
+                    payment = (pmt(rate_, numberOfPayments, -loanAmount, $amortization.val())).toFixed(2),
+                    schedule_ = computeSchedule(loanAmount, interestRate, paymentsPerYear, years, parseFloat(payment), $amortization.val()),
                     table = $("<table border='1' style='text-align: center; width: 100%;'/>"),
                     rows = processSchedule(schedule_);
                 $('#payment-amount').val(payment);
@@ -519,10 +500,6 @@
                 }
                 $dvCSV.html('');
                 $dvCSV.append(table);
-            } else {
-                $message.hide();
-                $('.amortization-div').show();
-                $('#payment-amount-div').hide();
             }
         });
 

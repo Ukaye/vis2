@@ -1,6 +1,6 @@
 const
     fs = require('fs'),
-    axios = require('axios'),
+    axios = require('./axios'),
     async = require('async'),
     moment = require('moment'),
     db = require('../../../db'),
@@ -50,7 +50,7 @@ router.get('/get', function (req, res, next) {
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
     let query = `SELECT p.*, c.fullname, c.phone FROM preapplications p, clients c 
-                 WHERE p.userID = c.ID AND p.status in (1,2) AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
+                 WHERE p.creator_type = 'admin' AND p.userID = c.ID AND p.status in (1,2) AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
                  OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
@@ -60,8 +60,8 @@ router.get('/get', function (req, res, next) {
         }
     }).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM preapplications p 
-                 WHERE p.status in (1,2) AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
-                 OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM preapplications WHERE status in (1,2)`;
+                 WHERE p.creator_type = 'admin' AND p.status in (1,2) AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
+                 OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM preapplications WHERE creator_type = 'admin' AND status in (1,2)`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {
@@ -83,7 +83,7 @@ router.get('/get/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`,
         path = `files/preapplication-${req.params.id}/`;
     let query = `SELECT p.*, c.fullname, c.email, c.phone FROM preapplications p 
-                INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.id}`,
+                INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.id} AND p.creator_type = 'admin'`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
     axios.get(url, {

@@ -203,10 +203,19 @@
                         <div class="card-header">
                             <div style="float: left; margin: 0 15px;">
                                 <strong id="workflow-div-title" class="card-title">Workflow</strong>
-                                <button id="generateLoanFile" class="btn btn-primary btn-xs" onclick="generateLoanFile()" style="margin-left: 30px;">Generate Loan File</button>
-                                <button id="setupDirectDebit" class ="btn btn-primary btn-xs" style="float: right;">Setup Direct Debit</button>
-                                <button id="viewMandate" class ="btn btn-primary btn-xs" style="float: right; display: none;" data-toggle="modal" data-target="#viewMandateModal">View Mandate</button>
-                                <p><span id="client-id-label">Client ID#:</span> <a onclick="goToClientProfile()" style="text-decoration: underline; cursor: pointer;"><span id="client-id"></span></a> | LOAN ID#: <span id="application-id"></span> | L-CIRRUS ID#: <span id="loancirrus-id"></span></p>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-primary btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        More Actions
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="#" id="setupDirectDebit">Setup Direct Debit</a>
+                                        <a class="dropdown-item" href="#" id="viewMandate" data-toggle="modal" data-target="#viewMandateModal" style="display: none;">View Mandate</a>
+                                        <a class="dropdown-item" href="#" id="generateLoanFile" onclick="generateLoanFile()">Generate Loan File</a>
+                                        <a class="dropdown-item" href="#" onclick="printLoanSchedule()">Print Loan Schedule</a>
+                                    </div>
+                                </div>
+                                <p><span id="client-id-label">Client ID#:</span> <a onclick="goToClientProfile()" style="text-decoration: underline; cursor: pointer;"><span id="client-id"></span></a>
+                                     | LOAN ID#: <span id="application-id"></span> | L-CIRRUS ID#: <span id="loancirrus-id"></span></p>
                             </div>
                             <button id="loan_closed" class ="btn btn-warning btn-lg" style="float: right; margin-top: 5px; display: none;" disabled="disabled"></button>
                             <div id="close_loan" class="btn-group" style="float: right; display: none; margin-top: 5px;">
@@ -456,8 +465,9 @@
                                         <h2 class="text-center" style="margin: 0 0 15px 200px;">Loan Reschedule
                                             <span id="reschedule-total-text" style="font-size: 20px; float: right; margin: 5px 5px 0 0;"></span>
                                             <select id="amortization" class="form-control" style="width: 200px; float: right;">
-                                                <option value="custom" selected="selected">Custom (Manual)</option>
-                                                <option value="standard">Standard (Automatic)</option>
+                                                <option value="custom" selected="selected">Custom Balance (Manual)</option>
+                                                <option value="fixed">Fixed Balance (Automatic)</option>
+                                                <option value="standard">Reducing Balance (Automatic)</option>
                                             </select>
                                         </h2>
                                         <p id="schedule-error-message" class="amortization-div" style="display: none;"></p>
@@ -507,7 +517,8 @@
                                             </div>
                                             <div class="col-sm-5">
                                                 <button id="rejectCSV2" class="btn btn-danger" style="float: right;">Reject <i class="fa fa-times"></i></button>
-                                                <button id="approveCSV2" class="btn btn-success" style="float: right;">Approve <i class="fa fa-check"></i></button>
+                                                <button id="approveRescheduleModalBtn" class="btn btn-success" style="float: right;" 
+                                                    data-toggle="modal" data-target="#disburseModal">Approve <i class="fa fa-check"></i></button>
                                                 <button id="saveCSV2" class="btn btn-primary" style="float: right;">Add <i class="fa fa-plus"></i></button>
                                                 <button id="uploadCSV2" class="btn btn-info" style="float: right;">Preview <i class="fa fa-eye-slash"></i></button>
                                                 <i id="csvLoader2" class="fa fa-spinner fa-spin" style="display: none;"></i>
@@ -701,7 +712,7 @@
     </div>
 </div>
 
-<div class="modal fade" id="addDocumentModal" tabindex="-1" role="dialog" aria-labelledby="addDocumentModalLabel">
+<div class="modal" id="addDocumentModal" role="dialog" aria-labelledby="addDocumentModalLabel">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -794,9 +805,9 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button id="newOfferModalBtn" class ="btn btn-warning" data-toggle="modal" 
+                <button id="editRepaymentDateBtn" class ="btn btn-warning" data-toggle="modal" 
                     data-target="#newOfferModal" onclick="setDefaultOffer('edit_repayment_date')"> Edit Repayment Date</button>
-                <button type="button" class="btn btn-primary" onclick="disburse()">Disburse</button>
+                <button id="approveCSV2" type="button" class="btn btn-primary" onclick="disburse()">Disburse</button>
             </div>
         </div>
     </div>
@@ -1071,8 +1082,9 @@
                         <div class="col-sm-6 form-group">
                             <label class="form-control-label">Select Amortization Type</label><strong style="color:red"> *</strong>
                             <select id="amortization2" class="form-control">
-                                <option value="custom" selected="selected">Custom (Manual)</option>
-                                <option value="standard">Standard (Automatic)</option>
+                                <option value="custom" selected="selected">Custom Balance (Manual)</option>
+                                <option value="fixed">Fixed Balance (Automatic)</option>
+                                <option value="standard">Reducing Balance (Automatic)</option>
                             </select>
                         </div>
                         <div id="payment-amount-div" class="col-sm-6 form-group" style="display: none;">
@@ -1109,7 +1121,6 @@
         </div>
     </div>
 </div>
-
 <script src="/assets/js/popper.min.js"></script>
 <script src="/assets/js/bootstrap.min.js"></script>
 <script src="/assets/js/plugins.js"></script>

@@ -131,7 +131,8 @@
                                 <button class="btn btn-sm btn-primary dropdown-toggle" type="button" id="dropdownMenuButton"
                                         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> MORE ACTIONS </button>
                                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                    <a href="#" class="write dropdown-item" onclick="disableMultipleRemita()"> REMOVE SELECTED INVOICES</a>
+                                    <a href="#" class="dropdown-item" data-toggle="modal" data-target="#setMinBalanceModal">MINIMUM BALANCE FILTER</a>
+                                    <a href="#" class="write dropdown-item" onclick="disableMultipleRemita()">REMOVE SELECTED INVOICES</a>
                                 </div>
                             </div>
                         </div>
@@ -169,13 +170,38 @@
                 </div>
             </div>
         </div><!-- .animated -->
-        <div id="wait" style=";width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;"><img src='spinner.gif' width="100" height="100" style="background-color: transparent"/></div>
+        <div id="wait" style="width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;"><img src='spinner.gif' width="100" height="100" style="background-color: transparent"/></div>
     </div><!-- .content -->
 </div><!-- /#right-panel -->
 <!-- Right Panel -->
 
 <!-- Notification Panel -->
 <div id="panels" include-html="/includes/notifications.html"></div>
+
+<!-- Modal -->
+<div class="modal fade" id="setMinBalanceModal" tabindex="-1" role="dialog" aria-labelledby="setMinBalanceModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="setMinBalanceModalLabel">Set Minimum Balance</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label class="form-control-label">Minimum Balance</label><strong style="color:red"> *</strong>
+                        <input type="text" id="min_balance" class="form-control" required="required" />
+                        <small class="form-text text-muted">Default minimum balance is 0</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="setMinBalance()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="assets/js/popper.min.js"></script>
 <script src="assets/js/bootstrap.min.js"></script>
@@ -184,7 +210,6 @@
 <script src="assets/js/lib/data-table/datatables.min.js"></script>
 <script src="../../js/helper-functions.js"></script>
 <script type="text/javascript" src="../../remita/remita-collection/remita-collection2.js"></script>
-<script src="../../js/loader.js"></script>
 <script src="../../js/notifications.js"></script>
 </body>
 </html>

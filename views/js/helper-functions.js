@@ -125,22 +125,26 @@ function padWithZeroes(n, width, z) {
     return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
-function pmt(rate,nper,pv) {
+function pmt(rate, nper, pv, type) {
     let pvif, pmt;
+    rate = rate.round(2);
 
-    pvif = Math.pow( 1 + rate, nper);
+    pvif = Math.pow(1 + rate, nper);
     pmt = rate / (pvif - 1) * -(pv * pvif);
+
+    if (type && type === 'fixed')
+        pmt = -pv * (1/nper + rate);
 
     return pmt;
 }
 
-function computeSchedule(loan_amount, interest_rate, payments_per_year, years, payment) {
+function computeSchedule(loan_amount, interest_rate, payments_per_year, years, payment, type) {
     let schedule = [],
         remaining = loan_amount,
         number_of_payments = payments_per_year * years;
 
     for (let i=0; i<=number_of_payments; i++) {
-        let interest = (remaining * (interest_rate/100/payments_per_year)).round(2),
+        let interest = (((type && type === 'fixed')? loan_amount:remaining) * (interest_rate/100/payments_per_year)).round(2),
             principle = (payment-interest).round(2);
         remaining = (remaining - principle).round(2);
         let row = [i, principle>0?(principle<payment?principle:payment):0, interest>0?interest:0, remaining>0?remaining:0];

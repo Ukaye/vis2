@@ -28,29 +28,21 @@
 </head>
 <body>
     <script src="assets/js/vendor/jquery-2.1.4.min.js"></script>
-    <script type="text/javascript">
-    </script>
-        <!-- Left Panel -->
-
-    <aside id="left-panel" class="left-panel" include-html="/includes/sidebar.html">
-    </aside><!-- /#left-panel -->
-
     <!-- Left Panel -->
+    <aside id="left-panel" class="left-panel" include-html="/includes/sidebar.html"></aside>
+    <!-- /#left-panel -->
 
     <!-- Right Panel -->
-
     <div id="right-panel" class="right-panel">
-
         <!-- Header-->
-        <header id="header" class="header" include-html="/includes/header.html">
-        </header><!-- /header -->
+        <header id="header" class="header" include-html="/includes/header.html"></header>
         <!-- Header-->
 
         <div class="breadcrumbs">
             <div class="col-sm-4">
                 <div class="page-header float-left">
                     <div class="page-title">
-                        <h1>Dashboard</h1>
+                        <h1 id="message"></h1>
                     </div>
                 </div>
             </div>
@@ -66,112 +58,10 @@
         </div>
 
         <div class="content mt-3">
-
-
-           <div class="col-sm-6 col-lg-3">
-                <div class="card text-white bg-flat-color-1">
-                    <div class="card-body pb-0">
-                        <div class="dropdown float-right">
-                            <button class="btn bg-transparent dropdown-toggle theme-toggle text-light" type="button" id="dropdownMenuButton" data-toggle="dropdown">
-                                <i class="fa fa-cog"></i>
-                            </button>
-                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                <div class="dropdown-menu-content">
-                                    <a class="dropdown-item" href="/all-vehicles">View All</a>
-                                    <a class="dropdown-item" href="/add-vehicle">New</a>
-                                </div>
-                            </div>
-                        </div>
-                        <h4 class="mb-0">
-                            <span id="countVehicles" class="count"></span>
-                        </h4>
-                        <p class="text-light">Vehicles</p>
-
-
-                    </div>
-
-                </div>
+            <div class="login-logo">
+                <img class="align-content" src="fin-ratus-logo.svg" alt="" style="width:300px; padding-top: 150px; height: auto; top:40%; left:45%; align-items: center;">
             </div>
-            <!--/.col-->
-
-            <div class="col-sm-6 col-lg-3">
-                <div class="card text-white bg-flat-color-2">
-                    <div class="card-body pb-0">
-                        <div class="dropdown float-right">
-                            <button class="btn bg-transparent dropdown-toggle theme-toggle text-light" type="button" id="dropdownMenuButton" data-toggle="dropdown">
-                                <i class="fa fa-cog"></i>
-                            </button>
-                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                <div class="dropdown-menu-content">
-                                    <a class="dropdown-item" href="/inspections">View Inspections</a>
-                                    <!-- <a class="dropdown-item" href="#">Something else here</a> -->
-                                </div>
-                            </div>
-                        </div>
-                        <h4 class="mb-0">
-                            <span id="countOwners" class="count"></span>
-                        </h4>
-                        <p class="text-light">Vehicle Owners</p>
-
-                    </div>
-                </div>
-            </div>
-            <!--/.col-->
-
-            <div class="col-sm-6 col-lg-3">
-                <div class="card text-white bg-flat-color-3">
-                    <div class="card-body pb-0">
-                        <div id="models-card" class="dropdown float-right">
-                            <button class="btn bg-transparent dropdown-toggle theme-toggle text-light" type="button" id="dropdownMenuButton" data-toggle="dropdown">
-                                <i class="fa fa-cog"></i>
-                            </button>
-                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                <div class="dropdown-menu-content">
-                                    <a class="dropdown-item" href="/all-models">All Models</a>
-                                    <a class="dropdown-item" href="/add-model">New Model</a>
-                                    <!-- <a class="dropdown-item" href="#">Something else here</a> -->
-                                </div>
-                            </div>
-                        </div>
-                        <h4 class="mb-0">
-                            <span id = "countModels" class="count"></span>
-                        </h4>
-                        <p class="text-light">Car Models</p>
-
-                    </div>
-                </div>
-            </div>
-            <!--/.col-->
-
-            <div class="col-sm-6 col-lg-3">
-                <div class="card text-white bg-flat-color-4">
-                    <div class="card-body pb-0">
-                        <div class="dropdown float-right">
-                            <button class="btn bg-transparent dropdown-toggle theme-toggle text-light" type="button" id="dropdownMenuButton" data-toggle="dropdown">
-                                <i class="fa fa-cog"></i>
-                            </button>
-                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                <div class="dropdown-menu-content">
-                                    <a class="dropdown-item" href="/all-users">All Users</a>
-                                    <a class="dropdown-item" href="/add-user">New User</a>
-                                    <!-- <a class="dropdown-item" href="#">Something else here</a> -->
-                                </div>
-                            </div>
-                        </div>
-                        <h4 class="mb-0">
-                            <span id = "countUsers" class="count"></span>
-                        </h4>
-                        <p class="text-light">Users</p>
-
-                    </div>
-                </div>
-            </div>
-            <!--/.col-->
-            </div>
-
-
-        <div id="wait" style=";width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;"><img src='spinner.gif' width="100" height="100" style="background-color: transparent"/></div>
-
+            <div id="wait" style="width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;"><img src='spinner.gif' width="100" height="100" style="background-color: transparent"/></div>
         </div> <!-- .content -->
     </div><!-- /#right-panel -->
 
@@ -183,7 +73,6 @@
     <script src="assets/js/popper.min.js"></script>
     <script src="assets/js/plugins.js"></script>
     <script src="assets/js/main.js"></script>
-
 
     <script src="assets/js/lib/data-table/datatables.min.js"></script>
     <script src="assets/js/lib/data-table/dataTables.bootstrap.min.js"></script>
@@ -197,209 +86,7 @@
     <script src="assets/js/lib/data-table/buttons.colVis.min.js"></script>
     <script src="assets/js/lib/data-table/datatables-init.js"></script>
     <script src="../../menus/menu-items.js"></script>
-    <script src="js/notifications.js"></script>
     <script src="js/loader.js"></script>
-
-
-    <script type="text/javascript">
-        jQuery(document).ready(function($){countVehicles(); countOwners(); countCarModels(); countUsers();
-//            notifications();
-//            loan_notifications();
-        });
-//
-        let mains;
-
-        function countVehicles(){
-            jQuery.ajax({
-                'url': '/vehiclesCount',
-                'type': 'get',
-                'data': {},
-                'success': function (data) {
-//                    console.log(data);
-                    let total = 0;
-                    var count = JSON.parse(data);
-//                    console.log(count);
-                    jQuery.each(count, function(k, v){
-//                        console.log(v.total);
-                        total = v.total;
-                    });
-                    jQuery('#countVehicles').html(total);
-                },
-                'error': function (err) {
-                    //alert ('Error');
-                    console.log(err);
-                }
-            });
-        }
-
-        function countOwners(){
-            jQuery.ajax({
-                'url': '/ownersCount',
-                'type': 'get',
-                'data': {},
-                'success': function (data) {
-//                    console.log(data);
-                    let total = 0;
-                    var count = JSON.parse(data);
-//                    console.log(count);
-                    jQuery.each(count, function(k, v){
-//                        console.log(v.total);
-                        total = v.total;
-                    });
-                    jQuery('#countOwners').html(total);
-                },
-                'error': function (err) {
-                    //alert ('Error');
-                    console.log(err);
-                }
-            });
-        }
-
-        function countCarModels(){
-            jQuery.ajax({
-                'url': '/modelsCount',
-                'type': 'get',
-                'data': {},
-                'success': function (data) {
-//                    console.log(data);
-                    let total = 0;
-                    var count = JSON.parse(data);
-//                    console.log(count);
-                    jQuery.each(count, function(k, v){
-//                        console.log(v.total);
-                        total = v.total;
-                    });
-                    jQuery('#countModels').html(total);
-                },
-                'error': function (err) {
-                    //alert ('Error');
-                    console.log(err);
-                }
-            });
-        }
-
-        function countUsers(){
-            jQuery.ajax({
-                'url': '/user/usersCount',
-                'type': 'get',
-                'data': {},
-                'success': function (data) {
-//                    console.log(data);
-                    let total = 0;
-                    var count = JSON.parse(data);
-//                    console.log(count);
-                    jQuery.each(count, function(k, v){
-//                        console.log(v.total);
-                        total = v.total;
-                    });
-                    jQuery('#countUsers').html(total);
-                },
-                'error': function (err) {
-                    //alert ('Error');
-                    console.log(err);
-                }
-            });
-        }
-
-//        function check(){
-//            if (localStorage.getItem('role') !== 1){
-//                jQuery('#car-models').hide();
-//                jQuery('#new-user').hide();
-//                jQuery('#models-card').hide();
-//                jQuery('#user').html(localStorage.getItem("name"));
-//            }
-//            else{
-//                jQuery('#user').html(localStorage.getItem("name"));
-//            }
-////            jQuery.ajax({
-////                'url': '/check',
-////                'type': 'get',
-////                'data': {},
-////                'success': function (data) {
-////                    let num = 5;
-////                    var count = JSON.parse(data);
-//////                    console.log(data);
-////                    // jQuery.each(count, function(k, v){
-////                    //     num = v.rand;
-////                    // });
-////                    if (data != 1){
-////                        jQuery('#car-models').hide();
-////                        jQuery('#new-user').hide();
-////                        jQuery('#models-card').hide();
-////                        jQuery('#user').html('ATB Admin');
-////                    }
-////                    else{ jQuery('#user').html('Super Admin'); }
-////                },
-////                'error': function (err) {
-////                    //alert ('Error');
-////                    console.log(err);
-////                }
-////            });
-//        }
-//
-//        function loadMenus(){
-//    let modules = {};
-//    modules = JSON.parse(localStorage.getItem("modules"));
-//    modules.forEach(function(k, v){
-//        if (k.menu_name === 'Sub Menu'){
-//            let main = $.grep(modules, function(e){return e.id === parseInt(k.main_menu);});
-//            $('#'+$(main[0]['module_tag']).attr('id') + ' > .sub-menu').append(k.module_tag);
-//        }else if(k.menu_name === 'Main Menu'){
-//            $('#sidebar').append(k.module_tag);
-//            $('#'+$(k.module_tag).attr('id')).append('<ul class="sub-menu children dropdown-menu"></ul>');
-//        }else{
-//            $('#'+k.module_name).show();
-//        }
-//    });
-//    $.ajax({
-//        type: "GET",
-//        url: "/user/all-requests",
-//        success: function (response) {
-//            $.each(response, function(k,v){
-//                $('#requests-badge').html(v.requests);
-//            });
-//        }
-//    });
-//    $.ajax({
-//        type: "GET",
-//        url: "/user/all-applications",
-//        success: function (response) {
-//            $.each(response, function(k,v){
-//                $('#applications-badge').html(v.applications);
-//            });
-//        }
-//    });
-//}
-//
-////        function read_write(){
-////            var perms = JSON.parse(localStorage.getItem("permissions"));
-//////            console.log(window.location);
-////            var page = (window.location.pathname.split('/')[1].split('.'))[0];
-////            perms.forEach(function (k,v){
-////               if (k.module_name === page){
-////                   if (k.editable !== 1){
-////                       $('.write').hide();
-////                   }
-////               }
-////            });
-////        }
-//
-//        function read_write(){
-//    let w;
-//    var perms = JSON.parse(localStorage.getItem("permissions"));
-//    var page = (window.location.pathname.split('/')[1].split('.'))[0];
-//    perms.forEach(function (k,v){
-//        if (k.module_name === page){
-//            w = $.grep(perms, function(e){return e.id === parseInt(k.id);});
-//        }
-//    });
-//    if (w && w[0] && (parseInt(w[0]['editable']) !== 1)){
-//        $(".write").hide();
-//    }
-//}
-
-
-    </script>
-
+    <script src="js/notifications.js"></script>
 </body>
 </html>

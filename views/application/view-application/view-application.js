@@ -23,6 +23,7 @@ const application_id = urlParams.get('id');
 
 let workflow,
     application,
+    reschedule_status = false,
     settings_obj = {
         loan_requested_min: 1,
         loan_requested_max: 100000000,
@@ -31,6 +32,11 @@ let workflow,
         interest_rate_min: 1,
         interest_rate_max: 1000
     };
+
+$("#disbursement-amount").on("keyup", function () {
+    let val = $("#disbursement-amount").val();
+    $("#disbursement-amount").val(numberToCurrencyformatter(val));
+});
 
 $("#disbursement-fees").on("keyup", function () {
     let val = $("#disbursement-fees").val();
@@ -171,7 +177,7 @@ function loadApplication(user_id){
             $('#application-id').text(padWithZeroes(application.ID, 9));
             if (application.reschedule_amount){
                 $('#reschedule-info').show();
-                $('#reschedule-info').text('Reschedule Add-on amount is ₦'+(parseFloat(application.reschedule_amount)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')+
+                $('#reschedule-info').text('Reschedule Add-on amount is ₦'+numberToCurrencyFormatter_(application.reschedule_amount)+
                     ' last updated on '+application.date_modified);
             }
 
@@ -447,7 +453,7 @@ function loadWorkflowStages(state) {
             if (stage.stage_name === 'Disbursal' || application.status === 2){
                 $('#infoRequestModalBtn').hide();
                 $('#downloadsForm').hide();
-                $('#disbursement-amount').val((parseFloat(application.loan_amount)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
+                $('#disbursement-amount').val(numberToCurrencyformatter(application.loan_amount));
                 $('#stage-actions').append('<a href="#" id="stage-action-0" class="dropdown-item" data-toggle="modal" data-target="#disburseModal">Disburse Loan</a>');
             }
 
@@ -1104,15 +1110,15 @@ function initLoanSummary(total_prinicipal) {
     let payment_history = [],
         total_principal = total_prinicipal,
         invoices = $.grep(application.schedule,function(e){return e.status===1});
-    $('#loan-amount-text').text('₦'+(parseFloat(application.loan_amount)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
-    $('#principal-total-text').text('Disbursed Amount: ₦'+total_principal.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
+    $('#loan-amount-text').text(`₦${numberToCurrencyFormatter_(application.loan_amount)}`);
+    $('#principal-total-text').text(`Disbursed Amount: ₦${numberToCurrencyFormatter_(total_principal)}`);
     for (let i=0; i<invoices.length; i++){
         let payments = $.grep(application.payment_history,function(e){return e.invoiceID===invoices[i]['ID']});
         payment_history = payment_history.concat(payments);
     }
     if (!payment_history || !payment_history[0]){
         total_due_amount = total_prinicipal;
-        $('#total-due-text').text('₦'+total_principal.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
+        $('#total-due-text').text(`₦${numberToCurrencyFormatter_(total_principal)}`);
         $('#last-payment-text').text('N/A');
     } else {
         let count = 0,
@@ -1122,7 +1128,7 @@ function initLoanSummary(total_prinicipal) {
             amount = (amount - parseFloat(payment.payment_amount)).round(2);
             if (count === payment_history.length){
                 total_due_amount = amount;
-                $('#total-due-text').text(`₦${numberToCurrencyformatter(amount)}`);
+                $('#total-due-text').text(`₦${numberToCurrencyFormatter_(amount)}`);
             }
         });
         $('#last-payment-text').text(((payment_history[0]['date_created']).split(' '))[0]);
@@ -1173,6 +1179,7 @@ function checkTotalDue() {
 }
 
 function disburse() {
+    if (reschedule_status) return;
     let disbursal = {};
     disbursal.funding_source = $('#funding').val();
     disbursal.disbursement_date = $('#disbursement-date').val();
@@ -1195,6 +1202,7 @@ function disburse() {
         'success': function (data) {
             $('#wait').hide();
             notification('Loan disbursed successfully','','success');
+            printLoanSchedule();
             window.location.reload();
         },
         'error': function (err) {
@@ -1218,6 +1226,8 @@ $('#repayment-date').change(function () {
 });
 
 function triggerAmortization() {
+    if ($('#amortization').val() === 'fixed')
+        $('#amortization').val('fixed').trigger('change');
     if ($('#amortization').val() === 'standard')
         $('#amortization').val('standard').trigger('change');
 }
@@ -1271,7 +1281,11 @@ function initCSVUpload2(application, settings) {
         $dvCSV.html('');
         schedule = [];
         loan_amount = 0;
-        if (this.value === 'standard'){
+        if (this.value === 'custom') {
+            $('#uploadCSV2').show();
+            $('#csvUpload2').show();
+            $('.amortization-div').hide();
+        } else {
             $('#uploadCSV2').hide();
             $('#csvUpload2').hide();
             $('.amortization-div').show();
@@ -1299,8 +1313,8 @@ function initCSVUpload2(application, settings) {
                 paymentsPerYear = 12,
                 rate_ = (interestRate/100)/paymentsPerYear,
                 numberOfPayments = paymentsPerYear * years,
-                payment = (pmt(rate_, numberOfPayments, -loanAmount)).toFixed(2),
-                schedule_ = computeSchedule(loanAmount, interestRate, paymentsPerYear, years, parseFloat(payment)),
+                payment = (pmt(rate_, numberOfPayments, -loanAmount, $amortization.val())).toFixed(2),
+                schedule_ = computeSchedule(loanAmount, interestRate, paymentsPerYear, years, parseFloat(payment), $amortization.val()),
                 table = $("<table border='1' style='text-align: center; width: 100%;'/>"),
                 rows = processSchedule(schedule_, loanAmount, repaymentDate);
             $('#payment-amount').val(payment);
@@ -1373,10 +1387,6 @@ function initCSVUpload2(application, settings) {
             }
             $dvCSV.html('');
             $dvCSV.append(table);
-        } else {
-            $('#uploadCSV2').show();
-            $('#csvUpload2').show();
-            $('.amortization-div').hide();
         }
     });
 
@@ -1553,13 +1563,35 @@ function initCSVUpload2(application, settings) {
         $dvCSV.html('');
         $dvCSV.append(table);
         $('#amortization').hide();
-        $('#reschedule-total-text').text('Disbursed Amount: ₦'+total_new_schedule.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
+        $('#reschedule-total-text').text(`Disbursed Amount: ₦${numberToCurrencyFormatter_(total_new_schedule)}`);
     }
 
-    $approveCSV.bind("click", function () {
+    $('#approveRescheduleModalBtn').bind('click', e => {
         if (!new_reschedule || !new_reschedule[0])
             return notification('There is no reschedule available for approval!','','error');
+        reschedule_status = true;
+        $('#editRepaymentDateBtn').hide();
+        $('#disbursement-amount').prop('disabled', false);
+        $('#disbursement-amount').val(numberToCurrencyformatter((total_new_schedule-total_due_amount).round(2)));
+    });
 
+    $approveCSV.bind("click", function () {
+        if (!reschedule_status) return;
+        let disbursal = {};
+        disbursal.funding_source = $('#funding').val();
+        disbursal.disbursement_date = $('#disbursement-date').val();
+        disbursal.disbursement_amount = currencyToNumberformatter($('#disbursement-amount').val());
+        if (disbursal.funding_source === "-- Select a Disbursement Bank --" || 
+            !disbursal.disbursement_date || !disbursal.disbursement_amount)
+            return notification('Kindly fill all required fields!','','warning');
+        if ($('#fees-check').is(':checked')) {
+            let $fees = $('#disbursement-fees');
+            if (!$fees.val())
+                return notification('The fees amount is not valid!','','warning');
+            disbursal.fees = currencyToNumberformatter($fees.val());
+            disbursal.vat = currencyToNumberformatter($('#disbursement-vat').val());
+            disbursal.fees_payment = $('#fees-payment').val();
+        }
         swal({
             title: "Are you sure?",
             text: "Once started, this process is not reversible!",
@@ -1575,10 +1607,15 @@ function initCSVUpload2(application, settings) {
                     $.ajax({
                         'url': '/user/application/approve-schedule/'+application_id,
                         'type': 'post',
-                        'data': {reschedule_amount:reschedule_amount,loan_amount_update:loan_amount_update},
+                        'data': {
+                            disbursal: disbursal,
+                            reschedule_amount: reschedule_amount, 
+                            loan_amount_update: loan_amount_update
+                        },
                         'success': function (data) {
                             $csvLoader.hide();
                             notification('Reschedule approved successfully','','success');
+                            printLoanSchedule();
                             window.location.reload();
                         },
                         'error': function (err) {
@@ -2072,6 +2109,8 @@ $('#repayment-date2').change(function () {
 });
 
 function triggerAmortization2() {
+    if ($('#amortization2').val() === 'fixed')
+        $('#amortization2').val('fixed').trigger('change');
     if ($('#amortization2').val() === 'standard')
         $('#amortization2').val('standard').trigger('change');
 }
@@ -2084,16 +2123,20 @@ function initNewLoanOffer(application, settings) {
         $csvUpload = $("#loan-schedule"),
         $uploadCSV = $("#previewScheduleBtn"),
         $csvLoader = $("#wait"),
+        $amortization = $('#amortization2'),
         loanAmount = $('#amount2').val(),
         interestRate = $('#interest-rate2').val(),
         duration = $('#term2').val(),
         repaymentDate = $('#repayment-date2').val();
 
-    $('#amortization2').change(function () {
+    $amortization.change(function () {
         $dvCSV.html('');
         schedule = [];
         loan_amount = 0;
-        if (this.value === 'standard') {
+        if (this.value === 'custom') {
+            $('.amortization-div2').show();
+            $('#payment-amount-div').hide();
+        } else {
             $('.amortization-div2').hide();
             $('#payment-amount-div').show();
             loanAmount = $('#amount2').val();
@@ -2119,8 +2162,8 @@ function initNewLoanOffer(application, settings) {
                 paymentsPerYear = 12,
                 rate_ = (interestRate/100)/paymentsPerYear,
                 numberOfPayments = paymentsPerYear * years,
-                payment = (pmt(rate_, numberOfPayments, -loanAmount)).toFixed(2),
-                schedule_ = computeSchedule(loanAmount, interestRate, paymentsPerYear, years, parseFloat(payment)),
+                payment = (pmt(rate_, numberOfPayments, -loanAmount, $amortization.val())).toFixed(2),
+                schedule_ = computeSchedule(loanAmount, interestRate, paymentsPerYear, years, parseFloat(payment), $amortization.val()),
                 table = $("<table border='1' style='text-align: center; width: 100%;'/>"),
                 rows = processSchedule(schedule_, loanAmount, repaymentDate);
             $('#payment-amount2').val(payment);
@@ -2193,9 +2236,6 @@ function initNewLoanOffer(application, settings) {
             }
             $dvCSV.html('');
             $dvCSV.append(table);
-        } else {
-            $('.amortization-div2').show();
-            $('#payment-amount-div').hide();
         }
     });
 
@@ -2333,24 +2373,14 @@ function initNewLoanOffer(application, settings) {
 function printLoanSchedule() {
     const loanSchedule = {
         id: application_id,
-        request_date: application.date_created,
         customer_name: application.fullname,
-        incorporation_date: application.incorporation_date,
-        line_of_business: application.industry,
+        customer_phone: application.phone,
+        customer_address: application.address,
         initiating_officer: workflow_processes[0]['agent'],
-        client_date_created: application.client_date_created,
-        registration_number: application.registration_number,
         loan_amount: application.loan_amount,
-        interest_rate: application.interest_rate,
-        fees: application.fees,
         tenor: application.duration,
-        loan_purpose: application.loan_purpose,
-        documents: application.documents,
-        customer_details_request: (workflow_comments[0])? workflow_comments[0]['text'] : '',
-        transaction_dynamics: (workflow_comments[1])? workflow_comments[1]['text'] : '',
-        kyc: `${($.isEmptyObject(application.files))? 'Not':'Yes'} Attached`,
-        security: `${($.isEmptyObject(application.files))? 'Not':'Yes'} Attached`,
-        workflow_processes: workflow_processes
+        workflow_processes: workflow_processes,
+        schedule: application.schedule
     };
     localStorage.loanSchedule = encodeURIComponent(JSON.stringify(loanSchedule));
     return window.open(`/loan-schedule?id=${application_id}`, '_blank');

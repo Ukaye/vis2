@@ -12,11 +12,13 @@ function getXeroConfig() {
         success: function (data) {
             if (data.status === 200) {
                 xero_config = data.response;
-                if (xero_config.xero_collection_description === 1) 
-                    $('#collection-description-required').show();
-                if (xero_config.xero_collection_bank === 1) {
-                    getCollectionBanks();
-                    $('#collection-bank-div').show();
+                if (xero_config) {
+                    if (xero_config.xero_collection_description === 1) 
+                        $('#collection-description-required').show();
+                    if (xero_config.xero_collection_bank === 1) {
+                        getCollectionBanks();
+                        $('#collection-bank-div').show();
+                    }
                 }
             }
         }
@@ -30,6 +32,7 @@ function getCollectionBanks() {
         success: function (data) {
             $.each(data.response, function (key, collection_bank) {
                 $('#collection_bank').append(`<option value="${collection_bank.Code}">${collection_bank.Name}</option>`);
+                $('#refund_overpayment_bank').append(`<option value="${collection_bank.Code}">${collection_bank.Name}</option>`);
             });
         }
     });
@@ -42,9 +45,12 @@ function goToLoanOverview() {
     window.location.href = '/application?id='+application_id;
 }
 
-$("#remita-amount").on("keyup", function () {
-    let val = $("#remita-amount").val();
-    $("#remita-amount").val(numberToCurrencyformatter(val));
+$("#remita-amount").on("keyup", e => {
+    $("#remita-amount").val(numberToCurrencyformatter(e.target.value));
+});
+
+$("#refund_overpayment_amount").on("keyup", e => {
+    $("#refund_overpayment_amount").val(numberToCurrencyformatter(e.target.value));
 });
 
 let application;
@@ -513,7 +519,7 @@ function validation() {
 }
 
 function confirmPayment() {
-    if (xero_config.xero_collection_bank === 1 && !selected_schedule.interest_invoice_no)
+    if (xero_config && xero_config.xero_collection_bank === 1 && !selected_schedule.interest_invoice_no)
         return notification('Xero invoice no is required','Kindly update this invoice with the xero invoice no','warning');
     let invoice = {},
         payment = parseFloat($('#payment').val() || '0');
@@ -536,17 +542,19 @@ function confirmPayment() {
         return notification('Insufficient escrow funds ('+parseFloat(application.escrow).round(2)+')','','warning');
     if (invoice.payment_source === 'remita' && remita_id) invoice.remitaPaymentID = remita_id;
     if ($('#collection_bank').val() !== '000') invoice.xeroCollectionBankID = $('#collection_bank').val();
-    if (xero_config.xero_collection_description === 1 && 
-        invoice.payment_source !== 'escrow' &&
-        !$('#collection_description').val()) {
+    if (xero_config && xero_config.xero_collection_description === 1 && 
+        invoice.payment_source !== 'escrow' && !$('#collection_description').val()) {
             return notification('Kindly specify a statement description to proceed','','warning');
     }
     if ($('#collection_description').val()) invoice.xeroCollectionDescription = $('#collection_description').val();
+    let overpayment = (payment - (parseFloat(invoice.actual_payment_amount) + parseFloat(invoice.actual_interest_amount))).round(2);
+    if (overpayment < 0)
+        return notification(`Actual payment cannot be less than ₦${numberToCurrencyformatter((parseFloat(invoice.actual_payment_amount) + 
+            parseFloat(invoice.actual_interest_amount)).round(2))}`,'','warning');
     $('#wait').show();
     $('#confirmPayment').modal('hide');
     updateEscrow(invoice, total_payment, function () {
-        let overpayment = (payment - (parseFloat(invoice.actual_payment_amount) + parseFloat(invoice.actual_interest_amount))).round(2);
-        if (overpayment > 0){
+        if (overpayment > 0) {
             $('#wait').hide();
             swal({
                 title: "Are you sure?",
@@ -564,7 +572,7 @@ function confirmPayment() {
                             'data': invoice,
                             'success': function (data) {
                                 $('#wait').hide();
-                                return escrow(overpayment, invoice.xeroCollectionBankID);
+                                return escrow(overpayment, invoice.xeroCollectionBankID, invoice.payment_date);
                             },
                             'error': function (err) {
                                 $('#wait').hide();
@@ -616,14 +624,15 @@ function updateEscrow(invoice, amount, callback) {
     }
 }
 
-function escrow(amount, bank) {
+function escrow(amount, bank, date) {
     $.ajax({
         'url': '/user/application/escrow',
         'type': 'post',
         'data': {
             clientID:application.userID,
             amount:amount,
-            xeroCollectionBankID: bank
+            xeroCollectionBankID: bank,
+            payment_date: date
         },
         'success': function (data) {
             notification('Payment confirmed successfully',`Overpayment of ₦${numberToCurrencyformatter(amount)} has been credited to escrow`,'success');
@@ -740,10 +749,14 @@ function escrowHistory() {
                     v.type,
                     v.date_created
                 ];
-                if (v.status === 0){
-                    table.push('Payment Reversed');
-                } else if (v.status === 1){
-                    table.push('<button class="btn btn-danger reversePayment" onclick="reverseEscrowPayment('+v.ID+')"><i class="fa fa-remove"></i> Reverse</button>');
+                if (v.status === 0) {
+                    table.push('Payment Unavailable');
+                } else if (v.status === 1) {
+                    table.push('<button class="btn btn-danger reversePayment" onclick="reverseEscrowPayment('+v.ID+')">'+
+                        '<i class="fa fa-remove"></i> Reverse</button>');
+                    if (xero_config && xero_config.xero_collection_bank === 1 && v.type === 'credit')
+                        table[3] = table[3].concat(`<button class="btn btn-warning reversePayment" data-toggle="modal" data-target="#refundOverpaymentModal" 
+                            onclick="refundEscrowPaymentModal(${v.ID},'${v.amount}')"><i class="fa fa-reply"></i> Refund</button>`);
                 }
                 $('#escrow-history').dataTable().fnAddData(table);
                 $('#escrow-history').dataTable().fnSort([[2,'desc']]);
@@ -827,6 +840,42 @@ function reverseEscrowPayment(payment_id) {
         'type': 'get',
         'success': function (data) {
             notification('Payment reversed successfully','','success');
+            window.location.reload();
+        },
+        'error': function (err) {
+            notification('No internet connection','','error');
+        }
+    });
+}
+
+let overpayment_refund_id,
+    overpayment_refund_amount;
+function refundEscrowPaymentModal(payment_id, amount) {
+    overpayment_refund_id = payment_id;
+    overpayment_refund_amount = parseFloat(amount);
+    $('#refund_overpayment_amount').val(numberToCurrencyformatter(overpayment_refund_amount));
+}
+
+function refundEscrowPayment() {
+    let overpayment = {};
+    overpayment.refund = currencyToNumberformatter($('#refund_overpayment_amount').val());
+    overpayment.bank = $('#refund_overpayment_bank').val();
+    overpayment.status = 1;
+    if (!overpayment.refund || !overpayment.bank)
+        return notification('Kindly fill all required fields!', '', 'warning');
+    if (overpayment.refund > overpayment_refund_amount) {
+        return notification(`Maximum refundable amount for this overpayment is 
+            ${numberToCurrencyformatter(overpayment_refund_amount)}!`, '', 'warning');
+    } else if (overpayment.refund === overpayment_refund_amount) {
+        overpayment.status = 0;
+    }
+    overpayment.amount = (overpayment_refund_amount - overpayment.refund).round(2);
+    $.ajax({
+        'url': '/user/application/escrow-payment-refund/'+overpayment_refund_id,
+        'type': 'post',
+        'data': overpayment,
+        'success': function (data) {
+            notification('Payment refunded successfully','','success');
             window.location.reload();
         },
         'error': function (err) {

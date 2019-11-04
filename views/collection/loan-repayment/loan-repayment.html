@@ -631,6 +631,35 @@
     </div>
 </div>
 
+<div class="modal fade" id="refundOverpaymentModal" role="dialog" aria-labelledby="refundOverpaymentModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="refundOverpaymentModalLabel">Refund Overpayment</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label class="form-control-label">Amount</label><strong style="color:red"> *</strong>
+                        <input id="refund_overpayment_amount" type="text" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label">Bank</label><strong style="color:red"> *</strong>
+                        <select id="refund_overpayment_bank" class="form-control" required="required">
+                            <option value="000" selected="selected">-- Select Bank --</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="refundEscrowPayment()">Post</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Notification Panel -->
 <div id="panels" include-html="/includes/notifications.html"></div>
 
@@ -638,6 +667,7 @@
 <script src="assets/js/bootstrap.min.js"></script>
 <script src="assets/js/plugins.js"></script>
 <script src="assets/js/main.js"></script>
+
 <script src="assets/js/lib/data-table/datatables.min.js"></script>
 <script src="assets/js/lib/data-table/dataTables.bootstrap.min.js"></script>
 <script src="assets/js/lib/data-table/dataTables.buttons.min.js"></script>
