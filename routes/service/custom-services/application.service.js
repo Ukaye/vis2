@@ -112,7 +112,6 @@ router.get('/get', function (req, res, next) {
             });
         });
     } else {
-        console.log(query)
         axios.get(url, {
             params: {
                 query: query
