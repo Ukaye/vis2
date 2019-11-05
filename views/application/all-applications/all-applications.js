@@ -49,10 +49,6 @@ function loadApplications() {
                     query: `ORDER BY u.fullname ${aoData[2].value[0].dir}`
                 },
                 {
-                    name: 'phone',
-                    query: `ORDER BY u.phone ${aoData[2].value[0].dir}`
-                },
-                {
                     name: 'loan_amount',
                     query: `ORDER BY a.loan_amount ${aoData[2].value[0].dir}`
                 },
@@ -86,12 +82,12 @@ function loadApplications() {
             });
         },
         aaSorting: [
-            [6, 'desc']
+            [5, 'desc']
         ],
         aoColumnDefs: [
             {
                 sClass: "numericCol",
-                aTargets: [3,4],
+                aTargets: [3],
                 sType: "numeric"
             }
         ],
@@ -112,13 +108,8 @@ function loadApplications() {
             {
                 width: "20%",
                 mRender: function (data, type, full) {
-                    return (full.client_type === 'corporate')? full.corporate_name : full.fullname;
+                    return full.fullname || full.name;
                 }
-            },
-            {
-                width: "10%",
-                data: "phone",
-                className: "text-right"
             },
             {
                 width: "15%",
@@ -186,7 +177,7 @@ function loadApplications() {
                 mRender: function (data, type, full) {
                      let action = `<div class="dropdown-container"><button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown">
                                         More </button><div class="dropdown-menu">`;
-                     action = action.concat(`<a class="dropdown-item" href="#" data-toggle="modal" data-target="#myModal" onclick="openModal(${full.ID})"><i class="fa fa-eye"></i> View Client</a>`);
+                     action = action.concat(`<a class="dropdown-item" href="/client-info?id=${full.ID}"><i class="fa fa-eye"></i> View Client</a>`);
                      if (full.comment){
                         let view_comment_button = `<a class="dropdown-item" href="#" data-toggle="modal" data-target="#viewCommentModal" onclick="openViewCommentModal(${full.ID})"><i class="fa fa-eye"></i> View Comment</a>`;
                         action = action.concat(view_comment_button);
@@ -213,40 +204,6 @@ function loadApplications() {
             }
         ]
     });
-}
-
-function openModal(id) {
-    localStorage.setItem("application_id",id);
-    let data = ($.grep(results, function(e){ return e.ID === id; }))[0],
-        tbody = $("#application"),
-        tr = "";
-    tbody.empty();
-    if (data.client_type === 'corporate') {
-        data.fullname = data.corporate_name;
-        data.phone = data.corporate_phone;
-        data.email = data.corporate_email;
-    }
-    if (data.fullname)
-        tr += "<tr><td>Name</td><td>"+data.fullname+"</td></tr>";
-    if (data.phone)
-        tr += "<tr><td>Phone Number</td><td>"+data.phone+"</td></tr>";
-    if (data.email)
-        tr += "<tr><td>Email</td><td>"+data.email+"</td></tr>";
-    if (data.loan_amount)
-        tr += "<tr><td>Loan Amount</td><td>"+data.loan_amount+"</td></tr>";
-    if (data.collateral)
-        tr += "<tr><td>Collateral</td><td>"+data.collateral+"</td></tr>";
-    if (data.jewelry)
-        tr += "<tr><td>Jewelry</td><td>"+data.jewelry+"</td></tr>";
-    if (data.brand)
-        tr += "<tr><td>Brand</td><td>"+data.brand+"</td></tr>";
-    if (data.model)
-        tr += "<tr><td>Model</td><td>"+data.model+"</td></tr>";
-    if (data.year)
-        tr += "<tr><td>Year</td><td>"+data.year+"</td></tr>";
-    if (data.date_created)
-        tr += "<tr><td>Date Created</td><td>"+processDate(data.date_created)+"</td></tr>";
-    tbody.html(tr);
 }
 
 function openViewCommentModal(id) {
