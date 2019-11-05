@@ -1786,7 +1786,7 @@ users.post('/apply', function(req, res) {
             emailService.send(mailOptions);
             if (!workflow_id)
                 return res.send({"status": 200, "message": "New Application Added!"});
-            helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process) {
+            helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process, approver_id_) {
                 db.query('SELECT MAX(ID) AS ID from applications', function(err, application, fields) {
                     process.workflowID = workflow_id;
                     process.agentID = postData.agentID;
@@ -1803,6 +1803,8 @@ users.post('/apply', function(req, res) {
                         if(error){
                             return res.send({"status": 500, "error": error, "response": null});
                         } else {
+                            if(approver_id_)
+                                helperFunctions.workflowApprovalNotification(process, approver_id_);
                             return res.send({"status": 200, "message": "New Application Added!", "response": application[0]});
                         }
                     });
@@ -2378,7 +2380,7 @@ users.get('/application/assign_workflow/:id/:workflow_id/:agent_id', function(re
         if(error){
             res.send({"status": 500, "error": error, "response": null});
         } else {
-            helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process) {
+            helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process, approver_id_) {
                 process.workflowID = workflow_id;
                 process.applicationID = id;
                 process.agentID = agent_id;
@@ -2387,6 +2389,8 @@ users.get('/application/assign_workflow/:id/:workflow_id/:agent_id', function(re
                     if(error){
                         res.send({"status": 500, "error": error, "response": null});
                     } else {
+                        if(approver_id_)
+                            helperFunctions.workflowApprovalNotification(process, approver_id_);
                         let query = 'SELECT u.fullname, u.phone, u.email, u.address, a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, ' +
                             'a.workflowID, a.loan_amount, a.date_modified, a.comment FROM clients AS u, applications AS a WHERE u.ID=a.userID AND a.status <> 0 ORDER BY a.ID desc';
                         db.query(query, function (error, results, fields) {
@@ -2413,7 +2417,7 @@ users.post('/workflow_process/:application_id/:workflow_id', function(req, res, 
         return res.send({"status": 500, "error": "Required Parameter(s) not sent!"});
     if (!stage || (Object.keys(stage).length === 0 && stage.constructor === Object))
         stage = false;
-    helperFunctions.getNextWorkflowProcess(application_id,workflow_id,stage, function (process) {
+    helperFunctions.getNextWorkflowProcess(application_id,workflow_id,stage, function (process, approver_id_) {
         process.workflowID = workflow_id;
         process.applicationID = application_id;
         if (!process.approver_id || (process.approver_id === 0))
@@ -2435,12 +2439,14 @@ users.post('/workflow_process/:application_id/:workflow_id', function(req, res, 
                             if(error){
                                 res.send({"status": 500, "error": error, "response": null});
                             } else {
-                                let payload = {}
-                                payload.category = 'Application'
-                                payload.userid = req.cookies.timeout
-                                payload.description = 'Loan Application moved to next Workflow Stage'
-                                payload.affected = application_id
-                                notificationsService.log(req, payload)
+                                if(approver_id_)
+                                    helperFunctions.workflowApprovalNotification(process, approver_id_);
+                                let payload = {};
+                                payload.category = 'Application';
+                                payload.userid = req.cookies.timeout;
+                                payload.description = 'Loan Application moved to next Workflow Stage';
+                                payload.affected = application_id;
+                                notificationsService.log(req, payload);
                                 res.send({"status": 200, "message": "Workflow Process created successfully!"});
                             }
                         });

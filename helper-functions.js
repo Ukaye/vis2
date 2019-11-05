@@ -2,10 +2,12 @@ let functions = {},
     fs = require('fs'),
     db = require('./db'),
     path = require('path'),
+    async = require('async'),
     moment = require('moment'),
     request = require('request'),
+    jwt = require('jsonwebtoken'),
     SHA512 = require('js-sha512'),
-    jwt = require('jsonwebtoken');
+    emailService = require('./routes/service/custom-services/email.service');
 
 
 functions.getNextWorkflowProcess = function(application_id, workflow_id, stage, callback) {
@@ -19,10 +21,10 @@ functions.getNextWorkflowProcess = function(application_id, workflow_id, stage, 
                             current_stage_index = stages.map(function(e) { return e.stageID; }).indexOf(parseInt(application_last_process[0]['current_stage']));
                         if (stages[next_stage_index+1]){
                             if (application_last_process[0]['next_stage'] !== stages[next_stage_index+1]['stageID']){//current stage must not be equal to next stage
-                                callback({previous_stage:application_last_process[0]['current_stage'],current_stage:application_last_process[0]['next_stage'],next_stage:stages[next_stage_index+1]['stageID'], approver_id:stages[current_stage_index]['approverID']});
+                                callback({previous_stage:application_last_process[0]['current_stage'],current_stage:application_last_process[0]['next_stage'],next_stage:stages[next_stage_index+1]['stageID'], approver_id:stages[current_stage_index]['approverID']}, stages[next_stage_index]['approverID']);
                             } else {
                                 if (stages[next_stage_index+2]){
-                                    callback({previous_stage:application_last_process[0]['current_stage'],current_stage:application_last_process[0]['next_stage'],next_stage:stages[next_stage_index+2]['stageID'], approver_id:stages[current_stage_index]['approverID']});
+                                    callback({previous_stage:application_last_process[0]['current_stage'],current_stage:application_last_process[0]['next_stage'],next_stage:stages[next_stage_index+2]['stageID'], approver_id:stages[current_stage_index]['approverID']}, stages[next_stage_index]['approverID']);
                                 } else {
                                     callback({previous_stage:application_last_process[0]['current_stage'],current_stage:application_last_process[0]['next_stage'], approver_id:stages[current_stage_index]['approverID']});
                                 }
@@ -39,13 +41,13 @@ functions.getNextWorkflowProcess = function(application_id, workflow_id, stage, 
                     current_stage_index = stages.map(function(e) { return e.stageID; }).indexOf(parseInt(stage['current_stage'])),
                     next_stage_index = current_stage_index+1;
                 if (stage['next_stage']){
-                    callback({previous_stage:stage['previous_stage'],current_stage:stage['current_stage'],next_stage:stage['next_stage'], approver_id:stages[previous_stage_index]['approverID']});
+                    callback({previous_stage:stage['previous_stage'],current_stage:stage['current_stage'],next_stage:stage['next_stage'], approver_id:stages[previous_stage_index]['approverID']}, stages[current_stage_index]['approverID']);
                 }else if (stages[next_stage_index]){
                     if (stage['current_stage'] !== stages[next_stage_index]['stageID']){
-                        callback({previous_stage:stage['previous_stage'],current_stage:stage['current_stage'],next_stage:stages[next_stage_index]['stageID'], approver_id:stages[previous_stage_index]['approverID']});
+                        callback({previous_stage:stage['previous_stage'],current_stage:stage['current_stage'],next_stage:stages[next_stage_index]['stageID'], approver_id:stages[previous_stage_index]['approverID']}, stages[current_stage_index]['approverID']);
                     } else {
                         if (stages[next_stage_index+1]){
-                            callback({previous_stage:stage['previous_stage'],current_stage:stage['current_stage'],next_stage:stages[next_stage_index+1]['stageID'], approver_id:stages[previous_stage_index]['approverID']});
+                            callback({previous_stage:stage['previous_stage'],current_stage:stage['current_stage'],next_stage:stages[next_stage_index+1]['stageID'], approver_id:stages[previous_stage_index]['approverID']}, stages[current_stage_index]['approverID']);
                         } else {
                             callback({previous_stage:stage['previous_stage'],current_stage:stage['current_stage'], approver_id:stages[previous_stage_index]['approverID']});
                         }
@@ -59,6 +61,29 @@ functions.getNextWorkflowProcess = function(application_id, workflow_id, stage, 
         } else {
             callback({})
         }
+    });
+};
+
+functions.workflowApprovalNotification = function (process, approver_id_) {
+    let approvers = [];
+    async.forEach(approver_id_.split(','), (id, callback) => {
+        let query = `SELECT email FROM users WHERE ID = ${id}`;
+        db.query(query, (error, user) => {
+            if (user && user[0] && user[0]['email'])
+                approvers.push(user[0]['email']);
+            callback();
+        });
+    }, data => {
+        emailService.send({
+            to: approvers.join(),
+            subject: 'New Application Approval Notification',
+            template: 'default',
+            context: {
+                name: 'Admin',
+                message: `Application with Loan ID#: ${functions.padWithZeroes(process.applicationID, 9)} 
+                    is pending approval!`
+            }
+        });
     });
 };
 
