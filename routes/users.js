@@ -4336,6 +4336,7 @@ users.get('/bad-loans/', function(req, res, next) {
 });
 
 users.get('/all-updates', function(req, res){
+    return res.send([]);
     let load = {}
     let data = []
     const HOST = `${req.protocol}://${req.get('host')}`;
