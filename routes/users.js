@@ -1786,7 +1786,7 @@ users.post('/apply', function(req, res) {
             emailService.send(mailOptions);
             if (!workflow_id)
                 return res.send({"status": 200, "message": "New Application Added!"});
-            helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process) {
+            helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process, approver_id_) {
                 db.query('SELECT MAX(ID) AS ID from applications', function(err, application, fields) {
                     process.workflowID = workflow_id;
                     process.agentID = postData.agentID;
@@ -1803,6 +1803,8 @@ users.post('/apply', function(req, res) {
                         if(error){
                             return res.send({"status": 500, "error": error, "response": null});
                         } else {
+                            if(approver_id_)
+                                helperFunctions.workflowApprovalNotification(process, approver_id_);
                             return res.send({"status": 200, "message": "New Application Added!", "response": application[0]});
                         }
                     });
@@ -2056,7 +2058,7 @@ users.get('/applications/:officerID', function(req, res, next) {
         "(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status " +
         "FROM clients AS u, workflow_processes AS w, applications AS a LEFT JOIN corporates AS c ON a.userID = c.ID " +
         "WHERE u.ID=a.userID AND a.status <> 0 AND w.ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=a.ID AND status=1) ",
-        query2 = query.concat('AND loan_officer = '+id+' '),
+        query2 = query.concat('AND u.loan_officer = '+id+' '),
         query3 = query.concat('AND (select supervisor from users where users.id = u.loan_officer) =  '+id+' ');
     if (id)
         query = query2;
@@ -2068,29 +2070,37 @@ users.get('/applications/:officerID', function(req, res, next) {
             }
             case '2': {
                 query = query.concat("AND a.status = 1 AND a.close_status = 0 AND w.current_stage<>2  AND w.current_stage<>3 ");
+                query3 = query3.concat("AND a.status = 1 AND a.close_status = 0 AND w.current_stage<>2  AND w.current_stage<>3 ");
                 break;
             }
             case '3': {
                 query = query.concat("AND a.status = 1 AND a.close_status = 0 AND w.current_stage=2 ");
+                query3 = query3.concat("AND a.status = 1 AND a.close_status = 0 AND w.current_stage=2 ");
                 break;
             }
             case '4': {
                 query = query.concat("AND a.status = 1 AND a.close_status = 0 AND w.current_stage=3 ");
+                query3 = query3.concat("AND a.status = 1 AND a.close_status = 0 AND w.current_stage=3 ");
                 break;
             }
             case '5': {
                 query = query.concat("AND a.status = 2  AND a.close_status = 0 ");
+                query3 = query3.concat("AND a.status = 2  AND a.close_status = 0 ");
                 break;
             }
             case '6': {
                 query = query.concat("AND a.close_status <> 0 ");
+                query3 = query3.concat("AND a.close_status <> 0 ");
                 break;
             }
         }
     }
-    if (start && end)
+    if (start && end) {
         query = query.concat("AND TIMESTAMP(a.date_created) < TIMESTAMP('"+end+"') AND TIMESTAMP(a.date_created) >= TIMESTAMP('"+start+"') ");
+        query3 = query3.concat("AND TIMESTAMP(a.date_created) < TIMESTAMP('"+end+"') AND TIMESTAMP(a.date_created) >= TIMESTAMP('"+start+"') ");
+    }
     query = query.concat("ORDER BY a.ID desc");
+    query3 = query3.concat("ORDER BY a.ID desc");
     if (id){
         db.query(query, function (error, results1, fields) {
             if(error){
@@ -2370,7 +2380,7 @@ users.get('/application/assign_workflow/:id/:workflow_id/:agent_id', function(re
         if(error){
             res.send({"status": 500, "error": error, "response": null});
         } else {
-            helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process) {
+            helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process, approver_id_) {
                 process.workflowID = workflow_id;
                 process.applicationID = id;
                 process.agentID = agent_id;
@@ -2379,6 +2389,8 @@ users.get('/application/assign_workflow/:id/:workflow_id/:agent_id', function(re
                     if(error){
                         res.send({"status": 500, "error": error, "response": null});
                     } else {
+                        if(approver_id_)
+                            helperFunctions.workflowApprovalNotification(process, approver_id_);
                         let query = 'SELECT u.fullname, u.phone, u.email, u.address, a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, ' +
                             'a.workflowID, a.loan_amount, a.date_modified, a.comment FROM clients AS u, applications AS a WHERE u.ID=a.userID AND a.status <> 0 ORDER BY a.ID desc';
                         db.query(query, function (error, results, fields) {
@@ -2405,7 +2417,7 @@ users.post('/workflow_process/:application_id/:workflow_id', function(req, res, 
         return res.send({"status": 500, "error": "Required Parameter(s) not sent!"});
     if (!stage || (Object.keys(stage).length === 0 && stage.constructor === Object))
         stage = false;
-    helperFunctions.getNextWorkflowProcess(application_id,workflow_id,stage, function (process) {
+    helperFunctions.getNextWorkflowProcess(application_id,workflow_id,stage, function (process, approver_id_) {
         process.workflowID = workflow_id;
         process.applicationID = application_id;
         if (!process.approver_id || (process.approver_id === 0))
@@ -2427,12 +2439,14 @@ users.post('/workflow_process/:application_id/:workflow_id', function(req, res, 
                             if(error){
                                 res.send({"status": 500, "error": error, "response": null});
                             } else {
-                                let payload = {}
-                                payload.category = 'Application'
-                                payload.userid = req.cookies.timeout
-                                payload.description = 'Loan Application moved to next Workflow Stage'
-                                payload.affected = application_id
-                                notificationsService.log(req, payload)
+                                if(approver_id_)
+                                    helperFunctions.workflowApprovalNotification(process, approver_id_);
+                                let payload = {};
+                                payload.category = 'Application';
+                                payload.userid = req.cookies.timeout;
+                                payload.description = 'Loan Application moved to next Workflow Stage';
+                                payload.affected = application_id;
+                                notificationsService.log(req, payload);
                                 res.send({"status": 200, "message": "Workflow Process created successfully!"});
                             }
                         });

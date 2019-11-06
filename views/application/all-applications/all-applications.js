@@ -1,10 +1,14 @@
+let results,
+    table = {},
+    loan_officer,
+    $wait = $('#wait'),
+    url = '/application/get?';
 $(document).ready(function() {
-    $('#bootstrap-data-table-export').DataTable();
     read_write_custom();
 });
 
 let applicationsList;
-function read_write_custom(){
+function read_write_custom() {
     let w,
         perms = JSON.parse(localStorage.getItem("permissions")),
         page = (window.location.pathname.split('/')[1].split('.'))[0];
@@ -16,143 +20,190 @@ function read_write_custom(){
     if (w && w[0] && (parseInt(w[0]['editable']) !== 1))
         $(".write").hide();
 
-    if (applicationsList && applicationsList['read_only'] === '1'){
-        loadApplications();
-    } else {
-        loadApplications((JSON.parse(localStorage.user_obj)).ID);
-    }
+    if (!(applicationsList && applicationsList['read_only'] === '1'))
+        loan_officer = JSON.parse(localStorage.user_obj).ID;
+    loadApplications();
 }
 
 
-let results;
-$('#wait').show();
-function loadApplications(id){
-    let uid = id || '';
-    $.ajax({
-        'url': '/user/applications/'+uid,
-        'type': 'get',
-        'success': function (data) {
-            $('#wait').hide();
-            let applications = data.response;
-            results = applications;
-            populateDataTable(applications);
-        },
-        'error': function (err) {
-            $('#wait').hide();
-            console.log(err);
-        }
-    });
-}
-
-function populateDataTable(data) {
-    console.log("populating data table...");
-    $("#bootstrap-data-table").dataTable().fnClearTable();
-    $.each(data, function(k, v){
-        let table = [
-            padWithZeroes(v.ID,9),
-            v.loanCirrusID || 'N/A',
-            (v.client_type === 'corporate')? v.corporate_name : v.fullname,
-            v.phone,
-            numberToCurrencyformatter(v.loan_amount),
-            v.product || 'preapproved',
-            v.date_created,
-            v.current_stage,
-            '<button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#myModal" onclick="openModal('+v.ID+')"><i class="fa fa-eye"></i> View Client</button>'
-        ];
-        if (v.close_status === 0) {
-            if (v.status === 1){
-                switch (v.current_stage){
-                    case 2: {
-                        table[table.length-2] = '<span class="badge badge-info">Pending Approval</span>';
-                        break;
-                    }
-                    case 3: {
-                        table[table.length-2] = '<span class="badge badge-info">Pending Disbursal</span>';
-                        break;
-                    }
-                    default: {
-                        table[table.length-2] = '<span class="badge badge-primary">Started</span>';
-                    }
+function loadApplications() {
+    table = $('#applications').DataTable({
+        dom: 'Blfrtip',
+        bProcessing: true,
+        bServerSide: true,
+        buttons: [
+            'copy', 'csv', 'excel', 'pdf', 'print'
+        ],
+        fnServerData: function (sSource, aoData, fnCallback) {
+            let tableHeaders = [
+                {
+                    name: 'ID',
+                    query: `ORDER BY a.ID ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'loanCirrusID',
+                    query: `ORDER BY a.loanCirrusID ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'fullname',
+                    query: `ORDER BY u.fullname ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'loan_amount',
+                    query: `ORDER BY a.loan_amount ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'date_created',
+                    query: `ORDER BY a.date_created ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'action',
+                    query: `ORDER BY a.ID ${aoData[2].value[0].dir}`
                 }
-            } else if (v.status === 2){
-                table[table.length-2] = '<span class="badge badge-success">Active</span>';
-            } else {
-                table[table.length-2] = '<span class="badge badge-danger">Not Active</span>';
+            ];
+            $wait.show();
+            if (loan_officer) url = url.concat(`&loan_officer=${loan_officer}`);
+            $.ajax({
+                dataType: 'json',
+                type: "GET",
+                url: url,
+                data: {
+                    limit: aoData[4].value,
+                    offset: aoData[3].value,
+                    draw: aoData[0].value,
+                    search_string: aoData[5].value.value,
+                    order: tableHeaders[aoData[2].value[0].column].query
+                },
+                success: function (data) {
+                    $wait.hide();
+                    fnCallback(data);
+                    results = data.data;
+                }
+            });
+        },
+        aaSorting: [
+            [5, 'desc']
+        ],
+        aoColumnDefs: [
+            {
+                sClass: "numericCol",
+                aTargets: [3],
+                sType: "numeric"
             }
-        } else {
-            table[table.length-2] = '<span class="badge badge-warning">Closed</span>';
-        }
-        if (v.reschedule_amount){
-            table[table.length-2] = table[table.length-2].concat('<span class="badge badge-pill badge-secondary">Rescheduled</span>');
-        } else {
-            if (v.reschedule_status === 1)
-                table[table.length-2] = table[table.length-2].concat('<span class="badge badge-pill badge-secondary">Pending Reschedule</span>');
-        }
-        if (v.client_applications_status === 2 && v.information_request_status === 1 && v.status === 1){
-            table[table.length-2] = table[table.length-2].concat('<span class="badge badge-pill badge-warning">More Info Required</span>');
-        }
-        if (v.client_applications_status === 3 && v.status === 1){
-            table[table.length-2] = table[table.length-2].concat('<span class="badge badge-pill badge-warning">Pending Client <br> Acceptance</span>');
-        }
-        if (v.client_applications_status === 5 && v.status === 1){
-            table[table.length-2] = table[table.length-2].concat('<span class="badge badge-pill badge-danger">Client Declined</span>');
-        }
-        if (v.comment){
-            let view_comment_button = ' <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#viewCommentModal" onclick="openViewCommentModal('+v.ID+')"><i class="fa fa-eye"></i> View Comment</button>';
-            table[table.length-1] = table[table.length-1].concat(view_comment_button);
-        } else {
-            let add_comment_button = ' <button type="button" class="btn btn-success btn-sm write" data-toggle="modal" data-target="#addCommentModal" onclick="openAddCommentModal('+v.ID+')"><i class="fa fa-plus"></i> Add Comment</button>';
-            table[table.length-1] = table[table.length-1].concat(add_comment_button);
-        }
-        if (v.workflowID){
-            let view_workflow_button;
-            if (v.status === 2){
-                view_workflow_button = ' <button type="button" class="btn btn-outline-primary btn-sm" data-toggle="modal" data-target="#viewWorkflowModal" onclick="openViewWorkflowModal('+v.ID+')"><i class="fa fa-eye"></i> View Loan</button>';
-            } else {
-                view_workflow_button = ' <button type="button" class="btn btn-outline-primary btn-sm" data-toggle="modal" data-target="#viewWorkflowModal" onclick="openViewWorkflowModal('+v.ID+')"><i class="fa fa-eye"></i> View Application</button>';
-            }
-            table[table.length-1] = table[table.length-1].concat(view_workflow_button);
-        } else {
-            let add_workflow_button = ' <button type="button" class="btn btn-outline-success btn-sm" data-toggle="modal" data-target="#addWorkflowModal" onclick="openAddWorkflowModal('+v.ID+')"><i class="fa fa-plus"></i> Assign Loan Process</button>';
-            table[table.length-1] = table[table.length-1].concat(add_workflow_button);
-        }
-        $('#bootstrap-data-table').dataTable().fnAddData(table);
-        $('#bootstrap-data-table').dataTable().fnSort([[6,'desc']]);
-    });
-}
+        ],
+        columns: [
+            {
+                width: "10%",
+                className: "text-right",
+                mRender: function (data, type, full) {
+                    return padWithZeroes(full.ID, 9);
+                }
+            },
+            {
+                width: "10%",
+                mRender: function (data, type, full) {
+                    return full.loanCirrusID || 'N/A';
+                }
+            },
+            {
+                width: "20%",
+                mRender: function (data, type, full) {
+                    return full.fullname || full.name;
+                }
+            },
+            {
+                width: "15%",
+                className: "text-right",
+                mRender: function (data, type, full) {
+                    return numberToCurrencyformatter(full.loan_amount);
+                }
+            },
+            {
+                width: "5%",
+                className: "text-right",
+                mRender: function (data, type, full) {
+                    return full.product || 'preapproved';
+                }
+            },
+            {
+                width: "10%",
+                data: "date_created"
+            },
+            {
+                width: "10%",
+                mRender: function (data, type, full) {
+                    let status = full.current_stage;
+                    if (full.close_status === 0) {
+                        if (full.status === 1){
+                            switch (full.current_stage){
+                                case 2: {
+                                    status = '<span class="badge badge-info">Pending Approval</span>';
+                                    break;
+                                }
+                                case 3: {
+                                    status = '<span class="badge badge-info">Pending Disbursal</span>';
+                                    break;
+                                }
+                                default: {
+                                    status = '<span class="badge badge-primary">Started</span>';
+                                }
+                            }
+                        } else if (full.status === 2){
+                            status = '<span class="badge badge-success">Active</span>';
+                        } else {
+                            status = '<span class="badge badge-danger">Not Active</span>';
+                        }
+                    } else {
+                        status = '<span class="badge badge-warning">Closed</span>';
+                    }
+                    if (full.reschedule_amount) {
+                        status = status.concat('<span class="badge badge-pill badge-secondary">Rescheduled</span>');
+                    } else {
+                        if (full.reschedule_status === 1)
+                            status = status.concat('<span class="badge badge-pill badge-secondary">Pending Reschedule</span>');
+                    }
+                    if (full.client_applications_status === 2 && full.information_request_status === 1 && full.status === 1)
+                        status = status.concat('<span class="badge badge-pill badge-warning">More Info Required</span>');
+                    if (full.client_applications_status === 3 && full.status === 1)
+                        status = status.concat('<span class="badge badge-pill badge-warning">Pending Client <br> Acceptance</span>');
+                    if (full.client_applications_status === 5 && full.status === 1)
+                        status = status.concat('<span class="badge badge-pill badge-danger">Client Declined</span>');
+                        
+                    return status;
+                }
+            },
+            {
+                width: "10%",
+                mRender: function (data, type, full) {
+                     let action = `<div class="dropdown-container"><button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown">
+                                        More </button><div class="dropdown-menu">`;
+                     action = action.concat(`<a class="dropdown-item" href="/client-info?id=${full.ID}"><i class="fa fa-eye"></i> View Client</a>`);
+                     if (full.comment){
+                        let view_comment_button = `<a class="dropdown-item" href="#" data-toggle="modal" data-target="#viewCommentModal" onclick="openViewCommentModal(${full.ID})"><i class="fa fa-eye"></i> View Comment</a>`;
+                        action = action.concat(view_comment_button);
+                    } else {
+                        let add_comment_button = `<a class="dropdown-item write" href="#" data-toggle="modal" data-target="#addCommentModal" onclick="openAddCommentModal(${full.ID})"><i class="fa fa-plus"></i> Add Comment</a>`;
+                        action = action.concat(add_comment_button);
+                    }
+                    if (full.workflowID){
+                        let view_workflow_button;
+                        if (full.status === 2){
+                            view_workflow_button = `<a class="dropdown-item" href="#" data-toggle="modal" data-target="#viewWorkflowModal" onclick="openViewWorkflowModal(${full.ID})"><i class="fa fa-eye"></i> View Loan</a>`;
+                        } else {
+                            view_workflow_button = `<a class="dropdown-item" href="#" data-toggle="modal" data-target="#viewWorkflowModal" onclick="openViewWorkflowModal(${full.ID})"><i class="fa fa-eye"></i> View Application</a>`;
+                        }
+                        action = action.concat(view_workflow_button);
+                    } else {
+                        let add_workflow_button = `<a class="dropdown-item" href="#" data-toggle="modal" data-target="#addWorkflowModal" onclick="openAddWorkflowModal(${full.ID})"><i class="fa fa-plus"></i> Assign Loan Process</a>`;
+                        action = action.concat(add_workflow_button);
+                    }
 
-function openModal(id) {
-    localStorage.setItem("application_id",id);
-    let data = ($.grep(results, function(e){ return e.ID === id; }))[0],
-        tbody = $("#application"),
-        tr = "";
-    tbody.empty();
-    if (data.client_type === 'corporate') {
-        data.fullname = data.corporate_name;
-        data.phone = data.corporate_phone;
-        data.email = data.corporate_email;
-    }
-    if (data.fullname)
-        tr += "<tr><td>Name</td><td>"+data.fullname+"</td></tr>";
-    if (data.phone)
-        tr += "<tr><td>Phone Number</td><td>"+data.phone+"</td></tr>";
-    if (data.email)
-        tr += "<tr><td>Email</td><td>"+data.email+"</td></tr>";
-    if (data.loan_amount)
-        tr += "<tr><td>Loan Amount</td><td>"+data.loan_amount+"</td></tr>";
-    if (data.collateral)
-        tr += "<tr><td>Collateral</td><td>"+data.collateral+"</td></tr>";
-    if (data.jewelry)
-        tr += "<tr><td>Jewelry</td><td>"+data.jewelry+"</td></tr>";
-    if (data.brand)
-        tr += "<tr><td>Brand</td><td>"+data.brand+"</td></tr>";
-    if (data.model)
-        tr += "<tr><td>Model</td><td>"+data.model+"</td></tr>";
-    if (data.year)
-        tr += "<tr><td>Year</td><td>"+data.year+"</td></tr>";
-    if (data.date_created)
-        tr += "<tr><td>Date Created</td><td>"+processDate(data.date_created)+"</td></tr>";
-    tbody.html(tr);
+                    action = action.concat('</div></div>');
+                    return action;
+                }
+            }
+        ]
+    });
 }
 
 function openViewCommentModal(id) {
@@ -178,26 +229,7 @@ function openAddWorkflowModal(id) {
     localStorage.setItem("application_id",id);
 }
 
-function archive(){
-    $('#wait').show();
-    $.ajax({
-        'url': '/user/applications/delete/'+localStorage.getItem("application_id"),
-        'type': 'get',
-        'success': function (data) {
-            $('#wait').hide();
-            let applications = data.response;
-            results = applications;
-            notification('Application archived successfully');
-            window.location.reload();
-        },
-        'error': function (err) {
-            $('#wait').hide();
-            notification('Oops! An error occurred during archiving');
-        }
-    });
-}
-
-function comment(){
+function comment() {
     let $comment = $("#comment"),
         comment = $comment.val();
     if (!comment || comment === "")
@@ -209,8 +241,6 @@ function comment(){
         'data': {comment: comment},
         'success': function (data) {
             $('#wait').hide();
-            let applications = data.response;
-            results = applications;
             $comment.val("");
             notification('Comment saved successfully');
             window.location.reload();
@@ -225,55 +255,22 @@ function comment(){
 
 $("#filter").submit(function (e) {
     e.preventDefault();
-    let id = '';
-    if (!(applicationsList && applicationsList['read_only'] === '1'))
-        id = (JSON.parse(localStorage.user_obj)).ID;
-
-    let start = $("#startDate").val(),
-        end = $("#endDate").val(),
-        type = $("#type-filter").val(),
-        url = '/user/applications/'+id+'?start='+processDate(start)+'&&end='+processDate(end);
-    if (!start || !end)
-        return loadApplications();
-    if (type)
-        url = url.concat('&&type='+type);
-
-    $.ajax({
-        'url': url,
-        'type': 'get',
-        'success': function (data) {
-            let applications = data.response;
-            results = applications;
-            populateDataTable(applications);
-        },
-        'error': function (err) {
-            console.log(err);
-        }
-    });
+    let end = $("#endDate").val(),
+        start = $("#startDate").val(),
+        type = $("#type-filter").val();
+    if (!start || !end) return table.ajax.reload(null, false);
+    url = '/application/get?';
+    url = url.concat(`&start=${processDate(start)}&end=${processDate(end)}`);
+    if (type) url = url.concat(`&type=${type}`);
+    return table.ajax.reload(null, false);
 });
 
-function filterType(type) {
-    let id = '';
-    if (!(applicationsList && applicationsList['read_only'] === '1'))
-        id = (JSON.parse(localStorage.user_obj)).ID;
-
-    let start = $("#startDate").val(),
-        end = $("#endDate").val(),
-        url = '/user/applications/'+id+'?';
-    if (start && end)
-        url = url.concat('start='+processDate(start)+'&&end='+processDate(end)+'&&');
-    url = url.concat('type='+type.value);
-
-    $.ajax({
-        'url': url,
-        'type': 'get',
-        'success': function (data) {
-            let applications = data.response;
-            results = applications;
-            populateDataTable(applications);
-        },
-        'error': function (err) {
-            console.log(err);
-        }
-    });
+function filterType() {
+    let end = $("#endDate").val(),
+        start = $("#startDate").val(),
+        type = $("#type-filter").val();
+    url = '/application/get?';
+    if (start && end) url = url.concat(`&start=${processDate(start)}&end=${processDate(end)}`);
+    if (type) url = url.concat(`&type=${type}`);
+    return table.ajax.reload(null, false);
 }
