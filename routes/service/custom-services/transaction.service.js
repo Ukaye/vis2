@@ -77,7 +77,6 @@ function organisationSettings() {
 
 /**End point to create investment/savings transaction and it also enforces product requirement on the transaction **/
 router.post('/create', function (req, res, next) {
-    console.log(5678)
     var data = req.body
     const dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let refId = moment().utcOffset('+0100').format('x');
