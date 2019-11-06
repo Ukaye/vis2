@@ -492,7 +492,7 @@ router.post('/offer/accept/:id', function (req, res, next) {
                                 }
                             };
                             emailService.send(mailOptions);
-                            helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process, approver_id_) {
+                            helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process, stage) {
                                 query =  'INSERT INTO workflow_processes Set ?';
                                 endpoint = `/core-service/post?query=${query}`;
                                 url = `${HOST}${endpoint}`;
@@ -504,8 +504,8 @@ router.post('/offer/accept/:id', function (req, res, next) {
                                     if(error) {
                                         res.send({status: 500, error: error, response: null});
                                     } else {
-                                        if(approver_id_)
-                                            helperFunctions.workflowApprovalNotification(process, approver_id_);
+                                        if(stage)
+                                            helperFunctions.workflowApprovalNotification(process, stage);
                                         res.send(process_response);
                                     }
                                 });

@@ -9,7 +9,6 @@ let functions = {},
     SHA512 = require('js-sha512'),
     emailService = require('./routes/service/custom-services/email.service');
 
-
 functions.getNextWorkflowProcess = function(application_id, workflow_id, stage, callback) {
     db.query('SELECT * FROM workflow_stages WHERE workflowID=? ORDER BY ID asc',[workflow_id], function (error, stages, fields) {
         if(stages){
@@ -21,10 +20,10 @@ functions.getNextWorkflowProcess = function(application_id, workflow_id, stage, 
                             current_stage_index = stages.map(function(e) { return e.stageID; }).indexOf(parseInt(application_last_process[0]['current_stage']));
                         if (stages[next_stage_index+1]){
                             if (application_last_process[0]['next_stage'] !== stages[next_stage_index+1]['stageID']){//current stage must not be equal to next stage
-                                callback({previous_stage:application_last_process[0]['current_stage'],current_stage:application_last_process[0]['next_stage'],next_stage:stages[next_stage_index+1]['stageID'], approver_id:stages[current_stage_index]['approverID']}, stages[next_stage_index]['approverID']);
+                                callback({previous_stage:application_last_process[0]['current_stage'],current_stage:application_last_process[0]['next_stage'],next_stage:stages[next_stage_index+1]['stageID'], approver_id:stages[current_stage_index]['approverID']}, stages[next_stage_index]);
                             } else {
                                 if (stages[next_stage_index+2]){
-                                    callback({previous_stage:application_last_process[0]['current_stage'],current_stage:application_last_process[0]['next_stage'],next_stage:stages[next_stage_index+2]['stageID'], approver_id:stages[current_stage_index]['approverID']}, stages[next_stage_index]['approverID']);
+                                    callback({previous_stage:application_last_process[0]['current_stage'],current_stage:application_last_process[0]['next_stage'],next_stage:stages[next_stage_index+2]['stageID'], approver_id:stages[current_stage_index]['approverID']}, stages[next_stage_index]);
                                 } else {
                                     callback({previous_stage:application_last_process[0]['current_stage'],current_stage:application_last_process[0]['next_stage'], approver_id:stages[current_stage_index]['approverID']});
                                 }
@@ -41,13 +40,13 @@ functions.getNextWorkflowProcess = function(application_id, workflow_id, stage, 
                     current_stage_index = stages.map(function(e) { return e.stageID; }).indexOf(parseInt(stage['current_stage'])),
                     next_stage_index = current_stage_index+1;
                 if (stage['next_stage']){
-                    callback({previous_stage:stage['previous_stage'],current_stage:stage['current_stage'],next_stage:stage['next_stage'], approver_id:stages[previous_stage_index]['approverID']}, stages[current_stage_index]['approverID']);
+                    callback({previous_stage:stage['previous_stage'],current_stage:stage['current_stage'],next_stage:stage['next_stage'], approver_id:stages[previous_stage_index]['approverID']}, stages[current_stage_index]);
                 }else if (stages[next_stage_index]){
                     if (stage['current_stage'] !== stages[next_stage_index]['stageID']){
-                        callback({previous_stage:stage['previous_stage'],current_stage:stage['current_stage'],next_stage:stages[next_stage_index]['stageID'], approver_id:stages[previous_stage_index]['approverID']}, stages[current_stage_index]['approverID']);
+                        callback({previous_stage:stage['previous_stage'],current_stage:stage['current_stage'],next_stage:stages[next_stage_index]['stageID'], approver_id:stages[previous_stage_index]['approverID']}, stages[current_stage_index]);
                     } else {
                         if (stages[next_stage_index+1]){
-                            callback({previous_stage:stage['previous_stage'],current_stage:stage['current_stage'],next_stage:stages[next_stage_index+1]['stageID'], approver_id:stages[previous_stage_index]['approverID']}, stages[current_stage_index]['approverID']);
+                            callback({previous_stage:stage['previous_stage'],current_stage:stage['current_stage'],next_stage:stages[next_stage_index+1]['stageID'], approver_id:stages[previous_stage_index]['approverID']}, stages[current_stage_index]);
                         } else {
                             callback({previous_stage:stage['previous_stage'],current_stage:stage['current_stage'], approver_id:stages[previous_stage_index]['approverID']});
                         }
@@ -64,25 +63,38 @@ functions.getNextWorkflowProcess = function(application_id, workflow_id, stage, 
     });
 };
 
-functions.workflowApprovalNotification = function (process, approver_id_) {
-    let approvers = [];
-    async.forEach(approver_id_.split(','), (id, callback) => {
-        let query = `SELECT email FROM users WHERE ID = ${id}`;
-        db.query(query, (error, user) => {
-            if (user && user[0] && user[0]['email'])
-                approvers.push(user[0]['email']);
-            callback();
-        });
-    }, data => {
-        emailService.send({
-            to: approvers.join(),
-            subject: 'New Application Approval Notification',
-            template: 'default',
-            context: {
-                name: 'Admin',
-                message: `Application with Loan ID#: ${functions.padWithZeroes(process.applicationID, 9)} 
-                    is pending approval!`
-            }
+functions.workflowApprovalNotification = function (process, stage) {
+    db.getConnection((err, connection) => {
+        if (err) throw err;
+        async.forEach(stage.approverID.split(','), (role_id, callback) => {
+            let query = `SELECT fullname, email FROM users WHERE user_role = ${role_id}`;
+            connection.query(query, (error, users) => {
+                async.forEach(users, (user, callback_user) => {
+                    if (!user || !user.email) callback_user();
+                    query = `SELECT c.name, c.fullname FROM clients c, applications a 
+                        WHERE c.ID = a.userID AND a.ID = ${process.applicationID}`;
+                    connection.query(query, (error, client_) => {
+                        let client = 'client';
+                        if (client_ && client_[0])
+                            client = client_[0]['fullname'] || client_[0]['name'];
+                        emailService.send({
+                            to: user.email,
+                            subject: `Pending ${stage.name} Notification`,
+                            template: 'default',
+                            context: {
+                                name: user.fullname,
+                                message: `Application for ${client} with Loan ID#: ${functions.padWithZeroes(process.applicationID, 9)} 
+                                    is pending ${stage.name}!`
+                            }
+                        });
+                        callback_user();
+                    });
+                }, data => {
+                    callback();
+                });
+            });
+        }, data => {
+            connection.release();
         });
     });
 };
