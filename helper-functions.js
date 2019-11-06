@@ -66,12 +66,16 @@ functions.getNextWorkflowProcess = function(application_id, workflow_id, stage, 
 
 functions.workflowApprovalNotification = function (process, approver_id_) {
     let approvers = [];
-    async.forEach(approver_id_.split(','), (id, callback) => {
-        let query = `SELECT email FROM users WHERE ID = ${id}`;
-        db.query(query, (error, user) => {
-            if (user && user[0] && user[0]['email'])
-                approvers.push(user[0]['email']);
-            callback();
+    async.forEach(approver_id_.split(','), (role_id, callback) => {
+        let query = `SELECT email FROM users WHERE user_role = ${role_id}`;
+        db.query(query, (error, users) => {
+            async.forEach(users, (user, callback_user) => {
+                if (user && user.email)
+                    approvers.push(user.email);
+                callback_user();
+            }, data => {
+                callback();
+            });
         });
     }, data => {
         emailService.send({
