@@ -43,6 +43,7 @@ var sRequest = {
                         "response": null
                     });
                 } else {
+                   
                     if (query.toLowerCase().includes('investment_txns') &&
                         query.toLowerCase().includes('insert') &&
                         data.isApproved === 1 &&

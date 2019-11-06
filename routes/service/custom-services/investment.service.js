@@ -5,10 +5,31 @@ var isAfter = require('date-fns/is_after');
 var differenceInCalendarDays = require('date-fns/difference_in_calendar_days');
 let fs = require('fs');
 const sRequest = require('../s_request');
+const editableProductData = [
+    "freq_withdrawal",
+    "saving_fees",
+    "saving_charge_opt",
+    "minimum_bal_charges",
+    "minimum_bal_charges_opt",
+    "acct_allows_withdrawal",
+    "inv_moves_wallet",
+    "interest_moves_wallet",
+    "chkEnforceCount",
+    "withdrawal_freq_duration",
+    "withdrawal_fees",
+    "withdrawal_freq_fees_opt",
+    "canTerminate", 
+    "min_days_termination",
+    "min_days_termination_charge", 
+    "opt_on_min_days_termination",
+    "minimum_bal",
+    "interest_disbursement_time",
+    "interest_rate",
+    "premature_interest_rate"
+]
 
 /** End point to create investment/savings account **/
 router.post('/create', function (req, res, next) {
-    console.log(req.body.interest_rate, 'interest_rate')
     let _date = new Date();
     let data = JSON.parse(JSON.stringify(req.body));
     const is_after = isAfter(new Date(data.investment_mature_date.toString()), new Date(data.investment_start_date.toString()))
@@ -31,9 +52,12 @@ router.post('/create', function (req, res, next) {
             let query = `INSERT INTO investments SET ?`;
             let dt_ = moment().utcOffset('+0100').format('x');
             let _data = JSON.parse(JSON.stringify(data));
+            for(let editable of editableProductData){
+                delete _data[editable]
+            }
             delete _data.selectedProduct;
-            delete _data.interest_rate;
-            delete _data.premature_interest_rate;
+            // delete _data.interest_rate;
+            // delete _data.premature_interest_rate;
             sRequest.post(query, _data)
                 .then(function (response) {
                     let inv_txn = {
@@ -264,6 +288,7 @@ function getProductItem(id) {
 }
 
 function cloneProductItem(item) {
+
     return new Promise((resolve, reject) => {
         let query = `INSERT INTO investment_products SET ?`;
         const _item = JSON.parse(JSON.stringify(item));
@@ -272,18 +297,33 @@ function cloneProductItem(item) {
         sRequest.post(query, _item)
             .then(function (response2) {
                 resolve(response2.insertId);
-            });
+            })
+            .catch(error => { reject(error) });
     });
+
 }
 
 async function editedProductOps(data) {
-    const interest_rate = data.interest_rate.toString();
-    const premature_interest_rate = data.premature_interest_rate.toString();
-    if (interest_rate !== data.selectedProduct.interest_rate.toString() || 
-    premature_interest_rate !== data.selectedProduct.premature_interest_rate.toString()) {
+    let customProduct = false
+    // const interest_rate = data.interest_rate.toString();
+    // const premature_interest_rate = data.premature_interest_rate.toString();
+
+   
+
+
+    for (let editable in editableProductData) {
+        if (data[editableProductData[editable]] !== data.selectedProduct[editableProductData[editable]]) {
+            customProduct = true
+            editable = editableProductData.length - 1
+        }
+    }
+
+
+    if (customProduct === true) {
         let product = await getProductItem(data.productId);
-        product.interest_rate = interest_rate;
-        product.premature_interest_rate = premature_interest_rate;
+        for(let editable of editableProductData){
+            product[editable] = data[editable]                                                                                                                                                                                                                                                           
+        }
         const clonedProductId = await cloneProductItem(product);
         await productCloneOps(data.productId, clonedProductId);
 

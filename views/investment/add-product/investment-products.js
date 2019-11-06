@@ -196,7 +196,6 @@ function getInvestmentProducts(id) {
                 $('#min_days_termination').val(product_obj.min_days_termination);
                 $('#min_days_termination_charge').val(product_obj.min_days_termination_charge);
                 $('#opt_on_min_days_termination').val(product_obj.opt_on_min_days_termination);
-                //opt_on_min_days_termination
                 $('#btnSaveProduct').html('Update');
                 $('#wait').hide();
             } else {
