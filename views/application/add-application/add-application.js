@@ -939,7 +939,7 @@
             user = ($name.val() !== '-- Choose Client --')? JSON.parse(decodeURIComponent($name.val())) : false;
         if (user)
             obj.userID = user.ID;
-        obj.name = user.fullname;
+        obj.name = user.fullname || user.name;
         obj.product = $('#product').val();
         obj.loan_amount = currencyToNumberformatter($('#loan_amount').val());
         obj.rate = currencyToNumberformatter($('#rate').val());
