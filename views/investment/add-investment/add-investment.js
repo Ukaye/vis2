@@ -178,10 +178,6 @@ $("#chk_enforce_count").on('change',
 $("#acct_allows_withdrawal").on('change',
     function () {
         let status = $('#acct_allows_withdrawal').is(':checked');
-        // if (status) {
-        //     $('#inv_moves_wallet').attr("checked", false);
-        //     $('#interest_moves_wallet').attr("checked", false);
-        // }
         setWalletControlStatus(status);
     });
 
@@ -303,6 +299,8 @@ function activate_interest_penalty_controls(status) {
 $("#investment_product").on("change", function (event) {
     const selectedID = $("#investment_product").val();
     let selectedValue = products.find(x => x.ID.toString() === selectedID.toString());
+    console.log(selectedValue.acct_allows_withdrawal, 'ooo')
+
     $('#interest_rate').val(selectedValue.interest_rate);
     $('#premature_interest_rate').val(selectedValue.premature_interest_rate);
 
@@ -316,18 +314,13 @@ $("#investment_product").on("change", function (event) {
     $('#opt_on_minimum_bal_penalty_amount').val(selectedValue.opt_on_minimum_bal_penalty_amount);
     $('#minimum_bal').val(selectedValue.minimum_bal);
     $('#minimum_bal_penalty_amount').val(selectedValue.minimum_bal_charges);
-    $('#opt_on_minimum_bal_penalty_amount').val((selectedValue.minimum_bal_charges_opt ===
-        null) ? $(
-            '#opt_on_minimum_bal_penalty_amount').val() : selectedValue.minimum_bal_charges_opt);
-    $('#acct_allows_withdrawal').val(selectedValue.acct_allows_withdrawal);
+    $('#opt_on_minimum_bal_penalty_amount').val((selectedValue.minimum_bal_charges_opt === null) ? $(
+        '#opt_on_minimum_bal_penalty_amount').val() : selectedValue.minimum_bal_charges_opt);
     $('#interest_moves_wallet').attr('checked', ((selectedValue.interest_moves_wallet) ?
     true : false));
-
-    $('#inv_moves_wallet').attr('checked', ((selectedValue.inv_moves_wallet) ?
-                    true : false));
+    $('#inv_moves_wallet').attr('checked', ((selectedValue.inv_moves_wallet) ? true : false));
     $('#withdrawal_conditions_value').val(selectedValue.freq_withdrawal);
-    $('#chk_can_terminate').attr('checked', ((selectedValue.canTerminate) ?
-    true : false));
+    $('#chk_can_terminate').attr('checked', ((selectedValue.canTerminate) ? true : false));
     $('#min_days_termination').val(selectedValue.min_days_termination);
     $('#min_days_termination_charge').val(selectedValue.min_days_termination_charge);
     $('#opt_on_min_days_termination').val(selectedValue.opt_on_min_days_termination);
@@ -335,15 +328,11 @@ $("#investment_product").on("change", function (event) {
     $('#min_days_termination').val(selectedValue.min_days_termination);
     $('#withdrawal_charge_duration').val(selectedValue.withdrawal_freq_duration);
     $('#withdrawal_charge_freq').val(selectedValue.withdrawal_fees);
-    $('#opt_on_freq_charge').val((selectedValue.withdrawal_freq_fees_opt ===
-        null) ? $(
-            '#opt_on_freq_charge').val() : selectedValue.withdrawal_freq_fees_opt);
-
-    $('#chk_enforce_count').attr('checked', ((selectedValue.chkEnforceCount) ?
-    true : false));
+    $('#opt_on_freq_charge').val((selectedValue.withdrawal_freq_fees_opt === null) ? $(
+        '#opt_on_freq_charge').val() : selectedValue.withdrawal_freq_fees_opt);
+    $('#chk_enforce_count').attr('checked', ((selectedValue.chkEnforceCount) ? true : false));
     $('#condition_for_interest').val(selectedValue.interest_disbursement_time)
-    $('#acct_allows_withdrawal').attr('checked', ((selectedValue.acct_allows_withdrawal) ?
-                    true : false));
+    $('#acct_allows_withdrawal').attr('checked', ((selectedValue.acct_allows_withdrawal) ? true : false));
 
     if (selectedValue.acct_allows_withdrawal === 1) {
         $('#withdrawal_conditions_value').attr("disabled", false);

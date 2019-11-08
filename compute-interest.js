@@ -159,9 +159,9 @@ module.exports = _module;
 
 
 dailyMaturedInvestmentTxns(HOST, data.investmentId, formatedDate).then(payload => {
-    console.log("------------dailyMaturedInvestmentTxns-----------");
-    console.log(payload.data);
-    console.log("------------dailyMaturedInvestmentTxns Ends-----------");
+    // console.log("------------dailyMaturedInvestmentTxns-----------");
+    // console.log(payload.data);
+    // console.log("------------dailyMaturedInvestmentTxns Ends-----------");
     if (payload.data.status === undefined) {
         if (payload.data.length > 0) {
             let daysInYear = 365;
@@ -183,9 +183,9 @@ dailyMaturedInvestmentTxns(HOST, data.investmentId, formatedDate).then(payload =
             let SI = (totalInvestedAmount * interestInDays) / 100;
             let _amount = parseFloat(Math.round(SI * 100) / 100).toFixed(2);
             sumUpInvestmentInterest(HOST, data.investmentId).then(payload1 => {
-                console.log("------------sumUpInvestmentInterest-----------");
-                console.log(payload1.data);
-                console.log("------------sumUpInvestmentInterest Ends-----------");
+                // console.log("------------sumUpInvestmentInterest-----------");
+                // console.log(payload1.data);
+                // console.log("------------sumUpInvestmentInterest Ends-----------");
                 let dailyInterest = {
                     clientId: payload.data[0].clientId,
                     investmentId: data.investmentId,
@@ -227,7 +227,7 @@ dailyMaturedInvestmentTxns(HOST, data.investmentId, formatedDate).then(payload =
                                     WHERE id <> 0 AND investmentId = ${data.investmentId} 
                                     AND month = ${_formatedDate.getMonth()} 
                                     AND year = ${_formatedDate.getFullYear()}`;
-                                        console.log(query);
+                                        // console.log(query);
                                         endpoint = '/core-service/get';
                                         url = `${HOST}${endpoint}`;
                                         axios.get(url, {
@@ -266,7 +266,7 @@ dailyMaturedInvestmentTxns(HOST, data.investmentId, formatedDate).then(payload =
                             WHERE id <> 0 AND investmentId = ${data.investmentId} 
                             AND month = ${_formatedDate.getMonth()} 
                             AND year = ${_formatedDate.getFullYear()}`;
-                                    console.log(query);
+                                    // console.log(query);
                                     endpoint = '/core-service/get';
                                     url = `${HOST}${endpoint}`;
                                     axios.get(url, {
@@ -289,5 +289,5 @@ dailyMaturedInvestmentTxns(HOST, data.investmentId, formatedDate).then(payload =
         }
     }
 }, err => {
-    console.log(role);
+    //console.log(role);
 });

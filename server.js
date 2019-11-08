@@ -11,6 +11,7 @@ let fs = require('fs'),
     session = require('client-sessions'),
     cookieParser = require('cookie-parser'),
     notificationsService = require('./routes/notifications-service'),
+    compression = require('compression'),
     fileUpload = require('express-fileupload');
 
 //check and create uploads directory
@@ -60,6 +61,7 @@ let app = express(),
     notification = require('./routes/notifications'),
     index = require('./routes/index');
 
+app.use(compression());    
 app.engine('html', require('ejs').renderFile);
 app.set('view engine', 'html');
 app.use(bodyParser.json({
