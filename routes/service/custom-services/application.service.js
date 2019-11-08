@@ -59,7 +59,7 @@ router.get('/get', function (req, res, next) {
     if (start && end)
         query_condition = query_condition.concat(`AND TIMESTAMP(a.date_created) < TIMESTAMP('${end}') AND TIMESTAMP(a.date_created) >= TIMESTAMP('${start}') `);
 
-    let query = `SELECT u.fullname, u.name, a.ID, a.status, a.date_created, a.workflowID, a.loan_amount, a.comment, 
+    let query = `SELECT u.fullname, u.name, a.ID, a.userID, a.status, a.date_created, a.workflowID, a.loan_amount, a.comment, 
         a.close_status, a.loanCirrusID, a.reschedule_amount, w.current_stage, (SELECT product FROM preapplications WHERE ID = a.preapplicationID) product, 
         (SELECT status FROM preapplications WHERE ID = a.preapplicationID AND creator_type = "client") client_applications_status, 
         (CASE WHEN (SELECT COUNT(*) FROM application_information_requests WHERE applicationID = a.ID) > 0 THEN 1 ELSE 0 END) information_request_status, 

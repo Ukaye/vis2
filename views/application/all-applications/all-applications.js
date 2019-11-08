@@ -177,7 +177,7 @@ function loadApplications() {
                 mRender: function (data, type, full) {
                      let action = `<div class="dropdown-container"><button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown">
                                         More </button><div class="dropdown-menu">`;
-                     action = action.concat(`<a class="dropdown-item" href="/client-info?id=${full.ID}"><i class="fa fa-eye"></i> View Client</a>`);
+                     action = action.concat(`<a class="dropdown-item" href="/client-info?id=${full.userID}"><i class="fa fa-eye"></i> View Client</a>`);
                      if (full.comment){
                         let view_comment_button = `<a class="dropdown-item" href="#" data-toggle="modal" data-target="#viewCommentModal" onclick="openViewCommentModal(${full.ID})"><i class="fa fa-eye"></i> View Comment</a>`;
                         action = action.concat(view_comment_button);
