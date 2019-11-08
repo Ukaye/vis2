@@ -3,6 +3,7 @@ $(document).ready(function() {
     getInformationRequests();
     read_write_1();
     getCollectionBank();
+    getStages();
 });
 
 function getCollectionBank() {
@@ -21,8 +22,11 @@ function getCollectionBank() {
 const urlParams = new URLSearchParams(window.location.search);
 const application_id = urlParams.get('id');
 
-let workflow,
+let state_,
+    stages_,
+    workflow,
     application,
+    workflow_stages_,
     reschedule_status = false,
     settings_obj = {
         loan_requested_min: 1,
@@ -50,6 +54,16 @@ $("#disbursement-vat").on("keyup", function () {
 
 function goToLoanRepayment() {
     window.location.href = '/loan-repayment?id='+application_id;
+}
+
+function getStages() {
+    $.ajax({
+        type: 'get',
+        url: '/stages',
+        success: data => {
+            stages_ = data;
+        }
+    });
 }
 
 function getApplicationSettings(application) {
@@ -320,14 +334,30 @@ function loadWorkflowStages(state) {
         'type': 'get',
         'success': function (data) {
             let count = 0,
-                workflow_stages = data.response;
-            workflow_stages.push({name:"Denied",stageID:4,stage_name:"Denied",workflowID:state.workflowID,approverID:1});
+                workflow_stages = data.response,
+                denied_stage_id = ($.grep(stages_, e => {return e.name === 'Denied';}))[0]['ID'],
+                disburse_stage_id = ($.grep(stages_, e => {return e.name === 'Disbursed';}))[0]['ID'];
+            workflow_stages.push({
+                approverID: 1,
+                name: "Denied",
+                stage_name: "Denied",
+                stageID: denied_stage_id,
+                workflowID:state.workflowID
+            });
+            workflow_stages.push({
+                approverID: 1,
+                name: "Disbursed",
+                stage_name: "Disbursed",
+                stageID: disburse_stage_id,
+                workflowID:state.workflowID
+            });
+            workflow_stages_ = workflow_stages;
 
             let ul = document.getElementById('workflow-ul-list'),
                 $last_btn = $("#btn-"+workflow_stages[workflow_stages.length-1]['stageID']),
                 stage = ($.grep(workflow_stages, function(e){ return e.stageID === state.current_stage; }))[0];
 
-            if ((!stage.actions || !stage.actions[0]) && (stage.stage_name !== 'Disbursal'))
+            if ((!stage.actions || !stage.actions[0]) && stage.stage_name !== 'Disbursal' && stage.stage_name !== 'Disbursed')
                 $('.next').show();
             $('.previous').show();
             $('#next-actions').show();
@@ -391,25 +421,25 @@ function loadWorkflowStages(state) {
             });
 
             workflow_stages.forEach(function (stage) {
-                if (stage.stage_name !== 'Denied'){
-                    let index =  workflow_stages.map(function(e) { return e.stageID; }).indexOf(state.current_stage),
-                        li = document.createElement('li');
-                    if (count === index){
-                        li.className = "active";
-                        if (count === 0)
-                            $(".previous").hide();
-                        if (count === workflow_stages.length-1)
-                            $(".next").hide();
-                    } else if (count > index) {
-                        li.className = "disabled";
-                    }
-                    ul.appendChild(li);
-                    count++;
-                    li.innerHTML += '<a><h4 class="list-group-item-heading">Step '+count+'</h4>\n' +
-                        '<p class="list-group-item-text">'+stage.name+'<br> ('+stage.stage_name+')</p></a>';}
+                if (stage.stage_name === 'Denied' || stage.stage_name === 'Disbursed') return;
+                let index =  workflow_stages.map(function(e) { return e.stageID; }).indexOf(state.current_stage),
+                    li = document.createElement('li');
+                if (count === index) {
+                    li.className = "active";
+                    if (count === 0)
+                        $(".previous").hide();
+                    if (count === workflow_stages.length-1)
+                        $(".next").hide();
+                } else if (count > index) {
+                    li.className = "disabled";
+                }
+                ul.appendChild(li);
+                count++;
+                li.innerHTML += '<a><h4 class="list-group-item-heading">Step '+count+'</h4>\n' +
+                    '<p class="list-group-item-text">'+stage.name+'<br> ('+stage.stage_name+')</p></a>';
             });
 
-            if (stage.stage_name === 'Denied'){
+            if (stage.stage_name === 'Denied') {
                 $("#current_stage").hide();
                 $("#next-actions").hide();
                 $("#schedule").hide();
@@ -426,7 +456,7 @@ function loadWorkflowStages(state) {
                     '<p class="list-group-item-text">'+stage.name+'<br> ('+stage.stage_name+')</p></a>';
             }
 
-            if (application.client_applications_status === 5){
+            if (application.client_applications_status === 5) {
                 $("#newOfferModalBtn").show();
                 $("#current_stage").hide();
                 $("#next-actions").hide();
@@ -439,7 +469,7 @@ function loadWorkflowStages(state) {
                 if (user_comments[0]) $('#decline-reason').text(`"${user_comments[0]['text']}"`);
             }
 
-            if (application.status === 0){
+            if (application.status === 0) {
                 $("#next-actions").hide();
                 $('.previous').hide();
                 $('.cancel').hide();
@@ -450,14 +480,14 @@ function loadWorkflowStages(state) {
             if (stage.stage_name === 'Final Approval')
                 $('.next').text('Disbursal (Disbursal)');
 
-            if (stage.stage_name === 'Disbursal' || application.status === 2){
+            if (stage.stage_name === 'Disbursal' || stage.stage_name === 'Disbursed' || application.status === 2) {
                 $('#infoRequestModalBtn').hide();
                 $('#downloadsForm').hide();
                 $('#disbursement-amount').val(numberToCurrencyformatter(application.loan_amount));
                 $('#stage-actions').append('<a href="#" id="stage-action-0" class="dropdown-item" data-toggle="modal" data-target="#disburseModal">Disburse Loan</a>');
             }
 
-            if (application.status === 2){
+            if (application.status === 2) {
                 $('#collect-payment-button').show();
                 $('#generate-schedule-v2').show();
                 $('#principal-total-text').hide();
@@ -469,7 +499,7 @@ function loadWorkflowStages(state) {
                 $(".cancel").hide();
                 $(".next").hide();
 
-                if (application.close_status === 0){
+                if (application.close_status === 0) {
                     $('#close_loan').show();
                 } else {
                     $('#loan_closed').show();
@@ -538,6 +568,7 @@ function loadWorkflowState() {
             let states = data.response,
                 state = states[states.length-1],
                 allWells = $('.setup-content');
+            state_ = state;
 
             loadWorkflowStages(state);
             allWells.hide();
@@ -589,7 +620,7 @@ function loadAllWorkflowState(workflow_stages) {
     });
 }
 
-function nextStage(state, workflow_stages, action_stage) {
+function nextStage(state, workflow_stages, action_stage, callback) {
     let stage = {};
     if (workflow_stages && action_stage){
         stage.previous_stage = state.current_stage;
@@ -612,6 +643,7 @@ function nextStage(state, workflow_stages, action_stage) {
             'success': function (data) {
                 $('#wait').hide();
                 if (data.status === 200){
+                    if (typeof callback === "function") return callback();
                     $('#document-upload').hide();
                     $('#document-upload-text').text('');
                     notification('Workflow updated successfully!','','success');
@@ -1193,21 +1225,26 @@ function disburse() {
         disbursal.vat = currencyToNumberformatter($('#disbursement-vat').val());
         disbursal.fees_payment = $('#fees-payment').val();
     }
-    $('#wait').show();
-    $('#disburseModal').modal('hide');
-    $.ajax({
-        'url': '/user/application/disburse/'+application_id,
-        'type': 'post',
-        'data': disbursal,
-        'success': function (data) {
-            $('#wait').hide();
-            notification('Loan disbursed successfully','','success');
-            window.location.reload();
-        },
-        'error': function (err) {
-            $('#wait').hide();
-            notification('Oops! An error occurred while disbursing loan','','error');
-        }
+    let disburse_stage_id = ($.grep(stages_, e => {return e.name === 'Disbursed';}))[0]['ID'];
+    if (!state_ || !workflow_stages_ || !disburse_stage_id)
+        return notification('Kindly try again, page is not fully loaded yet!','','warning');
+    nextStage(state_, workflow_stages_, disburse_stage_id, () => {
+        $('#wait').show();
+        $('#disburseModal').modal('hide');
+        $.ajax({
+            'url': `/user/application/disburse/${application_id}`,
+            'type': 'post',
+            'data': disbursal,
+            'success': function (data) {
+                $('#wait').hide();
+                notification('Loan disbursed successfully','','success');
+                window.location.reload();
+            },
+            'error': function (err) {
+                $('#wait').hide();
+                notification('Oops! An error occurred while disbursing loan','','error');
+            }
+        }); 
     });
 }
 
@@ -1274,9 +1311,10 @@ function initCSVUpload2(application, settings) {
         $csvLoader = $("#csvLoader2"),
         $rejectCSV = $("#rejectCSV2"),
         $approveCSV = $("#approveCSV2"),
+        $amortization = $('#amortization'),
         $message = $("#schedule-error-message");
 
-    $('#amortization').change(function () {
+    $amortization.change(function () {
         $dvCSV.html('');
         schedule = [];
         loan_amount = 0;
