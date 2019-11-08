@@ -402,7 +402,7 @@ function loadWorkflowStages(state) {
                 let actions = stage.actions.split(',');
                 actions.forEach(function (id) {
                     let stage_template = ($.grep(workflow_stages, function(e){ return e.stageID === parseInt(id); }))[0];
-                    if (stage_template){
+                    if (stage_template && stage_template.stage_name !== 'Disbursed') {
                         $('#stage-actions').append('<a href="#" class="dropdown-item" id="stage-action-'+stage_template.stageID+'">'
                             +stage_template.name+' ('+stage_template.stage_name+')</a>');
                     }
