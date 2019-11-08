@@ -166,8 +166,8 @@ router.post('/corporate/create', function (req, res) {
         query = `SELECT * FROM clients WHERE name = '${postData.name}'`,
         endpoint = `/core-service/get`,
         url = `${HOST}${endpoint}`;
-    if (postData.email) query = query.concat(` OR email = ${postData.email}`)
-    if (postData.phone) query = query.concat(` OR phone = ${postData.phone}`)
+    if (postData.email) query = query.concat(` OR email = '${postData.email}'`)
+    if (postData.phone) query = query.concat(` OR phone = '${postData.phone}'`)
     axios.get(url, {
         params: {
             query: query
