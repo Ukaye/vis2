@@ -1950,86 +1950,67 @@ users.get('/application-id/:id', function(req, res, next) {
             '(SELECT status FROM preapplications WHERE ID = a.preapplicationID AND creator_type = "client") AS client_applications_status, ' +
             'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
             'FROM clients AS u INNER JOIN applications AS a ON u.ID = a.userID LEFT JOIN remita_mandates r ' +
-            'ON (r.applicationID = a.ID AND r.status = 1) WHERE a.ID = ?',
-        query2 = 'SELECT u.ID userID, c.ID contactID, u.name fullname, u.phone, u.email, u.address, u.industry, u.incorporation_date, u.registration_number, u.date_created client_date_created, a.fees, ' +
-            '(SELECT title FROM loan_purpose_settings WHERE ID = a.loan_purpose) loan_purpose, (SELECT GROUP_CONCAT(document) FROM workflow_stages WHERE workflowID = a.workflowID) documents, '+
-            '(SELECT GROUP_CONCAT(download) FROM workflow_stages WHERE workflowID = a.workflowID) downloads, cast(c.loan_officer as unsigned) loan_officer, ' +
-            'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.interest_rate, a.repayment_date, ' +
-            'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, a.interest_rate, a.duration, a.preapplicationID, ' +
-            '(SELECT l.supervisor FROM users l WHERE l.ID = c.loan_officer) AS supervisor, ' +
-            '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
-            '(SELECT status FROM preapplications WHERE ID = a.preapplicationID AND creator_type = "client") AS client_applications_status, ' +
-            'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
-            'FROM corporates AS u INNER JOIN applications AS a ON u.ID = a.userID INNER JOIN clients AS c ON u.clientID=c.ID LEFT JOIN remita_mandates r ' +
             'ON (r.applicationID = a.ID AND r.status = 1) WHERE a.ID = ?';
     db.getConnection(function(err, connection) {
         if (err) throw err;
 
-        connection.query('SELECT client_type FROM applications WHERE ID = ?', [application_id], function (error, app, fields) {
-            if (error || !app[0]) {
+        connection.query(query, [application_id], function (error, result, fields) {
+            if(error){
                 res.send({"status": 500, "error": error, "response": null});
             } else {
-                if (app[0]['client_type'] === 'corporate')
-                    query = query2;
-                connection.query(query, [application_id], function (error, result, fields) {
-                    if(error){
+                result = (result[0])? result[0] : {};
+                connection.query('SELECT * FROM application_schedules WHERE applicationID=?', [application_id], function (error, schedule, fields) {
+                    if (error) {
                         res.send({"status": 500, "error": error, "response": null});
                     } else {
-                        result = (result[0])? result[0] : {};
-                        connection.query('SELECT * FROM application_schedules WHERE applicationID=?', [application_id], function (error, schedule, fields) {
+                        result.schedule = schedule;
+                        connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', [application_id], function (error, payment_history, fields) {
+                            connection.release();
                             if (error) {
                                 res.send({"status": 500, "error": error, "response": null});
                             } else {
-                                result.schedule = schedule;
-                                connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', [application_id], function (error, payment_history, fields) {
-                                    connection.release();
-                                    if (error) {
-                                        res.send({"status": 500, "error": error, "response": null});
-                                    } else {
-                                        result.payment_history = payment_history;
-                                        let path2 = `files/client_application-${result.preapplicationID}/`,
-                                            path3 = `files/application_download-${application_id}/`;
-                                        result.files = {};
-                                        fs.readdir(path, function (err, files){
+                                result.payment_history = payment_history;
+                                let path2 = `files/client_application-${result.preapplicationID}/`,
+                                    path3 = `files/application_download-${application_id}/`;
+                                result.files = {};
+                                fs.readdir(path, function (err, files){
+                                    if (err) files = [];
+                                    files = helperFunctions.removeFileDuplicates(path, files);
+                                    async.forEach(files, function (file, callback){
+                                        let filename = file.split('.')[0].split('_');
+                                        filename.shift();
+                                        obj[filename.join('_')] = path+file;
+                                        callback();
+                                    }, function(data){
+                                        result.files = Object.assign({}, result.files, obj);
+                                        obj = {};
+                                        fs.readdir(path2, function (err, files){
                                             if (err) files = [];
-                                            files = helperFunctions.removeFileDuplicates(path, files);
+                                            files = helperFunctions.removeFileDuplicates(path2, files);
                                             async.forEach(files, function (file, callback){
                                                 let filename = file.split('.')[0].split('_');
                                                 filename.shift();
-                                                obj[filename.join('_')] = path+file;
+                                                obj[filename.join('_')] = path2+file;
                                                 callback();
                                             }, function(data){
                                                 result.files = Object.assign({}, result.files, obj);
                                                 obj = {};
-                                                fs.readdir(path2, function (err, files){
+                                                fs.readdir(path3, function (err, files){
                                                     if (err) files = [];
-                                                    files = helperFunctions.removeFileDuplicates(path2, files);
+                                                    files = helperFunctions.removeFileDuplicates(path3, files);
                                                     async.forEach(files, function (file, callback){
                                                         let filename = file.split('.')[0].split('_');
                                                         filename.shift();
-                                                        obj[filename.join('_')] = path2+file;
+                                                        obj[filename.join('_')] = path3+file;
                                                         callback();
                                                     }, function(data){
-                                                        result.files = Object.assign({}, result.files, obj);
-                                                        obj = {};
-                                                        fs.readdir(path3, function (err, files){
-                                                            if (err) files = [];
-                                                            files = helperFunctions.removeFileDuplicates(path3, files);
-                                                            async.forEach(files, function (file, callback){
-                                                                let filename = file.split('.')[0].split('_');
-                                                                filename.shift();
-                                                                obj[filename.join('_')] = path3+file;
-                                                                callback();
-                                                            }, function(data){
-                                                                result.file_downloads = obj;
-                                                                return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
-                                                            });
-                                                        });
+                                                        result.file_downloads = obj;
+                                                        return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
                                                     });
                                                 });
                                             });
                                         });
-                                    }
+                                    });
                                 });
                             }
                         });
@@ -7462,7 +7443,7 @@ users.get('/corporate-borrowers', function(req, res, next) {
             'N/A' as Secondary_Address, tax_id as Tax_ID,
             phone as Phone_Number
             
-        from corporates`;
+        from clients WHERE status = 1 AND client_type = 'corporate'`;
 
     db.query(query, function (error, results, fields) {
         if(error){
