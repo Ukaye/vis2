@@ -36,7 +36,7 @@ config.production = {
     port: '3306',
     user: 'loan35admin',
     password: 'Loan35Pass@word2018',
-    database: 'fewchore',
+    database: 'loan35',
     charset: 'utf8mb4',
     insecureAuth: true
 };
