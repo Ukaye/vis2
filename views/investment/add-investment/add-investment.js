@@ -371,7 +371,7 @@ $("#investment_product").on("change", function (event) {
                             const maxDate = new Date(data.max);
                             let _m2 = maxDate.getUTCMonth() + 1;
                             const _cmax_2 = `${maxDate.getUTCFullYear()}-${pad(_m2)}-${pad(maxDate.getUTCDate())}`;
-
+console.log(_cmax_1, _cmax_2, '22222')
                             if (data.min !== null) {
                                 $('#investment_mature_date').attr('min', _cmax_1);
                             }
@@ -486,10 +486,14 @@ function pad(d) {
 let start_with = "";
 $("#investment_date_start").on("change", function (event) {
     let val = $("#investment_date_start").val();
+    console.log(val, 'abc')
     start_with = val;
     const selectedID = $("#investment_product").val();
     let selectedValue = products.find(x => x.ID.toString() === selectedID.toString());
     var _date = new Date(start_with);
+    console.log(_date, '2345')
+    console.log(typeof(_date.getUTCFullYear()), _date.getMonth(), _date.getDate(), 'iiiii')
+
     if (selectedValue !== undefined && selectedValue !== undefined) {
         let data = {
             year: _date.getUTCFullYear(),
@@ -513,6 +517,8 @@ $("#investment_date_start").on("change", function (event) {
                     const maxDate = new Date(data.max);
                     let _m2 = maxDate.getUTCMonth() + 1;
                     const _cmax_2 = `${maxDate.getUTCFullYear()}-${pad(_m2)}-${pad(maxDate.getUTCDate())}`;
+console.log(_cmax_1, _cmax_2, 'dddddd')
+
                     if (data.min !== null) {
                         $('#investment_mature_date').attr('min', _cmax_1);
                     }
@@ -545,7 +551,6 @@ $("#investment_date_start").on("change", function (event) {
 $("#btn_save_product").on("click", function (event) {
     $("#btn_save_product").attr('disabled', true);
     let selectedValue = products.find(x => x.ID.toString() === $("#investment_product").val().toString());
-    console.log(1234567)
     var data = {
         clientId: $('#client').on('select2:select').val(),
         productId: $('#investment_product').on('select2:select').val(),

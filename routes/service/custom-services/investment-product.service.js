@@ -795,13 +795,30 @@ router.post('/create-docs', function (req, res, next) {
         });
 });
 
+
+
 /** End point use to get product maximum and minimum maturity date **/
 router.post('/get-maturity-dates', function (req, res, next) {
     let data = req.body;
+    console.log(data, 'aaaa')
     const result1 = addMonths(new Date(data.year, data.month, data.day), data.min);
     const result2 = addMonths(new Date(data.year, data.month, data.day), data.max);
+    console.log(result1, result2, 'bbbbb')
+    
     res.send({ min: result1, max: result2 });
 });
+
+
+// I commented this part
+/** End point use to get product maximum and minimum maturity date **/
+// router.post('/get-maturity-dates', function (req, res, next) {
+//     let data = req.body;
+//     const result1 = addMonths(new Date(data.year, data.month, data.day), data.min);
+//     const result2 = addMonths(new Date(data.year, data.month, data.day), data.max);
+//     res.send({ min: result1, max: result2 });
+// });
+
+
 
 /** End point use to get product document requirement **/
 router.get('/get-doc-requirements/:id', function (req, res, next) {
