@@ -594,7 +594,6 @@ router.post('/reviews', function (req, res, next) {
     let query = `UPDATE investment_op_approvals SET isReviewed = ${data.status}, reviewedBy=${data.userId},isCompleted = ${1}, updatedAt ='${dt.toString()}' WHERE ID =${data.id}`;
     sRequest.get(query)
         .then(function (response) {
-console.log(response, 'ooooo')
             if (response.status === undefined) {
                 query = `Select 
                         (Select Count(*) as total_reviewed from investment_op_approvals where txnId = ${data.txnId} AND (isReviewed = 1 || isCompleted = 1) AND method = 'REVIEW') as total_reviewed,
@@ -603,11 +602,9 @@ console.log(response, 'ooooo')
                         (Select Count(*) as priorityItemTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'REVIEW' AND priority = '${data.priority}') as priorityItemTotal,
                         (Select Count(*) as total_reviewedBy from investment_op_approvals where txnId = ${data.txnId} AND method = 'REVIEW') as total_reviewedBy`;
                 sRequest.get(query).then(counter => {
-                    console.log(counter, 'iiii')
                     if (((counter[0].total_reviewedBy === counter[0].total_reviewed) || (counter[0].isOptional > 0) ||
                         (counter[0].priorityTotal !== 0 && counter[0].priorityTotal === counter[0].priorityItemTotal)) && data.status === '1') {
                         query = `UPDATE investment_txns SET reviewDone = ${1} WHERE ID =${data.txnId}`;
-                        console.log(5555)
                         sRequest.get(query)
                             .then(function (response_) {
                                 res.send(response);
@@ -626,7 +623,6 @@ console.log(response, 'ooooo')
                                 });
                             });
                     } else {
-                        console.log(7777)
                         query = `UPDATE investment_txns SET reviewDone = ${0}, isDeny = ${data.isDeny} WHERE ID =${data.txnId}`;
                         sRequest.get(query)
                             .then(function (response_) {
@@ -678,7 +674,6 @@ console.log(response, 'ooooo')
 
 /**End point to post an investment/savings transaction **/
 router.post('/posts', function (req, res, next) {
-    console.log(34556, '/posts')
     let dt = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let data = req.body
     let query = `UPDATE investment_op_approvals SET isPosted = ${data.status}, postedBy=${data.userId},isCompleted = ${1}, updatedAt ='${dt.toString()}' WHERE ID =${data.id}`;
@@ -691,7 +686,6 @@ router.post('/posts', function (req, res, next) {
                 (Select Count(*) as priorityItemTotal from investment_op_approvals where txnId = ${data.txnId} AND method = 'POST' AND priority = '${data.priority}') as priorityItemTotal,
                 (Select Count(*) as total_postedBy from investment_op_approvals where txnId = ${data.txnId} AND method = 'POST') as total_postedBy`;
             sRequest.get(query).then(counter => {
-                console.log(counter, 'tttttt')
                 if (((counter[0].total_postedBy === counter[0].total_posted) || (counter[0].isOptional > 0) ||
                     (counter[0].priorityTotal !== 0 && counter[0].priorityTotal === counter[0].priorityItemTotal)) && data.status === '1') {
                     let total_bal = 0;
@@ -707,9 +701,7 @@ router.post('/posts', function (req, res, next) {
                         //     bal = '0.00';
                         //     _amountTxn = interest_payload.balance
                         // }
-                        console.log(data, 't.s data')
                         if (data.isInvestmentTerminated.toString() === '0') {
-                            console.log('here')
                             const updateDate = (data.useTxnDateAsPostDate.toString() === '0') ?
                                 moment().utcOffset('+0100').format('YYYY-MM-DD') : data.txn_date;
                             query = `UPDATE investment_txns SET isApproved = ${data.status}, 
@@ -759,7 +751,6 @@ router.post('/posts', function (req, res, next) {
                         }
                     });
                 } else {
-                    console.log(12345)
                     if (data.isInvestmentTerminated.toString() === '0') {
                         const updateDate_ = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                         query = `UPDATE investment_txns SET isApproved = ${0}, updated_date ='${updateDate_}', postDone = ${0}, isDeny = ${data.isDeny},
@@ -2456,7 +2447,6 @@ function sumInvestmentInterestPerDayRange(investmentId, inStartDate, startDate, 
 //                 });
 //             }
 //             let _result = parseFloat(Number(total).toFixed(2));
-//             console.log(_result, 'tttttt')
 //             resolve(_result);
 //         }, err => {
 //             reject(err);
@@ -2486,7 +2476,6 @@ function setInvestmentInterestPerDay(values) {
         let bodyQuery = '';
         for (let i = 0; i < values.length; i++) {
             const item = values[i];
-            console.log(item, 'item')
             bodyQuery += `(${item.amount},${item.clientId},${item.investmentId},'${item.createdAt}',${item.month},${item.year},${item.balance},'${item.date}', ${item.dailyBalanceAmount})`;
             if (values.length !== i + 1) {
                 bodyQuery += ',';
