@@ -1934,8 +1934,8 @@ function generateLoanFile() {
         tenor: application.duration,
         loan_purpose: application.loan_purpose,
         documents: application.documents,
-        customer_details_request: (workflow_comments[0])? workflow_comments[0]['text'] : '',
-        transaction_dynamics: (workflow_comments[1])? workflow_comments[1]['text'] : '',
+        customer_details_request: (workflow_comments[workflow_comments.length-1])? workflow_comments[workflow_comments.length-1]['text'] : '',
+        transaction_dynamics: (workflow_comments[workflow_comments.length-2])? workflow_comments[workflow_comments.length-2]['text'] : '',
         kyc: `${($.isEmptyObject(application.files))? 'Not':'Yes'} Attached`,
         security: `${($.isEmptyObject(application.files))? 'Not':'Yes'} Attached`,
         workflow_processes: workflow_processes

@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="assets/scss/style.css">
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,800' rel='stylesheet' type='text/css'>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
     <script src="assets/js/vendor/jquery-2.1.4.min.js"></script>
     <style>
         div.dataTables_wrapper div.dataTables_filter{
@@ -43,6 +44,9 @@
         }
         td.numericCol{
             float:right;
+        }
+        a {
+            color: blue;
         }
     </style>
 </head>
@@ -83,7 +87,23 @@
         <div class="animated fadeIn">
             <div class="card">
                 <div class="card-header">
-                    <strong class="card-title">Collection Reconcilation</strong>
+                    <strong class="card-title" style="float: left;">Collection Reconcilation</strong>
+                    <form id="filter" class="form-inline" style="float: right;">
+                        <div class="form-group">
+                            <label class="" for="startDate">Start date</label>
+                            <input type="date" class="form-control" id="startDate" placeholder="Start date">
+                        </div>
+                        <div class="form-group">
+                            <label class="" for="endDate">End date</label>
+                            <input type="date" class="form-control" id="endDate" placeholder="End date">
+                        </div>
+                        <button type="submit" class="btn btn-success">Filter</button>
+                    </form>
+                    <select id="type-filter" onchange="filterType()" class="form-control" style="float: right; width:200px; margin: 0 5px;">
+                        <option value="" selected="selected">All</option>
+                        <option value="0">Confirmed</option>
+                        <option value="1">Unconfirmed</option>
+                    </select>
                 </div>
 
                 <div class="card-body">
