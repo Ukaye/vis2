@@ -34,7 +34,8 @@
             type: 'GET',
             url: `/client/application/getV2/${id}`,
             success: function (data) {
-                preapplication = data.response;
+                let response = data.response;
+                preapplication = response;
                 $('#saveApplication').hide();
                 switch (preapplication.status) {
                     case 1: {
