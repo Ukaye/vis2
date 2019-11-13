@@ -799,10 +799,20 @@ router.post('/create-docs', function (req, res, next) {
 
 /** End point use to get product maximum and minimum maturity date **/
 router.post('/get-maturity-dates', function (req, res, next) {
+    // let data = req.body;
+    // const result1 = addMonths(new Date(data.year, data.month, data.day), data.min);
+    // const result2 = addMonths(new Date(data.year, data.month, data.day), data.max);
+    // res.send({ min: result1, max: result2 });
+
+
+
     let data = req.body;
-    console.log(data, 'aaaa')
-    const result1 = addMonths(new Date(data.year, data.month, data.day), data.min);
-    const result2 = addMonths(new Date(data.year, data.month, data.day), data.max);
+    // Javascript date object start from 0 for months but moment starts from 1, to reconcile add 1 to js moment
+    const addOneToMonth = 1
+    data.month = Number(data.month) + addOneToMonth;
+    
+    const result1 = moment(`${data.year}-${data.month}-${data.day}`, 'YYYY-MM-DD').add(data.min, 'M').format();
+    const result2 = moment(`${data.year}-${data.month}-${data.day}`, 'YYYY-MM-DD').add(data.max, 'M').format();
     console.log(result1, result2, 'bbbbb')
     
     res.send({ min: result1, max: result2 });
