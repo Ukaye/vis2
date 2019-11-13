@@ -365,25 +365,18 @@ $("#investment_product").on("change", function (event) {
                             $('#wait').hide();
                             $('#investment_mature_date').attr('disabled', false);
 
-                            const minDate = new Date(data.min);
-                            let _m = minDate.getUTCMonth() + 1;
-                            const _cmax_1 = `${minDate.getUTCFullYear()}-${pad(_m)}-${pad(minDate.getUTCDate())}`;
-                            const maxDate = new Date(data.max);
-                            let _m2 = maxDate.getUTCMonth() + 1;
-                            const _cmax_2 = `${maxDate.getUTCFullYear()}-${pad(_m2)}-${pad(maxDate.getUTCDate())}`;
-console.log(_cmax_1, _cmax_2, '22222')
-                            if (data.min !== null) {
-                                $('#investment_mature_date').attr('min', _cmax_1);
-                            }
-                            if (data.max !== null) {
-                                $('#investment_mature_date').attr('max', _cmax_2);
-                            }
-                            if (!isNaN(minDate.getDate()) && !isNaN(maxDate.getDate())) {
-                                $("#duration_info").html(`Min.: ${(data.min !== null) ?
-                                    `${pad(minDate.getUTCDate())}-${pad(minDate.getUTCMonth() + 1)}-${minDate.getUTCFullYear()}` :
-                                    'None'} Max.: ${(data.max !== null) ?
-                                        `${pad(maxDate.getUTCDate())}-${pad(maxDate.getUTCMonth() + 1)}-${maxDate.getUTCFullYear()}` :
-                                        'None'} `);
+                            console.log(data.min.split('-'))
+                            const minDate = data.min
+                            const splitMinDate = minDate.split('-');
+                            const formattedMinDate = `${splitMinDate[0]}-${splitMinDate[1]}-${splitMinDate[2].slice(0,2)}`
+                            
+                            const maxDate = data.max;
+                            const splitMaxDate = maxDate.split('-');
+                            const formattedMaxDate = `${splitMaxDate[0]}-${splitMaxDate[1]}-${splitMaxDate[2].slice(0,2)}`
+                            if (splitMaxDate[0] && splitMaxDate[1] && splitMaxDate[2] && splitMinDate[0] && splitMinDate[1] && splitMinDate[2]) {
+                                $('#investment_mature_date').attr('min', formattedMinDate);
+                                $('#investment_mature_date').attr('max', formattedMaxDate);
+                                $("#duration_info").html(`Min.: ${formattedMinDate} | Max.: ${formattedMaxDate}`);
                             }
                         } else {
                             $('#wait').hide();
@@ -483,6 +476,8 @@ function pad(d) {
 // });
 
 
+
+
 let start_with = "";
 $("#investment_date_start").on("change", function (event) {
     let val = $("#investment_date_start").val();
@@ -492,7 +487,7 @@ $("#investment_date_start").on("change", function (event) {
     let selectedValue = products.find(x => x.ID.toString() === selectedID.toString());
     var _date = new Date(start_with);
     console.log(_date, '2345')
-    console.log(typeof(_date.getUTCFullYear()), _date.getMonth(), _date.getDate(), 'iiiii')
+    console.log(_date.getUTCFullYear(), _date.getMonth(), _date.getDate(), 'iiiii')
 
     if (selectedValue !== undefined && selectedValue !== undefined) {
         let data = {
@@ -510,28 +505,22 @@ $("#investment_date_start").on("change", function (event) {
                 if (!data.error) {
                     $('#wait').hide();
                     $('#investment_mature_date').attr('disabled', false);
-
-                    const minDate = new Date(data.min);
-                    let _m = minDate.getUTCMonth() + 1;
-                    const _cmax_1 = `${minDate.getUTCFullYear()}-${pad(_m)}-${pad(minDate.getUTCDate())}`;
-                    const maxDate = new Date(data.max);
-                    let _m2 = maxDate.getUTCMonth() + 1;
-                    const _cmax_2 = `${maxDate.getUTCFullYear()}-${pad(_m2)}-${pad(maxDate.getUTCDate())}`;
-console.log(_cmax_1, _cmax_2, 'dddddd')
-
-                    if (data.min !== null) {
-                        $('#investment_mature_date').attr('min', _cmax_1);
+                    $('#wait').hide();
+                    $('#investment_mature_date').attr('disabled', false);
+                    console.log(data.min.split('-'))
+                    const minDate = data.min
+                    const splitMinDate = minDate.split('-');
+                    const formattedMinDate = `${splitMinDate[0]}-${splitMinDate[1]}-${splitMinDate[2].slice(0,2)}`
+                    
+                    const maxDate = data.max;
+                    const splitMaxDate = maxDate.split('-');
+                    const formattedMaxDate = `${splitMaxDate[0]}-${splitMaxDate[1]}-${splitMaxDate[2].slice(0,2)}`
+                    if (splitMaxDate[0] && splitMaxDate[1] && splitMaxDate[2] && splitMinDate[0] && splitMinDate[1] && splitMinDate[2]) {
+                        $('#investment_mature_date').attr('min', formattedMinDate);
+                        $('#investment_mature_date').attr('max', formattedMaxDate);
+                        $("#duration_info").html(`Min.: ${formattedMinDate} | Max.: ${formattedMaxDate}`);
                     }
-                    if (data.max !== null) {
-                        $('#investment_mature_date').attr('max', _cmax_2);
-                    }
-                    if (!isNaN(minDate.getDate()) && !isNaN(maxDate.getDate())) {
-                        $("#duration_info").html(`Min.: ${(data.min !== null) ?
-                            `${pad(minDate.getUTCDate())}-${pad(minDate.getUTCMonth() + 1)}-${minDate.getUTCFullYear()}` :
-                            'None'} Max.: ${(data.max !== null) ?
-                                `${pad(maxDate.getUTCDate())}-${pad(maxDate.getUTCMonth() + 1)}-${maxDate.getUTCFullYear()}` :
-                                'None'} `);
-                    }
+                    
                 } else {
                     $('#wait').hide();
                     swal('Oops! An error occurred while computing maturity date; kindly check your internet connection', '', 'error');
@@ -547,6 +536,79 @@ console.log(_cmax_1, _cmax_2, 'dddddd')
         $('#investment_mature_date').attr('disabled', true);
     }
 });
+
+
+
+
+
+// I commented this part
+// let start_with = "";
+// $("#investment_date_start").on("change", function (event) {
+//     let val = $("#investment_date_start").val();
+//     console.log(val, 'abc')
+//     start_with = val;
+//     const selectedID = $("#investment_product").val();
+//     let selectedValue = products.find(x => x.ID.toString() === selectedID.toString());
+//     var _date = new Date(start_with);
+//     console.log(_date, '2345')
+//     console.log(_date.getUTCFullYear(), _date.getMonth(), _date.getDate(), 'iiiii')
+
+//     if (selectedValue !== undefined && selectedValue !== undefined) {
+//         let data = {
+//             year: _date.getUTCFullYear(),
+//             month: _date.getMonth(),
+//             day: _date.getDate(),
+//             min: parseInt(selectedValue.min_term),
+//             max: parseInt(selectedValue.max_term)
+//         };
+//         $.ajax({
+//             'url': '/investment-products/get-maturity-dates',
+//             'type': 'post',
+//             'data': data,
+//             'success': function (data) {
+//                 if (!data.error) {
+//                     $('#wait').hide();
+//                     $('#investment_mature_date').attr('disabled', false);
+
+//                     const minDate = new Date(data.min);
+//                     let _m = minDate.getUTCMonth() + 1;
+//                     const _cmax_1 = `${minDate.getUTCFullYear()}-${pad(_m)}-${pad(minDate.getUTCDate())}`;
+//                     const maxDate = new Date(data.max);
+//                     let _m2 = maxDate.getUTCMonth() + 1;
+//                     const _cmax_2 = `${maxDate.getUTCFullYear()}-${pad(_m2)}-${pad(maxDate.getUTCDate())}`;
+// console.log(_cmax_1, _cmax_2, 'dddddd')
+
+//                     if (data.min !== null) {
+//                         $('#investment_mature_date').attr('min', _cmax_1);
+//                     }
+//                     if (data.max !== null) {
+//                         $('#investment_mature_date').attr('max', _cmax_2);
+//                     }
+//                     if (!isNaN(minDate.getDate()) && !isNaN(maxDate.getDate())) {
+//                         $("#duration_info").html(`Min.: ${(data.min !== null) ?
+//                             `${pad(minDate.getUTCDate())}-${pad(minDate.getUTCMonth() + 1)}-${minDate.getUTCFullYear()}` :
+//                             'None'} Max.: ${(data.max !== null) ?
+//                                 `${pad(maxDate.getUTCDate())}-${pad(maxDate.getUTCMonth() + 1)}-${maxDate.getUTCFullYear()}` :
+//                                 'None'} `);
+//                     }
+//                 } else {
+//                     $('#wait').hide();
+//                     swal('Oops! An error occurred while computing maturity date; kindly check your internet connection', '', 'error');
+//                 }
+//             },
+//             'error': function (err) {
+//                 $('#wait').hide();
+//                 swal('Oops! An error occurred while creating Investment; ', '', 'error');
+//             }
+//         });
+//     } else {
+//         swal('Please select product', '', 'error');
+//         $('#investment_mature_date').attr('disabled', true);
+//     }
+// });
+
+
+
 
 $("#btn_save_product").on("click", function (event) {
     $("#btn_save_product").attr('disabled', true);
