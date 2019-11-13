@@ -711,7 +711,7 @@ router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
             "error": 'User does not exist!',
             "response": null
         });
-        const path = `files/users/${result.email}/`;
+        const path = `files/users/${result.images_folder}/`;
         if (!fs.existsSync(path)) {
             result.files = {};
             return res.send({
