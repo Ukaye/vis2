@@ -453,7 +453,7 @@ router.post('/create', function (req, res) {
         if (err) throw err;
         connection.query(query2, [postData.username, postData.email, postData.phone], function (error, results) {
             if (results && results[0]) {
-                return res.send({ "status": 200, "error": null, "response": "Information in use by existing client!" });
+                return res.send({ "status": 200, "error": null, "response": "Client already exists!" });
             }
             let bvn = postData.bvn;
             if (bvn.trim() !== '') {
@@ -2571,6 +2571,86 @@ router.get('/kyc', (req, res) => {
                 "response": response
             });
         });
+});
+
+router.post('/forgot-password/get', (req, res) => {
+    if (!req.body.username || !req.body.callback_url) return res.status(500).send('Required parameter(s) not sent!');
+    let data = {},
+        query = `SELECT fullname, email, status FROM clients WHERE username = ${req.body.username}`;
+    const expiry_days = 1,
+        token = jwt.sign(
+            {
+                ID: req.user.ID,
+                email: req.user.email,
+                phone: req.user.phone
+            },
+            process.env.SECRET_KEY,
+            {
+                expiresIn: 60 * 60 * expiry_days
+            });
+    db.query(query, (error, client_) => {
+        if (error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+        if (!client_ || !client_[0]) return res.send({
+            "status": 500,
+            "error": 'Client does not exist!',
+            "response": null
+        });
+
+        let client = client_[0];
+        if (client.status === 0) return res.send({
+            "status": 500,
+            "error": "Client has been disabled!",
+            "response": null
+        });
+
+        data.fullname = client.fullname;
+        data.date = moment().utcOffset('+0100').format('YYYY-MM-DD');
+        data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
+        data.forgot_url = `${req.body.callback_url}?token=${token}`;
+        emailService.send({
+            to: client.email,
+            subject: 'Forgot Password Request',
+            template: 'forgot',
+            context: data
+        });
+        return res.send({
+            "status": 200,
+            "error": null,
+            "response": `Forgot password email sent to ${client.email} successfully!`
+        });
+    });
+});
+
+router.put('/forgot-password/update', (req, res) => {
+    if (!req.body.token || !req.body.password) return res.status(500).send('Required parameter(s) not sent!');
+    jwt.verify(req.body.token, process.env.SECRET_KEY, function (err, decoded) {
+        if (err) return res.send({
+            "status": 500,
+            "error": err,
+            "response": "Failed to authenticate token!"
+        });
+
+        let payload = {},
+        query = `UPDATE clients SET ? WHERE ID = ${decoded.ID}`;
+        payload.password = bcrypt.hashSync(req.body.password, parseInt(process.env.SALT_ROUNDS));
+        payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        db.query(query, payload, error => {
+            if (error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+            return res.send({
+                "status": 200,
+                "error": null,
+                "response": `Client password updated successfully!`
+            });
+        });
+    });
 });
 
 module.exports = router;
