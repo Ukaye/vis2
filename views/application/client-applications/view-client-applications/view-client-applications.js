@@ -33,8 +33,8 @@
         $.ajax({
             type: 'GET',
             url: `/client/application/getV2/${id}`,
-            success: function (response) {
-                preapplication = response;
+            success: function (data) {
+                preapplication = data.response;
                 $('#saveApplication').hide();
                 switch (preapplication.status) {
                     case 1: {

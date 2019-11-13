@@ -1459,7 +1459,11 @@ router.get('/application/getV2/:application_id', function (req, res) {
         });
         if (!fs.existsSync(path)) {
             result.files = {};
-            res.send(result);
+            res.send({
+                "status": 200,
+                "error": null,
+                "response": result
+            });
         } else {
             fs.readdir(path, function (err, files) {
                 files = helperFunctions.removeFileDuplicates(path, files);
