@@ -8,25 +8,31 @@ const
 
 router.get('/get/:module', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let limit = req.query.limit;
-    let offset = req.query.offset;
+    let end = req.query.end;
+    let type = req.query.type;
     let draw = req.query.draw;
+    let start = req.query.start;
+    let limit = req.query.limit;
     let order = req.query.order;
+    let offset = req.query.offset;
     let module = req.params.module;
     let search_string = req.query.search_string.toUpperCase();
-    let query = `SELECT a.*, c.fullname client FROM audit_logs a, clients c 
-                 WHERE a.clientID = c.ID AND a.status = 1 AND a.module = "${module}" AND (upper(c.fullname) LIKE "${search_string}%" OR upper(a.amount) LIKE "${search_string}%" 
-                 OR upper(a.loanID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
+    let query_condition = `FROM audit_logs a, clients c 
+        WHERE a.clientID = c.ID AND a.module = "${module}" AND (upper(c.fullname) LIKE "${search_string}%" OR upper(a.amount) LIKE "${search_string}%" 
+        OR upper(a.loanID) LIKE "${search_string}%") `;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
+    end = moment(end).add(1, 'days').format("YYYY-MM-DD");
+    if (type) query_condition = query_condition.concat(`AND a.status = ${type} `);
+    if (start && end)
+        query_condition = query_condition.concat(`AND TIMESTAMP(a.date_created) < TIMESTAMP('${end}') AND TIMESTAMP(a.date_created) >= TIMESTAMP('${start}') `);
+    let query = `SELECT a.*, c.fullname client ${query_condition} ${order} LIMIT ${limit} OFFSET ${offset}`;
     axios.get(url, {
         params: {
             query: query
         }
     }).then(response => {
-        query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM audit_logs a, clients c 
-                 WHERE a.clientID = c.ID AND a.status = 1 AND a.module = "${module}" AND (upper(c.fullname) LIKE "${search_string}%" OR upper(a.amount) LIKE "${search_string}%" 
-                 OR upper(a.loanID) LIKE "${search_string}%")) as recordsFiltered FROM audit_logs WHERE status = 1 AND module = "${module}"`;
+        query = `SELECT count(*) AS recordsTotal, (SELECT count(*) ${query_condition}) as recordsFiltered FROM audit_logs WHERE module = "${module}"`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {

@@ -3325,6 +3325,12 @@ function allocateXeroOverpayment(req, res, client) {
                         {
                             OverpaymentID: xeroOverpayments[index]['OverpaymentID']
                         });
+                        auditLog.log({
+                            clientID: data.clientID,
+                            amount: principal_amount,
+                            type: 'overpayment',
+                            module: 'collections'
+                        });
                         balance -= principal_amount;
                         principal_amount = 0;
                     } else {
@@ -3336,6 +3342,12 @@ function allocateXeroOverpayment(req, res, client) {
                         },
                         {
                             OverpaymentID: xeroOverpayments[index]['OverpaymentID']
+                        });
+                        auditLog.log({
+                            clientID: data.clientID,
+                            amount: balance,
+                            type: 'overpayment',
+                            module: 'collections'
                         });
                         principal_amount -= balance;
                         index++;
@@ -3357,6 +3369,12 @@ function allocateXeroOverpayment(req, res, client) {
                         {
                             OverpaymentID: xeroOverpayments[index]['OverpaymentID']
                         });
+                        auditLog.log({
+                            clientID: data.clientID,
+                            amount: interest_amount,
+                            type: 'overpayment',
+                            module: 'collections'
+                        });
                         balance -= interest_amount;
                         interest_amount = 0;
                     } else {
@@ -3368,6 +3386,12 @@ function allocateXeroOverpayment(req, res, client) {
                         },
                         {
                             OverpaymentID: xeroOverpayments[index]['OverpaymentID']
+                        });
+                        auditLog.log({
+                            clientID: data.clientID,
+                            amount: balance,
+                            type: 'overpayment',
+                            module: 'collections'
                         });
                         interest_amount -= balance;
                         index++;

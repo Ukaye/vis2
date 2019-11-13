@@ -1,12 +1,14 @@
-let table = {},
-    $wait = $('#wait');
+let $wait = $('#wait'),
+    table_collections = {},
+    table_investments = {},
+    url = '/audit/get/collections?';
 $(document).ready(function () {
     getCollections();
     getInvestments();
 });
 
 function getCollections() {
-    table = $('#collections').DataTable({
+    table_collections = $('#collections').DataTable({
         dom: 'Blfrtip',
         bProcessing: true,
         bServerSide: true,
@@ -44,7 +46,7 @@ function getCollections() {
             $.ajax({
                 dataType: 'json',
                 type: "GET",
-                url: `/audit/get/collections`,
+                url: url,
                 data: {
                     limit: aoData[4].value,
                     offset: aoData[3].value,
@@ -79,8 +81,10 @@ function getCollections() {
                 }
             },
             {
-                data: "client",
-                width: "30%"
+                width: "30%",
+                mRender: function (data, type, full) {
+                    return `<a href="/client-info?id=${full.clientID}">${full.client}</a>`;
+                }
             },
             {
                 data: "type",
@@ -91,19 +95,21 @@ function getCollections() {
                 className: "text-right",
                 mRender: function (data, type, full) {
                     if (full.loanID)
-                        return padWithZeroes(full.loanID, 9);
+                        return `<a href="/application?id=${full.loanID}">${padWithZeroes(full.loanID, 9)}</a>`;
                     return '--';
                 }
             },
             {
-                data: "date_created",
-                width: "20%"
+                width: "20%",
+                mRender: function (data, type, full) {
+                    return moment(new Date(full.date_created)).format('LLLL');;
+                }
             },
             {
                 width: "10%",
                 mRender: function (data, type, full) {
-                     return `<a class="btn btn-success btn-sm" onclick="confirm(${full.ID})">
-                                Confirm <i class="fa fa-check"></i></a>`;
+                    return (full.status === 1)? `<a class="btn btn-success btn-sm" onclick="confirm(${full.ID})">
+                               Confirm <i class="fa fa-check"></i></a>` : '';
                 }
             }
         ]
@@ -111,7 +117,7 @@ function getCollections() {
 }
 
 function getInvestments() {
-    table = $('#investments').DataTable({
+    table_investments = $('#investments').DataTable({
         dom: 'Blfrtip',
         bProcessing: true,
         bServerSide: true,
@@ -203,8 +209,8 @@ function getInvestments() {
             {
                 width: "10%",
                 mRender: function (data, type, full) {
-                     return `<a class="btn btn-success btn-sm" onclick="confirm(${full.ID})">
-                                Confirm <i class="fa fa-check"></i></a>`;
+                     return (full.status === 1)? `<a class="btn btn-success btn-sm" onclick="confirm(${full.ID})">
+                                Confirm <i class="fa fa-check"></i></a>` : '';
                 }
             }
         ]
@@ -229,4 +235,26 @@ function confirm(id) {
             notification('Oops! An error occurred while confirming audit','','error');
         }
     });
+}
+
+$("#filter").submit(function (e) {
+    e.preventDefault();
+    let end = $("#endDate").val(),
+        start = $("#startDate").val(),
+        type = $("#type-filter").val();
+    if (!start || !end) return table_collections.ajax.reload(null, false);
+    url = '/audit/get/collections?';
+    url = url.concat(`&start=${processDate(start)}&end=${processDate(end)}`);
+    if (type) url = url.concat(`&type=${type}`);
+    return table_collections.ajax.reload(null, false);
+});
+
+function filterType() {
+    let end = $("#endDate").val(),
+        start = $("#startDate").val(),
+        type = $("#type-filter").val();
+    url = '/audit/get/collections?';
+    if (start && end) url = url.concat(`&start=${processDate(start)}&end=${processDate(end)}`);
+    if (type) url = url.concat(`&type=${type}`);
+    return table_collections.ajax.reload(null, false);
 }
