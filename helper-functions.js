@@ -350,6 +350,7 @@ functions.currencyToNumberFormatter = function (value) {
 };
 
 functions.verifyJWT = function (req, res, next) {
+    console.log(req.secure)
     console.log(req.protocol)
     let token = req.headers['x-access-token'];
     if (!token) return res.send({
