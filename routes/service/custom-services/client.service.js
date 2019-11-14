@@ -2580,7 +2580,7 @@ router.get('/kyc', (req, res) => {
 router.post('/forgot-password/get', (req, res) => {
     if (!req.body.username || !req.body.callback_url) return res.status(500).send('Required parameter(s) not sent!');
     let data = {},
-        query = `SELECT ID, fullname, email, phone, status FROM clients WHERE username = ${req.body.username}`;
+        query = `SELECT ID, fullname, email, phone, status FROM clients WHERE username = '${req.body.username}'`;
     db.query(query, (error, client_) => {
         if (error) return res.send({
             "status": 500,
