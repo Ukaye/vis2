@@ -61,7 +61,9 @@ let app = express(),
     notification = require('./routes/notifications'),
     index = require('./routes/index');
 
-app.enable('trust proxy');
+app.set('trust proxy', ip => {
+    console.log(ip)
+});
 app.use(compression());    
 app.engine('html', require('ejs').renderFile);
 app.set('view engine', 'html');
