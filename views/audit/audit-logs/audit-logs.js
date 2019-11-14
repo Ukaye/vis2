@@ -22,6 +22,10 @@ function getCollections() {
                     query: `ORDER BY amount ${aoData[2].value[0].dir}`
                 },
                 {
+                    name: 'amount',
+                    query: `ORDER BY amount ${aoData[2].value[0].dir}`
+                },
+                {
                     name: 'client',
                     query: `ORDER BY client ${aoData[2].value[0].dir}`
                 },
@@ -61,23 +65,37 @@ function getCollections() {
             });
         },
         aaSorting: [
-            [4, 'desc']
+            [5, 'desc']
         ],
         aoColumnDefs: [
             {
                 sClass: "numericCol",
-                aTargets: [0],
+                aTargets: [0, 1],
                 sType: "numeric"
             }
         ],
         columns: [
             {
-                width: "15%",
+                width: "10%",
                 className: "text-right",
                 mRender: function (data, type, full) {
                     if (full.amount)
                         return numberToCurrencyformatter(full.amount.round(2));
                     return '--';
+                }
+            },
+            {
+                width: "20%",
+                className: "text-right",
+                mRender: function (data, type, full) {
+                    let payment = [];
+                    if (full.interest_amount > 0)
+                        payment.push(`Interest - ${numberToCurrencyformatter(full.interest_amount.round(2))}`);
+                    if (full.principal_amount > 0)
+                        payment.push(`Principal - ${numberToCurrencyformatter(full.principal_amount.round(2))}`);
+                    if (full.escrow_amount > 0)
+                        payment.push(`Overpayment - ${numberToCurrencyformatter(full.escrow_amount.round(2))}`);
+                    return payment.join('\n');
                 }
             },
             {
@@ -88,10 +106,10 @@ function getCollections() {
             },
             {
                 data: "type",
-                width: "15%"
+                width: "10%"
             },
             {
-                width: "20%",
+                width: "10%",
                 className: "text-right",
                 mRender: function (data, type, full) {
                     if (full.loanID)

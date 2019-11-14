@@ -2670,7 +2670,8 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                         amount: principal_due,
                                                         type: 'repayment',
                                                         loanID: old_invoice.applicationID,
-                                                        module: 'collections'
+                                                        module: 'collections',
+                                                        principal_amount: principal_due
                                                     });
                                                 }
                                             }
@@ -3121,6 +3122,8 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                     application = app[0],
                     postData = Object.assign({},req.body);
                 postData.payment_status = 1;
+                delete postData.actual_amount;
+                delete postData.escrow_amount;
                 delete postData.payment_source;
                 delete postData.payment_date;
                 delete postData.remitaPaymentID;
@@ -3134,10 +3137,12 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                         invoice.invoiceID = req.params.id;
                         invoice.agentID = req.params.agent_id;
                         invoice.applicationID = req.params.application_id;
+                        invoice.actual_amount = data.actual_amount;
                         invoice.payment_amount = data.actual_payment_amount;
                         invoice.interest_amount = data.actual_interest_amount;
                         invoice.fees_amount = data.actual_fees_amount;
                         invoice.penalty_amount = data.actual_penalty_amount;
+                        invoice.escrow_amount = data.escrow_amount;
                         invoice.payment_source = data.payment_source;
                         invoice.payment_date = data.payment_date;
                         invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -3179,13 +3184,6 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                         ${application.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(application.ID, 9)} | `)
                                 });
                                 invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
-                                auditLog.log({
-                                    clientID: application.clientID,
-                                    amount: invoice.payment_amount,
-                                    type: 'repayment',
-                                    loanID: application.ID,
-                                    module: 'collections'
-                                });
                             }
                             if (xeroClient && invoice.interest_amount > 0 && 
                                 application.interest_invoice_no && invoice.xeroCollectionBankID) {
@@ -3203,18 +3201,21 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                         ${application.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(application.ID, 9)} | `)
                                 });
                                 invoice.xeroInterestPaymentID = xeroPayment.Payments[0]['PaymentID'];
-                                auditLog.log({
-                                    clientID: application.clientID,
-                                    amount: invoice.interest_amount,
-                                    type: 'repayment',
-                                    loanID: application.ID,
-                                    module: 'collections'
-                                });
                             }
                             db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response, fields) {
                                 if(error){
                                     res.send({"status": 500, "error": error, "response": null});
                                 } else {
+                                    auditLog.log({
+                                        clientID: application.clientID,
+                                        amount: data.actual_amount,
+                                        type: 'repayment',
+                                        loanID: application.ID,
+                                        module: 'collections',
+                                        principal_amount: invoice.payment_amount,
+                                        interest_amount: invoice.interest_amount,
+                                        escrow_amount: data.escrow_amount
+                                    });
                                     let payload = {};
                                     payload.category = 'Application';
                                     payload.userid = req.cookies.timeout;
@@ -3276,12 +3277,6 @@ users.post('/application/escrow', function(req, res, next) {
                             Reference: helperFunctions.padWithZeroes(data.clientID, 6)
                         });
                         data.xeroOverpaymentID = xeroPayment.BankTransactions[0]['OverpaymentID'];
-                        auditLog.log({
-                            clientID: data.clientID,
-                            amount: data.amount,
-                            type: 'overpayment',
-                            module: 'collections'
-                        });
                     }
                     delete data.payment_date;
                     db.query('INSERT INTO escrow SET ?', data, function (error, result, fields) {
@@ -3325,12 +3320,6 @@ function allocateXeroOverpayment(req, res, client) {
                         {
                             OverpaymentID: xeroOverpayments[index]['OverpaymentID']
                         });
-                        auditLog.log({
-                            clientID: data.clientID,
-                            amount: principal_amount,
-                            type: 'overpayment',
-                            module: 'collections'
-                        });
                         balance -= principal_amount;
                         principal_amount = 0;
                     } else {
@@ -3342,12 +3331,6 @@ function allocateXeroOverpayment(req, res, client) {
                         },
                         {
                             OverpaymentID: xeroOverpayments[index]['OverpaymentID']
-                        });
-                        auditLog.log({
-                            clientID: data.clientID,
-                            amount: balance,
-                            type: 'overpayment',
-                            module: 'collections'
                         });
                         principal_amount -= balance;
                         index++;
@@ -3369,12 +3352,6 @@ function allocateXeroOverpayment(req, res, client) {
                         {
                             OverpaymentID: xeroOverpayments[index]['OverpaymentID']
                         });
-                        auditLog.log({
-                            clientID: data.clientID,
-                            amount: interest_amount,
-                            type: 'overpayment',
-                            module: 'collections'
-                        });
                         balance -= interest_amount;
                         interest_amount = 0;
                     } else {
@@ -3386,12 +3363,6 @@ function allocateXeroOverpayment(req, res, client) {
                         },
                         {
                             OverpaymentID: xeroOverpayments[index]['OverpaymentID']
-                        });
-                        auditLog.log({
-                            clientID: data.clientID,
-                            amount: balance,
-                            type: 'overpayment',
-                            module: 'collections'
                         });
                         interest_amount -= balance;
                         index++;
@@ -3783,13 +3754,6 @@ users.post('/application/pay-off/:id/:agentID', function(req, res, next) {
                                                     IsReconciled: true
                                                 });
                                                 invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
-                                                auditLog.log({
-                                                    clientID: application.clientID,
-                                                    amount: invoice.payment_amount,
-                                                    type: 'repayment',
-                                                    loanID: invoice.applicationID,
-                                                    module: 'collections'
-                                                });
                                             }
                                             if (xeroClient && invoice.interest_amount > 0 && 
                                                 invoice_obj.interest_invoice_no && data.close_bank) {
@@ -3805,14 +3769,16 @@ users.post('/application/pay-off/:id/:agentID', function(req, res, next) {
                                                     IsReconciled: true
                                                 });
                                                 invoice.xeroInterestPaymentID = xeroPayment.Payments[0]['PaymentID'];
-                                                auditLog.log({
-                                                    clientID: application.clientID,
-                                                    amount: invoice.interest_amount,
-                                                    type: 'repayment',
-                                                    loanID: invoice.applicationID,
-                                                    module: 'collections'
-                                                });
                                             }
+                                            auditLog.log({
+                                                clientID: application.clientID,
+                                                amount: parseFloat(invoice.payment_amount) + parseFloat(invoice.interest_amount),
+                                                type: 'repayment',
+                                                loanID: invoice.applicationID,
+                                                module: 'collections',
+                                                principal_amount: invoice.payment_amount,
+                                                interest_amount: invoice.interest_amount
+                                            });
                                             connection.query('UPDATE application_schedules SET payment_status=1 WHERE ID = ?', [invoice_obj.ID], function (error, result, fields) {
                                                 connection.query('INSERT INTO schedule_history SET ?', invoice, function (error, response, fields) {
                                                     callback();

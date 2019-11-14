@@ -521,8 +521,8 @@ function validation() {
 function confirmPayment() {
     if (xero_config && xero_config.xero_collection_bank === 1 && !selected_schedule.interest_invoice_no)
         return notification('Xero invoice no is required','Kindly update this invoice with the xero invoice no','warning');
-    let invoice = {},
-        payment = parseFloat($('#payment').val() || '0');
+    let invoice = {};
+    invoice.actual_amount = $('#payment').val() || '0';
     invoice.actual_payment_amount = $('#principal').val() || '0';
     invoice.actual_interest_amount = $('#interest').val() || '0';
     invoice.actual_fees_amount = $('#fees').val() || '0';
@@ -547,10 +547,11 @@ function confirmPayment() {
             return notification('Kindly specify a statement description to proceed','','warning');
     }
     if ($('#collection_description').val()) invoice.xeroCollectionDescription = $('#collection_description').val();
-    let overpayment = (payment - (parseFloat(invoice.actual_payment_amount) + parseFloat(invoice.actual_interest_amount))).round(2);
+    let overpayment = (invoice.actual_amount - (parseFloat(invoice.actual_payment_amount) + parseFloat(invoice.actual_interest_amount))).round(2);
     if (overpayment < 0)
         return notification(`Actual payment cannot be less than ₦${numberToCurrencyformatter((parseFloat(invoice.actual_payment_amount) + 
             parseFloat(invoice.actual_interest_amount)).round(2))}`,'','warning');
+    invoice.escrow_amount = overpayment;
     $('#wait').show();
     $('#confirmPayment').modal('hide');
     updateEscrow(invoice, total_payment, function () {
