@@ -540,6 +540,7 @@ router.post('/create', function (req, res) {
 router.post('/login', function (req, res) {
     let username = req.body.username,
         password = req.body.password;
+    if (!username || !password) return res.status(500).send('Required parameter(s) not sent!');
 
     db.query('SELECT * FROM clients WHERE username = ?', username, function (err, client) {
         if (err)
@@ -564,7 +565,7 @@ router.post('/login', function (req, res) {
                 "response": "User Disabled!"
             });
 
-        if (user.password_reset_status === enums.PASSWORD_RESET.STATUS.FALSE)
+        if (user.password_reset_status === enums.PASSWORD_RESET.STATUS.FALSE && password.toLowerCase() === 'password')
             return res.send({
                 "status": 400,
                 "error": null,
