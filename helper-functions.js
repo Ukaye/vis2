@@ -350,6 +350,7 @@ functions.currencyToNumberFormatter = function (value) {
 };
 
 functions.verifyJWT = function (req, res, next) {
+    console.log(req.protocol)
     let token = req.headers['x-access-token'];
     if (!token) return res.send({
         "status": 500,
@@ -370,7 +371,7 @@ functions.verifyJWT = function (req, res, next) {
                 "error": err,
                 "response": "Unauthorized operation!"
             });
-console.log(req.protocol)
+
         req.user = decoded;
         req.HOST = `${req.protocol}://${req.get('host')}`;
         next();
