@@ -370,7 +370,7 @@ functions.verifyJWT = function (req, res, next) {
                 "error": err,
                 "response": "Unauthorized operation!"
             });
-
+console.log(req.protocol)
         req.user = decoded;
         req.HOST = `${req.protocol}://${req.get('host')}`;
         next();
