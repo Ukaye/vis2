@@ -3919,7 +3919,7 @@ users.get('/forgot-password/:username', function(req, res) {
             return res.send({"status": 500, "response": "User Disabled!"});
 
         let user = rows[0];
-        user.forgot_url = req.protocol + '://' + req.get('host') + '/forgot-password?t=' + encodeURIComponent(user.username);
+        user.forgot_url = 'https://' + req.get('host') + '/forgot-password?t=' + encodeURIComponent(user.username);
         user.date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
         let mailOptions = {
             to: user.email,

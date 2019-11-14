@@ -350,9 +350,6 @@ functions.currencyToNumberFormatter = function (value) {
 };
 
 functions.verifyJWT = function (req, res, next) {
-    console.log(req.connection.encrypted)
-    console.log(req.secure)
-    console.log(req.protocol)
     let token = req.headers['x-access-token'];
     if (!token) return res.send({
         "status": 500,
@@ -375,7 +372,7 @@ functions.verifyJWT = function (req, res, next) {
             });
 
         req.user = decoded;
-        req.HOST = `${req.protocol}://${req.get('host')}`;
+        req.HOST = `https://${req.get('host')}`;
         next();
     });
 };
