@@ -698,6 +698,7 @@ router.delete('/disable/:id', helperFunctions.verifyJWT, function (req, res) {
 });
 
 router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
+    console.log(req)
     let query = `SELECT *, (select fullname from users u where u.ID = clients.loan_officer) loan_officer,
         (select branch_name from branches b where b.ID = clients.branch) branch, 
         (select count(*) from applications where userID = clients.ID and not (status = 0 and close_status = 0)) total_active_loan_count, 
