@@ -449,6 +449,7 @@ router.post('/create', function (req, res) {
     postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
     postData.password = bcrypt.hashSync(postData.password, parseInt(process.env.SALT_ROUNDS));
     postData.images_folder = postData.email;
+    postData.password_reset_status = enums.PASSWORD_RESET.STATUS.TRUE;
     db.getConnection(function (err, connection) {
         if (err) throw err;
         connection.query(query2, [postData.username, postData.email, postData.phone], function (error, results) {
@@ -554,15 +555,22 @@ router.post('/login', function (req, res) {
                 "error": null,
                 "response": "Incorrect Username/Password!"
             });
-
-        if (client[0]['status'] === "0")
+            
+        let user = client[0];
+        if (user.status === 0)
             return res.send({
                 "status": 500,
                 "error": null,
                 "response": "User Disabled!"
             });
 
-        let user = client[0];
+        if (user.password_reset_status === enums.PASSWORD_RESET.STATUS.FALSE)
+            return res.send({
+                "status": 400,
+                "error": null,
+                "response": `Password has expired! A reset password email will be sent to ${user.email}`
+            });
+
         if (bcrypt.compareSync(password, user.password)) {
             user.token = jwt.sign({
                 ID: user.ID,
@@ -2642,6 +2650,7 @@ router.put('/forgot-password/update', (req, res) => {
         query = `UPDATE clients SET ? WHERE ID = ${decoded.ID}`;
         payload.password = bcrypt.hashSync(req.body.password, parseInt(process.env.SALT_ROUNDS));
         payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        payload.password_reset_status = enums.PASSWORD_RESET.STATUS.TRUE;
         db.query(query, payload, error => {
             if (error) return res.send({
                 "status": 500,

@@ -78,4 +78,11 @@ enums.VERIFY_EMAIL = {
     }
 };
 
+enums.PASSWORD_RESET = {
+    STATUS: {
+        FALSE: 0,
+        TRUE: 1
+    }
+};
+
 module.exports = enums;
