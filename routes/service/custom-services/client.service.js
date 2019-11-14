@@ -2580,18 +2580,7 @@ router.get('/kyc', (req, res) => {
 router.post('/forgot-password/get', (req, res) => {
     if (!req.body.username || !req.body.callback_url) return res.status(500).send('Required parameter(s) not sent!');
     let data = {},
-        query = `SELECT fullname, email, status FROM clients WHERE username = ${req.body.username}`;
-    const expiry_days = 1,
-        token = jwt.sign(
-            {
-                ID: req.user.ID,
-                email: req.user.email,
-                phone: req.user.phone
-            },
-            process.env.SECRET_KEY,
-            {
-                expiresIn: 60 * 60 * expiry_days
-            });
+        query = `SELECT ID, fullname, email, phone, status FROM clients WHERE username = ${req.body.username}`;
     db.query(query, (error, client_) => {
         if (error) return res.send({
             "status": 500,
@@ -2611,6 +2600,17 @@ router.post('/forgot-password/get', (req, res) => {
             "response": null
         });
 
+        const expiry_days = 1,
+            token = jwt.sign(
+                {
+                    ID: client.ID,
+                    email: client.email,
+                    phone: client.phone
+                },
+                process.env.SECRET_KEY,
+                {
+                    expiresIn: 60 * 60 * expiry_days
+                });
         data.fullname = client.fullname;
         data.date = moment().utcOffset('+0100').format('YYYY-MM-DD');
         data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
