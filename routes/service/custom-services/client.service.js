@@ -698,7 +698,6 @@ router.delete('/disable/:id', helperFunctions.verifyJWT, function (req, res) {
 });
 
 router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
-    console.log(req)
     let query = `SELECT *, (select fullname from users u where u.ID = clients.loan_officer) loan_officer,
         (select branch_name from branches b where b.ID = clients.branch) branch, 
         (select count(*) from applications where userID = clients.ID and not (status = 0 and close_status = 0)) total_active_loan_count, 
@@ -735,7 +734,7 @@ router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
                 async.forEach(files, function (file, callback) {
                     let filename = file.split('.')[1].split('_');
                     filename.shift();
-                    obj[filename.join('_')] = `${process.env.HOST}/${path}${file}`;
+                    obj[filename.join('_')] = `${process.env.HOST || req.HOST}/${path}${file}`;
                     callback();
                 }, function (data) {
                     result.files = obj;
@@ -828,7 +827,7 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function (req, res) 
                     res.send({
                         "status": 200,
                         "error": null,
-                        "response": `${process.env.HOST}/${encodeURI(file_url)}`
+                        "response": `${process.env.HOST || req.HOST}/${encodeURI(file_url)}`
                     });
                 });
             } else {
@@ -849,7 +848,7 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function (req, res) 
                         res.send({
                             "status": 200,
                             "error": null,
-                            "response": `${process.env.HOST}/${encodeURI(file_url)}`
+                            "response": `${process.env.HOST || req.HOST}/${encodeURI(file_url)}`
                         });
                     });
                 });
@@ -1047,7 +1046,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                                 async.forEach(files, function (file, callback) {
                                                     let filename = file.split('.')[0].split('_');
                                                     filename.shift();
-                                                    obj[filename.join('_')] = `${process.env.HOST}/${path}${file}`;
+                                                    obj[filename.join('_')] = `${process.env.HOST || req.HOST}/${path}${file}`;
                                                     callback();
                                                 }, function (data) {
                                                     result.files = Object.assign({}, result.files, obj);
@@ -1058,7 +1057,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                                         async.forEach(files, function (file, callback) {
                                                             let filename = file.split('.')[0].split('_');
                                                             filename.shift();
-                                                            obj[filename.join('_')] = `${process.env.HOST}/${path2}${file}`;
+                                                            obj[filename.join('_')] = `${process.env.HOST || req.HOST}/${path2}${file}`;
                                                             callback();
                                                         }, function (data) {
                                                             result.files = Object.assign({}, result.files, obj);
@@ -1069,7 +1068,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                                                 async.forEach(files, function (file, callback) {
                                                                     let filename = file.split('.')[0].split('_');
                                                                     filename.shift();
-                                                                    obj[filename.join('_')] = `${process.env.HOST}/${path3}${file}`;
+                                                                    obj[filename.join('_')] = `${process.env.HOST || req.HOST}/${path3}${file}`;
                                                                     callback();
                                                                 }, function (data) {
                                                                     result.file_downloads = obj;
@@ -1193,7 +1192,7 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
         application_id = req.params.application_id,
         query = `SELECT * FROM preapplications WHERE ID = ${application_id} AND userID = ${id}`,
         endpoint = '/core-service/get',
-        url = `${process.env.HOST}${endpoint}`;
+        url = `${process.env.HOST || req.HOST}${endpoint}`;
     if (extension) extension = extension.toLowerCase();
     if (!req.files) return res.status(500).send('No files were uploaded.');
     if (!req.params || !application_id || !name) return res.status(500).send('Required parameter(s) not sent!');
@@ -1224,7 +1223,7 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
                             res.send({
                                 "status": 200,
                                 "error": null,
-                                "response": `${process.env.HOST}/${encodeURI(file_url)}`
+                                "response": `${process.env.HOST || req.HOST}/${encodeURI(file_url)}`
                             });
                         });
                     } else {
@@ -1238,7 +1237,7 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
                                     res.send({
                                         "status": 200,
                                         "error": null,
-                                        "response": `${process.env.HOST}/${encodeURI(file_url)}`
+                                        "response": `${process.env.HOST || req.HOST}/${encodeURI(file_url)}`
                                     });
                                 });
                             }
@@ -1341,7 +1340,7 @@ router.get('/loan/get/:id/:application_id', helperFunctions.verifyJWT, function 
                         async.forEach(files, function (file, callback) {
                             let filename = file.split('.')[0].split('_');
                             filename.shift();
-                            obj[filename.join('_')] = `${process.env.HOST}/${path}${file}`;
+                            obj[filename.join('_')] = `${process.env.HOST || req.HOST}/${path}${file}`;
                             callback();
                         }, function (data) {
                             result.files = obj;
@@ -1630,7 +1629,7 @@ router.get('/verify/email/:token', function (req, res) {
 
 router.get('/logout', function (req, res) {
     delete req.user;
-    delete process.env.HOST;
+    delete process.env.HOST || req.HOST;
     return res.send({
         "status": 200,
         "error": null,
@@ -1865,7 +1864,7 @@ router.get('/preapproved-loan/create/:id/:loan_id', helperFunctions.verifyJWT, f
                 data.expiry = preapproved_loan.expiry_date;
                 data.contact = contact;
                 data.amount = helperFunctions.numberToCurrencyFormatter(preapproved_loan.loan_amount);
-                data.offer_url = `${process.env.HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}&i=${req.params.loan_id}`;
+                data.offer_url = `${process.env.HOST || req.HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}&i=${req.params.loan_id}`;
                 emailService.send({
                     to: email,
                     subject: `${process.env.TENANT} Mandate Setup`,
@@ -1911,7 +1910,7 @@ router.get('/preapproved-loan/get/:id/:loan_id/:key?', helperFunctions.verifyJWT
                 preapproved_loan.remita = remita_mandate_status;
                 preapproved_loan.merchantId = process.env.REMITA_MERCHANT_ID;
                 preapproved_loan.hash = encodeURIComponent(preapproved_loan.hash);
-                preapproved_loan.url = `${process.env.HOST}/offer?t=${preapproved_loan.hash}&i=${preapproved_loan.applicationID}`;
+                preapproved_loan.url = `${process.env.HOST || req.HOST}/offer?t=${preapproved_loan.hash}&i=${preapproved_loan.applicationID}`;
                 if (response['data'][0]['requestId'])
                     preapproved_loan.remita_hash = SHA512(preapproved_loan.merchantId + process.env.REMITA_API_KEY + response['data'][0]['requestId']);
                 return res.send({
@@ -2240,7 +2239,7 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
         application_id = req.params.application_id,
         query = `SELECT * FROM preapplications WHERE ID = ${application_id} AND userID = ${id}`,
         endpoint = '/core-service/get',
-        url = `${process.env.HOST}${endpoint}`;
+        url = `${process.env.HOST || req.HOST}${endpoint}`;
     if (extension) extension = extension.toLowerCase();
     if (!req.files) return res.status(500).send('No files were uploaded.');
     if (!req.params || !application_id || !name) return res.status(500).send('Required parameter(s) not sent!');
@@ -2271,7 +2270,7 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
                             res.send({
                                 "status": 200,
                                 "error": null,
-                                "response": `${process.env.HOST}/${encodeURI(file_url)}`
+                                "response": `${process.env.HOST || req.HOST}/${encodeURI(file_url)}`
                             });
                         });
                     } else {
@@ -2285,7 +2284,7 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
                                     res.send({
                                         "status": 200,
                                         "error": null,
-                                        "response": `${process.env.HOST}/${encodeURI(file_url)}`
+                                        "response": `${process.env.HOST || req.HOST}/${encodeURI(file_url)}`
                                     });
                                 });
                             }
