@@ -224,11 +224,8 @@
                 if (yes) {
                     if (bank.authorization === 'OTP') notification('You would receive an OTP from your bank to proceed!', '', 'warning');
                     let start = preapproved_loan.schedule[0]['payment_collect_date'],
-                        end = preapproved_loan.schedule[preapproved_loan.schedule.length-1]['payment_collect_date'];
-                    if (start === end) {
-                        let start_ = new Date(start);
-                        end = formatDate(start_.setDate(start_.getDate() + 1));
-                    }
+                        end_ = new Date(preapproved_loan.schedule[preapproved_loan.schedule.length-1]['payment_collect_date']),
+                        end = formatDate(end_.setDate(end_.getDate() + 30));
                     $.ajax({
                         'url': `/client/mandate/setup`,
                         'type': 'post',

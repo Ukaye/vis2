@@ -2671,7 +2671,8 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                         type: 'repayment',
                                                         loanID: old_invoice.applicationID,
                                                         module: 'collections',
-                                                        principal_amount: principal_due
+                                                        principal_amount: principal_due,
+                                                        principal_invoice_no: old_invoice.principal_invoice_no
                                                     });
                                                 }
                                             }
