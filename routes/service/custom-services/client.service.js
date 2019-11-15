@@ -454,17 +454,16 @@ router.post('/create', function (req, res) {
         if (err) throw err;
         connection.query(query2, [postData.username, postData.email, postData.phone], function (error, results) {
             if (results && results[0]) {
-                return res.send({ "status": 200, "error": null, "response": "Client already exists!" });
+                return res.send({ "status": 500, "error": "Client already exists!", "response": null});
             }
             let bvn = postData.bvn;
             if (bvn.trim() !== '') {
                 connection.query('select * from clients where bvn = ? and status = 1 limit 1', [bvn], function (error, rest, foelds) {
                     if (rest && rest[0]) {
-                        return res.send({ "status": 200, "error": null, "response": rest, "bvn_exists": "Yes" });
+                        return res.send({ "status": 500, "error": "BVN already exists!", "response": null});
                     }
                     connection.query(query, postData, function (error, re) {
                         if (error) {
-                            console.log(error);
                             res.send({ "status": 500, "error": error, "response": null });
                         } else {
                             connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function (err, re) {
@@ -487,11 +486,11 @@ router.post('/create', function (req, res) {
                                             });
                                             res.send({ "status": 200, "error": null, "response": re });
                                         } else {
-                                            res.send({ "status": 500, "error": er, "response": "Error creating client wallet!" });
+                                            res.send({ "status": 500, "error": "Error creating client wallet!", "response": null});
                                         }
                                     });
                                 } else {
-                                    res.send({ "status": 500, "error": err, "response": "Error retrieving client details. Please try a new username!" });
+                                    res.send({ "status": 500, "error": "Error retrieving client details. Please try a new username!", "response": null});
                                 }
                             });
                         }
