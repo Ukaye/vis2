@@ -808,7 +808,8 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function (req, res) 
                 break;
             }
         }
-        const file_url = `${folder_url}${folder}_${item}_${new Date()}.${extension}`;
+        const file_url = `${folder_url}${folder}_${item}.${extension}`,
+            file_url_ = `${folder_url}${folder}_${item}_${new Date()}.${extension}`;
         fs.stat(folder_url, function (err) {
             if (err && err.code === 'ENOENT') {
                 fs.mkdirSync(`files/users/${folder}/`);
@@ -826,7 +827,7 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function (req, res) 
                     res.send({
                         "status": 200,
                         "error": null,
-                        "response": `${process.env.HOST || req.HOST}/${encodeURI(file_url)}`
+                        "response": `${process.env.HOST || req.HOST}/${encodeURI(file_url_)}`
                     });
                 });
             } else {
@@ -847,7 +848,7 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function (req, res) 
                         res.send({
                             "status": 200,
                             "error": null,
-                            "response": `${process.env.HOST || req.HOST}/${encodeURI(file_url)}`
+                            "response": `${process.env.HOST || req.HOST}/${encodeURI(file_url_)}`
                         });
                     });
                 });
