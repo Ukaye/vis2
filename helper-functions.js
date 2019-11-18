@@ -63,38 +63,44 @@ functions.getNextWorkflowProcess = function(application_id, workflow_id, stage, 
     });
 };
 
-functions.workflowApprovalNotification = function (process, stage) {
+functions.workflowApprovalNotification = function (process, stage, workflow_id) {
     db.getConnection((err, connection) => {
         if (err) throw err;
-        async.forEach(stage.approverID.split(','), (role_id, callback) => {
-            let query = `SELECT fullname, email FROM users WHERE user_role = ${role_id}`;
-            connection.query(query, (error, users) => {
-                async.forEach(users, (user, callback_user) => {
-                    if (!user || !user.email) callback_user();
-                    query = `SELECT c.name, c.fullname FROM clients c, applications a 
-                        WHERE c.ID = a.userID AND a.ID = ${process.applicationID}`;
-                    connection.query(query, (error, client_) => {
-                        let client = 'client';
-                        if (client_ && client_[0])
-                            client = client_[0]['fullname'] || client_[0]['name'];
-                        emailService.send({
-                            to: user.email,
-                            subject: `Pending ${stage.name} Notification`,
-                            template: 'default',
-                            context: {
-                                name: user.fullname,
-                                message: `Application for ${client} with Loan ID#: ${functions.padWithZeroes(process.applicationID, 9)} 
-                                    is pending ${stage.name}!`
-                            }
+        let query = `SELECT * FROM workflows WHERE ID = ${workflow_id}`;
+        connection.query(query, (error, worklow) => {
+            if (!worklow || !worklow[0] || worklow[0]['admin_email'] === 0)
+                return connection.release();
+            async.forEach(stage.approverID.split(','), (role_id, callback) => {
+                query = `SELECT fullname, email FROM users WHERE user_role = ${role_id}`;
+                connection.query(query, (error, users) => {
+                    async.forEach(users, (user, callback_user) => {
+                        if (!user || !user.email) callback_user();
+                        query = `SELECT c.name, c.fullname FROM clients c, applications a 
+                            WHERE c.ID = a.userID AND a.ID = ${process.applicationID}`;
+                        connection.query(query, (error, client_) => {
+                            let client = 'client';
+                            if (client_ && client_[0])
+                                client = client_[0]['fullname'] || client_[0]['name'];
+                            emailService.send({
+                                to: user.email,
+                                subject: `Pending ${stage.name} Notification`,
+                                template: 'default',
+                                context: {
+                                    name: user.fullname,
+                                    message: `Application for ${client} with Loan ID#: 
+                                        ${functions.padWithZeroes(process.applicationID, 9)} 
+                                        is pending ${stage.name}!`
+                                }
+                            });
+                            callback_user();
                         });
-                        callback_user();
+                    }, data => {
+                        callback();
                     });
-                }, data => {
-                    callback();
                 });
+            }, data => {
+                connection.release();
             });
-        }, data => {
-            connection.release();
         });
     });
 };

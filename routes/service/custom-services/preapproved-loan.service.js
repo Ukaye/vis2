@@ -504,7 +504,7 @@ router.post('/offer/accept/:id', function (req, res, next) {
                                     if(error) {
                                         res.send({status: 500, error: error, response: null});
                                     } else {
-                                        if(stage) helperFunctions.workflowApprovalNotification(process, stage);
+                                        if(stage) helperFunctions.workflowApprovalNotification(process, stage, workflow_id);
                                         res.send(process_response);
                                     }
                                 });

@@ -144,6 +144,8 @@ function addProcess() {
         data.stages.shift();
     if ($('#client-information').val()) 
         workflow.client_information = $('#client-information').val().join();
+    workflow.client_email = ($('#client-email').is(':checked'))? 1 : 0;
+    workflow.admin_email = ($('#admin-email').is(':checked'))? 1 : 0;
 
     $('#wait').show();
     $.ajax({

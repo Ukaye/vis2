@@ -1781,9 +1781,8 @@ users.post('/apply', function(req, res) {
                 template: 'application',
                 context: data
             };
-            if (!workflow_id)
-                mailOptions.template =  'main';
-            emailService.send(mailOptions);
+            if (!workflow_id) mailOptions.template =  'main';
+            sendApplyEmail(mailOptions, workflow_id);
             if (!workflow_id)
                 return res.send({"status": 200, "message": "New Application Added!"});
             helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process, stage) {
@@ -1803,7 +1802,7 @@ users.post('/apply', function(req, res) {
                         if(error){
                             return res.send({"status": 500, "error": error, "response": null});
                         } else {
-                            if(stage) helperFunctions.workflowApprovalNotification(process, stage);
+                            if(stage) helperFunctions.workflowApprovalNotification(process, stage, workflow_id);
                             return res.send({"status": 200, "message": "New Application Added!", "response": application[0]});
                         }
                     });
@@ -1812,6 +1811,16 @@ users.post('/apply', function(req, res) {
         }
     });
 });
+
+function sendApplyEmail(mailOptions, workflow_id) {
+    if (!workflow_id) return emailService.send(mailOptions);
+    let query = `SELECT * FROM workflows WHERE ID = ${workflow_id}`;
+    db.query(query, (error, worklow) => {
+        if (!worklow || !worklow[0] || worklow[0]['client_email'] === 1) 
+            return emailService.send(mailOptions);
+        return;
+    });
+}
 
 users.post('/contact', function(req, res) {
     let data = req.body;
@@ -2369,7 +2378,7 @@ users.get('/application/assign_workflow/:id/:workflow_id/:agent_id', function(re
                     if(error){
                         res.send({"status": 500, "error": error, "response": null});
                     } else {
-                        if(stage) helperFunctions.workflowApprovalNotification(process, stage);
+                        if(stage) helperFunctions.workflowApprovalNotification(process, stage, workflow_id);
                         let query = 'SELECT u.fullname, u.phone, u.email, u.address, a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, ' +
                             'a.workflowID, a.loan_amount, a.date_modified, a.comment FROM clients AS u, applications AS a WHERE u.ID=a.userID AND a.status <> 0 ORDER BY a.ID desc';
                         db.query(query, function (error, results, fields) {
@@ -2424,7 +2433,7 @@ users.post('/workflow_process/:application_id/:workflow_id', function(req, res, 
                                 payload.description = 'Loan Application moved to next Workflow Stage';
                                 payload.affected = application_id;
                                 notificationsService.log(req, payload);
-                                if(stage) helperFunctions.workflowApprovalNotification(process, stage);
+                                if(stage) helperFunctions.workflowApprovalNotification(process, stage, workflow_id);
                                 res.send({"status": 200, "message": "Workflow Process created successfully!"});
                             }
                         });
