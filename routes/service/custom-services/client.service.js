@@ -808,7 +808,7 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function (req, res) 
                 break;
             }
         }
-        const file_url = `${folder_url}${folder}_${item}.${extension}`;
+        const file_url = `${folder_url}${folder}_${item}_${new Date()}.${extension}`;
         fs.stat(folder_url, function (err) {
             if (err && err.code === 'ENOENT') {
                 fs.mkdirSync(`files/users/${folder}/`);
@@ -2226,72 +2226,6 @@ router.get('/application/comment/:id/:loan_id', (req, res) => {
             "error": null,
             "response": comments
         });
-    });
-});
-
-router.post('/application/upload/:id/:application_id/:name', helperFunctions.verifyJWT, function (req, res) {
-    let id = req.params.id,
-        name = req.params.name,
-        sampleFile = req.files.file,
-        extArray = sampleFile.name.split("."),
-        extension = extArray[extArray.length - 1],
-        application_id = req.params.application_id,
-        query = `SELECT * FROM preapplications WHERE ID = ${application_id} AND userID = ${id}`,
-        endpoint = '/core-service/get',
-        url = `${process.env.HOST || req.HOST}${endpoint}`;
-    if (extension) extension = extension.toLowerCase();
-    if (!req.files) return res.status(500).send('No files were uploaded.');
-    if (!req.params || !application_id || !name) return res.status(500).send('Required parameter(s) not sent!');
-
-    axios.get(url, {
-        params: {
-            query: query
-        }
-    }).then(response => {
-        let client_application = response.data;
-        if (!client_application || !client_application[0]) {
-            return res.send({
-                "status": 500,
-                "error": "Application does not exist",
-                "response": null
-            });
-        } else {
-            const file_folder = `files/client_application-${application_id}/`;
-            fs.stat(file_folder, function (err) {
-                if (err && (err.code === 'ENOENT'))
-                    fs.mkdirSync(file_folder);
-
-                const file_url = `${file_folder}${application_id}_${name.trim().replace(/ /g, '_')}.${extension}`;
-                fs.stat(file_url, function (err) {
-                    if (err) {
-                        sampleFile.mv(file_url, function (err) {
-                            if (err) return res.status(500).send(err);
-                            res.send({
-                                "status": 200,
-                                "error": null,
-                                "response": `${process.env.HOST || req.HOST}/${encodeURI(file_url)}`
-                            });
-                        });
-                    } else {
-                        fs.unlink(file_url, function (err) {
-                            if (err) {
-                                return console.log(err);
-                            } else {
-                                sampleFile.mv(file_url, function (err) {
-                                    if (err)
-                                        return res.status(500).send(err);
-                                    res.send({
-                                        "status": 200,
-                                        "error": null,
-                                        "response": `${process.env.HOST || req.HOST}/${encodeURI(file_url)}`
-                                    });
-                                });
-                            }
-                        });
-                    }
-                });
-            });
-        }
     });
 });
 
