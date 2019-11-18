@@ -3451,6 +3451,7 @@ users.post('/application/disburse/:id', function(req, res, next) {
                                     Reference: helperFunctions.padWithZeroes(application.ID, 9),
                                     IsReconciled: 'true'
                                 });
+                                console.log(xeroDisbursement.BankTransactions[0])
                                 disbursement.xeroDisbursementID = xeroDisbursement.BankTransactions[0]['BankTransactionID'];
                                 auditLog.log({
                                     clientID: application.clientID,
