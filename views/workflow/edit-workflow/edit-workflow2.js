@@ -201,8 +201,10 @@ function init(stages){
         'success': function (data) {
             let workflow = data.response;
             $('#process-name').val(workflow.name);
-            $('#client-information').val(workflow.client_information.split(','));
-            $('#client-information').multiselect("refresh");
+            if (workflow.client_information) {
+                $('#client-information').val(workflow.client_information.split(','));
+                $('#client-information').multiselect("refresh");
+            }
             if (workflow.client_email === 1) $('#client-email').prop('checked', true);
             if (workflow.admin_email === 1) $('#admin-email').prop('checked', true);
         },
