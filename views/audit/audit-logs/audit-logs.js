@@ -246,7 +246,7 @@ function confirm(id) {
         'success': function (data) {
             $wait.hide();
             notification('Audit confirmed successfully', '', 'success');
-            window.location.reload();
+            return table_collections.ajax.reload(null, false);
         },
         'error': function (err) {
             $wait.hide();
