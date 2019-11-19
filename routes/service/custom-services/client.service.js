@@ -1410,22 +1410,21 @@ router.get('/applications/get', function (req, res) {
     let search_string = req.query.search_string.toUpperCase();
     let query_status = `(${enums.CLIENT_APPLICATION.STATUS.ACTIVE},${enums.CLIENT_APPLICATION.STATUS.APPROVED})`;
     let query = `SELECT p.*, c.fullname, c.phone FROM preapplications p, clients c WHERE p.userID = c.ID AND p.status in 
-     ${query_status} AND p.ID NOT IN (SELECT a.preapplicationID FROM applications a WHERE p.userID = a.userID) AND p.creator_type = "client"
+     ${query_status} AND p.ID NOT IN (SELECT a.preapplicationID FROM applications a WHERE p.ID = a.preapplicationID) AND p.creator_type = "client"
      AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
      OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
-    console.log(query)
     axios.get(url, {
         params: {
             query: query
         }
     }).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM preapplications p WHERE p.status in 
-         ${query_status} AND p.ID NOT IN (SELECT a.preapplicationID FROM applications a WHERE p.userID = a.userID)  AND p.creator_type = "client"
+         ${query_status} AND p.ID NOT IN (SELECT a.preapplicationID FROM applications a WHERE p.ID = a.preapplicationID)  AND p.creator_type = "client"
          AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
          OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM preapplications WHERE status in ${query_status} 
-         AND ID NOT IN (SELECT a.preapplicationID FROM applications a WHERE userID = a.userID) AND creator_type = "client"`;
+         AND ID NOT IN (SELECT a.preapplicationID FROM applications a WHERE ID = a.preapplicationID) AND creator_type = "client"`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {
