@@ -421,4 +421,14 @@ String.prototype.round = function(p) {
     return parseFloat(this).toFixed(p);
 };
 
+functions.calculatePaystackFee = value => {
+    if (!value) return value;
+    if (value.constructor === 'String'.constructor)
+        value = parseFloat(value);
+    let fee = (0.0153 * value) - ((value < 2500)? 0 : 101.53);
+    return ((fee > 2000? 2000 : fee) * 100).round(2);
+};
+
+console.log(functions.calculatePaystackFee(9500))
+
 module.exports = functions;

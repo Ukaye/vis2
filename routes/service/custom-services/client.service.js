@@ -549,7 +549,7 @@ router.post('/login', function (req, res) {
                 "response": "Connection Error!"
             });
 
-        if (!client[0])
+        if (!client || !client[0] || !client[0]['password'])
             return res.send({
                 "status": 500,
                 "error": null,
