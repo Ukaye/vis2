@@ -178,7 +178,7 @@ function requireLogin(req, res, next) {
             let name = 'Others'
             let role = parseInt(req.session.user);
             let query = 'SELECT id,module_id, (select module_name from modules m where m.id = module_id) as module_name, read_only, editable FROM permissions where role_id = ? ' +
-                'and ((select menu_name from modules m where m.id = module_id) <> ?) and date in (select max(date) from permissions where role_id = ?) group by module_id'
+                'and ((select menu_name from modules m where m.id = module_id) <> ?) and date = (select date from permissions where role_id = ? and id = (select max(id) from permissions where role_id = ?)) group by module_id'
             db.query(query, [role, name, role], function (error, result, fields) {
                 if (!error) {
                     let status = true;
