@@ -28,6 +28,8 @@ email.send = function (mailOptions) {
     mailOptions.from = mailOptions.from || 'no-reply@app.finratus.com';
     mailOptions.subject = `${process.env.TENANT}: ${mailOptions.subject}`;
     transporter.sendMail(mailOptions, function(error, info){
+        console.log(error)
+        console.log(info)
         if (error) console.log(error);
     });
 };
