@@ -1584,7 +1584,6 @@ router.post('/verify/email/:id', helperFunctions.verifyJWT, function (req, res) 
     data.date = moment().utcOffset('+0100').format('YYYY-MM-DD');
     data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
     data.verify_url = `${req.body.callback_url}?token=${token}`;
-    console.log(data)
     emailService.send({
         to: req.user.email,
         subject: 'Email Verification',
