@@ -27,10 +27,7 @@ email.send = function (mailOptions) {
     if (process.env.ADMIN_EMAIL) mailOptions.to = mailOptions.to.concat(`,${process.env.ADMIN_EMAIL}`);
     mailOptions.from = mailOptions.from || 'no-reply@app.finratus.com';
     mailOptions.subject = `${process.env.TENANT}: ${mailOptions.subject}`;
-    console.log(mailOptions)
     transporter.sendMail(mailOptions, function(error, info){
-        console.log(error)
-        console.log(info)
         if (error) console.log(error);
     });
 };
