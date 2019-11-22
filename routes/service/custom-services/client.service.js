@@ -1587,7 +1587,7 @@ router.post('/verify/email/:id', helperFunctions.verifyJWT, function (req, res) 
     emailService.send({
         to: req.user.email,
         subject: 'Email Verification',
-        template: 'verify-email',
+        template: 'forgot',
         context: data
     });
     return res.send({
