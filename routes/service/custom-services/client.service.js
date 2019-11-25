@@ -808,7 +808,7 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function (req, res) 
                 break;
             }
         }
-        const file_url = `${folder_url}${folder}_${item}_${new Date()}.${extension}`;
+        const file_url = `${folder_url}${folder}_${item}.${extension}`;
         fs.stat(folder_url, function (err) {
             if (err && err.code === 'ENOENT') {
                 fs.mkdirSync(`files/users/${folder}/`);
