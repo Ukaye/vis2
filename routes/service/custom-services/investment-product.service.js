@@ -813,7 +813,6 @@ router.post('/get-maturity-dates', function (req, res, next) {
     
     const result1 = moment(`${data.year}-${data.month}-${data.day}`, 'YYYY-MM-DD').add(data.min, 'M').format();
     const result2 = moment(`${data.year}-${data.month}-${data.day}`, 'YYYY-MM-DD').add(data.max, 'M').format();
-    console.log(result1, result2, 'bbbbb')
     
     res.send({ min: result1, max: result2 });
 });

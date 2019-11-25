@@ -150,6 +150,10 @@
                     $('#salary-div').show();
                     $('#salary').val(response.salary);
                 }
+                if (response.work_email) {
+                    $('#work-email-div').show();
+                    $('#work-email').val(response.work_email);
+                }
                 read_write_custom();
             }
         });
