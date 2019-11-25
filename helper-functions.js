@@ -429,6 +429,4 @@ functions.calculatePaystackFee = value => {
     return ((fee > 2000? 2000 : fee) * 100).round(2);
 };
 
-console.log(functions.calculatePaystackFee(9500))
-
 module.exports = functions;

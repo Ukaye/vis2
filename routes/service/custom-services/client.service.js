@@ -545,30 +545,37 @@ router.post('/login', function (req, res) {
         if (err)
             return res.send({
                 "status": 500,
-                "error": err,
-                "response": "Connection Error!"
+                "error": "Connection Error!",
+                "response": null
             });
 
-        if (!client || !client[0] || !client[0]['password'])
+        if (!client || !client[0])
             return res.send({
                 "status": 500,
-                "error": null,
-                "response": "Incorrect Username/Password!"
+                "error": "Sorry we can’t find this email in our record, please click here to sign up!",
+                "response": null
+            });
+
+        if (!client[0]['password'])
+            return res.send({
+                "status": 500,
+                "error": "Incorrect Username/Password!",
+                "response": null
             });
             
         let user = client[0];
         if (user.status === 0)
             return res.send({
                 "status": 500,
-                "error": null,
-                "response": "User Disabled!"
+                "error": "User Disabled!",
+                "response": null
             });
 
         if (user.password_reset_status === enums.PASSWORD_RESET.STATUS.FALSE && password.toLowerCase() === 'password')
             return res.send({
                 "status": 400,
-                "error": null,
-                "response": `Password has expired! A reset password email will be sent to ${user.email}`
+                "error": `Password has expired! A reset password email will be sent to ${user.email}`,
+                "response": null
             });
 
         if (bcrypt.compareSync(password, user.password)) {
@@ -599,8 +606,8 @@ router.post('/login', function (req, res) {
         } else {
             res.send({
                 "status": 500,
-                "error": null,
-                "response": "Password is incorrect!"
+                "error": "Password is incorrect!",
+                "response": null
             });
         }
     });
@@ -749,9 +756,8 @@ router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
 });
 
 router.get('/products', helperFunctions.verifyJWT, function (req, res) {
-    let query = 'SELECT w.*, a.loan_requested_min, a.loan_requested_max, a.tenor_min, a.tenor_max, a.interest_rate_min, a.interest_rate_max, ' +
-        '(SELECT GROUP_CONCAT(NULLIF(s.document,"")) FROM workflow_stages s WHERE w.ID = s.workflowID) document ' +
-        'FROM workflows w, application_settings a WHERE w.status <> 0 AND a.ID = (SELECT MAX(ID) FROM application_settings) ORDER BY w.ID desc';
+    let query = 'SELECT w.*, (SELECT GROUP_CONCAT(NULLIF(s.document,"")) FROM workflow_stages s WHERE w.ID = s.workflowID) document ' +
+        'FROM workflows w WHERE w.status <> 0 ORDER BY w.ID desc';
     db.query(query, function (error, results) {
         if (error)
             return res.send({

@@ -3,6 +3,30 @@ $(document).ready(function() {
     getRoles();
 });
 
+$("#loan_requested_min").on("keyup", e => {
+    $("#loan_requested_min").val(numberToCurrencyformatter(e.target.value));
+});
+
+$("#loan_requested_max").on("keyup", e => {
+    $("#loan_requested_max").val(numberToCurrencyformatter(e.target.value));
+});
+
+$("#tenor_min").on("keyup", e => {
+    $("#tenor_min").val(numberToCurrencyformatter(e.target.value));
+});
+
+$("#tenor_max").on("keyup", e => {
+    $("#tenor_max").val(numberToCurrencyformatter(e.target.value));
+});
+
+$("#interest_rate_min").on("keyup", e => {
+    $("#interest_rate_min").val(numberToCurrencyformatter(e.target.value));
+});
+
+$("#interest_rate_max").on("keyup", e => {
+    $("#interest_rate_max").val(numberToCurrencyformatter(e.target.value));
+});
+
 $('#client-information').multiselect({
     includeSelectAllOption: true
 });
@@ -127,6 +151,24 @@ $('#client-email').click(e => {
 $('#admin-email').click(e => {
     archiveWorkflow(e);
 });
+$('#loan_requested_min').click(e => {
+    archiveWorkflow(e);
+});
+$('#loan_requested_max').click(e => {
+    archiveWorkflow(e);
+});
+$('#tenor_min').click(e => {
+    archiveWorkflow(e);
+});
+$('#tenor_max').click(e => {
+    archiveWorkflow(e);
+});
+$('#interest_rate_min').click(e => {
+    archiveWorkflow(e);
+});
+$('#interest_rate_max').click(e => {
+    archiveWorkflow(e);
+});
 
 function archiveWorkflow(e) {
     if (localStorage.archive_workflow === 'false'){
@@ -170,6 +212,25 @@ function addProcess() {
         workflow.client_information = $('#client-information').val().join();
     workflow.client_email = ($('#client-email').is(':checked'))? 1 : 0;
     workflow.admin_email = ($('#admin-email').is(':checked'))? 1 : 0;
+    workflow.loan_requested_min = currencyToNumberformatter($('#loan_requested_min').val());
+    workflow.loan_requested_max = currencyToNumberformatter($('#loan_requested_max').val());
+    workflow.tenor_min = currencyToNumberformatter($('#tenor_min').val());
+    workflow.tenor_max = currencyToNumberformatter($('#tenor_max').val());
+    workflow.interest_rate_min = currencyToNumberformatter($('#interest_rate_min').val());
+    workflow.interest_rate_max = currencyToNumberformatter($('#interest_rate_max').val());
+    workflow.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
+    if (!workflow.loan_requested_min || workflow.loan_requested_min <= 0)
+        return notification('Invalid loan requested min','','warning');
+    if (!workflow.loan_requested_max || workflow.loan_requested_max <= 0)
+        return notification('Invalid loan requested max','','warning');
+    if (!workflow.tenor_min || workflow.tenor_min <= 0)
+        return notification('Invalid tenor min','','warning');
+    if (!workflow.tenor_max || workflow.tenor_max <= 0)
+        return notification('Invalid tenor max','','warning');
+    if (!workflow.interest_rate_min || workflow.interest_rate_min <= 0)
+        return notification('Invalid interest rate min','','warning');
+    if (!workflow.interest_rate_max || workflow.interest_rate_max <= 0)
+        return notification('Invalid interest rate max','','warning');
     if (localStorage.archive_workflow === 'false')
         url = '/edit-workflows/';
 
@@ -207,6 +268,12 @@ function init(stages){
             }
             if (workflow.client_email === 1) $('#client-email').prop('checked', true);
             if (workflow.admin_email === 1) $('#admin-email').prop('checked', true);
+            if (workflow.loan_requested_min) $('#loan_requested_min').val(numberToCurrencyformatter(workflow.loan_requested_min));
+            if (workflow.loan_requested_max) $('#loan_requested_max').val(numberToCurrencyformatter(workflow.loan_requested_max));
+            if (workflow.tenor_min) $('#tenor_min').val(numberToCurrencyformatter(workflow.tenor_min));
+            if (workflow.tenor_max) $('#tenor_max').val(numberToCurrencyformatter(workflow.tenor_max));
+            if (workflow.interest_rate_min) $('#interest_rate_min').val(numberToCurrencyformatter(workflow.interest_rate_min));
+            if (workflow.interest_rate_max) $('#interest_rate_max').val(numberToCurrencyformatter(workflow.interest_rate_max));
         },
         'error': function (err) {
             console.log(err);
