@@ -2531,7 +2531,7 @@ router.post('/forgot-password/get', (req, res) => {
         });
         if (!client_ || !client_[0]) return res.send({
             "status": 500,
-            "error": 'Client does not exist!',
+            "error": 'Sorry we can’t find this email in our record, please click here to sign up!',
             "response": null
         });
 
