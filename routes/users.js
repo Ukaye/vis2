@@ -1933,18 +1933,6 @@ users.get('/user-applications/:id', function(req, res, next) {
     });
 });
 
-users.get('/application/:id', function(req, res, next) {
-    let query = 'SELECT u.fullname, u.phone, u.email, u.address, a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, ' +
-        'a.workflowID, a.loan_amount, a.date_modified, a.comment FROM clients AS u, applications AS a WHERE u.ID=a.userID AND u.ID =?';
-    db.query(query, [req.params.id], function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
-        } else {
-            res.send({"status": 200, "message": "User applications fetched successfully!", "response": results});
-        }
-    });
-});
-
 users.get('/application-id/:id', function(req, res, next) {
     let obj = {},
         application_id = req.params.id,
@@ -3538,14 +3526,100 @@ function createXeroSchedule (req, res) {
     });
 }
 
-users.get('/application/invoice-history/:id', function(req, res, next) {
-    db.query('SELECT s.ID, s.invoiceID, s.payment_amount, s.interest_amount, s.fees_amount, s.penalty_amount, s.payment_date, s.date_created, s.status,' +
-        's.applicationID, u.fullname AS agent FROM schedule_history AS s, users AS u WHERE s.agentID=u.ID AND invoiceID = ? ORDER BY ID desc', [req.params.id], function (error, history, fields) {
+users.get('/application/invoice-history/:id?/:status?', function(req, res, next) {
+    db.query(`SELECT s.ID, s.invoiceID, s.payment_amount, s.interest_amount, s.fees_amount, s.penalty_amount, s.payment_date, s.payment_source, 
+        s.date_created, s.status, s.applicationID, u.fullname AS agent FROM schedule_history AS s, users AS u 
+        WHERE s.agentID=u.ID ${(req.query.id)? `AND invoiceID = ${req.query.id}`:''} AND s.status in (${req.query.status || '0,1'}) ORDER BY ID desc`, function (error, history) {
         if(error){
             res.send({"status": 500, "error": error, "response": null});
         } else {
             res.send({"status": 200, "message": "Invoice history fetched successfully!", "response":history});
         }
+    });
+});
+
+users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
+    let data = req.body;
+    data.status = 1;
+    // if (data.xeroCollectionBankID)
+    // if (data.xeroCollectionDescription)
+    // if (data.agentID)
+    xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async () => {
+        db.query(`select s.clientID, s.applicationID, s.xeroPrincipalPaymentID, s.xeroInterestPaymentID, 
+            i.principal_invoice_no, i.interest_invoice_no, c.fullname from schedule_history s, application_schedules i, clients c 
+            where s.invoiceID = i.ID AND s.clientID = c.ID AND s.ID = ${req.params.id}`, 
+        (error, result) => {
+            if (error) {
+                res.send({"status": 500, "error": error, "response": null});
+            } else {
+                let payment = result[0];
+                xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
+                    if (xeroClient && payment.payment_amount > 0 && 
+                        payment.principal_invoice_no && data.xeroCollectionBankID) {
+                        let xeroPayment = await xeroClient.payments.create({
+                            Invoice: {
+                                InvoiceNumber: payment.principal_invoice_no
+                            },
+                            Account: {
+                                Code: data.xeroCollectionBankID
+                            },
+                            Date: payment.payment_date,
+                            Amount: payment.payment_amount,
+                            IsReconciled: true,
+                            Reference: (data.xeroCollectionDescription || '').concat(` | 
+                                ${payment.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(payment.applicationID, 9)} | `)
+                        });
+                        data.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                    }
+                    if (xeroClient && payment.interest_amount > 0 && 
+                        payment.interest_invoice_no && data.xeroCollectionBankID) {
+                        let xeroPayment = await xeroClient.payments.create({
+                            Invoice: {
+                                InvoiceNumber: payment.interest_invoice_no
+                            },
+                            Account: {
+                                Code: data.xeroCollectionBankID
+                            },
+                            Date: payment.payment_date,
+                            Amount: payment.interest_amount,
+                            IsReconciled: true,
+                            Reference: (data.xeroCollectionDescription || '').concat(` | 
+                                ${payment.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(payment.applicationID, 9)} | `)
+                        });
+                        data.xeroInterestPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                    }
+                });
+                db.query(`UPDATE schedule_history SET ? WHERE ID = ${req.params.id}`, data, (error, history) => {
+                    if(error) {
+                        res.send({"status": 500, "error": error, "response": null});
+                    } else {
+                        db.query(`UPDATE application_schedules SET payment_status=1 WHERE ID = ${req.params.invoice_id}`, (error, invoice) => {
+                            if(error){
+                                res.send({"status": 500, "error": error, "response": null});
+                            } else {
+                                let payload = {};
+                                payload.category = 'Application';
+                                payload.userid = req.cookies.timeout;
+                                payload.description = 'Payment confirmed for Loan';
+                                payload.affected = payment.applicationID;
+                                notificationsService.log(req, payload);
+                                    auditLog.log({
+                                        clientID: payment.clientID,
+                                        amount: payment.actual_amount,
+                                        type: 'repayment',
+                                        loanID: payment.applicationID,
+                                        module: 'collections',
+                                        principal_amount: payment.payment_amount,
+                                        interest_amount: payment.interest_amount,
+                                        escrow_amount: payment.escrow_amount
+                                    });
+                                res.send({"status": 200, "message": "Payment confirmed successfully!", "response":history});
+                            }
+                        });
+                    }
+                });
+            }
+        });
     });
 });
 

@@ -1757,6 +1757,7 @@ router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, fun
                                     invoice.invoiceID = req.params.invoice_id;
                                     invoice.agentID = 1;
                                     invoice.applicationID = invoice_.app_id;
+                                    invoice.actual_amount = invoice_.amount;
                                     invoice.payment_amount = data.actual_payment_amount;
                                     invoice.interest_amount = data.actual_interest_amount;
                                     invoice.fees_amount = data.actual_fees_amount;
@@ -1768,6 +1769,7 @@ router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, fun
                                     invoice.loan_officerID = invoice_.loan_officer;
                                     invoice.branchID = invoice_.branch;
                                     invoice.type = 'multiple';
+                                    invoice.status = 2;
                                     db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response) {
                                         if (error) {
                                             res.send({
@@ -2137,6 +2139,7 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
                                     invoice.invoiceID = req.params.invoice_id;
                                     invoice.agentID = 1;
                                     invoice.applicationID = invoice_.app_id;
+                                    invoice.actual_amount = invoice_.amount;
                                     invoice.payment_amount = data.actual_payment_amount;
                                     invoice.interest_amount = data.actual_interest_amount;
                                     invoice.fees_amount = data.actual_fees_amount;
@@ -2148,6 +2151,7 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
                                     invoice.loan_officerID = invoice_.loan_officer;
                                     invoice.branchID = invoice_.branch;
                                     invoice.type = 'multiple';
+                                    invoice.status = 2;
                                     db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response) {
                                         if (error) {
                                             res.send({
@@ -2437,6 +2441,7 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
                                     invoice.invoiceID = req.params.invoice_id;
                                     invoice.agentID = 1;
                                     invoice.applicationID = invoice_.app_id;
+                                    invoice.actual_amount = req.body.amount;
                                     invoice.payment_amount = data.actual_payment_amount;
                                     invoice.interest_amount = data.actual_interest_amount;
                                     invoice.fees_amount = data.actual_fees_amount;
@@ -2447,6 +2452,7 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
                                     invoice.clientID = invoice_.userID;
                                     invoice.loan_officerID = invoice_.loan_officer;
                                     invoice.branchID = invoice_.branch;
+                                    invoice.status = 2;
                                     if (invoice.payment_amount > 0 && invoice.interest_amount > 0) {
                                         invoice.type = 'multiple';
                                     } else {

@@ -338,7 +338,7 @@ function initRepaymentSchedule(application) {
                                     '        <a class="dropdown-item" href="#" onclick="selectRemitaModal('+application.schedule[i - 2]['ID']+')">Apply Remita</a>\n' +
                                     '        <div class="dropdown-divider"></div>\n' +
                                     '        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#editSchedule" onclick="editScheduleModal('+application.schedule[i - 2]['ID']+')">Edit Schedule</a>\n' +
-                                    '        <a class="dropdown-item" data-toggle="modal" data-target="#invoiceHistory" href="#" onclick="invoiceHistory('+application.schedule[i - 2]['ID']+')">Payment History</a>\n' +
+                                    '        <a class="dropdown-item" href="#" onclick="invoiceHistory('+application.schedule[i - 2]['ID']+')">Payment History</a>\n' +
                                     '        <a class="dropdown-item" data-toggle="modal" data-target="#editHistory" href="#" onclick="editHistory('+application.schedule[i - 2]['ID']+')">Edit History</a>\n' +
                                     '        <a class="dropdown-item" href="#" onclick="writeOff('+application.schedule[i - 2]['ID']+')">Write Off</a>\n' +
                                     '    </div>\n' +
@@ -352,7 +352,7 @@ function initRepaymentSchedule(application) {
                                     '        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#confirmPayment" onclick="confirmPaymentModal('+application.schedule[i - 2]['ID']+')">Confirm Payment</a>\n' +
                                     '        <a class="dropdown-item" href="#" onclick="selectRemitaModal('+application.schedule[i - 2]['ID']+')">Apply Remita</a>\n' +
                                     '        <div class="dropdown-divider"></div>\n' +
-                                    '        <a class="dropdown-item" data-toggle="modal" data-target="#invoiceHistory" href="#" onclick="invoiceHistory('+application.schedule[i - 2]['ID']+')">Payment History</a>\n' +
+                                    '        <a class="dropdown-item" href="#" onclick="invoiceHistory('+application.schedule[i - 2]['ID']+')">Payment History</a>\n' +
                                     '        <a class="dropdown-item" data-toggle="modal" data-target="#editHistory" href="#" onclick="editHistory('+application.schedule[i - 2]['ID']+')">Edit History</a>\n' +
                                     '        <a class="dropdown-item" href="#" onclick="writeOff('+application.schedule[i - 2]['ID']+')">Write Off</a>\n' +
                                     '    </div>\n' +
@@ -364,7 +364,7 @@ function initRepaymentSchedule(application) {
                                 '        <i class="fa fa-list"></i>\n' +
                                 '    </button>\n' +
                                 '    <div class="dropdown-menu">\n' +
-                                '        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#invoiceHistory" onclick="invoiceHistory('+application.schedule[i - 2]['ID']+')">Payment History</a>\n' +
+                                '        <a class="dropdown-item" href="#" onclick="invoiceHistory('+application.schedule[i - 2]['ID']+')">Payment History</a>\n' +
                                 '        <a class="dropdown-item" data-toggle="modal" data-target="#editHistory" href="#" onclick="editHistory('+application.schedule[i - 2]['ID']+')">Edit History</a>\n' +
                                 '    </div>\n' +
                                 '</div>');
@@ -410,10 +410,14 @@ function totalActualPayment(a){
 
 let remita_id,
     invoice_id,
+    payment_id,
+    web_payment,
+    invoice_history,
     expected_invoice,
     selected_schedule;
-function confirmPaymentModal(id) {
+function confirmPaymentModal(id, id2) {
     invoice_id = id;
+    payment_id = id2;
     let invoice_obj = ($.grep(application.schedule, function (e) { return parseInt(e.ID) === parseInt(invoice_id) }))[0],
         invoice = $.extend({},invoice_obj);
     selected_schedule = invoice_obj;
@@ -426,11 +430,23 @@ function confirmPaymentModal(id) {
     $('#source').val(0);
     $('#message').text('');
     $('#overpayment-message').text('');
-    // $('#repayment-date').val(new Date().toDateInputValue());
     $('#principal').attr({max:invoice.payment_amount});
     $('#interest').attr({max:invoice.interest_amount});
     $('#principal-payable').text('₦'+(parseFloat(invoice.payment_amount)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
     $('#interest-payable').text('₦'+(parseFloat(invoice.interest_amount)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
+    $('#invoiceHistory').modal('hide');
+    $('#confirmPayment').modal('show');
+    
+    if (payment_id) {
+        web_payment = ($.grep(invoice_history, e => {return (e.ID === parseInt(payment_id))}))[0];
+        $('#source').val('web').prop('disabled', true);
+        $('#payment').val(web_payment.actual_amount).prop('disabled', true);
+        $('#principal').val(web_payment.payment_amount).prop('disabled', true);
+        $('#interest').val(web_payment.interest_amount).prop('disabled', true);
+        $('#fees').val(web_payment.fees_amount).prop('disabled', true);
+        $('#penalty').val(web_payment.penalty_amount).prop('disabled', true);
+        $('#payment_date').val(web_payment.payment_date).prop('disabled', true);
+    }
 }
 
 function selectRemitaModal(id) {
@@ -519,8 +535,6 @@ function validation() {
 }
 
 function confirmPayment() {
-    if (xero_config && xero_config.xero_collection_bank === 1 && !selected_schedule.interest_invoice_no)
-        return notification('Xero invoice no is required','Kindly update this invoice with the xero invoice no','warning');
     let invoice = {};
     invoice.actual_amount = $('#payment').val() || '0';
     invoice.actual_payment_amount = $('#principal').val() || '0';
@@ -529,29 +543,33 @@ function confirmPayment() {
     invoice.actual_penalty_amount = $('#penalty').val() || '0';
     invoice.payment_source = $('#source').val();
     invoice.payment_date = $('#repayment-date').val();
+    if (invoice.payment_source === 'remita' && remita_id) invoice.remitaPaymentID = remita_id;
+    if ($('#collection_bank').val() !== '000') invoice.xeroCollectionBankID = $('#collection_bank').val();
+    if ($('#collection_description').val()) invoice.xeroCollectionDescription = $('#collection_description').val();
     let total_payment = (parseFloat(invoice.actual_payment_amount) +
                         parseFloat(invoice.actual_interest_amount) +
                         parseFloat(invoice.actual_fees_amount) +
                         parseFloat(invoice.actual_penalty_amount)).round(2);
+    let overpayment = (invoice.actual_amount - total_payment).round(2);
+    invoice.escrow_amount = overpayment;
+    application.escrow = application.escrow || "0";
+
     if (!invoice.payment_date)
         return notification('Kindly specify a payment date to proceed','','warning');
     if (invoice.payment_source === '0')
         return notification('Kindly select a payment source to proceed','','warning');
-    application.escrow = application.escrow || "0";
     if (invoice.payment_source === 'escrow' && (total_payment > (parseFloat(application.escrow)).round(2)))
         return notification('Insufficient escrow funds ('+parseFloat(application.escrow).round(2)+')','','warning');
-    if (invoice.payment_source === 'remita' && remita_id) invoice.remitaPaymentID = remita_id;
-    if ($('#collection_bank').val() !== '000') invoice.xeroCollectionBankID = $('#collection_bank').val();
+    if (overpayment < 0)
+        return notification(`Actual payment cannot be less than ₦${numberToCurrencyformatter((parseFloat(invoice.actual_payment_amount) + 
+            parseFloat(invoice.actual_interest_amount)).round(2))}`,'','warning');
     if (xero_config && xero_config.xero_collection_description === 1 && 
         invoice.payment_source !== 'escrow' && !$('#collection_description').val()) {
             return notification('Kindly specify a statement description to proceed','','warning');
     }
-    if ($('#collection_description').val()) invoice.xeroCollectionDescription = $('#collection_description').val();
-    let overpayment = (invoice.actual_amount - (parseFloat(invoice.actual_payment_amount) + parseFloat(invoice.actual_interest_amount))).round(2);
-    if (overpayment < 0)
-        return notification(`Actual payment cannot be less than ₦${numberToCurrencyformatter((parseFloat(invoice.actual_payment_amount) + 
-            parseFloat(invoice.actual_interest_amount)).round(2))}`,'','warning');
-    invoice.escrow_amount = overpayment;
+    if (web_payment) return confirmWebPayment(invoice); 
+    if (xero_config && xero_config.xero_collection_bank === 1 && !selected_schedule.interest_invoice_no)
+        return notification('Xero invoice no is required','Kindly update this invoice with the xero invoice no','warning');
     $('#wait').show();
     $('#confirmPayment').modal('hide');
     updateEscrow(invoice, total_payment, function () {
@@ -597,6 +615,25 @@ function confirmPayment() {
                     notification('Oops! An error occurred while confirming payment','','error');
                 }
             });
+        }
+    });
+}
+
+function confirmWebPayment(invoice) {
+    invoice.agentID = (JSON.parse(localStorage.getItem('user_obj')))['ID'];
+    $('#wait').show();
+    $.ajax({
+        'url': `/user/application/invoice-history/${payment_id}/${invoice_id}`,
+        'type': 'put',
+        'data': invoice,
+        'success': function (data) {
+            $('#wait').hide();
+            notification('Payment confirmed successfully','','success');
+            // window.location.reload();
+        },
+        'error': function (err) {
+            $('#wait').hide();
+            notification('Oops! An error occurred while confirming payment','','error');
         }
     });
 }
@@ -705,11 +742,16 @@ function editSchedule() {
     });
 }
 
-function invoiceHistory(invoice_id) {
+function invoiceHistory(invoice_id, status) {
+    $('#invoiceHistory').modal('show');
+    let url = '/user/application/invoice-history';
+    if (invoice_id) url = url.concat(`?id=${invoice_id}`);
+    if (status) url = url.concat(`?status=${status}`);
     $.ajax({
-        'url': '/user/application/invoice-history/'+invoice_id,
+        'url': url,
         'type': 'get',
         'success': function (data) {
+            invoice_history = data.response;
             $("#invoice-history").dataTable().fnClearTable();
             $.each(data.response, function(k, v){
                 let table = [
@@ -718,7 +760,7 @@ function invoiceHistory(invoice_id) {
                     v.interest_amount,
                     v.fees_amount,
                     v.penalty_amount,
-                    v.agent,
+                    (v.payment_source === 'paystack')? 'web':v.agent,
                     v.payment_date,
                     v.date_created
                 ];
@@ -726,6 +768,8 @@ function invoiceHistory(invoice_id) {
                     table.push('Payment Reversed');
                 } else if (v.status === 1){
                     table.push('<button class="btn btn-danger reversePayment" onclick="reversePayment('+v.ID+','+v.invoiceID+')"><i class="fa fa-remove"></i> Reverse</button>');
+                } else if (v.status === 2){
+                    table.push('<button class="btn btn-success" onclick="confirmPaymentModal('+v.invoiceID+','+v.ID+')"><i class="fa fa-check"></i> Confirm</button>');
                 }
                 $('#invoice-history').dataTable().fnAddData(table);
                 $('#invoice-history').dataTable().fnSort([[0,'desc']]);
