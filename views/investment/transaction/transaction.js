@@ -273,7 +273,36 @@ function bindDataTable(id) {
         bProcessing: true,
         bServerSide: true,
         buttons: [
-            'copy', 'csv', 'excel', 'pdf', 'print'
+            {
+                extend: 'copy',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4, 5, 6, 7]
+                }
+            },
+            {
+                extend: 'csv',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4, 5, 6, 7]
+                }
+            }, 
+            {
+                extend: 'excel',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4, 5, 6, 7]
+                }
+            },
+            {
+                extend: 'pdf',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4, 5, 6, 7]
+                }
+            },
+            {
+                extend: 'print',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4, 5, 6, 7]
+                }
+            }
         ],
         fnServerData: function (sSource, aoData, fnCallback) {
             let tableHeaders = [{
@@ -864,7 +893,8 @@ async function onOpenMode(operationType, operationId, is_credit) {
                 if (operationId === '1') {
                     hint = `Min.: ${product_config.investment_min} - Max.: ${product_config.investment_max}`;//freq_withdrawal
                 } else if (operationId === '3') {
-                    hint = `Max. withdrawal#: ${product_config.freq_withdrawal} - Over.: ${product_config.withdrawal_freq_duration}`
+                    //Removed irrelevant amount range in the withdrawal function
+                    // hint = `Max. withdrawal#: ${product_config.freq_withdrawal} - Over.: ${product_config.withdrawal_freq_duration}`
                 }
                 $("#spanAmountRange").html(hint);
                 $("#btnTransaction").attr('disabled', false);
