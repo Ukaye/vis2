@@ -893,7 +893,8 @@ async function onOpenMode(operationType, operationId, is_credit) {
                 if (operationId === '1') {
                     hint = `Min.: ${product_config.investment_min} - Max.: ${product_config.investment_max}`;//freq_withdrawal
                 } else if (operationId === '3') {
-                    hint = `Max. withdrawal#: ${product_config.freq_withdrawal} - Over.: ${product_config.withdrawal_freq_duration}`
+                    //Removed irrelevant amount range in the withdrawal function
+                    // hint = `Max. withdrawal#: ${product_config.freq_withdrawal} - Over.: ${product_config.withdrawal_freq_duration}`
                 }
                 $("#spanAmountRange").html(hint);
                 $("#btnTransaction").attr('disabled', false);
