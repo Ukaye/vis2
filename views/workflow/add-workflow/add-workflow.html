@@ -204,84 +204,89 @@
                             <div class="form-group row">
                                 <label class="col-sm-3 col-form-label">Application Settings</label>
                                 <div class="col-sm-9">
-                                    <div class="panel push-down">
-                                        <div class="panel-body">
-                                            <div class="example-box-wrapper">
-                                                <h6>Loan Requested</h6>
-                                                <hr>
-                                                <div class="row">
-                                                    <div class="form-group col-sm-6 col-md-6">
-                                                        <label class="form-control-label">Min. Amount <span
-                                                                class="text-danger">*</span></label>
-                                                        <div class="input-group">
-                                                            <input type="text" id="loan_requested_min"
-                                                                class="form-control" placeholder="Minimum Amount">
+                                    <label class="form-control-label" for="application-settings-option">
+                                        <input id="application-settings-option" type="checkbox" checked="checked"> Configure application settings
+                                    </label>
+                                    <div id="application-settings-div">
+                                        <div class="panel push-down">
+                                            <div class="panel-body">
+                                                <div class="example-box-wrapper">
+                                                    <h6>Loan Requested</h6>
+                                                    <hr>
+                                                    <div class="row">
+                                                        <div class="form-group col-sm-6 col-md-6">
+                                                            <label class="form-control-label">Min. Amount <span
+                                                                    class="text-danger">*</span></label>
+                                                            <div class="input-group">
+                                                                <input type="text" id="loan_requested_min"
+                                                                    class="form-control" placeholder="Minimum Amount">
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group col-sm-6 col-md-6">
+                                                            <label class="form-control-label">Max. Amount <span
+                                                                    class="text-danger">*</span></label>
+                                                            <div class="input-group">
+                                                                <input type="text" id="loan_requested_max"
+                                                                    class="form-control" placeholder="Maximum Amount">
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    <div class="form-group col-sm-6 col-md-6">
-                                                        <label class="form-control-label">Max. Amount <span
-                                                                class="text-danger">*</span></label>
-                                                        <div class="input-group">
-                                                            <input type="text" id="loan_requested_max"
-                                                                class="form-control" placeholder="Maximum Amount">
-                                                        </div>
-                                                    </div>
+                                                    <hr />
                                                 </div>
-                                                <hr />
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="panel push-down">
-                                        <div class="panel-body">
-                                            <div class="example-box-wrapper">
-                                                <h6>Tenor (monthly)</h6>
-                                                <hr>
-                                                <div class="row">
-                                                    <div class="form-group col-sm-6 col-md-6">
-                                                        <label class="form-control-label"> Min. Tenor <span
-                                                                class="text-danger">*</span></label>
-                                                        <div class="input-group">
-                                                            <input type="text" id="tenor_min" class="form-control"
-                                                                placeholder="Minimum Tenor">
+                                        <div class="panel push-down">
+                                            <div class="panel-body">
+                                                <div class="example-box-wrapper">
+                                                    <h6>Tenor (monthly)</h6>
+                                                    <hr>
+                                                    <div class="row">
+                                                        <div class="form-group col-sm-6 col-md-6">
+                                                            <label class="form-control-label"> Min. Tenor <span
+                                                                    class="text-danger">*</span></label>
+                                                            <div class="input-group">
+                                                                <input type="text" id="tenor_min" class="form-control"
+                                                                    placeholder="Minimum Tenor">
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group col-sm-6 col-md-6">
+                                                            <label class="form-control-label"> Max. Tenor <span
+                                                                    class="text-danger">*</span></label>
+                                                            <div class="input-group">
+                                                                <input type="text" id="tenor_max" class="form-control"
+                                                                    placeholder="Minimum Tenor">
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    <div class="form-group col-sm-6 col-md-6">
-                                                        <label class="form-control-label"> Max. Tenor <span
-                                                                class="text-danger">*</span></label>
-                                                        <div class="input-group">
-                                                            <input type="text" id="tenor_max" class="form-control"
-                                                                placeholder="Minimum Tenor">
-                                                        </div>
-                                                    </div>
+                                                    <hr />
                                                 </div>
-                                                <hr />
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="panel push-down">
-                                        <div class="panel-body">
-                                            <div class="example-box-wrapper">
-                                                <h6>Interest Rate</h6>
-                                                <hr>
-                                                <div class="row">
-                                                    <div class="form-group col-sm-6 col-md-6">
-                                                        <label class="form-control-label"> Min. Rate <span
-                                                                class="text-danger">*</span></label>
-                                                        <div class="input-group">
-                                                            <input type="text" id="interest_rate_min" class="form-control"
-                                                                placeholder="Minimum Rate">
+                                        <div class="panel push-down">
+                                            <div class="panel-body">
+                                                <div class="example-box-wrapper">
+                                                    <h6>Interest Rate</h6>
+                                                    <hr>
+                                                    <div class="row">
+                                                        <div class="form-group col-sm-6 col-md-6">
+                                                            <label class="form-control-label"> Min. Rate <span
+                                                                    class="text-danger">*</span></label>
+                                                            <div class="input-group">
+                                                                <input type="text" id="interest_rate_min" class="form-control"
+                                                                    placeholder="Minimum Rate">
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group col-sm-6 col-md-6">
+                                                            <label class="form-control-label"> Max. Rate <span
+                                                                    class="text-danger">*</span></label>
+                                                            <div class="input-group">
+                                                                <input type="text" id="interest_rate_max" class="form-control"
+                                                                    placeholder="Minimum Rate">
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    <div class="form-group col-sm-6 col-md-6">
-                                                        <label class="form-control-label"> Max. Rate <span
-                                                                class="text-danger">*</span></label>
-                                                        <div class="input-group">
-                                                            <input type="text" id="interest_rate_max" class="form-control"
-                                                                placeholder="Minimum Rate">
-                                                        </div>
-                                                    </div>
+                                                    <hr />
                                                 </div>
-                                                <hr />
                                             </div>
                                         </div>
                                     </div>

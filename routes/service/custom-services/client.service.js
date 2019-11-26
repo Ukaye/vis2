@@ -567,7 +567,7 @@ router.post('/login', function (req, res) {
         if (user.status === 0)
             return res.send({
                 "status": 500,
-                "error": "User Disabled!",
+                "error": "Your Account Has Been Disabled, Please Contact The Admin",
                 "response": null
             });
 

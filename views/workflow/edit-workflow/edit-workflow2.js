@@ -169,6 +169,16 @@ $('#interest_rate_min').click(e => {
 $('#interest_rate_max').click(e => {
     archiveWorkflow(e);
 });
+$('#application-settings-option').click(e => {
+    archiveWorkflow(e);
+    if (localStorage.archive_workflow === 'true') {
+        if ($('#application-settings-option').is(':checked')) {
+            $('#application-settings-div').show();
+        } else {
+            $('#application-settings-div').hide();
+        }
+    }
+});
 
 function archiveWorkflow(e) {
     if (localStorage.archive_workflow === 'false'){
@@ -219,20 +229,23 @@ function addProcess() {
     workflow.interest_rate_min = currencyToNumberformatter($('#interest_rate_min').val());
     workflow.interest_rate_max = currencyToNumberformatter($('#interest_rate_max').val());
     workflow.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
-    if (!workflow.loan_requested_min || workflow.loan_requested_min <= 0)
-        return notification('Invalid loan requested min','','warning');
-    if (!workflow.loan_requested_max || workflow.loan_requested_max <= 0)
-        return notification('Invalid loan requested max','','warning');
-    if (!workflow.tenor_min || workflow.tenor_min <= 0)
-        return notification('Invalid tenor min','','warning');
-    if (!workflow.tenor_max || workflow.tenor_max <= 0)
-        return notification('Invalid tenor max','','warning');
-    if (!workflow.interest_rate_min || workflow.interest_rate_min <= 0)
-        return notification('Invalid interest rate min','','warning');
-    if (!workflow.interest_rate_max || workflow.interest_rate_max <= 0)
-        return notification('Invalid interest rate max','','warning');
-    if (localStorage.archive_workflow === 'false')
-        url = '/edit-workflows/';
+    workflow.application_settings_option = ($('#application-settings-option').is(':checked'))? 1 : 0;
+    if (workflow.application_settings_option === 1) {
+        if (!workflow.loan_requested_min || workflow.loan_requested_min <= 0)
+            return notification('Invalid loan requested min','','warning');
+        if (!workflow.loan_requested_max || workflow.loan_requested_max <= 0)
+            return notification('Invalid loan requested max','','warning');
+        if (!workflow.tenor_min || workflow.tenor_min <= 0)
+            return notification('Invalid tenor min','','warning');
+        if (!workflow.tenor_max || workflow.tenor_max <= 0)
+            return notification('Invalid tenor max','','warning');
+        if (!workflow.interest_rate_min || workflow.interest_rate_min <= 0)
+            return notification('Invalid interest rate min','','warning');
+        if (!workflow.interest_rate_max || workflow.interest_rate_max <= 0)
+            return notification('Invalid interest rate max','','warning');
+        if (localStorage.archive_workflow === 'false')
+            url = '/edit-workflows/';
+    }
 
     $('#wait').show();
     $.ajax({
@@ -268,6 +281,10 @@ function init(stages){
             }
             if (workflow.client_email === 1) $('#client-email').prop('checked', true);
             if (workflow.admin_email === 1) $('#admin-email').prop('checked', true);
+            if (workflow.application_settings_option === 1) {
+                $('#application-settings-option').prop('checked', true);
+                $('#application-settings-div').show();
+            }
             if (workflow.loan_requested_min) $('#loan_requested_min').val(numberToCurrencyformatter(workflow.loan_requested_min));
             if (workflow.loan_requested_max) $('#loan_requested_max').val(numberToCurrencyformatter(workflow.loan_requested_max));
             if (workflow.tenor_min) $('#tenor_min').val(numberToCurrencyformatter(workflow.tenor_min));
