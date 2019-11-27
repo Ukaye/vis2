@@ -1783,6 +1783,16 @@ router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, fun
                                             payload.description = 'Loan Application Payment Confirmed';
                                             payload.affected = invoice_.app_id;
                                             notificationsService.log(req, payload);
+                                            emailService.send({
+                                                to: req.user.email,
+                                                subject: 'Payment Confirmation',
+                                                template: 'default',
+                                                context: {
+                                                    name: req.user.fullname,
+                                                    message: `Your payment of ₦${helperFunctions.numberToCurrencyFormatter(invoice_.amount)} 
+                                                        was received successfully!`
+                                                }
+                                            });
                                             return res.send({
                                                 "status": 200,
                                                 "error": null,
@@ -1817,10 +1827,6 @@ router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, fun
     });
 });
 
-/**
- * 1. Preapproved Loan Offer
- * 2. Direct Debit Mandate Setup
- */
 router.get('/preapproved-loan/create/:id/:loan_id', helperFunctions.verifyJWT, function (req, res) {
     db.query(`SELECT a.userID, a.workflowID, a.loan_amount, a.interest_rate, a.duration, a.repayment_date, c.fullname client, 
     c.email, (SELECT u.phone FROM users u WHERE u.ID = (SELECT c.loan_officer FROM clients c WHERE c.ID = a.userID)) AS contact 
@@ -2164,6 +2170,16 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
                                             payload.description = 'Loan Application Payment Confirmed';
                                             payload.affected = invoice_.app_id;
                                             notificationsService.log(req, payload);
+                                            emailService.send({
+                                                to: req.user.email,
+                                                subject: 'Payment Confirmation',
+                                                template: 'default',
+                                                context: {
+                                                    name: req.user.fullname,
+                                                    message: `Your payment of ₦${helperFunctions.numberToCurrencyFormatter(invoice_.amount)} 
+                                                        was received successfully!`
+                                                }
+                                            });
                                             return res.send({
                                                 "status": 200,
                                                 "error": null,
@@ -2477,6 +2493,16 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
                                             payload.description = 'Loan Application Payment Confirmed';
                                             payload.affected = invoice_.app_id;
                                             notificationsService.log(req, payload);
+                                            emailService.send({
+                                                to: req.user.email,
+                                                subject: 'Payment Confirmation',
+                                                template: 'default',
+                                                context: {
+                                                    name: req.user.fullname,
+                                                    message: `Your payment of ₦${helperFunctions.numberToCurrencyFormatter(req.body.amount)} 
+                                                        was received successfully!`
+                                                }
+                                            });
                                             return res.send({
                                                 "status": 200,
                                                 "error": null,
