@@ -81,6 +81,8 @@ function confirmPassword(){
 function validate(){
     if ($('#fullname').val() == "" || $('#fullname').val() == null)
         return swal('Kindly enter a valid fullname','','warning');
+    if(!validateFullName($('#fullname').val()) === false)
+        return swal('kindly enter a valid fullname', '', 'warning');
     if ($('#email').val() == "" || $('#email').val() == null)
         return swal('Kindly enter the an email address for the user','','warning');
     if (validateEmail($('#email').val()) === false)
@@ -251,4 +253,9 @@ function getBranches(){
 function validateEmail(email) {
     var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     return re.test(email);
+}
+
+function validateFullName(fullname) {
+    let re = /\d+/g;
+    return re.test(fullname);
 }
