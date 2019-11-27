@@ -95,7 +95,7 @@ function getCollections() {
                         payment.push(`Principal - ${numberToCurrencyformatter(full.principal_amount.round(2))}`);
                     if (full.escrow_amount > 0)
                         payment.push(`Overpayment - ${numberToCurrencyformatter(full.escrow_amount.round(2))}`);
-                    return payment.join(',\n');
+                    return payment.join(',<br>');
                 }
             },
             {

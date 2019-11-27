@@ -6,7 +6,7 @@ const
     express = require('express'),
     router = express.Router();
 
-router.get('/get/:payment_source', function (req, res, next) {
+router.get('/get/:payment_source', (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let end = req.query.end;
     let type = req.query.type;
@@ -18,8 +18,8 @@ router.get('/get/:payment_source', function (req, res, next) {
     let payment_source = req.params.payment_source;
     let search_string = req.query.search_string.toUpperCase();
     let query_condition = `FROM schedule_history s, clients c 
-        WHERE s.clientID = c.ID AND s.payment_source = "${payment_source}" AND (upper(c.fullname) LIKE "${search_string}%" OR upper(s.amount) LIKE "${search_string}%" 
-        OR upper(s.loanID) LIKE "${search_string}%") `;
+        WHERE s.clientID = c.ID AND s.payment_source = "${payment_source}" AND (upper(c.fullname) LIKE "${search_string}%" OR upper(s.actual_amount) LIKE "${search_string}%" 
+        OR upper(s.applicationID) LIKE "${search_string}%") `;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     end = moment(end).add(1, 'days').format("YYYY-MM-DD");

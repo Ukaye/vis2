@@ -48,6 +48,9 @@
         a {
             color: blue;
         }
+        .modal-backdrop {
+            background: rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 
@@ -112,7 +115,6 @@
                                 <th>Amount(NGN)</th>
                                 <th>Payment(NGN)</th>
                                 <th>Client</th>
-                                <th>Type</th>
                                 <th>Loan ID</th>
                                 <th>Date</th>
                                 <th>Action</th>
@@ -129,6 +131,96 @@
 
 
 </div><!-- /#right-panel -->
+
+<!-- Modal -->
+<div class="modal" id="confirmPayment" role="dialog" aria-labelledby="confirmPaymentLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="confirmPaymentLabel">Repayment</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label class="form-control-label">Payment Source</label><strong style="color:red"> *</strong><span id="source-error" style="padding-left:50px; text-align: center"></span>
+                        <div class="input-group">
+                            <div class="input-group-addon"><i class="fa fa-link"></i></div>
+                            <select id="source" class="form-control" required="required">
+                                <option value="0" selected="selected">-- Select Payment Source --</option>
+                                <option value="cash">Cash</option>
+                                <option value="escrow">Overpayment</option>
+                                <option value="remita">Remita</option>
+                                <option value="paystack">Paystack</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="collection-bank-div" class="form-group" style="display: none;">
+                        <label class="form-control-label">Collection Bank</label>
+                        <div class="input-group">
+                            <div class="input-group-addon"><i class="fa fa-bank"></i></div>
+                            <select id="collection_bank" class="form-control" required="required">
+                                <option value="000" selected="selected">-- Select Bank --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label">Actual Payment</label><strong style="color:red"> *</strong><span id="payment-error" style="padding-left:50px; text-align: center"></span>
+                        <div class="input-group">
+                            <div class="input-group-addon">₦</div>
+                            <input id="payment" type="number" class="form-control validate" placeholder="0" required="required">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label">Principal</label><strong style="color:red"> *</strong><span id="principal-error" style="padding-left:50px; text-align: center"></span>
+                        <div class="input-group">
+                            <div class="input-group-addon">₦</div>
+                            <input id="principal" type="number" class="form-control validate" placeholder="0" required="required">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label">Interest</label><strong style="color:red"> *</strong><span id="interest-error" style="padding-left:50px; text-align: center"></span>
+                        <div class="input-group">
+                            <div class="input-group-addon">₦</div>
+                            <input id="interest" type="number" class="form-control validate" placeholder="0" required="required">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label">Fees</label><strong style="color:red"> *</strong><span id="fees-error" style="padding-left:50px; text-align: center"></span>
+                        <div class="input-group">
+                            <div class="input-group-addon">₦</div>
+                            <input id="fees" type="number" class="form-control" placeholder="0" required="required">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label">Penalty</label><strong style="color:red"> *</strong><span id="penalty-error" style="padding-left:50px; text-align: center"></span>
+                        <div class="input-group">
+                            <div class="input-group-addon">₦</div>
+                            <input id="penalty" type="number" class="form-control" placeholder="0" required="required">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label">Payment date</label><strong style="color:red"> *</strong><span id="repayment-date-error" style="padding-left:50px; text-align: center"></span>
+                        <div class="input-group">
+                            <div class="input-group-addon"><i class="fa fa-calendar"></i></div>
+                            <input id="repayment-date" type="date" class="form-control" required="required">
+                        </div>
+                    </div>
+                    <div id="collection-description-div" class="form-group">                        
+                        <label for="collection_description" class="form-control-label">Statement Description</label>
+                        <strong id="collection-description-required" style="color:red; display: none;"> *</strong>
+                        <textarea id="collection_description" class="form-control" required="required" maxlength="250" placeholder="Brief description"></textarea>
+                        <small class="form-text text-muted">Maximum of 250 characters</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button id="confirm-payment-button" type="button" class="btn btn-primary" onclick="confirmPayment()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="assets/js/popper.min.js"></script>
 <script src="assets/js/plugins.js"></script>
