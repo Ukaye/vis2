@@ -761,6 +761,7 @@ function invoiceHistory(invoice_id, status) {
                     v.fees_amount,
                     v.penalty_amount,
                     (v.payment_source === 'paystack')? 'web':v.agent,
+                    v.payment_source,
                     v.payment_date,
                     v.date_created
                 ];

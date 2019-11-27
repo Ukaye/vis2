@@ -3594,7 +3594,7 @@ users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
                     if(error) {
                         res.send({"status": 500, "error": error, "response": null});
                     } else {
-                        db.query(`UPDATE application_schedules SET payment_status=1 WHERE ID = ${req.params.invoice_id}`, (error, invoice) => {
+                        db.query(`UPDATE application_schedules SET payment_status = 1 WHERE ID = ${req.params.invoice_id}`, (error, invoice) => {
                             if(error){
                                 res.send({"status": 500, "error": error, "response": null});
                             } else {

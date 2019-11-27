@@ -1740,8 +1740,7 @@ router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, fun
                             payment_source: 'paystack',
                             payment_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
                         },
-                            postData = Object.assign({}, data);
-                        postData.payment_status = 1;
+                        postData = Object.assign({}, data);
                         delete postData.payment_source;
                         delete postData.payment_date;
                         db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`,
@@ -2122,8 +2121,7 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
                             payment_source: 'paystack',
                             payment_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
                         },
-                            postData = Object.assign({}, data);
-                        postData.payment_status = 1;
+                        postData = Object.assign({}, data);
                         delete postData.payment_source;
                         delete postData.payment_date;
                         db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`,
@@ -2331,7 +2329,7 @@ router.post('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, func
                                         invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                                         invoice.payment_date = moment().utcOffset('+0100').format('YYYY-MM-DD');
                                         invoice.payment_source = 'paystack';
-                                        connection.query(`UPDATE application_schedules SET payment_status=1 WHERE ID = ${invoice_obj.ID}`, () => {
+                                        connection.query(`UPDATE application_schedules SET payment_status = 1 WHERE ID = ${invoice_obj.ID}`, () => {
                                             connection.query('INSERT INTO schedule_history SET ?', invoice, () => {
                                                 callback();
                                             });
@@ -2424,8 +2422,7 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
                             payment_source: 'paystack',
                             payment_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
                         },
-                            postData = Object.assign({}, data);
-                        postData.payment_status = 1;
+                        postData = Object.assign({}, data);
                         delete postData.payment_source;
                         delete postData.payment_date;
                         db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`,
