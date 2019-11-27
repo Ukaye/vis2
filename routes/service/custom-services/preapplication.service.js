@@ -7,6 +7,7 @@ const
     express = require('express'),
     router = express.Router(),
     enums = require('../../../enums'),
+    emailService = require('./email.service'),
     helperFunctions = require('../../../helper-functions');
 
 router.post('/create', function (req, res, next) {
@@ -117,7 +118,7 @@ router.post('/approve/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let payload = req.body,
         id = req.params.id,
-        query =  `UPDATE preapplications Set ? WHERE ID = ${id}`,
+        query = `UPDATE preapplications Set ? WHERE ID = ${id}`,
         endpoint = `/core-service/post?query=${query}`,
         url = `${HOST}${endpoint}`;
     payload.status = enums.PREAPPLICATION.STATUS.APPROVED;
@@ -126,6 +127,17 @@ router.post('/approve/:id', function (req, res, next) {
     db.query(query, payload, function (error, response) {
         if (error)
             return res.send({status: 500, error: error, response: null});
+        
+        query = `SELECT c.email FROM preapplications p, clients c WHERE p.userID = c.ID AND p.ID = ${id}`;
+        db.query(query, function (error, preapplication) {            
+            if (preapplication && preapplication[0]) {
+                emailService.send({
+                    to: preapplication[0]['email'],
+                    subject: 'Loan Request Accepted',
+                    template: 'application'
+                });
+            }
+        });
         return res.send({status: 200, error: null, response: response});
     });
 });

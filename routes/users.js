@@ -1775,10 +1775,11 @@ users.post('/apply', function(req, res) {
         } else {
             data.name = req.body.username;
             data.date = postData.date_created;
+            data.message = 'Your loan request has been reviewed, pending document uploads, please log in to my X3 to upload';
             let mailOptions = {
                 to: req.body.email,
-                subject: 'Application Successful',
-                template: 'application',
+                subject: 'Loan Request Reviewed',
+                template: 'default',
                 context: data
             };
             if (!workflow_id) mailOptions.template =  'main';
