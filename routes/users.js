@@ -3526,11 +3526,11 @@ function createXeroSchedule (req, res) {
     });
 }
 
-users.get('/application/invoice-history/:id?/:status?', function(req, res, next) {
-    db.query(`SELECT s.ID, s.invoiceID, s.payment_amount, s.interest_amount, s.fees_amount, s.penalty_amount, s.payment_date, s.payment_source, 
-        s.date_created, s.status, s.applicationID, u.fullname AS agent FROM schedule_history AS s, users AS u 
-        WHERE s.agentID=u.ID ${(req.query.id)? `AND invoiceID = ${req.query.id}`:''} AND s.status in (${req.query.status || '0,1'}) ORDER BY ID desc`, function (error, history) {
-        if(error){
+users.get('/application/invoice-history/:id?/:status?', (req, res) => {
+    db.query(`SELECT s.ID, s.invoiceID, s.actual_amount, s.payment_amount, s.interest_amount, s.escrow_amount, s.fees_amount, s.penalty_amount, 
+        s.payment_date, s.payment_source, s.date_created, s.status, s.applicationID, u.fullname AS agent FROM schedule_history AS s, users AS u 
+        WHERE s.agentID=u.ID ${(req.query.id)? `AND invoiceID = ${req.query.id}`:''} AND s.status in (${req.query.status || '0,1'}) ORDER BY ID desc`, (error, history) => {
+        if(error) {
             res.send({"status": 500, "error": error, "response": null});
         } else {
             res.send({"status": 200, "message": "Invoice history fetched successfully!", "response":history});
@@ -3541,9 +3541,10 @@ users.get('/application/invoice-history/:id?/:status?', function(req, res, next)
 users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
     let data = req.body;
     data.status = 1;
-    // if (data.xeroCollectionBankID)
-    // if (data.xeroCollectionDescription)
-    // if (data.agentID)
+    delete data.actual_payment_amount;
+    delete data.actual_interest_amount;
+    delete data.actual_fees_amount;
+    delete data.actual_penalty_amount;
     xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async () => {
         db.query(`select s.clientID, s.applicationID, s.xeroPrincipalPaymentID, s.xeroInterestPaymentID, 
             i.principal_invoice_no, i.interest_invoice_no, c.fullname from schedule_history s, application_schedules i, clients c 

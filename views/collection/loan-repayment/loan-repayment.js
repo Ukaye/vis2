@@ -445,7 +445,7 @@ function confirmPaymentModal(id, id2) {
         $('#interest').val(web_payment.interest_amount).prop('disabled', true);
         $('#fees').val(web_payment.fees_amount).prop('disabled', true);
         $('#penalty').val(web_payment.penalty_amount).prop('disabled', true);
-        $('#payment_date').val(web_payment.payment_date).prop('disabled', true);
+        $('#repayment-date').val(web_payment.payment_date).prop('disabled', true);
     }
 }
 
@@ -498,12 +498,12 @@ function validation() {
         $button = $('#confirm-payment-button');
 
     if ($('#source').val() === 'escrow') {
-        $payment.val(parseFloat($principal.val() || 0) + parseFloat($('#interest').val() || 0));
+        $payment.val(parseFloat($principal.val() || 0) + parseFloat($interest.val() || 0));
     }
 
-    let payment = ($('#payment').val())? parseFloat($('#payment').val()) : 0;
-    invoice.actual_payment_amount = ($('#principal').val())? parseFloat($('#principal').val()) : 0;
-    invoice.actual_interest_amount = ($('#interest').val())? parseFloat($('#interest').val()) : 0;
+    let payment = ($payment.val())? parseFloat($payment.val()) : 0;
+    invoice.actual_payment_amount = ($principal.val())? parseFloat($principal.val()) : 0;
+    invoice.actual_interest_amount = ($interest.val())? parseFloat($interest.val()) : 0;
 
     if (invoice.actual_payment_amount > (parseFloat(expected_invoice.payment_amount)).round(2)){
         $message.text('Principal cannot be greater than '+expected_invoice.payment_amount);
@@ -629,7 +629,7 @@ function confirmWebPayment(invoice) {
         'success': function (data) {
             $('#wait').hide();
             notification('Payment confirmed successfully','','success');
-            // window.location.reload();
+            window.location.reload();
         },
         'error': function (err) {
             $('#wait').hide();
