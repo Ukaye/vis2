@@ -1760,8 +1760,7 @@ users.post('/new-owner', function(req, res, next) {
  */
 
 users.post('/apply', function(req, res) {
-    let data = {},
-        workflow_id = req.body.workflowID,
+    let workflow_id = req.body.workflowID,
         postData = Object.assign({},req.body),
         query =  'INSERT INTO applications Set ?';
     if (!workflow_id)
@@ -1773,19 +1772,15 @@ users.post('/apply', function(req, res) {
         if(error){
             res.send({"status": 500, "error": error, "response": null});
         } else {
-            data.name = req.body.username;
-            data.date = postData.date_created;
-            data.message = 'Your loan request has been reviewed, pending document uploads, please log in to my X3 to upload';
-            let mailOptions = {
-                to: req.body.email,
-                subject: 'Loan Request Reviewed',
-                template: 'default',
-                context: data
-            };
-            if (!workflow_id) mailOptions.template =  'main';
-            sendApplyEmail(mailOptions, workflow_id);
-            if (!workflow_id)
+            if (!workflow_id) {
+                emailService.send({
+                    to: req.body.email,
+                    subject: 'Application Successful',
+                    template: 'main'
+                });
                 return res.send({"status": 200, "message": "New Application Added!"});
+            }
+            let process_ =  process;
             helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process, stage) {
                 db.query('SELECT MAX(ID) AS ID from applications', function(err, application, fields) {
                     process.workflowID = workflow_id;
@@ -1803,6 +1798,21 @@ users.post('/apply', function(req, res) {
                         if(error){
                             return res.send({"status": 500, "error": error, "response": null});
                         } else {
+                            let x3_link = '',
+                                required_docs = '';
+                            if (stage.document) required_docs = `, pending document uploads (${stage.document})`;
+                            if (process_.env.CLIENT_HOST) x3_link = `(<a href="${process_.env.CLIENT_HOST}">${process_.env.CLIENT_HOST}</a>)`;
+                            let mailOptions = {
+                                to: req.body.email,
+                                subject: 'Loan Request Reviewed',
+                                template: 'default',
+                                context: {
+                                    name: req.body.username,
+                                    date: postData.date_created,
+                                    message: `Your loan request has been reviewed${required_docs}. Please log in to my X3${x3_link} to proceed!`
+                                }
+                            };
+                            sendApplyEmail(mailOptions, workflow_id);
                             if(stage) helperFunctions.workflowApprovalNotification(process, stage, workflow_id);
                             return res.send({"status": 200, "message": "New Application Added!", "response": application[0]});
                         }
@@ -1814,7 +1824,6 @@ users.post('/apply', function(req, res) {
 });
 
 function sendApplyEmail(mailOptions, workflow_id) {
-    if (!workflow_id) return emailService.send(mailOptions);
     let query = `SELECT * FROM workflows WHERE ID = ${workflow_id}`;
     db.query(query, (error, worklow) => {
         if (!worklow || !worklow[0] || worklow[0]['client_email'] === 1) 
@@ -2509,7 +2518,11 @@ users.get('/application/comments/:id', function(req, res, next) {
 });
 
 users.post('/application/information-request/:id', (req, res) => {
-    let payload = req.body;
+    let payload = req.body,
+        email = payload.email,
+        fullname = payload.fullname;
+    delete payload.email;
+    delete payload.fullname;
     payload.applicationID = req.params.id;
     payload.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('INSERT INTO application_information_requests SET ?', payload, (error, response) => {
@@ -2517,6 +2530,16 @@ users.post('/application/information-request/:id', (req, res) => {
             "status": 500,
             "error": error,
             "response": null
+        });
+
+        emailService.send({
+            to: email,
+            subject: 'Information Request',
+            template: 'default',
+            context: {
+                name: fullname,
+                message: `Additional information has been requested to proceed with your loan request. ${payload.description || ''}`
+            }
         });
         return res.send({
             "status": 200,

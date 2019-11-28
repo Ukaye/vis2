@@ -334,7 +334,7 @@ function initRepaymentSchedule(application) {
                                     '        <i class="fa fa-list"></i>\n' +
                                     '    </button>\n' +
                                     '    <div class="dropdown-menu">\n' +
-                                    '        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#confirmPayment" onclick="confirmPaymentModal('+application.schedule[i - 2]['ID']+')">Confirm Payment</a>\n' +
+                                    '        <a class="dropdown-item" href="#" onclick="confirmPaymentModal('+application.schedule[i - 2]['ID']+')">Confirm Payment</a>\n' +
                                     '        <a class="dropdown-item" href="#" onclick="selectRemitaModal('+application.schedule[i - 2]['ID']+')">Apply Remita</a>\n' +
                                     '        <div class="dropdown-divider"></div>\n' +
                                     '        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#editSchedule" onclick="editScheduleModal('+application.schedule[i - 2]['ID']+')">Edit Schedule</a>\n' +
@@ -349,7 +349,7 @@ function initRepaymentSchedule(application) {
                                     '        <i class="fa fa-list"></i>\n' +
                                     '    </button>\n' +
                                     '    <div class="dropdown-menu">\n' +
-                                    '        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#confirmPayment" onclick="confirmPaymentModal('+application.schedule[i - 2]['ID']+')">Confirm Payment</a>\n' +
+                                    '        <a class="dropdown-item" href="#" onclick="confirmPaymentModal('+application.schedule[i - 2]['ID']+')">Confirm Payment</a>\n' +
                                     '        <a class="dropdown-item" href="#" onclick="selectRemitaModal('+application.schedule[i - 2]['ID']+')">Apply Remita</a>\n' +
                                     '        <div class="dropdown-divider"></div>\n' +
                                     '        <a class="dropdown-item" href="#" onclick="invoiceHistory('+application.schedule[i - 2]['ID']+')">Payment History</a>\n' +
@@ -434,8 +434,6 @@ function confirmPaymentModal(id, id2) {
     $('#interest').attr({max:invoice.interest_amount});
     $('#principal-payable').text('₦'+(parseFloat(invoice.payment_amount)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
     $('#interest-payable').text('₦'+(parseFloat(invoice.interest_amount)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
-    $('#invoiceHistory').modal('hide');
-    $('#confirmPayment').modal('show');
     
     if (payment_id) {
         web_payment = ($.grep(invoice_history, e => {return (e.ID === parseInt(payment_id))}))[0];
@@ -446,7 +444,9 @@ function confirmPaymentModal(id, id2) {
         $('#fees').val(web_payment.fees_amount).prop('disabled', true);
         $('#penalty').val(web_payment.penalty_amount).prop('disabled', true);
         $('#repayment-date').val(web_payment.payment_date).prop('disabled', true);
+        $('#invoiceHistory').modal('hide');
     }
+    $('#confirmPayment').modal('show');
 }
 
 function selectRemitaModal(id) {

@@ -128,13 +128,17 @@ router.post('/approve/:id', function (req, res, next) {
         if (error)
             return res.send({status: 500, error: error, response: null});
         
-        query = `SELECT c.email FROM preapplications p, clients c WHERE p.userID = c.ID AND p.ID = ${id}`;
+        query = `SELECT c.fullname, c.email FROM preapplications p, clients c 
+            WHERE p.userID = c.ID AND p.ID = ${id}`;
         db.query(query, function (error, preapplication) {            
             if (preapplication && preapplication[0]) {
                 emailService.send({
                     to: preapplication[0]['email'],
                     subject: 'Loan Request Accepted',
-                    template: 'application'
+                    template: 'application',
+                    context: {
+                        name: preapplication[0]['fullname']
+                    }
                 });
             }
         });

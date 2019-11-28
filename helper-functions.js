@@ -55,7 +55,7 @@ functions.getNextWorkflowProcess = function(application_id, workflow_id, stage, 
                     callback({previous_stage:stage['previous_stage'],current_stage:stage['current_stage'], approver_id:stages[previous_stage_index]['approverID']});
                 }
             } else {
-                callback({current_stage:stages[0]['stageID'],next_stage:stages[1]['stageID']});
+                callback({current_stage:stages[0]['stageID'],next_stage:stages[1]['stageID']}, stages[0]);
             }
         } else {
             callback({})

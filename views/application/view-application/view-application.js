@@ -1999,6 +1999,8 @@ function requestInfo() {
             break;
         }
     }
+    request.email = application.email;
+    request.fullname = application.fullname;
     request.created_by = (JSON.parse(localStorage.user_obj))['ID'];
     $('#wait').show();
     $.ajax({
