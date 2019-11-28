@@ -1028,7 +1028,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                     res.send({ "status": 500, "error": error, "response": null });
                 } else {
                     result.schedule = schedule;
-                    db.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc',
+                    db.query('SELECT * FROM schedule_history WHERE applicationID=? ORDER BY ID desc',
                         [result.loanID], function (error, payment_history, fields) {
                             if (error) {
                                 res.send({ "status": 500, "error": error, "response": null });
