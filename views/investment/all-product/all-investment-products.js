@@ -1297,6 +1297,18 @@ function onDoc() {
 
 }
 
+$("#addDoc").click(function () {
+    validate();
+});
+
+function validate(){
+    if ($('#docName').val() == "" || $('#docName').val() == null) {
+        return swal('Kindly enter a valid document name','','warning');
+    }
+    ceateProductDoc();
+}
+
+
 function ceateProductDoc() {
     let doc = {
         productId: data_row.ID,
