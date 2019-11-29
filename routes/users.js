@@ -3660,7 +3660,7 @@ users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
                                     template: 'default',
                                     context: {
                                         name: payment.fullname,
-                                        message: `Your payment of ₦${helperFunctions.numberToCurrencyFormatter(payment.actual_amount)} 
+                                        message: `Your payment of ₦${payment.actual_amount} 
                                             was confirmed successfully!`
                                     }
                                 });
