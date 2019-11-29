@@ -350,6 +350,17 @@ function bindDataTable(id) {
                     if (data.data.length > 0) {
                         //The value for selectedInvestment was assigned here
                         selectedInvestment = data.data[data.data.length - 1];
+                        //Tis get all the posted transactions alone
+                        let postedTxns = data.data.filter(p => p.postDone == 1);
+                        //This select the most recent transactions balance
+                        let currentTxnBalance = postedTxns[postedTxns.length].txnBalance;
+
+                        //This replaces the txnBalance of all unposted transactions with the most recent transaction balance(currentTxtBalance)
+                        for(let txn of data.data) {
+                            if(txn.postDone != 1) {
+                                txn.txnBalance = currentTxnBalance;
+                            }
+                        }
                         if (selectedInvestment.canTerminate === 0 || selectedInvestment.canTerminate === null) {
                             $('#btnTerminateInvestment').attr('disabled', true);
                         }
