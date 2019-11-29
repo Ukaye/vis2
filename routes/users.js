@@ -1978,8 +1978,10 @@ users.get('/application-id/:id', function(req, res, next) {
                             } else {
                                 result.payment_history = payment_history;
                                 let path2 = `files/client_application-${result.preapplicationID}/`,
-                                    path3 = `files/application_download-${application_id}/`;
+                                    path3 = `files/application_download-${application_id}/`,
+                                    path4 = `files/workflow_download-${result.workflowID}/`;
                                 result.files = {};
+                                result.file_downloads = {};
                                 fs.readdir(path, function (err, files){
                                     if (err) files = [];
                                     files = helperFunctions.removeFileDuplicates(path, files);
@@ -2011,8 +2013,21 @@ users.get('/application-id/:id', function(req, res, next) {
                                                         obj[filename.join('_')] = path3+file;
                                                         callback();
                                                     }, function(data){
-                                                        result.file_downloads = obj;
-                                                        return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
+                                                        result.file_downloads = Object.assign({}, result.file_downloads, obj);
+                                                        obj = {};
+                                                        fs.readdir(path4, function (err, files){
+                                                            if (err) files = [];
+                                                            files = helperFunctions.removeFileDuplicates(path4, files);
+                                                            async.forEach(files, function (file, callback){
+                                                                let filename = file.split('.')[0].split('_');
+                                                                filename.shift();
+                                                                obj[filename.join('_')] = path4+file;
+                                                                callback();
+                                                            }, function(data){
+                                                                result.file_downloads = Object.assign({}, result.file_downloads, obj);
+                                                                return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
+                                                            });
+                                                        });
                                                     });
                                                 });
                                             });

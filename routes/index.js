@@ -1,18 +1,14 @@
-var express = require('express');
-var router = express.Router();
-var async = require('async');
-var db = require('../db');
-const fs = require('fs');
-const Moment = require('moment');
-const MomentRange = require('moment-range');
-const moment = MomentRange.extendMoment(Moment);
-let notificationsService = require('./notifications-service');
+let fs = require('fs'),
+    db = require('../db'),
+    async = require('async'),
+    express = require('express'),
+    router = express.Router(),
+    Moment = require('moment'),
+    MomentRange = require('moment-range'),
+    moment = MomentRange.extendMoment(Moment),
+    helperFunctions = require('../helper-functions'),
+    notificationsService = require('./notifications-service');
 
-
-//Compute Interest
-router.post('/investment-interests/compute', function(req, res) {
-    
-});
 //File Upload - Inspection
 router.post('/upload/:number_plate/:part', function(req, res) {
     if (!req.files) return res.status(400).send('No files were uploaded.');
@@ -1277,13 +1273,29 @@ router.get('/workflows-all', function(req, res, next) {
     });
 });
 
-router.get('/workflows/:workflow_id', function(req, res, next) {
-    let query = 'SELECT * FROM workflows AS w WHERE w.status <> 0 AND w.ID = '+req.params.workflow_id;
-    db.query(query, function (error, results, fields) {
+router.get('/workflows/:workflow_id', (req, res) => {
+    let obj = {},
+        workflow_id = req.params.workflow_id,
+        path = `files/workflow_download-${workflow_id}/`,
+        query = `SELECT * FROM workflows AS w WHERE w.status <> 0 AND w.ID = ${workflow_id}`;
+    db.query(query, (error, result_) => {
         if(error){
             res.send({"status": 500, "error": error, "response": null});
         } else {
-            res.send({"status": 200, "message": "Workflows fetched successfully!", "response": results[0]});
+            let result = result_[0];
+            fs.readdir(path, (err, files) => {
+                if (err) files = [];
+                files = helperFunctions.removeFileDuplicates(path, files);
+                async.forEach(files, (file, callback) => {
+                    let filename = file.split('.')[0].split('_');
+                    filename.shift();
+                    obj[filename.join('_')] = path + file;
+                    callback();
+                }, () => {
+                    result.file_downloads = obj;
+                    res.send({"status": 200, "message": "Workflows fetched successfully!", "response": result});
+                });
+            });
         }
     });
 });

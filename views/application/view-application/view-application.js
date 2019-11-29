@@ -192,6 +192,8 @@ function loadApplication(user_id){
 
             application.loanCirrusID = application.loanCirrusID || 'N/A';
             $('#loancirrus-id').text(application.loanCirrusID);
+            if (application.client_applications_status === 3 && application.status === 1)
+                $('#loancirrus-id').append('<span class="badge badge-pill badge-warning">Pending Client <br> Acceptance</span>');
 
             if (application.schedule && application.schedule[0]){
                 $("#generate-schedule").hide();

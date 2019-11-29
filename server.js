@@ -60,6 +60,7 @@ let app = express(),
     audit_service = require('./routes/service/custom-services/audit.service'),
     payment_service = require('./routes/service/custom-services/payment.service'),
     notification = require('./routes/notifications'),
+    upload_service = require('./routes/service/custom-services/upload.service'),
     index = require('./routes/index');
 
 app.use(compression());    
@@ -234,6 +235,7 @@ app.use('/application', application_service);
 app.use('/audit', audit_service);
 app.use('/payment', payment_service);
 app.use('/notifications', notification);
+app.use('/upload', upload_service);
 app.use('/files', express.static(__dirname + '/files'));
 
 app.get('/logon', function (req, res) {

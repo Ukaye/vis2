@@ -291,41 +291,54 @@ function init(stages){
             if (workflow.tenor_max) $('#tenor_max').val(numberToCurrencyformatter(workflow.tenor_max));
             if (workflow.interest_rate_min) $('#interest_rate_min').val(numberToCurrencyformatter(workflow.interest_rate_min));
             if (workflow.interest_rate_max) $('#interest_rate_max').val(numberToCurrencyformatter(workflow.interest_rate_max));
-        },
-        'error': function (err) {
-            console.log(err);
-        }
-    });
-    $.ajax({
-        'url': '/workflow-stages/'+workflow_id,
-        'type': 'get',
-        'success': function (data) {
-            initDefaultStages(stages, data.response);
-            $.each(data.response, function (key, stagex) {
-                let stage = {
-                    action_names: [],
-                    actions: stagex.actions,
-                    approverID: stagex.approverID,
-                    description: stagex.description,
-                    document: stagex.document,
-                    download: stagex.download,
-                    name: stagex.name,
-                    stageID: stagex.stageID,
-                    stage_name: stagex.stage_name,
-                    onLoad: true
-                };
-                if (stagex.stage_name === 'Application Start' || stagex.stage_name === 'Final Approval' || stagex.stage_name === 'Disbursal')
-                    stage.disabled = true;
-                if (stage.actions){
-                    let actions_array = stage.actions.split(',');
-                    actions_array.forEach(function (action_id) {
-                        let action = ($.grep(stages, function(e){return e.ID === parseInt(action_id);}))[0];
-                        stage.action_names.push(action.name);
+
+            
+            $.ajax({
+                'url': '/workflow-stages/'+workflow_id,
+                'type': 'get',
+                'success': function (data) {
+                    initDefaultStages(stages, data.response);
+                    getFileDownloads(workflow);
+                    $.each(data.response, function (key, stagex) {
+                        let stage = {
+                            action_names: [],
+                            actions: stagex.actions,
+                            approverID: stagex.approverID,
+                            description: stagex.description,
+                            document: stagex.document,
+                            download: stagex.download,
+                            name: stagex.name,
+                            stageID: stagex.stageID,
+                            stage_name: stagex.stage_name,
+                            onLoad: true
+                        };
+                        if (stagex.stage_name === 'Application Start' || stagex.stage_name === 'Final Approval' || stagex.stage_name === 'Disbursal')
+                            stage.disabled = true;
+                        if (stage.actions){
+                            let actions_array = stage.actions.split(',');
+                            actions_array.forEach(function (action_id) {
+                                let action = ($.grep(stages, function(e){return e.ID === parseInt(action_id);}))[0];
+                                stage.action_names.push(action.name);
+                            });
+                        }
+                        if (stage.download){
+                            let downloads = stage.download.split(',');
+                            downloads.forEach(function (download) {
+                                if (download.trim().replace(/ /g, '_') in workflow.file_downloads){
+                                    $('#stage-downloads').append(`<option value = "${download}">${download} &nbsp; (&check;)</option>`);
+                                } else {
+                                    $('#stage-downloads').append(`<option value = "${download}">${download}</option>`);
+                                }
+                            });
+                        }
+                        createTodo(stage);
+                        if (key === data.response.length-1)
+                            return getLocalStages();
                     });
+                },
+                'error': function (err) {
+                    console.log(err);
                 }
-                createTodo(stage);
-                if (key === data.response.length-1)
-                    return getLocalStages();
             });
         },
         'error': function (err) {
@@ -358,3 +371,60 @@ function initDefaultStages(response,workflow_stages) {
     let local_stages_sorted = local_stages.sort(function(a, b) { return a.stageID - b.stageID; });
     localStorage.setItem('local_stages', JSON.stringify(local_stages_sorted));
 }
+
+function getFileDownloads(workflow) {
+    let downloads = workflow.file_downloads,
+        $downloads = $('#downloads');
+    $downloads.html('');
+    if ($.isEmptyObject(downloads)) return $downloads.append('<h2 style="margin: auto;">No file downloads available yet!</h2>');
+    Object.keys(downloads).forEach(function (key) {
+        let preview = `<img class="img-responsive user-photo" src="/${downloads[key]}">`;
+        if (!isUriImage(`/${downloads[key]}`)) preview = '<i class="fa fa-file" style="font-size: 100px;"></i>';
+        $downloads.append('<div class="row">\n' +
+            '    <div class="col-sm-2">\n' +
+            '        <div class="thumbnail">'+preview+'</div>\n' +
+            '    </div>\n' +
+            '    <div class="col-sm-10">\n' +
+            '        <div class="panel panel-default">\n' +
+            '            <div class="panel-heading"><strong>'+key+'</strong></div>\n' +
+            '            <div class="panel-body"><a href="/'+downloads[key]+'" target="_blank">Click to download file</a></div>\n' +
+            '        </div>\n' +
+            '    </div>\n' +
+            '</div>');
+    });
+}
+
+function uploadFile() {
+    let file = $(`#file-upload`)[0].files[0],
+        filename = $('#stage-downloads').val();
+    if (!file || filename === '-- Choose Document --')
+        return notification('Kindly choose file to upload!', '', 'warning');
+    let formData = new FormData();
+    formData.append('file', file);
+    $.ajax({
+        url: `/upload/document/${workflow_id}/${filename}/workflow_download-${workflow_id}`,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (response) {
+            let preview = `<img class="img-responsive user-photo" src="/${response.file}">`;
+            if (!isUriImage(`/${response.file}`)) preview = '<i class="fa fa-file" style="font-size: 100px;"></i>';
+            $('#downloads').append('<div class="row">\n' +
+                '    <div class="col-sm-2">\n' +
+                '        <div class="thumbnail">'+preview+'</div>\n' +
+                '    </div>\n' +
+                '    <div class="col-sm-10">\n' +
+                '        <div class="panel panel-default">\n' +
+                '            <div class="panel-heading"><strong>'+filename+'</strong></div>\n' +
+                '            <div class="panel-body"><a href="/'+response.file+'" target="_blank">Click to download file</a></div>\n' +
+                '        </div>\n' +
+                '    </div>\n' +
+                '</div>');
+            return notification('File uploaded successfully!', '', 'success');
+        },
+        error: function () {
+            notification('Oops! An error occurred while uploading file', '', 'error');
+        }
+    });
+};

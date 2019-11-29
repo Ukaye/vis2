@@ -1042,8 +1042,10 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                             result.information_requests = information_requests;
                                             let path = `files/client_application-${result.ID}/`,
                                                 path2 = `files/application-${result.loanID}/`,
-                                                path3 = `files/application_download-${result.loanID}/`;
+                                                path3 = `files/application_download-${result.loanID}/`,
+                                                path4 = `files/workflow_download-${result.workflowID}/`;
                                             result.files = {};
+                                            result.file_downloads = {};
                                             fs.readdir(path, function (err, files) {
                                                 if (err) files = [];
                                                 files = helperFunctions.removeFileDuplicates(path, files);
@@ -1075,11 +1077,24 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                                                     obj[filename.join('_')] = `${process.env.HOST || req.HOST}/${path3}${file}`;
                                                                     callback();
                                                                 }, function (data) {
-                                                                    result.file_downloads = obj;
-                                                                    return res.send({
-                                                                        "status": 200,
-                                                                        "error": null,
-                                                                        "response": result
+                                                                    result.file_downloads = Object.assign({}, result.file_downloads, obj);
+                                                                    obj = {};
+                                                                    fs.readdir(path4, function (err, files) {
+                                                                        if (err) files = [];
+                                                                        files = helperFunctions.removeFileDuplicates(path4, files);
+                                                                        async.forEach(files, function (file, callback) {
+                                                                            let filename = file.split('.')[0].split('_');
+                                                                            filename.shift();
+                                                                            obj[filename.join('_')] = `${process.env.HOST || req.HOST}/${path4}${file}`;
+                                                                            callback();
+                                                                        }, function (data) {
+                                                                            result.file_downloads = Object.assign({}, result.file_downloads, obj);
+                                                                            return res.send({
+                                                                                "status": 200,
+                                                                                "error": null,
+                                                                                "response": result
+                                                                            });
+                                                                        });
                                                                     });
                                                                 });
                                                             });
