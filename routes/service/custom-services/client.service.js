@@ -2004,29 +2004,32 @@ router.get('/payment-method/initiate/:id', helperFunctions.verifyJWT, function (
 });
 
 router.post('/payment-method/create/:id', helperFunctions.verifyJWT, function (req, res) {
-    db.query(`SELECT * FROM client_payment_methods WHERE reference = '${req.body.reference}' 
-    AND userID = ${req.params.id}`, (error, payment_method) => {
-        if (error) return res.send({
-            "status": 500,
-            "error": error,
-            "response": null
-        });
-        if (payment_method[0]) return res.send({
-            "status": 500,
-            "error": null,
-            "response": 'Payment method already exists!'
-        });
-        paystack.transaction.verify(req.body.reference)
-            .then(function (body) {
-                if (body.status) {
-                    if (body.data.status === 'success') {
-                        let data = body.data.authorization;
-                        data.userID = req.params.id;
-                        data.reference = body.data.reference;
-                        data.payment_channel = 'paystack';
-                        data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                        data.created_by = req.params.id;
-                        delete data.bin;
+    paystack.transaction.verify(req.body.reference)
+        .then(function (body) {
+            if (body.status) {
+                if (body.data.status === 'success') {
+                    let data = body.data.authorization;
+                    data.userID = req.params.id;
+                    data.reference = body.data.reference;
+                    data.payment_channel = 'paystack';
+                    data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                    data.created_by = req.params.id;
+                    delete data.bin;
+
+                    db.query(`SELECT * FROM client_payment_methods WHERE reference = '${req.body.reference}' AND payment_channel = 'paystack' AND last4 = ${data.last4} 
+                    AND exp_month = ${data.exp_month} AND exp_year = ${data.exp_year} AND channel = ${data.channel} AND card_type = ${data.card_type} AND bank = ${data.bank} 
+                    AND country_code = ${data.country_code} AND brand = ${data.brand} AND signature = ${data.signature} AND userID = ${req.params.id}`, (error, payment_method) => {
+                        if (error) return res.send({
+                            "status": 500,
+                            "error": error,
+                            "response": null
+                        });
+                        if (payment_method[0]) return res.send({
+                            "status": 500,
+                            "error": null,
+                            "response": 'Payment method already exists!'
+                        });
+                        
                         db.query('INSERT INTO client_payment_methods SET ?', data, function (error, response) {
                             if (error) {
                                 res.send({
@@ -2042,29 +2045,29 @@ router.post('/payment-method/create/:id', helperFunctions.verifyJWT, function (r
                                 });
                             }
                         });
-                    } else {
-                        return res.send({
-                            "status": 500,
-                            "error": null,
-                            "response": body.data.gateway_response
-                        });
-                    }
+                    });
                 } else {
                     return res.send({
                         "status": 500,
                         "error": null,
-                        "response": body.message
+                        "response": body.data.gateway_response
                     });
                 }
-            })
-            .catch(function (error) {
-                if (error) return res.send({
+            } else {
+                return res.send({
                     "status": 500,
-                    "error": error,
-                    "response": null
+                    "error": null,
+                    "response": body.message
                 });
+            }
+        })
+        .catch(function (error) {
+            if (error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
             });
-    });
+        });
 });
 
 router.get('/payment-method/get/:id', helperFunctions.verifyJWT, function (req, res) {

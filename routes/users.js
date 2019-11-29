@@ -3682,7 +3682,7 @@ users.get('/application/payment-reversal/:id/:invoice_id', function(req, res, ne
             if(error){
                 res.send({"status": 500, "error": error, "response": null});
             } else {
-                db.query('select h.applicationID, h.xeroPrincipalPaymentID, h.xeroInterestPaymentID, c.email, c.fullname '+
+                db.query('select h.applicationID, h.actual_amount, h.xeroPrincipalPaymentID, h.xeroInterestPaymentID, c.email, c.fullname '+
                 'from schedule_history h, clients c where h.clientID = c.ID AND h.ID = ?', 
                 [req.params.id], function(error, result, fields){
                     if (error){
@@ -3729,7 +3729,7 @@ users.get('/application/payment-reversal/:id/:invoice_id', function(req, res, ne
                                     template: 'default',
                                     context: {
                                         name: result[0]['fullname'],
-                                        message: `Your payment of ₦${helperFunctions.numberToCurrencyFormatter(payment.actual_amount)} 
+                                        message: `Your payment of ₦${helperFunctions.numberToCurrencyFormatter(result[0]['actual_amount'])} 
                                             was reversed!`
                                     }
                                 });
