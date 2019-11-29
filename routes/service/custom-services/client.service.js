@@ -2027,7 +2027,7 @@ router.post('/payment-method/create/:id', helperFunctions.verifyJWT, function (r
                         if (payment_method[0]) return res.send({
                             "status": 500,
                             "error": null,
-                            "response": 'Payment method already exists!'
+                            "response": 'Card already exists!'
                         });
                         
                         db.query('INSERT INTO client_payment_methods SET ?', data, function (error, response) {
