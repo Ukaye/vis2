@@ -46,15 +46,11 @@ $('#xero_loan_account').click(function (e) {
         $('#xero_disbursement_account').prop('disabled', false);
         $('#xero_principal_account').prop('disabled', false);
         $('#xero_interest_account').prop('disabled', false);
-        $('#xero_web_principal_account').prop('disabled', false);
-        $('#xero_web_interest_account').prop('disabled', false);
     } else {
         $('#xero_loan_account_status').prop('disabled', true);
         $('#xero_disbursement_account').prop('disabled', true);
         $('#xero_principal_account').prop('disabled', true);
         $('#xero_interest_account').prop('disabled', true);
-        $('#xero_web_principal_account').prop('disabled', true);
-        $('#xero_web_interest_account').prop('disabled', true);
     }
 });
 
@@ -69,8 +65,10 @@ $('#xero_writeoff').click(function (e) {
 $('#xero_collection_bank').click(function (e) {
     if ($('#xero_collection_bank').is(':checked')) {
         $('#xero_collection_description').parent().show();
+        $('#xero_web_collection_bank').prop('disabled', false);
     } else {
         $('#xero_collection_description').parent().hide();
+        $('#xero_web_collection_bank').prop('disabled', true);
     }
 });
 
@@ -83,12 +81,11 @@ function getAccounts() {
                 if (account.Type === 'CURRENT') {
                     $('#xero_disbursement_account').append(`<option value="${account.Code}">${account.Name}</option>`);
                     $('#xero_principal_account').append(`<option value="${account.Code}">${account.Name}</option>`);
-                    $('#xero_web_principal_account').append(`<option value="${account.Code}">${account.Name}</option>`);
                 }
-                if (account.Class === 'REVENUE') {
+                if (account.Type === 'BANK')
+                    $('#xero_web_collection_bank').append(`<option value="${account.Code}">${account.Name} (${account.Type})</option>`);
+                if (account.Class === 'REVENUE')
                     $('#xero_interest_account').append(`<option value="${account.Code}">${account.Name} (${account.Type})</option>`);
-                    $('#xero_web_interest_account').append(`<option value="${account.Code}">${account.Name} (${account.Type})</option>`);
-                }
                 if (account.Class === 'EXPENSE')
                     $('#xero_writeoff_account').append(`<option value="${account.Code}">${account.Name} (${account.Type})</option>`);
             });
@@ -127,20 +124,18 @@ function getXeroConfig() {
                 $('#xero_disbursement_account').prop('disabled', false);
                 $('#xero_principal_account').prop('disabled', false);
                 $('#xero_interest_account').prop('disabled', false);
-                $('#xero_web_principal_account').prop('disabled', false);
-                $('#xero_web_interest_account').prop('disabled', false);
             }
             if (config.xero_loan_account_status) $('#xero_loan_account_status').val(config.xero_loan_account_status);
             if (config.xero_disbursement_account) $('#xero_disbursement_account').val(config.xero_disbursement_account);
             if (config.xero_principal_account) $('#xero_principal_account').val(config.xero_principal_account);
             if (config.xero_interest_account) $('#xero_interest_account').val(config.xero_interest_account);
-            if (config.xero_web_principal_account) $('#xero_web_principal_account').val(config.xero_web_principal_account);
-            if (config.xero_web_interest_account) $('#xero_web_interest_account').val(config.xero_web_interest_account);
             if (config.xero_collection_bank) {
                 $('#xero_collection_bank').prop('checked', true);
                 $('#xero_collection_description').parent().show();
+                $('#xero_web_collection_bank').prop('disabled', false);
             }
             if (config.xero_collection_description) $('#xero_collection_description').prop('checked', true);
+            if (config.xero_web_collection_bank) $('#xero_web_collection_bank').val(config.xero_web_collection_bank);
             if (config.xero_escrow) $('#xero_escrow').prop('checked', true);
             if (config.xero_writeoff) {
                 $('#xero_writeoff').prop('checked', true);
@@ -172,12 +167,6 @@ function saveXeroConfig() {
         if ($('#xero_interest_account').val() === '000')
             return notification('Kindly select a interest account!', '', 'warning');
         config.xero_interest_account = $('#xero_interest_account').val();
-        if ($('#xero_web_principal_account').val() === '000')
-            return notification('Kindly select a web principal account!', '', 'warning');
-        config.xero_web_principal_account = $('#xero_web_principal_account').val();
-        if ($('#xero_web_interest_account').val() === '000')
-            return notification('Kindly select a web interest account!', '', 'warning');
-        config.xero_web_interest_account = $('#xero_web_interest_account').val();
     }
     if ($('#xero_writeoff').is(':checked')) {
         if ($('#xero_writeoff_account').val() === '000')
@@ -189,6 +178,9 @@ function saveXeroConfig() {
     if ($('#xero_collection_bank').is(':checked')) {
         config.xero_collection_bank = 1;
         if ($('#xero_collection_description').is(':checked')) config.xero_collection_description = 1;
+        if ($('#xero_web_collection_bank').val() === '000')
+            return notification('Kindly select a web principal account!', '', 'warning');
+        config.xero_web_collection_bank = $('#xero_web_collection_bank').val();
     }
     if ($('#xero_escrow').is(':checked')) config.xero_escrow = 1;
     if ($('#xero_users').val()) config.xero_users = ($('#xero_users').val()).join();

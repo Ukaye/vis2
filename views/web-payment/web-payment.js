@@ -202,6 +202,9 @@ function confirmPaymentModal(id, id2) {
     $('#fees').val(web_payment.fees_amount).prop('disabled', true);
     $('#penalty').val(web_payment.penalty_amount).prop('disabled', true);
     $('#repayment-date').val(web_payment.payment_date).prop('disabled', true);
+    if (xero_config.xero_web_collection_bank)
+        $('#collection_bank').val(xero_config.xero_web_collection_bank);
+    $('#collection_bank').prop('disabled', true);
     $('#confirmPayment').modal('show');
 }
 

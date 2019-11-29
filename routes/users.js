@@ -1760,13 +1760,12 @@ users.post('/new-owner', function(req, res, next) {
  */
 
 users.post('/apply', function(req, res) {
-    let name = req.body.name,
-        workflow_id = req.body.workflowID,
+    let workflow_id = req.body.workflowID,
         postData = Object.assign({},req.body),
         query =  'INSERT INTO applications Set ?';
     if (!workflow_id)
         query =  'INSERT INTO requests Set ?';
-    delete req.body.name;
+    delete postData.name;
     delete postData.email;
     delete postData.username;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -1809,7 +1808,7 @@ users.post('/apply', function(req, res) {
                                 subject: 'Loan Request Reviewed',
                                 template: 'default',
                                 context: {
-                                    name: name,
+                                    name: req.body.name,
                                     date: postData.date_created,
                                     message: `Your loan request has been reviewed${required_docs}. Please log in to my X3${x3_link} to proceed!`
                                 }
