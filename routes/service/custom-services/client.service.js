@@ -2016,9 +2016,9 @@ router.post('/payment-method/create/:id', helperFunctions.verifyJWT, function (r
                     data.created_by = req.params.id;
                     delete data.bin;
 
-                    db.query(`SELECT * FROM client_payment_methods WHERE reference = '${req.body.reference}' AND payment_channel = 'paystack' AND last4 = ${data.last4} 
-                    AND exp_month = ${data.exp_month} AND exp_year = ${data.exp_year} AND channel = ${data.channel} AND card_type = ${data.card_type} AND bank = ${data.bank} 
-                    AND country_code = ${data.country_code} AND brand = ${data.brand} AND signature = ${data.signature} AND userID = ${req.params.id}`, (error, payment_method) => {
+                    db.query(`SELECT * FROM client_payment_methods WHERE reference = '${req.body.reference}' AND payment_channel = 'paystack' AND last4 = '${data.last4}' 
+                    AND exp_month = '${data.exp_month}' AND exp_year = '${data.exp_year}' AND channel = '${data.channel}' AND card_type = '${data.card_type}' AND bank = ${data.bank} 
+                    AND country_code = '${data.country_code}' AND brand = '${data.brand}' AND signature = '${data.signature}' AND userID = '${req.params.id}'`, (error, payment_method) => {
                         if (error) return res.send({
                             "status": 500,
                             "error": error,
