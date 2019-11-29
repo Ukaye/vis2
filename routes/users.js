@@ -3660,8 +3660,7 @@ users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
                                     template: 'default',
                                     context: {
                                         name: payment.fullname,
-                                        message: `Your payment of ₦${payment.actual_amount} 
-                                            was confirmed successfully!`
+                                        message: `Your payment of ₦${payment.actual_amount} was confirmed successfully!`
                                     }
                                 });
                                 res.send({"status": 200, "message": "Payment confirmed successfully!", "response":history});
