@@ -169,6 +169,9 @@ $('#interest_rate_min').click(e => {
 $('#interest_rate_max').click(e => {
     archiveWorkflow(e);
 });
+$('#admin-application-override').click(e => {
+    archiveWorkflow(e);
+});
 $('#application-settings-option').click(e => {
     archiveWorkflow(e);
     if (localStorage.archive_workflow === 'true') {
@@ -222,15 +225,16 @@ function addProcess() {
         workflow.client_information = $('#client-information').val().join();
     workflow.client_email = ($('#client-email').is(':checked'))? 1 : 0;
     workflow.admin_email = ($('#admin-email').is(':checked'))? 1 : 0;
-    workflow.loan_requested_min = currencyToNumberformatter($('#loan_requested_min').val());
-    workflow.loan_requested_max = currencyToNumberformatter($('#loan_requested_max').val());
-    workflow.tenor_min = currencyToNumberformatter($('#tenor_min').val());
-    workflow.tenor_max = currencyToNumberformatter($('#tenor_max').val());
-    workflow.interest_rate_min = currencyToNumberformatter($('#interest_rate_min').val());
-    workflow.interest_rate_max = currencyToNumberformatter($('#interest_rate_max').val());
-    workflow.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
     workflow.application_settings_option = ($('#application-settings-option').is(':checked'))? 1 : 0;
     if (workflow.application_settings_option === 1) {
+        workflow.loan_requested_min = currencyToNumberformatter($('#loan_requested_min').val());
+        workflow.loan_requested_max = currencyToNumberformatter($('#loan_requested_max').val());
+        workflow.tenor_min = currencyToNumberformatter($('#tenor_min').val());
+        workflow.tenor_max = currencyToNumberformatter($('#tenor_max').val());
+        workflow.interest_rate_min = currencyToNumberformatter($('#interest_rate_min').val());
+        workflow.interest_rate_max = currencyToNumberformatter($('#interest_rate_max').val());
+        workflow.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
+        workflow.admin_application_override = ($('#admin-application-override').is(':checked'))? 1 : 0;
         if (!workflow.loan_requested_min || workflow.loan_requested_min <= 0)
             return notification('Invalid loan requested min','','warning');
         if (!workflow.loan_requested_max || workflow.loan_requested_max <= 0)
@@ -243,9 +247,9 @@ function addProcess() {
             return notification('Invalid interest rate min','','warning');
         if (!workflow.interest_rate_max || workflow.interest_rate_max <= 0)
             return notification('Invalid interest rate max','','warning');
-        if (localStorage.archive_workflow === 'false')
-            url = '/edit-workflows/';
     }
+    if (localStorage.archive_workflow === 'false')
+        url = '/edit-workflows/';
 
     $('#wait').show();
     $.ajax({
@@ -281,6 +285,7 @@ function init(stages){
             }
             if (workflow.client_email === 1) $('#client-email').prop('checked', true);
             if (workflow.admin_email === 1) $('#admin-email').prop('checked', true);
+            if (workflow.admin_email === 1) $('#admin-email').prop('checked', true);
             if (workflow.application_settings_option === 1) {
                 $('#application-settings-option').prop('checked', true);
                 $('#application-settings-div').show();
@@ -291,6 +296,7 @@ function init(stages){
             if (workflow.tenor_max) $('#tenor_max').val(numberToCurrencyformatter(workflow.tenor_max));
             if (workflow.interest_rate_min) $('#interest_rate_min').val(numberToCurrencyformatter(workflow.interest_rate_min));
             if (workflow.interest_rate_max) $('#interest_rate_max').val(numberToCurrencyformatter(workflow.interest_rate_max));
+            if (workflow.admin_application_override === 1) $('#admin-application-override').prop('checked', true);
 
             
             $.ajax({

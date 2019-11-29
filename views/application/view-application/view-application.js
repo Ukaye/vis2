@@ -194,6 +194,10 @@ function loadApplication(user_id){
             $('#loancirrus-id').text(application.loanCirrusID);
             if (application.client_applications_status === 3 && application.status === 1)
                 $('#loancirrus-id').append('<span class="badge badge-pill badge-warning">Pending Client <br> Acceptance</span>');
+            if (application.client_applications_status === 4 && application.status === 1)
+                $('#loancirrus-id').append('<span class="badge badge-pill badge-success">Client Accepted</span>');
+            if (application.client_applications_status === 5 && application.status === 1)
+                $('#loancirrus-id').append('<span class="badge badge-pill badge-danger">Client Declined</span>');
 
             if (application.schedule && application.schedule[0]){
                 $("#generate-schedule").hide();
@@ -1205,6 +1209,8 @@ function checkTotalDue() {
 
 function disburse() {
     if (reschedule_status) return;
+    if (workflow.admin_application_override === 0 && application.client_applications_status === 3 && application.status === 1)
+        return notification('Application is still pending client acceptance!','','warning');
     let disbursal = {};
     disbursal.funding_source = $('#funding').val();
     disbursal.disbursement_date = $('#disbursement-date').val();

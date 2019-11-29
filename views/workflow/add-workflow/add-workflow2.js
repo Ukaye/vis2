@@ -187,6 +187,7 @@ function addProcess() {
         workflow.tenor_max = currencyToNumberformatter($('#tenor_max').val());
         workflow.interest_rate_min = currencyToNumberformatter($('#interest_rate_min').val());
         workflow.interest_rate_max = currencyToNumberformatter($('#interest_rate_max').val());
+        workflow.admin_application_override = ($('#admin-application-override').is(':checked'))? 1 : 0;
         if (!workflow.loan_requested_min || workflow.loan_requested_min <= 0)
             return notification('Invalid loan requested min','','warning');
         if (!workflow.loan_requested_max || workflow.loan_requested_max <= 0)
