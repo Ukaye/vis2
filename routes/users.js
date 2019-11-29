@@ -3588,7 +3588,7 @@ users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
     delete data.actual_penalty_amount;
     xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async () => {
         db.query(`select s.clientID, s.applicationID, s.xeroPrincipalPaymentID, s.xeroInterestPaymentID, 
-            i.principal_invoice_no, i.interest_invoice_no, c.fullname from schedule_history s, application_schedules i, clients c 
+            i.principal_invoice_no, i.interest_invoice_no, c.fullname, c.email from schedule_history s, application_schedules i, clients c 
             where s.invoiceID = i.ID AND s.clientID = c.ID AND s.ID = ${req.params.id}`, 
         (error, result) => {
             if (error) {
@@ -3645,16 +3645,26 @@ users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
                                 payload.description = 'Payment confirmed for Loan';
                                 payload.affected = payment.applicationID;
                                 notificationsService.log(req, payload);
-                                    auditLog.log({
-                                        clientID: payment.clientID,
-                                        amount: payment.actual_amount,
-                                        type: 'repayment',
-                                        loanID: payment.applicationID,
-                                        module: 'collections',
-                                        principal_amount: payment.payment_amount,
-                                        interest_amount: payment.interest_amount,
-                                        escrow_amount: payment.escrow_amount
-                                    });
+                                auditLog.log({
+                                    clientID: payment.clientID,
+                                    amount: payment.actual_amount,
+                                    type: 'repayment',
+                                    loanID: payment.applicationID,
+                                    module: 'collections',
+                                    principal_amount: payment.payment_amount,
+                                    interest_amount: payment.interest_amount,
+                                    escrow_amount: payment.escrow_amount
+                                });
+                                emailService.send({
+                                    to: payment.email,
+                                    subject: 'Payment Confirmation',
+                                    template: 'default',
+                                    context: {
+                                        name: payment.fullname,
+                                        message: `Your payment of ₦${helperFunctions.numberToCurrencyFormatter(payment.actual_amount)} 
+                                            was confirmed successfully!`
+                                    }
+                                });
                                 res.send({"status": 200, "message": "Payment confirmed successfully!", "response":history});
                             }
                         });
@@ -3672,12 +3682,12 @@ users.get('/application/payment-reversal/:id/:invoice_id', function(req, res, ne
             if(error){
                 res.send({"status": 500, "error": error, "response": null});
             } else {
-                db.query('select applicationID, xeroPrincipalPaymentID, xeroInterestPaymentID from schedule_history where ID = ?', 
+                db.query('select h.applicationID, h.xeroPrincipalPaymentID, h.xeroInterestPaymentID, c.email, c.fullname '+
+                'from schedule_history h, clients c where h.clientID = c.ID AND h.ID = ?', 
                 [req.params.id], function(error, result, fields){
                     if (error){
                         res.send({"status": 500, "error": error, "response": null});
-                    }
-                    else {
+                    } else {
                         id = result[0]['applicationID'];
                         if (result[0]['xeroPrincipalPaymentID'] || result[0]['xeroInterestPaymentID']) {
                             xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
@@ -3707,12 +3717,22 @@ users.get('/application/payment-reversal/:id/:invoice_id', function(req, res, ne
                             if(error){
                                 res.send({"status": 500, "error": error, "response": null});
                             } else {
-                                let payload = {}
-                                payload.category = 'Application'
-                                payload.userid = req.cookies.timeout
-                                payload.description = 'Payment Reversed for Loan'
-                                payload.affected = id
-                                notificationsService.log(req, payload)
+                                let payload = {};
+                                payload.category = 'Application';
+                                payload.userid = req.cookies.timeout;
+                                payload.description = 'Payment Reversed for Loan';
+                                payload.affected = id;
+                                notificationsService.log(req, payload);
+                                emailService.send({
+                                    to: result[0]['email'],
+                                    subject: 'Payment Reversed',
+                                    template: 'default',
+                                    context: {
+                                        name: result[0]['fullname'],
+                                        message: `Your payment of ₦${helperFunctions.numberToCurrencyFormatter(payment.actual_amount)} 
+                                            was reversed!`
+                                    }
+                                });
                                 res.send({"status": 200, "message": "Payment reversed successfully!", "response":history});
                             }
                         });

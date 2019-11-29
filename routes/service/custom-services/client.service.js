@@ -1799,7 +1799,7 @@ router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, fun
                                             notificationsService.log(req, payload);
                                             emailService.send({
                                                 to: req.user.email,
-                                                subject: 'Payment Confirmation',
+                                                subject: 'Payment Received',
                                                 template: 'default',
                                                 context: {
                                                     name: req.user.fullname,
@@ -2186,7 +2186,7 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
                                             notificationsService.log(req, payload);
                                             emailService.send({
                                                 to: req.user.email,
-                                                subject: 'Payment Confirmation',
+                                                subject: 'Payment Received',
                                                 template: 'default',
                                                 context: {
                                                     name: req.user.fullname,
@@ -2509,7 +2509,7 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
                                             notificationsService.log(req, payload);
                                             emailService.send({
                                                 to: req.user.email,
-                                                subject: 'Payment Confirmation',
+                                                subject: 'Payment Received',
                                                 template: 'default',
                                                 context: {
                                                     name: req.user.fullname,
