@@ -151,7 +151,8 @@ function getWebPayments() {
             {
                 width: "20%",
                 mRender: function (data, type, full) {
-                    return moment(new Date(full.date_created)).format('LLLL');;
+                    // return moment(new Date(full.date_created)).format('LLLL');
+                    return full.date_created;
                 }
             },
             {

@@ -1760,11 +1760,13 @@ users.post('/new-owner', function(req, res, next) {
  */
 
 users.post('/apply', function(req, res) {
-    let workflow_id = req.body.workflowID,
+    let name = req.body.name,
+        workflow_id = req.body.workflowID,
         postData = Object.assign({},req.body),
         query =  'INSERT INTO applications Set ?';
     if (!workflow_id)
         query =  'INSERT INTO requests Set ?';
+    delete req.body.name;
     delete postData.email;
     delete postData.username;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -1801,13 +1803,13 @@ users.post('/apply', function(req, res) {
                             let x3_link = '',
                                 required_docs = '';
                             if (stage.document) required_docs = `, pending document uploads (${stage.document})`;
-                            if (process_.env.CLIENT_HOST) x3_link = `(<a href="${process_.env.CLIENT_HOST}">${process_.env.CLIENT_HOST}</a>)`;
+                            if (process_.env.CLIENT_HOST) x3_link = `(${process_.env.CLIENT_HOST})`;
                             let mailOptions = {
                                 to: req.body.email,
                                 subject: 'Loan Request Reviewed',
                                 template: 'default',
                                 context: {
-                                    name: req.body.username,
+                                    name: name,
                                     date: postData.date_created,
                                     message: `Your loan request has been reviewed${required_docs}. Please log in to my X3${x3_link} to proceed!`
                                 }
@@ -2553,7 +2555,7 @@ users.post('/application/information-request/:id', (req, res) => {
             template: 'default',
             context: {
                 name: fullname,
-                message: `Additional information has been requested to proceed with your loan request. ${payload.description || ''}`
+                message: `Additional information has been requested to proceed with your loan request. Description: ${payload.description || ''}`
             }
         });
         return res.send({
