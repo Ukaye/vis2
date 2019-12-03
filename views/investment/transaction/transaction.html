@@ -195,6 +195,11 @@
             height: 20px;
             z-index: 400;
         }
+        .expand__util {
+            /* background: red; */
+            min-width: 100% !important;
+            /* max-width: 100% !important; */
+        }
     </style>
 
     <aside id="left-panel" class="left-panel" include-html="/includes/sidebar.html">
@@ -533,7 +538,7 @@
 
         <div class="modal fade" id="viewListDocModal" role="dialog" aria-labelledby="viewListDocModalLabel">
             <div class="modal-dialog" role="document">
-                <div class="modal-content" style="width: fit-content;">
+                <div class="modal-content expand__util" style="width: 700px;">
                     <div class="modal-header">
                         <div>
                             <div class="row" style="padding-left:20px">
