@@ -645,7 +645,7 @@
                             $('#interest-rate').val("");
                             $('#term').val("");
                             $('#repayment-date').val("");
-                            // uploadSchedule(schedule, data.response.ID);
+                            uploadSchedule(schedule, data.response.ID);
                         },
                         'error': function (err) {
                             console.log(err);
