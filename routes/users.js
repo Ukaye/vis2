@@ -3044,10 +3044,8 @@ users.post('/application/edit-schedule/:id/:modifier_id', function(req, res, nex
                                                     InvoiceNumber: invoice.interest_invoice_no,
                                                     Reference: helperFunctions.padWithZeroes(invoice.applicationID, 9)
                                                 });
-                                                let xeroInterest_ = await xeroClient.invoices.get({
-                                                    InvoiceID: '2db75448-b5db-4b7c-8503-e5cc006721ec'
-                                                });
-                                                console.log(xeroInterest_)
+                                                console.log(xeroInterest)
+                                                console.log(xeroInterest.Invoices)
                                             }
                                         });
                                     }
