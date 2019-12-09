@@ -2709,7 +2709,9 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                         loanID: old_invoice.applicationID,
                                                         module: 'collections',
                                                         principal_amount: principal_due,
-                                                        principal_invoice_no: old_invoice.principal_invoice_no
+                                                        principal_invoice_no: old_invoice.principal_invoice_no,
+                                                        payment_date: date_modified,
+                                                        bank: integration.xero_principal_account
                                                     });
                                                 }
                                             }
@@ -2816,7 +2818,9 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                     amount: disbursal.disbursement_amount,
                                                     type: 'disbursement',
                                                     loanID: application.ID,
-                                                    module: 'collections'
+                                                    module: 'collections',
+                                                    payment_date: disbursal.disbursement_date,
+                                                    bank: disbursal.funding_source
                                                 });
                                             }
                                             application.integration = integration;
@@ -3252,7 +3256,9 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                         module: 'collections',
                                         principal_amount: invoice.payment_amount,
                                         interest_amount: invoice.interest_amount,
-                                        escrow_amount: data.escrow_amount
+                                        escrow_amount: data.escrow_amount,
+                                        payment_date: invoice.payment_date,
+                                        bank: invoice.xeroCollectionBankID
                                     });
                                     let payload = {};
                                     payload.category = 'Application';
@@ -3485,7 +3491,9 @@ users.post('/application/disburse/:id', function(req, res, next) {
                                     amount: application.amount,
                                     type: 'disbursement',
                                     loanID: application.ID,
-                                    module: 'collections'
+                                    module: 'collections',
+                                    payment_date: data.disbursement_date,
+                                    bank: data.funding_source
                                 });
                             }
                             db.query(`INSERT INTO disbursement_history SET ?`, disbursement, function (error, result, fields) {
@@ -3652,7 +3660,9 @@ users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
                                     module: 'collections',
                                     principal_amount: payment.payment_amount,
                                     interest_amount: payment.interest_amount,
-                                    escrow_amount: payment.escrow_amount
+                                    escrow_amount: payment.escrow_amount,
+                                    payment_date: payment.payment_date,
+                                    bank: data.xeroCollectionBankID
                                 });
                                 emailService.send({
                                     to: payment.email,
@@ -3921,7 +3931,9 @@ users.post('/application/pay-off/:id/:agentID', function(req, res, next) {
                                                 loanID: invoice.applicationID,
                                                 module: 'collections',
                                                 principal_amount: invoice.payment_amount,
-                                                interest_amount: invoice.interest_amount
+                                                interest_amount: invoice.interest_amount,
+                                                payment_date: invoice.date_created,
+                                                bank: data.close_bank
                                             });
                                             connection.query('UPDATE application_schedules SET payment_status=1 WHERE ID = ?', [invoice_obj.ID], function (error, result, fields) {
                                                 connection.query('INSERT INTO schedule_history SET ?', invoice, function (error, response, fields) {

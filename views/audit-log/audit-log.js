@@ -38,8 +38,12 @@ function getCollections() {
                     query: `ORDER BY loanID ${aoData[2].value[0].dir}`
                 },
                 {
-                    name: 'date_created',
-                    query: `ORDER BY date_created ${aoData[2].value[0].dir}`
+                    name: 'bank',
+                    query: `ORDER BY bank ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'payment_date',
+                    query: `ORDER BY payment_date ${aoData[2].value[0].dir}`
                 },
                 {
                     name: 'action',
@@ -65,7 +69,7 @@ function getCollections() {
             });
         },
         aaSorting: [
-            [5, 'desc']
+            [6, 'desc']
         ],
         aoColumnDefs: [
             {
@@ -99,7 +103,7 @@ function getCollections() {
                 }
             },
             {
-                width: "30%",
+                width: "25%",
                 mRender: function (data, type, full) {
                     return `<a href="/client-info?id=${full.clientID}">${full.client}</a>`;
                 }
@@ -118,9 +122,16 @@ function getCollections() {
                 }
             },
             {
-                width: "20%",
+                width: "10%",
                 mRender: function (data, type, full) {
-                    return moment(new Date(full.date_created)).format('LLLL');;
+                    return full.bank || '--';
+                }
+            },
+            {
+                width: "15%",
+                mRender: function (data, type, full) {
+                    if (full.payment_date) return moment(new Date(full.payment_date)).format('LLLL');
+                    return '--';
                 }
             },
             {
@@ -161,8 +172,8 @@ function getInvestments() {
                     query: `ORDER BY account_no ${aoData[2].value[0].dir}`
                 },
                 {
-                    name: 'date_created',
-                    query: `ORDER BY date_created ${aoData[2].value[0].dir}`
+                    name: 'payment_date',
+                    query: `ORDER BY payment_date ${aoData[2].value[0].dir}`
                 },
                 {
                     name: 'action',
@@ -221,7 +232,7 @@ function getInvestments() {
                 className: "text-right"
             },
             {
-                data: "date_created",
+                data: "payment_date",
                 width: "20%"
             },
             {
