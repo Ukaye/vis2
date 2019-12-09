@@ -423,7 +423,7 @@
                 $message.hide();
 
                 let years = duration/12,
-                    paymentsPerYear = 12,
+                    paymentsPerYear = 12, //tenor: monthly = 12, biweekly = 26, weekly = 52
                     rate_ = (interestRate/100)/paymentsPerYear,
                     numberOfPayments = paymentsPerYear * years,
                     payment = (pmt(rate_, numberOfPayments, -loanAmount, $amortization.val())).toFixed(2),

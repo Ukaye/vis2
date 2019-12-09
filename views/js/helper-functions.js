@@ -127,7 +127,6 @@ function padWithZeroes(n, width, z) {
 
 function pmt(rate, nper, pv, type) {
     let pvif, pmt;
-    rate = rate.round(2);
 
     pvif = Math.pow(1 + rate, nper);
     pmt = rate / (pvif - 1) * -(pv * pvif);
