@@ -2820,7 +2820,7 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                     loanID: application.ID,
                                                     module: 'collections',
                                                     payment_date: disbursal.disbursement_date,
-                                                    bank: disbursal.funding_source
+                                                    bank: disbursal.bank
                                                 });
                                             }
                                             application.integration = integration;
@@ -3169,6 +3169,7 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                 delete postData.payment_source;
                 delete postData.payment_date;
                 delete postData.remitaPaymentID;
+                delete postData.xeroCollectionBank;
                 delete postData.xeroCollectionBankID;
                 delete postData.xeroCollectionDescription;
                 db.query('UPDATE application_schedules SET ? WHERE ID = '+req.params.id, postData, function (error, invoice, fields) {
@@ -3191,8 +3192,10 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                         invoice.clientID = application.clientID;
                         invoice.loan_officerID = application.loan_officerID;
                         invoice.branchID = application.branchID;
-                        if (data.xeroCollectionBankID)
+                        if (data.xeroCollectionBankID) {
+                            invoice.xeroCollectionBank = data.xeroCollectionBank;
                             invoice.xeroCollectionBankID = data.xeroCollectionBankID;
+                        }
                         if (data.xeroCollectionDescription)
                             invoice.xeroCollectionDescription = data.xeroCollectionDescription;
                         if (data.remitaPaymentID) invoice.remitaPaymentID = data.remitaPaymentID;
@@ -3258,7 +3261,7 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                         interest_amount: invoice.interest_amount,
                                         escrow_amount: data.escrow_amount,
                                         payment_date: invoice.payment_date,
-                                        bank: invoice.xeroCollectionBankID
+                                        bank: invoice.xeroCollectionBank
                                     });
                                     let payload = {};
                                     payload.category = 'Application';
@@ -3459,6 +3462,7 @@ users.post('/application/disburse/:id', function(req, res, next) {
                                     client_id: application.clientID,
                                     loan_officer: application.loan_officerID,
                                     branch: application.branchID,
+                                    bank: data.disbursement_bank,
                                     date_disbursed: data.disbursement_date,
                                     status: 1,
                                     date_created: data.date_modified
@@ -3493,7 +3497,7 @@ users.post('/application/disburse/:id', function(req, res, next) {
                                     loanID: application.ID,
                                     module: 'collections',
                                     payment_date: data.disbursement_date,
-                                    bank: data.funding_source
+                                    bank: data.disbursement_bank
                                 });
                             }
                             db.query(`INSERT INTO disbursement_history SET ?`, disbursement, function (error, result, fields) {
@@ -3612,7 +3616,7 @@ users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
                             Account: {
                                 Code: data.xeroCollectionBankID
                             },
-                            Date: payment.payment_date,
+                            Date: data.payment_date,
                             Amount: payment.payment_amount,
                             IsReconciled: true,
                             Reference: (data.xeroCollectionDescription || '').concat(` | 
@@ -3629,7 +3633,7 @@ users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
                             Account: {
                                 Code: data.xeroCollectionBankID
                             },
-                            Date: payment.payment_date,
+                            Date: data.payment_date,
                             Amount: payment.interest_amount,
                             IsReconciled: true,
                             Reference: (data.xeroCollectionDescription || '').concat(` | 
@@ -3661,8 +3665,8 @@ users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
                                     principal_amount: payment.payment_amount,
                                     interest_amount: payment.interest_amount,
                                     escrow_amount: payment.escrow_amount,
-                                    payment_date: payment.payment_date,
-                                    bank: data.xeroCollectionBankID
+                                    payment_date: data.payment_date,
+                                    bank: data.xeroCollectionBank
                                 });
                                 emailService.send({
                                     to: payment.email,
@@ -3932,8 +3936,8 @@ users.post('/application/pay-off/:id/:agentID', function(req, res, next) {
                                                 module: 'collections',
                                                 principal_amount: invoice.payment_amount,
                                                 interest_amount: invoice.interest_amount,
-                                                payment_date: invoice.date_created,
-                                                bank: data.close_bank
+                                                payment_date: data.close_date,
+                                                bank: data.close_bankname
                                             });
                                             connection.query('UPDATE application_schedules SET payment_status=1 WHERE ID = ?', [invoice_obj.ID], function (error, result, fields) {
                                                 connection.query('INSERT INTO schedule_history SET ?', invoice, function (error, response, fields) {

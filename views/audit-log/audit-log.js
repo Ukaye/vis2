@@ -103,14 +103,14 @@ function getCollections() {
                 }
             },
             {
-                width: "25%",
+                width: "20%",
                 mRender: function (data, type, full) {
                     return `<a href="/client-info?id=${full.clientID}">${full.client}</a>`;
                 }
             },
             {
                 data: "type",
-                width: "10%"
+                width: "5%"
             },
             {
                 width: "10%",
@@ -122,7 +122,7 @@ function getCollections() {
                 }
             },
             {
-                width: "10%",
+                width: "15%",
                 mRender: function (data, type, full) {
                     return full.bank || '--';
                 }
@@ -135,7 +135,7 @@ function getCollections() {
                 }
             },
             {
-                width: "10%",
+                width: "5%",
                 mRender: function (data, type, full) {
                     return (full.status === 1)? `<a class="btn btn-success btn-sm" onclick="confirm(${full.ID})">
                                Confirm <i class="fa fa-check"></i></a>` : '';

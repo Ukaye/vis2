@@ -544,7 +544,10 @@ function confirmPayment() {
     invoice.payment_source = $('#source').val();
     invoice.payment_date = $('#repayment-date').val();
     if (invoice.payment_source === 'remita' && remita_id) invoice.remitaPaymentID = remita_id;
-    if ($('#collection_bank').val() !== '000') invoice.xeroCollectionBankID = $('#collection_bank').val();
+    if ($('#collection_bank').val() !== '000') {
+        invoice.xeroCollectionBankID = $('#collection_bank').val();
+        invoice.xeroCollectionBank = $('#collection_bank').find(":selected").text();
+    }
     if ($('#collection_description').val()) invoice.xeroCollectionDescription = $('#collection_description').val();
     let total_payment = (parseFloat(invoice.actual_payment_amount) +
                         parseFloat(invoice.actual_interest_amount) +
