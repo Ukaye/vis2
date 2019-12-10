@@ -3229,6 +3229,7 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                         ${application.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(application.ID, 9)} | `)
                                 });
                                 invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                                console.log(xeroPayment.Payments[0])
                             }
                             if (xeroClient && invoice.interest_amount > 0 && 
                                 application.interest_invoice_no && invoice.xeroCollectionBankID) {
