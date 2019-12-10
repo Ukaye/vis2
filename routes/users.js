@@ -1803,6 +1803,7 @@ users.post('/apply', function(req, res) {
                                 required_docs = '';
                             if (stage.document) required_docs = `, pending document uploads (${stage.document})`;
                             if (process_.env.CLIENT_HOST) x3_link = `(${process_.env.CLIENT_HOST})`;
+                            console.log(req.body)
                             let mailOptions = {
                                 to: req.body.email,
                                 subject: 'Loan Request Reviewed',
