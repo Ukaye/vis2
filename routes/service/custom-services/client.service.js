@@ -2652,4 +2652,58 @@ router.put('/forgot-password/update', (req, res) => {
     });
 });
 
+router.get('/branches', helperFunctions.verifyJWT, function (req, res) {
+    let query = 'SELECT * FROM branches';
+    db.query(query, function (error, results) {
+        if (error)
+            return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": results
+        });
+    });
+});
+
+router.get('/states', helperFunctions.verifyJWT, function (req, res) {
+    let query = 'SELECT * FROM state';
+    db.query(query, function (error, results) {
+        if (error)
+            return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": results
+        });
+    });
+});
+
+router.get('/countries', helperFunctions.verifyJWT, function (req, res) {
+    let query = 'SELECT * FROM country';
+    db.query(query, function (error, results) {
+        if (error)
+            return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": results
+        });
+    });
+});
+
 module.exports = router;
