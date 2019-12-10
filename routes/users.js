@@ -1760,12 +1760,12 @@ users.post('/new-owner', function(req, res, next) {
  */
 
 users.post('/apply', function(req, res) {
+    console.log(req.body)
     let workflow_id = req.body.workflowID,
         postData = Object.assign({},req.body),
         query =  'INSERT INTO applications Set ?';
     if (!workflow_id)
         query =  'INSERT INTO requests Set ?';
-    console.log(req.body)
     delete postData.name;
     delete postData.email;
     delete postData.username;
