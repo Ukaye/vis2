@@ -623,6 +623,7 @@
                         obj.userID = user.ID;
                         obj.email = user.email;
                         obj.username = user.username || user.name;
+                        obj.name = user.fullname || user.name;
                     }
                     obj.workflowID = $('#workflows').val();
                     obj.loan_amount = $('#amount').val();
