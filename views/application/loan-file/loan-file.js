@@ -27,10 +27,11 @@ function init() {
     $('#kyc').text(loan.kyc || 'N/A');
     $('#security').text(loan.security || 'N/A');
 
-    for (let i=0; i<loan.workflow_processes.length; i++) {
-        let workflow_process = loan.workflow_processes[i];
+    for (let i=0; i<loan.workflow_processes.length - 1; i++) {
+        let workflow_process = loan.workflow_processes[i],
+            workflow_process_ = loan.workflow_processes[i + 1];
         $('#process_label').append(`${workflow_process.stage || 'N/A'} By: <br>`);
-        $('#process_value').append(`<b>${workflow_process.agent || 'N/A'} (${workflow_process.role || 'N/A'})</b><br>`);
+        $('#process_value').append(`<b>${workflow_process_.agent || 'N/A'} (${workflow_process.role || 'N/A'})</b><br>`);
     }
 
     return window.print();
