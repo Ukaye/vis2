@@ -631,7 +631,6 @@
                         and Maximum is ₦${numberToCurrencyformatter(settings.loan_requested_max)}`,'','warning');
                     if (loan_amount !== parseFloat(obj.loan_amount))
                         return notification('Loan amount ('+parseFloat(obj.loan_amount)+') and schedule ('+loan_amount+') mismatch','','warning');
-
                     $('#wait').show();
                     $.ajax({
                         'url': '/user/apply',
