@@ -119,6 +119,7 @@ function getWebPayments() {
                 width: "25%",
                 className: "text-right",
                 mRender: function (data, type, full) {
+                    if (full.status === 2) return '--';
                     let payment = [];
                     if (full.interest_amount > 0)
                         payment.push(`Interest - ${numberToCurrencyformatter(full.interest_amount.round(2))}`);
@@ -196,12 +197,12 @@ function confirmPaymentModal(id, id2) {
     payment_id = id2;
     web_payment = ($.grep(web_payments, e => {return (e.ID === parseInt(payment_id))}))[0];
     $('#source').val('paystack').prop('disabled', true);
-    $('#payment').val(web_payment.actual_amount).prop('disabled', true);
-    $('#principal').val(web_payment.payment_amount).prop('disabled', true);
-    $('#interest').val(web_payment.interest_amount).prop('disabled', true);
-    $('#fees').val(web_payment.fees_amount).prop('disabled', true);
-    $('#penalty').val(web_payment.penalty_amount).prop('disabled', true);
-    $('#repayment-date').val(web_payment.payment_date).prop('disabled', true);
+    $('#payment').val(web_payment.actual_amount);
+    $('#principal').val(web_payment.payment_amount);
+    $('#interest').val(web_payment.interest_amount);
+    $('#fees').val(web_payment.fees_amount);
+    $('#penalty').val(web_payment.penalty_amount);
+    $('#repayment-date').val(web_payment.payment_date);
     if (xero_config.xero_web_collection_bank)
         $('#collection_bank').val(xero_config.xero_web_collection_bank);
     $('#collection_bank').prop('disabled', true);

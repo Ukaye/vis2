@@ -438,12 +438,12 @@ function confirmPaymentModal(id, id2) {
     if (payment_id) {
         web_payment = ($.grep(invoice_history, e => {return (e.ID === parseInt(payment_id))}))[0];
         $('#source').val('paystack').prop('disabled', true);
-        $('#payment').val(web_payment.actual_amount).prop('disabled', true);
-        $('#principal').val(web_payment.payment_amount).prop('disabled', true);
-        $('#interest').val(web_payment.interest_amount).prop('disabled', true);
-        $('#fees').val(web_payment.fees_amount).prop('disabled', true);
-        $('#penalty').val(web_payment.penalty_amount).prop('disabled', true);
-        $('#repayment-date').val(web_payment.payment_date).prop('disabled', true);
+        $('#payment').val(web_payment.actual_amount);
+        $('#principal').val(web_payment.payment_amount);
+        $('#interest').val(web_payment.interest_amount);
+        $('#fees').val(web_payment.fees_amount);
+        $('#penalty').val(web_payment.penalty_amount);
+        $('#repayment-date').val(web_payment.payment_date);
         $('#invoiceHistory').modal('hide');
     }
     $('#confirmPayment').modal('show');

@@ -3591,12 +3591,6 @@ users.get('/application/invoice-history/:id?/:status?', (req, res) => {
 });
 
 users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
-    let data = req.body;
-    data.status = 1;
-    delete data.actual_payment_amount;
-    delete data.actual_interest_amount;
-    delete data.actual_fees_amount;
-    delete data.actual_penalty_amount;
     xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async () => {
         db.query(`select s.clientID, s.applicationID, s.xeroPrincipalPaymentID, s.xeroInterestPaymentID, 
             i.principal_invoice_no, i.interest_invoice_no, c.fullname, c.email from schedule_history s, application_schedules i, clients c 
@@ -3604,49 +3598,95 @@ users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
         (error, result) => {
             if (error) {
                 res.send({"status": 500, "error": error, "response": null});
+            } else if (!result[0]) {
+                res.send({"status": 500, "error": "Payment does not exist!", "response": null});
             } else {
-                let payment = result[0];
-                xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
-                    if (xeroClient && payment.payment_amount > 0 && 
-                        payment.principal_invoice_no && data.xeroCollectionBankID) {
-                        let xeroPayment = await xeroClient.payments.create({
-                            Invoice: {
-                                InvoiceNumber: payment.principal_invoice_no
-                            },
-                            Account: {
-                                Code: data.xeroCollectionBankID
-                            },
-                            Date: data.payment_date,
-                            Amount: payment.payment_amount,
-                            IsReconciled: true,
-                            Reference: (data.xeroCollectionDescription || '').concat(` | 
-                                ${payment.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(payment.applicationID, 9)} | `)
-                        });
-                        data.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
-                    }
-                    if (xeroClient && payment.interest_amount > 0 && 
-                        payment.interest_invoice_no && data.xeroCollectionBankID) {
-                        let xeroPayment = await xeroClient.payments.create({
-                            Invoice: {
-                                InvoiceNumber: payment.interest_invoice_no
-                            },
-                            Account: {
-                                Code: data.xeroCollectionBankID
-                            },
-                            Date: data.payment_date,
-                            Amount: payment.interest_amount,
-                            IsReconciled: true,
-                            Reference: (data.xeroCollectionDescription || '').concat(` | 
-                                ${payment.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(payment.applicationID, 9)} | `)
-                        });
-                        data.xeroInterestPaymentID = xeroPayment.Payments[0]['PaymentID'];
-                    }
-                });
-                db.query(`UPDATE schedule_history SET ? WHERE ID = ${req.params.id}`, data, (error, history) => {
+                let data = req.body,
+                    payment = result[0],
+                    postData = Object.assign({},req.body);
+                postData.payment_status = 1;
+                delete postData.agentID;
+                delete postData.actual_amount;
+                delete postData.escrow_amount;
+                delete postData.payment_source;
+                delete postData.payment_date;
+                delete postData.remitaPaymentID;
+                delete postData.xeroCollectionBank;
+                delete postData.xeroCollectionBankID;
+                delete postData.xeroCollectionDescription;
+                db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`, postData, (error, invoice) => {
                     if(error) {
                         res.send({"status": 500, "error": error, "response": null});
                     } else {
-                        db.query(`UPDATE application_schedules SET payment_status = 1 WHERE ID = ${req.params.invoice_id}`, (error, invoice) => {
+                        let invoice = {};
+                        invoice.agentID = data.agentID;
+                        invoice.actual_amount = data.actual_amount;
+                        invoice.payment_amount = data.actual_payment_amount;
+                        invoice.interest_amount = data.actual_interest_amount;
+                        invoice.fees_amount = data.actual_fees_amount;
+                        invoice.penalty_amount = data.actual_penalty_amount;
+                        invoice.escrow_amount = data.escrow_amount;
+                        invoice.payment_source = data.payment_source;
+                        invoice.payment_date = data.payment_date;
+                        invoice.status = 1;
+                        invoice.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                        if (data.xeroCollectionBankID) {
+                            invoice.xeroCollectionBank = data.xeroCollectionBank;
+                            invoice.xeroCollectionBankID = data.xeroCollectionBankID;
+                        }
+                        if (data.xeroCollectionDescription)
+                            invoice.xeroCollectionDescription = data.xeroCollectionDescription;
+                        if (data.remitaPaymentID) invoice.remitaPaymentID = data.remitaPaymentID;
+                        if (invoice.payment_amount > 0 && invoice.interest_amount > 0) {
+                            invoice.type = 'multiple';
+                        } else {
+                            if (invoice.payment_amount > 0) {
+                                invoice.type = 'principal';
+                            } else if (invoice.interest_amount > 0) {
+                                invoice.type = 'interest';
+                            } else if (invoice.fees_amount > 0) {
+                                invoice.type = 'fees';
+                            } else if (invoice.penalty_amount > 0) {
+                                invoice.type = 'penalty';
+                            }
+                        }
+                        xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
+                            if (xeroClient && invoice.payment_amount > 0 && 
+                                payment.principal_invoice_no && invoice.xeroCollectionBankID) {
+                                let xeroPayment = await xeroClient.payments.create({
+                                    Invoice: {
+                                        InvoiceNumber: payment.principal_invoice_no
+                                    },
+                                    Account: {
+                                        Code: invoice.xeroCollectionBankID
+                                    },
+                                    Date: invoice.payment_date,
+                                    Amount: invoice.payment_amount,
+                                    IsReconciled: true,
+                                    Reference: (invoice.xeroCollectionDescription || '').concat(` | 
+                                        ${payment.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(payment.applicationID, 9)} | `)
+                                });
+                                invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                            }
+                            if (xeroClient && invoice.interest_amount > 0 && 
+                                payment.interest_invoice_no && invoice.xeroCollectionBankID) {
+                                let xeroPayment = await xeroClient.payments.create({
+                                    Invoice: {
+                                        InvoiceNumber: payment.interest_invoice_no
+                                    },
+                                    Account: {
+                                        Code: invoice.xeroCollectionBankID
+                                    },
+                                    Date: invoice.payment_date,
+                                    Amount: invoice.interest_amount,
+                                    IsReconciled: true,
+                                    Reference: (invoice.xeroCollectionDescription || '').concat(` | 
+                                        ${payment.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(payment.applicationID, 9)} | `)
+                                });
+                                invoice.xeroInterestPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                            }
+                        });
+                        db.query(`UPDATE schedule_history SET ? WHERE ID = ${req.params.id}`, invoice, (error, history) => {
                             if(error){
                                 res.send({"status": 500, "error": error, "response": null});
                             } else {
@@ -3658,15 +3698,15 @@ users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
                                 notificationsService.log(req, payload);
                                 auditLog.log({
                                     clientID: payment.clientID,
-                                    amount: payment.actual_amount,
+                                    amount: invoice.actual_amount,
                                     type: 'repayment',
                                     loanID: payment.applicationID,
                                     module: 'collections',
-                                    principal_amount: payment.payment_amount,
-                                    interest_amount: payment.interest_amount,
-                                    escrow_amount: payment.escrow_amount,
-                                    payment_date: data.payment_date,
-                                    bank: data.xeroCollectionBank
+                                    principal_amount: invoice.payment_amount,
+                                    interest_amount: invoice.interest_amount,
+                                    escrow_amount: invoice.escrow_amount,
+                                    payment_date: invoice.payment_date,
+                                    bank: invoice.xeroCollectionBank
                                 });
                                 emailService.send({
                                     to: payment.email,
@@ -3690,7 +3730,12 @@ users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
 users.get('/application/payment-reversal/:id/:invoice_id', function(req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async () => {
         let id;
-        db.query('UPDATE schedule_history SET status=0 WHERE ID=?', [req.params.id], function (error, history, fields) {
+        const date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        let update = {
+            status: 0,
+            date_modified: date_modified
+        };
+        db.query(`UPDATE schedule_history SET ? WHERE ID = ${req.params.id}`, update, (error, history) => {
             if(error){
                 res.send({"status": 500, "error": error, "response": null});
             } else {
@@ -3725,7 +3770,11 @@ users.get('/application/payment-reversal/:id/:invoice_id', function(req, res, ne
                                 }
                             });
                         }
-                        db.query('UPDATE application_schedules SET payment_status=0 WHERE ID=?', [req.params.invoice_id], function (error, history, fields) {
+                        update = {
+                            payment_status: 0,
+                            date_modified: date_modified
+                        };
+                        db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`, update, (error, history) => {
                             if(error){
                                 res.send({"status": 500, "error": error, "response": null});
                             } else {
