@@ -142,6 +142,9 @@ $('#document-download-div').on('click','.document-download-text', function (e) {
 $('.todolist').on('click','.remove-item', function (e) {
     archiveWorkflow(e);
 });
+$('#process-description').click(function (e) {
+    archiveWorkflow(e);
+});
 $('#client-information-div').click(function (e) {
     archiveWorkflow(e);
 });
@@ -224,6 +227,8 @@ function addProcess() {
     data.stages = stages;
     if (($.grep(data.stages,function(e){return e.stage_name==='Application Start'})).length > 1)
         data.stages.shift();
+    if ($('#process-description').val())
+        workflow.description = $('#process-description').val();
     if ($('#client-information').val())
         workflow.client_information = $('#client-information').val().join();
     workflow.client_email = ($('#client-email').is(':checked'))? 1 : 0;
@@ -264,6 +269,7 @@ function addProcess() {
         success: function (data) {
             localStorage.removeItem('local_stages');
             $('#process-name').val("");
+            $('#process-description').val("");
             $('#wait').hide();
             notification(data.message);
             window.location.href = "/all-workflow";
@@ -283,6 +289,7 @@ function init(stages){
         'success': function (data) {
             let workflow = data.response;
             $('#process-name').val(workflow.name);
+            if (workflow.description) $('#process-description').val(workflow.description);
             if (workflow.client_information) {
                 $('#client-information').val(workflow.client_information.split(','));
                 $('#client-information').multiselect("refresh");

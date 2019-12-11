@@ -174,7 +174,9 @@ function addProcess() {
     data.stages = stages;
     if (($.grep(data.stages,function(e){return e.stage_name==='Application Start'})).length > 1)
         data.stages.shift();
-    if ($('#client-information').val()) 
+    if ($('#process-description').val())
+        workflow.description = $('#process-description').val();
+    if ($('#client-information').val())
         workflow.client_information = $('#client-information').val().join();
     workflow.client_email = ($('#client-email').is(':checked'))? 1 : 0;
     workflow.admin_email = ($('#admin-email').is(':checked'))? 1 : 0;
@@ -211,6 +213,7 @@ function addProcess() {
         success: function (data) {
             localStorage.removeItem('local_stages');
             $('#process-name').val("");
+            $('#process-description').val("");
             $('#wait').hide();
             notification(data.message, '', 'success');
             window.location.href = "/all-workflow";
