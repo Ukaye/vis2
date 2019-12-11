@@ -664,6 +664,13 @@ app.get('/web-payments', requireLogin, function (req, res) {
     });
 });
 
+//create mail routes
+app.get('/mail-templates', requireLogin, function(req, res) {
+    res.sendFile('/mail-templates/index.html', {
+        root: __dirname + '/views'
+    });
+});
+
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
     res.status(404);
