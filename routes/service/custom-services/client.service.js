@@ -2273,16 +2273,17 @@ router.get('/application/comment/:id/:loan_id', (req, res) => {
 router.get('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req, res) => {
     let query = `SELECT * FROM applications WHERE ID = ${req.params.loan_id} AND userID = ${req.params.id}`;
     let query1 = `SELECT COALESCE(SUM(payment_amount+interest_amount), 0) amount FROM application_schedules 
-    WHERE applicationID = ${req.params.loan_id} AND interest_collect_date <= CURDATE() AND status = 1`;
+        WHERE applicationID = ${req.params.loan_id} AND interest_collect_date <= CURDATE() AND status = 1`;
     let query2 = `SELECT COALESCE(SUM(payment_amount), 0) amount FROM application_schedules 
-    WHERE applicationID = ${req.params.loan_id} AND interest_collect_date > CURDATE() AND status = 1`;
+        WHERE applicationID = ${req.params.loan_id} AND interest_collect_date > CURDATE() AND status = 1`;
     let query3 = `SELECT COALESCE(((interest_amount/30) * (CASE
         WHEN DAY(CURDATE()) > DAY(interest_collect_date) THEN DAY(CURDATE()) - DAY(interest_collect_date)
         WHEN DAY(CURDATE()) < DAY(interest_collect_date) THEN 30 - (DAY(interest_collect_date) - DAY(CURDATE()))
         ElSE 0 END)), 0) amount FROM application_schedules WHERE applicationID = ${req.params.loan_id} AND status = 1 
         AND MONTH(interest_collect_date) = MONTH(CURDATE()) AND YEAR(interest_collect_date) = YEAR(CURDATE())`;
     let query4 = `SELECT COALESCE(SUM(payment_amount+interest_amount), 0) amount FROM schedule_history 
-    WHERE applicationID = ${req.params.loan_id} AND clientID = ${req.params.id} AND status = 1`;
+        WHERE applicationID = ${req.params.loan_id} AND clientID = ${req.params.id} AND status = 1 
+        AND (SELECT status FROM application_schedules WHERE ID = invoiceID) = 1`;
     db.query(query, (error, application) => {
         if (error) return res.send({
             "status": 500,
