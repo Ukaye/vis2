@@ -1893,7 +1893,7 @@ router.get('/preapproved-loan/create/:id/:loan_id', helperFunctions.verifyJWT, f
                 data.offer_url = `${process.env.HOST || req.HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}&i=${req.params.loan_id}`;
                 emailService.send({
                     to: email,
-                    subject: `${process.env.TENANT} Mandate Setup`,
+                    subject: `Mandate Setup`,
                     template: 'mandate',
                     context: data
                 });
