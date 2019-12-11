@@ -127,7 +127,6 @@ function padWithZeroes(n, width, z) {
 
 function pmt(rate, nper, pv, type) {
     let pvif, pmt;
-    rate = rate.round(2);
 
     pvif = Math.pow(1 + rate, nper);
     pmt = rate / (pvif - 1) * -(pv * pvif);
@@ -140,14 +139,25 @@ function pmt(rate, nper, pv, type) {
 
 function computeSchedule(loan_amount, interest_rate, payments_per_year, years, payment, type) {
     let schedule = [],
+        total_principal = 0,
         remaining = loan_amount,
         number_of_payments = payments_per_year * years;
 
     for (let i=0; i<=number_of_payments; i++) {
         let interest = (((type && type === 'fixed')? loan_amount:remaining) * (interest_rate/100/payments_per_year)).round(2),
-            principle = (payment-interest).round(2);
+            interest_ = interest > 0? interest:0,
+            principle = (payment - interest).round(2),
+            principle_ = principle > 0? (principle < payment? principle:payment):0;
         remaining = (remaining - principle).round(2);
-        let row = [i, principle>0?(principle<payment?principle:payment):0, interest>0?interest:0, remaining>0?remaining:0];
+        let remaining_ = remaining > 0? remaining:0,
+            row = [i, principle_, interest_, remaining_];
+        total_principal += principle_;
+        if (i === number_of_payments - 1) {
+            let diff = loan_amount - total_principal;
+            principle_ = (principle_ + diff).round(2);
+            interest_ = (interest_ - diff).round(2);
+            row = [i, principle_, interest_, remaining_];
+        }
         schedule.push(row);
     }
 

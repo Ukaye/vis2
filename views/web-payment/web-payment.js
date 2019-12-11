@@ -110,15 +110,15 @@ function getWebPayments() {
                 width: "15%",
                 className: "text-right",
                 mRender: function (data, type, full) {
-                    if (full.actual_amount)
-                        return numberToCurrencyformatter(full.actual_amount.round(2));
-                    return '--';
+                    return numberToCurrencyformatter(full.actual_amount.round(2));
                 }
             },
             {
                 width: "25%",
                 className: "text-right",
                 mRender: function (data, type, full) {
+                    if (full.status === 2) return numberToCurrencyformatter(full.actual_amount.round(2));
+
                     let payment = [];
                     if (full.interest_amount > 0)
                         payment.push(`Interest - ${numberToCurrencyformatter(full.interest_amount.round(2))}`);
@@ -143,9 +143,7 @@ function getWebPayments() {
                 width: "10%",
                 className: "text-right",
                 mRender: function (data, type, full) {
-                    if (full.applicationID)
-                        return `<a href="/application?id=${full.applicationID}">${padWithZeroes(full.applicationID, 9)}</a>`;
-                    return '--';
+                    return `<a href="/application?id=${full.applicationID}">${padWithZeroes(full.applicationID, 9)}</a>`;
                 }
             },
             {
@@ -159,7 +157,7 @@ function getWebPayments() {
                 width: "10%",
                 mRender: function (data, type, full) {
                     return (full.status === 2)? `<a class="btn btn-success btn-sm" onclick="confirmPaymentModal(${full.invoiceID},${full.ID})">
-                               Confirm <i class="fa fa-check"></i></a>` : '';
+                               Apply <i class="fa fa-check"></i></a>` : '';
                 }
             }
         ]
@@ -196,12 +194,12 @@ function confirmPaymentModal(id, id2) {
     payment_id = id2;
     web_payment = ($.grep(web_payments, e => {return (e.ID === parseInt(payment_id))}))[0];
     $('#source').val('paystack').prop('disabled', true);
-    $('#payment').val(web_payment.actual_amount).prop('disabled', true);
-    $('#principal').val(web_payment.payment_amount).prop('disabled', true);
-    $('#interest').val(web_payment.interest_amount).prop('disabled', true);
-    $('#fees').val(web_payment.fees_amount).prop('disabled', true);
-    $('#penalty').val(web_payment.penalty_amount).prop('disabled', true);
-    $('#repayment-date').val(web_payment.payment_date).prop('disabled', true);
+    $('#payment').val(web_payment.actual_amount);
+    $('#principal').val(web_payment.payment_amount);
+    $('#interest').val(web_payment.interest_amount);
+    $('#fees').val(web_payment.fees_amount);
+    $('#penalty').val(web_payment.penalty_amount);
+    $('#repayment-date').val(web_payment.payment_date);
     if (xero_config.xero_web_collection_bank)
         $('#collection_bank').val(xero_config.xero_web_collection_bank);
     $('#collection_bank').prop('disabled', true);
@@ -218,7 +216,10 @@ function confirmPayment() {
     invoice.payment_source = $('#source').val();
     invoice.payment_date = $('#repayment-date').val();
     if (invoice.payment_source === 'remita' && remita_id) invoice.remitaPaymentID = remita_id;
-    if ($('#collection_bank').val() !== '000') invoice.xeroCollectionBankID = $('#collection_bank').val();
+    if ($('#collection_bank').val() !== '000') {
+        invoice.xeroCollectionBankID = $('#collection_bank').val();
+        invoice.xeroCollectionBank = $('#collection_bank').find(":selected").text();
+    }
     if ($('#collection_description').val()) invoice.xeroCollectionDescription = $('#collection_description').val();
     let total_payment = (parseFloat(invoice.actual_payment_amount) +
                         parseFloat(invoice.actual_interest_amount) +

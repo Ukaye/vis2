@@ -1113,7 +1113,7 @@ async function onExecutiveTransaction() {
                         $('#wait').hide();
                         $("#input_amount").val('');
                         $("#input_description").val('');
-                        swal(`${(investmentOps.isDeposit === 1) ? 'Deposit' : 'Withdrawal'} transaction successful!`, '', 'success');
+                        swal(`${(investmentOps.isDeposit === 1) ? 'Deposit' : 'Withdrawal'} transaction initiated!`, '', 'success');
                         // bindDataTable(selectedInvestment.investmentId, false);
                         table.ajax.reload(null, false);
                     } else {
