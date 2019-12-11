@@ -110,16 +110,15 @@ function getWebPayments() {
                 width: "15%",
                 className: "text-right",
                 mRender: function (data, type, full) {
-                    if (full.actual_amount)
-                        return numberToCurrencyformatter(full.actual_amount.round(2));
-                    return '--';
+                    return numberToCurrencyformatter(full.actual_amount.round(2));
                 }
             },
             {
                 width: "25%",
                 className: "text-right",
                 mRender: function (data, type, full) {
-                    if (full.status === 2) return '--';
+                    if (full.status === 2) return numberToCurrencyformatter(full.actual_amount.round(2));
+
                     let payment = [];
                     if (full.interest_amount > 0)
                         payment.push(`Interest - ${numberToCurrencyformatter(full.interest_amount.round(2))}`);
@@ -144,9 +143,7 @@ function getWebPayments() {
                 width: "10%",
                 className: "text-right",
                 mRender: function (data, type, full) {
-                    if (full.applicationID)
-                        return `<a href="/application?id=${full.applicationID}">${padWithZeroes(full.applicationID, 9)}</a>`;
-                    return '--';
+                    return `<a href="/application?id=${full.applicationID}">${padWithZeroes(full.applicationID, 9)}</a>`;
                 }
             },
             {
@@ -160,7 +157,7 @@ function getWebPayments() {
                 width: "10%",
                 mRender: function (data, type, full) {
                     return (full.status === 2)? `<a class="btn btn-success btn-sm" onclick="confirmPaymentModal(${full.invoiceID},${full.ID})">
-                               Confirm <i class="fa fa-check"></i></a>` : '';
+                               Apply <i class="fa fa-check"></i></a>` : '';
                 }
             }
         ]
