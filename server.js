@@ -92,6 +92,12 @@ app.use(session({
     ephemeral: true
 }));
 
+app.use(function (req, res, next) {
+    if (Number(req.headers['content-length']) > Number(process.env.FILE_SIZE_LIMIT))
+        return res.status(413).send('Request exceeds file size limit!');
+    next();
+});
+
 app.post('/login', function (req, res) {
     let user = [],
         username = req.body.username,

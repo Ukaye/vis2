@@ -1435,7 +1435,6 @@ router.post('/document-upload/:id/:name', function(req, res) {
         extArray = sampleFile.name.split("."),
         extension = extArray[extArray.length - 1];
     if (extension) extension = extension.toLowerCase();
-
     db.query('SELECT * FROM applications WHERE ID = ?', [application_id], function (error, application, fields) {
         if(error){
             res.send({"status": 500, "error": error, "response": null});
