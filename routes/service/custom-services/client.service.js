@@ -1603,7 +1603,7 @@ router.post('/verify/email/:id', helperFunctions.verifyJWT, function (req, res) 
     data.name = req.user.fullname;
     data.date = moment().utcOffset('+0100').format('YYYY-MM-DD');
     data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
-    data.verify_url = `${req.body.callback_url}?token=${token}`;
+    data.verify_url = `${req.body.callback_url}?token=${token}&module=client`;
     emailService.send({
         to: req.user.email,
         subject: 'Email Confirmation',
@@ -2609,7 +2609,7 @@ router.post('/forgot-password/get', (req, res) => {
         data.fullname = client.fullname;
         data.date = moment().utcOffset('+0100').format('YYYY-MM-DD');
         data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
-        data.forgot_url = `${req.body.callback_url}?token=${token}`;
+        data.forgot_url = `${req.body.callback_url}?token=${token}&module=password`;
         emailService.send({
             to: client.email,
             subject: 'Forgot Password Request',
