@@ -3731,21 +3731,21 @@
             data: '{}',
             success: function (response) {
                 var role = $("[id=filter-officers]");
-                role.empty().append('<option value="0" id="0">All Loan Officers</option>');
-                $("#overdue-officers").empty().append('<option value="0" id="0">All Loan Officers</option>');
-                $("#badloans-officers").empty().append('<option value="0" id="0">All Loan Officers</option>');
-                $("#chartfilterofficers").empty().append('<option value="0" id="0">All Loan Officers</option>');
-                $("#pchartfilterofficers").empty().append('<option value="0" id="0">All Loan Officers</option>');
-                $("#irchartfilterofficers").empty().append('<option value="0" id="0">All Loan Officers</option>');
-                $("#irrecchartfilterofficers").empty().append('<option value="0" id="0">All Loan Officers</option>');
-                $("#interest-officers").empty().append('<option value="0" id="0">All Loan Officers</option>');
-                $("#interest-rec-officers").empty().append('<option value="0" id="0">All Loan Officers</option>');
-                $("#prchartfilterofficers").empty().append('<option value="0" id="0">All Loan Officers</option>');
-                $("#prrecchartfilterofficers").empty().append('<option value="0" id="0">All Loan Officers</option>');
-                $("#principal-officers").empty().append('<option value="0" id="0">All Loan Officers</option>');
-                $("#principal-rec-officers").empty().append('<option value="0" id="0">All Loan Officers</option>');
-                $("#pvifilterofficers").empty().append('<option value="0" id="0">All Loan Officers</option>');
-                $("#filter-glp-officers").empty().append('<option value="0" id="0">All Loan Officers</option>');
+                role.empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#overdue-officers").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#badloans-officers").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#chartfilterofficers").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#pchartfilterofficers").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#irchartfilterofficers").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#irrecchartfilterofficers").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#interest-officers").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#interest-rec-officers").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#prchartfilterofficers").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#prrecchartfilterofficers").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#principal-officers").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#principal-rec-officers").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#pvifilterofficers").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#filter-glp-officers").empty().append('<option value="false" id="false">All Loan Officers</option>');
                 $.each(JSON.parse(response), function (key, val) {
                     $("#filter-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#overdue-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
@@ -3774,7 +3774,7 @@
             data: '{}',
             success: function (response) {
                 $("#loan-classes").empty().append('<option value="-1" id="-1">Choose Loan Classification</option>');
-                $("#loan-classes").append('<option value="0" id="0">Performing Loans</option>');
+                $("#loan-classes").append('<option value="false" id="false">Performing Loans</option>');
                 $.each(JSON.parse(response), function (key, val) {
                     let value = val.id+'-'+val.un_max;
                     $("#loan-classes").append('<option value = "' + value + '" id="' + val.id + '" un_max="'+val.un_max+'">' + val.description + '</option>');
@@ -3793,7 +3793,7 @@
             url = url.concat('start='+formatDate(start)+'&&end='+formatDate(end)+'&&');
             urlAn = urlAn.concat('start='+formatDate(start)+'&&end='+formatDate(end)+'&&');
         }
-        if (officer.value == 0){
+        if (officer.value == false){
             return loadDisbursed();
         }
         url = url.concat('officer='+officer.value);
@@ -3821,7 +3821,7 @@
         if (start && end){
             url = url.concat('start='+formatDate(start)+'&&end='+formatDate(end)+'&&');
         }
-        if (officer.value == 0){
+        if (officer.value == false){
             return loadGLP();
         }
         url = url.concat('officer='+officer.value);
@@ -3848,7 +3848,7 @@
         if (start && end){
             url = url.concat('start='+formatDate(start)+'&&end='+formatDate(end)+'&&');
         }
-        if (officer.value == 0){
+        if (officer.value == false){
             return loadInterestReceived();
         }
         url = url.concat('officer='+officer.value);
@@ -3875,7 +3875,7 @@
         if (start && end){
             url = url.concat('start='+formatDate(start)+'&&end='+formatDate(end)+'&&');
         }
-        if (officer.value == 0){
+        if (officer.value == false){
             return loadInterestReceived();
         }
         url = url.concat('officer='+officer.value);
@@ -3902,7 +3902,7 @@
         if (start && end){
             url = url.concat('start='+formatDate(start)+'&&end='+formatDate(end)+'&&');
         }
-        if (officer.value == 0){
+        if (officer.value == false){
             return loadPrincipalReceived();
         }
         url = url.concat('officer='+officer.value);
@@ -3929,7 +3929,7 @@
         if (start && end){
             url = url.concat('start='+formatDate(start)+'&&end='+formatDate(end)+'&&');
         }
-        if (officer.value == 0){
+        if (officer.value == false){
             return loadPrincipalReceived();
         }
         url = url.concat('officer='+officer.value);
@@ -3953,7 +3953,7 @@
 //            end = $("#endDate").val(),
 //            url = '/user/badloans?',
 //            d=[], agent;
-//        if (officer.value == 0){
+//        if (officer.value == false){
 //            return loadBadLoans();
 //        }
 //        url = url.concat('officer='+officer.value);
@@ -3979,7 +3979,7 @@
             classification = $('#loan-classes').val().split('-')[0],
             unmax = $('#loan-classes').val().split('-')[1] ;
         let off_ = classification.value.split('-')[0];
-        if (officer.value == 0 && classification == -1){
+        if (officer.value == false && classification == -1){
             return loadBadLoans();
         }
         else {
@@ -4010,7 +4010,7 @@
             url = '/user/badloans?';
         let class_ = classification.value.split('-')[0],
             unmax = classification.value.split('-')[1] ;
-        if (class_ == -1 && officer == 0){
+        if (class_ == -1 && officer == false){
             return loadBadLoans();
         }
         else {
@@ -4041,7 +4041,7 @@
         if (start && end){
             url = url.concat('start='+formatDate(start)+'&&end='+formatDate(end)+'&&');
         }
-        if (officer.value == 0){
+        if (officer.value == false){
             return loadOverdues();
         }
         url = url.concat('officer='+officer.value);
@@ -4135,7 +4135,7 @@
         let url = '/user/analytics?t=disbursements&&',
             freq = $('#disburse-frequency').val(),
             year = $('#disburse-year').val();
-        if (officer.value == 0 && freq == "-1"){
+        if (officer.value == false && freq == "-1"){
             return disbursed();
         }
         url = url.concat('officer='+officer.value+'&&year='+year);
@@ -4425,7 +4425,7 @@
             type: "GET",
             url: "/user/branches/",
             success: function (response) {
-                $("#chartfilterbranches").empty().append('<option id="0" value ="0">Select a Branch</option>');
+                $("#chartfilterbranches").empty().append('<option value="false" id="false">Select a Branch</option>');
                 $.each(JSON.parse(response), function (key, val) {
                     $("#chartfilterbranches").append('<option value = "' + val.id + '" id="' + val.id + '">' + val.branch_name + '</option>');
                 });
@@ -4499,7 +4499,7 @@
         let url = '/user/analytics?t=branches&&bt='+$('#branchreport').val()+'&&',
             freq = $('#branch-frequency').val(),
             year = $('#branch-year').val();
-        if (branch.value == 0){
+        if (branch.value == false){
             swal('', 'You have to choose a branch to continue!', 'warning');
             $('#branch-frequency').val(-1);
             $('#branch-year').val(0);
@@ -4629,7 +4629,7 @@
 //        let url = ($('#reportview').val() == '1') ? 'user/analytics?t=branches&&bt='+$('#branchreport').val()+'&&' : 'user/multi-analytics?bt='+$('#branchreport').val()+'&&';
 //            year = $('#branch-year').val(), report = $('#reportview').val(),
 //            branch = $('#chartfilterbranches').val();
-////        if (branch == 0){
+////        if (branch == false){
 ////            return swal('Please select a branch!', '','warning');
 ////        }
 //        if (frequency.value == 2 || frequency.value == 4){
@@ -4826,7 +4826,7 @@
         let url = ($('#reportview').val() == '1') ? 'user/analytics?t=branches&&bt='+$('#branchreport').val()+'&&' : 'user/multi-analytics?bt='+$('#branchreport').val()+'&&';
         year = $('#branch-year').val(), report = $('#reportview').val(),
             branch = $('#chartfilterbranches').val();
-        if (($('#reportview').val() == '1') && branch == 0){
+        if (($('#reportview').val() == '1') && branch == false){
             return swal('Please select a branch!', '','warning');
         }
         if (frequency.value == 2 || frequency.value == 4){
@@ -5103,7 +5103,7 @@
         let branch = $('#chartfilterbranches').val(), report = $('#reportview').val(),
             freq = $('#branch-frequency').val(),
             d=[], agent, xaxis, yaxis, caption, categories = [], dataset = [], datar = [], chartTemp, values = [], diffSeries = [], countSeries, seriesNames = [], nondupSeriesNames = [];
-        if (($('#reportview').val() == '1') && branch == 0){
+        if (($('#reportview').val() == '1') && branch == false){
             return swal('Please choose a branch!', '', 'warning');
         }
         urlAn = urlAn.concat('freq='+freq+'&&branch='+branch+'&&year='+year.value);
@@ -5480,7 +5480,7 @@
         let url = '/user/analytics?t=payments&&',
             freq = $('#payment-frequency').val(),
             year = $('#payment-year').val();
-        if (officer.value == 0){
+        if (officer.value == false){
             $('#payment-frequency').val(-1);
             $('#payment-year').val(0);
             $('#pay-year').hide();
@@ -5768,7 +5768,7 @@
         let url = '/user/analytics?t=interest-received&&',
             freq = $('#ir-frequency').val(),
             year = $('#i-r-year').val();
-        if (officer.value == 0 && freq == "-1"){
+        if (officer.value == false && freq == "-1"){
             return interestreceived();
         }
         url = url.concat('officer='+officer.value+'&&year='+year);
@@ -6086,7 +6086,7 @@
         let url = '/user/analytics?t=interest-receivable&&',
             freq = $('#ir-rec-frequency').val(),
             year = $('#i-r-rec-year').val();
-        if (officer.value == 0 && freq == "-1"){
+        if (officer.value == false && freq == "-1"){
             return interestreceivable();
         }
         url = url.concat('officer='+officer.value+'&&year='+year);
@@ -6408,7 +6408,7 @@
         let url = '/user/analytics?t=principal-received&&',
             freq = $('#pr-frequency').val(),
             year = $('#p-r-year').val();
-        if (officer.value == 0 && freq == "-1"){
+        if (officer.value == false && freq == "-1"){
             return principalreceived();
         }
         url = url.concat('officer='+officer.value+'&&year='+year);
@@ -6726,7 +6726,7 @@
         let url = '/user/analytics?t=principal-receivable&&',
             freq = $('#pr-rec-frequency').val(),
             year = $('#p-r-rec-year').val();
-        if (officer.value == 0 && freq == "-1"){
+        if (officer.value == false && freq == "-1"){
             return principalreceivable();
         }
         if (freq != "2" || freq != '4'){
