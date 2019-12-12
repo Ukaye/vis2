@@ -113,5 +113,20 @@
     "name": "CBN",
     "authorization": "FORM",
     "code": "000"
+  },
+  {
+    "name": "ENTERPRISE BANK"
+  },
+  {
+    "name": "FSDH MERCHANT BANK"
+  },
+  {
+    "name": "RAND MERCHANT BANK"
+  },
+  {
+    "name": "STANDARD CHARTERED BANK"
+  },
+  {
+    "name": "CORONATION MERCHANT BANK"
   }
 ]

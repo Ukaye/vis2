@@ -2786,4 +2786,31 @@ router.get('/application/verify/email/:token', function (req, res) {
     });
 });
 
+router.get('/banks', function (req, res) {
+    let banks = require('../../../banks.json');
+    paystack.subaccount.listBanks()
+        .then(function (body) {
+            async.forEach(body.data, (bank, callback) => {
+                let check = banks.filter(bank_ => {
+                    return bank_.name.toLowerCase().indexOf(bank.name.toLowerCase()) > -1;
+                });
+                if (!check[0]) banks.push({name: bank.name});
+                callback();
+            }, data => {
+                return res.send({
+                    "status": 200,
+                    "error": null,
+                    "response": banks
+                });
+            });
+        })
+        .catch(function (error) {
+            if (error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+        });
+});
+
 module.exports = router;
