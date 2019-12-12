@@ -2708,7 +2708,7 @@ router.get('/countries', helperFunctions.verifyJWT, function (req, res) {
 });
 
 router.post('/application/verify/email/:id/:type', helperFunctions.verifyJWT, function (req, res) {
-    if (!req.body.callback_url || !req.body.email)
+    if (!req.body.callback_url || !req.body.email || !req.params.type)
         return res.status(500).send('Required parameter(s) not sent!');
     let data = {},
         email = req.body.email;
@@ -2718,7 +2718,7 @@ router.post('/application/verify/email/:id/:type', helperFunctions.verifyJWT, fu
                 ID: req.user.ID,
                 email: req.user.email,
                 phone: req.user.phone,
-                type: req.query.type
+                type: req.params.type
             },
             process.env.SECRET_KEY,
             {
@@ -2734,8 +2734,8 @@ router.post('/application/verify/email/:id/:type', helperFunctions.verifyJWT, fu
         template: 'default',
         context: {
             name: req.user.fullname,
-            message: `This is a reminder that your ${req.query.type} email (${email}) is pending verification. 
-                Kindly log in to your ${req.query.type} email for further instructions on how to proceed!`
+            message: `This is a reminder that your ${req.params.type} email (${email}) is pending verification. 
+                Kindly log in to your ${req.params.type} email for further instructions on how to proceed!`
         }
     });
     emailService.send({
