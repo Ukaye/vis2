@@ -178,6 +178,9 @@ $('#admin-application-override').click(e => {
 $('#enable-client-product').click(e => {
     archiveWorkflow(e);
 });
+$('#enable-client-product').click(e => {
+    archiveWorkflow(e);
+});
 $('#application-settings-option').click(e => {
     archiveWorkflow(e);
     if (localStorage.archive_workflow === 'true') {
@@ -187,6 +190,9 @@ $('#application-settings-option').click(e => {
             $('#application-settings-div').hide();
         }
     }
+});
+$('#terms').click(e => {
+    archiveWorkflow(e);
 });
 
 function archiveWorkflow(e) {
@@ -257,6 +263,8 @@ function addProcess() {
         if (!workflow.interest_rate_max || workflow.interest_rate_max <= 0)
             return notification('Invalid interest rate max','','warning');
     }
+    workflow.terms = $('#terms').summernote('code');
+    $('#terms').summernote('destroy');
     if (localStorage.archive_workflow === 'false')
         url = '/edit-workflows/';
 
@@ -309,6 +317,12 @@ function init(stages){
             if (workflow.interest_rate_max) $('#interest_rate_max').val(numberToCurrencyformatter(workflow.interest_rate_max));
             if (workflow.admin_application_override === 1) $('#admin-application-override').prop('checked', true);
             if (workflow.enable_client_product === 1) $('#enable-client-product').prop('checked', true);
+            if (workflow.terms) $('#terms').html(workflow.terms);
+            $('#terms').summernote({focus: true});
+            $('.note-icon-caret').hide();
+            $('.note-popover').hide();
+            $('.note-insert').hide();
+            $('.note-view').hide();
 
             $.ajax({
                 'url': '/workflow-stages/'+workflow_id,

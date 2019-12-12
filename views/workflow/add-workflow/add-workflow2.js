@@ -1,4 +1,9 @@
 $(document).ready(function() {
+    $('#terms').summernote({focus: true});
+    $('.note-icon-caret').hide();
+    $('.note-popover').hide();
+    $('.note-insert').hide();
+    $('.note-view').hide();
     getStages();
     getRoles();
 });
@@ -204,6 +209,8 @@ function addProcess() {
         if (!workflow.interest_rate_max || workflow.interest_rate_max <= 0)
             return notification('Invalid interest rate max','','warning');
     }
+    workflow.terms = $('#terms').summernote('code');
+    $('#terms').summernote('destroy');
 
     $('#wait').show();
     $.ajax({
