@@ -201,7 +201,8 @@ function archiveWorkflow(e) {
         swal({
             title: "Are you sure?",
             text: "Only Approval Rights are editable. Any other changes to this workflow would be saved as a new copy.\n\n" +
-            "Once started, this process is not reversible!",
+            "Once started, this process is not reversible!\n\n"+
+            "Please note that all files attached to this workflow would be lost and require reuploading.",
             icon: "warning",
             buttons: true,
             dangerMode: true
