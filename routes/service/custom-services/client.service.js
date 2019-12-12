@@ -2707,8 +2707,8 @@ router.get('/countries', helperFunctions.verifyJWT, function (req, res) {
     });
 });
 
-router.post('/application/verify/email/:id/:type', helperFunctions.verifyJWT, function (req, res) {
-    if (!req.body.callback_url || !req.body.email || !req.params.type)
+router.post('/application/verify/email/:id/:application_id/:type', helperFunctions.verifyJWT, function (req, res) {
+    if (!req.body.callback_url || !req.body.email || !req.params.type || !req.params.application_id)
         return res.status(500).send('Required parameter(s) not sent!');
     let data = {},
         email = req.body.email;
@@ -2718,7 +2718,8 @@ router.post('/application/verify/email/:id/:type', helperFunctions.verifyJWT, fu
                 ID: req.user.ID,
                 email: req.user.email,
                 phone: req.user.phone,
-                type: req.params.type
+                type: req.params.type,
+                applicationID: req.params.application_id
             },
             process.env.SECRET_KEY,
             {
@@ -2761,7 +2762,7 @@ router.get('/application/verify/email/:token', function (req, res) {
         });
 
         let payload = {},
-            query = `UPDATE preapplications Set ? WHERE ID = ${decoded.ID}`;
+            query = `UPDATE preapplications Set ? WHERE ID = ${decoded.applicationID}`;
         switch (decoded.type) {
             case 'work': {
                 payload.verify_work_email = enums.VERIFY_EMAIL.STATUS.VERIFIED;
