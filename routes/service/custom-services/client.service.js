@@ -2727,7 +2727,7 @@ router.post('/application/verify/email/:id/:type', helperFunctions.verifyJWT, fu
     data.name = req.user.fullname;
     data.date = moment().utcOffset('+0100').format('YYYY-MM-DD');
     data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
-    data.verify_url = `${req.body.callback_url}?token=${token}`;
+    data.verify_url = `${req.body.callback_url}?token=${token}&module=application`;
     emailService.send({
         to: req.user.email,
         subject: 'Email Confirmation',
