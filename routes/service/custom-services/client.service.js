@@ -2707,4 +2707,82 @@ router.get('/countries', helperFunctions.verifyJWT, function (req, res) {
     });
 });
 
+router.post('/application/verify/email/:id/:type', helperFunctions.verifyJWT, function (req, res) {
+    if (!req.body.callback_url || !req.body.email)
+        return res.status(500).send('Required parameter(s) not sent!');
+    let data = {},
+        email = req.body.email;
+    const expiry_days = 1,
+        token = jwt.sign(
+            {
+                ID: req.user.ID,
+                email: req.user.email,
+                phone: req.user.phone,
+                type: req.query.type
+            },
+            process.env.SECRET_KEY,
+            {
+                expiresIn: 60 * 60 * expiry_days
+            });
+    data.name = req.user.fullname;
+    data.date = moment().utcOffset('+0100').format('YYYY-MM-DD');
+    data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
+    data.verify_url = `${req.body.callback_url}?token=${token}`;
+    emailService.send({
+        to: req.user.email,
+        subject: 'Email Confirmation',
+        template: 'default',
+        context: {
+            name: req.user.fullname,
+            message: `This is a reminder that your ${req.query.type} email (${email}) is pending verification. 
+                Kindly log in to your ${req.query.type} email for further instructions on how to proceed!`
+        }
+    });
+    emailService.send({
+        to: email,
+        subject: 'Email Confirmation',
+        template: 'verify-email',
+        context: data
+    });
+    return res.send({
+        "status": 200,
+        "error": null,
+        "response": `Verification email sent to ${email} successfully!`
+    });
+});
+
+router.get('/application/verify/email/:token', function (req, res) {
+    if (!req.params.token) return res.status(500).send('Required parameter(s) not sent!');
+    jwt.verify(req.params.token, process.env.SECRET_KEY, function (err, decoded) {
+        if (err) return res.send({
+            "status": 500,
+            "error": err,
+            "response": "Failed to authenticate token!"
+        });
+
+        let payload = {},
+            query = `UPDATE preapplications Set ? WHERE ID = ${decoded.ID}`;
+        switch (decoded.type) {
+            case 'work': {
+                payload.verify_work_email = enums.VERIFY_EMAIL.STATUS.VERIFIED;
+                break;
+            }
+        }
+        payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+
+        db.query(query, payload, function (error, response) {
+            if (error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+            return res.send({
+                "status": 200,
+                "error": null,
+                "response": `Email verified successfully!`
+            });
+        });
+    });
+});
+
 module.exports = router;
