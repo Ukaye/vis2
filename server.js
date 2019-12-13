@@ -215,6 +215,25 @@ app.get('/logout', function (req, res) {
     res.redirect('/logon');
 });
 
+//create mail routes
+app.get('/mailer', requireLogin, function(req, res) {
+    res.render('/mailer/index.html', {
+        root: __dirname + '/views'
+    });
+});
+
+app.post('/atbmailer/:action', requireLogin, function(req, res, next) {
+/*     res.json({
+        success: 'Email successful',
+    })
+    return next; */
+    let action = req.params.action;
+
+    if(action === 'send') {
+
+    }
+});
+
 app.use('/', index);
 app.use('/user', user);
 app.use('/settings', settings);
@@ -660,13 +679,6 @@ app.get('/audit-logs', requireLogin, function (req, res) {
 
 app.get('/web-payments', requireLogin, function (req, res) {
     res.sendFile('/web-payment/web-payment.html', {
-        root: __dirname + '/views'
-    });
-});
-
-//create mail routes
-app.get('/mail-templates', requireLogin, function(req, res) {
-    res.sendFile('/mail-templates/index.html', {
         root: __dirname + '/views'
     });
 });
