@@ -1,4 +1,9 @@
 $(document).ready(function() {
+    $('#terms').summernote({focus: true});
+    $('.note-icon-caret').hide();
+    $('.note-popover').hide();
+    $('.note-insert').hide();
+    $('.note-view').hide();
     getStages();
     getRoles();
 });
@@ -174,7 +179,9 @@ function addProcess() {
     data.stages = stages;
     if (($.grep(data.stages,function(e){return e.stage_name==='Application Start'})).length > 1)
         data.stages.shift();
-    if ($('#client-information').val()) 
+    if ($('#process-description').val())
+        workflow.description = $('#process-description').val();
+    if ($('#client-information').val())
         workflow.client_information = $('#client-information').val().join();
     workflow.client_email = ($('#client-email').is(':checked'))? 1 : 0;
     workflow.admin_email = ($('#admin-email').is(':checked'))? 1 : 0;
@@ -202,6 +209,8 @@ function addProcess() {
         if (!workflow.interest_rate_max || workflow.interest_rate_max <= 0)
             return notification('Invalid interest rate max','','warning');
     }
+    workflow.terms = $('#terms').summernote('code');
+    $('#terms').summernote('destroy');
 
     $('#wait').show();
     $.ajax({
@@ -211,6 +220,7 @@ function addProcess() {
         success: function (data) {
             localStorage.removeItem('local_stages');
             $('#process-name').val("");
+            $('#process-description').val("");
             $('#wait').hide();
             notification(data.message, '', 'success');
             window.location.href = "/all-workflow";

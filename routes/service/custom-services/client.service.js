@@ -1603,7 +1603,7 @@ router.post('/verify/email/:id', helperFunctions.verifyJWT, function (req, res) 
     data.name = req.user.fullname;
     data.date = moment().utcOffset('+0100').format('YYYY-MM-DD');
     data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
-    data.verify_url = `${req.body.callback_url}?token=${token}`;
+    data.verify_url = `${req.body.callback_url}?token=${token}&module=client`;
     emailService.send({
         to: req.user.email,
         subject: 'Email Confirmation',
@@ -2273,16 +2273,17 @@ router.get('/application/comment/:id/:loan_id', (req, res) => {
 router.get('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req, res) => {
     let query = `SELECT * FROM applications WHERE ID = ${req.params.loan_id} AND userID = ${req.params.id}`;
     let query1 = `SELECT COALESCE(SUM(payment_amount+interest_amount), 0) amount FROM application_schedules 
-    WHERE applicationID = ${req.params.loan_id} AND interest_collect_date <= CURDATE() AND status = 1`;
+        WHERE applicationID = ${req.params.loan_id} AND interest_collect_date <= CURDATE() AND status = 1`;
     let query2 = `SELECT COALESCE(SUM(payment_amount), 0) amount FROM application_schedules 
-    WHERE applicationID = ${req.params.loan_id} AND interest_collect_date > CURDATE() AND status = 1`;
+        WHERE applicationID = ${req.params.loan_id} AND interest_collect_date > CURDATE() AND status = 1`;
     let query3 = `SELECT COALESCE(((interest_amount/30) * (CASE
         WHEN DAY(CURDATE()) > DAY(interest_collect_date) THEN DAY(CURDATE()) - DAY(interest_collect_date)
         WHEN DAY(CURDATE()) < DAY(interest_collect_date) THEN 30 - (DAY(interest_collect_date) - DAY(CURDATE()))
         ElSE 0 END)), 0) amount FROM application_schedules WHERE applicationID = ${req.params.loan_id} AND status = 1 
         AND MONTH(interest_collect_date) = MONTH(CURDATE()) AND YEAR(interest_collect_date) = YEAR(CURDATE())`;
     let query4 = `SELECT COALESCE(SUM(payment_amount+interest_amount), 0) amount FROM schedule_history 
-    WHERE applicationID = ${req.params.loan_id} AND clientID = ${req.params.id} AND status = 1`;
+        WHERE applicationID = ${req.params.loan_id} AND clientID = ${req.params.id} AND status = 1 
+        AND (SELECT status FROM application_schedules WHERE ID = invoiceID) = 1`;
     db.query(query, (error, application) => {
         if (error) return res.send({
             "status": 500,
@@ -2608,7 +2609,7 @@ router.post('/forgot-password/get', (req, res) => {
         data.fullname = client.fullname;
         data.date = moment().utcOffset('+0100').format('YYYY-MM-DD');
         data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
-        data.forgot_url = `${req.body.callback_url}?token=${token}`;
+        data.forgot_url = `${req.body.callback_url}?token=${token}&module=password`;
         emailService.send({
             to: client.email,
             subject: 'Forgot Password Request',
@@ -2704,6 +2705,112 @@ router.get('/countries', helperFunctions.verifyJWT, function (req, res) {
             "response": results
         });
     });
+});
+
+router.post('/application/verify/email/:id/:application_id/:type', helperFunctions.verifyJWT, function (req, res) {
+    if (!req.body.callback_url || !req.body.email || !req.params.type || !req.params.application_id)
+        return res.status(500).send('Required parameter(s) not sent!');
+    let data = {},
+        email = req.body.email;
+    const expiry_days = 1,
+        token = jwt.sign(
+            {
+                ID: req.user.ID,
+                email: req.user.email,
+                phone: req.user.phone,
+                type: req.params.type,
+                applicationID: req.params.application_id
+            },
+            process.env.SECRET_KEY,
+            {
+                expiresIn: 60 * 60 * expiry_days
+            });
+    data.name = req.user.fullname;
+    data.date = moment().utcOffset('+0100').format('YYYY-MM-DD');
+    data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
+    data.verify_url = `${req.body.callback_url}?token=${token}&module=application`;
+    emailService.send({
+        to: req.user.email,
+        subject: 'Email Confirmation',
+        template: 'default',
+        context: {
+            name: req.user.fullname,
+            message: `This is a reminder that your ${req.params.type} email (${email}) is pending verification. 
+                Kindly log in to your ${req.params.type} email for further instructions on how to proceed!`
+        }
+    });
+    emailService.send({
+        to: email,
+        subject: 'Email Confirmation',
+        template: 'verify-email',
+        context: data
+    });
+    return res.send({
+        "status": 200,
+        "error": null,
+        "response": `Verification email sent to ${email} successfully!`
+    });
+});
+
+router.get('/application/verify/email/:token', function (req, res) {
+    if (!req.params.token) return res.status(500).send('Required parameter(s) not sent!');
+    jwt.verify(req.params.token, process.env.SECRET_KEY, function (err, decoded) {
+        if (err) return res.send({
+            "status": 500,
+            "error": err,
+            "response": "Failed to authenticate token!"
+        });
+
+        let payload = {},
+            query = `UPDATE preapplications Set ? WHERE ID = ${decoded.applicationID}`;
+        switch (decoded.type) {
+            case 'work': {
+                payload.verify_work_email = enums.VERIFY_EMAIL.STATUS.VERIFIED;
+                break;
+            }
+        }
+        payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+
+        db.query(query, payload, function (error, response) {
+            if (error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+            return res.send({
+                "status": 200,
+                "error": null,
+                "response": `Email verified successfully!`
+            });
+        });
+    });
+});
+
+router.get('/banks', function (req, res) {
+    let banks = require('../../../banks.json');
+    paystack.subaccount.listBanks()
+        .then(function (body) {
+            async.forEach(body.data, (bank, callback) => {
+                let check = banks.filter(bank_ => {
+                    return bank_.name.toLowerCase().indexOf(bank.name.toLowerCase()) > -1;
+                });
+                if (!check[0]) banks.push({name: bank.name});
+                callback();
+            }, data => {
+                return res.send({
+                    "status": 200,
+                    "error": null,
+                    "response": banks
+                });
+            });
+        })
+        .catch(function (error) {
+            if (error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+        });
 });
 
 module.exports = router;

@@ -262,6 +262,12 @@ function getWorkflows(data){
             let fullname = data.fullname || '';
             workflow = (response.response)? ($.grep(response.response, function(e){ return e.ID === data.workflowID; }))[0] : {name:'Workflow'};
             $("#workflow-div-title").text(fullname.toUpperCase()+" ("+workflow.name+")");
+            if (workflow.client_information && workflow.client_information.indexOf('work_email') > -1 && data.status === 1) {
+                if (data.verify_work_email === 0)
+                    $('#loancirrus-id').append('<span class="badge badge-pill badge-danger">Work Email <br> Unverifed</span>');
+                if (data.verify_work_email === 1)
+                    $('#loancirrus-id').append('<span class="badge badge-pill badge-success">Work Email <br> Verifed</span>');
+            }
         }
     });
 }
@@ -1211,6 +1217,8 @@ function disburse() {
     if (reschedule_status) return;
     if (workflow.admin_application_override === 0 && application.client_applications_status === 3 && application.status === 1)
         return notification('Application is still pending client acceptance!','','warning');
+    if (workflow.client_information && workflow.client_information.indexOf('work_email') > -1 && application.verify_work_email === 0)
+        return notification('Client has not verified work email!','','warning');
     let disbursal = {};
     disbursal.funding_source = $('#funding').val();
     disbursal.disbursement_date = $('#disbursement-date').val();

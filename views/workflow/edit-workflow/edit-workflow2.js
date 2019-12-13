@@ -142,6 +142,9 @@ $('#document-download-div').on('click','.document-download-text', function (e) {
 $('.todolist').on('click','.remove-item', function (e) {
     archiveWorkflow(e);
 });
+$('#process-description').click(function (e) {
+    archiveWorkflow(e);
+});
 $('#client-information-div').click(function (e) {
     archiveWorkflow(e);
 });
@@ -175,6 +178,9 @@ $('#admin-application-override').click(e => {
 $('#enable-client-product').click(e => {
     archiveWorkflow(e);
 });
+$('#enable-client-product').click(e => {
+    archiveWorkflow(e);
+});
 $('#application-settings-option').click(e => {
     archiveWorkflow(e);
     if (localStorage.archive_workflow === 'true') {
@@ -185,6 +191,9 @@ $('#application-settings-option').click(e => {
         }
     }
 });
+$('#terms').click(e => {
+    archiveWorkflow(e);
+});
 
 function archiveWorkflow(e) {
     if (localStorage.archive_workflow === 'false'){
@@ -192,7 +201,8 @@ function archiveWorkflow(e) {
         swal({
             title: "Are you sure?",
             text: "Only Approval Rights are editable. Any other changes to this workflow would be saved as a new copy.\n\n" +
-            "Once started, this process is not reversible!",
+            "Once started, this process is not reversible!\n\n"+
+            "Please note that all files attached to this workflow would be lost and require reuploading.",
             icon: "warning",
             buttons: true,
             dangerMode: true
@@ -224,6 +234,8 @@ function addProcess() {
     data.stages = stages;
     if (($.grep(data.stages,function(e){return e.stage_name==='Application Start'})).length > 1)
         data.stages.shift();
+    if ($('#process-description').val())
+        workflow.description = $('#process-description').val();
     if ($('#client-information').val())
         workflow.client_information = $('#client-information').val().join();
     workflow.client_email = ($('#client-email').is(':checked'))? 1 : 0;
@@ -252,6 +264,8 @@ function addProcess() {
         if (!workflow.interest_rate_max || workflow.interest_rate_max <= 0)
             return notification('Invalid interest rate max','','warning');
     }
+    workflow.terms = $('#terms').summernote('code');
+    $('#terms').summernote('destroy');
     if (localStorage.archive_workflow === 'false')
         url = '/edit-workflows/';
 
@@ -264,6 +278,7 @@ function addProcess() {
         success: function (data) {
             localStorage.removeItem('local_stages');
             $('#process-name').val("");
+            $('#process-description').val("");
             $('#wait').hide();
             notification(data.message);
             window.location.href = "/all-workflow";
@@ -283,6 +298,7 @@ function init(stages){
         'success': function (data) {
             let workflow = data.response;
             $('#process-name').val(workflow.name);
+            if (workflow.description) $('#process-description').val(workflow.description);
             if (workflow.client_information) {
                 $('#client-information').val(workflow.client_information.split(','));
                 $('#client-information').multiselect("refresh");
@@ -302,6 +318,12 @@ function init(stages){
             if (workflow.interest_rate_max) $('#interest_rate_max').val(numberToCurrencyformatter(workflow.interest_rate_max));
             if (workflow.admin_application_override === 1) $('#admin-application-override').prop('checked', true);
             if (workflow.enable_client_product === 1) $('#enable-client-product').prop('checked', true);
+            if (workflow.terms) $('#terms').html(workflow.terms);
+            $('#terms').summernote({focus: true});
+            $('.note-icon-caret').hide();
+            $('.note-popover').hide();
+            $('.note-insert').hide();
+            $('.note-view').hide();
 
             $.ajax({
                 'url': '/workflow-stages/'+workflow_id,
