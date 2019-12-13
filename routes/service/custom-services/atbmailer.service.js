@@ -11,10 +11,9 @@ router.post('/send', function(req, res, next) {
         fs.writeFileSync(`views/atbmailer/templates/${mailData.template}.html`, mailData.content);
     }
 
-    //let mentionsQuery = 'select ';
-    const unsterilizedMsg = mailData.content;
+/*     const unsterilizedMsg = mailData.content;
     let mentions = extract(unsterilizedMsg, { unique: false, symbol: false});
-    let mentionsQuery = `select ${mentions.join()}`;
+    let mentionsQuery = `select ${mentions.join()}`; */
 
     console.log(mentionsQuery);
     let { recipients, content, subject } = mailData;
