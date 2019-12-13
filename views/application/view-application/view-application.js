@@ -12,8 +12,8 @@ function getCollectionBank() {
         url: "/settings/collection_bank",
         success: function (data) {
             $.each(data.response, function (key, funding_source) {
-                $('#funding').append(`<option value="${funding_source.Code}">${funding_source.Name} 
-                    (${funding_source.Type})</option>`);
+                $('#funding').append(`<option value="${funding_source.Code}">${funding_source.Name}</option>`);
+                $('#payoff-bank').append(`<option value="${funding_source.Code}">${funding_source.Name}</option>`);
             });
         }
     });
@@ -1214,6 +1214,7 @@ function disburse() {
     let disbursal = {};
     disbursal.funding_source = $('#funding').val();
     disbursal.disbursement_date = $('#disbursement-date').val();
+    disbursal.disbursement_bank = $('#funding').find(":selected").text();
     if (disbursal.funding_source === "-- Select a Disbursement Bank --" || !disbursal.disbursement_date)
         return notification('Kindly fill all required fields!','','warning');
     if ($('#fees-check').is(':checked')) {
@@ -1615,6 +1616,7 @@ function initCSVUpload2(application, settings) {
         if (!reschedule_status) return;
         let disbursal = {};
         disbursal.funding_source = $('#funding').val();
+        disbursal.bank = $('#funding').find(":selected").text();
         disbursal.disbursement_date = $('#disbursement-date').val();
         disbursal.disbursement_amount = currencyToNumberformatter($('#disbursement-amount').val());
         if (disbursal.funding_source === "-- Select a Disbursement Bank --" || 
@@ -1803,6 +1805,7 @@ function payOffLoan() {
     payoff.close_interest = $('#payoff-interest').val();
     payoff.close_date = $('#payoff-date').val();
     payoff.close_bank = $('#payoff-bank').val();
+    payoff.close_bankname = $('#payoff-bank').find(":selected").text();
     payoff.close_comment = $('#payoff-notes').val();
     if ($('input[name=payoff-include-interest]:checked').val())
         payoff.close_include_interest = $('input[name=payoff-include-interest]:checked').val();

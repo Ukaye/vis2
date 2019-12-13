@@ -172,6 +172,9 @@ $('#interest_rate_max').click(e => {
 $('#admin-application-override').click(e => {
     archiveWorkflow(e);
 });
+$('#enable-client-product').click(e => {
+    archiveWorkflow(e);
+});
 $('#application-settings-option').click(e => {
     archiveWorkflow(e);
     if (localStorage.archive_workflow === 'true') {
@@ -235,6 +238,7 @@ function addProcess() {
         workflow.interest_rate_max = currencyToNumberformatter($('#interest_rate_max').val());
         workflow.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
         workflow.admin_application_override = ($('#admin-application-override').is(':checked'))? 1 : 0;
+        workflow.enable_client_product = ($('#enable-client-product').is(':checked'))? 1 : 0;
         if (!workflow.loan_requested_min || workflow.loan_requested_min <= 0)
             return notification('Invalid loan requested min','','warning');
         if (!workflow.loan_requested_max || workflow.loan_requested_max <= 0)
@@ -297,8 +301,8 @@ function init(stages){
             if (workflow.interest_rate_min) $('#interest_rate_min').val(numberToCurrencyformatter(workflow.interest_rate_min));
             if (workflow.interest_rate_max) $('#interest_rate_max').val(numberToCurrencyformatter(workflow.interest_rate_max));
             if (workflow.admin_application_override === 1) $('#admin-application-override').prop('checked', true);
+            if (workflow.enable_client_product === 1) $('#enable-client-product').prop('checked', true);
 
-            
             $.ajax({
                 'url': '/workflow-stages/'+workflow_id,
                 'type': 'get',

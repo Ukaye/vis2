@@ -21,16 +21,17 @@ function init() {
     $('#tenor').text(`${loan.tenor} months` || 'N/A');
     $('#loan_id').text(padWithZeroes(loan.id, 9) || 'N/A');
 
-    for (let i=0; i<loan.workflow_processes.length; i++) {
-        let workflow_process = loan.workflow_processes[i];
+    for (let i=0; i<loan.workflow_processes.length - 1; i++) {
+        let workflow_process = loan.workflow_processes[i],
+            workflow_process_ = loan.workflow_processes[i + 1];
         $('#process_label').append(`${workflow_process.stage || 'N/A'} By: <br>`);
-        $('#process_value').append(`<b>${workflow_process.agent || 'N/A'} (${workflow_process.role || 'N/A'})</b><br>`);
+        $('#process_value').append(`<b>${workflow_process_.agent || 'N/A'} (${workflow_process.role || 'N/A'})</b><br>`);
     }
 
     for (let i=0; i<loan.schedule.length; i++) {
         let invoice = loan.schedule[i];
         $('#schedule').append(`
-            <tr class="service">
+            <tr class="service" style="${invoice.status === 0? 'background-color: #aaaaaa; text-decoration: line-through;': ''}">
                 <td class="tableitem"><p class="itemtext">${i+1}</p></td>
                 <td class="tableitem"><p class="itemtext">${invoice.interest_collect_date}</p></td>
                 <td class="tableitem"><p class="itemtext">${(parseFloat(invoice.balance) + parseFloat(invoice.payment_amount)).round(2)}</p></td>

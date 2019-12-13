@@ -756,7 +756,7 @@ router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
 
 router.get('/products', helperFunctions.verifyJWT, function (req, res) {
     let query = 'SELECT w.*, (SELECT GROUP_CONCAT(NULLIF(s.document,"")) FROM workflow_stages s WHERE w.ID = s.workflowID) document ' +
-        'FROM workflows w WHERE w.status <> 0 ORDER BY w.ID desc';
+        'FROM workflows w WHERE w.status <> 0 AND w.enable_client_product = 1 ORDER BY w.ID desc';
     db.query(query, function (error, results) {
         if (error)
             return res.send({
@@ -1893,7 +1893,7 @@ router.get('/preapproved-loan/create/:id/:loan_id', helperFunctions.verifyJWT, f
                 data.offer_url = `${process.env.HOST || req.HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}&i=${req.params.loan_id}`;
                 emailService.send({
                     to: email,
-                    subject: `${process.env.TENANT} Mandate Setup`,
+                    subject: `Mandate Setup`,
                     template: 'mandate',
                     context: data
                 });
@@ -2648,6 +2648,60 @@ router.put('/forgot-password/update', (req, res) => {
                 "error": null,
                 "response": `Client password updated successfully!`
             });
+        });
+    });
+});
+
+router.get('/branches', helperFunctions.verifyJWT, function (req, res) {
+    let query = 'SELECT * FROM branches';
+    db.query(query, function (error, results) {
+        if (error)
+            return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": results
+        });
+    });
+});
+
+router.get('/states', helperFunctions.verifyJWT, function (req, res) {
+    let query = 'SELECT * FROM state';
+    db.query(query, function (error, results) {
+        if (error)
+            return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": results
+        });
+    });
+});
+
+router.get('/countries', helperFunctions.verifyJWT, function (req, res) {
+    let query = 'SELECT * FROM country';
+    db.query(query, function (error, results) {
+        if (error)
+            return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": results
         });
     });
 });

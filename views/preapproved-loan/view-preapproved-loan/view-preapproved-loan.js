@@ -213,6 +213,7 @@
         let disbursal = {};
         disbursal.funding_source = $('#funding').val();
         disbursal.disbursement_date = $('#disbursement-date').val();
+        disbursal.disbursement_bank = $('#funding').find(":selected").text();
         if (disbursal.funding_source === "-- Select a Disbursement Bank --" || !disbursal.disbursement_date)
             return notification('Kindly fill all required fields!','','warning');
         swal({

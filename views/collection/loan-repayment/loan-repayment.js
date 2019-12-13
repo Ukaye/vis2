@@ -438,12 +438,12 @@ function confirmPaymentModal(id, id2) {
     if (payment_id) {
         web_payment = ($.grep(invoice_history, e => {return (e.ID === parseInt(payment_id))}))[0];
         $('#source').val('paystack').prop('disabled', true);
-        $('#payment').val(web_payment.actual_amount).prop('disabled', true);
-        $('#principal').val(web_payment.payment_amount).prop('disabled', true);
-        $('#interest').val(web_payment.interest_amount).prop('disabled', true);
-        $('#fees').val(web_payment.fees_amount).prop('disabled', true);
-        $('#penalty').val(web_payment.penalty_amount).prop('disabled', true);
-        $('#repayment-date').val(web_payment.payment_date).prop('disabled', true);
+        $('#payment').val(web_payment.actual_amount);
+        $('#principal').val(web_payment.payment_amount);
+        $('#interest').val(web_payment.interest_amount);
+        $('#fees').val(web_payment.fees_amount);
+        $('#penalty').val(web_payment.penalty_amount);
+        $('#repayment-date').val(web_payment.payment_date);
         $('#invoiceHistory').modal('hide');
     }
     $('#confirmPayment').modal('show');
@@ -544,7 +544,10 @@ function confirmPayment() {
     invoice.payment_source = $('#source').val();
     invoice.payment_date = $('#repayment-date').val();
     if (invoice.payment_source === 'remita' && remita_id) invoice.remitaPaymentID = remita_id;
-    if ($('#collection_bank').val() !== '000') invoice.xeroCollectionBankID = $('#collection_bank').val();
+    if ($('#collection_bank').val() !== '000') {
+        invoice.xeroCollectionBankID = $('#collection_bank').val();
+        invoice.xeroCollectionBank = $('#collection_bank').find(":selected").text();
+    }
     if ($('#collection_description').val()) invoice.xeroCollectionDescription = $('#collection_description').val();
     let total_payment = (parseFloat(invoice.actual_payment_amount) +
                         parseFloat(invoice.actual_interest_amount) +
