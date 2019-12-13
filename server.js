@@ -61,7 +61,8 @@ let app = express(),
     payment_service = require('./routes/service/custom-services/payment.service'),
     notification = require('./routes/notifications'),
     upload_service = require('./routes/service/custom-services/upload.service'),
-    index = require('./routes/index');
+    index = require('./routes/index'),
+    atbmailer_service = require('./routes/service/custom-services/atbmailer.service');
 
 app.use(compression());    
 app.engine('html', require('ejs').renderFile);
@@ -216,22 +217,10 @@ app.get('/logout', function (req, res) {
 });
 
 //create mail routes
-app.get('/mailer', requireLogin, function(req, res) {
-    res.render('/mailer/index.html', {
+app.get('/atbmailer', requireLogin, function(req, res) {
+    res.render('/atbmailer/index.html', {
         root: __dirname + '/views'
     });
-});
-
-app.post('/atbmailer/:action', requireLogin, function(req, res, next) {
-/*     res.json({
-        success: 'Email successful',
-    })
-    return next; */
-    let action = req.params.action;
-
-    if(action === 'send') {
-
-    }
 });
 
 app.use('/', index);
@@ -255,6 +244,7 @@ app.use('/audit', audit_service);
 app.use('/payment', payment_service);
 app.use('/notifications', notification);
 app.use('/upload', upload_service);
+app.use('/atbmailer', atbmailer_service);
 app.use('/files', express.static(__dirname + '/files'));
 
 app.get('/logon', function (req, res) {
