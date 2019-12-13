@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <script src="../../files/ckcustom/ckeditor.js"></script>
-    <title>Document</title>
+    <script src="./ckcustom/ckeditor.js"></script>
+    <title>ATB Mailer</title>
 </head>
 <body>
     <div class ="body">
@@ -20,9 +20,7 @@
             <textarea name="content" id="" cols="30" rows="10"></textarea>
             <button type="submit">Send Mail</button>
         </form>
-        <input type="text" name="template" id="template" value="hello">
-        <button id="save" onclick="saveTemplate()">Save Template</button>
-      </div>
+    </div>
       <script>
 
           CKEDITOR.replace( 'content' );
@@ -35,14 +33,6 @@
             }
           ];
 
-        function saveTemplate() {
-            var template = document.getElementById('template').val;
-            var temp = document.getSelection(template).val;
-            console.log(template);
-            alert(template);
-            alert(temp);
-        }
-          
       </script>
 </body>
 </html>
