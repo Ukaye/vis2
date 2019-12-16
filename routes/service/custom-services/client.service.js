@@ -2120,7 +2120,7 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
         });
 
         const invoice_ = schedule[0],
-            amount = parseFloat(invoice_.amount) * 100;
+            amount = (parseFloat(invoice_.amount) + helperFunctions.calculatePaystackFee(invoice_.amount)) * 100;
 
         paystack.transaction.charge({
             authorization_code: req.body.authorization_code,
@@ -2317,9 +2317,9 @@ router.get('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req,
 
 router.post('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, function (req, res) {
     paystack.transaction.charge({
-        authorization_code: req.body.authorization_code,
         email: req.user.email,
-        amount: parseFloat(req.body.close_amount) * 100
+        authorization_code: req.body.authorization_code,
+        amount: (parseFloat(req.body.close_amount) + helperFunctions.calculatePaystackFee(req.body.close_amount)) * 100
     })
         .then(function (body) {
             if (body.status) {
@@ -2429,7 +2429,6 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
         });
 
         const invoice_ = schedule[0],
-            amount = parseFloat(req.body.amount) * 100,
             interest_amount = (req.body.amount >= invoice_.interest_owed)? invoice_.interest_owed : req.body.amount,
             principal_amount = (req.body.amount > interest_amount)? (req.body.amount - interest_amount) : 0;
 
@@ -2441,9 +2440,9 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
             });
 
         paystack.transaction.charge({
-            authorization_code: req.body.authorization_code,
             email: req.user.email,
-            amount: amount
+            authorization_code: req.body.authorization_code,
+            amount: (parseFloat(req.body.amount) + helperFunctions.calculatePaystackFee(req.body.amount)) * 100
         })
         .then(function(body){
             if (body.status) {

@@ -426,7 +426,7 @@ functions.calculatePaystackFee = value => {
     if (value.constructor === 'String'.constructor)
         value = parseFloat(value);
     let fee = (0.0153 * value) - ((value < 2500)? 0 : 101.53);
-    return ((fee > 2000? 2000 : fee) * 100).round(2);
+    return (fee > 2000? 2000 : fee).round(2);
 };
 
 module.exports = functions;
