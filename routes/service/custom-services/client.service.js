@@ -2794,7 +2794,10 @@ router.get('/banks', function (req, res) {
                 let check = banks.filter(bank_ => {
                     return bank_.name.toLowerCase().indexOf(bank.name.toLowerCase()) > -1;
                 });
-                if (!check[0]) banks.push({name: bank.name});
+                if (!check[0]) banks.push({
+                    name: bank.name,
+                    code: "000"
+                });
                 callback();
             }, data => {
                 return res.send({
