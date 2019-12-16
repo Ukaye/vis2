@@ -390,6 +390,7 @@ function loadWorkflowStages(state) {
             }
 
             if (stage.download){
+                $('#downloads-form-div').show();
                 let downloads = stage.download.split(',');
                 downloads.forEach(function (download) {
                     if (download.trim().replace(/ /g, '_') in application.file_downloads){

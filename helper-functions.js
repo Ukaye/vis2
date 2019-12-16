@@ -429,4 +429,21 @@ functions.calculatePaystackFee = value => {
     return (fee > 2000? 2000 : fee).round(2);
 };
 
+functions.stopMandate = function (payload, callback) {
+    payload.merchantId = process.env.REMITA_MERCHANT_ID;
+    payload.hash = SHA512(payload.mandateId + payload.merchantId + payload.requestId + process.env.REMITA_API_KEY);
+    request.post(
+        {
+            url: `${process.env.REMITA_BASE_URL}/stop`,
+            body: payload,
+            json: true
+        },
+        (error, res, body) => {
+            if (error) {
+                return callback(error);
+            }
+            callback(functions.formatJSONP(body));
+        })
+};
+
 module.exports = functions;
