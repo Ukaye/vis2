@@ -3513,7 +3513,7 @@ users.post('/application/disburse/:id', function(req, res, next) {
                                     notificationsService.log(req, payload);
                                     createXeroSchedule(req, res);
 
-                                    let payload = {};
+                                    payload = {};
                                     payload.status = enums.CLIENT_APPLICATION.STATUS.ACCEPTED;
                                     payload.date_modified = data.date_modified;
                                     db.query(`UPDATE preapplications Set ? WHERE ID = ${application.preapplicationID}`, payload, error => {
