@@ -441,8 +441,8 @@ router.post('/create', function (req, res) {
         query2 = 'select * from clients where username = ? or email = ? or phone = ?';
     postData.status = enums.CLIENT.STATUS.ACTIVE;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    if (!postData.username || !postData.password || !postData.first_name || !postData.last_name || !postData.phone || !postData.email
-        || !postData.bvn || !postData.loan_officer || !postData.branch)
+    if (!postData.username || !postData.password || !postData.first_name || !postData.last_name 
+        || !postData.phone || !postData.email || !postData.loan_officer || !postData.branch)
         return res.send({ "status": 200, "error": null, "response": "Required parameter(s) not sent!" });
 
     postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
@@ -456,47 +456,57 @@ router.post('/create', function (req, res) {
                 return res.send({ "status": 500, "error": "Client already exists!", "response": null});
             }
             let bvn = postData.bvn;
-            if (bvn.trim() !== '') {
-                connection.query('select * from clients where bvn = ? and status = 1 limit 1', [bvn], function (error, rest, foelds) {
+            delete postData.bvn;
+            if (bvn && bvn.trim() !== '') {
+                connection.query('select * from clients where bvn = ? and status = 1 limit 1', [bvn], function (error, rest) {
                     if (rest && rest[0]) {
                         return res.send({ "status": 500, "error": "BVN already exists!", "response": null});
                     }
-                    connection.query(query, postData, function (error, re) {
-                        if (error) {
-                            res.send({ "status": 500, "error": error, "response": null });
-                        } else {
-                            connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function (err, re) {
-                                if (!err) {
-                                    id = re[0]['ID'];
-                                    connection.query('INSERT into wallets Set ?', { client_id: id }, function (er, r) {
-                                        connection.release();
-                                        if (!er) {
-                                            let payload = {};
-                                            payload.category = 'Clients';
-                                            payload.userid = req.cookies.timeout;
-                                            payload.description = 'New Client Created';
-                                            payload.affected = id;
-                                            notificationsService.log(req, payload);
-                                            emailService.send({
-                                                to: postData.email,
-                                                subject: 'Signup Successful!',
-                                                template: 'client',
-                                                context: postData
-                                            });
-                                            res.send({ "status": 200, "error": null, "response": re });
-                                        } else {
-                                            res.send({ "status": 500, "error": "Error creating client wallet!", "response": null});
-                                        }
-                                    });
-                                } else {
-                                    res.send({ "status": 500, "error": "Error retrieving client details. Please try a new username!", "response": null});
-                                }
-                            });
+                    helperFunctions.resolveBVN(bvn, bvn_response => {
+                        if (bvn_response.status && helperFunctions.phoneMatch(postData.phone, bvn_response.data.mobile)) {
+                            postData.first_name = bvn_response.data.first_name;
+                            postData.last_name = bvn_response.data.last_name;
+                            postData.dob = bvn_response.data.formatted_dob;
+                            postData.phone = bvn_response.data.mobile;
+                            postData.bvn = bvn_response.data.bvn;
+                            postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
                         }
+                        connection.query(query, postData, function (error, re) {
+                            if (error) {
+                                res.send({ "status": 500, "error": error, "response": null });
+                            } else {
+                                connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function (err, re) {
+                                    if (!err) {
+                                        id = re[0]['ID'];
+                                        connection.query('INSERT into wallets Set ?', { client_id: id }, function (er, r) {
+                                            connection.release();
+                                            if (!er) {
+                                                let payload = {};
+                                                payload.category = 'Clients';
+                                                payload.userid = req.cookies.timeout;
+                                                payload.description = 'New Client Created';
+                                                payload.affected = id;
+                                                notificationsService.log(req, payload);
+                                                emailService.send({
+                                                    to: postData.email,
+                                                    subject: 'Signup Successful!',
+                                                    template: 'client',
+                                                    context: postData
+                                                });
+                                                res.send({ "status": 200, "error": null, "response": re });
+                                            } else {
+                                                res.send({ "status": 500, "error": "Error creating client wallet!", "response": null});
+                                            }
+                                        });
+                                    } else {
+                                        res.send({ "status": 500, "error": "Error retrieving client details. Please try a new username!", "response": null});
+                                    }
+                                });
+                            }
+                        });
                     });
                 });
-            }
-            else {
+            } else {
                 connection.query(query, postData, function (error, re) {
                     if (error) {
                         res.send({ "status": 500, "error": error, "response": null });
@@ -620,26 +630,61 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
     delete postData.username;
     delete postData.password;
     delete postData.email;
-    db.query(query, postData, function (error, results) {
-        if (error)
-            return res.send({
-                "status": 500,
-                "error": error,
-                "response": null
+    let bvn = postData.bvn;
+    delete postData.bvn;
+    if (bvn) {
+        helperFunctions.resolveBVN(bvn, bvn_response => {
+            if (bvn_response.status && helperFunctions.phoneMatch(postData.phone, bvn_response.data.mobile)) {
+                postData.first_name = bvn_response.data.first_name;
+                postData.last_name = bvn_response.data.last_name;
+                postData.dob = bvn_response.data.formatted_dob;
+                postData.phone = bvn_response.data.mobile;
+                postData.bvn = bvn_response.data.bvn;
+                postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
+            }
+            db.query(query, postData, function (error, results) {
+                if (error)
+                    return res.send({
+                        "status": 500,
+                        "error": error,
+                        "response": null
+                    });
+        
+                let payload = {};
+                payload.category = 'Clients';
+                payload.userid = req.cookies.timeout;
+                payload.description = 'Client details updated.';
+                payload.affected = req.params.id;
+                notificationsService.log(req, payload);
+                res.send({
+                    "status": 200,
+                    "error": null,
+                    "response": "Client Details Updated"
+                });
             });
-
-        let payload = {};
-        payload.category = 'Clients';
-        payload.userid = req.cookies.timeout;
-        payload.description = 'Client details updated.';
-        payload.affected = req.params.id;
-        notificationsService.log(req, payload);
-        res.send({
-            "status": 200,
-            "error": null,
-            "response": "Client Details Updated"
         });
-    });
+    } else {
+        db.query(query, postData, function (error, results) {
+            if (error)
+                return res.send({
+                    "status": 500,
+                    "error": error,
+                    "response": null
+                });
+    
+            let payload = {};
+            payload.category = 'Clients';
+            payload.userid = req.cookies.timeout;
+            payload.description = 'Client details updated.';
+            payload.affected = req.params.id;
+            notificationsService.log(req, payload);
+            res.send({
+                "status": 200,
+                "error": null,
+                "response": "Client Details Updated"
+            });
+        });
+    }
 });
 
 router.get('/enable/:id', helperFunctions.verifyJWT, function (req, res) {

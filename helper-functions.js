@@ -429,21 +429,24 @@ functions.calculatePaystackFee = value => {
     return (fee > 2000? 2000 : fee).round(2);
 };
 
-functions.stopMandate = function (payload, callback) {
-    payload.merchantId = process.env.REMITA_MERCHANT_ID;
-    payload.hash = SHA512(payload.mandateId + payload.merchantId + payload.requestId + process.env.REMITA_API_KEY);
-    request.post(
+functions.resolveBVN = (bvn, callback) => {
+    request.get(
         {
-            url: `${process.env.REMITA_BASE_URL}/stop`,
-            body: payload,
-            json: true
+            url: `${process.env.PAYSTACK_BASE_URL}/bank/resolve_bvn/${bvn}`,
+            headers: {
+                'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
+            }
         },
         (error, res, body) => {
-            if (error) {
-                return callback(error);
-            }
-            callback(functions.formatJSONP(body));
-        })
+            if (error) return callback(error);
+            return callback(JSON.parse(body));
+        });
+};
+
+functions.phoneMatch = (phone1, phone2) => {
+    let phone1_ = phone1.toString().trim().toLowerCase();
+    let phone2_ = phone2.toString().trim().toLowerCase();
+    return phone1_.substr(-10) === phone2_.substr(-10);
 };
 
 module.exports = functions;
