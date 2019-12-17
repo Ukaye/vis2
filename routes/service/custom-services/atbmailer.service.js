@@ -24,7 +24,7 @@ router.post('/send', function(req, res, next) {
         let i = 0;
 
         mentions.forEach(element => {
-            let query = `select ${element} from users where email = '${mailData.recipients}'`;
+            let query = `select ${element} from users where email = '${recipientsArray[0]}'`;
                 db.query(query, function(error, results) {
                     if(error) {
                         console.log(error);
