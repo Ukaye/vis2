@@ -625,7 +625,13 @@ router.post('/login', function (req, res) {
 router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
     let postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    let query = `Update clients SET ? where ID = ${req.params.id}`;
+    let query = `UPDATE clients SET ? WHERE ID = ${req.params.id}`;
+    let payload = {};
+    payload.category = 'Clients';
+    payload.userid = req.cookies.timeout;
+    payload.description = 'Client details updated.';
+    payload.affected = req.params.id;
+
     delete postData.ID;
     delete postData.username;
     delete postData.password;
@@ -633,38 +639,61 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
     let bvn = postData.bvn;
     delete postData.bvn;
     if (bvn) {
-        helperFunctions.resolveBVN(bvn, bvn_response => {
-            if (bvn_response.status && helperFunctions.phoneMatch(postData.phone, bvn_response.data.mobile)) {
-                postData.first_name = bvn_response.data.first_name;
-                postData.last_name = bvn_response.data.last_name;
-                postData.dob = bvn_response.data.formatted_dob;
-                postData.phone = bvn_response.data.mobile;
-                postData.bvn = bvn_response.data.bvn;
-                postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
-            }
-            db.query(query, postData, function (error, results) {
-                if (error)
-                    return res.send({
+        db.query(`SELECT * FROM clients WHERE ID = ${req.params.id}`, (error, client) => {
+
+            helperFunctions.resolveBVN(bvn, bvn_response => {
+                if (error) return res.send({
                         "status": 500,
                         "error": error,
                         "response": null
                     });
-        
-                let payload = {};
-                payload.category = 'Clients';
-                payload.userid = req.cookies.timeout;
-                payload.description = 'Client details updated.';
-                payload.affected = req.params.id;
-                notificationsService.log(req, payload);
-                res.send({
-                    "status": 200,
+
+                if (!client[0]) return res.send({
+                    "status": 500,
                     "error": null,
-                    "response": "Client Details Updated"
+                    "response": 'User does not exist!'
                 });
+
+                if (bvn_response.status) {
+                    if (helperFunctions.phoneMatch(client[0]['phone'], bvn_response.data.mobile)) {
+                        postData.first_name = bvn_response.data.first_name;
+                        postData.last_name = bvn_response.data.last_name;
+                        postData.dob = bvn_response.data.formatted_dob;
+                        postData.phone = bvn_response.data.mobile;
+                        postData.bvn = bvn_response.data.bvn;
+                        postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
+                        db.query(query, postData, error => {
+                            if (error) return res.send({
+                                    "status": 500,
+                                    "error": error,
+                                    "response": null
+                                });
+                    
+                            notificationsService.log(req, payload);
+                            res.send({
+                                "status": 200,
+                                "error": null,
+                                "response": "Client Details Updated"
+                            });
+                        });
+                    } else {
+                        return res.send({
+                            "status": 500,
+                            "error": 'BVN does not match phone number on record!',
+                            "response": null
+                        });
+                    }
+                } else {
+                    return res.send({
+                        "status": 500,
+                        "error": bvn_response.message || 'Error resolving BVN!',
+                        "response": null
+                    });
+                }
             });
         });
     } else {
-        db.query(query, postData, function (error, results) {
+        db.query(query, postData, error => {
             if (error)
                 return res.send({
                     "status": 500,
@@ -672,11 +701,6 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
                     "response": null
                 });
     
-            let payload = {};
-            payload.category = 'Clients';
-            payload.userid = req.cookies.timeout;
-            payload.description = 'Client details updated.';
-            payload.affected = req.params.id;
             notificationsService.log(req, payload);
             res.send({
                 "status": 200,
