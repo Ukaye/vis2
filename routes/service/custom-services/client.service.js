@@ -564,13 +564,6 @@ router.post('/login', function (req, res) {
                 "error": "Sorry we can’t find this email in our record, please click here to sign up!",
                 "response": null
             });
-
-        if (!client[0]['password'])
-            return res.send({
-                "status": 500,
-                "error": "Incorrect Username/Password!",
-                "response": null
-            });
             
         let user = client[0];
         if (user.status === 0)
@@ -584,6 +577,13 @@ router.post('/login', function (req, res) {
             return res.send({
                 "status": 400,
                 "error": `Password has expired! A reset password email will be sent to ${user.email}`,
+                "response": null
+            });
+
+        if (!user.password)
+            return res.send({
+                "status": 500,
+                "error": "Incorrect Username/Password!",
                 "response": null
             });
 
