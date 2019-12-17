@@ -32,7 +32,7 @@ config.live = {
 };
 
 config.production = {
-    host: '52.151.98.246',
+    host: '178.62.4.168',
     port: '3306',
     user: 'loan35admin',
     password: 'Loan35Pass@word2018',

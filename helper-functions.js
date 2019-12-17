@@ -425,8 +425,35 @@ functions.calculatePaystackFee = value => {
     if (!value) return value;
     if (value.constructor === 'String'.constructor)
         value = parseFloat(value);
-    let fee = (0.0153 * value) - ((value < 2500)? 0 : 101.53);
-    return ((fee > 2000? 2000 : fee) * 100).round(2);
+    let fee = 0;
+    if (value > 126666) {
+        fee = 2000;
+    } else if (value < 2500) {
+        fee = 0.0156 * value;
+    } else {
+        fee = (0.01523 * value) + 102;
+    }
+    return Math.ceil(fee > 2000? 2000 : fee);
+};
+
+functions.resolveBVN = (bvn, callback) => {
+    request.get(
+        {
+            url: `${process.env.PAYSTACK_BASE_URL}/bank/resolve_bvn/${bvn}`,
+            headers: {
+                'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
+            }
+        },
+        (error, res, body) => {
+            if (error) return callback(error);
+            return callback(JSON.parse(body));
+        });
+};
+
+functions.phoneMatch = (phone1, phone2) => {
+    let phone1_ = phone1.toString().trim().toLowerCase();
+    let phone2_ = phone2.toString().trim().toLowerCase();
+    return phone1_.substr(-10) === phone2_.substr(-10);
 };
 
 module.exports = functions;
