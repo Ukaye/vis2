@@ -433,9 +433,9 @@ functions.calculatePaystackFee = value => {
     } else {
         fee = (0.01523 * value) + 102;
     }
-    return (fee > 2000? 2000 : fee).round(2);
+    return Math.ceil(fee > 2000? 2000 : fee);
 };
-
+console.log(functions.calculatePaystackFee(90000))
 functions.resolveBVN = (bvn, callback) => {
     request.get(
         {
