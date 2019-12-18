@@ -443,7 +443,7 @@ router.post('/create', function (req, res) {
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     if (!postData.username || !postData.password || !postData.first_name || !postData.last_name 
         || !postData.phone || !postData.email || !postData.loan_officer || !postData.branch)
-        return res.send({ "status": 200, "error": null, "response": "Required parameter(s) not sent!" });
+        return res.send({ "status": 500, "error": "Required parameter(s) not sent!", "response": null });
 
     postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
     postData.password = bcrypt.hashSync(postData.password, parseInt(process.env.SALT_ROUNDS));
@@ -473,7 +473,7 @@ router.post('/create', function (req, res) {
                         }
                         connection.query(query, postData, function (error, re) {
                             if (error) {
-                                res.send({ "status": 500, "error": error, "response": null });
+                                res.send({ "status": 500, "error": JSON.stringify(error), "response": null });
                             } else {
                                 connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function (err, re) {
                                     if (!err) {
@@ -509,7 +509,7 @@ router.post('/create', function (req, res) {
             } else {
                 connection.query(query, postData, function (error, re) {
                     if (error) {
-                        res.send({ "status": 500, "error": error, "response": null });
+                        res.send({ "status": 500, "error": JSON.stringify(error), "response": null });
                     } else {
                         connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function (err, re) {
                             if (!err) {
@@ -531,11 +531,11 @@ router.post('/create', function (req, res) {
                                         });
                                         res.send({ "status": 200, "error": null, "response": re });
                                     } else {
-                                        res.send({ "status": 500, "error": er, "response": "Error creating client wallet!" });
+                                        res.send({ "status": 500, "error": JSON.stringify(er), "response": "Error creating client wallet!" });
                                     }
                                 });
                             } else {
-                                res.send({ "status": 500, "error": err, "response": "Error retrieving client details. Please try a new username!" });
+                                res.send({ "status": 500, "error": JSON.stringify(err), "response": "Error retrieving client details. Please try a new username!" });
                             }
                         });
                     }
