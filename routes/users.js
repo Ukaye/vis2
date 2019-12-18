@@ -5769,7 +5769,7 @@ users.get('/analytics', function(req, res, next) {
                 if (b){
                     query = 'select sum(amount) amount_disbursed, \n' +
                         '(select branch_name from branches where branches.id = branch) branch\n' +
-                        'from date_disbursed \n' +
+                        'from disbursement_history \n' +
                         'where status = 1\n' +
                         'and branch = '+b+'\n'+
                         'group by branch'
