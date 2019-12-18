@@ -662,6 +662,7 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
                         postData.dob = bvn_response.data.formatted_dob;
                         postData.phone = bvn_response.data.mobile;
                         postData.bvn = bvn_response.data.bvn;
+                        postData.verify_bvn = enums.VERIFY_BVN.STATUS.TRUE;
                         postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
                         db.query(query, postData, error => {
                             if (error) return res.send({
@@ -716,7 +717,7 @@ sendBVNOTP = (client, phone, res) => {
     let otp = Math.floor(100000 + Math.random() * 900000);
     let payload = {
         bvn_otp: otp,
-        verify_bvn: 0,
+        verify_bvn: enums.VERIFY_BVN.STATUS.FALSE,
         date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
     };
     let sms = {
@@ -2681,7 +2682,8 @@ router.get('/kyc', (req, res) => {
 router.post('/forgot-password/get', (req, res) => {
     if (!req.body.username || !req.body.callback_url) return res.status(500).send('Required parameter(s) not sent!');
     let data = {},
-        query = `SELECT ID, fullname, email, phone, status FROM clients WHERE username = '${req.body.username}'`;
+        query = `SELECT ID, fullname, email, phone, status FROM clients 
+            WHERE username = '${req.body.username}' OR email = '${req.body.username}' OR phone = '${req.body.username}'`;
     db.query(query, (error, client_) => {
         if (error) return res.send({
             "status": 500,

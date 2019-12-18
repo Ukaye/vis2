@@ -85,4 +85,11 @@ enums.PASSWORD_RESET = {
     }
 };
 
+enums.VERIFY_BVN = {
+    STATUS: {
+        FALSE: 0,
+        TRUE: 1
+    }
+};
+
 module.exports = enums;
