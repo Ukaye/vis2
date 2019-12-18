@@ -550,7 +550,7 @@ router.post('/login', function (req, res) {
         password = req.body.password;
     if (!username || !password) return res.status(500).send('Required parameter(s) not sent!');
 
-    db.query('SELECT * FROM clients WHERE username = ?', username, function (err, client) {
+    db.query(`SELECT * FROM clients WHERE username = ${username} OR email = ${username} OR phone = ${username}`, (err, client) => {
         if (err)
             return res.send({
                 "status": 500,
