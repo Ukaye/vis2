@@ -456,4 +456,43 @@ functions.phoneMatch = (phone1, phone2) => {
     return phone1_.substr(-10) === phone2_.substr(-10);
 };
 
+functions.sendSMS = function (payload, callback) {
+    request.post(
+        {
+            url: `${process.env.EBULKSMS_BASE_URL}/sendsms.json`,
+            json: true,
+            body: {
+                'SMS': {
+                    'auth': {
+                        'username': process.env.EBULKSMS_USERNAME,
+                        'apikey': process.env.EBULKSMS_API_KEY
+                    },
+                    'message': {
+                        'sender': process.env.TENANT,
+                        'messagetext': payload.message,
+                        'flash': '0'
+                    },
+                    'recipients':
+                    {
+                        "gsm": [
+                            {
+                                "msidn": payload.phone
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        (error, res, body) => {
+            if (error) {
+                return callback(error);
+            }
+            callback(body);
+        })
+};
+
+functions.formatToNigerianPhone = (phone) => {
+    return `234${phone.toString().trim().toLowerCase().substr(-10)}`;
+};
+
 module.exports = functions;

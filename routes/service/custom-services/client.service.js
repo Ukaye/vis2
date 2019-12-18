@@ -640,7 +640,6 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
     delete postData.bvn;
     if (bvn) {
         db.query(`SELECT * FROM clients WHERE ID = ${req.params.id}`, (error, client) => {
-
             helperFunctions.resolveBVN(bvn, bvn_response => {
                 if (error) return res.send({
                         "status": 500,
@@ -655,7 +654,9 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
                 });
 
                 if (bvn_response.status) {
-                    if (helperFunctions.phoneMatch(client[0]['phone'], bvn_response.data.mobile)) {
+                    if (!postData.bvn_otp)
+                        return sendBVNOTP(client[0], bvn_response.data.mobile, res);
+                    if (postData.bvn_otp === client[0]['bvn_otp']) {
                         postData.first_name = bvn_response.data.first_name;
                         postData.last_name = bvn_response.data.last_name;
                         postData.dob = bvn_response.data.formatted_dob;
@@ -710,6 +711,43 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
         });
     }
 });
+
+sendBVNOTP = (client, phone, res) => {
+    let otp = Math.floor(100000 + Math.random() * 900000);
+    let payload = {
+        bvn_otp: otp,
+        verify_bvn: 0,
+        date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
+    };
+    let sms = {
+        phone: helperFunctions.formatToNigerianPhone(phone),
+        message: `Your OTP is ${otp}`
+    }
+    helperFunctions.sendSMS(sms, response => {
+        if (response.status === 'SUCCESS') {
+            db.query(`UPDATE clients SET ? WHERE ID = ${client.ID}`, payload, (error, response) => {
+                if (error)
+                    return res.send({
+                        "status": 500,
+                        "error": error,
+                        "response": null
+                    });
+
+                res.send({
+                    "status": 200,
+                    "error": null,
+                    "response": `Kindly input the OTP sent to ${phone}`
+                });
+            });
+        } else {
+            return res.send({
+                "status": 500,
+                "error": 'Error validating BVN!',
+                "response": null
+            });
+        }
+    });
+}
 
 router.get('/enable/:id', helperFunctions.verifyJWT, function (req, res) {
     let postData = req.body;
