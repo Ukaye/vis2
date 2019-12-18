@@ -453,7 +453,11 @@ router.post('/create', function (req, res) {
         if (err) throw err;
         connection.query(query2, [postData.username, postData.email, postData.phone], function (error, results) {
             if (results && results[0]) {
-                return res.send({ "status": 500, "error": "Client already exists!", "response": null});
+                let duplicates = [];
+                if (postData.username == results[0]['username']) duplicates.push('username');
+                if (postData.email == results[0]['email']) duplicates.push('email');
+                if (postData.phone == results[0]['phone']) duplicates.push('phone');
+                return res.send({ "status": 500, "error": `The ${duplicates[0]} is already in use by another user!`, "response": null});
             }
             let bvn = postData.bvn;
             delete postData.bvn;
