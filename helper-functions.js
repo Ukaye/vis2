@@ -485,7 +485,7 @@ functions.sendSMS = function (payload, callback) {
         },
         (error, res, body) => {
             if (error) return callback(error);
-            return callback(JSON.parse(body));
+            return callback(body);
         })
 };
 

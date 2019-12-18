@@ -723,9 +723,8 @@ sendBVNOTP = (client, phone, res) => {
         phone: helperFunctions.formatToNigerianPhone(phone),
         message: `Your OTP is ${otp}`
     }
-    helperFunctions.sendSMS(sms, response => {
-        console.log(response)
-        if (response.status === 'SUCCESS') {
+    helperFunctions.sendSMS(sms, data => {
+        if (data.response.status === 'SUCCESS') {
             db.query(`UPDATE clients SET ? WHERE ID = ${client.ID}`, payload, (error, response) => {
                 if (error)
                     return res.send({
