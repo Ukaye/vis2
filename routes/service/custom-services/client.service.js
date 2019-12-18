@@ -680,7 +680,7 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
                     } else {
                         return res.send({
                             "status": 500,
-                            "error": 'BVN does not match phone number on record!',
+                            "error": 'OTP is incorrect!',
                             "response": null
                         });
                     }
