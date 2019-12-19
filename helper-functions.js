@@ -450,7 +450,7 @@ functions.resolveBVN = (bvn, callback) => {
         });
 };
 
-functions.resolveAccountNumber = (payload, callback) => {
+functions.resolveAccount = (payload, callback) => {
     request.get(
         {
             url: `${process.env.PAYSTACK_BASE_URL}/bank/resolve?account_number=${payload.account}&bank_code=${payload.bank}`,

@@ -2928,13 +2928,13 @@ router.get('/banks', function (req, res) {
         });
 });
 
-router.get('/resolve/account_number/:account/:bank', (req, res) => {
+router.get('/resolve/account/:account/:bank', (req, res) => {
     let payload = {};
     payload.bank = req.params.bank;
     payload.account = req.params.account;
     if (!payload.account || !payload.bank) return res.status(500).send('Required parameter(s) not sent!');
 
-    helperFunctions.resolveAccountNumber(payload, response => {
+    helperFunctions.resolveAccount(payload, response => {
         if (!response.status) return res.send({
             "status": 500,
             "error": response.message,
