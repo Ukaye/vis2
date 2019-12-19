@@ -564,7 +564,7 @@ router.post('/login', function (req, res) {
         if (!client || !client[0])
             return res.send({
                 "status": 500,
-                "error": "Sorry we can’t find this email in our record, please click here to sign up!",
+                "error": "Sorry, we can’t find this user information in our record, please click here to sign up!",
                 "response": null
             });
             
