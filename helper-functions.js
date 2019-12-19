@@ -450,6 +450,20 @@ functions.resolveBVN = (bvn, callback) => {
         });
 };
 
+functions.resolveAccountNumber = (payload, callback) => {
+    request.get(
+        {
+            url: `${process.env.PAYSTACK_BASE_URL}/bank/resolve?account_number=${payload.account}&bank_code=${payload.bank}`,
+            headers: {
+                'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
+            }
+        },
+        (error, res, body) => {
+            if (error) return callback(error);
+            return callback(JSON.parse(body));
+        });
+};
+
 functions.phoneMatch = (phone1, phone2) => {
     let phone1_ = phone1.toString().trim().toLowerCase();
     let phone2_ = phone2.toString().trim().toLowerCase();

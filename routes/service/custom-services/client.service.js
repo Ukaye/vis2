@@ -454,10 +454,9 @@ router.post('/create', function (req, res) {
         connection.query(query2, [postData.username, postData.email, postData.phone], function (error, results) {
             if (results && results[0]) {
                 let duplicates = [];
-                if (postData.username == results[0]['username']) duplicates.push('username');
                 if (postData.email == results[0]['email']) duplicates.push('email');
                 if (postData.phone == results[0]['phone']) duplicates.push('phone');
-                return res.send({ "status": 500, "error": `The ${duplicates[0]} is already in use by another user!`, "response": null});
+                return res.send({ "status": 500, "error": `The ${duplicates[0] || username} is already in use by another user!`, "response": null});
             }
             let bvn = postData.bvn;
             delete postData.bvn;
@@ -726,7 +725,7 @@ sendBVNOTP = (client, phone, res) => {
     };
     let sms = {
         phone: helperFunctions.formatToNigerianPhone(phone),
-        message: `Your OTP is ${otp}`
+        message: `To confirm your phone number on My X3, use this OTP ${otp}`
     }
     helperFunctions.sendSMS(sms, data => {
         if (data.response.status === 'SUCCESS') {
@@ -2901,14 +2900,15 @@ router.get('/application/verify/email/:token', function (req, res) {
 router.get('/banks', function (req, res) {
     let banks = require('../../../banks.json');
     paystack.subaccount.listBanks()
-        .then(function (body) {
+        .then(body => {
             async.forEach(body.data, (bank, callback) => {
                 let check = banks.filter(bank_ => {
                     return bank_.name.toLowerCase().indexOf(bank.name.toLowerCase()) > -1;
                 });
                 if (!check[0]) banks.push({
-                    name: bank.name,
-                    code: "000"
+                    name: bank.name.toUpperCase(),
+                    authorization: 'FORM',
+                    code: bank.code
                 });
                 callback();
             }, data => {
@@ -2926,6 +2926,27 @@ router.get('/banks', function (req, res) {
                 "response": null
             });
         });
+});
+
+router.get('/resolve/account_number/:account/:bank', (req, res) => {
+    let payload = {};
+    payload.bank = req.params.bank;
+    payload.account = req.params.account;
+    if (!payload.account || !payload.bank) return res.status(500).send('Required parameter(s) not sent!');
+
+    helperFunctions.resolveAccountNumber(payload, response => {
+        if (!response.status) return res.send({
+            "status": 500,
+            "error": response.message,
+            "response": null
+        });
+
+        return res.send({
+            "status": 200,
+            "error": null,
+            "response": response.data
+        });
+    });
 });
 
 module.exports = router;
