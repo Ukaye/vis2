@@ -2710,7 +2710,6 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                         loanID: old_invoice.applicationID,
                                                         module: 'collections',
                                                         principal_amount: principal_due,
-                                                        principal_invoice_no: old_invoice.principal_invoice_no,
                                                         payment_date: date_modified,
                                                         bank: integration.xero_principal_account
                                                     });
