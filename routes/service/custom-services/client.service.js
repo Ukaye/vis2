@@ -725,7 +725,7 @@ sendBVNOTP = (client, phone, res) => {
     };
     let sms = {
         phone: helperFunctions.formatToNigerianPhone(phone),
-        message: `To confirm your phone number on My X3, use this OTP ${otp}`
+        message: `To confirm your BVN on My X3, use this OTP ${otp}`
     }
     helperFunctions.sendSMS(sms, data => {
         if (data.response.status === 'SUCCESS') {
