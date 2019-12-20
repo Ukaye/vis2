@@ -2703,16 +2703,16 @@ users.post('/application/approve-schedule/:id', function(req, res, next) {
                                                         IsReconciled: true,
                                                         Reference: `Reschedule adjustment for LOAN ID: ${helperFunctions.padWithZeroes(old_invoice.applicationID, 9)}`
                                                     });
-                                                    auditLog.log({
-                                                        clientID: application.clientID,
-                                                        amount: principal_due,
-                                                        type: 'repayment',
-                                                        loanID: old_invoice.applicationID,
-                                                        module: 'collections',
-                                                        principal_amount: principal_due,
-                                                        payment_date: date_modified,
-                                                        bank: integration.xero_principal_account
-                                                    });
+                                                    // auditLog.log({
+                                                    //     clientID: application.clientID,
+                                                    //     amount: principal_due,
+                                                    //     type: 'repayment',
+                                                    //     loanID: old_invoice.applicationID,
+                                                    //     module: 'collections',
+                                                    //     principal_amount: principal_due,
+                                                    //     payment_date: date_modified,
+                                                    //     bank: integration.xero_principal_account
+                                                    // });
                                                 }
                                             }
                                         });
