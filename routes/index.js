@@ -132,7 +132,7 @@ router.post('/new-model', function(req, res, next) {
                     if(error){
                         res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
                     } else {
-                        connection.query('SELECT * from vehiclemakes where ID = LAST_INSERT_ID()', function(err, re, fields) {
+                        connection.query('SELECT * from vehiclemakes where ID = (SELECT MAX(ID) FROM vehiclemakes)', function(err, re, fields) {
                             connection.release();
                             if (!err){
                                 res.send(JSON.stringify({"status": 200, "error": null, "response": re}));
@@ -1126,7 +1126,7 @@ router.post('/workflows', function(req, res, next) {
         connection.query('INSERT INTO workflows SET ?', workflow, function (error, response, fields) {
             if(error || !response)
                 res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
-            connection.query('SELECT * FROM workflows WHERE ID = LAST_INSERT_ID()', function (error, results, fields) {
+            connection.query('SELECT * FROM workflows WHERE ID = (SELECT MAX(ID) FROM workflows)', function (error, results, fields) {
                 async.forEach(stages, function (stage, callback) {
                     stage.workflowID = results[0]['ID'];
                     created_workflow = results[0]['ID'];
@@ -1179,7 +1179,7 @@ router.post('/workflows/:workflow_id', function(req, res, next) {
                 connection.query('INSERT INTO workflows SET ?', workflow, function (error, response, fields) {
                     if(error || !response)
                         res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
-                    connection.query('SELECT * FROM workflows WHERE ID = LAST_INSERT_ID()', function (error, results, fields) {
+                    connection.query('SELECT * FROM workflows WHERE ID = (SELECT MAX(ID) FROM workflows)', function (error, results, fields) {
                         async.forEach(stages, function (stage, callback) {
                             stage.workflowID = results[0]['ID'];
                             created_workflow = results[0]['ID'];

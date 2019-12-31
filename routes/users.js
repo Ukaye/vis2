@@ -214,7 +214,7 @@ users.post('/new-user', function(req, res, next) {
                     if(error){
                         res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
                     } else {
-                        connection.query('SELECT * from users where ID = LAST_INSERT_ID()', function(err, re, fields) {
+                        connection.query('SELECT * from users where ID = (SELECT MAX(ID) FROM users)', function(err, re, fields) {
                             connection.release();
                             if (!err){
                                 let payload = {}
@@ -280,7 +280,7 @@ users.post('/new-client', function(req, res, next) {
                                 if(error){
                                     res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
                                 } else {
-                                    connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function(err, re, fields) {
+                                    connection.query('SELECT * from clients where ID = (SELECT MAX(ID) FROM clients)', function(err, re, fields) {
                                         if (!err){
                                             id = re[0]['ID'];
                                             connection.query('INSERT into wallets Set ?', {client_id: id}, function(er, r, fields) {
@@ -330,7 +330,7 @@ users.post('/new-client', function(req, res, next) {
                             if(error){
                                 res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
                             } else {
-                                connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function(err, re, fields) {
+                                connection.query('SELECT * from clients where ID = (SELECT MAX(ID) FROM clients)', function(err, re, fields) {
                                     if (!err){
                                         id = re[0]['ID'];
                                         connection.query('INSERT into wallets Set ?', {client_id: id}, function(er, r, fields) {
@@ -9695,7 +9695,7 @@ users.post('/new-activity', function(req, res, next) {
     let data = [],
         postData = req.body,
         query =  'INSERT INTO activities Set ?',
-        query2 = 'SELECT ID from activities where ID = LAST_INSERT_ID()';
+        query2 = 'SELECT ID from activities where ID = (SELECT MAX(ID) FROM activities)';
     postData.status = 1;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.getConnection(function(err, connection) {

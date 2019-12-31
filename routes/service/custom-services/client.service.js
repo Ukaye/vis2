@@ -478,7 +478,7 @@ router.post('/create', function (req, res) {
                             if (error) {
                                 res.send({ "status": 500, "error": JSON.stringify(error), "response": null });
                             } else {
-                                connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function (err, re) {
+                                connection.query('SELECT * from clients where ID = (SELECT MAX(ID) FROM clients)', function (err, re) {
                                     if (!err) {
                                         id = re[0]['ID'];
                                         connection.query('INSERT into wallets Set ?', { client_id: id }, function (er, r) {
@@ -514,7 +514,7 @@ router.post('/create', function (req, res) {
                     if (error) {
                         res.send({ "status": 500, "error": JSON.stringify(error), "response": null });
                     } else {
-                        connection.query('SELECT * from clients where ID = LAST_INSERT_ID()', function (err, re) {
+                        connection.query('SELECT * from clients where ID = (SELECT MAX(ID) FROM clients)', function (err, re) {
                             if (!err) {
                                 id = re[0]['ID'];
                                 connection.query('INSERT into wallets Set ?', { client_id: id }, function (er, r) {
