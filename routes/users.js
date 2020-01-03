@@ -1956,6 +1956,7 @@ users.get('/application-id/:id', function(req, res, next) {
             '(SELECT l.supervisor FROM users l WHERE l.ID = u.loan_officer) AS supervisor, ' +
             '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
             '(SELECT status FROM preapplications WHERE ID = a.preapplicationID AND creator_type = "client") AS client_applications_status, ' +
+            '(SELECT work_email FROM preapplications WHERE ID = a.preapplicationID AND creator_type = "client") AS work_email, ' +
             '(SELECT verify_work_email FROM preapplications WHERE ID = a.preapplicationID AND creator_type = "client") AS verify_work_email, ' +
             'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
             'FROM clients AS u INNER JOIN applications AS a ON u.ID = a.userID LEFT JOIN remita_mandates r ' +

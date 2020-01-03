@@ -264,7 +264,7 @@ function getWorkflows(data){
             $("#workflow-div-title").text(fullname.toUpperCase()+" ("+workflow.name+")");
             if (workflow.client_information && workflow.client_information.indexOf('work_email') > -1 && data.status === 1) {
                 if (data.verify_work_email === 0)
-                    $('#loancirrus-id').append('<span class="badge badge-pill badge-danger">Work Email <br> Unverifed</span>');
+                    $('#loancirrus-id').append('<button class="badge badge-pill badge-danger" onclick="verifyWorkEmail()">Work Email <br> Unverifed</button>');
                 if (data.verify_work_email === 1)
                     $('#loancirrus-id').append('<span class="badge badge-pill badge-success">Work Email <br> Verifed</span>');
             }
@@ -2433,6 +2433,36 @@ function printLoanSchedule() {
     };
     localStorage.loanSchedule = encodeURIComponent(JSON.stringify(loanSchedule));
     return window.open(`/loan-schedule?id=${application_id}`, '_blank');
+}
+
+function verifyWorkEmail() {
+    swal({
+        title: "Resend Email Confirmation Link?",
+        text: `An email will be sent to ${application.work_email} to proceed with confirmation!`,
+        icon: "warning",
+        buttons: true,
+        dangerMode: true
+    })
+        .then((yes) => {
+            if (yes) {
+                $.ajax({
+                    'url': `/client/application/verifyV2/email/${application.preapplicationID}/work`,
+                    'type': 'post',
+                    'data': {
+                        'email': application.work_email
+                    },
+                    'success': data => {
+                        if (data.status === 200)
+                         return notification(data.response,'','success');
+                        return notification(data.error,'','error');
+                    },
+                    'error': err => {
+                        console.log(err);
+                        notification('No internet connection','','error');
+                    }
+                });
+            }
+        });
 }
 
 function read_write_1(){

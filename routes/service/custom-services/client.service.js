@@ -652,8 +652,8 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
 
                 if (!client[0]) return res.send({
                     "status": 500,
-                    "error": null,
-                    "response": 'User does not exist!'
+                    "error": 'User does not exist!',
+                    "response": null
                 });
 
                 if (bvn_response.status) {
@@ -898,8 +898,8 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function (req, res) 
 
         if (!client[0]) return res.send({
             "status": 500,
-            "error": null,
-            "response": 'User does not exist!'
+            "error": 'User does not exist!',
+            "response": null
         });
 
         let user = client[0],
@@ -1240,8 +1240,8 @@ router.get('/application/accept/:id/:application_id', helperFunctions.verifyJWT,
 
         if (!application[0]) return res.send({
             "status": 500,
-            "error": null,
-            "response": 'Application does not exist!'
+            "error": 'Application does not exist!',
+            "response": null
         });
 
         if (application[0]['status'] !== enums.CLIENT_APPLICATION.STATUS.COMPLETED)
@@ -1285,8 +1285,8 @@ router.get('/application/decline/:id/:application_id', helperFunctions.verifyJWT
 
         if (!application[0]) return res.send({
             "status": 500,
-            "error": null,
-            "response": 'Application does not exist!'
+            "error": 'Application does not exist!',
+            "response": null
         });
 
         if (application[0]['status'] !== enums.CLIENT_APPLICATION.STATUS.COMPLETED)
@@ -1780,8 +1780,8 @@ router.get('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, functi
 
         if (!schedule[0]) return res.send({
             "status": 500,
-            "error": null,
-            "response": 'Invoice does not exist for this client!'
+            "error": 'Invoice does not exist for this client!',
+            "response": null
         });
 
         const invoice = schedule[0];
@@ -1841,8 +1841,8 @@ router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, fun
 
         if (!schedule[0]) return res.send({
             "status": 500,
-            "error": null,
-            "response": 'Invoice does not exist!'
+            "error": 'Invoice does not exist!',
+            "response": null
         });
 
         const invoice_ = schedule[0]
@@ -1853,8 +1853,8 @@ router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, fun
                     if (body.data.amount !== parseFloat(invoice_.amount) * 100)
                         return res.send({
                             "status": 500,
-                            "error": null,
-                            "response": 'Payment amount does not match the invoice amount!'
+                            "error": 'Payment amount does not match the invoice amount!',
+                            "response": null
                         });
                     if (body.data.status === 'success') {
                         let data = {
@@ -1964,8 +1964,8 @@ router.get('/preapproved-loan/create/:id/:loan_id', helperFunctions.verifyJWT, f
 
         if (!app[0]) return res.send({
             "status": 500,
-            "error": null,
-            "response": 'Loan does not exist for this client!'
+            "error": 'Loan does not exist for this client!',
+            "response": null
         });
 
         const HOST = `${req.protocol}://${req.get('host')}`;
@@ -2059,8 +2059,8 @@ router.get('/preapproved-loan/get/:id/:loan_id/:key?', helperFunctions.verifyJWT
         } else {
             return res.send({
                 "status": 500,
-                "error": null,
-                "response": 'Remita does not exist!'
+                "error": 'Remita does not exist!',
+                "response": null
             });
         }
     });
@@ -2226,8 +2226,8 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
 
         if (!schedule[0]) return res.send({
             "status": 500,
-            "error": null,
-            "response": 'Invoice does not exist!'
+            "error": 'Invoice does not exist!',
+            "response": null
         });
 
         const invoice_ = schedule[0],
@@ -2243,8 +2243,8 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
                     if (body.data.amount !== amount)
                         return res.send({
                             "status": 500,
-                            "error": null,
-                            "response": 'Payment amount does not match the invoice amount!'
+                            "error": 'Payment amount does not match the invoice amount!',
+                            "response": null
                         });
                     if (body.data.status === 'success') {
                         let data = {
@@ -2403,8 +2403,8 @@ router.get('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req,
         });
         if (!application[0]) return res.send({
             "status": 500,
-            "error": null,
-            "response": 'Application does not exist!'
+            "error": 'Application does not exist!',
+            "response": null
         });
         db.query(query1, (error, response) => {
             let overdue = (response[0]) ? response[0]['amount'] : 0;
@@ -2535,8 +2535,8 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
 
         if (!schedule[0]) return res.send({
             "status": 500,
-            "error": null,
-            "response": 'Invoice does not exist!'
+            "error": 'Invoice does not exist!',
+            "response": null
         });
 
         const invoice_ = schedule[0],
@@ -2947,6 +2947,68 @@ router.get('/resolve/account/:account/:bank', (req, res) => {
             "response": response.data
         });
     });
+});
+
+router.post('/application/verifyV2/email/:application_id/:type', (req, res) => {
+    if (!req.body.email || !req.params.type || !req.params.application_id)
+        return res.status(500).send('Required parameter(s) not sent!');
+
+    db.query(`SELECT c.ID, c.email, c.phone, c.fullname FROM clients c, preapplications a 
+        WHERE a.ID = ${req.params.application_id} AND c.ID = a.userID`, (error, client_) => {
+            if (error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+            if (!client_[0]) return res.send({
+                "status": 500,
+                "error": 'Client does not exist!',
+                "response": null
+            });
+
+            let data = {},
+                client = client_[0],
+                email = req.body.email;
+            const expiry_days = 1,
+                token = jwt.sign(
+                    {
+                        ID: client.ID,
+                        email: client.email,
+                        phone: client.phone,
+                        type: req.params.type,
+                        applicationID: req.params.application_id
+                    },
+                    process.env.SECRET_KEY,
+                    {
+                        expiresIn: 60 * 60 * expiry_days
+                    });
+            data.name = client.fullname;
+            data.date = moment().utcOffset('+0100').format('YYYY-MM-DD');
+            data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
+            data.verify_url = `${process.env.CLIENT_HOST}/verify-email?token=${token}&module=application`;
+            emailService.send({
+                to: client.email,
+                subject: 'Email Confirmation',
+                template: 'default',
+                context: {
+                    name: client.fullname,
+                    message: `This is a reminder that your ${req.params.type} email (${email}) is pending verification. 
+                        Kindly log in to your ${req.params.type} email for further instructions on how to proceed!`
+                }
+            });
+            emailService.send({
+                to: email,
+                subject: 'Email Confirmation',
+                template: 'verify-email',
+                context: data
+            });
+            return res.send({
+                "status": 200,
+                "error": null,
+                "response": `Verification email sent to ${email} successfully!`
+            });
+        });
 });
 
 module.exports = router;
