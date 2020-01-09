@@ -1216,7 +1216,7 @@ function checkTotalDue() {
 
 function disburse() {
     if (reschedule_status) return;
-    if (workflow.admin_application_override === 0 && application.client_applications_status === 3 && application.status === 1)
+    if (workflow.admin_application_override === 0 && application.client_applications_status < 4 && application.status === 1)
         return notification('Application is still pending client acceptance!','','warning');
     if (workflow.client_information && workflow.client_information.indexOf('work_email') > -1 && application.verify_work_email === 0)
         return notification('Client has not verified work email!','','warning');

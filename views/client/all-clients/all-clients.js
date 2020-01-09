@@ -36,7 +36,7 @@ function showTab(n) {
 
 function nextPrev(n) {
     let x = document.getElementsByClassName("tab");
-    if (!($('#loan_officer').find('option:selected').attr('id') === '0') && !($('#branch').find('option:selected').attr('id') === '0')){
+    if (!($('#loan_officer').find('option:selected').attr('id') === 'default-officer') && !($('#branch').find('option:selected').attr('id') === 'default-branch')){
 
         if(validateEmail($('#email').val())){
             if (n === 1 && !validateForm()){
@@ -418,7 +418,7 @@ function getOfficers(){
         success: function (response) {
             let role = $("[id=loan_officer]");
             let role2 = $("[id=loan_officer2]");
-            role.empty().append('<option selected="selected" id="0">-- Choose Loan Officer --</option>');
+            role.empty().append('<option selected="selected" id="default-officer">-- Choose Loan Officer --</option>');
             role2.empty().append('<option selected="selected">-- Choose Loan Officer --</option>');
             $.each(JSON.parse(response), function (key, val) {
                 $("#loan_officer").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
@@ -436,8 +436,8 @@ function getBranches(){
         success: function (response) {
             let branch = $("[id=branch]");
             let branch2 = $("[id=branch2]");
-            branch.empty().append('<option id="0" value ="0">-- Select a Branch --</option>');
-            branch2.empty().append('<option value ="0">-- Select a Branch --</option>');
+            branch.empty().append('<option id="default-branch" value ="default-branch">-- Select a Branch --</option>');
+            branch2.empty().append('<option value ="default-branch">-- Select a Branch --</option>');
             $.each(JSON.parse(response), function (key, val) {
                 $("#branch").append('<option value = "' + val.id + '" id="' + val.id + '">' + val.branch_name + '</option>');
                 $("#branch2").append('<option value = "' + val.id + '">' + val.branch_name + '</option>');

@@ -79,6 +79,13 @@ function loadMenus() {
             });
         }
     });
+    $.ajax({
+        type: "GET",
+        url: "/client/applications/web/count",
+        success: function (data) {
+            $('#web-requests-badge').html(data.response);
+        }
+    });
 }
 
 function includeHTML() {

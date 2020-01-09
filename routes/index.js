@@ -218,6 +218,7 @@ router.get('/inspection-images/:number_plate', function(req, res, next) {
 
 /* GET client profile images. */
 router.get('/profile-images/:folder/', function(req, res, next) {
+    if (!req.params.folder) return res.send(JSON.stringify({"status":500, "response": "Required Parameter(s) not sent!"}))
     let path = 'files/users/'+req.params.folder+'/';
     if (fs.existsSync(path)){
         fs.readdir(path, function (err, files){

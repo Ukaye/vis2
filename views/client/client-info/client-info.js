@@ -129,7 +129,6 @@ function loadInfo() {
             //                var details = JSON.parse(data);
             client_det = data;
             getBanks();
-            populateCards(client_det);
         },
         'error': function (err) {
             //alert ('Error');
@@ -138,8 +137,8 @@ function loadInfo() {
     });
 }
 
-function populateCards(data) {
-
+function populateCards() {
+    const data = client_det;
     let obj = data[0];
     if (obj.escrow)
         $('.escrow-balance').text(parseFloat(obj.escrow).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
@@ -156,12 +155,12 @@ function populateCards(data) {
     $('#total_balance').html(obj.total_balance === null ? formatter.format(0) : formatter.format(parseFloat(obj.total_balance)));
     $('#total_interest').html(obj.total_interests === null ? formatter.format(0) : formatter.format(parseFloat(obj.total_interests)));
     let pbody = $("#personal");
+    let bbody = $("#bank");
     let ebody = $("#employment");
-    let rbody = $("#reference"),
-        tr = "";
-    let te = "";
-    let tp = "";
+    let rbody = $("#reference");
+    let tr = "", tb = "", te = "", tp = "";
     pbody.empty();
+    bbody.empty();
     ebody.empty();
     rbody.empty();
 
@@ -179,6 +178,17 @@ function populateCards(data) {
     if (obj.date_created)
         tr += "<tr><td><strong>Date Created</strong></td><td>" + formatDate(obj.date_created) + "</td></tr>";
     pbody.html(tr);
+
+    // Bank Info Card
+    if (obj.bank) {
+        let bank_name = ($.grep(banks, e => {return e.code === obj.bank}))[0]['name'];
+        tb += "<tr><td><strong>Bank Name</strong></td><td>" + bank_name + "</td></tr>";
+    }
+    if (obj.account)
+        tb += "<tr><td><strong>Account Number</strong></td><td>" + obj.account + "</td></tr>";
+    if (obj.account_name)
+        tb += "<tr><td><strong>Account Name</strong></td><td>" + obj.account_name + "</td></tr>";
+    bbody.html(tb);
 
     // Employment Info Card
     if (obj.job)
@@ -240,21 +250,14 @@ function displayActivities(data) {
     $feed.html('');
     $.each(data, function (k, v) {
         $feed.append('<div id="feed' + v.ID + '" class="row">\n' +
-            //                '    <div class="col-sm-1">\n' +
-            //                '        <div class="thumbnail" style="border-radius: 50%; width: 100px; height: 100px; background: #9fcdff; text-align: center">' +
-            //                '           <div id="name" style="display: inline-block; margin: 0 auto; padding-top: 20px"><h1>'+getInitials(v.user)+'</h1></div>'+
-            //                '        </div>\n' +
-            //                '    </div>\n' +
             '    <div class="col-sm-12" style="padding-left: 30px">\n' +
             '        <div class="panel panel-default col-sm-12" style="background: #e9ecef; padding-left: 10px; border-radius: 4px">\n' +
             '            <div class="panel-heading"><i class="fa fa-users"></i> Activity by <span class="text-muted">' + v.user + '</span></div>' +
-            //            '               <button type="button" class="btn btn-outline-primary pull-right" onclick="viewActivity('+v.ID+')"><i class="fa fa-eye"></i> View More</button>\n' +
             '            <div class="panel-body">' + v.activity + ' ' +
             '               <i class="fa fa-user"></i><span> ' + v.client_name + '</span>&nbsp;|&nbsp;' +
             '               <i class="fa fa-phone"></i><span> ' + v.client_phone + '</span>&nbsp;|&nbsp;<i class="fa fa-envelope"></i><span> ' + v.client_email + '</span><br/>\n' +
             '            </div>\n' +
             '            <div class="panel-footer">' + v.activity_description + '<br/><span class="text-muted"><small>created on ' + v.date_created + '</small></span></div>\n' +
-            //                '            <div class="input-group"><div class="input-group-addon"><i class="fa fa-comment"></i></div><input type="text" id="act'+v.ID+'" maxlength="250" class="form-control"/></div><button onclick="savecomment('+v.ID+')" class ="btn btn-info" style="float: right; border-radius: 4px" data-toggle="modal" data-target="#addCommentModal">Add Comment <i class="fa fa-comment"></i></button>'+
             '        </div>\n' +
             '    </div>\n' +
             '</div><br/>');
@@ -268,18 +271,14 @@ function loadImages(folder) {
         'type': 'get',
         'data': {},
         'success': function (data) {
-            // $.each(data[0], function (key, val) {
-            //     test[key] = val;
-            // });
+            console.log(data)
             let res = JSON.parse(data);
             if (res.status == 500) {
-                //                    swal("No Profile Image Uploaded!");
                 $('#pic').append('<img src="assets/default_user_logo.png" width="180" height="170"/>');
             } else {
                 let image =
                     '<a href="#">' +
                     '<img src="' + res['response']['Image'] + '" alt="Profile Pic ' + name + '" style="max-width:100%;" height = 150 width = 150>' +
-                    // '<div style = "background-image: url("'+res['response']['Image']+'"); max-width:100%;" height = 150 width = 150></div>'+
                     '</a>';
                 $('#pic').append(image);
             }
@@ -458,6 +457,7 @@ function getBanks(){
         url: '/user/banks',
         success: function (response) {
             banks = response;
+            populateCards();
             $.each(response, function (key, val) {
                 $('#cheque-bank').append(`<option value="${val.code}">${val.name}</option>`);
             });

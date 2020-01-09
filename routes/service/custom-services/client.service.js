@@ -719,7 +719,9 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
 sendBVNOTP = (client, phone, res) => {
     let otp = Math.floor(100000 + Math.random() * 900000);
     let payload = {
+        phone: phone,
         bvn_otp: otp,
+        phone: phone,
         verify_bvn: enums.VERIFY_BVN.STATUS.FALSE,
         date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
     };
@@ -3009,6 +3011,24 @@ router.post('/application/verifyV2/email/:application_id/:type', (req, res) => {
                 "response": `Verification email sent to ${email} successfully!`
             });
         });
+});
+
+router.get('/applications/web/count', (req, res) => {
+    let query_status = `(${enums.CLIENT_APPLICATION.STATUS.ACTIVE},${enums.CLIENT_APPLICATION.STATUS.APPROVED})`;
+    let query = `SELECT COUNT(*) count FROM preapplications WHERE status in ${query_status} 
+    AND ID NOT IN (SELECT a.preapplicationID FROM applications a WHERE ID = a.preapplicationID) AND creator_type = "client"`;
+    db.query(query, (error, response) => {
+        if (error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+        return res.send({
+            "status": 200,
+            "error": null,
+            "response": response[0]['count']
+        });
+    });
 });
 
 module.exports = router;
