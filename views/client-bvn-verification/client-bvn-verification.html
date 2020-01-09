@@ -100,8 +100,8 @@
                     </form>
                     <select id="type-filter" onchange="filterType()" class="form-control" style="float: right; width:200px; margin: 0 5px;">
                         <option value="" selected="selected">All</option>
-                        <option value="0">Confirmed</option>
-                        <option value="1">Unconfirmed</option>
+                        <option value="0">Verified</option>
+                        <option value="1">Unverified</option>
                     </select>
                 </div>
 
@@ -109,12 +109,11 @@
                     <table id="bvn_list" class="table table-striped table-bordered">
                         <thead>
                             <tr>
-                                <th>Amount(NGN)</th>
-                                <th>Payment(NGN)</th>
-                                <th>Client</th>
-                                <th>Type</th>
-                                <th>Loan ID</th>
-                                <th>Bank</th>
+                                <th>ID</th>
+                                <th>Fullname</th>
+                                <th>Phone</th>
+                                <th>BVN</th>
+                                <th>Status</th>
                                 <th>Date</th>
                                 <th>Action</th>
                             </tr>

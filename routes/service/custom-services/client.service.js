@@ -3043,7 +3043,8 @@ router.get('/bvn/get', function (req, res, next) {
     let offset = req.query.offset;
     let search_string = req.query.search_string.toUpperCase();
     let query_condition = `FROM clients c WHERE c.bvn_otp IS NOT NULL AND c.bvn_input IS NOT NULL 
-        (upper(c.ID) LIKE "${search_string}%" OR upper(c.fullname) LIKE "${search_string}%" OR upper(c.phone) LIKE "${search_string}%" OR upper(c.bvn_input) LIKE "${search_string}%") `;
+        AND (upper(c.ID) LIKE "${search_string}%" OR upper(c.fullname) LIKE "${search_string}%" 
+        OR upper(c.phone) LIKE "${search_string}%" OR upper(c.bvn_input) LIKE "${search_string}%") `;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     end = moment(end).add(1, 'days').format("YYYY-MM-DD");
@@ -3057,7 +3058,7 @@ router.get('/bvn/get', function (req, res, next) {
         }
     }).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) ${query_condition}) as recordsFiltered 
-            FROM clients WHERE c.bvn_otp IS NOT NULL AND c.bvn_input IS NOT NULL`;
+            FROM clients WHERE bvn_otp IS NOT NULL AND bvn_input IS NOT NULL`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {

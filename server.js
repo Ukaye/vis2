@@ -670,6 +670,12 @@ app.get('/web-payments', requireLogin, function (req, res) {
     });
 });
 
+app.get('/client-bvn-verifications', requireLogin, function (req, res) {
+    res.sendFile('/client-bvn-verification/client-bvn-verification.html', {
+        root: __dirname + '/views'
+    });
+});
+
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
     res.status(404);
