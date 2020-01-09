@@ -74,14 +74,14 @@ function getCollections() {
         ],
         columns: [
             {
-                width: "10%",
+                width: "5%",
                 className: "text-right",
                 mRender: (data, type, full) => {
                     return `<a href="/client-info?id=${full.ID}">${padWithZeroes(full.ID, 6)}</a>`;
                 }
             },
             {
-                width: "20%",
+                width: "30%",
                 className: "text-right",
                 mRender: (data, type, full) => {
                     return `<a href="/client-info?id=${full.ID}">${full.fullname}</a>`;
@@ -95,7 +95,7 @@ function getCollections() {
                 }
             },
             {
-                width: "10%",
+                width: "20%",
                 className: "text-right",
                 mRender: (data, type, full) => {
                     return full.bvn_input;
@@ -109,7 +109,7 @@ function getCollections() {
                 }
             },
             {
-                width: "15%",
+                width: "20%",
                 mRender: function (data, type, full) {
                     if (full.date_created) return moment(new Date(full.date_created)).format('LLLL');
                     return '--';
