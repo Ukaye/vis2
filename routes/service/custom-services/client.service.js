@@ -658,7 +658,7 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
 
                 if (bvn_response.status) {
                     if (!postData.bvn_otp)
-                        return sendBVNOTP(client[0], bvn_response.data.mobile, res);
+                        return sendBVNOTP(client[0], bvn, bvn_response.data.mobile, res);
                     if (postData.bvn_otp === client[0]['bvn_otp']) {
                         postData.first_name = bvn_response.data.first_name;
                         postData.last_name = bvn_response.data.last_name;
@@ -716,12 +716,13 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
     }
 });
 
-sendBVNOTP = (client, phone, res) => {
+sendBVNOTP = (client, bvn, phone, res) => {
     let otp = Math.floor(100000 + Math.random() * 900000);
     let payload = {
         phone: phone,
         bvn_otp: otp,
         phone: phone,
+        bvn_input: bvn,
         verify_bvn: enums.VERIFY_BVN.STATUS.FALSE,
         date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
     };
@@ -3028,6 +3029,63 @@ router.get('/applications/web/count', (req, res) => {
             "error": null,
             "response": response[0]['count']
         });
+    });
+});
+
+router.get('/bvn/get', function (req, res, next) {
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let end = req.query.end;
+    let type = req.query.type;
+    let draw = req.query.draw;
+    let start = req.query.start;
+    let limit = req.query.limit;
+    let order = req.query.order;
+    let offset = req.query.offset;
+    let search_string = req.query.search_string.toUpperCase();
+    let query_condition = `FROM clients c WHERE c.bvn_otp IS NOT NULL AND c.bvn_input IS NOT NULL 
+        (upper(c.ID) LIKE "${search_string}%" OR upper(c.fullname) LIKE "${search_string}%" OR upper(c.phone) LIKE "${search_string}%" OR upper(c.bvn_input) LIKE "${search_string}%") `;
+    let endpoint = '/core-service/get';
+    let url = `${HOST}${endpoint}`;
+    end = moment(end).add(1, 'days').format("YYYY-MM-DD");
+    if (type) query_condition = query_condition.concat(`AND c.verify_bvn = ${type} `);
+    if (start && end)
+        query_condition = query_condition.concat(`AND TIMESTAMP(c.date_created) < TIMESTAMP('${end}') AND TIMESTAMP(c.date_created) >= TIMESTAMP('${start}') `);
+    let query = `SELECT * ${query_condition} ${order} LIMIT ${limit} OFFSET ${offset}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        query = `SELECT count(*) AS recordsTotal, (SELECT count(*) ${query_condition}) as recordsFiltered 
+            FROM clients WHERE c.bvn_otp IS NOT NULL AND c.bvn_input IS NOT NULL`;
+        endpoint = '/core-service/get';
+        url = `${HOST}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(payload => {
+            res.send({
+                draw: draw,
+                recordsTotal: payload.data[0].recordsTotal,
+                recordsFiltered: payload.data[0].recordsFiltered,
+                data: (response.data === undefined) ? [] : response.data
+            });
+        });
+    });
+});
+
+router.post('/bvn/verify/:id', function (req, res, next) {
+    let payload = req.body,
+        id = req.params.id,
+        query =  `UPDATE clients Set ? WHERE ID = ${id}`;
+    payload.verify_bvn = 1;
+    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+
+    db.query(query, payload, function (error, response) {
+        if (error)
+            return res.send({status: 500, error: error, response: null});
+        return res.send({status: 200, error: null, response: response});
     });
 });
 

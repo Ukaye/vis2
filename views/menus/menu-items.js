@@ -1,8 +1,7 @@
-// let $ = jQuery.noConflict();
 $(document).ready(function () {
     includeHTML();
-  $body.delegate('.locked', 'click', function(event) {
-    return swal({
+    $body.delegate('.locked', 'click', function(event) {
+        return swal({
             title: 'You do not have licence for this module!',
             text: 'Please contact your admin to purchase the necessary licence.',
             icon: 'warning',

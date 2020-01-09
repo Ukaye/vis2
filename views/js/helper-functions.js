@@ -7,6 +7,8 @@ $(document).ready(() => {
         complete: (response) => {
             if (response && response.responseJSON && response.responseJSON.code === 'xero')
                 return window.location.href = response.responseJSON.url;
+            if (response && response.status === 413)
+                return notification(response.responseText, '', 'error');
         }
     });
 })
