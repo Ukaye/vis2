@@ -118,8 +118,9 @@ function getCollections() {
             {
                 width: "5%",
                 mRender: function (data, type, full) {
-                    return (full.status === 1)? `<a class="btn btn-success btn-sm" onclick="verify(${full.ID}, '${full.bvn_input}')">
-                               Verify <i class="fa fa-check"></i></a>` : '';
+                    return (full.verify_bvn === 0)? 
+                        `<a class="btn btn-success btn-sm" onclick="verify(${full.ID}, '${full.bvn_input}')">Verify <i class="fa fa-check"></i></a>` 
+                        : `<a class="btn btn-danger btn-sm" onclick="unverify(${full.ID})">Unverify <i class="fa fa-times"></i></a>`;
                 }
             }
         ]
@@ -151,6 +152,34 @@ function verify(id, bvn) {
                     'error': function (err) {
                         $wait.hide();
                         notification('Oops! An error occurred while verifying bvn','','error');
+                    }
+                });
+            }
+        });
+}
+
+function unverify(id) {
+    swal({
+        title: "Are you sure?",
+        text: "Once unverified, this process is not reversible!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true
+    })
+        .then((yes) => {
+            if (yes) {
+                $wait.show();
+                $.ajax({
+                    'url': `/client/bvn/unverify/${id}`,
+                    'type': 'get',
+                    'success': function (data) {
+                        $wait.hide();
+                        notification('BVN unverified successfully', '', 'success');
+                        return table_bvn.ajax.reload(null, false);
+                    },
+                    'error': function (err) {
+                        $wait.hide();
+                        notification('Oops! An error occurred while unverifying bvn','','error');
                     }
                 });
             }

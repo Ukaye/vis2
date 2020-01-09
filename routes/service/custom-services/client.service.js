@@ -3088,4 +3088,18 @@ router.post('/bvn/verify/:id', function (req, res, next) {
     });
 });
 
+router.get('/bvn/unverify/:id', function (req, res, next) {
+    let payload = req.body,
+        id = req.params.id,
+        query =  `UPDATE clients Set ? WHERE ID = ${id}`;
+    payload.verify_bvn = 0;
+    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+
+    db.query(query, payload, function (error, response) {
+        if (error)
+            return res.send({status: 500, error: error, response: null});
+        return res.send({status: 200, error: null, response: response});
+    });
+});
+
 module.exports = router;
