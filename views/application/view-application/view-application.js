@@ -360,7 +360,7 @@ function loadWorkflowStages(state) {
                 $last_btn = $("#btn-"+workflow_stages[workflow_stages.length-1]['stageID']),
                 stage = ($.grep(workflow_stages, function(e){ return e.stageID === state.current_stage; }))[0];
 
-            if ((!stage.actions || !stage.actions[0]) && stage.stage_name !== 'Disbursal' && stage.stage_name !== 'Disbursed')
+            if ((!stage.actions || !stage.actions[0]) && stage.stage_name !== 'Approved' && stage.stage_name !== 'Disbursed')
                 $('.next').show();
             $('.previous').show();
             $('#next-actions').show();
@@ -481,10 +481,10 @@ function loadWorkflowStages(state) {
                 $("#current_stage").html('<span>CANCELLED</span>');
             }
 
-            if (stage.stage_name === 'Final Approval')
-                $('.next').text('Disbursal (Disbursal)');
+            if (stage.stage_name === 'Pending Approval')
+                $('.next').text('Approved (Approved)');
 
-            if (stage.stage_name === 'Disbursal' || stage.stage_name === 'Disbursed' || application.status === 2) {
+            if (stage.stage_name === 'Approved' || stage.stage_name === 'Disbursed' || application.status === 2) {
                 $('#infoRequestModalBtn').hide();
                 $('#downloadsForm').hide();
                 $('#disbursement-amount').val(numberToCurrencyformatter(application.loan_amount));
