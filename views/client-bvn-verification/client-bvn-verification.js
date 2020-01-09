@@ -118,7 +118,7 @@ function getCollections() {
             {
                 width: "5%",
                 mRender: function (data, type, full) {
-                    return (full.status === 1)? `<a class="btn btn-success btn-sm" onclick="confirm(${full.ID}, '${full.bvn_input}')">
+                    return (full.status === 1)? `<a class="btn btn-success btn-sm" onclick="verify(${full.ID}, '${full.bvn_input}')">
                                Verify <i class="fa fa-check"></i></a>` : '';
                 }
             }
@@ -126,25 +126,35 @@ function getCollections() {
     });
 }
 
-function confirm(id, bvn) {
-    $wait.show();
-    $.ajax({
-        'url': `/client/bvn/verify/${id}`,
-        'type': 'post',
-        'data': {
-            bvn: bvn,
-            approved_by: JSON.parse(localStorage.user_obj).ID
-        },
-        'success': function (data) {
-            $wait.hide();
-            notification('BVN verified successfully', '', 'success');
-            return table_bvn.ajax.reload(null, false);
-        },
-        'error': function (err) {
-            $wait.hide();
-            notification('Oops! An error occurred while verifying bvn','','error');
-        }
-    });
+function verify(id, bvn) {
+    swal({
+        title: "Are you sure?",
+        text: "Once verified, this process is not reversible!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true
+    })
+        .then((yes) => {
+            if (yes) {
+                $wait.show();
+                $.ajax({
+                    'url': `/client/bvn/verify/${id}`,
+                    'type': 'post',
+                    'data': {
+                        bvn: bvn
+                    },
+                    'success': function (data) {
+                        $wait.hide();
+                        notification('BVN verified successfully', '', 'success');
+                        return table_bvn.ajax.reload(null, false);
+                    },
+                    'error': function (err) {
+                        $wait.hide();
+                        notification('Oops! An error occurred while verifying bvn','','error');
+                    }
+                });
+            }
+        });
 }
 
 $("#filter").submit(function (e) {
@@ -153,7 +163,7 @@ $("#filter").submit(function (e) {
         start = $("#startDate").val(),
         type = $("#type-filter").val();
     if (!start || !end) return table_bvn.ajax.reload(null, false);
-    url = '/client/bvn/get';
+    url = '/client/bvn/get?';
     url = url.concat(`&start=${processDate(start)}&end=${processDate(end)}`);
     if (type) url = url.concat(`&type=${type}`);
     return table_bvn.ajax.reload(null, false);
@@ -163,7 +173,7 @@ function filterType() {
     let end = $("#endDate").val(),
         start = $("#startDate").val(),
         type = $("#type-filter").val();
-    url = '/client/bvn/get';
+    url = '/client/bvn/get?';
     if (start && end) url = url.concat(`&start=${processDate(start)}&end=${processDate(end)}`);
     if (type) url = url.concat(`&type=${type}`);
     return table_bvn.ajax.reload(null, false);

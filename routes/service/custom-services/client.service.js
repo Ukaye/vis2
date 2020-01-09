@@ -657,37 +657,35 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
                 });
 
                 if (bvn_response.status) {
-                    if (!postData.bvn_otp)
-                        return sendBVNOTP(client[0], bvn, bvn_response.data.mobile, res);
-                    if (postData.bvn_otp === client[0]['bvn_otp']) {
-                        postData.first_name = bvn_response.data.first_name;
-                        postData.last_name = bvn_response.data.last_name;
-                        postData.dob = bvn_response.data.formatted_dob;
-                        postData.phone = bvn_response.data.mobile;
-                        postData.bvn = bvn_response.data.bvn;
+                    postData.first_name = bvn_response.data.first_name;
+                    postData.last_name = bvn_response.data.last_name;
+                    postData.dob = bvn_response.data.formatted_dob;
+                    postData.phone = bvn_response.data.mobile;
+                    postData.bvn = bvn_response.data.bvn;
+                    if (postData.bvn_otp && postData.bvn_otp === client[0]['bvn_otp'])
                         postData.verify_bvn = enums.VERIFY_BVN.STATUS.TRUE;
-                        postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
-                        db.query(query, postData, error => {
-                            if (error) return res.send({
-                                    "status": 500,
-                                    "error": error,
-                                    "response": null
-                                });
-                    
-                            notificationsService.log(req, payload);
-                            res.send({
-                                "status": 200,
-                                "error": null,
-                                "response": "Client Details Updated"
+                    postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
+                    db.query(query, postData, error => {
+                        if (error) return res.send({
+                                "status": 500,
+                                "error": error,
+                                "response": null
                             });
+                        if (!postData.bvn_otp)
+                            return sendBVNOTP(client[0], bvn, bvn_response.data.mobile, res);
+                        if (postData.bvn_otp !== client[0]['bvn_otp'])
+                            return res.send({
+                                "status": 500,
+                                "error": 'OTP is incorrect!',
+                                "response": null
+                            });
+                        notificationsService.log(req, payload);
+                        res.send({
+                            "status": 200,
+                            "error": null,
+                            "response": "Client Details Updated"
                         });
-                    } else {
-                        return res.send({
-                            "status": 500,
-                            "error": 'OTP is incorrect!',
-                            "response": null
-                        });
-                    }
+                    });
                 } else {
                     return res.send({
                         "status": 500,
