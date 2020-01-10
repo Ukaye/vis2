@@ -46,7 +46,7 @@ function populateDataTable(data) {
             v.RRR || 'N/A',
             v.date_created,
             v.initiator,
-            JSON.parse(v.response).status,
+            JSON.parse(v.response).status || 'N/A',
             `<a class="btn btn-primary btn-sm" href="/loan-repayment?id=${v.applicationID}">View Loan</a>
              <a class="btn btn-outline-info btn-sm" onclick="getRemitaStatus(${v.ID})">View Status</a>`
         ];
