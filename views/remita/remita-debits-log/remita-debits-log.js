@@ -1,59 +1,134 @@
-$(document).ready(function() {
+let $wait = $('#wait'),
+    table_remita = {},
+    url = '/remita/logs/get?';
+$(document).ready(() => {
     getRemitaLogs();
 });
 
 function getRemitaLogs() {
-    $.ajax({
-        type: 'get',
-        url: `/remita/logs/get`,
-        success: function (data) {
-            if (data.status !== 500){
-                populateDataTable(data);
-            } else {
-                console.log(data.error);
+    table_remita = $('#remita-logs').DataTable({
+        dom: 'Blfrtip',
+        bProcessing: true,
+        bServerSide: true,
+        buttons: [
+            'copy', 'csv', 'excel', 'pdf', 'print'
+        ],
+        fnServerData: function (sSource, aoData, fnCallback) {
+            let tableHeaders = [
+                {
+                    name: 'client',
+                    query: `ORDER BY client ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'totalAmount',
+                    query: `ORDER BY totalAmount ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'RRR',
+                    query: `ORDER BY RRR ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'date_created',
+                    query: `ORDER BY date_created ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'initiator',
+                    query: `ORDER BY initiator ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'response',
+                    query: `ORDER BY response ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'action',
+                    query: `ORDER BY ID ${aoData[2].value[0].dir}`
+                }
+            ];
+            $wait.show();
+            $.ajax({
+                dataType: 'json',
+                type: "GET",
+                url: url,
+                data: {
+                    limit: aoData[4].value,
+                    offset: aoData[3].value,
+                    draw: aoData[0].value,
+                    search_string: aoData[5].value.value,
+                    order: tableHeaders[aoData[2].value[0].column].query
+                },
+                success: function (data) {
+                    $wait.hide();
+                    fnCallback(data);
+                }
+            });
+        },
+        aaSorting: [
+            [3, 'desc']
+        ],
+        aoColumnDefs: [
+            {
+                sClass: "numericCol",
+                aTargets: [1],
+                sType: "numeric"
             }
-        }
+        ],
+        columns: [
+            {
+                width: "20%",
+                data: "client"
+            },
+            {
+                width: "10%",
+                className: "text-right",
+                mRender: (data, type, full) => {
+                    return `₦${numberToCurrencyformatter(full.totalAmount)}`;
+                }
+            },
+            {
+                width: "10%",
+                mRender: (data, type, full) => {
+                    return full.RRR || 'N/A';
+                }
+            },
+            {
+                width: "20%",
+                mRender: function (data, type, full) {
+                    if (full.date_created) return moment(new Date(full.date_created)).format('LLLL');
+                    return '--';
+                }
+            },
+            {
+                width: "15%",
+                mRender: (data, type, full) => {
+                    return full.initiator;
+                }
+            },
+            {
+                width: "20%",
+                mRender: function (data, type, full) {
+                    return JSON.parse(full.response).status || 'N/A';
+                }
+            },
+            {
+                width: "5%",
+                mRender: function (data, type, full) {
+                    return `<a class="btn btn-primary btn-sm" href="/loan-repayment?id=${full.applicationID}">View Loan</a>
+                    <a class="btn btn-outline-info btn-sm" onclick="getRemitaStatus(${full.ID})">View Status</a>`;
+                }
+            }
+        ]
     });
 }
 
-$("#filter").submit(function (e) {
+$("#filter").submit(e => {
     e.preventDefault();
     let start = $("#startDate").val(),
-        end = $("#endDate").val(),
-        url = `/remita/logs/get?start=${processDate(start)}&&end=${processDate(end)}`;
-    if (!start || !end)
-        return notification('Kindly input both start date and end date', '', 'warning');
-
-    $.ajax({
-        url: url,
-        type: 'get',
-        success: function (data) {
-            if (data.status !== 500){
-                populateDataTable(data);
-            } else {
-                console.log(data.error);
-            }
-        }
-    });
+        end = $("#endDate").val();
+    if (!start || !end) return table_remita.ajax.reload(null, false);
+    url = '/remita/logs/get?';
+    url = url.concat(`&start=${processDate(start)}&end=${processDate(end)}`);
+    return table_remita.ajax.reload(null, false);
 });
-
-function populateDataTable(data) {
-    $('#remita-logs').dataTable().fnClearTable();
-    $.each(data.response, (k, v) => {
-        let table = [
-            v.client,
-            `₦${numberToCurrencyformatter(v.totalAmount)}`,
-            v.RRR || 'N/A',
-            v.date_created,
-            v.initiator,
-            JSON.parse(v.response).status || 'N/A',
-            `<a class="btn btn-primary btn-sm" href="/loan-repayment?id=${v.applicationID}">View Loan</a>
-             <a class="btn btn-outline-info btn-sm" onclick="getRemitaStatus(${v.ID})">View Status</a>`
-        ];
-        $('#remita-logs').dataTable().fnAddData(table);
-        $('#remita-logs').dataTable().fnSort([[3,'desc']]);
-    });
-}
 
 function getRemitaStatus(id) {
     $('#wait').show();

@@ -264,20 +264,44 @@ router.get('/payment/status/get/:id', function (req, res, next) {
     });
 });
 
-router.get('/logs/get', function (req, res, next) {
+router.get('/logs/get', (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let start = req.query.start,
-        end = moment(req.query.end).add(1, 'days').utcOffset('+0100').format('YYYY-MM-DD'),
-        query =  `SELECT l.*, u.fullname initiator FROM remita_debits_log l, users u WHERE l.status = 1 AND l.created_by = u.ID`,
-        endpoint = '/core-service/get',
-        url = `${HOST}${endpoint}`;
-    if (start && end) query = query.concat(` AND TIMESTAMP(l.date_created) BETWEEN TIMESTAMP('${start}') AND TIMESTAMP('${end}')`);
+    let end = req.query.end;
+    let draw = req.query.draw;
+    let start = req.query.start;
+    let limit = req.query.limit;
+    let order = req.query.order;
+    let offset = req.query.offset;
+    let search_string = req.query.search_string.toUpperCase();
+    let query_condition = `FROM remita_debits_log l, users u WHERE l.status = 1 AND l.created_by = u.ID 
+        AND (upper(u.fullname) LIKE "${search_string}%" OR upper(l.totalAmount) LIKE "${search_string}%" OR upper(l.RRR) LIKE "${search_string}%") `;
+    let endpoint = '/core-service/get';
+    let url = `${HOST}${endpoint}`;
+    end = moment(end).add(1, 'days').format("YYYY-MM-DD");
+    if (start && end)
+        query_condition = query_condition.concat(`AND TIMESTAMP(l.date_created) BETWEEN TIMESTAMP('${start}') AND TIMESTAMP('${end}') `);
+    let query = `SELECT l.*, u.fullname initiator ${query_condition} ${order} LIMIT ${limit} OFFSET ${offset}`;
     axios.get(url, {
         params: {
             query: query
         }
     }).then(response => {
-        res.send({status: 200, error: null, response: response.data});
+        query = `SELECT count(*) AS recordsTotal, (SELECT count(*) ${query_condition}) as recordsFiltered 
+            FROM remita_debits_log WHERE status = 1`;
+        endpoint = '/core-service/get';
+        url = `${HOST}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(payload => {
+            res.send({
+                draw: draw,
+                recordsTotal: payload.data[0].recordsTotal,
+                recordsFiltered: payload.data[0].recordsFiltered,
+                data: (response.data === undefined) ? [] : response.data
+            });
+        });
     });
 });
 
