@@ -55,6 +55,7 @@ let app = express(),
     preapplication_service = require('./routes/service/custom-services/preapplication.service'),
     collection_service = require('./routes/service/custom-services/collection.service'),
     remita_service = require('./routes/service/custom-services/remita.service'),
+    paystack_service = require('./routes/service/custom-services/paystack.service'),
     xero_service = require('./routes/service/custom-services/xero.service'),
     application_service = require('./routes/service/custom-services/application.service'),
     audit_service = require('./routes/service/custom-services/audit.service'),
@@ -236,6 +237,7 @@ app.use('/collection', collection_service);
 app.use('/investment-interests', investment_interest_service);
 // app.use('/notification-service', notification_service);
 app.use('/remita', remita_service);
+app.use('/paystack', paystack_service);
 app.use('/xero', xero_service);
 app.use('/application', application_service);
 app.use('/audit', audit_service);
@@ -624,6 +626,18 @@ app.get('/remita-collection', requireLogin, function (req, res) {
 
 app.get('/remita-debits-log', requireLogin, function (req, res) {
     res.sendFile('remita/remita-debits-log/remita-debits-log.html', {
+        root: __dirname + '/views'
+    });
+});
+
+app.get('/paystack-collection', requireLogin, function (req, res) {
+    res.sendFile('paystack/paystack-collection/paystack-collection.html', {
+        root: __dirname + '/views'
+    });
+});
+
+app.get('/paystack-debits-log', requireLogin, function (req, res) {
+    res.sendFile('paystack/paystack-debits-log/paystack-debits-log.html', {
         root: __dirname + '/views'
     });
 });

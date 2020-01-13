@@ -266,7 +266,7 @@ function getWorkflows(data){
                 if (data.verify_work_email === 0)
                     $('#loancirrus-id').append('<button class="badge badge-pill badge-danger" onclick="verifyWorkEmail()">Work Email <br> Unverifed</button>');
                 if (data.verify_work_email === 1)
-                    $('#loancirrus-id').append('<span class="badge badge-pill badge-success">Work Email <br> Verifed</span>');
+                    $('#loancirrus-id').append('<button class="badge badge-pill badge-success" onclick="showWorkEmail()">Work Email <br> Verifed</button>');
             }
         }
     });
@@ -2464,6 +2464,10 @@ function verifyWorkEmail() {
                 });
             }
         });
+}
+
+function showWorkEmail() {
+    notification(`Success! The work email (${application.work_email}) has been verified.`, '', 'success', 10000);
 }
 
 function read_write_1(){
