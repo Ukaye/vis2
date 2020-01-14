@@ -1104,7 +1104,11 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                 WHEN s.payment_collect_date > CURDATE() AND s.interest_collect_date > CURDATE() THEN 1
                 WHEN s.payment_collect_date = CURDATE() OR s.interest_collect_date = CURDATE() THEN 2
                 WHEN s.payment_collect_date < CURDATE() OR s.interest_collect_date < CURDATE() THEN 3
-            END) payment_status
+            END) payment_status,
+            (CASE 
+                WHEN (SELECT COUNT(*) FROM application_information_requests WHERE a.ID = applicationID) > 0 THEN 1
+                ELSE 0
+            END) information_request_status
             FROM clients AS u INNER JOIN applications AS a ON u.ID = a.userID LEFT JOIN remita_mandates r 
             ON (r.applicationID = a.ID AND r.status = 1) LEFT JOIN application_schedules s ON s.ID = 
             (SELECT MIN(ID) FROM application_schedules WHERE a.ID = applicationID AND payment_status = 0)
