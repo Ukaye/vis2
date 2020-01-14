@@ -14,7 +14,8 @@ const fs = require('fs'),
     paystack = require('paystack')(process.env.PAYSTACK_SECRET_KEY),
     emailService = require('../../service/custom-services/email.service');
 
-//Get Investment Product
+if (!process.env.HOST) process.env.HOST = 'https://x3.finratus.com';
+
 router.get('/all', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
@@ -1152,10 +1153,15 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                             res.send({ "status": 500, "error": error, "response": null });
                                         } else {
                                             result.information_requests = information_requests;
+                                            result.document_upload_status = 0;
                                             let path = `files/client_application-${result.ID}/`,
                                                 path2 = `files/application-${result.loanID}/`,
                                                 path3 = `files/application_download-${result.loanID}/`,
                                                 path4 = `files/workflow_download-${result.workflowID}/`;
+                                            if (result.loanID && fs.existsSync(path2))
+                                                result.document_upload_status = 1;
+                                            if (fs.existsSync(path))
+                                                result.document_upload_status = 1;
                                             result.files = {};
                                             result.file_downloads = {};
                                             fs.readdir(path, function (err, files) {

@@ -52,7 +52,8 @@
                     }
                 }
                 if (response.product) {
-                    $('#product').val(response.product).trigger('change');
+                    $('#workflows').val(response.product);
+                    $('#workflows').prop('disabled', true);
                     if (response.product === 'market_loan') {
                         $('.upload-div').show();
                     }
@@ -937,7 +938,7 @@
         if (user)
             obj.userID = user.ID;
         obj.name = user.fullname;
-        obj.product = $('#product').val();
+        obj.product = preapplication.product;
         obj.loan_amount = currencyToNumberformatter($('#loan_amount').val());
         obj.rate = currencyToNumberformatter($('#rate').val());
         obj.tenor = currencyToNumberformatter($('#tenor').val());
