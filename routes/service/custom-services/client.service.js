@@ -3099,7 +3099,7 @@ router.get('/bvn/get', function (req, res, next) {
         }
     }).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) ${query_condition}) as recordsFiltered 
-            FROM clients WHERE bvn_otp IS NOT NULL AND bvn_input IS NOT NULL AND c.bvn_phone IS NOT NULL`;
+            FROM clients WHERE bvn_otp IS NOT NULL AND bvn_input IS NOT NULL AND bvn_phone IS NOT NULL`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {
