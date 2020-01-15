@@ -224,7 +224,7 @@
     function getWorkflows(){
         $.ajax({
             type: "GET",
-            url: "/workflows",
+            url: "/workflows-all",
             success: function (response) {
                 $.each(response.response, function (key, val) {
                     $("#workflows").append('<option value = "'+val.ID+'"">'+val.name+'</option>');
