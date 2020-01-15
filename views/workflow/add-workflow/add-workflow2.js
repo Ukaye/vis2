@@ -127,7 +127,7 @@ function getStages(){
                     val.stage_name = val.name;
                     local_stages.push(val);
                 }
-                if (val.name === 'Disbursal'){
+                if (val.name === 'Approved'){
                     $("#stage-template").append('<option class="disabled" value = "'+encodeURIComponent(JSON.stringify(val))+'">'+val.name+'</option>');
                 } else {
                     $("#stage-template").append('<option value = "'+encodeURIComponent(JSON.stringify(val))+'">'+val.name+'</option>');
@@ -140,14 +140,14 @@ function getStages(){
                         switch (val.name){
                             case 'Application Start':{
                                 stage_name = "Application Start";
-                                action_names = ['Final Approval']; break;
+                                action_names = ['Pending Approval']; break;
                             }
-                            case 'Final Approval':{
-                                stage_name = "Final Approval";
-                                action_names = ['Disbursal']; break;
+                            case 'Pending Approval':{
+                                stage_name = "Pending Approval";
+                                action_names = ['Approved']; break;
                             }
-                            case 'Disbursal':{
-                                stage_name = "Disbursal";
+                            case 'Approved':{
+                                stage_name = "Approved";
                                 action_names = ['Disbursed']; break;
                             }
                         }

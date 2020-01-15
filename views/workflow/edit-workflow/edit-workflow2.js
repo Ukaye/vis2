@@ -344,7 +344,7 @@ function init(stages){
                             stage_name: stagex.stage_name,
                             onLoad: true
                         };
-                        if (stagex.stage_name === 'Application Start' || stagex.stage_name === 'Final Approval' || stagex.stage_name === 'Disbursal')
+                        if (stagex.stage_name === 'Application Start' || stagex.stage_name === 'Pending Approval' || stagex.stage_name === 'Approved')
                             stage.disabled = true;
                         if (stage.actions){
                             let actions_array = stage.actions.split(',');
@@ -393,7 +393,7 @@ function initDefaultStages(response,workflow_stages) {
             val.stage_name = val.name;
             local_stages.push(val);
         }
-        if (val.name === 'Disbursal'){
+        if (val.name === 'Approved'){
             $("#stage-template").append('<option class="disabled" value = "'+encodeURIComponent(JSON.stringify(val))+'">'+val.name+'</option>');
         } else {
             $("#stage-template").append('<option value = "'+encodeURIComponent(JSON.stringify(val))+'">'+val.name+'</option>');
