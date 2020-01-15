@@ -633,6 +633,8 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
     let query = `SELECT * FROM clients WHERE bvn = ${bvn} AND verify_bvn = 1`;
     let bvn_reset_query = 'SELECT 0';
     let phone_reset_query = 'SELECT 0';
+    let bvn_reset_query2 = 'SELECT 0';
+    let phone_reset_query2 = 'SELECT 0';
     let payload = {};
     payload.category = 'Clients';
     payload.userid = req.cookies.timeout;
@@ -692,30 +694,36 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
                             postData.verify_bvn = enums.VERIFY_BVN.STATUS.TRUE;
                             bvn_reset_query = `UPDATE clients SET bvn = NULL WHERE bvn = ${postData.bvn}`;
                             phone_reset_query = `UPDATE clients SET phone = NULL WHERE phone = ${postData.phone}`;
+                            bvn_reset_query2 = `UPDATE clients SET bvn_input = NULL WHERE bvn_input = ${postData.bvn}`;
+                            phone_reset_query2 = `UPDATE clients SET bvn_phone = NULL WHERE bvn_phone = ${postData.phone}`;
                         }
                         postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
                         db.query(bvn_reset_query, () => {
                             db.query(phone_reset_query, () => {
-                                query = `UPDATE clients SET ? WHERE ID = ${req.params.id}`;
-                                db.query(query, postData, error => {
-                                    if (error) return res.send({
-                                            "status": 500,
-                                            "error": error,
-                                            "response": null
+                                db.query(bvn_reset_query2, () => {
+                                    db.query(phone_reset_query2, () => {
+                                        query = `UPDATE clients SET ? WHERE ID = ${req.params.id}`;
+                                        db.query(query, postData, error => {
+                                            if (error) return res.send({
+                                                    "status": 500,
+                                                    "error": error,
+                                                    "response": null
+                                                });
+                                            if (!postData.bvn_otp)
+                                                return sendBVNOTP(client[0], bvn, bvn_response.data.mobile, res);
+                                            if (postData.bvn_otp !== client[0]['bvn_otp'])
+                                                return res.send({
+                                                    "status": 500,
+                                                    "error": 'OTP is incorrect!',
+                                                    "response": null
+                                                });
+                                            notificationsService.log(req, payload);
+                                            res.send({
+                                                "status": 200,
+                                                "error": null,
+                                                "response": "Client Details Updated"
+                                            });
                                         });
-                                    if (!postData.bvn_otp)
-                                        return sendBVNOTP(client[0], bvn, bvn_response.data.mobile, res);
-                                    if (postData.bvn_otp !== client[0]['bvn_otp'])
-                                        return res.send({
-                                            "status": 500,
-                                            "error": 'OTP is incorrect!',
-                                            "response": null
-                                        });
-                                    notificationsService.log(req, payload);
-                                    res.send({
-                                        "status": 200,
-                                        "error": null,
-                                        "response": "Client Details Updated"
                                     });
                                 });
                             });
@@ -3120,18 +3128,35 @@ router.get('/bvn/get', function (req, res, next) {
 router.post('/bvn/verify/:id', (req, res) => {
     let payload = req.body,
         id = req.params.id,
-        query =  `UPDATE clients SET bvn = NULL WHERE bvn = ${payload.bvn}`;
+        query = `SELECT * FROM clients WHERE bvn = ${payload.bvn} AND verify_bvn = 1`;
     payload.verify_bvn = 1;
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
-    db.query(query, () => {
-        query = `UPDATE clients SET phone = NULL WHERE phone = ${payload.phone}`;
+    db.query(query, (error, bvn_check) => {
+        if (error) res.send({status: 500, error: error, response: null});
+
+        if (bvn_check[0]) {
+            if (bvn_check[0]['ID'] == id)
+                return res.send({status: 500, error: 'You have already verified this BVN!', response: null});
+            return res.send({status: 500, error: 'This BVN is already in use by another user!', response: null});
+        }
+
+        query =  `UPDATE clients SET bvn = NULL WHERE bvn = ${payload.bvn}`;
         db.query(query, () => {
-            query = `UPDATE clients Set ? WHERE ID = ${id}`;
-            db.query(query, payload, (error, response) => {
-                if (error)
-                    return res.send({status: 500, error: error, response: null});
-                return res.send({status: 200, error: null, response: response});
+            query = `UPDATE clients SET phone = NULL WHERE phone = ${payload.phone}`;
+            db.query(query, () => {
+                query =  `UPDATE clients SET bvn_input = NULL WHERE bvn_input = ${payload.bvn}`;
+                db.query(query, () => {
+                    query = `UPDATE clients SET bvn_phone = NULL WHERE bvn_phone = ${payload.phone}`;
+                    db.query(query, () => {
+                        query = `UPDATE clients Set ? WHERE ID = ${id}`;
+                        db.query(query, payload, (error, response) => {
+                            if (error)
+                                return res.send({status: 500, error: error, response: null});
+                            return res.send({status: 200, error: null, response: response});
+                        });
+                    });
+                });
             });
         });
     });
