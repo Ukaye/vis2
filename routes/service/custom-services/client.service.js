@@ -692,6 +692,8 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
                             postData.bvn = bvn_response.data.bvn;
                             postData.phone = bvn_response.data.mobile;
                             postData.verify_bvn = enums.VERIFY_BVN.STATUS.TRUE;
+                            postData.bvn_input = postData.bvn;
+                            postData.bvn_phone = postData.phone;
                             bvn_reset_query = `UPDATE clients SET bvn = NULL WHERE bvn = ${postData.bvn}`;
                             phone_reset_query = `UPDATE clients SET phone = NULL WHERE phone = ${postData.phone}`;
                             bvn_reset_query2 = `UPDATE clients SET bvn_input = NULL WHERE bvn_input = ${postData.bvn}`;
@@ -3130,6 +3132,8 @@ router.post('/bvn/verify/:id', (req, res) => {
         id = req.params.id,
         query = `SELECT * FROM clients WHERE bvn = ${payload.bvn} AND verify_bvn = 1`;
     payload.verify_bvn = 1;
+    payload.bvn_input = payload.bvn;
+    payload.bvn_phone = payload.phone;
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
     db.query(query, (error, bvn_check) => {
