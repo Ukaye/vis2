@@ -3120,12 +3120,12 @@ router.get('/bvn/get', function (req, res, next) {
 router.post('/bvn/verify/:id', (req, res) => {
     let payload = req.body,
         id = req.params.id,
-        query =  `UPDATE clients SET bvn = NULL WHERE bvn = ${postData.bvn}`;
+        query =  `UPDATE clients SET bvn = NULL WHERE bvn = ${payload.bvn}`;
     payload.verify_bvn = 1;
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
     db.query(query, () => {
-        query = `UPDATE clients SET phone = NULL WHERE phone = ${postData.phone}`;
+        query = `UPDATE clients SET phone = NULL WHERE phone = ${payload.phone}`;
         db.query(query, () => {
             query = `UPDATE clients Set ? WHERE ID = ${id}`;
             db.query(query, payload, (error, response) => {
