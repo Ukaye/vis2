@@ -24,8 +24,8 @@ function getCollections() {
                     query: `ORDER BY fullname ${aoData[2].value[0].dir}`
                 },
                 {
-                    name: 'phone',
-                    query: `ORDER BY phone ${aoData[2].value[0].dir}`
+                    name: 'bvn_phone',
+                    query: `ORDER BY bvn_phone ${aoData[2].value[0].dir}`
                 },
                 {
                     name: 'bvn_input',
@@ -91,7 +91,7 @@ function getCollections() {
                 width: "10%",
                 className: "text-right",
                 mRender: (data, type, full) => {
-                    return full.phone;
+                    return full.bvn_phone;
                 }
             },
             {
@@ -119,15 +119,17 @@ function getCollections() {
                 width: "5%",
                 mRender: function (data, type, full) {
                     return (full.verify_bvn === 0)? 
-                        `<a class="btn btn-success btn-sm" onclick="verify(${full.ID}, '${full.bvn_input}')">Verify <i class="fa fa-check"></i></a>` 
-                        : `<a class="btn btn-danger btn-sm" onclick="unverify(${full.ID})">Unverify <i class="fa fa-times"></i></a>`;
+                        `<a class="btn btn-success btn-sm" onclick="verify(${full.ID}, '${full.bvn_input}', '${full.bvn_phone}')">
+                            Verify <i class="fa fa-check"></i></a>` 
+                        : `<a class="btn btn-danger btn-sm" onclick="unverify(${full.ID})">
+                            Unverify <i class="fa fa-times"></i></a>`;
                 }
             }
         ]
     });
 }
 
-function verify(id, bvn) {
+function verify(id, bvn, phone) {
     swal({
         title: "Are you sure?",
         text: "Once verified, this process is not reversible!",
@@ -142,7 +144,8 @@ function verify(id, bvn) {
                     'url': `/client/bvn/verify/${id}`,
                     'type': 'post',
                     'data': {
-                        bvn: bvn
+                        bvn: bvn,
+                        phone: phone
                     },
                     'success': function (data) {
                         $wait.hide();

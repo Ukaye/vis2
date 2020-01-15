@@ -629,7 +629,9 @@ router.post('/login', function (req, res) {
 router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
     let postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    let query = `UPDATE clients SET ? WHERE ID = ${req.params.id}`;
+    let query = `SELECT * FROM clients WHERE bvn = ${bvn} AND verify_bvn = 1`;
+    let bvn_reset_query = 'SELECT 0';
+    let phone_reset_query = 'SELECT 0';
     let payload = {};
     payload.category = 'Clients';
     payload.userid = req.cookies.timeout;
@@ -643,57 +645,89 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
     let bvn = postData.bvn;
     delete postData.bvn;
     if (bvn) {
-        db.query(`SELECT * FROM clients WHERE ID = ${req.params.id}`, (error, client) => {
-            helperFunctions.resolveBVN(bvn, bvn_response => {
-                if (error) return res.send({
+        db.query(query, (error, bvn_check) => {
+            if (error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+            if (bvn_check[0]) {
+                if (bvn_check[0]['ID'] == req.params.id) {
+                    return res.send({
                         "status": 500,
-                        "error": error,
+                        "error": 'You have already verified this BVN!',
                         "response": null
-                    });
-
-                if (!client[0]) return res.send({
-                    "status": 500,
-                    "error": 'User does not exist!',
-                    "response": null
-                });
-
-                if (bvn_response.status) {
-                    postData.first_name = bvn_response.data.first_name;
-                    postData.last_name = bvn_response.data.last_name;
-                    postData.dob = bvn_response.data.formatted_dob;
-                    postData.phone = bvn_response.data.mobile;
-                    postData.bvn = bvn_response.data.bvn;
-                    if (postData.bvn_otp && postData.bvn_otp === client[0]['bvn_otp'])
-                        postData.verify_bvn = enums.VERIFY_BVN.STATUS.TRUE;
-                    postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
-                    db.query(query, postData, error => {
-                        if (error) return res.send({
-                                "status": 500,
-                                "error": error,
-                                "response": null
-                            });
-                        if (!postData.bvn_otp)
-                            return sendBVNOTP(client[0], bvn, bvn_response.data.mobile, res);
-                        if (postData.bvn_otp !== client[0]['bvn_otp'])
-                            return res.send({
-                                "status": 500,
-                                "error": 'OTP is incorrect!',
-                                "response": null
-                            });
-                        notificationsService.log(req, payload);
-                        res.send({
-                            "status": 200,
-                            "error": null,
-                            "response": "Client Details Updated"
-                        });
                     });
                 } else {
                     return res.send({
                         "status": 500,
-                        "error": bvn_response.message || 'Error resolving BVN!',
+                        "error": 'This BVN is already in use by another user!',
                         "response": null
                     });
                 }
+            }
+
+            db.query(`SELECT * FROM clients WHERE ID = ${req.params.id}`, (error, client) => {
+                helperFunctions.resolveBVN(bvn, bvn_response => {
+                    if (error) return res.send({
+                            "status": 500,
+                            "error": error,
+                            "response": null
+                        });
+
+                    if (!client[0]) return res.send({
+                        "status": 500,
+                        "error": 'User does not exist!',
+                        "response": null
+                    });
+
+                    if (bvn_response.status) {
+                        postData.first_name = bvn_response.data.first_name;
+                        postData.last_name = bvn_response.data.last_name;
+                        postData.dob = bvn_response.data.formatted_dob;
+                        if (postData.bvn_otp && postData.bvn_otp === client[0]['bvn_otp']) {
+                            postData.bvn = bvn_response.data.bvn;
+                            postData.phone = bvn_response.data.mobile;
+                            postData.verify_bvn = enums.VERIFY_BVN.STATUS.TRUE;
+                            bvn_reset_query = `UPDATE clients SET bvn = NULL WHERE bvn = ${postData.bvn}`;
+                            phone_reset_query = `UPDATE clients SET phone = NULL WHERE phone = ${postData.phone}`;
+                        }
+                        postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
+                        db.query(bvn_reset_query, () => {
+                            db.query(phone_reset_query, () => {
+                                query = `UPDATE clients SET ? WHERE ID = ${req.params.id}`;
+                                db.query(query, postData, error => {
+                                    if (error) return res.send({
+                                            "status": 500,
+                                            "error": error,
+                                            "response": null
+                                        });
+                                    if (!postData.bvn_otp)
+                                        return sendBVNOTP(client[0], bvn, bvn_response.data.mobile, res);
+                                    if (postData.bvn_otp !== client[0]['bvn_otp'])
+                                        return res.send({
+                                            "status": 500,
+                                            "error": 'OTP is incorrect!',
+                                            "response": null
+                                        });
+                                    notificationsService.log(req, payload);
+                                    res.send({
+                                        "status": 200,
+                                        "error": null,
+                                        "response": "Client Details Updated"
+                                    });
+                                });
+                            });
+                        });
+                    } else {
+                        return res.send({
+                            "status": 500,
+                            "error": bvn_response.message || 'Error resolving BVN!',
+                            "response": null
+                        });
+                    }
+                });
             });
         });
     } else {
@@ -718,10 +752,9 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
 sendBVNOTP = (client, bvn, phone, res) => {
     let otp = Math.floor(100000 + Math.random() * 900000);
     let payload = {
-        phone: phone,
         bvn_otp: otp,
-        phone: phone,
         bvn_input: bvn,
+        bvn_phone: phone,
         verify_bvn: enums.VERIFY_BVN.STATUS.FALSE,
         date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
     };
@@ -3050,9 +3083,9 @@ router.get('/bvn/get', function (req, res, next) {
     let order = req.query.order;
     let offset = req.query.offset;
     let search_string = req.query.search_string.toUpperCase();
-    let query_condition = `FROM clients c WHERE c.bvn_otp IS NOT NULL AND c.bvn_input IS NOT NULL 
+    let query_condition = `FROM clients c WHERE c.bvn_otp IS NOT NULL AND c.bvn_input IS NOT NULL AND c.bvn_phone IS NOT NULL 
         AND (upper(c.ID) LIKE "${search_string}%" OR upper(c.fullname) LIKE "${search_string}%" 
-        OR upper(c.phone) LIKE "${search_string}%" OR upper(c.bvn_input) LIKE "${search_string}%") `;
+        OR upper(c.bvn_phone) LIKE "${search_string}%" OR upper(c.bvn_input) LIKE "${search_string}%") `;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     end = moment(end).add(1, 'days').format("YYYY-MM-DD");
@@ -3066,7 +3099,7 @@ router.get('/bvn/get', function (req, res, next) {
         }
     }).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) ${query_condition}) as recordsFiltered 
-            FROM clients WHERE bvn_otp IS NOT NULL AND bvn_input IS NOT NULL`;
+            FROM clients WHERE bvn_otp IS NOT NULL AND bvn_input IS NOT NULL AND c.bvn_phone IS NOT NULL`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {
@@ -3084,28 +3117,34 @@ router.get('/bvn/get', function (req, res, next) {
     });
 });
 
-router.post('/bvn/verify/:id', function (req, res, next) {
+router.post('/bvn/verify/:id', (req, res) => {
     let payload = req.body,
         id = req.params.id,
-        query =  `UPDATE clients Set ? WHERE ID = ${id}`;
+        query =  `UPDATE clients SET bvn = NULL WHERE bvn = ${postData.bvn}`;
     payload.verify_bvn = 1;
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
-    db.query(query, payload, function (error, response) {
-        if (error)
-            return res.send({status: 500, error: error, response: null});
-        return res.send({status: 200, error: null, response: response});
+    db.query(query, () => {
+        query = `UPDATE clients SET phone = NULL WHERE phone = ${postData.phone}`;
+        db.query(query, () => {
+            query = `UPDATE clients Set ? WHERE ID = ${id}`;
+            db.query(query, payload, (error, response) => {
+                if (error)
+                    return res.send({status: 500, error: error, response: null});
+                return res.send({status: 200, error: null, response: response});
+            });
+        });
     });
 });
 
-router.get('/bvn/unverify/:id', function (req, res, next) {
+router.get('/bvn/unverify/:id', (req, res) => {
     let payload = req.body,
         id = req.params.id,
         query =  `UPDATE clients Set ? WHERE ID = ${id}`;
     payload.verify_bvn = 0;
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
-    db.query(query, payload, function (error, response) {
+    db.query(query, payload, (error, response) => {
         if (error)
             return res.send({status: 500, error: error, response: null});
         return res.send({status: 200, error: null, response: response});
