@@ -628,6 +628,7 @@ router.post('/login', function (req, res) {
 
 router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
     let postData = req.body;
+    let bvn = postData.bvn;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let query = `SELECT * FROM clients WHERE bvn = ${bvn} AND verify_bvn = 1`;
     let bvn_reset_query = 'SELECT 0';
@@ -642,7 +643,6 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
     delete postData.username;
     delete postData.password;
     delete postData.email;
-    let bvn = postData.bvn;
     delete postData.bvn;
     if (bvn) {
         db.query(query, (error, bvn_check) => {
