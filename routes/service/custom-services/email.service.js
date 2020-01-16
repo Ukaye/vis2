@@ -45,6 +45,22 @@ email.sendByDomain = function (domain, mailOptions) {
     transporter.sendMail(mailOptions, function(error, info){
         if (error) console.log(error);
     });
-};
+}; 
+
+email.sendHtmlByDomain = function(domain, mailOptions) {
+    if (!mailOptions.to) return console.log('Email recipient is required!');
+    if (!mailOptions.subject) return console.log('Email subject is required!');
+
+    mailgunOptions.auth.domain = domain;
+    transport = mailgunTransport(mailgunOptions);
+    transporter = nodemailer.createTransport(transport);
+
+    mailOptions.from = mailOptions.from || `no-reply@${domain}`;
+    transporter.sendMail(mailOptions, function(error, info){
+        if (error) console.log(error);
+
+        return info
+    });
+}
 
 module.exports = email;
