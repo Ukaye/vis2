@@ -1370,6 +1370,7 @@ router.get('/application/decline/:id/:application_id', helperFunctions.verifyJWT
 });
 
 router.post('/application/upload/:id/:application_id/:name', helperFunctions.verifyJWT, function (req, res) {
+    console.log(req.files)
     let id = req.params.id,
         name = req.params.name,
         sampleFile = req.files.file,
