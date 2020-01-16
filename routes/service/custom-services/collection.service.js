@@ -365,7 +365,82 @@ router.post('/remita/confirm-payment', function(req, res, next) {
                 record.interest_amount = update.actual_interest_amount;
                 record.fees_amount = update.actual_fees_amount;
                 record.penalty_amount = update.actual_penalty_amount;
-                record.payment_source = 'cash';
+                record.payment_source = 'remita';
+                record.payment_date = payment.value_date;
+                record.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                record.remitaPaymentID = payment.ID;
+                records.push({record: record, update: update});
+
+                if (payment_history.index >= payments.length - 1) break;
+                if (invoice_amount > payment_history.balance) {
+                    payment_history.index = payment_history.index + 1;
+                    payment_history.balance = helperFunctions.currencyToNumberFormatter(payments[payment_history['index']]['unallocated']);
+                }
+            }
+            while (invoice_amount > 0);
+            postPayment(records, connection, req, null, function (response) {
+                count += response;
+                callback();
+            });
+        }, function (data) {
+            connection.release();
+            return res.send({
+                status: 200,
+                error: null,
+                response: `${count} payment(s) posted successfully.`
+            });
+        });
+    });
+});
+
+router.post('/paystack/confirm-payment', function(req, res, next) {
+    let count = 0,
+        invoices = req.body.invoices,
+        payments = req.body.payments,
+        created_by = req.body.created_by;
+
+    db.getConnection(function(err, connection) {
+        if (err) throw err;
+
+        let payment_history = {
+            index: 0,
+            balance: helperFunctions.currencyToNumberFormatter(payments[0]['unallocated'])
+        };
+        async.forEach(invoices, function (invoice, callback) {
+            let records = [],
+                invoice_amount = helperFunctions.currencyToNumberFormatter(invoice.payment_amount);
+            do {
+                let amount = 0,
+                    record = {},
+                    update = {
+                        actual_payment_amount: '0',
+                        actual_interest_amount: '0',
+                        actual_fees_amount: '0',
+                        actual_penalty_amount: '0',
+                        payment_status: 1
+                    };
+                let payment = payments[payment_history['index']];
+                if (invoice_amount >= payment_history.balance) {
+                    amount = payment_history.balance;
+                    invoice_amount -= amount;
+                    payment_history.balance = 0;
+                    record.status = 'full';
+                } else {
+                    amount = invoice_amount;
+                    payment_history.balance -= amount;
+                    invoice_amount = 0;
+                    record.status = 'part';
+                }
+                if (invoice.type === 'Principal') update.actual_payment_amount = amount;
+                if (invoice.type === 'Interest') update.actual_interest_amount = amount;
+                record.invoiceID = invoice.ID;
+                record.agentID = created_by;
+                record.applicationID = invoice.applicationID;
+                record.payment_amount = update.actual_payment_amount;
+                record.interest_amount = update.actual_interest_amount;
+                record.fees_amount = update.actual_fees_amount;
+                record.penalty_amount = update.actual_penalty_amount;
+                record.payment_source = 'paystack';
                 record.payment_date = payment.value_date;
                 record.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                 record.remitaPaymentID = payment.ID;
@@ -496,6 +571,59 @@ router.post('/remita/settings/:user_id', (req, res) => {
 });
 
 router.get('/remita/settings/:user_id', (req, res) => {
+    db.query(`SELECT * FROM user_remita_settings WHERE userID = ${req.params.user_id}`, (error, settings) => {
+        if (error) return res.send({status: 500, error: error, response: null});
+        return res.send({status: 200, error: null, response: settings[0] || {}});
+    });
+});
+
+router.get('/paystack/invoices/due/:user_id', (req, res) => {
+    let today = moment().utcOffset('+0100').format('YYYY-MM-DD'),
+        query = "SELECT s.ID,c.fullname AS client, c.ID AS clientID, s.applicationID, s.status, s.payment_collect_date, s.payment_status, " +
+            "(ROUND((s.payment_amount + s.interest_amount), 2)) invoice_amount, l.response, r.mandateId, r.payerAccount fundingAccount, r.payerBankCode fundingBankCode, "+
+            "(ROUND((SELECT COALESCE(SUM(p.payment_amount + p.interest_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1), 2)) total_paid, " +
+            "(ROUND(((s.payment_amount + s.interest_amount) - (SELECT COALESCE(SUM(p.payment_amount + p.interest_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)), 2)) payment_amount "+
+            "FROM remita_mandates r, clients c, applications a, application_schedules s LEFT JOIN (SELECT l.* FROM remita_debits_log l WHERE l.ID = (SELECT max(l_.ID) from remita_debits_log l_ WHERE l_.invoiceID = l.invoiceID)) l ON (l.invoiceID = s.ID) " +
+            "WHERE s.status = 1 AND s.payment_status < 2 AND s.enable_remita = 1 AND a.ID = s.applicationID AND a.status = 2 AND r.applicationID = s.applicationID AND NOT EXISTS (SELECT p.ID FROM remita_payments p WHERE p.invoiceID = s.ID) " +
+            "AND ((ROUND(((s.payment_amount + s.interest_amount) - (SELECT COALESCE(SUM(p.payment_amount + p.interest_amount),0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)), 2)) > "+
+            "(SELECT COALESCE(MAX(min_balance), 0) FROM user_remita_settings WHERE userID = "+req.params.user_id+")) = 1 AND c.ID = a.userID AND a.close_status = 0 "+
+            "AND (s.payment_amount + s.interest_amount) > 0 AND TIMESTAMP(s.payment_collect_date) <= TIMESTAMP('"+today+"') ORDER BY s.ID desc";
+
+    db.query(query, (error, results) => {
+        if(error) {
+            res.send({"status": 500, "error": error, "response": null});
+        } else {
+            return res.send({
+                status: 200,
+                message: "Due invoices with remita fetched successfully!",
+                response: _.orderBy(results, ['ID'], ['desc'])
+            });
+        }
+    });
+});
+
+router.post('/paystack/settings/:user_id', (req, res) => {
+    let userID = req.params.user_id;
+    db.query(`SELECT * FROM user_remita_settings WHERE userID = ${userID}`, (error, settings) => {
+        if (error) return res.send({status: 500, error: error, response: null});
+        let payload = req.body,
+            query = `INSERT INTO user_remita_settings SET ?`,
+            date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        if (settings[0]) {
+            query = `UPDATE user_remita_settings SET ? WHERE userID = ${userID}`;
+            payload.date_modified = date;
+        } else {
+            payload.userID = userID;
+            payload.date_created = date;
+        }
+        db.query(query, payload, (error, response) => {
+            if (error) return res.send({status: 500, error: error, response: null});
+            return res.send({status: 200, error: null, response: response});
+        });
+    });
+});
+
+router.get('/paystack/settings/:user_id', (req, res) => {
     db.query(`SELECT * FROM user_remita_settings WHERE userID = ${req.params.user_id}`, (error, settings) => {
         if (error) return res.send({status: 500, error: error, response: null});
         return res.send({status: 200, error: null, response: settings[0] || {}});

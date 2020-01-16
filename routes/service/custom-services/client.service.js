@@ -1149,11 +1149,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                 WHEN s.payment_collect_date > CURDATE() AND s.interest_collect_date > CURDATE() THEN 1
                 WHEN s.payment_collect_date = CURDATE() OR s.interest_collect_date = CURDATE() THEN 2
                 WHEN s.payment_collect_date < CURDATE() OR s.interest_collect_date < CURDATE() THEN 3
-            END) payment_status,
-            (CASE 
-                WHEN (SELECT COUNT(*) FROM application_information_requests WHERE a.ID = applicationID) > 0 THEN 1
-                ELSE 0
-            END) information_request_status
+            END) payment_status
             FROM clients AS u INNER JOIN applications AS a ON u.ID = a.userID LEFT JOIN remita_mandates r 
             ON (r.applicationID = a.ID AND r.status = 1) LEFT JOIN application_schedules s ON s.ID = 
             (SELECT MIN(ID) FROM application_schedules WHERE a.ID = applicationID AND payment_status = 0)
@@ -1202,6 +1198,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                             res.send({ "status": 500, "error": error, "response": null });
                                         } else {
                                             result.information_requests = information_requests;
+                                            result.information_request_status = (information_requests.length > 0)? 1:0;
                                             result.document_upload_status = 0;
                                             let path = `files/client_application-${result.ID}/`,
                                                 path2 = `files/application-${result.loanID}/`,
@@ -1370,7 +1367,6 @@ router.get('/application/decline/:id/:application_id', helperFunctions.verifyJWT
 });
 
 router.post('/application/upload/:id/:application_id/:name', helperFunctions.verifyJWT, function (req, res) {
-    console.log(req.files)
     let id = req.params.id,
         name = req.params.name,
         sampleFile = req.files.file,
