@@ -630,7 +630,7 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
     let postData = req.body;
     let bvn = postData.bvn;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    let query = `SELECT * FROM clients WHERE bvn = ${bvn} AND verify_bvn = 1`;
+    let query;
     let bvn_reset_query = 'SELECT 0';
     let phone_reset_query = 'SELECT 0';
     let bvn_reset_query2 = 'SELECT 0';
@@ -647,6 +647,7 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
     delete postData.email;
     delete postData.bvn;
     if (bvn) {
+        query = `SELECT * FROM clients WHERE bvn = ${bvn} AND verify_bvn = 1`;
         db.query(query, (error, bvn_check) => {
             if (error) return res.send({
                 "status": 500,
@@ -741,6 +742,7 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
             });
         });
     } else {
+        query = `UPDATE clients SET ? WHERE ID = ${req.params.id}`;
         db.query(query, postData, error => {
             if (error)
                 return res.send({
