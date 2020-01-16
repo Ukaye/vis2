@@ -224,7 +224,7 @@ app.get('/logout', function (req, res) {
 
 //create mail routes
 app.get('/atbmailer', requireLogin, function(req, res) {
-    res.render('/atbmailer/index.html', {
+    res.sendFile('/atbmailer/index.html', {
         root: __dirname + '/views'
     });
 });

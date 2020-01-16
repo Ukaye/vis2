@@ -5,8 +5,33 @@ const fs = require('fs');
 const axios = require('axios');
 const db = require('../../../db');
 
-router.post('/send', function(req, res, next) {
-    let mailData = req.body;
+router.post('/trigger/save', function(req, res, next) {
+
+    //save content to db
+    let mailData = req.body,
+        query = `INSERT into email_templates SET trigger_name = ${mailData.triggerName}, trigger_subject = ${mailData.triggerSubject}, trigger_content = ${mailData.triggerContent}`
+        db.query(query, function (error, response) {
+            if(error) {
+                res.send({
+                    status: 500,
+                    error,
+                    response: null
+                })
+            }
+
+            res.send({
+                status: 201,
+                error: null,
+                response: "Trigger saved successfully"
+            })
+        })
+
+        next
+})
+
+
+        
+/*
 
     if(mailData.template !== '') {
         fs.writeFileSync(`views/atbmailer/templates/${mailData.template}.html`, mailData.content);
@@ -30,7 +55,7 @@ router.post('/send', function(req, res, next) {
                         console.log(error);
                     } else {
                         results.map(liveData => {
-                            //console.log(liveData[element]);
+                            console.log(liveData[element]);
                             //for(mentions[i] in unsterilizedMsg) 
                             let regex = new RegExp('@'+element, 'gi');
                             sterilizedMsg = sterilizedMsg.replace(regex, liveData[element]);
@@ -40,7 +65,7 @@ router.post('/send', function(req, res, next) {
                         if(i === mentions.length) {
                             //console.log(sterilizedMsg);
 
-                            let msg = {
+                             let msg = {
                                 to: recipientsArray,
                                 from: 'noreply@atbtechsoft.com',
                                 subject: subject,
@@ -69,13 +94,38 @@ router.post('/send', function(req, res, next) {
         });
 
     }
+
+    */
+/*     let msg = {
+        to: recipientsArray,
+        from: 'service@atb.com',
+        subject: subject,
+        text: 'hi',
+        html: sterilizedMsg,
+        };
+    
+        axios({
+            method: 'post',
+            url: 'http://localhost:5000/api/send',
+            data: msg
+        }).then(function(response) {
+            //console.log(response);
+            if(response.status === 200) {
+                res.json(response.data);
+            }
+        }).catch(function(error) {
+            //return error;
+            res.json(JSON.stringify(error));
+        });
+
+        console.log(sterilizedMsg); */
     
 
     //if recipients are more than one
 
     //db.query(query);
 
-})
+//})
 
 
 module.exports = router;
