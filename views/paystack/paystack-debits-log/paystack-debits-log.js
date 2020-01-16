@@ -1,12 +1,12 @@
 let $wait = $('#wait'),
-    table_remita = {},
-    url = '/remita/logs/get?';
+    table_paystack = {},
+    url = '/paystack/logs/get?';
 $(document).ready(() => {
-    getRemitaLogs();
+    getPaystackLogs();
 });
 
-function getRemitaLogs() {
-    table_remita = $('#remita-logs').DataTable({
+function getPaystackLogs() {
+    table_paystack = $('#paystack-logs').DataTable({
         dom: 'Blfrtip',
         bProcessing: true,
         bServerSide: true,
@@ -113,7 +113,7 @@ function getRemitaLogs() {
                 width: "5%",
                 mRender: function (data, type, full) {
                     return `<a class="btn btn-primary btn-sm" href="/loan-repayment?id=${full.applicationID}">View Loan</a>
-                    <a class="btn btn-outline-info btn-sm" onclick="getRemitaStatus(${full.ID})">View Status</a>`;
+                    <a class="btn btn-outline-info btn-sm" onclick="getPaystackStatus(${full.ID})">View Status</a>`;
                 }
             }
         ]
@@ -124,17 +124,17 @@ $("#filter").submit(e => {
     e.preventDefault();
     let start = $("#startDate").val(),
         end = $("#endDate").val();
-    if (!start || !end) return table_remita.ajax.reload(null, false);
-    url = '/remita/logs/get?';
+    if (!start || !end) return table_paystack.ajax.reload(null, false);
+    url = '/paystack/logs/get?';
     url = url.concat(`&start=${processDate(start)}&end=${processDate(end)}`);
-    return table_remita.ajax.reload(null, false);
+    return table_paystack.ajax.reload(null, false);
 });
 
-function getRemitaStatus(id) {
+function getPaystackStatus(id) {
     $('#wait').show();
     $.ajax({
         type: 'get',
-        url: `/remita/payment/status/get/${id}`,
+        url: `/paystack/payment/status/get/${id}`,
         success: function (data) {
             $('#wait').hide();
             alert(data.response || data.error);

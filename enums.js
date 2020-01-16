@@ -92,4 +92,20 @@ enums.VERIFY_BVN = {
     }
 };
 
+enums.ENABLE_PAYSTACK = {
+    STATUS: {
+        INACTIVE: 0,
+        ACTIVE: 1
+    }
+};
+
+enums.PAYSTACK_PAYMENT = {
+    STATUS: {
+        INACTIVE: 0,
+        ACTIVE: 1,
+        PART_ASSIGNED: 2,
+        FULL_ASSIGNED: 3
+    }
+};
+
 module.exports = enums;

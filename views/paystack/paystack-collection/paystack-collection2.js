@@ -115,7 +115,7 @@ function validatePayment() {
 
     swal({
         title: 'Are you sure?',
-        text: `Once initiated, direct debit instructions would be sent!`,
+        text: `Once initiated, payment method will be charged!`,
         icon:  'warning',
         buttons: true,
         dangerMode: true

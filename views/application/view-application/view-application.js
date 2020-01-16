@@ -253,7 +253,7 @@ function goToClientProfile() {
     window.location.href = '/client-info?id='+application.userID;
 }
 
-function getWorkflows(data){
+function getWorkflows(data) {
     $.ajax({
         type: "GET",
         url: "/workflows-all",

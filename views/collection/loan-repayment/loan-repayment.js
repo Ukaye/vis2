@@ -49,6 +49,10 @@ $("#remita-amount").on("keyup", e => {
     $("#remita-amount").val(numberToCurrencyformatter(e.target.value));
 });
 
+$("#paystack-amount").on("keyup", e => {
+    $("#paystack-amount").val(numberToCurrencyformatter(e.target.value));
+});
+
 $("#refund_overpayment_amount").on("keyup", e => {
     $("#refund_overpayment_amount").val(numberToCurrencyformatter(e.target.value));
 });
@@ -80,6 +84,12 @@ function getApplication(){
                 getMandateStatus();
                 getRemitaLogs();
             }
+            if (application.paystack_payment_status === 1) {
+                $('#paystackPaymentButton').show();
+                getPaystackSuccessPayments();
+                getPaystackCards();
+                getPaystackLogs();
+            }
         },
         'error': function (err) {
             console.log(err);
@@ -99,6 +109,22 @@ function getMandateStatus(){
                 $('.cancelRemitaPaymentBtn').removeClass('reversePayment');
                 $('.cancelRemitaPaymentBtn').prop('disabled', true);
             }
+        },
+        'error': function (err) {
+            console.log(err);
+        }
+    });
+}
+
+function getPaystackCards(){
+    $.ajax({
+        'url': `/paystack/payment-methods/get/${application.userID}`,
+        'type': 'get',
+        'success': function (data) {
+            $.each(data.response, function (key, val) {
+                $("#paystack_card").append(`<option value="${val.authorization_code}">
+                    **** **** **** ${val.last4} (${val.exp_month}/${val.exp_year})</option>`);
+            });
         },
         'error': function (err) {
             console.log(err);
@@ -336,6 +362,7 @@ function initRepaymentSchedule(application) {
                                     '    <div class="dropdown-menu">\n' +
                                     '        <a class="dropdown-item" href="#" onclick="confirmPaymentModal('+application.schedule[i - 2]['ID']+')">Confirm Payment</a>\n' +
                                     '        <a class="dropdown-item" href="#" onclick="selectRemitaModal('+application.schedule[i - 2]['ID']+')">Apply Remita</a>\n' +
+                                    '        <a class="dropdown-item" href="#" onclick="selectPaystackModal('+application.schedule[i - 2]['ID']+')">Apply Paystack</a>\n' +
                                     '        <div class="dropdown-divider"></div>\n' +
                                     '        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#editSchedule" onclick="editScheduleModal('+application.schedule[i - 2]['ID']+')">Edit Schedule</a>\n' +
                                     '        <a class="dropdown-item" href="#" onclick="invoiceHistory('+application.schedule[i - 2]['ID']+')">Payment History</a>\n' +
@@ -351,6 +378,7 @@ function initRepaymentSchedule(application) {
                                     '    <div class="dropdown-menu">\n' +
                                     '        <a class="dropdown-item" href="#" onclick="confirmPaymentModal('+application.schedule[i - 2]['ID']+')">Confirm Payment</a>\n' +
                                     '        <a class="dropdown-item" href="#" onclick="selectRemitaModal('+application.schedule[i - 2]['ID']+')">Apply Remita</a>\n' +
+                                    '        <a class="dropdown-item" href="#" onclick="selectPaystackModal('+application.schedule[i - 2]['ID']+')">Apply Paystack</a>\n' +
                                     '        <div class="dropdown-divider"></div>\n' +
                                     '        <a class="dropdown-item" href="#" onclick="invoiceHistory('+application.schedule[i - 2]['ID']+')">Payment History</a>\n' +
                                     '        <a class="dropdown-item" data-toggle="modal" data-target="#editHistory" href="#" onclick="editHistory('+application.schedule[i - 2]['ID']+')">Edit History</a>\n' +
@@ -411,6 +439,7 @@ function totalActualPayment(a){
 let remita_id,
     invoice_id,
     payment_id,
+    paystack_id,
     web_payment,
     invoice_history,
     expected_invoice,
@@ -462,6 +491,22 @@ function applyRemitaPayment(obj) {
     $('#source').val('remita');
     $('#source').prop('disabled', true);
     $('#payment').val(remita.totalAmount);
+    $('#payment').prop('disabled', true);
+}
+
+function selectPaystackModal(id) {
+    invoice_id = id;
+    $('#selectPaystack').modal('show');
+}
+
+function applyPaystackPayment(obj) {
+    $('#selectPaystack').modal('hide');
+    let paystack = JSON.parse(decodeURIComponent(obj));
+    paystack_id = paystack.ID;
+    confirmPaymentModal(invoice_id);
+    $('#source').val('paystack');
+    $('#source').prop('disabled', true);
+    $('#payment').val(paystack.amount);
     $('#payment').prop('disabled', true);
 }
 
@@ -544,6 +589,7 @@ function confirmPayment() {
     invoice.payment_source = $('#source').val();
     invoice.payment_date = $('#repayment-date').val();
     if (invoice.payment_source === 'remita' && remita_id) invoice.remitaPaymentID = remita_id;
+    if (invoice.payment_source === 'paystack' && paystack_id) invoice.paystackPaymentID = paystack_id;
     if ($('#collection_bank').val() !== '000') {
         invoice.xeroCollectionBankID = $('#collection_bank').val();
         invoice.xeroCollectionBank = $('#collection_bank').find(":selected").text();
@@ -1154,6 +1200,108 @@ function stopMandate() {
                 });
             }
         });
+}
+
+function makePaystackPayment() {
+    let payment = {};
+    payment.email = application.email;
+    payment.client = application.fullname;
+    payment.clientID = application.userID;
+    payment.applicationID = application.ID;
+    payment.authorization_code = $('#paystack_card').val();
+    payment.amount = currencyToNumberformatter($('#paystack-amount').val());
+    payment.created_by = (JSON.parse(localStorage.getItem('user_obj')))['ID'];
+    if (!payment.amount || payment.authorization_code === '0')
+        return notification('Kindly fill all required fields!','','warning');
+    swal({
+        title: "Are you sure?",
+        text: "Once started, this process may not reversible!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true
+    })
+        .then((yes) => {
+            if (yes) {
+                $('#wait').show();
+                $.ajax({
+                    'url': `/paystack/payment/create`,
+                    'type': 'post',
+                    'data': payment,
+                    'success': function (data) {
+                        $('#wait').hide();
+                        if (data.status !== 500) {
+                            notification('Paystack payment request was successful','','info');
+                            window.location.reload();
+                        } else {
+                            notification(data.error,'','error');
+                        }
+                    },
+                    'error': function (err) {
+                        notification('No internet connection','','error');
+                    }
+                });
+            }
+        });
+}
+
+function getPaystackSuccessPayments() {
+    $.ajax({
+        type: 'get',
+        url: `/paystack/payments/get/${application_id}`,
+        success: function (data) {
+            if (data.status !== 500){
+                let paystack_count = 0,
+                    paystack_amount = 0;
+                $('#paystack-success-payments').dataTable().fnClearTable();
+                $.each(data.response, (k, v) => {
+                    let table = [
+                        `₦${numberToCurrencyformatter(v.amount)}`,
+                        v.reference,
+                        v.date_created
+                    ];
+                    if (!v.invoiceID) {
+                        table.push(`<button data-toggle="modal" data-target="#confirmPayment" class="btn btn-success" 
+                            onclick="applyPaystackPayment('${encodeURIComponent(JSON.stringify(v))}')">Click to Apply</button>`);
+                    } else {
+                        table.push(`Applied to INV-${padWithZeroes(v.invoiceID, 6)}`);
+                    }
+                    $('#paystack-success-payments').dataTable().fnAddData(table);
+                    $('#paystack-success-payments').dataTable().fnSort([[2,'desc']]);
+                    paystack_count++;
+                    paystack_amount += Number(v.amount);
+                });
+                $('#paystack-total-amount').text(`₦${numberToCurrencyformatter(paystack_amount)}`);
+                $('#paystack-transaction-count').text(`${numberToCurrencyformatter(paystack_count)}`);
+            } else {
+                console.log(data.error);
+            }
+        }
+    });
+}
+
+function getPaystackLogs() {
+    $.ajax({
+        type: 'get',
+        url: `/paystack/logs/get/${application_id}`,
+        success: function (data) {
+            if (data.status !== 500){
+                $('#paystack-logs').dataTable().fnClearTable();
+                $.each(data.response, (k, v) => {
+                    let table = [
+                        `₦${numberToCurrencyformatter(v.totalAmount)}`,
+                        v.reference || 'N/A',
+                        v.date_created,
+                        v.initiator,
+                        JSON.parse(v.response).status
+                    ];
+                    $('#paystack-logs').dataTable().fnAddData(table);
+                    $('#paystack-logs').dataTable().fnSort([[2,'desc']]);
+                });
+            } else {
+                console.log(data.error);
+            }
+        }
+    });
 }
 
 function read_write_custom(){

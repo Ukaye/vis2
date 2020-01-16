@@ -7,6 +7,7 @@ let functions = {},
     request = require('request'),
     jwt = require('jsonwebtoken'),
     SHA512 = require('js-sha512'),
+    paystack = require('paystack')(process.env.PAYSTACK_SECRET_KEY),
     emailService = require('./routes/service/custom-services/email.service');
 
 functions.getNextWorkflowProcess = function(application_id, workflow_id, stage, callback) {
@@ -272,7 +273,6 @@ functions.sendDebitInstruction = function (payload, callback) {
             callback(functions.formatJSONP(body));
         })
 };
-
 functions.mandatePaymentHistory = function (payload, callback) {
     payload.merchantId = process.env.REMITA_MERCHANT_ID;
     payload.hash = SHA512(payload.mandateId + payload.merchantId + payload.requestId + process.env.REMITA_API_KEY);
@@ -505,6 +505,30 @@ functions.sendSMS = function (payload, callback) {
 
 functions.formatToNigerianPhone = (phone) => {
     return `234${phone.toString().trim().toLowerCase().substr(-10)}`;
+};
+
+functions.chargePaymentMethod = (payload, callback) => {
+    const fee  = functions.calculatePaystackFee(payload.amount);
+    payload.amount = Number(Number(payload.amount) + fee) * 100;
+    paystack.transaction.charge(payload)
+        .then(body => {
+            body.amount = payload.amount;
+            body.fee = fee;
+            callback(body);
+        })
+        .catch(error => {
+            callback(error);
+        });
+};
+
+functions.paymentChargeStatus = (reference, callback) => {
+    paystack.transaction.verify(reference)
+        .then(body => {
+            callback(body);
+        })
+        .catch(error => {
+            callback(error);
+        });
 };
 
 module.exports = functions;
