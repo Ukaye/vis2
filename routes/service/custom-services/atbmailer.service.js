@@ -4,6 +4,7 @@ const extract = require('mention-hashtag');
 const fs = require('fs');
 const axios = require('axios');
 const db = require('../../../db');
+const emailService = require('./email.service')
 
 router.post('/trigger/save', function(req, res, next) {
 
@@ -50,7 +51,7 @@ router.post('/trigger/send', function(req, res, next) {
                 recipients = mailData.recipients;
                 recipientsArray = (recipients).split(',');
     
-                recipientsArray.every((recipient)=> {
+                recipientsArray.forEach((recipient)=> {
             
                     //replace placeholder with live data
                     if(mentions.length > 0) {
@@ -72,23 +73,12 @@ router.post('/trigger/send', function(req, res, next) {
                 
                                             let msg = {
                                                 to: recipient,
-                                                from: 'noreply@atbtechsoft.com',
                                                 subject,
-                                                text: 'hi',
-                                                html: sterilizedMsg,
+                                                from: 'no-reply@app.finratus.com',
+                                                html: sterilizedMsg
                                                 };
-                                            
-                                                axios({
-                                                    method: 'post',
-                                                    url: 'http://localhost:5000/api/send',
-                                                    data: msg
-                                                }).then(function(response) {
-                                                    if(response.status === 200) {
-                                                        res.json(response.data);
-                                                    }
-                                                }).catch(function(error) {
-                                                    return res.json(JSON.stringify(error));
-                                                });
+
+                                                emailService.sendHtmlByDomain(msg)
                                         }
                                     }
                                 })
@@ -96,6 +86,7 @@ router.post('/trigger/send', function(req, res, next) {
                 
                     }
             })
+            res.status(200).send()
         })
 
 })
