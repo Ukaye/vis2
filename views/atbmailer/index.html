@@ -236,8 +236,10 @@
                 'type': 'post',
                 'data': obj,
                 'success': function (data) {
+                    $(triggerName).val('');
+                    $(triggerSubject).val('');
+                    CKEDITOR.instances.editor1.setData('');
                     $('#wait').hide();
-                    console.log(data)
                     swal(data.response,"","success");
                 }
             });
