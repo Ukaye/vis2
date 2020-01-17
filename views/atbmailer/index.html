@@ -224,7 +224,24 @@
         ];
     })
 
-
+    function saveTrigger() {
+            let obj = {
+                triggerName: $(triggerName).val(),
+                triggerSubject: $(triggerSubject).val(),
+                triggerContent: CKEDITOR.instances.triggerContent.getData()
+            }
+            
+            $.ajax({
+                'url': '/atbmailer/trigger/save/',
+                'type': 'post',
+                'data': obj,
+                'success': function (data) {
+                    $('#wait').hide();
+                    console.log(data)
+                    swal(data.response,"","success");
+                }
+            });
+        }
 
 </script>
 </body>
