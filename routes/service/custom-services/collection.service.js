@@ -584,18 +584,18 @@ router.get('/remita/settings/:user_id', (req, res) => {
 
 router.get('/paystack/invoices/due/:user_id', (req, res) => {
     let today = moment().utcOffset('+0100').format('YYYY-MM-DD'),
-        query = `SELECT s.ID, c.fullname AS client, c.ID AS clientID, s.applicationID, s.status, s.payment_collect_date, s.payment_status,
+        query = `SELECT s.ID, c.fullname AS client, c.ID AS clientID, c.email, s.applicationID, s.status, s.payment_collect_date, s.payment_status,
             (ROUND((s.payment_amount + s.interest_amount), 2)) invoice_amount, l.response, r.reference, r.authorization_code,
             (ROUND((SELECT COALESCE(SUM(p.payment_amount + p.interest_amount), 0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1), 2)) total_paid,
             (ROUND(((s.payment_amount + s.interest_amount) - (SELECT COALESCE(SUM(p.payment_amount + p.interest_amount), 0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)), 2)) payment_amount
         FROM client_payment_methods r, clients c, applications a, application_schedules s
             LEFT JOIN (SELECT l.* FROM paystack_debits_log l WHERE l.ID = (SELECT MAX(l_.ID) FROM paystack_debits_log l_ WHERE l_.invoiceID = l.invoiceID)) l ON (l.invoiceID = s.ID)
         WHERE s.status = 1 AND s.payment_status < 2 AND s.enable_paystack = 1 AND a.ID = s.applicationID AND a.status = 2
-            AND r.userID = (SELECT a_.userID FROM applications a_ WHERE a_.ID = s.applicationID) AND NOT EXISTS(SELECT p.ID FROM paystack_payments p WHERE p.invoiceID = s.ID)
+            AND r.userID = (SELECT a_.userID FROM applications a_ WHERE a_.ID = s.applicationID) AND NOT EXISTS(SELECT p.ID FROM paystack_payments p WHERE p.invoiceID = s.ID) AND r.status = 1 
             AND ((ROUND(((s.payment_amount + s.interest_amount) - (SELECT COALESCE(SUM(p.payment_amount + p.interest_amount), 0) FROM schedule_history p WHERE p.invoiceID = s.ID AND p.status = 1)), 2)) 
             > (SELECT COALESCE(MAX(min_balance), 0) FROM user_paystack_settings WHERE userID = '${req.params.user_id}')) = 1
             AND c.ID = a.userID AND a.close_status = 0 AND (s.payment_amount + s.interest_amount) > 0 AND TIMESTAMP(s.payment_collect_date) <= TIMESTAMP('${today}')
-        ORDER BY s.ID DESC`;
+        GROUP BY s.ID ORDER BY s.ID DESC`;
     db.query(query, (error, results) => {
         if(error) {
             res.send({"status": 500, "error": error, "response": null});

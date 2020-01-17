@@ -475,7 +475,6 @@ function confirmPaymentModal(id, id2) {
         $('#repayment-date').val(web_payment.payment_date);
         $('#invoiceHistory').modal('hide');
     }
-    console.log('here')
     $('#confirmPayment').modal('show');
 }
 
@@ -792,11 +791,12 @@ function editSchedule() {
     });
 }
 
-function invoiceHistory(invoice_id, status) {
+function invoiceHistory(invoice_id, status, byClient) {
     $('#invoiceHistory').modal('show');
-    let url = '/user/application/invoice-history';
-    if (invoice_id) url = url.concat(`?id=${invoice_id}`);
-    if (status) url = url.concat(`?status=${status}`);
+    let url = '/user/application/invoice-history?';
+    if (invoice_id) url = url.concat(`&id=${invoice_id}`);
+    if (status) url = url.concat(`&status=${status}`);
+    if (byClient) url = url.concat(`&clientID=${application.userID}`);
     $.ajax({
         'url': url,
         'type': 'get',
@@ -1063,7 +1063,7 @@ function getRemitaSuccessPayments() {
                         v.date_created
                     ];
                     if (!v.invoiceID) {
-                        table.push(`<button data-toggle="modal" data-target="#confirmPayment" class="btn btn-success" 
+                        table.push(`<button class="btn btn-success" 
                             onclick="applyRemitaPayment('${encodeURIComponent(JSON.stringify(v))}')">Click to Apply</button>`);
                     } else {
                         table.push(`Applied to INV-${padWithZeroes(v.invoiceID, 6)}`);
@@ -1261,7 +1261,7 @@ function getPaystackSuccessPayments() {
                         v.date_created
                     ];
                     if (!v.invoiceID) {
-                        table.push(`<button data-toggle="modal" data-target="#confirmPayment" class="btn btn-success" 
+                        table.push(`<button class="btn btn-success" 
                             onclick="applyPaystackPayment('${encodeURIComponent(JSON.stringify(v))}')">Click to Apply</button>`);
                     } else {
                         table.push(`Applied to INV-${padWithZeroes(v.invoiceID, 6)}`);

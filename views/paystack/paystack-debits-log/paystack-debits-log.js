@@ -20,8 +20,8 @@ function getPaystackLogs() {
                     query: `ORDER BY client ${aoData[2].value[0].dir}`
                 },
                 {
-                    name: 'totalAmount',
-                    query: `ORDER BY totalAmount ${aoData[2].value[0].dir}`
+                    name: 'amount',
+                    query: `ORDER BY amount ${aoData[2].value[0].dir}`
                 },
                 {
                     name: 'RRR',
@@ -81,13 +81,13 @@ function getPaystackLogs() {
                 width: "10%",
                 className: "text-right",
                 mRender: (data, type, full) => {
-                    return `₦${numberToCurrencyformatter(full.totalAmount)}`;
+                    return `₦${numberToCurrencyformatter(full.amount)}`;
                 }
             },
             {
                 width: "10%",
                 mRender: (data, type, full) => {
-                    return full.RRR || 'N/A';
+                    return full.reference || 'N/A';
                 }
             },
             {

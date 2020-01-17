@@ -3171,6 +3171,7 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                 delete postData.payment_source;
                 delete postData.payment_date;
                 delete postData.remitaPaymentID;
+                delete postData.paystackPaymentID;
                 delete postData.xeroCollectionBank;
                 delete postData.xeroCollectionBankID;
                 delete postData.xeroCollectionDescription;
@@ -3201,6 +3202,7 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                         if (data.xeroCollectionDescription)
                             invoice.xeroCollectionDescription = data.xeroCollectionDescription;
                         if (data.remitaPaymentID) invoice.remitaPaymentID = data.remitaPaymentID;
+                        if (data.paystackPaymentID) invoice.paystackPaymentID = data.paystackPaymentID;
                         if (invoice.payment_amount > 0 && invoice.interest_amount > 0) {
                             invoice.type = 'multiple';
                         } else {
@@ -3271,13 +3273,21 @@ users.post('/application/confirm-payment/:id/:application_id/:agent_id', functio
                                     payload.description = 'Loan Application Payment Confirmed';
                                     payload.affected = req.params.application_id;
                                     notificationsService.log(req, payload);
-                                    if (!invoice.remitaPaymentID)
+                                    if (!invoice.remitaPaymentID && !invoice.paystackPaymentID)
                                         return res.send({"status": 200, "message": "Invoice Payment confirmed successfully!"});
-                                    let update = {};
-                                    update.status = enums.REMITA_PAYMENT.STATUS.FULL_ASSIGNED;
+                                    let url = '',
+                                        update = {};
                                     update.invoiceID = invoice.invoiceID;
+                                    if (invoice.remitaPaymentID) {
+                                        update.status = enums.REMITA_PAYMENT.STATUS.FULL_ASSIGNED;
+                                        url = `UPDATE remita_payments Set ? WHERE ID = ${invoice.remitaPaymentID}`;
+                                    }
+                                    if (invoice.paystackPaymentID) {
+                                        update.status = enums.PAYSTACK_PAYMENT.STATUS.FULL_ASSIGNED;
+                                        url = `UPDATE paystack_payments Set ? WHERE ID = ${invoice.paystackPaymentID}`;
+                                    }
                                     update.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                                    db.query(`UPDATE remita_payments Set ? WHERE ID = ${invoice.remitaPaymentID}`, update, function (error, response) {
+                                    db.query(url, update, (error, response) => {
                                         if (error) console.log(error);
                                         return res.send({"status": 200, "message": "Invoice Payment confirmed successfully!"});
                                     });
@@ -3587,10 +3597,11 @@ function createXeroSchedule (req, res) {
     });
 }
 
-users.get('/application/invoice-history/:id?/:status?', (req, res) => {
+users.get('/application/invoice-history/:id?/:status?/:clientID?', (req, res) => {
     db.query(`SELECT s.ID, s.invoiceID, s.actual_amount, s.payment_amount, s.interest_amount, s.escrow_amount, s.fees_amount, s.penalty_amount, 
         s.payment_date, s.payment_source, s.date_created, s.status, s.applicationID, u.fullname AS agent FROM schedule_history AS s, users AS u 
-        WHERE s.agentID=u.ID ${(req.query.id)? `AND invoiceID = ${req.query.id}`:''} AND s.status in (${req.query.status || '0,1'}) ORDER BY ID desc`, (error, history) => {
+        WHERE s.agentID=u.ID ${(req.query.id)? `AND s.invoiceID = ${req.query.id}`:''} ${(req.query.clientID)? `AND s.clientID = ${req.query.clientID}`:''} 
+        AND s.status in (${req.query.status || '0,1'}) ORDER BY s.ID desc`, (error, history) => {
         if(error) {
             res.send({"status": 500, "error": error, "response": null});
         } else {
@@ -3620,6 +3631,7 @@ users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
                 delete postData.payment_source;
                 delete postData.payment_date;
                 delete postData.remitaPaymentID;
+                delete postData.paystackPaymentID;
                 delete postData.xeroCollectionBank;
                 delete postData.xeroCollectionBankID;
                 delete postData.xeroCollectionDescription;
@@ -3646,6 +3658,7 @@ users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
                         if (data.xeroCollectionDescription)
                             invoice.xeroCollectionDescription = data.xeroCollectionDescription;
                         if (data.remitaPaymentID) invoice.remitaPaymentID = data.remitaPaymentID;
+                        if (data.paystackPaymentID) invoice.paystackPaymentID = data.paystackPaymentID;
                         if (invoice.payment_amount > 0 && invoice.interest_amount > 0) {
                             invoice.type = 'multiple';
                         } else {

@@ -8,7 +8,7 @@ const
     enums = require('../../../enums'),
     helperFunctions = require('../../../helper-functions');
 
-router.post('/payment/create', function (req, res, next) {
+router.post('/payment/create', (req, res) => {
     let invoice = req.body,
         payload = {},
         payment = {
@@ -18,7 +18,7 @@ router.post('/payment/create', function (req, res, next) {
         },
         date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     invoice.payment_amount = invoice.amount;
-    helperFunctions.chargePaymentMethod(payment, function (payment_response) {
+    helperFunctions.chargePaymentMethod(payment, payment_response => {
         payload.total_amount = payment_response.amount / 100;
         payload.fee = payment_response.fee;
         payload.amount = invoice.amount;
@@ -51,15 +51,15 @@ router.post('/payment/create', function (req, res, next) {
     });
 });
 
-router.post('/payments/create', function (req, res, next) {
+router.post('/payments/create', (req, res) => {
     let count = 0,
         invoices = req.body.invoices,
         created_by = req.body.created_by,
         date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.getConnection(function(err, connection) {
+    db.getConnection((err, connection) => {
         if (err) throw err;
 
-        async.forEach(invoices, function (invoice, callback) {
+        async.forEach(invoices, (invoice, callback) => {
             invoice.invoiceID = invoice.ID;
             invoice.amount = invoice.payment_amount;
             invoice.payment_status = invoice.status;
@@ -73,18 +73,25 @@ router.post('/payments/create', function (req, res, next) {
                     amount: invoice.amount,
                     authorization_code: invoice.authorization_code
                 };
-            helperFunctions.chargePaymentMethod(payment, function (payment_response) {
-                payload.amount = payment.amount;
+            invoice.payment_amount = invoice.amount;
+            helperFunctions.chargePaymentMethod(payment, payment_response => {
+                payload.total_amount = payment_response.amount / 100;
+                payload.fee = payment_response.fee;
+                payload.amount = invoice.amount;
                 payload.authorization_code = payment.authorization_code;
                 payload.reference = payment_response.data.reference;
                 payload.date_created = date;
                 payload.created_by = invoice.created_by;
+                payload.invoiceID = invoice.invoiceID;
                 payload.applicationID = invoice.applicationID;
                 payload.clientID = invoice.clientID;
+                invoice.fee = payload.fee;
                 invoice.date_created = date;
                 invoice.reference = payload.reference;
+                invoice.total_amount = payload.total_amount;
                 invoice.authorization_code = payload.authorization_code;
                 invoice.response = JSON.stringify(payment_response);
+                delete invoice.email;
                 connection.query('INSERT INTO paystack_debits_log Set ?', invoice, (error, response) => {
                     if (payment_response && payment_response.data.status === 'success') {
                         connection.query('INSERT INTO paystack_payments Set ?', payload, (error, response) => {
@@ -214,10 +221,14 @@ router.get('/payment/status/get/:id', function (req, res, next) {
             query: query
         }
     }).then(response => {
-        let reference = response.data[0];
-        if (reference) {
-            helperFunctions.paymentChargeStatus(reference, response => {
-                res.send({status: 500, error: null, response: response.data.status});
+        let payment = response.data[0];
+        if (payment) {
+            helperFunctions.paymentChargeStatus(payment.reference, response => {
+                if (response && response.data) {
+                    res.send({status: 200, error: null, response: response.data.status});
+                } else {
+                    res.send({status: 500, error: response.message, response: null});
+                }
             });
         } else {
             res.send({status: 500, error: 'There is no card setup for this application', response: null});
