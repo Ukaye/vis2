@@ -549,6 +549,120 @@ router.post('/create', function (req, res) {
     });
 });
 
+router.post('/v2/create', function (req, res) {
+    let id;
+    let postData = req.body,
+        query = 'INSERT INTO clients Set ?',
+        query2 = 'select * from clients where username = ? or email = ? or phone = ?';
+    postData.status = enums.CLIENT.STATUS.ACTIVE;
+    postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    if (!postData.username || !postData.password || !postData.first_name || !postData.last_name 
+        || !postData.phone || !postData.email || !postData.loan_officer || !postData.branch)
+        return res.send({ "status": 500, "error": "Required parameter(s) not sent!", "response": null });
+
+    postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
+    postData.password = bcrypt.hashSync(postData.password, parseInt(process.env.SALT_ROUNDS));
+    postData.images_folder = postData.email;
+    postData.password_reset_status = enums.PASSWORD_RESET.STATUS.TRUE;
+    db.getConnection(function (err, connection) {
+        if (err) throw err;
+        connection.query(query2, [postData.username, postData.email, postData.phone], function (error, results) {
+            if (results && results[0]) {
+                let duplicates = [];
+                if (postData.email == results[0]['email']) duplicates.push('email');
+                if (postData.phone == results[0]['phone']) duplicates.push('phone');
+                return res.send({ "status": 500, "error": `The ${duplicates[0] || username} is already in use by another user!`, "response": null});
+            }
+            let bvn = postData.bvn;
+            delete postData.bvn;
+            if (bvn && bvn.trim() !== '') {
+                connection.query('select * from clients where bvn = ? and status = 1 limit 1', [bvn], function (error, rest) {
+                    if (rest && rest[0]) {
+                        return res.send({ "status": 500, "error": "BVN already exists!", "response": null});
+                    }
+                    helperFunctions.resolveBVN(bvn, bvn_response => {
+                        if (bvn_response.status && helperFunctions.phoneMatch(postData.phone, bvn_response.data.mobile)) {
+                            postData.first_name = bvn_response.data.first_name;
+                            postData.last_name = bvn_response.data.last_name;
+                            postData.dob = bvn_response.data.formatted_dob;
+                            postData.phone = bvn_response.data.mobile;
+                            postData.bvn = bvn_response.data.bvn;
+                            postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
+                        }
+                        connection.query(query, postData, function (error, re) {
+                            if (error) {
+                                res.send({ "status": 500, "error": JSON.stringify(error), "response": null });
+                            } else {
+                                connection.query('SELECT * from clients where ID = (SELECT MAX(ID) FROM clients)', function (err, re) {
+                                    if (!err) {
+                                        id = re[0]['ID'];
+                                        connection.query('INSERT into wallets Set ?', { client_id: id }, function (er, r) {
+                                            connection.release();
+                                            if (!er) {
+                                                let payload = {};
+                                                payload.category = 'Clients';
+                                                payload.userid = req.cookies.timeout;
+                                                payload.description = 'New Client Created';
+                                                payload.affected = id;
+                                                notificationsService.log(req, payload);
+                                                emailService.send({
+                                                    to: postData.email,
+                                                    subject: 'Signup Successful!',
+                                                    template: 'client',
+                                                    context: postData
+                                                });
+                                                res.send({ "status": 200, "error": null, "response": re });
+                                            } else {
+                                                res.send({ "status": 500, "error": "Error creating client wallet!", "response": null});
+                                            }
+                                        });
+                                    } else {
+                                        res.send({ "status": 500, "error": "Error retrieving client details. Please try a new username!", "response": null});
+                                    }
+                                });
+                            }
+                        });
+                    });
+                });
+            } else {
+                connection.query(query, postData, function (error, re) {
+                    if (error) {
+                        res.send({ "status": 500, "error": JSON.stringify(error), "response": null });
+                    } else {
+                        connection.query('SELECT * from clients where ID = (SELECT MAX(ID) FROM clients)', function (err, re) {
+                            if (!err) {
+                                id = re[0]['ID'];
+                                connection.query('INSERT into wallets Set ?', { client_id: id }, function (er, r) {
+                                    connection.release();
+                                    if (!er) {
+                                        let payload = {};
+                                        payload.category = 'Clients';
+                                        payload.userid = req.cookies.timeout;
+                                        payload.description = 'New Client Created';
+                                        payload.affected = id;
+                                        notificationsService.log(req, payload);
+                                        emailService.send({
+                                            to: postData.email,
+                                            subject: 'Signup Successful!',
+                                            template: 'client',
+                                            context: postData
+                                        });
+                                        res.send({ "status": 200, "error": null, "response": re });
+                                    } else {
+                                        res.send({ "status": 500, "error": JSON.stringify(er), "response": "Error creating client wallet!" });
+                                    }
+                                });
+                            } else {
+                                res.send({ "status": 500, "error": JSON.stringify(err), "response": "Error retrieving client details. Please try a new username!" });
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    });
+});
+
 router.post('/login', function (req, res) {
     let username = req.body.username,
         password = req.body.password;
@@ -3066,8 +3180,8 @@ router.post('/application/verifyV2/email/:application_id/:type', (req, res) => {
 
 router.get('/applications/web/count', (req, res) => {
     let query_status = `(${enums.CLIENT_APPLICATION.STATUS.ACTIVE},${enums.CLIENT_APPLICATION.STATUS.APPROVED})`;
-    let query = `SELECT COUNT(*) count FROM preapplications WHERE status in ${query_status} 
-    AND ID NOT IN (SELECT a.preapplicationID FROM applications a WHERE ID = a.preapplicationID) AND creator_type = "client"`;
+    let query = `SELECT COUNT(*) count FROM preapplications p WHERE p.status in ${query_status} 
+    AND p.ID NOT IN (SELECT a.preapplicationID FROM applications a WHERE p.ID = a.preapplicationID) AND p.creator_type = "client"`;
     db.query(query, (error, response) => {
         if (error) return res.send({
             "status": 500,

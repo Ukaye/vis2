@@ -1958,7 +1958,7 @@ users.get('/application-id/:id', function(req, res, next) {
             '(SELECT status FROM preapplications WHERE ID = a.preapplicationID AND creator_type = "client") AS client_applications_status, ' +
             '(SELECT work_email FROM preapplications WHERE ID = a.preapplicationID AND creator_type = "client") AS work_email, ' +
             '(SELECT verify_work_email FROM preapplications WHERE ID = a.preapplicationID AND creator_type = "client") AS verify_work_email, ' +
-            '(CASE WHEN (SELECT COUNT(*) FROM client_payment_methods WHERE a.userID = userID AND payment_channel = "paystack") > 0 THEN 1 ELSE 0 END) paystack_payment_status, ' +
+            '(CASE WHEN (SELECT COUNT(*) FROM client_payment_methods WHERE a.userID = userID AND payment_channel = "paystack" AND status = 1) > 0 THEN 1 ELSE 0 END) paystack_payment_status, ' +
             'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
             'FROM clients AS u INNER JOIN applications AS a ON u.ID = a.userID LEFT JOIN remita_mandates r ' +
             'ON (r.applicationID = a.ID AND r.status = 1) WHERE a.ID = ?';

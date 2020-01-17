@@ -475,6 +475,7 @@ function confirmPaymentModal(id, id2) {
         $('#repayment-date').val(web_payment.payment_date);
         $('#invoiceHistory').modal('hide');
     }
+    console.log('here')
     $('#confirmPayment').modal('show');
 }
 
@@ -1230,7 +1231,7 @@ function makePaystackPayment() {
                     'success': function (data) {
                         $('#wait').hide();
                         if (data.status !== 500) {
-                            notification('Paystack payment request was successful','','info');
+                            notification('Paystack payment request was successful','','success');
                             window.location.reload();
                         } else {
                             notification(data.error,'','error');
@@ -1288,7 +1289,7 @@ function getPaystackLogs() {
                 $('#paystack-logs').dataTable().fnClearTable();
                 $.each(data.response, (k, v) => {
                     let table = [
-                        `₦${numberToCurrencyformatter(v.totalAmount)}`,
+                        `₦${numberToCurrencyformatter(v.amount)}`,
                         v.reference || 'N/A',
                         v.date_created,
                         v.initiator,

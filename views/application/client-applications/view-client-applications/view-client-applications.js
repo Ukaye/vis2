@@ -1,6 +1,5 @@
 (function( $ ) {
     jQuery(document).ready(function() {
-        getWorkflows();
         getApplicationSettings();
     });
 
@@ -221,18 +220,6 @@
         });
     }
 
-    function getWorkflows(){
-        $.ajax({
-            type: "GET",
-            url: "/workflows-all",
-            success: function (response) {
-                $.each(response.response, function (key, val) {
-                    $("#workflows").append('<option value = "'+val.ID+'"">'+val.name+'</option>');
-                });
-            }
-        });
-    }
-
     function getLoanPurposes(){
         $.ajax({
             type: "GET",
@@ -254,10 +241,23 @@
             type: "GET",
             url: "/settings/application/business",
             success: function (response) {
+                getWorkflows();
                 $.each(response.response, function (key, val) {
                     $("#businesses").append('<option value = "'+val.ID+'"">'+val.name+'</option>');
                 });
                 $("#businesses").select2();
+            }
+        });
+    }
+
+    function getWorkflows(){
+        $.ajax({
+            type: "GET",
+            url: "/workflows-all",
+            success: function (response) {
+                $.each(response.response, function (key, val) {
+                    $("#workflows").append('<option value = "'+val.ID+'"">'+val.name+'</option>');
+                });
                 if (preapplication_id) {
                     getPreapplication(preapplication_id);
                 }
