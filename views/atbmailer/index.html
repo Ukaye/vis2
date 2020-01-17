@@ -208,43 +208,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.15/js/bootstrap-multiselect.min.js"></script>
 <script src="../assets/summernote/summernote.min.js"></script>
 <script src="../../js/helper-functions.js"></script>
+<script type="text/javascript" src="./trigger.js"></script>
 <script src="../../js/loader.js"></script>
 <script src="../../js/notifications.js"></script>
-<script type = "text/javascript">
-    $(document).ready(function() {
-        
-        CKEDITOR.replace( 'triggerContent' );
-
-        CKEDITOR.config.mentions = [
-            {
-                feed: [ 'username', 'fullname', 'phone', 'address', 'branch', 'supervisor'],
-                minChars: 0,
-                marker: '@'
-            }
-        ];
-    })
-
-    function saveTrigger() {
-            let obj = {
-                triggerName: $(triggerName).val(),
-                triggerSubject: $(triggerSubject).val(),
-                triggerContent: CKEDITOR.instances.triggerContent.getData()
-            }
-            
-            $.ajax({
-                'url': '/atbmailer/trigger/save/',
-                'type': 'post',
-                'data': obj,
-                'success': function (data) {
-                    $(triggerName).val('');
-                    $(triggerSubject).val('');
-                    CKEDITOR.instances.editor1.setData('');
-                    $('#wait').hide();
-                    swal(data.response,"","success");
-                }
-            });
-        }
-
-</script>
 </body>
 </html>
