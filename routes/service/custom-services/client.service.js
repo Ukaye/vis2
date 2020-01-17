@@ -549,120 +549,6 @@ router.post('/create', function (req, res) {
     });
 });
 
-router.post('/v2/create', function (req, res) {
-    let id;
-    let postData = req.body,
-        query = 'INSERT INTO clients Set ?',
-        query2 = 'select * from clients where username = ? or email = ? or phone = ?';
-    postData.status = enums.CLIENT.STATUS.ACTIVE;
-    postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    if (!postData.username || !postData.password || !postData.first_name || !postData.last_name 
-        || !postData.phone || !postData.email || !postData.loan_officer || !postData.branch)
-        return res.send({ "status": 500, "error": "Required parameter(s) not sent!", "response": null });
-
-    postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
-    postData.password = bcrypt.hashSync(postData.password, parseInt(process.env.SALT_ROUNDS));
-    postData.images_folder = postData.email;
-    postData.password_reset_status = enums.PASSWORD_RESET.STATUS.TRUE;
-    db.getConnection(function (err, connection) {
-        if (err) throw err;
-        connection.query(query2, [postData.username, postData.email, postData.phone], function (error, results) {
-            if (results && results[0]) {
-                let duplicates = [];
-                if (postData.email == results[0]['email']) duplicates.push('email');
-                if (postData.phone == results[0]['phone']) duplicates.push('phone');
-                return res.send({ "status": 500, "error": `The ${duplicates[0] || username} is already in use by another user!`, "response": null});
-            }
-            let bvn = postData.bvn;
-            delete postData.bvn;
-            if (bvn && bvn.trim() !== '') {
-                connection.query('select * from clients where bvn = ? and status = 1 limit 1', [bvn], function (error, rest) {
-                    if (rest && rest[0]) {
-                        return res.send({ "status": 500, "error": "BVN already exists!", "response": null});
-                    }
-                    helperFunctions.resolveBVN(bvn, bvn_response => {
-                        if (bvn_response.status && helperFunctions.phoneMatch(postData.phone, bvn_response.data.mobile)) {
-                            postData.first_name = bvn_response.data.first_name;
-                            postData.last_name = bvn_response.data.last_name;
-                            postData.dob = bvn_response.data.formatted_dob;
-                            postData.phone = bvn_response.data.mobile;
-                            postData.bvn = bvn_response.data.bvn;
-                            postData.fullname = `${postData.first_name} ${(postData.middle_name || '')} ${postData.last_name}`;
-                        }
-                        connection.query(query, postData, function (error, re) {
-                            if (error) {
-                                res.send({ "status": 500, "error": JSON.stringify(error), "response": null });
-                            } else {
-                                connection.query('SELECT * from clients where ID = (SELECT MAX(ID) FROM clients)', function (err, re) {
-                                    if (!err) {
-                                        id = re[0]['ID'];
-                                        connection.query('INSERT into wallets Set ?', { client_id: id }, function (er, r) {
-                                            connection.release();
-                                            if (!er) {
-                                                let payload = {};
-                                                payload.category = 'Clients';
-                                                payload.userid = req.cookies.timeout;
-                                                payload.description = 'New Client Created';
-                                                payload.affected = id;
-                                                notificationsService.log(req, payload);
-                                                emailService.send({
-                                                    to: postData.email,
-                                                    subject: 'Signup Successful!',
-                                                    template: 'client',
-                                                    context: postData
-                                                });
-                                                res.send({ "status": 200, "error": null, "response": re });
-                                            } else {
-                                                res.send({ "status": 500, "error": "Error creating client wallet!", "response": null});
-                                            }
-                                        });
-                                    } else {
-                                        res.send({ "status": 500, "error": "Error retrieving client details. Please try a new username!", "response": null});
-                                    }
-                                });
-                            }
-                        });
-                    });
-                });
-            } else {
-                connection.query(query, postData, function (error, re) {
-                    if (error) {
-                        res.send({ "status": 500, "error": JSON.stringify(error), "response": null });
-                    } else {
-                        connection.query('SELECT * from clients where ID = (SELECT MAX(ID) FROM clients)', function (err, re) {
-                            if (!err) {
-                                id = re[0]['ID'];
-                                connection.query('INSERT into wallets Set ?', { client_id: id }, function (er, r) {
-                                    connection.release();
-                                    if (!er) {
-                                        let payload = {};
-                                        payload.category = 'Clients';
-                                        payload.userid = req.cookies.timeout;
-                                        payload.description = 'New Client Created';
-                                        payload.affected = id;
-                                        notificationsService.log(req, payload);
-                                        emailService.send({
-                                            to: postData.email,
-                                            subject: 'Signup Successful!',
-                                            template: 'client',
-                                            context: postData
-                                        });
-                                        res.send({ "status": 200, "error": null, "response": re });
-                                    } else {
-                                        res.send({ "status": 500, "error": JSON.stringify(er), "response": "Error creating client wallet!" });
-                                    }
-                                });
-                            } else {
-                                res.send({ "status": 500, "error": JSON.stringify(err), "response": "Error retrieving client details. Please try a new username!" });
-                            }
-                        });
-                    }
-                });
-            }
-        });
-    });
-});
-
 router.post('/login', function (req, res) {
     let username = req.body.username,
         password = req.body.password;
@@ -679,7 +565,7 @@ router.post('/login', function (req, res) {
         if (!client || !client[0])
             return res.send({
                 "status": 500,
-                "error": "Sorry, we can’t find this user information in our record, please click here to sign up!",
+                "error": "Sorry, we can’t find this user information in our record, please proceed to sign up!",
                 "response": null
             });
             
@@ -2862,7 +2748,7 @@ router.post('/forgot-password/get', (req, res) => {
         });
         if (!client_ || !client_[0]) return res.send({
             "status": 500,
-            "error": 'Sorry we can’t find this email in our record, please click here to sign up!',
+            "error": 'Sorry we can’t find this username in our record, please proceed to sign up!',
             "response": null
         });
 
@@ -3290,6 +3176,214 @@ router.get('/bvn/unverify/:id', (req, res) => {
         if (error)
             return res.send({status: 500, error: error, response: null});
         return res.send({status: 200, error: null, response: response});
+    });
+});
+
+router.post('/v2/create', (req, res) => {
+    let id;
+    let postData = req.body,
+        query = 'INSERT INTO clients Set ?',
+        query2 = 'select * from clients where username = ? or phone = ?';
+    postData.status = enums.CLIENT.STATUS.ACTIVE;
+    postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    if (!postData.username || !postData.phone || !postData.pin || !postData.loan_officer || !postData.branch)
+        return res.send({ "status": 500, "error": "Required parameter(s) not sent!", "response": null });
+
+    postData.pin = bcrypt.hashSync(postData.pin, parseInt(process.env.SALT_ROUNDS));
+    postData.images_folder = postData.phone;
+    postData.pin_reset_status = enums.PIN_RESET.STATUS.TRUE;
+    db.getConnection((err, connection) => {
+        if (err) throw err;
+        connection.query(query2, [postData.username, postData.phone], (error, results) => {
+            if (results && results[0]) {
+                let duplicates = [];
+                if (postData.phone == results[0]['phone']) duplicates.push('phone');
+                return res.send({ "status": 500, "error": `The ${duplicates[0] || username} is already in use by another user!`, "response": null});
+            }
+            connection.query(query, postData, (error, response) => {
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
+                } else {
+                    connection.query('SELECT * from clients where ID = (SELECT MAX(ID) FROM clients)', (err, client) => {
+                        if (!err) {
+                            id = client[0]['ID'];
+                            connection.query('INSERT into wallets Set ?', { client_id: id }, (er, r) => {
+                                connection.release();
+                                if (!er) {
+                                    let payload = {};
+                                    payload.category = 'Clients';
+                                    payload.userid = req.cookies.timeout;
+                                    payload.description = 'New Client Created';
+                                    payload.affected = id;
+                                    notificationsService.log(req, payload);
+                                    emailService.send({
+                                        to: postData.email,
+                                        subject: 'Signup Successful!',
+                                        template: 'client',
+                                        context: postData
+                                    });
+                                    res.send({ "status": 200, "error": null, "response": client });
+                                } else {
+                                    res.send({ "status": 500, "error": er, "response": "Error creating client wallet!" });
+                                }
+                            });
+                        } else {
+                            res.send({ "status": 500, "error": err, "response": "Error retrieving client details. Please try a new username!" });
+                        }
+                    });
+                }
+            });
+        });
+    });
+});
+
+router.post('/v2/login', (req, res) => {
+    let username = req.body.username,
+        pin = req.body.pin;
+    if (!username || !pin) return res.status(500).send('Required parameter(s) not sent!');
+
+    db.query(`SELECT * FROM clients WHERE username = '${username}' OR email = '${username}' OR phone = '${username}'`, (err, client) => {
+        if (err)
+            return res.send({
+                "status": 500,
+                "error": "Connection Error!",
+                "response": null
+            });
+
+        if (!client || !client[0])
+            return res.send({
+                "status": 500,
+                "error": "Sorry, we can’t find this user information in our record, please proceed to sign up!",
+                "response": null
+            });
+            
+        let user = client[0];
+        if (user.status === 0)
+            return res.send({
+                "status": 500,
+                "error": "Your Account Has Been Disabled, Please Contact The Admin",
+                "response": null
+            });
+
+        if (user.pin_reset_status === enums.PIN_RESET.STATUS.FALSE && pin.toLowerCase() === '0000')
+            return res.send({
+                "status": 400,
+                "error": `Pin has expired! A default pin will be sent to ${user.phone}`,
+                "response": null
+            });
+
+        if (!user.pin)
+            return res.send({
+                "status": 500,
+                "error": "Incorrect Username/Pin!",
+                "response": null
+            });
+
+        if (bcrypt.compareSync(pin, user.pin)) {
+            let payload = {
+                pin_reset_status: enums.PIN_RESET.STATUS.TRUE,
+                date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
+            };
+            db.query(`UPDATE clients SET ? WHERE ID = ${user.ID}`, payload, (error, response) => {
+                if (error)
+                    return res.send({
+                        "status": 500,
+                        "error": error,
+                        "response": null
+                    });
+
+                user.token = jwt.sign({
+                    ID: user.ID,
+                    username: user.username,
+                    fullname: user.fullname,
+                    email: user.email,
+                    phone: user.phone
+                },
+                    process.env.SECRET_KEY,
+                    {
+                        expiresIn: 60 * 60 * 24
+                    });
+                user.tenant = process.env.TENANT;
+                user.environment = process.env.STATUS;
+                let payload = {};
+                payload.category = 'Authentication';
+                payload.userid = user.ID;
+                payload.description = 'New User Login';
+                payload.affected = user.ID;
+                notificationsService.log(req, payload);
+                res.send({
+                    "status": 200,
+                    "error": null,
+                    "response": user
+                });
+            });
+        } else {
+            res.send({
+                "status": 500,
+                "error": "Pin is incorrect!",
+                "response": null
+            });
+        }
+    });
+});
+
+router.post('/forgot-pin/get', (req, res) => {
+    if (!req.body.username) return res.status(500).send('Required parameter(s) not sent!');
+    let data = {},
+        query = `SELECT ID, fullname, email, phone, status FROM clients 
+            WHERE username = '${req.body.username}' OR email = '${req.body.username}' OR phone = '${req.body.username}'`;
+    db.query(query, (error, client_) => {
+        if (error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+        if (!client_ || !client_[0]) return res.send({
+            "status": 500,
+            "error": 'Sorry we can’t find this username in our record, please proceed to sign up!',
+            "response": null
+        });
+
+        let client = client_[0];
+        if (client.status === 0) return res.send({
+            "status": 500,
+            "error": "Client has been disabled!",
+            "response": null
+        });
+
+        let pin = Math.floor(1000 + Math.random() * 9000);
+        let payload = {
+            pin: bcrypt.hashSync(pin.toString(), parseInt(process.env.SALT_ROUNDS)),
+            date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
+        };
+        let sms = {
+            phone: helperFunctions.formatToNigerianPhone(client.phone),
+            message: `To login to My X3 mobile app, use this pin ${pin}`
+        }
+        helperFunctions.sendSMS(sms, data => {
+            if (data.response.status === 'SUCCESS') {
+                db.query(`UPDATE clients SET ? WHERE ID = ${client.ID}`, payload, (error, response) => {
+                    if (error)
+                        return res.send({
+                            "status": 500,
+                            "error": error,
+                            "response": null
+                        });
+    
+                    return res.send({
+                        "status": 200,
+                        "error": null,
+                        "response": `Default pin sent to ${client.phone} successfully!`
+                    });
+                });
+            } else {
+                return res.send({
+                    "status": 500,
+                    "error": 'Error sending new pin!',
+                    "response": null
+                });
+            }
+        });
     });
 });
 
