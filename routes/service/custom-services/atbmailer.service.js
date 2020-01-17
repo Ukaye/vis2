@@ -14,7 +14,7 @@ router.post('/trigger/save', function(req, res, next) {
         db.query(query, function (error, results) {
             if(results[0].rows > 0) {
                 //update content if trigger exists
-                query = `UPDATE email_templates SET trigger_subject = '${mailData.triggerSubject}', trigger_content = '${mailData.triggerContent}'`
+                query = `UPDATE email_templates SET trigger_subject = '${mailData.triggerSubject}', trigger_content = '${mailData.triggerContent}' WHERE trigger_name = '${mailData.triggerName.trim()}'`
                 db.query(query, function (error, results) {
                     if(error) {
                         res.send({
@@ -27,7 +27,7 @@ router.post('/trigger/save', function(req, res, next) {
                     res.send({
                         status: 200,
                         error: null,
-                        response: "Trigger updated successfully"
+                        response: "Trigger Updated"
                     })
                 })
             } else {
@@ -46,11 +46,11 @@ router.post('/trigger/save', function(req, res, next) {
                     res.send({
                         status: 201,
                         error: null,
-                        response: "Trigger saved successfully"
+                        response: "Trigger Saved"
                     })
                 })
             }
-            
+
         })
 
         next
