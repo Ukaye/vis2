@@ -1,205 +1,605 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>Loan 35</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <style type="text/css">
+    <meta charset="utf-8"> <!-- utf-8 works for most cases -->
+    <meta name="viewport" content="width=device-width"> <!-- Forcing initial-scale shouldn't be necessary -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Use the latest (edge) version of IE rendering engine -->
+    <meta name="x-apple-disable-message-reformatting">  <!-- Disable auto-scale in iOS 10 Mail entirely -->
+    <title></title> <!-- The title tag shows in email notifications, like Android 4.4. -->
+
+    <link href="https://fonts.googleapis.com/css?family=Work+Sans:200,300,400,500,600,700" rel="stylesheet">
+
+    <!-- CSS Reset : BEGIN -->
+    <style>
+
+        html,
+        body {
+            margin: 0 auto !important;
+            padding: 0 !important;
+            height: 100% !important;
+            width: 100% !important;
+            background: #f1f1f1;
+        }
+
+        /* What it does: Stops email clients resizing small text. */
         * {
-            -ms-text-size-adjust:100%;
-            -webkit-text-size-adjust:none;
-            -webkit-text-resize:100%;
-            text-resize:100%;
+            -ms-text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
         }
-        button {
-            width: auto;
-            padding: 10px 30px;
-            background: #303030;
-            border-radius: 2px;
-            color: #fff;
-            outline: none;
-            border: none;
-            cursor: pointer;
-            font-size: 18px;
+
+        /* What it does: Centers email on Android 4.4 */
+        div[style*="margin: 16px 0"] {
+            margin: 0 !important;
         }
-        a{
-            outline:none;
-            color:;
-            text-decoration:underline;
+
+        /* What it does: Stops Outlook from adding extra spacing to tables. */
+        table,
+        td {
+            mso-table-lspace: 0pt !important;
+            mso-table-rspace: 0pt !important;
         }
-        .img-fluid {
-            max-width: 100%;
-            height: auto
+
+        /* What it does: Fixes webkit padding issue. */
+        table {
+            border-spacing: 0 !important;
+            border-collapse: collapse !important;
+            table-layout: fixed !important;
+            margin: 0 auto !important;
         }
-        a:hover{text-decoration:none !important;}
-        .nav a:hover{text-decoration:underline !important;}
-        .title a:hover{text-decoration:underline !important;}
-        .title-2 a:hover{text-decoration:underline !important;}
-        .btn:hover{opacity:0.8;}
-        .btn a:hover{text-decoration:none !important;}
-        .btn{
-            -webkit-transition:all 0.3s ease;
-            -moz-transition:all 0.3s ease;
-            -ms-transition:all 0.3s ease;
-            transition:all 0.3s ease;
+
+        /* What it does: Uses a better rendering method when resizing images in IE. */
+        img {
+            -ms-interpolation-mode: bicubic;
         }
-        table td {border-collapse: collapse !important;}
-        .ExternalClass, .ExternalClass a, .ExternalClass span, .ExternalClass b, .ExternalClass br, .ExternalClass p, .ExternalClass div{line-height:inherit;}
-        @media only screen and (max-width:500px) {
-            table[class="flexible"]{width:100% !important;}
-            table[class="center"]{
-                float:none !important;
-                margin:0 auto !important;
-            }
-            *[class="hide"]{
-                display:none !important;
-                width:0 !important;
-                height:0 !important;
-                padding:0 !important;
-                font-size:0 !important;
-                line-height:0 !important;
-            }
-            td[class="img-flex"] img{
-                width:100% !important;
-                height:auto !important;
-            }
-            td[class="aligncenter"]{text-align:center !important;}
-            th[class="flex"]{
-                display:block !important;
-                width:100% !important;
-            }
-            td[class="wrapper"]{padding:0 !important;}
-            td[class="holder"]{padding:30px 15px 20px !important;}
-            td[class="nav"]{
-                padding:20px 0 0 !important;
-                text-align:center !important;
-            }
-            td[class="h-auto"]{height:auto !important;}
-            td[class="description"]{padding:30px 20px !important;}
-            td[class="i-120"] img{
-                width:120px !important;
-                height:auto !important;
-            }
-            td[class="footer"]{padding:5px 20px 20px !important;}
-            td[class="footer"] td[class="aligncenter"]{
-                line-height:25px !important;
-                padding:20px 0 0 !important;
-            }
-            tr[class="table-holder"]{
-                display:table !important;
-                width:100% !important;
-            }
-            th[class="thead"]{display:table-header-group !important; width:100% !important;}
-            th[class="tfoot"]{display:table-footer-group !important; width:100% !important;}
+
+        /* What it does: Prevents Windows 10 Mail from underlining links despite inline CSS. Styles for underlined links should be inline. */
+        a {
+            text-decoration: none;
         }
+
+        /* What it does: A work-around for email clients meddling in triggered links. */
+        *[x-apple-data-detectors], /* iOS */
+        .unstyle-auto-detected-links *,
+        .aBn {
+            border-bottom: 0 !important;
+            cursor: default !important;
+            color: inherit !important;
+            text-decoration: none !important;
+            font-size: inherit !important;
+            font-family: inherit !important;
+            font-weight: inherit !important;
+            line-height: inherit !important;
+        }
+
+        /* What it does: Prevents Gmail from displaying a download button on large, non-linked images. */
+        .a6S {
+            display: none !important;
+            opacity: 0.01 !important;
+        }
+
+        /* What it does: Prevents Gmail from changing the text color in conversation threads. */
+        .im {
+            color: inherit !important;
+        }
+
+        /* If the above doesn't work, add a .g-img class to any image in question. */
+        img.g-img + div {
+            display: none !important;
+        }
+
+        /* What it does: Removes right gutter in Gmail iOS app: https://github.com/TedGoas/Cerberus/issues/89  */
+        /* Create one of these media queries for each additional viewport size you'd like to fix */
+
+        /* iPhone 4, 4S, 5, 5S, 5C, and 5SE */
+        @media only screen and (min-device-width: 320px) and (max-device-width: 374px) {
+            u ~ div .email-container {
+                min-width: 320px !important;
+            }
+        }
+
+        /* iPhone 6, 6S, 7, 8, and X */
+        @media only screen and (min-device-width: 375px) and (max-device-width: 413px) {
+            u ~ div .email-container {
+                min-width: 375px !important;
+            }
+        }
+
+        /* iPhone 6+, 7+, and 8+ */
+        @media only screen and (min-device-width: 414px) {
+            u ~ div .email-container {
+                min-width: 414px !important;
+            }
+        }
+
     </style>
+
+    <!-- CSS Reset : END -->
+
+    <!-- Progressive Enhancements : BEGIN -->
+    <style>
+
+        .primary {
+            background: #2f89fc;
+        }
+
+        .bg_white {
+            background: #ffffff;
+        }
+
+        .bg_light {
+            background: #fafafa;
+        }
+
+        .bg_black {
+            background: #000000;
+        }
+
+        .bg_dark {
+            background: rgba(0, 0, 0, .8);
+        }
+
+        .email-section {
+            padding: 2.5em;
+        }
+
+        /*BUTTON*/
+        .btn {
+            padding: 5px 15px;
+            display: inline-block;
+        }
+
+        .btn.btn-primary {
+            border-radius: 5px;
+            background: #2f89fc;
+            color: #ffffff;
+        }
+
+        .btn.btn-white {
+            border-radius: 5px;
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .btn.btn-white-outline {
+            border-radius: 5px;
+            background: transparent;
+            border: 1px solid #fff;
+            color: #fff;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Work Sans', sans-serif;
+            color: #000000;
+            margin-top: 0;
+            font-weight: 400;
+        }
+
+        body {
+            font-family: 'Work Sans', sans-serif;
+            font-weight: 400;
+            font-size: 15px;
+            line-height: 1.8;
+            color: rgba(0, 0, 0, .4);
+        }
+
+        a {
+            color: #2f89fc;
+        }
+
+        table {
+        }
+
+        /*LOGO*/
+
+        .logo h1 {
+            margin: 0;
+        }
+
+        .logo h1 a {
+            color: #000000;
+            font-size: 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .navigation {
+            padding: 0;
+        }
+
+        .navigation li {
+            list-style: none;
+            display: inline-block;;
+            margin-left: 5px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .navigation li a {
+            color: rgba(0, 0, 0, .4);
+        }
+
+        /*HERO*/
+        .hero {
+            position: relative;
+            z-index: 0;
+        }
+
+        .hero .text {
+            color: rgba(0, 0, 0, .3);
+        }
+
+        .hero .text h2 {
+            color: #000;
+            font-size: 30px;
+            margin-bottom: 0;
+            font-weight: 300;
+        }
+
+        .hero .text h2 span {
+            font-weight: 600;
+            color: #440F7C;
+        }
+
+
+        /*HEADING SECTION*/
+        .heading-section {
+        }
+
+        .heading-section h2 {
+            color: #000000;
+            font-size: 28px;
+            margin-top: 0;
+            line-height: 1.4;
+            font-weight: 400;
+        }
+
+        .heading-section .subheading {
+            margin-bottom: 20px !important;
+            display: inline-block;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(0, 0, 0, .4);
+            position: relative;
+        }
+
+        .heading-section .subheading::after {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -10px;
+            content: '';
+            width: 100%;
+            height: 2px;
+            background: #2f89fc;
+            margin: 0 auto;
+        }
+
+        .heading-section-white {
+            color: rgba(255, 255, 255, .8);
+        }
+
+        .heading-section-white h2 {
+            font-family: line-height: 1;
+            padding-bottom: 0;
+        }
+
+        .heading-section-white h2 {
+            color: #ffffff;
+        }
+
+        .heading-section-white .subheading {
+            margin-bottom: 0;
+            display: inline-block;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(255, 255, 255, .4);
+        }
+
+        /*PROJECT*/
+        .text-project {
+            padding-top: 10px;
+        }
+
+        .text-project h3 {
+            margin-bottom: 0;
+        }
+
+        .text-project h3 a {
+            color: #000;
+        }
+
+        /*FOOTER*/
+
+        .footer {
+            color: rgba(255, 255, 255, .5);
+
+        }
+
+        .footer .heading {
+            color: #ffffff;
+            font-size: 20px;
+        }
+
+        .footer ul {
+            margin: 0;
+            padding: 0;
+        }
+
+        .footer ul li {
+            list-style: none;
+            margin-bottom: 10px;
+        }
+
+        .footer ul li a {
+            color: rgba(255, 255, 255, 1);
+        }
+
+
+        @media screen and (max-width: 500px) {
+
+
+        }
+
+
+    </style>
+
+
 </head>
-<body style="margin:0; padding:0;" bgcolor="#eaeced">
-<table style="min-width:320px;" width="100%" cellspacing="0" cellpadding="0" bgcolor="#eaeced">
-    <!-- fix for gmail -->
-    <tr>
-        <td class="hide">
-            <table width="600" cellpadding="0" cellspacing="0" style="width:600px !important;">
-                <tr>
-                    <td style="min-width:600px; font-size:0; line-height:0;">&nbsp;</td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-    <tr>
-        <td class="wrapper" style="padding:0 10px;">
-            <!-- module 1 -->
-            <!--<table data-module="module-1" data-thumb="thumbnails/01.png" width="100%" cellpadding="0" cellspacing="0">-->
-            <!--<tr>-->
-            <!--<td data-bgcolor="bg-module" bgcolor="#eaeced">-->
-            <!--<table class="flexible" width="600" align="center" style="margin:0 auto;" cellpadding="0" cellspacing="0">-->
-            <!--<tr style="background: #fff; ">-->
-            <!--<td style="padding:29px 0 30px; ">-->
-            <!--<table width="100%" cellpadding="0" cellspacing="0">-->
-            <!--<tr>-->
-            <!--<th class="flex" width="113" align="left" style="padding:0;">-->
-            <!--<table class="center" cellpadding="0" cellspacing="0">-->
-            <!--<tr style="text-align: center; align-items: center;">-->
-            <!--<td style="line-height:0;">-->
-            <!--<a target="_blank" style="text-decoration:none;" href=""><img src="images/finultimate-logo-blue.png" border="0" style="font:bold 12px/12px Arial, Helvetica, sans-serif; margin: auto; color:#606060;" align="middle" vspace="0" hspace="0" width="" alt="finultimate-logo" /></a>-->
-            <!--</td>-->
-            <!--</tr>-->
-            <!--</table>-->
-            <!--</th>-->
 
-            <!--</tr>-->
-            <!--</table>-->
-            <!--</td>-->
-            <!--</tr>-->
-            <!--</table>-->
-            <!--</td>-->
-            <!--</tr>-->
-            <!--</table>-->
-            <!-- module 2 -->
-            <table data-module="module-2" data-thumb="thumbnails/02.png" width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                    <td data-bgcolor="bg-module" bgcolor="#eaeced">
-                        <table class="flexible" width="600" align="center" style="margin:0 auto;" cellpadding="0" cellspacing="0">
-                            <tr>
-                                <td class="img-flex">
-                                    <img src="https://x3.finratus.com/fin-ratus-logo.svg" style="vertical-align:top;margin:100px 200px;" width="200" height="auto" alt="" />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td data-bgcolor="bg-block" class="holder" style="padding:58px 60px 52px;" bgcolor="#f9f9f9">
-                                    <table width="100%" cellpadding="0" cellspacing="0">
-                                        <tr>
-                                            <td data-color="title" data-size="size title" data-min="25" data-max="45" data-link-color="link title color" data-link-style="text-decoration:none; color:#292c34;" class="title" align="center" style="font:bold 25px/28px Arial, Helvetica, sans-serif; color: #303030; padding:0 0 24px;">
-                                                Welcome onboard!
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td data-color="text" data-size="size text" data-min="10" data-max="26" data-link-color="link text color" data-link-style="font-weight:normal; text-decoration:underline; color:#40aceb;" align="center" style="font:normal 16px/25px Arial, Helvetica, sans-serif; color:#1d1d1d; padding:0 0 23px;">
-                                                In order to request for loan, kindly login to the client portal to verify your email and update your bank information.
-                                        </tr>
-                                        <tr>
-                                            <td data-color="text" data-size="size text" data-min="10" data-max="26" data-link-color="link text color" data-link-style="font-weight:normal; text-decoration:underline; color:#40aceb;" align="center" style="font:normal 16px/25px Arial, Helvetica, sans-serif; color:#1d1d1d; padding:0 0 23px;">
-                                                Thank you for creating a Finratus account.
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                            <!--<tr><td height="28"></td></tr>-->
-                        </table>
-                    </td>
-                </tr>
-            </table>
+<body width="100%" style="margin: 0; padding: 0 !important; mso-line-height-rule: exactly; background-color: #222222;">
+<center style="width: 100%; background-color: #f1f1f1;">
+    <div style="display: none; font-size: 1px;max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all; font-family: sans-serif;">
+        &zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
+    </div>
+    <div style="max-width: 600px; margin: 0 auto;" class="email-container">
+        <!-- BEGIN BODY -->
+        <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+               style="margin: auto;">
+            <tr>
+                <td valign="top" class="bg_white" style="padding: 1em 2.5em;">
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                            <td class="logo" style="text-align: center;">
+                                <img src="https://finratus.com/images-temp/myx3_logo.svg" width="25%">
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr><!-- end tr -->
+            <tr>
+                <td valign="middle" class="hero hero-2 bg_white"
+                    style="background-image: url(https://loan35.com/image_upload/bg-1_.jpg); background-size: cover; height: 350px;">
+                    <table>
+                        <tbody>
+                        <tr>
+                            <td>
+                                <div class="text" style="padding: 0 3em; text-align: center;">
+<!--                                    <h2 style="color: #545454">Thank you for joining-->
+<!--                                        <span>MyX3</span></h2>-->
+                                </div>
+                            </td>
+                        </tr>
 
-            <!--<tr>-->
-            <!--<td data-bgcolor="bg-module" bgcolor="#eaeced">-->
-            <table class="flexible" width="600" align="center" style="margin-top:0" cellpadding="0" cellspacing="0">
-                <tr>
-                    <td class="footer" style="padding:0 0 10px;">
-                        <table width="100%" cellpadding="0" cellspacing="0">
-                            <tr class="table-holder">
-                                <th class="tfoot" width="400" align="left" style="vertical-align:top; padding:0;">
-                                    <table width="100%" cellpadding="0" cellspacing="0">
-                                        <tr>
-                                            <td data-color="text" data-link-color="link text color" data-link-style="text-decoration:underline; color:#797c82;" class="aligncenter" style="font:12px/16px Arial, Helvetica, sans-serif; color:#797c82; padding:10px 0;">
-                                                <span style="float: right">Finratus, 2019. &nbsp; All Rights Reserved. <a target="_blank" style="text-decoration:underline; color:#797c82;" href="sr_unsubscribe">Unsubscribe.</a></span>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </th>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-            </table>
-            <!--</td>-->
-            <!--</tr>-->
-            <!--</table>-->
-        </td>
-    </tr>
-    <!-- fix for gmail -->
-    <tr>
-        <td style="line-height:0;"><div style="display:none; white-space:nowrap; font:15px/1px courier;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</div></td>
-    </tr>
-</table>
+                        </tbody>
+                    </table>
+                </td>
+            </tr><!-- end tr --><!-- end tr -->
+
+
+            <tr>
+                <td class="bg_white">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                        <tr>
+                            <td class="bg_white email-section">
+                                <div class="heading-section" style="text-align: center; padding: 0 30px;">
+                                    <h2 style="color: #440F7C">Welcome Onboard</h2>
+                                    <p style="color: #545454">
+                                        Thank you for joining MyX3. Trust me, you have taken a cool and awesome
+                                        decision. You have taken the first step towards financial freedom.
+                                    </p>
+                                    <p style="color: #545454">
+                                        MyX3 is fast emerging a full and one stop financial lifestyle platform for
+                                        everyone.
+                                    </p>
+                                    <p style="color: #545454">
+                                        Over the past few months, we have been working on making MyX3 extremely simple
+                                        for anyone, regardless of their income level, to apply for loans at their
+                                        comfort.
+                                    </p>
+                                    <p style="color: #545454">
+                                        MyX3 brings home the needed harmony between mobile and web apps. Using MyX3 web,
+                                        you can now access:
+                                    </p>
+                                </div>
+
+                                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr>
+                                        <td valign="top" width="50%">
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0"
+                                                   width="100%">
+                                                <tr>
+                                                    <td style="padding-top: 20px; padding-right: 10px;">
+                                                        <a href="#"><img
+                                                                src="https://finratus.com/images-temp/loan-application.jpg"
+                                                                alt=""
+                                                                style="width: 100%; max-width: 600px; height: auto; margin: auto; display: block;"></a>
+                                                        <div class="text-project" style="text-align: center;">
+                                                            <h3><a href="#" style="color: #440F7C;">Loans</a></h3>
+                                                            <span style="color: #545454">Apply for a loan from the comfort of your couch in any part of the world.</span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+
+                                            </table>
+                                        </td>
+
+                                        <td valign="top" width="50%">
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0"
+                                                   width="100%">
+                                                <tr>
+                                                    <td style="padding-top: 20px; padding-left: 10px;">
+                                                        <a href="#"><img
+                                                                src="https://finratus.com/images-temp/loan-progress.jpg"
+                                                                alt=""
+                                                                style="width: 100%; max-width: 600px; height: auto; margin: auto; display: block;"></a>
+                                                        <div class="text-project" style="text-align: center;">
+                                                            <h3><a href="#" style="color: #440F7C;">Loan Progress</a>
+                                                            </h3>
+                                                            <span style="color: #545454">Stay informed on the details of your loan application(s).</span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr><!-- end: tr -->
+
+                                </table>
+
+
+                                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr>
+                                        <td valign="top" width="50%">
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0"
+                                                   width="100%">
+                                                <tr>
+                                                    <td style="padding-top: 20px; padding-right: 10px;">
+                                                        <a href="#"><img
+                                                                src="https://finratus.com/images-temp/easy-payment.jpg"
+                                                                alt=""
+                                                                style="width: 100%; max-width: 600px; height: auto; margin: auto; display: block;"></a>
+                                                        <div class="text-project" style="text-align: center;">
+                                                            <h3><a href="#" style="color: #440F7C;">Easy Repayment</a>
+                                                            </h3>
+                                                            <span style="color: #545454">The new repayment feature makes it possible for you to remit using your card as and when due. No issues. No stories.</span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+
+                                            </table>
+                                        </td>
+
+                                        <td valign="top" width="50%">
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0"
+                                                   width="100%">
+                                                <tr>
+                                                    <td style="padding-top: 20px; padding-left: 10px;">
+                                                        <a href="#"><img
+                                                                src="https://finratus.com/images-temp/loan-history.jpg"
+                                                                alt=""
+                                                                style="width: 100%; max-width: 600px; height: auto; margin: auto; display: block;"></a>
+                                                        <div class="text-project" style="text-align: center;">
+                                                            <h3><a href="#" style="color: #440F7C;">Loan History</a>
+                                                            </h3>
+                                                            <span style="color: #545454">View details of your previous and current loans from one intuitive dashboard.</span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr><!-- end: tr -->
+
+                                </table>
+
+                                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr>
+                                        <td valign="top" width="50%">
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0"
+                                                   width="100%">
+                                                <tr>
+                                                    <td style="padding-top: 20px; padding-right: 10px;">
+                                                        <a href="#"><img
+                                                                src="https://finratus.com/images-temp/payoff-loan.JPG"
+                                                                alt=""
+                                                                style="width: 100%; max-width: 600px; height: auto; margin: auto; display: block;"></a>
+                                                        <div class="text-project" style="text-align: center;">
+                                                            <h3><a href="#" style="color: #440F7C;"> Payoff Loan</a>
+                                                            </h3>
+                                                            <span style="color: #545454">Why pay in bits when you can now pay off your loan(s) in full?</span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+
+                                            </table>
+                                        </td>
+
+                                        <td valign="top" width="50%">
+
+                                        </td>
+                                    </tr><!-- end: tr -->
+
+                                </table>
+
+                            </td>
+                        </tr><!-- end:tr -->
+                        <!-- 1 Column Text + Button : END -->
+
+                    </table>
+                    <table>
+                        <tr>
+                            <td>
+                                <h3><a href="#" style="color: #440F7C;">Thanks for inspiring the journey so far.</a></h3>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: center">
+                                <a href="https://www.x3leasing.com/"
+                                   style="background-color:  #440F7C;border-radius: 30px;padding: 15px 50px;color: white; margin-top: 25px;">
+                                    Get Started</a>
+                            </td>
+                        </tr>
+                    </table>
+                    <br>
+                    <br>
+                    <table style="text-align: center;">
+                        <tr>
+                            <td>
+                                <h3><a href="#" style="color: #440F7C;">Coming Soon</a></h3>
+                                <img src="https://finratus.com/images-temp/google-play.svg" width="25%">
+                                <img src="https://finratus.com/images-temp/app-store.svg" width="25%">
+                            </td>
+                        </tr>
+                    </table>
+                    <br>
+                    <table>
+
+                        <tr>
+                            <td>
+                                <h3><a href="#" style="color: #545454;">Abiodun Atobatele (CEO, Founder).</a></h3>
+                            </td>
+                        </tr>
+                    </table>
+
+
+                    <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+                           style="margin: auto;">
+
+                        <tr>
+                            <td valign="middle" class="footer email-section" style="background-color: #440F7C;">
+                                <table>
+                                    <tr>
+                                        <td valign="top" width="33.333%">
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0"
+                                                   width="100%">
+                                                <tr>
+                                                    <td style="text-align: center;">
+                                                        <p style="color: white">&copy; 2020 Myx3. All Rights
+                                                            Reserved</p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </div>
+</center>
 </body>
 </html>
