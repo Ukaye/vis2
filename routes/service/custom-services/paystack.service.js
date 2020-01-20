@@ -82,7 +82,6 @@ router.post('/payments/create', (req, res) => {
                 payload.reference = payment_response.data.reference;
                 payload.date_created = date;
                 payload.created_by = invoice.created_by;
-                payload.invoiceID = invoice.invoiceID;
                 payload.applicationID = invoice.applicationID;
                 payload.clientID = invoice.clientID;
                 invoice.fee = payload.fee;
