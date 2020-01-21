@@ -24,8 +24,8 @@ function getPaystackLogs() {
                     query: `ORDER BY amount ${aoData[2].value[0].dir}`
                 },
                 {
-                    name: 'RRR',
-                    query: `ORDER BY RRR ${aoData[2].value[0].dir}`
+                    name: 'reference',
+                    query: `ORDER BY reference ${aoData[2].value[0].dir}`
                 },
                 {
                     name: 'date_created',
@@ -34,10 +34,6 @@ function getPaystackLogs() {
                 {
                     name: 'initiator',
                     query: `ORDER BY initiator ${aoData[2].value[0].dir}`
-                },
-                {
-                    name: 'response',
-                    query: `ORDER BY response ${aoData[2].value[0].dir}`
                 },
                 {
                     name: 'action',
@@ -74,7 +70,7 @@ function getPaystackLogs() {
         ],
         columns: [
             {
-                width: "20%",
+                width: "30%",
                 data: "client"
             },
             {
@@ -92,26 +88,20 @@ function getPaystackLogs() {
             },
             {
                 width: "20%",
-                mRender: function (data, type, full) {
+                mRender: (data, type, full) => {
                     if (full.date_created) return moment(new Date(full.date_created)).format('LLLL');
                     return '--';
                 }
             },
             {
-                width: "15%",
+                width: "25%",
                 mRender: (data, type, full) => {
                     return full.initiator;
                 }
             },
             {
-                width: "20%",
-                mRender: function (data, type, full) {
-                    return JSON.parse(full.response).status || 'N/A';
-                }
-            },
-            {
                 width: "5%",
-                mRender: function (data, type, full) {
+                mRender: (data, type, full) => {
                     return `<a class="btn btn-primary btn-sm" href="/loan-repayment?id=${full.applicationID}">View Loan</a>
                     <a class="btn btn-outline-info btn-sm" onclick="getPaystackStatus(${full.ID})">View Status</a>`;
                 }
