@@ -165,6 +165,7 @@ $('#fees-check').click(function () {
     }
 });
 
+let stage_downloads = [];
 function loadApplication(user_id){
     $.ajax({
         'url': '/user/application-id/'+application_id,
@@ -237,6 +238,19 @@ function loadApplication(user_id){
                         }
                     }
                 }
+            }
+
+            if (application.downloads){
+                $('#downloads-form-div').show();
+                let downloads = application.downloads.split(',');
+                downloads.forEach(function (download) {
+                    if (download.trim().replace(/ /g, '_') in application.file_downloads){
+                        $('#stage-downloads').append(`<option value = "${download}">${download} &nbsp; (&check;)</option>`);
+                    } else {
+                        $('#stage-downloads').append(`<option value = "${download}">${download}</option>`);
+                    }
+                    stage_downloads.push(document);
+                });
             }
 
             getApplicationSettings(application);
@@ -325,8 +339,7 @@ function loadComments(comments) {
     }
 }
 
-let stage_documents = [],
-    stage_downloads = [];
+let stage_documents = [];
 $('.next').hide();
 $('.previous').hide();
 $('#next-actions').hide();
@@ -387,19 +400,6 @@ function loadWorkflowStages(state) {
                 });
                 $('#stage-documents').append('<option value = "others">Others</option>');
                 fileUpload();
-            }
-
-            if (stage.download){
-                $('#downloads-form-div').show();
-                let downloads = stage.download.split(',');
-                downloads.forEach(function (download) {
-                    if (download.trim().replace(/ /g, '_') in application.file_downloads){
-                        $('#stage-downloads').append(`<option value = "${download}">${download} &nbsp; (&check;)</option>`);
-                    } else {
-                        $('#stage-downloads').append(`<option value = "${download}">${download}</option>`);
-                    }
-                    stage_downloads.push(document);
-                });
             }
 
             if (stage.actions){
@@ -499,6 +499,7 @@ function loadWorkflowStages(state) {
                 $('#disburse-alert').show();
                 $("#current_stage").hide();
                 $("#next-actions").hide();
+                $("#newOffer").hide();
                 $(".previous").hide();
                 $(".cancel").hide();
                 $(".next").hide();
