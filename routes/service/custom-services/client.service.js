@@ -641,37 +641,38 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
     payload.description = 'Client details updated.';
     payload.affected = req.params.id;
 
-    delete postData.ID;
-    delete postData.username;
-    delete postData.password;
-    delete postData.email;
-    delete postData.bvn;
-    if (bvn) {
-        query = `SELECT * FROM clients WHERE bvn = ${bvn} AND verify_bvn = 1`;
-        db.query(query, (error, bvn_check) => {
-            if (error) return res.send({
-                "status": 500,
-                "error": error,
-                "response": null
-            });
+    db.query(`SELECT * FROM clients WHERE ID = ${req.params.id}`, (error, client) => {
+        if (client[0]['ID']) delete postData.ID;
+        if (client[0]['bvn']) delete postData.bvn;
+        if (client[0]['email']) delete postData.email;
+        if (client[0]['username']) delete postData.username;
+        if (client[0]['password']) delete postData.password;
 
-            if (bvn_check[0]) {
-                if (bvn_check[0]['ID'] == req.params.id) {
-                    return res.send({
-                        "status": 500,
-                        "error": 'You have already verified this BVN!',
-                        "response": null
-                    });
-                } else {
-                    return res.send({
-                        "status": 500,
-                        "error": 'This BVN is already in use by another user!',
-                        "response": null
-                    });
+        if (bvn) {
+            query = `SELECT * FROM clients WHERE bvn = ${bvn} AND verify_bvn = 1`;
+            db.query(query, (error, bvn_check) => {
+                if (error) return res.send({
+                    "status": 500,
+                    "error": error,
+                    "response": null
+                });
+
+                if (bvn_check[0]) {
+                    if (bvn_check[0]['ID'] == req.params.id) {
+                        return res.send({
+                            "status": 500,
+                            "error": 'You have already verified this BVN!',
+                            "response": null
+                        });
+                    } else {
+                        return res.send({
+                            "status": 500,
+                            "error": 'This BVN is already in use by another user!',
+                            "response": null
+                        });
+                    }
                 }
-            }
 
-            db.query(`SELECT * FROM clients WHERE ID = ${req.params.id}`, (error, client) => {
                 helperFunctions.resolveBVN(bvn, bvn_response => {
                     if (error) return res.send({
                             "status": 500,
@@ -740,25 +741,25 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
                     }
                 });
             });
-        });
-    } else {
-        query = `UPDATE clients SET ? WHERE ID = ${req.params.id}`;
-        db.query(query, postData, error => {
-            if (error)
-                return res.send({
-                    "status": 500,
-                    "error": error,
-                    "response": null
+        } else {
+            query = `UPDATE clients SET ? WHERE ID = ${req.params.id}`;
+            db.query(query, postData, error => {
+                if (error)
+                    return res.send({
+                        "status": 500,
+                        "error": error,
+                        "response": null
+                    });
+        
+                notificationsService.log(req, payload);
+                res.send({
+                    "status": 200,
+                    "error": null,
+                    "response": "Client Details Updated"
                 });
-    
-            notificationsService.log(req, payload);
-            res.send({
-                "status": 200,
-                "error": null,
-                "response": "Client Details Updated"
             });
-        });
-    }
+        }
+    });
 });
 
 sendBVNOTP = (client, bvn, phone, res) => {
