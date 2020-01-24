@@ -3389,8 +3389,8 @@ router.post('/forgot-pin/get', (req, res) => {
 });
 
 router.get('/product/:product_id', helperFunctions.verifyJWT, function (req, res) {
-    let query = `SELECT w.*, (SELECT GROUP_CONCAT(NULLIF(s.document,"")) FROM workflow_stages s WHERE w.ID = s.workflowID) document ' +
-        'FROM workflows w WHERE w.status <> 0 AND w.enable_client_product = 1 AND w.ID = ${req.params.product_id}`;
+    let query = `SELECT w.*, (SELECT GROUP_CONCAT(NULLIF(s.document,"")) FROM workflow_stages s WHERE w.ID = s.workflowID) document 
+        FROM workflows w WHERE w.status <> 0 AND w.enable_client_product = 1 AND w.ID = ${req.params.product_id}`;
     db.query(query, function (error, product) {
         if (error)
             return res.send({
