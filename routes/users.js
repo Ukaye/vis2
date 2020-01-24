@@ -3806,16 +3806,16 @@ users.get('/application/payment-reversal/:id/:invoice_id', function(req, res, ne
                                 payload.description = 'Payment Reversed for Loan';
                                 payload.affected = id;
                                 notificationsService.log(req, payload);
-                                emailService.send({
-                                    to: result[0]['email'],
-                                    subject: 'Payment Reversed',
-                                    template: 'default',
-                                    context: {
-                                        name: result[0]['fullname'],
-                                        message: `Your payment of ₦${helperFunctions.numberToCurrencyFormatter(result[0]['actual_amount'])} 
-                                            was reversed!`
-                                    }
-                                });
+                                // emailService.send({
+                                //     to: result[0]['email'],
+                                //     subject: 'Payment Reversed',
+                                //     template: 'default',
+                                //     context: {
+                                //         name: result[0]['fullname'],
+                                //         message: `Your payment of ₦${helperFunctions.numberToCurrencyFormatter(result[0]['actual_amount'])} 
+                                //             was reversed!`
+                                //     }
+                                // });
                                 res.send({"status": 200, "message": "Payment reversed successfully!", "response":history});
                             }
                         });
