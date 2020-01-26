@@ -4,7 +4,7 @@ $(document).ready(function() {
 
     CKEDITOR.config.mentions = [
         {
-            feed: [ 'username', 'fullname', 'phone', 'address', 'branch', 'supervisor'],
+            feed: [ 'username', 'first_name', 'middle_name', 'last_name', 'full_name', 'date_created', 'phone', 'address', 'email', 'dob', 'marital_status', 'loan_officer', 'client_state', 'postcode', 'client_country', 'years_add', 'ownership', 'employer_name', 'industry', 'job', 'salary', 'job_country', 'off_address', 'off_state', 'doe', 'gender', 'branch', 'bank', 'account', 'account_name', 'bvn', 'client_description', 'name', 'web_address', 'state', 'country'],
             minChars: 0,
             marker: '@'
         }
