@@ -117,5 +117,9 @@ router.post('/trigger/send', function(req, res, next) {
 
 })
 
+router.get('/send', (req, res)=> {
+    
+})
+
 
 module.exports = router;
