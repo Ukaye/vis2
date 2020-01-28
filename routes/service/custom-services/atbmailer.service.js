@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const extract = require('mention-hashtag');
+const replaceOnce = require('replace-once')
 const fs = require('fs');
 const axios = require('axios');
 const db = require('../../../db');
@@ -58,30 +59,19 @@ router.post('/trigger/save', function(req, res, next) {
 
 router.post('/trigger/send', function(req, res, next) {
 
-    const mailData = req.body
+    let msg
+    let mailData = req.body,
 
-    let query = `SELECT trigger_subject, trigger_content FROM email_templates WHERE trigger_name = '${mailData.triggerName}'`
-        db.query(query, function(error, results) {
-            if(error) {
-                res.send({
-                    status: 500,
-                    error,
-                    result: null
-                })
-            }
-
-            let data = results[0]
-                sterilizedMsg = mailData.triggerContent,
+                unsterilizedMsg = mailData.triggerContent,
                 subject = mailData.triggerSubject,
-                mentions = extract(sterilizedMsg, { unique: true, symbol: false});
-                mentionsList = mentions.toString();
-                recipients = mailData.triggerRecipients;
+                mentions = extract(unsterilizedMsg, { unique: true, symbol: false}),
+                mentionsWithSymbol = extract(unsterilizedMsg, { unique: true, symbol: true}),
+                mentionsList = mentions.toString(),
+                recipients = mailData.triggerRecipients,
                 recipientsArray = (recipients).split(',');
     
                 recipientsArray.forEach((recipient)=> {
-            
-                    //New TEst replace placeholder with live data
-/*                     
+                    
                     if(mentions.length > 0) {
                         let query = `select ${mentionsList} from clients where email = '${recipient}'`;
                         console.log(query)
@@ -90,53 +80,37 @@ router.post('/trigger/send', function(req, res, next) {
                                 return console.log(error);
                             } else {
                                 results.map(liveData => {
-                                    //console.log(liveData.username)
-                                    mentions.forEach(element => {
-                                        let regex = new RegExp('@'+element, 'gi');
-                                        sterilizedMsg = sterilizedMsg.replace(regex, liveData[element]);
-                                    })
-                                    //let regex = new RegExp('@'+element, 'gi');
-                                    //sterilizedMsg = sterilizedMsg.replace(regex, liveData[element]);
+                                    console.log(Object.values(liveData))
+                                    let find = mentionsWithSymbol;
+                                    let replace = Object.values(liveData)
+                                    let sterilizedMsg = replaceOnce(unsterilizedMsg, find, replace, 'gi')
+                                    console.log(sterilizedMsg)
+                                    msg = {
+                                        to: recipient,
+                                        subject,
+                                        from: 'no-reply@app.finratus.com',
+                                        html: sterilizedMsg
+                                        };
+                                        emailService.sendHtmlByDomain(msg)
                                 });
-                                console.log(sterilizedMsg)
                             }
-                        }) */
+                        })
+                    } else {
 
-                        //end of new test
-
-                        let i = 0;
-                
-                        mentions.forEach(element => {
-                            let query = `select ${element} from clients where email = '${recipient}'`;
-                                db.query(query, function(error, results) {
-                                    if(error) {
-                                        return console.log(error);
-                                    } else {
-                                        results.map(liveData => {
-                                            let regex = new RegExp('@'+element, 'gi');
-                                            sterilizedMsg = sterilizedMsg.replace(regex, liveData[element]);
-                                        });
-                                        i++;
-                
-                                        if(i === mentions.length) {
-                
-                                            let msg = {
-                                                to: recipient,
-                                                subject,
-                                                from: 'no-reply@app.finratus.com',
-                                                html: sterilizedMsg
-                                                };
-                                                console.log(sterilizedMsg)
-                                                emailService.sendHtmlByDomain(msg)
-                                        }
-                                    }
-                                })
-                        });
-                
-                    //}
+                        msg = {
+                            to: recipient,
+                            subject,
+                            from: 'no-reply@app.finratus.com',
+                            html: unsterilizedMsg
+                            };
+                            emailService.sendHtmlByDomain(msg)                        
+                    }
             })
-            res.status(200).send()
-        })
+            res.send({
+                status: 200,
+                error: null,
+                response: 'Email succesfully sent.'
+            })
 
 })
 
