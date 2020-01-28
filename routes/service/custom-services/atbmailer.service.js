@@ -69,6 +69,7 @@ router.post('/trigger/send', function(req, res, next) {
                 mentionsList = mentions.toString(),
                 recipients = mailData.emailRecipients,
                 recipientsArray = (recipients).split(',');
+                console.log(unsterilizedMsg)
     
                 recipientsArray.forEach((recipient)=> {
                     
