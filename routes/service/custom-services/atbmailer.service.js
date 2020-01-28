@@ -71,20 +71,43 @@ router.post('/trigger/send', function(req, res, next) {
             }
 
             let data = results[0]
-                sterilizedMsg = data.trigger_content,
-                subject = data.trigger_subject,
+                sterilizedMsg = mailData.triggerContent,
+                subject = mailData.triggerSubject,
                 mentions = extract(sterilizedMsg, { unique: true, symbol: false});
-                recipients = mailData.recipients;
+                mentionsList = mentions.toString();
+                recipients = mailData.triggerRecipients;
                 recipientsArray = (recipients).split(',');
     
                 recipientsArray.forEach((recipient)=> {
             
-                    //replace placeholder with live data
+                    //New TEst replace placeholder with live data
+/*                     
                     if(mentions.length > 0) {
+                        let query = `select ${mentionsList} from clients where email = '${recipient}'`;
+                        console.log(query)
+                        db.query(query, function(error, results) {
+                            if(error) {
+                                return console.log(error);
+                            } else {
+                                results.map(liveData => {
+                                    //console.log(liveData.username)
+                                    mentions.forEach(element => {
+                                        let regex = new RegExp('@'+element, 'gi');
+                                        sterilizedMsg = sterilizedMsg.replace(regex, liveData[element]);
+                                    })
+                                    //let regex = new RegExp('@'+element, 'gi');
+                                    //sterilizedMsg = sterilizedMsg.replace(regex, liveData[element]);
+                                });
+                                console.log(sterilizedMsg)
+                            }
+                        }) */
+
+                        //end of new test
+
                         let i = 0;
                 
                         mentions.forEach(element => {
-                            let query = `select ${element} from users where email = '${recipient}'`;
+                            let query = `select ${element} from clients where email = '${recipient}'`;
                                 db.query(query, function(error, results) {
                                     if(error) {
                                         return console.log(error);
@@ -103,19 +126,20 @@ router.post('/trigger/send', function(req, res, next) {
                                                 from: 'no-reply@app.finratus.com',
                                                 html: sterilizedMsg
                                                 };
-
+                                                console.log(sterilizedMsg)
                                                 emailService.sendHtmlByDomain(msg)
                                         }
                                     }
                                 })
                         });
                 
-                    }
+                    //}
             })
             res.status(200).send()
         })
 
 })
+
 
 
 module.exports = router;
