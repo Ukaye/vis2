@@ -62,12 +62,12 @@ router.post('/trigger/send', function(req, res, next) {
     let msg
     let mailData = req.body,
 
-                unsterilizedMsg = mailData.triggerContent,
-                subject = mailData.triggerSubject,
+                unsterilizedMsg = mailData.emailContent,
+                subject = mailData.emailSubject,
                 mentions = extract(unsterilizedMsg, { unique: true, symbol: false}),
                 mentionsWithSymbol = extract(unsterilizedMsg, { unique: true, symbol: true}),
                 mentionsList = mentions.toString(),
-                recipients = mailData.triggerRecipients,
+                recipients = mailData.emailRecipients,
                 recipientsArray = (recipients).split(',');
     
                 recipientsArray.forEach((recipient)=> {

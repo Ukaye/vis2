@@ -1,6 +1,6 @@
 $(document).ready(function() {
         
-    CKEDITOR.replace( 'triggerContent' );
+    CKEDITOR.replace( 'emailContent' );
 
     CKEDITOR.config.mentions = [
         {
@@ -32,12 +32,11 @@ function saveTrigger() {
         });
     }
 
-    function sendTrigger() {
+    function sendEmail() {
         let obj = {
-            triggerName: $(triggerName).val(),
-            triggerSubject: $(triggerSubject).val(),
-            triggerRecipients: $(triggerRecipients).val(),
-            triggerContent: CKEDITOR.instances.triggerContent.getData()
+            triggerSubject: $(emailSubject).val(),
+            triggerRecipients: $(emailRecipients).val(),
+            triggerContent: CKEDITOR.instances.emailContent.getData()
         }
         
         $.ajax({
@@ -45,9 +44,9 @@ function saveTrigger() {
             'type': 'post',
             'data': obj,
             'success': function (data) {
-                //$(triggerRecipients).val('');
-                //$(triggerSubject).val('');
-                CKEDITOR.instances.triggerContent.setData('');
+                $(emailRecipients).val('');
+                $(emailSubject).val('');
+                CKEDITOR.instances.emailContent.setData('');
                 $('#wait').hide();
                 swal(data.response,"","success");
             }
