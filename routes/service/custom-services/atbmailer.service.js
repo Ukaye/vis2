@@ -74,17 +74,14 @@ router.post('/trigger/send', function(req, res, next) {
                     
                     if(mentions.length > 0) {
                         let query = `select ${mentionsList} from clients where email = '${recipient}'`;
-                        console.log(query)
                         db.query(query, function(error, results) {
                             if(error) {
                                 return console.log(error);
                             } else {
                                 results.map(liveData => {
-                                    console.log(Object.values(liveData))
                                     let find = mentionsWithSymbol;
                                     let replace = Object.values(liveData)
                                     let sterilizedMsg = replaceOnce(unsterilizedMsg, find, replace, 'gi')
-                                    console.log(sterilizedMsg)
                                     msg = {
                                         to: recipient,
                                         subject,
