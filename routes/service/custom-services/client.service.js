@@ -792,6 +792,8 @@ sendBVNOTP = (client, bvn, phone, res) => {
                 });
             });
         } else {
+            console.log(data)
+            console.log(data.response)
             return res.send({
                 "status": 500,
                 "error": 'Error validating BVN!',
