@@ -42,14 +42,14 @@ router.post('/trigger/save', function(req, res, next) {
                     res.send({
                         status: 201,
                         error: null,
-                        response: "Trigger Saved"
+                        response: "Trigger Created"
                     })
                 })
             }
 
         })
 
-        next
+        next;
 })
 
 router.post('/trigger/send', function(req, res, next) {
@@ -86,7 +86,8 @@ router.post('/trigger/send', function(req, res, next) {
                         query = `select ${mentionsList} from clients where email = '${recipient}'`;
                         db.query(query, function(error, results) {
                             if(error) {
-                                return console.log(error);
+                                console.log(error);
+                                res.status(500);
                             } else {
                                 results.map(liveData => {
                                     find = mentionsWithSymbol;
@@ -99,6 +100,8 @@ router.post('/trigger/send', function(req, res, next) {
                                         html: sterilizedMsg
                                         };
                                         emailService.sendHtmlByDomain(msg)
+                                        
+                                        succesResponse();
                                 });
                             }
                         })
@@ -110,15 +113,23 @@ router.post('/trigger/send', function(req, res, next) {
                             from: 'no-reply@app.finratus.com',
                             html: unsterilizedMsg
                             };
-                            emailService.sendHtmlByDomain(msg)                        
+                            emailService.sendHtmlByDomain(msg); 
+                            
+                        succesResponse();
                     }
             })
-            res.send({
+        })
+
+        //response on successfully sending mail
+        function succesResponse() {
+            return res.send({
                 status: 200,
                 error: null,
                 response: 'Email triggered succesfully.'
             })
-        })
+        }
+
+        next;
 
 })
 
@@ -141,7 +152,8 @@ router.post('/mail/send', function(req, res, next) {
                         let query = `select ${mentionsList} from clients where email = '${recipient}'`;
                         db.query(query, function(error, results) {
                             if(error) {
-                                return console.log(error);
+                                console.log(error);
+                                return res.status(500);
                             } else {
                                 results.map(liveData => {
                                     let find = mentionsWithSymbol;
@@ -153,7 +165,9 @@ router.post('/mail/send', function(req, res, next) {
                                         from: 'no-reply@app.finratus.com',
                                         html: sterilizedMsg
                                         };
-                                        emailService.sendHtmlByDomain(msg)
+                                        emailService.sendHtmlByDomain(msg);
+
+                                    succesResponse();
                                 });
                             }
                         })
@@ -165,15 +179,22 @@ router.post('/mail/send', function(req, res, next) {
                             from: 'no-reply@app.finratus.com',
                             html: unsterilizedMsg
                             };
-                            emailService.sendHtmlByDomain(msg)                        
+                            emailService.sendHtmlByDomain(msg);
+                            
+                        succesResponse();
                     }
             })
-            res.send({
-                status: 200,
-                error: null,
-                response: 'Email succesfully sent.'
-            })
 
+            //response on successfully sending mail
+            function succesResponse() {
+                return res.send({
+                    status: 200,
+                    error: null,
+                    response: 'Email triggered succesfully.'
+                })
+            }
+
+            next;
 })
 
 
