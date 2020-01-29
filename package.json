@@ -28,6 +28,7 @@
     "express-sql-session": "^1.0.0",
     "fs": "0.0.1-security",
     "getmac": "^1.4.6",
+    "he": "^1.2.0",
     "js-sha512": "^0.8.0",
     "jsonwebtoken": "^8.4.0",
     "jspdf": "^1.5.3",
