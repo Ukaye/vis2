@@ -763,6 +763,13 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
 });
 
 sendBVNOTP = (client, bvn, phone, res) => {
+    if (!phone)
+        return res.send({
+            "status": 500,
+            "error": 'There is no phone number linked to this BVN',
+            "response": null
+        });
+
     let otp = Math.floor(100000 + Math.random() * 900000);
     let payload = {
         bvn_otp: otp,
@@ -776,8 +783,6 @@ sendBVNOTP = (client, bvn, phone, res) => {
         message: `To confirm your BVN on My X3, use this OTP ${otp}`
     }
     helperFunctions.sendSMS(sms, data => {
-        console.log(phone)
-        console.log(helperFunctions.formatToNigerianPhone(phone))
         if (data.response.status === 'SUCCESS') {
             db.query(`UPDATE clients SET ? WHERE ID = ${client.ID}`, payload, (error, response) => {
                 if (error)
