@@ -3,8 +3,6 @@ const router = express.Router();
 const extract = require('mention-hashtag');
 const replaceOnce = require('replace-once');
 const he = require('he')
-const fs = require('fs');
-const axios = require('axios');
 const db = require('../../../db');
 const emailService = require('./email.service')
 
@@ -76,14 +74,16 @@ router.post('/trigger/send', function(req, res, next) {
                 mentionsList = mentions.toString(),
                 recipients = mailData.recipients;
                 recipientsArray = (recipients).split(','),
-                find,
-                replace,
-                sterilizedMsg;
     
                 recipientsArray.forEach((recipient)=> {
+                let msg,
+                    query,
+                    find,
+                    replace,
+                    sterilizedMsg;
                     
                     if(mentions.length > 0) {
-                        let query = `select ${mentionsList} from clients where email = '${recipient}'`;
+                        query = `select ${mentionsList} from clients where email = '${recipient}'`;
                         db.query(query, function(error, results) {
                             if(error) {
                                 return console.log(error);
@@ -113,7 +113,11 @@ router.post('/trigger/send', function(req, res, next) {
                             emailService.sendHtmlByDomain(msg)                        
                     }
             })
-            res.status(200).send()
+            res.send({
+                status: 200,
+                error: null,
+                response: 'Email triggered succesfully.'
+            })
         })
 
 })
