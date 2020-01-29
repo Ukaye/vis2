@@ -776,8 +776,8 @@ sendBVNOTP = (client, bvn, phone, res) => {
         message: `To confirm your BVN on My X3, use this OTP ${otp}`
     }
     helperFunctions.sendSMS(sms, data => {
-        console.log('here!')
-        console.log(data)
+        console.log(phone)
+        console.log(helperFunctions.formatToNigerianPhone(phone))
         if (data.response.status === 'SUCCESS') {
             db.query(`UPDATE clients SET ? WHERE ID = ${client.ID}`, payload, (error, response) => {
                 if (error)
