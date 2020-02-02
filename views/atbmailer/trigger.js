@@ -72,3 +72,26 @@ function saveTrigger() {
         
 
     }
+
+    function unsubscribe() {
+        let obj = {
+            emailAddress: $(emailAddress).val()
+        }
+
+        if(obj.emailAddress === '') {
+            return swal('Please input email address!', '', 'warning');
+        } else {
+            $.ajax({
+                'url': '/atbmailer/mail/unsubscribe/',
+                'type': 'post',
+                'data': obj,
+                'success': function (data) {
+                    $(emailAddress).val('');
+                    $('#wait').hide();
+                    swal(data.response,"",data.alert);
+                }
+            });
+        }
+        
+
+    }
