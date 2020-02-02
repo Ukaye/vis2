@@ -236,6 +236,12 @@ app.get('/atbmailer/send', requireLogin, function(req, res) {
     });
 });
 
+app.get('/atbmailer/unsubscribe', requireLogin, function(req, res) {
+    res.sendFile('/atbmailer/unsubscribe.html', {
+        root: __dirname + '/views'
+    });
+});
+
 app.use('/', index);
 app.use('/user', user);
 app.use('/settings', settings);
