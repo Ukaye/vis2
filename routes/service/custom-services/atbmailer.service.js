@@ -176,6 +176,8 @@ router.post('/mail/send', function(req, res, next) {
 
 })
 
-
+router.get('/unsubscribe/:email', (req, res)=> {
+    
+})
 
 module.exports = router;
