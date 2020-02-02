@@ -126,7 +126,7 @@
                     <ol class="breadcrumb text-right">
                         <li><a href="#">Dashboard</a></li>
                         <li><a href="#">Users</a></li>
-                        <li class="active">Email Triggers / Blaster</li>
+                        <li class="active">Email Triggers / Unsubscribe</li>
                     </ol>
                 </div>
             </div>
@@ -139,46 +139,23 @@
                 <div id="user-form" class="col-xs-12 col-sm-12">
                     <div class="card">
                         <div class="card-header">
-                            <strong>Send Bulk Personalised Mails</strong> <small> Mail Information</small>
+                            <strong>Unsubscribe from promotional mails</strong> <small> Email Address</small>
                         </div>
                         <div class="card-body card-block">
                             <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">Email Recipients <strong style="color:red"> *</strong></label>
-                                <div class="col-sm-9">
-                                    <div class="row">
-                                        <div class="col-sm-11">
-                                            <textarea id="emailRecipients" class="form-control" maxlength="10000" placeholder="Input recipients emails separated by comma." name="emailRecipients"></textarea>
-                                            <small class="form-text text-muted">Maximum of 10000 characters</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">Email Subject <strong style="color:red"> *</strong></label>
+                                <label class="col-sm-3 col-form-label">Email Address <strong style="color:red"> *</strong></label>
                                 <div class="col-sm-9">
                                     <div class="row">
                                         <div class="col-sm-11 input-group">
                                             <div class="input-group-addon"><i class="fa fa-sticky-note"></i></div>
-                                            <input id="emailSubject" class="form-control" required="required" name="emailSubject">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <br>
-                            <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">Email Content <strong style="color:red"> *</strong></label>
-                                <div class="col-sm-9">
-                                    <div class="row">
-                                        <div class="col-sm-11">
-                                            <textarea id="emailContent" class="form-control" maxlength="1000" placeholder="Brief description" name="emailContent"></textarea>
-                                            <small class="form-text text-muted">Maximum of 5000 characters</small>
+                                            <input id="emailAddress" class="form-control" required="required" name="emailAddress">
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <br>
                             <div class = "form-group">
-                                <input type="submit" class="btn btn-success btn-flat m-b-30 m-t-30" value="Send Email" onclick="sendEmail()"/><span id="submit-error" style="padding-left:50px; text-align: center"></span>
+                                <input type="submit" class="btn btn-success btn-flat m-b-30 m-t-30" value="Unsubscribe" onclick="unsubscribe()"/><span id="submit-error" style="padding-left:50px; text-align: center"></span>
                             </div>
                         </div>
                     </div>
