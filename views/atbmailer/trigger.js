@@ -72,3 +72,53 @@ function saveTrigger() {
         
 
     }
+
+    function sendPromotionalEmail() {
+        let obj = {
+            emailSubject: $(emailSubject).val(),
+            emailRecipients: $(emailRecipients).val(),
+            emailContent: $('#emailContent').summernote('code')
+        }
+
+        if(obj.emailSubject === '' || obj.emailRecipients === '') {
+            return swal('Kindly fill all required fields!', '', 'warning');
+        } else {
+            $.ajax({
+                'url': '/atbmailer/mail/promotions/',
+                'type': 'post',
+                'data': obj,
+                'success': function (data) {
+                    $(emailRecipients).val('');
+                    $(emailSubject).val('');
+                    $('#emailContent').summernote('code', '');
+                    $('#wait').hide();
+                    swal(data.response,"","success");
+                }
+            });
+        }
+        
+
+    }
+
+    function unsubscribe() {
+        let obj = {
+            emailAddress: $(emailAddress).val()
+        }
+
+        if(obj.emailAddress === '') {
+            return swal('Please input email address!', '', 'warning');
+        } else {
+            $.ajax({
+                'url': '/atbmailer/mail/unsubscribe/',
+                'type': 'post',
+                'data': obj,
+                'success': function (data) {
+                    $(emailAddress).val('');
+                    $('#wait').hide();
+                    swal(data.response,"",data.alert);
+                }
+            });
+        }
+        
+
+    }

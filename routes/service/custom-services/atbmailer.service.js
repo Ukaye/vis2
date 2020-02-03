@@ -176,6 +176,105 @@ router.post('/mail/send', function(req, res, next) {
 
 })
 
+router.post('/mail/promotions', function(req, res, next) {
 
+    let msg
+    let mailData = req.body,
+
+                unsterilizedMsg = mailData.emailContent,
+                subject = mailData.emailSubject,
+                mentions = extract(unsterilizedMsg, { unique: true, symbol: false}),
+                mentionsWithSymbol = extract(unsterilizedMsg, { unique: true, symbol: true}),
+                mentionsList = mentions.toString(),
+                recipients = mailData.emailRecipients,
+                recipientsArray = (recipients).split(','),
+                query
+    
+                recipientsArray.forEach((recipient)=> {
+
+                    query = `SELECT count(*) as rows FROM clients WHERE email = '${recipient.trim()}'`
+                    db.query(query, function(error, results) {
+                        if(error) {
+                            console.log('An error occured: ', error)
+                        } else if(results[0].rows > 0) {
+                            query = `SELECT count(*) as rows FROM unsubscribed_list WHERE email = '${recipient.trim()}'`
+                            db.query(query, function(error, results) {
+                                if(error) {
+                                    console.log('An error occured: ', error)
+                                } else if (results[0].rows < 1 && mentions.length > 0) {
+                                    query = `select ${mentionsList} from clients where email = '${recipient}'`;
+                                    db.query(query, function(error, results) {
+                                        if(error) {
+                                            return console.log(error);
+                                        } else {
+                                            results.map(liveData => {
+                                                let find = mentionsWithSymbol;
+                                                let replace = Object.values(liveData)
+                                                let sterilizedMsg = replaceOnce(unsterilizedMsg, find, replace, 'gi')
+                                                msg = {
+                                                        to: recipient,
+                                                        subject,
+                                                        from: 'no-reply@app.finratus.com',
+                                                        html: sterilizedMsg
+                                                    };
+                                                        emailService.sendHtmlByDomain(msg)
+                                                    });
+                                        }
+                                    })
+                                } else if (results[0].rows < 1 && mentions.length === 0) {
+                                    msg = {
+                                            to: recipient,
+                                            subject,
+                                            from: 'no-reply@app.finratus.com',
+                                            html: unsterilizedMsg
+                                        };
+                                        emailService.sendHtmlByDomain(msg)                        
+                                }
+                        })
+                    }
+                })
+            })
+            
+            res.send({
+                status: 200,
+                error: null,
+                response: 'Email succesfully sent.'
+            })
+})
+
+router.post('/mail/unsubscribe', function(req, res) {
+    let emailAddress = req.body.emailAddress,
+
+    query = `SELECT count(*) as rows FROM clients WHERE email = '${emailAddress.trim()}'`
+    db.query(query, function(error, results) {
+        if(error) {
+            return console.log('Email address does not exist')
+        } else {
+            if(results[0].rows > 0) {
+                const query = `INSERT INTO unsubscribed_list SET email = '${emailAddress}'`
+                db.query(query, function(error, results) {
+                    if(error) {
+                        return console.log(error)
+                    } else {
+                        res.send({
+                            status: 200,
+                            error: null,
+                            alert: 'success',
+                            response: 'You have been removed from ATB promotional mail list.'
+                        })
+                    }
+                })
+            } else {
+                        res.send({
+                            status: 404,
+                            error: null,
+                            alert: 'warning',
+                            response: 'Email address not found in database'
+                        })
+            }
+        }
+    })
+
+})
 
 module.exports = router;

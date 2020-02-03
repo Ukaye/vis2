@@ -1,0 +1,192 @@
+<!doctype html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang=""> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8" lang=""> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9" lang=""> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang=""> <!--<![endif]-->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Finratus Admin</title>
+    <meta name="description" content="Finratus Admin">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="apple-touch-icon" href="apple-icon.png">
+    <link rel="shortcut icon" href="../favicon.png">
+    <link rel="stylesheet" href="../assets/css/normalize.css">
+    <script src="./ckcustom/ckeditor.js"></script>
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.15/css/bootstrap-multiselect.css">
+    <link rel="stylesheet" href="../assets/css/font-awesome.min.css">
+    <link rel="stylesheet" href="../assets/css/themify-icons.css">
+    <link rel="stylesheet" href="../assets/css/flag-icon.min.css">
+    <link rel="stylesheet" href="../assets/css/cs-skin-elastic.css">
+    <link rel="stylesheet" href="../assets/css/lib/datatable/dataTables.bootstrap.min.css">
+    <link rel="stylesheet" href="../assets/scss/style.css">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,800' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="../assets/summernote/summernote.css">
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
+    <style type="text/css">
+        .todolist{
+            background-color:#FFF;
+        }
+        .todolist h1{
+            margin:0;
+            padding-bottom:20px;
+            text-align:center;
+        }
+        li.ui-state-default{
+            background:#fff;
+            border:1px solid #ddd;
+            cursor: move;
+            padding: 0 15px;
+            -webkit-box-shadow: 0 10px 6px -6px #777;
+            -moz-box-shadow: 0 10px 6px -6px #777;
+            box-shadow: 0 10px 6px -6px #777;
+        }
+        li.ui-state-default:hover{
+            background: #efefef;
+        }
+        li.ui-state-default:last-child{
+            border-bottom:none;
+        }
+        .todo-footer{
+            background-color:#F4FCE8;
+            padding: 10px 20px;
+        }
+        #stages-table th:first-child, #stages-table td:first-child{
+            display: none;
+        }
+        a:hover {
+            color: #0056b3 !important;
+            text-decoration: underline !important;
+            cursor: pointer !important;
+        }
+        li.disabled, option.disabled {
+            background: #efefef;
+        }
+        li.ui-state-default > span > small{
+            margin-left: 15px;
+        }
+        li.ui-state-default > span{
+            display: inline-block;
+            padding: 15px 0;
+        }
+        li.ui-state-default > button{
+            margin-top: 8px;
+        }
+        .multiselect-native-select{
+            width: 90%;
+        }
+        .multiselect-native-select div.btn-group, .multiselect-native-select button.multiselect, ul.multiselect-container{
+            width: 100%;
+        }
+        .multiselect-native-select button.multiselect{
+            background: #ffffff;
+            color: #495057;
+            border: 1px solid #ced4da;
+            border-radius: .25rem;
+        }
+        .edit-item{
+            pointer-events: auto;
+            margin-right: 5px;
+        }
+        .disabled{
+            pointer-events:none;
+        }
+        .note-editable {
+            padding: 30px !important;
+        }
+    </style>
+</head>
+<body>
+<script src="../../menus/menu-items.js"></script>
+<script type="text/javascript" src="../../workflow/add-workflow/add-workflow1.js"></script>
+<!-- Left Panel -->
+<aside id="left-panel" class="left-panel" include-html="/includes/sidebar.html"></aside><!-- /#left-panel -->
+<!-- Left Panel -->
+
+<!-- Right Panel -->
+<div id="right-panel" class="right-panel">
+    <!-- Header-->
+    <header id="header" class="header" include-html="/includes/header.html"></header><!-- /header -->
+    <!-- Header-->
+
+    <div class="breadcrumbs">
+        <div class="col-sm-4">
+            <div class="page-header float-left">
+                <div class="page-title">
+                    <h1>Email Blaster</h1>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-8">
+            <div class="page-header float-right">
+                <div class="page-title">
+                    <ol class="breadcrumb text-right">
+                        <li><a href="#">Dashboard</a></li>
+                        <li><a href="#">Users</a></li>
+                        <li class="active">Email Triggers / Unsubscribe</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content mt-3">
+        <div class="animated fadeIn">
+            <div class="row">
+                <div id="user-form" class="col-xs-12 col-sm-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <strong>Unsubscribe from promotional mails</strong> <small> Email Address</small>
+                        </div>
+                        <div class="card-body card-block">
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">Email Address <strong style="color:red"> *</strong></label>
+                                <div class="col-sm-9">
+                                    <div class="row">
+                                        <div class="col-sm-11 input-group">
+                                            <div class="input-group-addon"><i class="fa fa-sticky-note"></i></div>
+                                            <input id="emailAddress" class="form-control" required="required" name="emailAddress">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <br>
+                            <div class = "form-group">
+                                <input type="submit" class="btn btn-success btn-flat m-b-30 m-t-30" value="Unsubscribe" onclick="unsubscribe()"/><span id="submit-error" style="padding-left:50px; text-align: center"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div><!-- .animated -->
+        <div id="wait" style="width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;"><img src='../spinner.gif' width="100" height="100" style="background-color: transparent"/></div>
+    </div><!-- .content -->
+
+<!-- Notification Panel -->
+<div id="panels" include-html="/includes/notifications.html"></div>
+<script src="../assets/js/popper.min.js"></script>
+<script src="../assets/js/bootstrap.min.js"></script>
+<script src="../assets/js/plugins.js"></script>
+<script src="../assets/js/main.js"></script>
+<script src="../assets/js/lib/data-table/datatables.min.js"></script>
+<script src="../assets/js/lib/data-table/dataTables.bootstrap.min.js"></script>
+<script src="../assets/js/lib/data-table/dataTables.buttons.min.js"></script>
+<script src="../assets/js/lib/data-table/buttons.bootstrap.min.js"></script>
+<script src="../assets/js/lib/data-table/jszip.min.js"></script>
+<script src="../assets/js/lib/data-table/pdfmake.min.js"></script>
+<script src="../assets/js/lib/data-table/vfs_fonts.js"></script>
+<script src="../assets/js/lib/data-table/buttons.html5.min.js"></script>
+<script src="../assets/js/lib/data-table/buttons.print.min.js"></script>
+<script src="../assets/js/lib/data-table/buttons.colVis.min.js"></script>
+<script src="../assets/js/lib/data-table/datatables-init.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.15/js/bootstrap-multiselect.min.js"></script>
+<script src="../assets/summernote/summernote.min.js"></script>
+<script src="../../js/helper-functions.js"></script>
+<script type="text/javascript" src="./trigger.js"></script>
+<script src="../../js/loader.js"></script>
+<script src="../../js/notifications.js"></script>
+</body>
+</html>
