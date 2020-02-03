@@ -251,28 +251,36 @@ router.post('/mail/unsubscribe', function(req, res) {
             return console.log('Email address does not exist')
         } else {
             if(results[0].rows > 0) {
-                const query = `INSERT INTO unsubscribed_list SET email = '${emailAddress}'`
+                query = `SELECT count(*) as rows FROM clients WHERE email = '${emailAddress.trim()}'`
                 db.query(query, function(error, results) {
                     if(error) {
                         return console.log(error)
-                    } else {
-                        res.send({
-                            status: 200,
-                            error: null,
-                            alert: 'success',
-                            response: 'You have been removed from ATB promotional mail list.'
-                        })
-                    }
-                })
-            } else {
+                    }else if(results[0].rows > 0) {
                         res.send({
                             status: 404,
                             error: null,
                             alert: 'warning',
-                            response: 'Email address not found in database'
+                            response: 'You have previously unsubscribed.'
                         })
+                    } else {
+                        const query = `INSERT INTO unsubscribed_list SET email = '${emailAddress}'`
+                        db.query(query, function(error, results) {
+                            if(error) {
+                                return console.log(error)
+                            } else {
+                                res.send({
+                                    status: 200,
+                                    error: null,
+                                    alert: 'success',
+                                    response: 'You have been removed from ATB promotional mail list.'
+                                    })
+                            }
+                        })
+                    }
+                })
             }
         }
+
     })
 
 })
