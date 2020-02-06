@@ -871,11 +871,11 @@ router.delete('/disable/:id', helperFunctions.verifyJWT, function (req, res) {
 router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
     let query = `SELECT *, (select fullname from users u where u.ID = clients.loan_officer) loan_officer,
         (select branch_name from branches b where b.ID = clients.branch) branch, 
-        (select count(*) from applications where userID = clients.ID and not (status = 0 and close_status = 0)) total_active_loan_count, 
-        (select sum(loan_amount) from applications where userID = clients.ID and not (status = 0 and close_status = 0)) total_active_loan_sum, 
-        (select (select sum(loan_amount) from applications where userID = clients.ID and not (status = 0 and close_status = 0)) - 
-        sum(payment_amount) from schedule_history where applicationID in (select id from applications where userid = clients.ID and 
-        not (status = 0 and close_status = 0)) and status = 1) total_active_loan_balance
+        (select count(*) from applications where userID = clients.ID and status = 2) total_active_loan_count, 
+        (select sum(loan_amount) from applications where userID = clients.ID and status = 2) total_active_loan_sum, 
+        (select (select sum(loan_amount) from applications where userID = clients.ID and status = 2) - 
+        sum(payment_amount) from schedule_history where applicationID in (select id from applications where userid = clients.ID and status = 2) 
+        and status = 1) total_active_loan_balance
         FROM clients WHERE ID = ${req.params.id}`;
     db.query(query, (error, response) => {
         if (error) return res.send({
@@ -2903,7 +2903,7 @@ router.post('/application/verify/email/:id/:application_id/:type', helperFunctio
     data.verify_url = `${req.body.callback_url}?token=${token}&module=application`;
     emailService.send({
         to: req.user.email,
-        subject: 'Email Confirmation',
+        subject: `${req.params.type} email confirmation`,
         template: 'default',
         context: {
             name: req.user.fullname,
@@ -2913,7 +2913,7 @@ router.post('/application/verify/email/:id/:application_id/:type', helperFunctio
     });
     emailService.send({
         to: email,
-        subject: 'Email Confirmation',
+        subject: `${req.params.type} email confirmation`,
         template: 'verify-email',
         context: data
     });
@@ -2952,7 +2952,7 @@ router.get('/application/verify/email/:token', function (req, res) {
             return res.send({
                 "status": 200,
                 "error": null,
-                "response": `Email verified successfully!`
+                "response": `${decoded.type} email verified successfully!`
             });
         });
     });

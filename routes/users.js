@@ -6300,7 +6300,8 @@ users.get('/analytics', function(req, res, next) {
             if (officer !== 'false' && freq == '2' && y == '0'){
                 query = 'select sum(interest_amount) amount_received, \n' +
                     '(select fullname from users where users.id = '+officer+') agent, DATE_FORMAT(payment_date, \'%M, %Y\') paymonth\n' +
-                    'from schedule_history \n' +loan_officerIDre status = 1\n' +
+                    'from schedule_history \n' + 
+                    'where status = 1\n' +
                     'and applicationid in (select id from applications where status <> 0)\n'+
                     'and loan_officerID = '+officer+'\n'+
                     'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)'

@@ -240,7 +240,7 @@ function loadApplication(user_id){
                 }
             }
 
-            if (application.downloads){
+            if (application.downloads && application.client_applications_status !== 4){
                 $('#downloads-form-div').show();
                 let downloads = application.downloads.split(',');
                 downloads.forEach(function (download) {
@@ -460,6 +460,9 @@ function loadWorkflowStages(state) {
                     '<p class="list-group-item-text">'+stage.name+'<br> ('+stage.stage_name+')</p></a>';
             }
 
+            if (application.client_applications_status === 4) 
+                $('#infoRequestModalBtn').hide();
+
             if (application.client_applications_status === 5) {
                 $("#newOfferModalBtn").show();
                 $("#current_stage").hide();
@@ -487,6 +490,7 @@ function loadWorkflowStages(state) {
             if (stage.stage_name === 'Approved' || stage.stage_name === 'Disbursed' || application.status === 2) {
                 $('#infoRequestModalBtn').hide();
                 $('#downloadsForm').hide();
+                $("#newOffer").hide();
                 $('#disbursement-amount').val(numberToCurrencyformatter(application.loan_amount));
                 $('#stage-actions').append('<a href="#" id="stage-action-0" class="dropdown-item" data-toggle="modal" data-target="#disburseModal">Disburse Loan</a>');
             }
@@ -499,7 +503,6 @@ function loadWorkflowStages(state) {
                 $('#disburse-alert').show();
                 $("#current_stage").hide();
                 $("#next-actions").hide();
-                $("#newOffer").hide();
                 $(".previous").hide();
                 $(".cancel").hide();
                 $(".next").hide();
@@ -553,7 +556,7 @@ $('.cancel').on('click', function(e) {
                     'type': 'get',
                     'success': function (data) {
                         notification('Loan cancelled successfully','','success');
-                        window.location.reload();
+                        window.location.href = '/all-applications';
                     },
                     'error': function (err) {
                         console.log(err);
@@ -2190,9 +2193,9 @@ function initNewLoanOffer(application, settings) {
         } else {
             $('.amortization-div2').hide();
             $('#payment-amount-div').show();
-            loanAmount = $('#amount2').val();
-            interestRate = $('#interest-rate2').val();
-            duration = $('#term2').val();
+            loanAmount = $('#amount2').val() || '0';
+            interestRate = $('#interest-rate2').val() || '0';
+            duration = $('#term2').val() || '0';
             repaymentDate = $('#repayment-date2').val();
             if (!loanAmount || !interestRate || !duration)
                 return notification('Kindly fill all required fields!','','warning');

@@ -227,8 +227,7 @@ router.post('/loan-offer/:id', (req, res) => {
                         "response": null
                     });
                 let preapplication = {
-                    date_modified: date,
-                    status: enums.CLIENT_APPLICATION.STATUS.COMPLETED
+                    date_modified: date
                 };
                 connection.query(`UPDATE preapplications Set ? WHERE ID = ${app[0]['preapplicationID']}`, preapplication, (error) => {
                     if(error) return res.send({
@@ -237,11 +236,7 @@ router.post('/loan-offer/:id', (req, res) => {
                             "response": null
                         });
                     
-                    let update = {
-                        status: 0,
-                        date_modified: date
-                    };
-                    connection.query(`UPDATE application_schedules SET ? WHERE applicationID = ${req.params.id} AND status = 1`, update, (error) => {
+                    connection.query(`DELETE FROM application_schedules WHERE applicationID = ${req.params.id} AND status = 1`, (error) => {
                         if(error) return res.send({
                                 "status": 500,
                                 "error": error,
