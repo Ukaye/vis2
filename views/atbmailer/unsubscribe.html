@@ -116,7 +116,7 @@
         <div class="col-sm-4">
             <div class="page-header float-left">
                 <div class="page-title">
-                    <h1>Email Triggers</h1>
+                    <h1>Email Blaster</h1>
                 </div>
             </div>
         </div>
@@ -126,7 +126,7 @@
                     <ol class="breadcrumb text-right">
                         <li><a href="#">Dashboard</a></li>
                         <li><a href="#">Users</a></li>
-                        <li class="active">Email Triggers/Templates</li>
+                        <li class="active">Email Triggers / Unsubscribe</li>
                     </ol>
                 </div>
             </div>
@@ -139,46 +139,23 @@
                 <div id="user-form" class="col-xs-12 col-sm-12">
                     <div class="card">
                         <div class="card-header">
-                            <strong>Add or Update Trigger</strong> <small> Trigger Information</small>
+                            <strong>Unsubscribe from promotional mails</strong> <small> Email Address</small>
                         </div>
                         <div class="card-body card-block">
                             <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">Trigger Name <strong style="color:red"> *</strong></label>
+                                <label class="col-sm-3 col-form-label">Email Address <strong style="color:red"> *</strong></label>
                                 <div class="col-sm-9">
                                     <div class="row">
                                         <div class="col-sm-11 input-group">
                                             <div class="input-group-addon"><i class="fa fa-sticky-note"></i></div>
-                                            <input id="triggerName" class="form-control" name="triggerName" required="required">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">Trigger Subject <strong style="color:red"> *</strong></label>
-                                <div class="col-sm-9">
-                                    <div class="row">
-                                        <div class="col-sm-11 input-group">
-                                            <div class="input-group-addon"><i class="fa fa-sticky-note"></i></div>
-                                            <input id="triggerSubject" class="form-control" required="required" name="triggerSubject">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <br>
-                            <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">Trigger Content</label>
-                                <div class="col-sm-9">
-                                    <div class="row">
-                                        <div class="col-sm-11">
-                                            <textarea id="emailContent" class="form-control" maxlength="1000" placeholder="Brief description" name="emailContent"></textarea>
-                                            <small class="form-text text-muted">Maximum of 5000 characters</small>
+                                            <input id="emailAddress" class="form-control" required="required" name="emailAddress">
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <br>
                             <div class = "form-group">
-                                <input type="submit" class="btn btn-success btn-flat m-b-30 m-t-30" value="Save Trigger" onclick="saveTrigger()"/><span id="submit-error" style="padding-left:50px; text-align: center"></span>
+                                <input type="submit" class="btn btn-success btn-flat m-b-30 m-t-30" value="Unsubscribe" onclick="unsubscribe()"/><span id="submit-error" style="padding-left:50px; text-align: center"></span>
                             </div>
                         </div>
                     </div>

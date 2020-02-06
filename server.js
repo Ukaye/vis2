@@ -230,6 +230,24 @@ app.get('/atbmailer', requireLogin, function(req, res) {
     });
 });
 
+app.get('/atbmailer/send', requireLogin, function(req, res) {
+    res.sendFile('/atbmailer/send.html', {
+        root: __dirname + '/views'
+    });
+});
+
+app.get('/atbmailer/unsubscribe', requireLogin, function(req, res) {
+    res.sendFile('/atbmailer/unsubscribe.html', {
+        root: __dirname + '/views'
+    });
+});
+
+app.get('/atbmailer/promotions', requireLogin, function(req, res) {
+    res.sendFile('/atbmailer/promotions.html', {
+        root: __dirname + '/views'
+    });
+});
+
 app.use('/', index);
 app.use('/user', user);
 app.use('/settings', settings);
