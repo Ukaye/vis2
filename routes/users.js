@@ -4286,8 +4286,8 @@ users.get('/disbursements/filter', function(req, res, next) {
 
     var items = {};
     if (loan_officer){
-        queryPart = queryPart.concat('and (select loan_officer from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) = ?')
-        queryPart2 = queryPart2.concat('and (select loan_officer from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) = ?')
+        queryPart = queryPart.concat('and loan_officerID = ?')
+        queryPart2 = queryPart2.concat('and loan_officerID = ?')
         query = queryPart.concat(group);
         query3 = queryPart2.concat(group);
         query2 = query2.concat('and (select loan_officer from clients where clients.ID = userID) = '+loan_officer+' ');
@@ -4358,7 +4358,7 @@ users.get('/interests/', function(req, res, next) {
         '(select userID from applications where ID = applicationID) as user, (select fullname from clients where ID = user) as fullname, \n' +
         'applicationID, sum(interest_amount) as paid, \n' +
         '(select date_modified from applications where ID = applicationID) as date,\n' +
-        '(select fullname from users where users.id = (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid))) loan_officer\n'+
+        '(select fullname from users where users.id = loan_officerID) loan_officer\n'+
         'from schedule_history sh \n' +
         'where applicationID in (select applicationID from application_schedules\n' +
         '\t\t\t\t\t\twhere applicationID in (select ID from applications where status = 2) and status = 1)\n' +
@@ -4370,11 +4370,10 @@ users.get('/interests/', function(req, res, next) {
         start = "'"+start+"'"
         end = "'"+end+"'"
         queryPart = queryPart.concat('AND (TIMESTAMP(payment_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')
-        // query = (queryPart.concat('AND (TIMESTAMP((select date_created from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
         query = queryPart.concat(group);
     }
     if (officer){
-        queryPart = queryPart.concat('and (select loan_officer from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) = '+officer+' ')
+        queryPart = queryPart.concat('and loan_officerID = '+officer+' ')
         query = queryPart.concat(group)
     }
     db.query(query, function (error, results, fields) {
@@ -4390,15 +4389,14 @@ users.get('/interests/', function(req, res, next) {
 users.get('/interests-receivable/', function(req, res, next) {
     let start = req.query.start,
         end = req.query.end,
-        officer = req.query.officer
-    // end = moment(end).add(1, 'days').format("YYYY-MM-DD");
+        officer = req.query.officer;
     let queryPart,
         query,
-        group
+        group;
     queryPart = 'select \n' +
         '(select userID from applications where ID = applicationID) as user, (select fullname from clients where ID = user) as fullname, \n' +
         'applicationID, sum(interest_amount) as due, interest_collect_date,\n' +
-        '(select fullname from users where users.id = (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid))) loan_officer\n'+
+        '(select fullname from users where users.id = loan_officerID) loan_officer\n'+
         'from application_schedules sh \n' +
         'where applicationID in (select ID from applications where status = 2)\n' +
         'and status = 1\n';
@@ -4409,7 +4407,6 @@ users.get('/interests-receivable/', function(req, res, next) {
         start = "'"+start+"'"
         end = "'"+end+"'"
         queryPart = queryPart.concat('AND (TIMESTAMP(interest_collect_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')
-        // query = (queryPart.concat('AND (TIMESTAMP((select date_created from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
         query = queryPart.concat(group);
     }
     if (officer){
@@ -4429,16 +4426,15 @@ users.get('/interests-receivable/', function(req, res, next) {
 users.get('/principal/', function(req, res, next) {
     let start = req.query.start,
         end = req.query.end,
-        officer = req.query.officer
-    // end = moment(end).add(1, 'days').format("YYYY-MM-DD");
+        officer = req.query.officer;
     let queryPart,
         query,
-        group
+        group;
     queryPart = 'select \n' +
         '(select userID from applications where ID = applicationID) as user, (select fullname from clients where ID = user) as fullname, \n' +
         'applicationID, sum(payment_amount) as paid, \n' +
         '(select date_modified from applications where ID = applicationID) as date,\n' +
-        '(select fullname from users where users.id = (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid))) loan_officer\n'+
+        '(select fullname from users where users.id = loan_officerID) loan_officer\n'+
         'from schedule_history sh \n' +
         'where applicationID in (select applicationID from application_schedules\n' +
         '\t\t\t\t\t\twhere applicationID in (select ID from applications where status = 2) and status = 1)\n' +
@@ -4450,11 +4446,10 @@ users.get('/principal/', function(req, res, next) {
         start = "'"+start+"'"
         end = "'"+end+"'"
         queryPart = queryPart.concat('AND (TIMESTAMP(payment_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')
-        // query = (queryPart.concat('AND (TIMESTAMP((select date_created from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
         query = queryPart.concat(group);
     }
     if (officer){
-        queryPart = queryPart.concat('and (select loan_officer from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) = '+officer+' ')
+        queryPart = queryPart.concat('and loan_officerID = '+officer+' ')
         query = queryPart.concat(group)
     }
     db.query(query, function (error, results, fields) {
@@ -4488,13 +4483,12 @@ users.get('/principal-receivable/', function(req, res, next) {
     if (start  && end){
         start = "'"+start+"'"
         end = "'"+end+"'"
-        queryPart = queryPart.concat('AND (TIMESTAMP(payment_collect_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')
-        // query = (queryPart.concat('AND (TIMESTAMP((select date_created from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
+        queryPart = queryPart.concat('AND (TIMESTAMP(payment_collect_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ');
         query = queryPart.concat(group);
     }
     if (officer){
-        queryPart = queryPart.concat('and (select loan_officer from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) = '+officer+' ')
-        query = queryPart.concat(group)
+        queryPart = queryPart.concat('and (select loan_officer from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) = '+officer+' ');
+        query = queryPart.concat(group);
     }
     db.query(query, function (error, results, fields) {
         if(error){
@@ -4508,11 +4502,8 @@ users.get('/principal-receivable/', function(req, res, next) {
 /* Bad Loans - DeCommissioned  */
 users.get('/bad-loans/', function(req, res, next) {
     let start = req.query.start,
-        end = req.query.end
-    // end = moment(end).add(1, 'days').format("YYYY-MM-DD");
-    let queryPart,
-        query,
-        group
+        end = req.query.end;
+    let query;
     query = '\n' +
         'select ID, \n' +
         '(select fullname from clients where clients.ID = userID) as client, \n' +
@@ -4697,7 +4688,6 @@ users.get('/badloans/', function(req, res, next) {
     queryPart = 'select ID, applicationID, \n' +
         '(payment_collect_date) as duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
         '(select loan_amount from applications where applications.ID = applicationID) as principal, payment_amount\n' +
-        // 'payment_amount, sum(payment_amount) sum,  (sum(interest_amount) - interest_amount) as interest_due\n' +
         'from application_schedules\n' +
         'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) \n'+
         'and datediff(curdate(), payment_collect_date) > 0 ';
@@ -6152,7 +6142,7 @@ users.get('/analytics', function(req, res, next) {
                     'FROM     schedule_history\n' +
                     'WHERE  status = 1\n' +
                     'and applicationid in (select id from applications where applications.status <> 0)\n'+
-                    'AND (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'
+                    'AND loan_officerID = '+officer+'\n'
                 load = [officer]
             }
             //One Officer, Yearly
@@ -6164,7 +6154,7 @@ users.get('/analytics', function(req, res, next) {
                     'FROM     schedule_history\n' +
                     'WHERE status = 1\n' +
                     'and applicationid in (select id from applications where applications.status <> 0)\n'+
-                    'AND (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n' +
+                    'AND loan_officerID = '+officer+'\n' +
                     'group by year'
             }
             //All Officers, Yearly
@@ -6186,7 +6176,7 @@ users.get('/analytics', function(req, res, next) {
                     'FROM     schedule_history\n' +
                     'WHERE\t\t status = 1\n' +
                     'and applicationid in (select id from applications where applications.status <> 0)\n'+
-                    'AND (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n' +
+                    'AND loan_officerID = '+officer+'\n' +
                     'AND DATE_FORMAT(Payment_date, \'%Y\') = '+y+'\n'+
                     'GROUP BY DATE_FORMAT(Payment_date, \'%M%Y\') order by DisburseYearMonth'
             }
@@ -6199,7 +6189,7 @@ users.get('/analytics', function(req, res, next) {
                     'FROM     schedule_history\n' +
                     'WHERE status = 1\n' +
                     'and applicationid in (select id from applications where applications.status <> 0)\n'+
-                    'AND (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n' +
+                    'AND loan_officerID = '+officer+'\n' +
                     'GROUP BY DATE_FORMAT(Payment_date, \'%M%Y\') order by DisburseYearMonth'
             }
             //One Officer, Quarterly in One Year
@@ -6211,7 +6201,7 @@ users.get('/analytics', function(req, res, next) {
                     'FROM     schedule_history\n' +
                     'WHERE\t\t status = 1\n' +
                     'and applicationid in (select id from applications where applications.status <> 0)\n'+
-                    'AND (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n' +
+                    'AND loan_officerID = '+officer+'\n' +
                     'AND DATE_FORMAT(Payment_date, \'%Y\') = '+y+'\n'+
                     'GROUP BY Officersquarter'
             }
@@ -6224,7 +6214,7 @@ users.get('/analytics', function(req, res, next) {
                     'FROM     schedule_history\n' +
                     'WHERE status = 1\n' +
                     'and applicationid in (select id from applications where applications.status <> 0)\n'+
-                    'AND (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n' +
+                    'AND loan_officerID = '+officer+'\n' +
                     'GROUP BY Officersquarter'
             }
             //All Officers, Monthly in One Year
@@ -6291,7 +6281,7 @@ users.get('/analytics', function(req, res, next) {
                     'from schedule_history \n' +
                     'where status = 1\n' +
                     'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'
+                    'and loan_officerID = '+officer+'\n'
                 'group by officer'
             }
             //One Officer, Monthly in Specific Year
@@ -6310,8 +6300,7 @@ users.get('/analytics', function(req, res, next) {
             if (officer !== 'false' && freq == '2' && y == '0'){
                 query = 'select sum(interest_amount) amount_received, \n' +
                     '(select fullname from users where users.id = '+officer+') agent, DATE_FORMAT(payment_date, \'%M, %Y\') paymonth\n' +
-                    'from schedule_history \n' +
-                    'where status = 1\n' +
+                    'from schedule_history \n' +loan_officerIDre status = 1\n' +
                     'and applicationid in (select id from applications where status <> 0)\n'+
                     'and loan_officerID = '+officer+'\n'+
                     'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)'
@@ -6424,7 +6413,7 @@ users.get('/analytics', function(req, res, next) {
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
                     'and status = 1 \n'+
-                    'and loan_officerID = '+officer+'\n'+
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
                     'and Date_format(interest_collect_date, \'%Y\') = '+y+'\n'+
                     'group by Date_format(interest_collect_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM interest_collect_date)'
             }
@@ -6437,7 +6426,7 @@ users.get('/analytics', function(req, res, next) {
                     'from application_schedules\n'+
                     'where applicationID in (select ID from applications where status = 2) \n' +
                     'and status = 1 \n'+
-                    'and loan_officerID = '+officer+'\n'+
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
                     'group by paymonth order by EXTRACT(YEAR_MONTH FROM interest_collect_date)'
             }
             //One Officer, Quarterly in Specific Year
@@ -6449,7 +6438,7 @@ users.get('/analytics', function(req, res, next) {
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
                     'and status = 1 \n'+
-                    'and loan_officerID = '+officer+'\n'+
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
                     'and Date_format(interest_collect_date, \'%Y\') = '+y+'\n'+
                     'group by OfficerQuarter  order by EXTRACT(YEAR_MONTH FROM interest_collect_date)'
             }
@@ -6462,7 +6451,7 @@ users.get('/analytics', function(req, res, next) {
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
                     'and status = 1 \n'+
-                    'and loan_officerID = '+officer+'\n'+
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
                     'group by OfficerQuarter order by EXTRACT(YEAR_MONTH FROM interest_collect_date)'
             }
             //All Officers, Monthly in Specific Year
@@ -6516,7 +6505,7 @@ users.get('/analytics', function(req, res, next) {
                     'from application_schedules \n' +
                     'where status = 1\n' +
                     'and applicationid in (select id from applications where status = 2)\n'+
-                    'and loan_officerID = '+officer+'\n'+
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
                     'group by agent, DATE_FORMAT(interest_collect_date, \'%Y\')'
             }
             //All Officers, Yearly
@@ -6547,7 +6536,7 @@ users.get('/analytics', function(req, res, next) {
                     'from schedule_history \n' +
                     'where status = 1\n' +
                     'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'
+                    'and loan_officerID) = '+officer+'\n'
                 'group by officer'
             }
             //One Officer, Monthly in Specific Year
@@ -6680,7 +6669,7 @@ users.get('/analytics', function(req, res, next) {
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
                     'and status = 1 \n'+
-                    'and loan_officerID = '+officer+'\n'+
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
                     'and Date_format(payment_collect_date, \'%Y\') = '+y+'\n'+
                     'group by Date_format(payment_collect_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_collect_date)'
             }
@@ -6693,7 +6682,7 @@ users.get('/analytics', function(req, res, next) {
                     'from application_schedules\n'+
                     'where applicationID in (select ID from applications where status = 2) \n' +
                     'and status = 1 \n'+
-                    'and loan_officerID = '+officer+'\n'+
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
                     'group by paymonth order by EXTRACT(YEAR_MONTH FROM payment_collect_date)'
             }
             //One Officer, Quarterly in Specific Year
@@ -6705,7 +6694,7 @@ users.get('/analytics', function(req, res, next) {
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
                     'and status = 1 \n'+
-                    'and loan_officerID = '+officer+'\n'+
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
                     'and Date_format(payment_collect_date, \'%Y\') = '+y+'\n'+
                     'group by OfficerQuarter order by EXTRACT(YEAR_MONTH FROM payment_collect_date)'
             }
@@ -6718,7 +6707,7 @@ users.get('/analytics', function(req, res, next) {
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
                     'and status = 1 \n'+
-                    'and loan_officerID = '+officer+'\n'+
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
                     'group by OfficerQuarter order by EXTRACT(YEAR_MONTH FROM payment_collect_date)'//date_format(payment_collect_date, \'%Y%M\')'
             }
             //All Officers, Monthly in Specific Year
@@ -6772,7 +6761,7 @@ users.get('/analytics', function(req, res, next) {
                     'from application_schedules \n' +
                     'where status = 1\n' +
                     'and applicationid in (select id from applications where status = 2)\n'+
-                    'and loan_officerID = '+officer+'\n'+
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
                     'group by agent, DATE_FORMAT(payment_collect_date, \'%Y\')'
             }
             //All Officers, Yearly
@@ -7360,40 +7349,29 @@ users.get('/multi-analytics', function (req, res, next){
             if (!officer && !freq && !y){
                 query1 = 'select ? from schedule_history limit 1';
                 query2 = 'select sum(interest_amount) interest_received, sum(payment_amount) principal_received,\n' +
-                    // 'DATE_FORMAT(payment_date, \'%M, %Y\') period \n'+
                     '(select ? from schedule_history limit 1) period\n'+
                     'from schedule_history \n' +
                     'where status = 1\n' +
                     'and applicationid in (select id from applications where status <> 0)\n';
-                // 'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
-                // 'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer;
-                // 'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
             }
             if (officer && freq == '-1' && y == '0'){
                 query1 = 'select ? from schedule_history limit 1';
                 query2 = 'select sum(interest_amount) interest_received, sum(payment_amount) principal_received,\n' +
-                    // 'DATE_FORMAT(payment_date, \'%M, %Y\') period \n'+
                     '(select ? from schedule_history limit 1) period,\n'+
                     '(select fullname from users where users.id = '+officer+') officer\n'+
                     'from schedule_history \n' +
                     'where status = 1\n' +
                     'and applicationid in (select id from applications where status <> 0)\n'+
-                    // 'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer;
-                // 'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                    'and loan_officerID = '+officer;
             }
             if (officer == '0'){
                 if (freq == '-1' && y == '0'){
                     query1 = 'select ? from schedule_history limit 1';
                     query2 = 'select sum(interest_amount) interest_received, sum(payment_amount) principal_received,\n' +
-                        // 'DATE_FORMAT(payment_date, \'%M, %Y\') period \n'+
                         '(select ? from schedule_history limit 1) period\n'+
                         'from schedule_history \n' +
                         'where status = 1\n' +
                         'and applicationid in (select id from applications where status <> 0)\n';
-                    // 'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
-                    // 'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer;
-                    // 'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
                 if (freq == '2' && y != '0'){
                     query1 = 'select distinct(DATE_FORMAT(payment_date, \'%M, %Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
@@ -7473,7 +7451,7 @@ users.get('/multi-analytics', function (req, res, next){
                         'where status = 1\n' +
                         'and applicationid in (select id from applications where status <> 0)\n'+
                         'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
-                        'and loan_officerID = '+officer+'\n'+
+                        'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
                         'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
                 if (freq == '2' && y!= '0'){
@@ -7486,7 +7464,7 @@ users.get('/multi-analytics', function (req, res, next){
                         'where status = 1\n' +
                         'and applicationid in (select id from applications where status <> 0)\n'+
                         'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
-                        'and loan_officerID = '+officer+'\n'+
+                        'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
                         'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
                 if (freq == '3' && y== '0'){
@@ -7499,7 +7477,7 @@ users.get('/multi-analytics', function (req, res, next){
                         'where status = 1\n' +
                         'and applicationid in (select id from applications where status <> 0)\n'+
                         'and DATE_FORMAT(payment_date, \'%Y\') = ?\n'+
-                        'and loan_officerID = '+officer+'\n'+
+                        'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
                         'group by Date_format(Payment_date, \'%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
                 if (freq == '3' && y!= '0'){
@@ -7512,7 +7490,7 @@ users.get('/multi-analytics', function (req, res, next){
                         'where status = 1\n' +
                         'and applicationid in (select id from applications where status <> 0)\n'+
                         'and DATE_FORMAT(payment_date, \'%Y\') = ?\n'+
-                        'and loan_officerID = '+officer+'\n'+
+                        'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
                         'group by Date_format(Payment_date, \'%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
                 if (freq == '4' && y== '0'){
@@ -7525,7 +7503,7 @@ users.get('/multi-analytics', function (req, res, next){
                         'where status = 1\n' +
                         'and applicationid in (select id from applications where status <> 0)\n'+
                         'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n'+
-                        'and loan_officerID = '+officer+'\n'+
+                        'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
                         'group by period order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
                 if (freq == '4' && y!= '0'){
@@ -7538,7 +7516,7 @@ users.get('/multi-analytics', function (req, res, next){
                         'where status = 1\n' +
                         'and applicationid in (select id from applications where status <> 0)\n'+
                         'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n'+
-                        'and loan_officerID = '+officer+'\n'+
+                        'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
                         'group by period order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
             }
@@ -7554,7 +7532,7 @@ users.get('/multi-analytics', function (req, res, next){
                     'FROM     application_schedules\n' +
                     'WHERE  status = 2\n' +
                     'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n' +
-                    'and loan_officerID = '+officer+'\n'+
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
                     'GROUP BY period\n' +
                     'ORDER BY payment_date'
             }
