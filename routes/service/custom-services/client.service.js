@@ -3414,7 +3414,7 @@ router.get('/product/:product_id', helperFunctions.verifyJWT, function (req, res
     });
 });
 
-router.get('/:clientId/clientbanks', function (req, res) {
+router.get('/clientbanks/:clientId', function (req, res) {
     const userId = req.params.clientId;
     let query = `SELECT * from client_banks WHERE status = 1 AND user_id = ${userId}`;
 
@@ -3431,7 +3431,7 @@ router.get('/:clientId/clientbanks', function (req, res) {
 
 
 });
-router.post('/:clientId/clientbanks', function (req, res) {
+router.post('/clientbanks/:clientId', function (req, res) {
     const userId = req.params.clientId;
 
 
@@ -3450,7 +3450,7 @@ router.post('/:clientId/clientbanks', function (req, res) {
 
 
 });
-router.delete('/:clientId/clientbanks/:bankId', function (req, res) {
+router.delete('/clientbanks/:clientId/:bankId', function (req, res) {
     const userId = req.params.clientId;
     const bankId = req.params.bankId;
     let query = `DELETE FROM client_banks WHERE ID = ${bankId}`;
