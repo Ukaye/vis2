@@ -442,7 +442,7 @@ router.post('/create', function (req, res) {
         query2 = 'select * from clients where username = ? or email = ? or phone = ?';
     postData.status = enums.CLIENT.STATUS.ACTIVE;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    if (!postData.username || !postData.password || !postData.first_name || !postData.last_name 
+    if (!postData.username || !postData.password || !postData.first_name || !postData.last_name
         || !postData.phone || !postData.email || !postData.loan_officer || !postData.branch)
         return res.send({ "status": 500, "error": "Required parameter(s) not sent!", "response": null });
 
@@ -457,14 +457,14 @@ router.post('/create', function (req, res) {
                 let duplicates = [];
                 if (postData.email == results[0]['email']) duplicates.push('email');
                 if (postData.phone == results[0]['phone']) duplicates.push('phone');
-                return res.send({ "status": 500, "error": `The ${duplicates[0] || username} is already in use by another user!`, "response": null});
+                return res.send({ "status": 500, "error": `The ${duplicates[0] || username} is already in use by another user!`, "response": null });
             }
             let bvn = postData.bvn;
             delete postData.bvn;
             if (bvn && bvn.trim() !== '') {
                 connection.query('select * from clients where bvn = ? and status = 1 limit 1', [bvn], function (error, rest) {
                     if (rest && rest[0]) {
-                        return res.send({ "status": 500, "error": "BVN already exists!", "response": null});
+                        return res.send({ "status": 500, "error": "BVN already exists!", "response": null });
                     }
                     helperFunctions.resolveBVN(bvn, bvn_response => {
                         if (bvn_response.status && helperFunctions.phoneMatch(postData.phone, bvn_response.data.mobile)) {
@@ -499,11 +499,11 @@ router.post('/create', function (req, res) {
                                                 });
                                                 res.send({ "status": 200, "error": null, "response": re });
                                             } else {
-                                                res.send({ "status": 500, "error": "Error creating client wallet!", "response": null});
+                                                res.send({ "status": 500, "error": "Error creating client wallet!", "response": null });
                                             }
                                         });
                                     } else {
-                                        res.send({ "status": 500, "error": "Error retrieving client details. Please try a new username!", "response": null});
+                                        res.send({ "status": 500, "error": "Error retrieving client details. Please try a new username!", "response": null });
                                     }
                                 });
                             }
@@ -568,7 +568,7 @@ router.post('/login', function (req, res) {
                 "error": "Sorry, we can’t find this user information in our record, please proceed to sign up!",
                 "response": null
             });
-            
+
         let user = client[0];
         if (user.status === 0)
             return res.send({
@@ -675,10 +675,10 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
 
                 helperFunctions.resolveBVN(bvn, bvn_response => {
                     if (error) return res.send({
-                            "status": 500,
-                            "error": error,
-                            "response": null
-                        });
+                        "status": 500,
+                        "error": error,
+                        "response": null
+                    });
 
                     if (!client[0]) return res.send({
                         "status": 500,
@@ -709,10 +709,10 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
                                         query = `UPDATE clients SET ? WHERE ID = ${req.params.id}`;
                                         db.query(query, postData, error => {
                                             if (error) return res.send({
-                                                    "status": 500,
-                                                    "error": error,
-                                                    "response": null
-                                                });
+                                                "status": 500,
+                                                "error": error,
+                                                "response": null
+                                            });
                                             if (!postData.bvn_otp)
                                                 return sendBVNOTP(client[0], bvn, bvn_response.data.mobile, res);
                                             if (postData.bvn_otp !== client[0]['bvn_otp'])
@@ -750,7 +750,7 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
                         "error": error,
                         "response": null
                     });
-        
+
                 notificationsService.log(req, payload);
                 res.send({
                     "status": 200,
@@ -1206,7 +1206,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                             res.send({ "status": 500, "error": error, "response": null });
                                         } else {
                                             result.information_requests = information_requests;
-                                            result.information_request_status = (information_requests.length > 0)? 1:0;
+                                            result.information_request_status = (information_requests.length > 0) ? 1 : 0;
                                             result.document_upload_status = 0;
                                             let path = `files/client_application-${result.ID}/`,
                                                 path2 = `files/application-${result.loanID}/`,
@@ -1926,7 +1926,7 @@ router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, fun
                             payment_source: 'paystack',
                             payment_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
                         },
-                        postData = Object.assign({}, data);
+                            postData = Object.assign({}, data);
                         delete postData.payment_source;
                         delete postData.payment_date;
                         db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`,
@@ -2201,7 +2201,7 @@ router.post('/payment-method/create/:id', helperFunctions.verifyJWT, function (r
                             "error": null,
                             "response": 'Card already exists!'
                         });
-                        
+
                         db.query('INSERT INTO client_payment_methods SET ?', data, function (error, response) {
                             if (error) {
                                 res.send({
@@ -2316,7 +2316,7 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
                             payment_source: 'paystack',
                             payment_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
                         },
-                        postData = Object.assign({}, data);
+                            postData = Object.assign({}, data);
                         delete postData.payment_source;
                         delete postData.payment_date;
                         db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`,
@@ -2588,7 +2588,7 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
     ROUND((s.interest_amount - COALESCE(ROUND(SUM(p.interest_amount), 2), 0)), 2) interest_owed, ROUND((s.payment_amount - COALESCE(ROUND(SUM(p.payment_amount), 2), 0)), 2) principal_owed 
     FROM application_schedules s, applications a, clients c, schedule_history p WHERE s.ID = ${req.params.invoice_id} 
     AND s.applicationID = a.ID AND a.userID = ${req.params.id} AND a.userID = c.ID AND p.invoiceID = s.ID AND p.status = 1`, (error, schedule) => {
-        if(error) return res.send({
+        if (error) return res.send({
             "status": 500,
             "error": error,
             "response": null
@@ -2601,8 +2601,8 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
         });
 
         const invoice_ = schedule[0],
-            interest_amount = (req.body.amount >= invoice_.interest_owed)? invoice_.interest_owed : req.body.amount,
-            principal_amount = (req.body.amount > interest_amount)? (req.body.amount - interest_amount) : 0;
+            interest_amount = (req.body.amount >= invoice_.interest_owed) ? invoice_.interest_owed : req.body.amount,
+            principal_amount = (req.body.amount > interest_amount) ? (req.body.amount - interest_amount) : 0;
 
         if (req.body.amount > (invoice_.interest_owed + invoice_.principal_owed).round(2))
             return res.send({
@@ -2616,10 +2616,10 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
             authorization_code: req.body.authorization_code,
             amount: (parseFloat(req.body.amount) + helperFunctions.calculatePaystackFee(req.body.amount)) * 100
         })
-        .then(function(body){
-            if (body.status) {
-                if (body.data.status === 'success') {
-                    let data = {
+            .then(function (body) {
+                if (body.status) {
+                    if (body.data.status === 'success') {
+                        let data = {
                             actual_payment_amount: principal_amount,
                             actual_interest_amount: interest_amount,
                             actual_fees_amount: 0,
@@ -2627,7 +2627,7 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
                             payment_source: 'paystack',
                             payment_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
                         },
-                        postData = Object.assign({}, data);
+                            postData = Object.assign({}, data);
                         delete postData.payment_source;
                         delete postData.payment_date;
                         db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`,
@@ -2806,7 +2806,7 @@ router.put('/forgot-password/update', (req, res) => {
         });
 
         let payload = {},
-        query = `UPDATE clients SET ? WHERE ID = ${decoded.ID}`;
+            query = `UPDATE clients SET ? WHERE ID = ${decoded.ID}`;
         payload.password = bcrypt.hashSync(req.body.password, parseInt(process.env.SALT_ROUNDS));
         payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
         payload.password_reset_status = enums.PASSWORD_RESET.STATUS.TRUE;
@@ -3016,60 +3016,60 @@ router.post('/application/verifyV2/email/:application_id/:type', (req, res) => {
 
     db.query(`SELECT c.ID, c.email, c.phone, c.fullname FROM clients c, preapplications a 
         WHERE a.ID = ${req.params.application_id} AND c.ID = a.userID`, (error, client_) => {
-            if (error) return res.send({
-                "status": 500,
-                "error": error,
-                "response": null
-            });
-
-            if (!client_[0]) return res.send({
-                "status": 500,
-                "error": 'Client does not exist!',
-                "response": null
-            });
-
-            let data = {},
-                client = client_[0],
-                email = req.body.email;
-            const expiry_days = 1,
-                token = jwt.sign(
-                    {
-                        ID: client.ID,
-                        email: client.email,
-                        phone: client.phone,
-                        type: req.params.type,
-                        applicationID: req.params.application_id
-                    },
-                    process.env.SECRET_KEY,
-                    {
-                        expiresIn: 60 * 60 * expiry_days
-                    });
-            data.name = client.fullname;
-            data.date = moment().utcOffset('+0100').format('YYYY-MM-DD');
-            data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
-            data.verify_url = `${process.env.CLIENT_HOST}/verify-email?token=${token}&module=application`;
-            emailService.send({
-                to: client.email,
-                subject: 'Email Confirmation',
-                template: 'default',
-                context: {
-                    name: client.fullname,
-                    message: `This is a reminder that your ${req.params.type} email (${email}) is pending verification. 
-                        Kindly log in to your ${req.params.type} email for further instructions on how to proceed!`
-                }
-            });
-            emailService.send({
-                to: email,
-                subject: 'Email Confirmation',
-                template: 'verify-email',
-                context: data
-            });
-            return res.send({
-                "status": 200,
-                "error": null,
-                "response": `Verification email sent to ${email} successfully!`
-            });
+        if (error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
         });
+
+        if (!client_[0]) return res.send({
+            "status": 500,
+            "error": 'Client does not exist!',
+            "response": null
+        });
+
+        let data = {},
+            client = client_[0],
+            email = req.body.email;
+        const expiry_days = 1,
+            token = jwt.sign(
+                {
+                    ID: client.ID,
+                    email: client.email,
+                    phone: client.phone,
+                    type: req.params.type,
+                    applicationID: req.params.application_id
+                },
+                process.env.SECRET_KEY,
+                {
+                    expiresIn: 60 * 60 * expiry_days
+                });
+        data.name = client.fullname;
+        data.date = moment().utcOffset('+0100').format('YYYY-MM-DD');
+        data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
+        data.verify_url = `${process.env.CLIENT_HOST}/verify-email?token=${token}&module=application`;
+        emailService.send({
+            to: client.email,
+            subject: 'Email Confirmation',
+            template: 'default',
+            context: {
+                name: client.fullname,
+                message: `This is a reminder that your ${req.params.type} email (${email}) is pending verification. 
+                        Kindly log in to your ${req.params.type} email for further instructions on how to proceed!`
+            }
+        });
+        emailService.send({
+            to: email,
+            subject: 'Email Confirmation',
+            template: 'verify-email',
+            context: data
+        });
+        return res.send({
+            "status": 200,
+            "error": null,
+            "response": `Verification email sent to ${email} successfully!`
+        });
+    });
 });
 
 router.get('/applications/web/count', (req, res) => {
@@ -3144,27 +3144,27 @@ router.post('/bvn/verify/:id', (req, res) => {
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
     db.query(query, (error, bvn_check) => {
-        if (error) res.send({status: 500, error: error, response: null});
+        if (error) res.send({ status: 500, error: error, response: null });
 
         if (bvn_check[0]) {
             if (bvn_check[0]['ID'] == id)
-                return res.send({status: 500, error: 'You have already verified this BVN!', response: null});
-            return res.send({status: 500, error: 'This BVN is already in use by another user!', response: null});
+                return res.send({ status: 500, error: 'You have already verified this BVN!', response: null });
+            return res.send({ status: 500, error: 'This BVN is already in use by another user!', response: null });
         }
 
-        query =  `UPDATE clients SET bvn = NULL WHERE bvn = ${payload.bvn}`;
+        query = `UPDATE clients SET bvn = NULL WHERE bvn = ${payload.bvn}`;
         db.query(query, () => {
             query = `UPDATE clients SET phone = NULL WHERE phone = ${payload.phone}`;
             db.query(query, () => {
-                query =  `UPDATE clients SET bvn_input = NULL WHERE bvn_input = ${payload.bvn}`;
+                query = `UPDATE clients SET bvn_input = NULL WHERE bvn_input = ${payload.bvn}`;
                 db.query(query, () => {
                     query = `UPDATE clients SET bvn_phone = NULL WHERE bvn_phone = ${payload.phone}`;
                     db.query(query, () => {
                         query = `UPDATE clients Set ? WHERE ID = ${id}`;
                         db.query(query, payload, (error, response) => {
                             if (error)
-                                return res.send({status: 500, error: error, response: null});
-                            return res.send({status: 200, error: null, response: response});
+                                return res.send({ status: 500, error: error, response: null });
+                            return res.send({ status: 200, error: null, response: response });
                         });
                     });
                 });
@@ -3176,14 +3176,14 @@ router.post('/bvn/verify/:id', (req, res) => {
 router.get('/bvn/unverify/:id', (req, res) => {
     let payload = req.body,
         id = req.params.id,
-        query =  `UPDATE clients Set ? WHERE ID = ${id}`;
+        query = `UPDATE clients Set ? WHERE ID = ${id}`;
     payload.verify_bvn = 0;
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
     db.query(query, payload, (error, response) => {
         if (error)
-            return res.send({status: 500, error: error, response: null});
-        return res.send({status: 200, error: null, response: response});
+            return res.send({ status: 500, error: error, response: null });
+        return res.send({ status: 200, error: null, response: response });
     });
 });
 
@@ -3206,7 +3206,7 @@ router.post('/v2/create', (req, res) => {
             if (results && results[0]) {
                 let duplicates = [];
                 if (postData.phone == results[0]['phone']) duplicates.push('phone');
-                return res.send({ "status": 500, "error": `The ${duplicates[0] || username} is already in use by another user!`, "response": null});
+                return res.send({ "status": 500, "error": `The ${duplicates[0] || username} is already in use by another user!`, "response": null });
             }
             connection.query(query, postData, (error, response) => {
                 if (error) {
@@ -3264,7 +3264,7 @@ router.post('/v2/login', (req, res) => {
                 "error": "Sorry, we can’t find this user information in our record, please proceed to sign up!",
                 "response": null
             });
-            
+
         let user = client[0];
         if (user.status === 0)
             return res.send({
@@ -3377,7 +3377,7 @@ router.post('/forgot-pin/get', (req, res) => {
                             "error": error,
                             "response": null
                         });
-    
+
                     return res.send({
                         "status": 200,
                         "error": null,
@@ -3409,9 +3409,65 @@ router.get('/product/:product_id', helperFunctions.verifyJWT, function (req, res
         res.send({
             "status": 200,
             "error": null,
-            "response": product[0]? product[0]:{}
+            "response": product[0] ? product[0] : {}
         });
     });
 });
+
+router.get('/:clientId/clientbanks', function (req, res) {
+    const userId = req.params.clientId;
+    let query = `SELECT * from client_banks WHERE status = 1 AND user_id = ${userId}`;
+
+    db.query(query, (err, result) => {
+        if (err) {
+            console.log(err)
+            res.send({ "status": 500, "error": er, "response": "Err!" });
+            return
+        }
+
+        res.status(201).json(result)
+    })
+
+
+
+});
+router.post('/:clientId/clientbanks', function (req, res) {
+    const userId = req.params.clientId;
+
+
+    let query = `INSERT INTO client_banks SET ?`;
+
+    db.query(query, req.body, (err, result) => {
+        if (err) {
+            console.log(err)
+            res.send({ "status": 500, "error": er, "response": "Err!" });
+            return
+        }
+
+        res.status(201).json(result)
+    })
+
+
+
+});
+router.delete('/:clientId/clientbanks/:bankId', function (req, res) {
+    const userId = req.params.clientId;
+    const bankId = req.params.bankId;
+    let query = `DELETE FROM client_banks WHERE ID = ${bankId}`;
+
+    db.query(query, (err) => {
+        if (err) {
+            console.log(err)
+            res.send({ "status": 500, "error": er, "response": "Err!" });
+            return
+        }
+
+        res.status(201).json(true)
+    })
+
+
+
+});
+
 
 module.exports = router;
