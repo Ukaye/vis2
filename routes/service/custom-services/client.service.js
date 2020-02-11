@@ -3443,8 +3443,13 @@ router.post('/clientbanks/:clientId', function (req, res) {
             res.send({ "status": 500, "error": er, "response": "Err!" });
             return
         }
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": "Successfully added card"
+        });
 
-        res.status(201).json(result)
+    
     })
 
 
