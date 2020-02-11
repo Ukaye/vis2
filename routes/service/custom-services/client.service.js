@@ -3421,6 +3421,7 @@ router.get('/:clientId/clientbanks', function (req, res) {
     db.query(query, (err, result) => {
         if (err) {
             console.log(err)
+            res.send({ "status": 500, "error": er, "response": "Err!" });
             return
         }
 
@@ -3439,6 +3440,7 @@ router.post('/:clientId/clientbanks', function (req, res) {
     db.query(query, req.body, (err, result) => {
         if (err) {
             console.log(err)
+            res.send({ "status": 500, "error": er, "response": "Err!" });
             return
         }
 
@@ -3448,5 +3450,24 @@ router.post('/:clientId/clientbanks', function (req, res) {
 
 
 });
+router.delete('/:clientId/clientbanks/:bankId', function (req, res) {
+    const userId = req.params.clientId;
+    const bankId = req.params.bankId;
+    let query = `DELETE FROM client_banks WHERE ID = ${bankId}`;
+
+    db.query(query, (err) => {
+        if (err) {
+            console.log(err)
+            res.send({ "status": 500, "error": er, "response": "Err!" });
+            return
+        }
+
+        res.status(201).json(true)
+    })
+
+
+
+});
+
 
 module.exports = router;
