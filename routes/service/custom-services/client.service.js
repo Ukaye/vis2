@@ -3435,22 +3435,65 @@ router.post('/clientbanks/:clientId', function (req, res) {
     const userId = req.params.clientId;
 
 
-    let query = `INSERT INTO client_banks SET ?`;
 
-    db.query(query, req.body, (err, result) => {
-        if (err) {
-            console.log(err)
-            res.send({ "status": 500, "error": er, "response": "Err!" });
-            return
+
+
+    // check for duplicate
+
+    let query = `SELECT * from client_banks WHERE status = 1 AND user_id = ${userId} AND account = ${account}`;
+    const account = req.body.account;
+    db.query(query, (err, result) => {
+        
+        if(result.length >0) {
+            res.send({ "status": 500, "error": 'Account number already exixts', "response": "Err!" });
+            return;
+
         }
-        res.send({
-            "status": 200,
-            "error": null,
-            "response": "Successfully added card"
-        });
 
-    
+        // check th normal account number
+        query = `SELECT * from clients WHERE ID = ${userId} `;
+        db.query(query, (err, result) => {
+
+            if (result.length > 0) {
+                if(result[0].account == account) {
+                    res.send({ "status": 500, "error": 'Account number already exixts', "response": "Err!" });
+                    return;
+                }
+               
+
+            }
+
+            // insert
+            query = `INSERT INTO client_banks SET ?`;
+
+
+
+            db.query(query, req.body, (err, result) => {
+                if (err) {
+                    console.log(err)
+                    res.send({ "status": 500, "error": er, "response": "Err!" });
+                    return
+                }
+                res.send({
+                    "status": 200,
+                    "error": null,
+                    "response": "Successfully added card"
+                });
+
+
+            })
+        
     })
+
+
+  
+
+
+    })
+
+
+
+
 
 
 
