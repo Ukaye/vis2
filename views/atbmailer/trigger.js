@@ -49,19 +49,23 @@ function saveTrigger() {
     function sendEmail() {
         let obj = {
             emailSubject: $(emailSubject).val(),
-            emailRecipients: $(emailRecipients).val(),
+            emailFile: $(emailFile).val(),
             emailContent: $('#emailContent').summernote('code')
         }
 
-        if(obj.emailSubject === '' || obj.emailRecipients === '') {
+        if(obj.emailSubject === '' || obj.emailFile === '') {
             return swal('Kindly fill all required fields!', '', 'warning');
         } else {
             $.ajax({
                 'url': '/atbmailer/mail/send/',
                 'type': 'post',
                 'data': obj,
+                'mimeTypes': 'multipart/form-data',
+                'contentType': false,
+                'cache': false,
+                'processData': false,
                 'success': function (data) {
-                    $(emailRecipients).val('');
+                    $(emailFile).val('');
                     $(emailSubject).val('');
                     $('#emailContent').summernote('code', '');
                     $('#wait').hide();

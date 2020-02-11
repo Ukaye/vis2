@@ -2,7 +2,10 @@ const express = require('express');
 const router = express.Router();
 const extract = require('mention-hashtag');
 const replaceOnce = require('replace-once');
-const he = require('he')
+const he = require('he');
+const parse = require('csv-parse');
+const parser = parse({delimiter: ','});
+
 const db = require('../../../db');
 const emailService = require('./email.service')
 
@@ -124,16 +127,26 @@ router.post('/trigger/send', function(req, res, next) {
 
 router.post('/mail/send', function(req, res, next) {
 
-    let msg
-    let mailData = req.body,
+    let msg,
+    mailData = req.body,
+    recipientsArray = []
 
                 unsterilizedMsg = mailData.emailContent,
                 subject = mailData.emailSubject,
                 mentions = extract(unsterilizedMsg, { unique: true, symbol: false}),
                 mentionsWithSymbol = extract(unsterilizedMsg, { unique: true, symbol: true}),
                 mentionsList = mentions.toString(),
-                recipients = mailData.emailRecipients,
-                recipientsArray = (recipients).split(',');
+                recipientsFile = mailData.emailFile,
+
+                parser.on('readable', function(){
+                    let record;
+                    while (record = parser.read()) {
+                        recipientsArray.push(record)
+                    }
+                })
+
+                console.log(req.files);
+                //recipientsArray = (recipients).split(',');
     
                 recipientsArray.forEach((recipient)=> {
                     
