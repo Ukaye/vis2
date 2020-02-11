@@ -1040,6 +1040,8 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, function (req,
     postData.status = enums.CLIENT_APPLICATION.STATUS.ACTIVE;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     postData.creator_type = 'client';
+
+ 
     db.query(query, postData, function (error, results) {
         if (error) return res.send({
             "status": 500,
