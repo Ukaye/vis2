@@ -3441,9 +3441,9 @@ router.post('/clientbanks/:clientId', function (req, res) {
 
 
     // check for duplicate
-
-    let query = `SELECT * from client_banks WHERE status = 1 AND user_id = ${userId} AND account = ${account}`;
     const account = req.body.account;
+    let query = `SELECT * from client_banks WHERE status = 1 AND user_id = ${userId} AND account = ${account}`;
+
     db.query(query, (err, result) => {
         
         if(result.length >0) {
