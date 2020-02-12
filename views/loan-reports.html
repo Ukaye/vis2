@@ -2063,6 +2063,8 @@
     }
 
     function populateCards(data){
+          console.log('DATA Received', data);
+        console.log('jQuery Version',jQuery.fn.jquery);
         $('#branch').html(data.branches[0]["branches"]);
         $('#loan-officers').html(data.loan_officers[0]["loan_officers"]);
         $('#loans-active').html(data.active_loans[0]["all_applications"]);
@@ -2178,6 +2180,7 @@
             'url': url,
             'type': 'get',
             'success': function (data) {
+                console.log('Reload Disbursed Data', data);
                 (data.status === 200) ? populateDisbursed(data.response) :  swal({"icon": "error", "text": 'Database Error'})
             },
             'error': function (err) {
@@ -2312,8 +2315,10 @@
 
                 v = {};
                 v = dets[i];
+                console.log('Value of V', v)
                 if (v){
                     total += (v.loan_amount) ? parseFloat(v.loan_amount) : 0;
+                    console.log('Disbursed Total', total);
                     v.id = padWithZeroes(parseInt(v.applicationID),6);
                     v.balance = formatter.format(parseFloat((v.loan_amount - v.valid_payment) < 0 ? 0 : v.loan_amount - v.valid_payment));
                     v.principal = (v.loan_amount) ? formatter.format(parseFloat(v.loan_amount)) : 0;
@@ -2450,6 +2455,7 @@
                     amount_paid[v.ID] = 0;
                     total+= (v.loan_amount) ? parseFloat(v.loan_amount) : 0;
                     totalbalance += (v.loan_amount) ? parseFloat(v.loan_amount) : 0
+                    console.log('TOTAL BALANCE', totalbalance);
                     num_all++;
                 }
 
