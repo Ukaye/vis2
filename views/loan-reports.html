@@ -2318,6 +2318,11 @@
                 console.log('Value of V', v)
                 if (v){
                     total += (v.loan_amount) ? parseFloat(v.loan_amount) : 0;
+                    // if (v.loan_amount) {
+                    //     total = total + parseFloat(v.loan_amount);
+                    // } else {
+                    //     total = total + 0;
+                    // }
                     console.log('Disbursed Total', total);
                     v.id = padWithZeroes(parseInt(v.applicationID),6);
                     v.balance = formatter.format(parseFloat((v.loan_amount - v.valid_payment) < 0 ? 0 : v.loan_amount - v.valid_payment));
@@ -2593,6 +2598,7 @@
                 let applications = data.response;
                 results = applications;
                 populateDisbursed(applications);
+                console.log('APPLICATIONS', applications);
             },
             'error': function (err) {
                 console.log(err);
@@ -3761,7 +3767,7 @@
                     $("#irchartfilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#irrecchartfilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#interest-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
-                    $("#interest-rec-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                    $("#interest-rec-officers") .append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#prchartfilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#prrecchartfilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#principal-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
