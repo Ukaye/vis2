@@ -60,7 +60,6 @@
                     $name.select2('destroy');
                     $name.select2();
                     $user_list.val($user_list.find(`option[name='${response.email}']`).val());
-                    $user_list.prop('disabled', true);
                     $user_list.select2('destroy');
                     $user_list.select2();
                 }
@@ -88,14 +87,12 @@
                 if (response.loan_amount){
                     $('#loan_amount').val(response.loan_amount);
                     $('#amount').val(response.loan_amount);
-                    $('#amount').prop('disabled', true);
                 }
                 if (response.loan_purpose) {
                     $('#loan_purposes').val(response.loan_purpose);
                     $('#loan_purposes').select2('destroy');
                     $('#loan_purposes').select2();
                     $('#purposes').val(response.loan_purpose);
-                    $('#purposes').prop('disabled', true);
                     $('#purposes').select2('destroy');
                     $('#purposes').select2();
                 }
@@ -112,7 +109,6 @@
                 if (response.rate) {
                     $('#rate').val(response.rate);
                     $('#interest-rate').val(response.rate);
-                    $('#interest-rate').prop('disabled', true);
                 }
                 if (response.spouse_knowledge)
                     $(`input[name='spouse_knowledge'][value='${response.spouse_knowledge}']`).prop('checked', true);
@@ -121,7 +117,6 @@
                 if (response.tenor) {
                     $('#tenor').val(response.tenor);
                     $('#term').val(response.tenor);
-                    $('#term').prop('disabled', true);
                 }
                 if (response.tenor_type)
                     $('#tenor_type').val(response.tenor_type);

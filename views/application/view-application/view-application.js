@@ -286,20 +286,26 @@ function getWorkflows(data) {
     });
 }
 
-let workflow_comments;
+let workflow_comments,
+    comment_id = false;
 function loadComments(comments) {
     if (comments && comments[0]){
         workflow_comments = comments;
         let $comments = $('#comments');
         $comments.html('');
         comments.forEach(function (comment) {
+            let $edit_btn = '', $history_btn = '';
+            $edit_btn = `<span class="btn btn-outline btn-default" onclick="editComment(${comment.origin || comment.ID})"><i class="fa fa-edit"></i></span>`;
+            if (comment.origin)
+                $history_btn = `<span class="btn btn-outline btn-default" onclick="showCommentHistory(${comment.origin})"><i class="fa fa-eye"></i></span>`;
             $comments.append('<div class="row">\n' +
                 '    <div class="col-sm-2">\n' +
                 '        <div class="thumbnail"><img class="img-responsive user-photo" src="https://ssl.gstatic.com/accounts/ui/avatar_2x.png"></div>\n' +
                 '    </div>\n' +
                 '    <div class="col-sm-10">\n' +
                 '        <div class="panel panel-default">\n' +
-                '            <div class="panel-heading"><strong>'+comment.fullname+'</strong> <span class="text-muted">commented on '+comment.date_created+'</span></div>\n' +
+                '            <div class="panel-heading"><strong>'+comment.fullname+'</strong> '+
+                '               <span class="text-muted">commented on '+comment.date_created+'</span><span style="float: right; margin-top: -5px;">'+$edit_btn+$history_btn+'</span></div>\n' +
                 '            <div class="panel-body">'+comment.text+'</div>\n' +
                 '        </div>\n' +
                 '    </div>\n' +
@@ -318,13 +324,18 @@ function loadComments(comments) {
                 $('#generateLoanFile').prop('disabled', false);
                 if (!comments[0]) return $comments.append('<h2 style="margin: auto;">No comments available yet!</h2>');
                 comments.forEach(function (comment) {
+                    let $edit_btn = '', $history_btn = '';
+                    $edit_btn = `<span class="btn btn-outline btn-default" onclick="editComment(${comment.origin || comment.ID})"><i class="fa fa-edit"></i></span>`;
+                    if (comment.origin)
+                        $history_btn = `<span class="btn btn-outline btn-default" onclick="showCommentHistory(${comment.origin})"><i class="fa fa-eye"></i></span>`;
                     $comments.append('<div class="row">\n' +
                         '    <div class="col-sm-2">\n' +
                         '        <div class="thumbnail"><img class="img-responsive user-photo" src="https://ssl.gstatic.com/accounts/ui/avatar_2x.png"></div>\n' +
                         '    </div>\n' +
                         '    <div class="col-sm-10">\n' +
                         '        <div class="panel panel-default">\n' +
-                        '            <div class="panel-heading"><strong>'+comment.fullname+'</strong> <span class="text-muted">commented on '+comment.date_created+'</span></div>\n' +
+                        '            <div class="panel-heading"><strong>'+comment.fullname+'</strong> '+
+                        '               <span class="text-muted">commented on '+comment.date_created+'</span><span style="float: right; margin-top: -5px;">'+$edit_btn+$history_btn+'</span></div>\n' +
                         '            <div class="panel-body">'+comment.text+'</div>\n' +
                         '        </div>\n' +
                         '    </div>\n' +
@@ -699,18 +710,21 @@ function previousStage(state,states) {
 }
 
 function comment(){
-    let $comment = $("#comment"),
-        comment = $comment.val();
-    if (!comment || comment === "")
+    let payload = {},
+        $comment = $("#comment");
+    payload.text = $comment.val();
+    if (!payload.text || payload.text === "")
         return notification('Kindly type a brief comment','','error');
+    if (comment_id) payload.origin = comment_id;
     $('#wait').show();
     $('#addCommentModal').modal('hide');
     $.ajax({
         'url': '/user/application/comments/'+application_id+'/'+(JSON.parse(localStorage.getItem('user_obj')))['ID'],
         'type': 'post',
-        'data': {text: comment},
+        'data': payload,
         'success': function (data) {
             $('#wait').hide();
+            comment_id = false;
             let comments = data.response;
             results = comments;
             loadComments(comments);
@@ -719,6 +733,7 @@ function comment(){
         },
         'error': function (err) {
             $('#wait').hide();
+            comment_id = false;
             $comment.val("");
             notification('Oops! An error occurred while saving comment','','error');
         }
@@ -2472,6 +2487,41 @@ function verifyWorkEmail() {
 
 function showWorkEmail() {
     notification(`Success! The work email (${application.work_email}) has been verified.`, '', 'success', 10000);
+}
+
+function editComment(id) {
+    comment_id = id;
+    $('#addCommentModal').modal('show');
+}
+
+function showCommentHistory(id) {
+    $.ajax({
+        'url': `/user/application/comment/history/${id}`,
+        'type': 'get',
+        'success': data => {
+            $('#viewCommentHistoryModal').modal('show');
+            let comments = data.response;
+                $comments = $('#comment_history');
+            $comments.html('');
+            comments.forEach(function (comment) {
+                $comments.append('<div class="row">\n' +
+                    '    <div class="col-sm-2">\n' +
+                    '        <div class="thumbnail"><img class="img-responsive user-photo" src="https://ssl.gstatic.com/accounts/ui/avatar_2x.png"></div>\n' +
+                    '    </div>\n' +
+                    '    <div class="col-sm-10">\n' +
+                    '        <div class="panel panel-default">\n' +
+                    '            <div class="panel-heading"><strong>'+comment.fullname+'</strong> <span class="text-muted">commented on '+comment.date_created+'</span></div>\n' +
+                    '            <div class="panel-body">'+comment.text+'</div>\n' +
+                    '        </div>\n' +
+                    '    </div>\n' +
+                    '</div>');
+            });
+        },
+        'error': err => {
+            console.log(err);
+            notification('No internet connection','','error');
+        }
+    });
 }
 
 function read_write_1(){
