@@ -2595,6 +2595,11 @@
             'url': url,
             'type': 'get',
             'success': function (data) {
+                console.log('START DATE', start);
+                console.log('END DATE', end);
+                console.log('OFFICER', officer);
+                console.log('URL', url);
+                console.log('URL AN', urlAn);
                 let applications = data.response;
                 results = applications;
                 populateDisbursed(applications);
@@ -3285,7 +3290,9 @@
             end = $("#filterprincipalend").val(),
             url;
         url = (start === "" || start === null || end === "" || end === null ) ? 'user/principal' : 'user/principal?start='+formatDate(start)+'&&end='+formatDate(end)
-
+        console.log('START', start);
+        console.log('END', end);
+        console.log('URL', url);
         $.ajax({
             'url': url,
             'type': 'get',
@@ -3452,7 +3459,7 @@
         e.preventDefault();
 
         let start = $("#filterprincipalstart").val(),
-            end = $("#filterprincipal").val(),
+            end = $("#filterprincipalend").val(),
             officer = $('#principal-officers').find('option:selected').attr('id')
         url = '/user/principal?start='+formatDate(start)+'&&end='+formatDate(end);
         if (start && end && officer==0){
@@ -3722,8 +3729,9 @@
     });
 
     function formatDate(date) {
-        if (!date)
-            return '1970-01-01';
+        console.log('format date', date)
+        // if (!date)
+            // return '1970-01-01';
         let separator;
         if (date.indexOf('-') > -1){
             separator = '-';
@@ -3911,6 +3919,9 @@
             end = $("#filterprincipalend").val(),
             url = '/user/principal?',
             d=[], agent;
+        console.log('START', start);
+        console.log('END', end);
+        console.log('END', url);
         if (start && end){
             url = url.concat('start='+formatDate(start)+'&&end='+formatDate(end)+'&&');
         }
@@ -4242,6 +4253,10 @@
         let url ='user/analytics?t=disbursements&&',
         year = $('#disburse-year').val(),
         officer = $('#chartfilterofficers').val();
+        console.log('YEAR', year);
+        console.log('FREQUENCY', frequency.value);
+        console.log('OFFICER', officer);
+        console.log('URL', url);
         if (frequency.value == 2 || frequency.value == 4){
             $('#dis-year').show();
             if (officer && year){
@@ -4261,6 +4276,7 @@
             'success': function (data) {
 //                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
+                    console.log('DATA RESPONSE', data.response);
                     if (v.name){
                         agent = '';
                         d.push({label: v.name , value: v.amount_disbursed}, );

@@ -4328,7 +4328,7 @@ users.get('/disbursements-new/filter', function(req, res, next) {
     query = 'select ' +
         'client_id as user, loan_officer, (select fullname from clients where ID = user) as fullname, loan_id as applicationID, amount as loan_amount, date_disbursed as date ' +
         'from disbursement_history where status = 1 ';
-    if (loan_officer){
+    if (loan_officer && loan_officer !== 'false'){
         query = query.concat('and loan_officer = '+loan_officer+' ');
     }
     if (start  && end){
@@ -5291,7 +5291,8 @@ users.get('/analytics', function(req, res, next) {
             if (officer == 'false' && freq == '3'){
                 query = 'SELECT   DATE_FORMAT(date_disbursed, \'%Y\') AS OfficersYear, \n' +
                     'SUM(amount) AmountDisbursed, \n' +
-                    'EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
+                    // 'EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
+                    'EXTRACT(YEAR_MONTH FROM date_disbursed) As DisburseYearMonth\n' +
                     'FROM     disbursement_history \n' +
                     'WHERE    status =1\n' +
                     'GROUP BY DATE_FORMAT(date_disbursed, \'%Y\')\n' +
