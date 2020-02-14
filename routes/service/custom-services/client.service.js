@@ -565,7 +565,7 @@ router.post('/login', function (req, res) {
         if (!client || !client[0])
             return res.send({
                 "status": 500,
-                "error": "Sorry, we can’t find this user information in our record, please proceed to sign up!",
+                "error": "Sorry, we can't find this information in our record, please check again or create an account if you are a new user.",
                 "response": null
             });
 
@@ -3263,7 +3263,7 @@ router.post('/v2/login', (req, res) => {
         if (!client || !client[0])
             return res.send({
                 "status": 500,
-                "error": "Sorry, we can’t find this user information in our record, please proceed to sign up!",
+                "error": "Sorry, we can't find this information in our record, please check again or create an account if you are a new user.",
                 "response": null
             });
 
