@@ -256,6 +256,7 @@ function loadApplication(user_id){
             getApplicationSettings(application);
             checkForExistingMandate(application);
             getFileDownloads();
+            getLoansHistory()
         },
         'error': function (err) {
             console.log(err);
@@ -1958,6 +1959,17 @@ $("#setupDirectDebit").click(function () {
         });
 });
 
+let loans_history;
+function getLoansHistory() {
+    $.ajax({
+        type: 'get',
+        url: `/client/loans/history/get/${application.userID}`,
+        success: data => {
+            loans_history = data.response;
+        }
+    });
+}
+
 function generateLoanFile() {
     const loanFile = {
         id: application_id,
@@ -1978,7 +1990,8 @@ function generateLoanFile() {
         transaction_dynamics: (workflow_comments[workflow_comments.length-2])? workflow_comments[workflow_comments.length-2]['text'] : '',
         kyc: `${($.isEmptyObject(application.files))? 'Not':'Yes'} Attached`,
         security: `${($.isEmptyObject(application.files))? 'Not':'Yes'} Attached`,
-        workflow_processes: workflow_processes
+        workflow_processes: workflow_processes,
+        loans_history: loans_history
     };
     localStorage.loanFile = encodeURIComponent(JSON.stringify(loanFile));
     return window.open(`/loan-file?id=${application_id}`, '_blank');

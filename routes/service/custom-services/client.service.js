@@ -3432,47 +3432,33 @@ router.get('/clientbanks/:clientId', function (req, res) {
 
         res.status(201).json(result)
     })
-
-
-
 });
+
 router.post('/clientbanks/:clientId', function (req, res) {
     const userId = req.params.clientId;
-
-
-
-
 
     // check for duplicate
     const account = req.body.account;
     let query = `SELECT * from client_banks WHERE status = 1 AND user_id = ${userId} AND account = ${account}`;
 
     db.query(query, (err, result) => {
-        
         if(result.length >0) {
             res.send({ "status": 500, "error": 'Account number already exixts', "response": "Err!" });
             return;
-
         }
 
-        // check th normal account number
+        // check the normal account number
         query = `SELECT * from clients WHERE ID = ${userId} `;
         db.query(query, (err, result) => {
-
             if (result.length > 0) {
                 if(result[0].account == account) {
                     res.send({ "status": 500, "error": 'Account number already exixts', "response": "Err!" });
                     return;
                 }
-               
-
             }
 
             // insert
             query = `INSERT INTO client_banks SET ?`;
-
-
-
             db.query(query, req.body, (err, result) => {
                 if (err) {
                     console.log(err)
@@ -3484,25 +3470,11 @@ router.post('/clientbanks/:clientId', function (req, res) {
                     "error": null,
                     "response": "Successfully added card"
                 });
-
-
             })
-        
+        })
     })
-
-
-  
-
-
-    })
-
-
-
-
-
-
-
 });
+
 router.delete('/clientbanks/:clientId/:bankId', function (req, res) {
     const userId = req.params.clientId;
     const bankId = req.params.bankId;
@@ -3514,13 +3486,29 @@ router.delete('/clientbanks/:clientId/:bankId', function (req, res) {
             res.send({ "status": 500, "error": er, "response": "Err!" });
             return
         }
-
         res.status(201).json(true)
-    })
-
-
-
+    });
 });
 
+router.get('/loans/history/get/:id', (req, res) => {
+    let query = `SELECT  a.loan_amount, a.disbursement_date, a.duration, a.interest_rate, 
+        (select coalesce(sum(payment_amount), 0) from schedule_history where applicationID = a.ID and status = 1) paid,
+        (a.loan_amount - (select coalesce(sum(payment_amount), 0) from schedule_history where applicationID = a.ID and status = 1)) balance
+    FROM clients c, applications a WHERE c.ID = a.userID AND a.ID in (select id from applications where userID = ${req.params.id} and status = 2)`;
+    db.query(query, function (error, response) {
+        if (error)
+            return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": response
+        });
+    });
+});
 
 module.exports = router;
