@@ -422,7 +422,7 @@ functions.getFilesInformation = (folder_path, files) => {
         file_.shift();
         check.name = file_.join('_');
         check.datetime = fs.statSync(path.join(folder_path, file)).ctime;
-        check.file = file;
+        check.file = `${process.env.HOST || req.HOST}/${folder_path}${file}`;
         files_.push(check);
     }
     return files_;
