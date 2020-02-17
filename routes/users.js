@@ -4448,7 +4448,8 @@ users.get('/principal/', function(req, res, next) {
         queryPart = queryPart.concat('AND (TIMESTAMP(payment_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')
         query = queryPart.concat(group);
     }
-    if (officer){
+    // added
+    if (officer && officer !== 'false'){
         queryPart = queryPart.concat('and loan_officerID = '+officer+' ')
         query = queryPart.concat(group)
     }
@@ -4486,7 +4487,7 @@ users.get('/principal-receivable/', function(req, res, next) {
         queryPart = queryPart.concat('AND (TIMESTAMP(payment_collect_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ');
         query = queryPart.concat(group);
     }
-    if (officer){
+    if (officer && officer !== 'false'){
         queryPart = queryPart.concat('and (select loan_officer from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) = '+officer+' ');
         query = queryPart.concat(group);
     }
