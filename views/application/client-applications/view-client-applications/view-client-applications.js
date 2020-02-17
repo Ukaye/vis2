@@ -3,7 +3,7 @@
         getApplicationSettings();
     });
 
-    let preapplication;
+    let cn;
     const urlParams = new URLSearchParams(window.location.search);
     const preapplication_id = urlParams.get('id');
     const client_type = urlParams.get('type');
@@ -634,6 +634,12 @@
                     obj.loan_purpose = $purposes.val();
                     obj.agentID = (JSON.parse(localStorage.getItem("user_obj"))).ID;
                     obj.client_type = preapplication.client_type;
+
+                    obj.bank = preapplication.bank;
+                    obj.account = preapplication.account;
+                    obj.account_name = preapplication.account_name;
+
+
                     if (preapplication && preapplication.ID)
                         obj.preapplicationID = preapplication.ID;
                     if (!user || isNaN(obj.workflowID) || !obj.loan_amount || !obj.interest_rate || !obj.duration || $purposes.val() === '-- Choose Loan Purpose --')
@@ -740,7 +746,7 @@
                         .then((yes) => {
                             if (yes) {
                                 $('#wait').show();
-                                $.ajax({
+                                $.ajax({ 
                                     'url': `/client/application/approve/${preapplication.ID}`,
                                     'type': 'post',
                                     'data': obj,
