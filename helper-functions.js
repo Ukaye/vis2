@@ -412,8 +412,7 @@ functions.removeFileDuplicates = (folder_path, files) => {
 }
 
 functions.getFilesInformation = (folder_path, files) => {
-    let check = {},
-        files_ = [];
+    let check = {};
     for (let i=0; i<files.length; i++) {
         let file = files[i],
             file__ = file.split('.')[(folder_path.indexOf('files/users/') > -1)? 1:0];
@@ -426,7 +425,6 @@ functions.getFilesInformation = (folder_path, files) => {
             file: `${process.env.HOST || req.HOST}/${folder_path}${file}`
         };
         check[name] = info;
-        files_.push(check);
     }
     return files_;
 }
