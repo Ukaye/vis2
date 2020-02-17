@@ -1219,9 +1219,11 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                             if (fs.existsSync(path))
                                                 result.document_upload_status = 1;
                                             result.files = {};
+                                            result.files_info = {};
                                             result.file_downloads = {};
                                             fs.readdir(path, function (err, files) {
                                                 if (err) files = [];
+                                                result.files_info = Object.assign({}, result.files_info, helperFunctions.getFilesInformation(path, files));
                                                 files = helperFunctions.removeFileDuplicates(path, files);
                                                 async.forEach(files, function (file, callback) {
                                                     let filename = file.split('.')[0].split('_');
@@ -1234,6 +1236,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                                     fs.readdir(path2, function (err, files) {
                                                         if (err) files = [];
                                                         files = helperFunctions.removeFileDuplicates(path2, files);
+                                                        result.files_info = Object.assign({}, result.files_info, helperFunctions.getFilesInformation(path2, files));
                                                         async.forEach(files, function (file, callback) {
                                                             let filename = file.split('.')[0].split('_');
                                                             filename.shift();

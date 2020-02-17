@@ -411,6 +411,24 @@ functions.removeFileDuplicates = (folder_path, files) => {
     return files_;
 }
 
+functions.getFilesInformation = (folder_path, files) => {
+    let check = {};
+    for (let i=0; i<files.length; i++) {
+        let file = files[i],
+            file__ = file.split('.')[(folder_path.indexOf('files/users/') > -1)? 1:0];
+        if (!file__) continue;
+        let file_ = file__.split('_');
+        file_.shift();
+        const info = {
+            name: file_.join('_'),
+            datetime: fs.statSync(path.join(folder_path, file)).ctime,
+            file: `${process.env.HOST || req.HOST}/${folder_path}${file}`
+        };
+        check[info.name] = info;
+    }
+    return check;
+}
+
 Number.prototype.round = function(p) {
     p = p || 10;
     return parseFloat(parseFloat(this).toFixed(p));
