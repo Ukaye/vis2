@@ -4285,7 +4285,7 @@ users.get('/disbursements/filter', function(req, res, next) {
         'from applications where status = 2 and ID not in (select applicationID from schedule_history) '
 
     var items = {};
-    if (loan_officer){
+    if (loan_officer && loan_officer !=='false'){
         queryPart = queryPart.concat('and loan_officerID = ?')
         queryPart2 = queryPart2.concat('and loan_officerID = ?')
         query = queryPart.concat(group);
@@ -4372,7 +4372,7 @@ users.get('/interests/', function(req, res, next) {
         queryPart = queryPart.concat('AND (TIMESTAMP(payment_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')
         query = queryPart.concat(group);
     }
-    if (officer){
+    if (officer && officer !== 'false'){
         queryPart = queryPart.concat('and loan_officerID = '+officer+' ')
         query = queryPart.concat(group)
     }
