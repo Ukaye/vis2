@@ -424,6 +424,7 @@ functions.getFilesInformation = (folder_path, files) => {
         check.datetime = fs.statSync(path.join(folder_path, file)).ctime;
         check.file = file;
         files_.push(check);
+    }
     return files_;
 }
 
