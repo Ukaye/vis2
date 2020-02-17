@@ -424,7 +424,7 @@ functions.getFilesInformation = (folder_path, files) => {
             datetime: fs.statSync(path.join(folder_path, file)).ctime,
             file: `${process.env.HOST || req.HOST}/${folder_path}${file}`
         };
-        check[name] = info;
+        check[info.name] = info;
     }
     return check;
 }
