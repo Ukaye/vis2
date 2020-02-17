@@ -498,4 +498,23 @@ router.get('/overpayments', function (req, res) {
     });
 });
 
+router.get('/product/:product_id', (req, res) => {
+    let query = `SELECT loan_requested_min, loan_requested_max, tenor_min, tenor_max, interest_rate_min, interest_rate_max 
+        FROM workflows WHERE ID = ${req.params.product_id}`;
+    db.query(query, (error, results) => {
+        if (error)
+            return res.send({
+                    "status": 500,
+                    "error": error,
+                    "response": null
+                });
+        
+        res.send({
+            "status": 200,
+            "message": "Product settings fetched successfully!",
+            "response": results[0]
+        });
+    });
+});
+
 module.exports = router;
