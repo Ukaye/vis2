@@ -4013,13 +4013,18 @@
     }
 
     function loanclassFilter(classification){
+        console.log('CLASSIFICATION', classification);
         let start = $("#startDate").val(),
             end = $("#endDate").val(),
             officer = $('#badloans-officers').val(),
-//            unmax = $('#loan-classes').attr('un_max') ;
+        //    unmax = $('#loan-classes').attr('un_max') ;
             url = '/user/badloans?';
-        let class_ = classification.value.split('-')[0],
-            unmax = classification.value.split('-')[1] ;
+        let class_ = classification.value.split('-')[0];
+        unmax = classification.value.split('-')[1] ;
+        console.log('OFFICER', officer);
+        console.log('URL', url);
+        console.log('CLASS', class_);
+        console.log('UNMAX', unmax);
         if (class_ == -1 && officer === "false"){
             return loadBadLoans();
         }
