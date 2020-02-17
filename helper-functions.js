@@ -426,7 +426,7 @@ functions.getFilesInformation = (folder_path, files) => {
         };
         check[name] = info;
     }
-    return files_;
+    return check;
 }
 
 Number.prototype.round = function(p) {
