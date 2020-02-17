@@ -70,7 +70,7 @@ function getApplicationSettings(application) {
     $('#wait').show();
     $.ajax({
         type: "GET",
-        url: "/settings/application/"+ application.workflowID,
+        url: "/settings/product/"+ application.workflowID,
         success: function (data) {
             if (data.response) {
                 settings_obj = data.response;
