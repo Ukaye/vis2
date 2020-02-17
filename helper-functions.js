@@ -420,9 +420,12 @@ functions.getFilesInformation = (folder_path, files) => {
         if (!file__) continue;
         let file_ = file__.split('_');
         file_.shift();
-        check.name = file_.join('_');
-        check.datetime = fs.statSync(path.join(folder_path, file)).ctime;
-        check.file = `${process.env.HOST || req.HOST}/${folder_path}${file}`;
+        const info = {
+            name: file_.join('_'),
+            datetime: fs.statSync(path.join(folder_path, file)).ctime,
+            file: `${process.env.HOST || req.HOST}/${folder_path}${file}`
+        };
+        check[name] = info;
         files_.push(check);
     }
     return files_;
