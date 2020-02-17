@@ -412,12 +412,18 @@ functions.removeFileDuplicates = (folder_path, files) => {
 }
 
 functions.getFilesInformation = (folder_path, files) => {
-    let files_ = [];
+    let check = {},
+        files_ = [];
     for (let i=0; i<files.length; i++) {
         let file = files[i],
-            info = fs.statSync(path.join(folder_path, file));
-        files_.push(info);
-    }
+            file__ = file.split('.')[(folder_path.indexOf('files/users/') > -1)? 1:0];
+        if (!file__) continue;
+        let file_ = file__.split('_');
+        file_.shift();
+        check.name = file_.join('_');
+        check.datetime = fs.statSync(path.join(folder_path, file)).ctime;
+        check.file = file;
+        files_.push(check);
     return files_;
 }
 
