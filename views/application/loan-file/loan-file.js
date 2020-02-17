@@ -34,15 +34,19 @@ function init() {
         $('#process_value').append(`<b>${workflow_process_.agent || 'N/A'} (${workflow_process.role || 'N/A'})</b><br>`);
     }
 
-    loan.loans_history.forEach(loan_ => {
-        $('#loans_history').append(`<tr>
-            <td class="tableitem"><p class="itemtext right">${numberToCurrencyformatter(loan_.loan_amount)}</p></td>
-            <td class="tableitem"><p class="itemtext">${loan_.interest_rate}</p></td>
-            <td class="tableitem"><p class="itemtext">${loan_.duration}</p></td>
-            <td class="tableitem"><p class="itemtext">${loan_.disbursement_date}</p></td>
-            <td class="tableitem"><p class="itemtext">Yes Attached</p></td>
-        </tr>`);
-    });
+    if (loan.loans_history[0]) {
+        loan.loans_history.forEach(loan_ => {
+            $('#loans_history').append(`<tr>
+                <td class="tableitem"><p class="itemtext right">${numberToCurrencyformatter(loan_.loan_amount)}</p></td>
+                <td class="tableitem"><p class="itemtext">${loan_.interest_rate}</p></td>
+                <td class="tableitem"><p class="itemtext">${loan_.duration}</p></td>
+                <td class="tableitem"><p class="itemtext">${loan_.disbursement_date}</p></td>
+                <td class="tableitem"><p class="itemtext">Yes Attached</p></td>
+            </tr>`);
+        });
+    } else {
+        $('#loans_history').html('<h1>No history to display!</h1>');
+    }
 
     return window.print();
 }

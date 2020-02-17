@@ -296,7 +296,7 @@ function loadComments(comments) {
         $comments.html('');
         comments.forEach(function (comment) {
             let $edit_btn = '', $history_btn = '';
-            $edit_btn = `<span class="btn btn-outline btn-default" onclick="editComment(${comment.origin || comment.ID})"><i class="fa fa-edit"></i></span>`;
+            $edit_btn = `<span class="btn btn-outline btn-default" onclick="editComment(${comment.origin || comment.ID}, ${comment.ID})"><i class="fa fa-edit"></i></span>`;
             if (comment.origin)
                 $history_btn = `<span class="btn btn-outline btn-default" onclick="showCommentHistory(${comment.origin})"><i class="fa fa-eye"></i></span>`;
             $comments.append('<div class="row">\n' +
@@ -326,7 +326,7 @@ function loadComments(comments) {
                 if (!comments[0]) return $comments.append('<h2 style="margin: auto;">No comments available yet!</h2>');
                 comments.forEach(function (comment) {
                     let $edit_btn = '', $history_btn = '';
-                    $edit_btn = `<span class="btn btn-outline btn-default" onclick="editComment(${comment.origin || comment.ID})"><i class="fa fa-edit"></i></span>`;
+                    $edit_btn = `<span class="btn btn-outline btn-default" onclick="editComment(${comment.origin || comment.ID}, ${comment.ID})"><i class="fa fa-edit"></i></span>`;
                     if (comment.origin)
                         $history_btn = `<span class="btn btn-outline btn-default" onclick="showCommentHistory(${comment.origin})"><i class="fa fa-eye"></i></span>`;
                     $comments.append('<div class="row">\n' +
@@ -2502,8 +2502,9 @@ function showWorkEmail() {
     notification(`Success! The work email (${application.work_email}) has been verified.`, '', 'success', 10000);
 }
 
-function editComment(id) {
-    comment_id = id;
+function editComment(origin, id) {
+    comment_id = origin;
+    $('#comment').text(($.grep(workflow_comments, e => {return e.ID === id}))[0]['text']);
     $('#addCommentModal').modal('show');
 }
 
@@ -2571,4 +2572,8 @@ function read_write_2(){
         $('#rejectCSV2').hide();
     if (($.grep(perms, function(e){return e.module_name === 'close-loan';}))[0]['read_only'] === '0')
         $('#close_loan').hide();
+    if (($.grep(perms, function(e){return e.module_name === 'makeLoanOffer';}))[0]['read_only'] === '0') {
+        $('#newOffer').hide();
+        $('#newOfferModalBtn').hide();
+    }
 }
