@@ -1759,7 +1759,7 @@ users.post('/new-owner', function(req, res, next) {
  * Payload => Firstname, Lastname, Phone, Collateral
  */
 
-users.post('/apply', function(req, res) {
+users.post('/apply', function(req, res) { 
     let workflow_id = req.body.workflowID,
         postData = Object.assign({},req.body),
         query =  'INSERT INTO applications Set ?';
