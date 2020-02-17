@@ -3055,7 +3055,7 @@ router.post('/application/verifyV2/email/:application_id/:type', (req, res) => {
         data.verify_url = `${process.env.CLIENT_HOST}/verify-email?token=${token}&module=application`;
         emailService.send({
             to: client.email,
-            subject: 'Email Confirmation',
+            subject: `${req.params.type} email Confirmation`, // Email Confirmation
             template: 'default',
             context: {
                 name: client.fullname,

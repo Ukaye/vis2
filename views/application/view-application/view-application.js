@@ -70,22 +70,22 @@ function getApplicationSettings(application) {
     $('#wait').show();
     $.ajax({
         type: "GET",
-        url: "/settings/application",
+        url: "/settings/product/"+ application.workflowID,
         success: function (data) {
             if (data.response) {
                 settings_obj = data.response;
                 if (settings_obj.loan_requested_min)
-                    $('#loan_requested_min').text(numberToCurrencyformatter(settings_obj.loan_requested_min));
+                    $('.loan_requested_min').text(numberToCurrencyformatter(settings_obj.loan_requested_min));
                 if (settings_obj.loan_requested_max)
-                    $('#loan_requested_max').text(numberToCurrencyformatter(settings_obj.loan_requested_max));
+                    $('.loan_requested_max').text(numberToCurrencyformatter(settings_obj.loan_requested_max));
                 if (settings_obj.tenor_min)
-                    $('#tenor_min').text(numberToCurrencyformatter(settings_obj.tenor_min));
+                    $('.tenor_min').text(numberToCurrencyformatter(settings_obj.tenor_min));
                 if (settings_obj.tenor_max)
-                    $('#tenor_max').text(numberToCurrencyformatter(settings_obj.tenor_max));
+                    $('.tenor_max').text(numberToCurrencyformatter(settings_obj.tenor_max));
                 if (settings_obj.interest_rate_min)
-                    $('#interest_rate_min').text(numberToCurrencyformatter(settings_obj.interest_rate_min));
+                    $('.interest_rate_min').text(numberToCurrencyformatter(settings_obj.interest_rate_min));
                 if (settings_obj.interest_rate_max)
-                    $('#interest_rate_max').text(numberToCurrencyformatter(settings_obj.interest_rate_max));
+                    $('.interest_rate_max').text(numberToCurrencyformatter(settings_obj.interest_rate_max));
             }
             getFeeSettings();
             initCSVUpload(application);
@@ -2177,13 +2177,13 @@ function setDefaultOffer(type) {
     }
 }
 
-$('#term2').keyup(function () {
+$('#term2').change(function () {
     triggerAmortization2();
 });
-$('#amount2').keyup(function () {
+$('#amount2').change(function () {
     triggerAmortization2();
 });
-$('#interest-rate2').keyup(function () {
+$('#interest-rate2').change(function () {
     triggerAmortization2();
 });
 $('#repayment-date2').change(function () {
