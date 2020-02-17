@@ -411,6 +411,16 @@ functions.removeFileDuplicates = (folder_path, files) => {
     return files_;
 }
 
+functions.getFilesInformation = (folder_path, files) => {
+    let files_ = [];
+    for (let i=0; i<files.length; i++) {
+        let file = files[i],
+            info = fs.statSync(path.join(folder_path, file));
+        files_.push(info);
+    }
+    return files_;
+}
+
 Number.prototype.round = function(p) {
     p = p || 10;
     return parseFloat(parseFloat(this).toFixed(p));
