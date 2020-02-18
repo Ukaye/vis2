@@ -376,7 +376,8 @@ router.get('/get/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, 
         r.requestId, r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
-        LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) WHERE (p.ID = '${decodeURIComponent(req.params.id)}' OR p.hash = '${decodeURIComponent(req.params.id)}') AND p.status = 1`,
+        LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) 
+        WHERE (p.ID = '${decodeURIComponent(req.params.id)}' OR p.hash = '${decodeURIComponent(req.params.id)}') AND p.status = 1`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
     if (req.query.key === 'userID') {
