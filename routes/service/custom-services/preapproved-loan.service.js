@@ -368,6 +368,10 @@ router.get('/get', function (req, res, next) {
     });
 });
 
+
+
+// remita error 
+
 router.get('/get/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, 
