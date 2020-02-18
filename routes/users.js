@@ -2503,14 +2503,30 @@ users.get('/workflow_process_all/:application_id', function (req, res, next) {
     });
 });
 
-users.post('/application/comments/:id/:user_id', function (req, res, next) {
-    db.query('INSERT INTO application_comments SET ?', [{ applicationID: req.params.id, userID: req.params.user_id, text: req.body.text, date_created: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a') }],
-        function (error, response, fields) {
-            if (error || !response)
-                return res.send({ "status": 500, "error": error, "response": null });
-            db.query('SELECT c.text, c.date_created, u.fullname FROM application_comments AS c, users AS u WHERE c.applicationID = ? AND c.userID=u.ID ORDER BY c.ID desc', [req.params.id], function (error, comments, fields) {
-                if (error) {
-                    res.send({ "status": 500, "error": error, "response": null });
+users.post('/application/comments/:id/:user_id', (req, res) => {
+    const payload = {
+            ...req.body,
+            applicationID: req.params.id,
+            userID: req.params.user_id,
+            date_created: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
+        },
+        update = {
+            status : 0,
+            date_modified: payload.date_created
+        },
+        origin = payload.origin || 0;
+    db.query(`UPDATE application_comments SET ? WHERE status = 1 AND applicationID = ${req.params.id} AND (ID = ${origin} OR origin = ${origin})`, update, (error, response) => {
+        if(error || !response)
+            return res.send({"status": 500, "error": error, "response": null});
+        db.query('INSERT INTO application_comments SET ?', payload, (error, response) => {
+            if(error || !response)
+                return res.send({"status": 500, "error": error, "response": null});
+            db.query(`SELECT c.ID, c.origin, c.text, c.date_created, c.user_type,
+                (CASE WHEN c.user_type = 'admin' THEN (SELECT fullname FROM users WHERE ID = c.userID)
+                WHEN c.user_type = 'client' THEN (SELECT fullname FROM clients WHERE ID = c.userID) END) fullname
+                FROM application_comments c WHERE c.applicationID = ${req.params.id} AND c.status = 1 ORDER BY c.ID DESC`, (error, comments) => {
+                if(error){
+                    res.send({"status": 500, "error": error, "response": null});
                 } else {
                     let payload = {}
                     payload.category = 'Application'
@@ -2522,19 +2538,33 @@ users.post('/application/comments/:id/:user_id', function (req, res, next) {
                 }
             });
         });
+    });
 });
 
-users.get('/application/comments/:id', function (req, res, next) {
+users.get('/application/comments/:id', function(req, res, next) {
+    db.query(`SELECT c.ID, c.origin, c.text, c.date_created, c.user_type,
+        (CASE WHEN c.user_type = 'admin' THEN (SELECT fullname FROM users WHERE ID = c.userID)
+        WHEN c.user_type = 'client' THEN (SELECT fullname FROM clients WHERE ID = c.userID) END) fullname
+        FROM application_comments c WHERE c.applicationID = ${req.params.id} AND c.status = 1 ORDER BY c.ID DESC`, (error, comments) => {
+        if(error){
+            res.send({"status": 500, "error": error, "response": null});
+        } else {
+            res.send({"status": 200, "message": "Application comments fetched successfully!", "response": comments});
+        }
+    })
+});
+
+users.get('/application/comment/history/:id', (req, res) => {
     db.query(`SELECT c.text, c.date_created, c.user_type,
         (CASE WHEN c.user_type = 'admin' THEN (SELECT fullname FROM users WHERE ID = c.userID)
         WHEN c.user_type = 'client' THEN (SELECT fullname FROM clients WHERE ID = c.userID) END) fullname
-        FROM application_comments c WHERE c.applicationID = ${req.params.id} ORDER BY c.ID DESC`, (error, comments) => {
-            if (error) {
-                res.send({ "status": 500, "error": error, "response": null });
-            } else {
-                res.send({ "status": 200, "message": "Application comments fetched successfully!", "response": comments });
-            }
-        })
+        FROM application_comments c WHERE c.ID = ${req.params.id} OR c.origin = ${req.params.id} ORDER BY c.ID DESC`, (error, comments) => {
+        if(error){
+            res.send({"status": 500, "error": error, "response": null});
+        } else {
+            res.send({"status": 200, "message": "Application comments fetched successfully!", "response": comments});
+        }
+    })
 });
 
 users.post('/application/information-request/:id', (req, res) => {
