@@ -1563,7 +1563,7 @@
 
 
         </div><!-- .animated -->
-        <div id="wait" style=";width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;"><img src='spinner.gif' width="100" height="100" style="background-color: transparent"/></div>
+        <div id="wait" style="width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;"><img src='spinner.gif' width="100" height="100" style="background-color: transparent"/></div>
     </div><!-- .content -->
 
 
@@ -2314,6 +2314,11 @@
                 v = dets[i];
                 if (v){
                     total += (v.loan_amount) ? parseFloat(v.loan_amount) : 0;
+                    // if (v.loan_amount) {
+                    //     total = total + parseFloat(v.loan_amount);
+                    // } else {
+                    //     total = total + 0;
+                    // }
                     v.id = padWithZeroes(parseInt(v.applicationID),6);
                     v.balance = formatter.format(parseFloat((v.loan_amount - v.valid_payment) < 0 ? 0 : v.loan_amount - v.valid_payment));
                     v.principal = (v.loan_amount) ? formatter.format(parseFloat(v.loan_amount)) : 0;
@@ -2635,7 +2640,8 @@
         e.preventDefault();
 
         let start = $("#startGLPDate").val(),
-            end = $("#endGLPDate").val(),
+            end = $("#endGLPDate").val(), 
+            officer = $("#filter-glp-officers").val(),
             url = '/user/disbursements/filter?start='+formatDate(start)+'&&end='+formatDate(end);
         if (!start || !end ) {
             return loadGLP();
@@ -2969,6 +2975,7 @@
             'url': url,
             'type': 'get',
             'success': function (data) {
+                console.log('DATA', data);
                 let applications = data.response;
                 results = applications;
                 populateLoanByBranch(applications);
@@ -3273,7 +3280,6 @@
             end = $("#filterprincipalend").val(),
             url;
         url = (start === "" || start === null || end === "" || end === null ) ? 'user/principal' : 'user/principal?start='+formatDate(start)+'&&end='+formatDate(end)
-
         $.ajax({
             'url': url,
             'type': 'get',
@@ -3440,12 +3446,13 @@
         e.preventDefault();
 
         let start = $("#filterprincipalstart").val(),
-            end = $("#filterprincipal").val(),
+            end = $("#filterprincipalend").val(),
             officer = $('#principal-officers').find('option:selected').attr('id')
         url = '/user/principal?start='+formatDate(start)+'&&end='+formatDate(end);
         if (start && end && officer==0){
             url = '/user/principal?start='+formatDate(start)+'&&end='+formatDate(end);
         }
+
         if ((!start || !end) && officer==0 ) {
             return loadPrincipalReceived();
         }
@@ -3710,8 +3717,8 @@
     });
 
     function formatDate(date) {
-        if (!date)
-            return '1970-01-01';
+        // if (!date)
+            // return '1970-01-01';
         let separator;
         if (date.indexOf('-') > -1){
             separator = '-';
@@ -3755,7 +3762,7 @@
                     $("#irchartfilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#irrecchartfilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#interest-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
-                    $("#interest-rec-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                    $("#interest-rec-officers") .append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#prchartfilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#prrecchartfilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#principal-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
@@ -4003,13 +4010,18 @@
     }
 
     function loanclassFilter(classification){
+        console.log('CLASSIFICATION', classification);
         let start = $("#startDate").val(),
             end = $("#endDate").val(),
             officer = $('#badloans-officers').val(),
-//            unmax = $('#loan-classes').attr('un_max') ;
+        //    unmax = $('#loan-classes').attr('un_max') ;
             url = '/user/badloans?';
-        let class_ = classification.value.split('-')[0],
-            unmax = classification.value.split('-')[1] ;
+        let class_ = classification.value.split('-')[0];
+        unmax = classification.value.split('-')[1] ;
+        console.log('OFFICER', officer);
+        console.log('URL', url);
+        console.log('CLASS', class_);
+        console.log('UNMAX', unmax);
         if (class_ == -1 && officer === "false"){
             return loadBadLoans();
         }
