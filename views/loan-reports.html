@@ -2643,10 +2643,6 @@
             end = $("#endGLPDate").val(), 
             officer = $("#filter-glp-officers").val(),
             url = '/user/disbursements/filter?start='+formatDate(start)+'&&end='+formatDate(end);
-            console.log('START', start);
-            console.log('URL', url);
-        console.log('END', end);
-        console.log('OFFICER', officer);
         if (!start || !end ) {
             return loadGLP();
         }
@@ -2979,6 +2975,7 @@
             'url': url,
             'type': 'get',
             'success': function (data) {
+                console.log('DATA', data);
                 let applications = data.response;
                 results = applications;
                 populateLoanByBranch(applications);

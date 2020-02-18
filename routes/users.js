@@ -4865,7 +4865,7 @@ users.get('/payments', function (req, res, next) {
 //         }
 //     });
 // });
-
+// added
 users.get('/loans-by-branches', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end
@@ -4873,7 +4873,7 @@ users.get('/loans-by-branches', function (req, res, next) {
     let queryPart,
         query,
         group;
-    queryPart = `select branch branchID, \n
+    queryPart = `select branch branchID, date_disbursed, \n
                 (select branch_name from branches br where br.id = branchID) as branch, sum(amount) disbursed, \n
                 (select sum(payment_amount) from schedule_history sh where sh.status = 1 and sh.applicationID in (select ap.ID from applications ap where ap.status = 2)) collected\n
                 from disbursement_history\n
@@ -4884,12 +4884,12 @@ users.get('/loans-by-branches', function (req, res, next) {
     if (start && end) {
         start = "'" + start + "'";
         end = "'" + end + "'";
-        query = `select branch branchID, \n
+        query = `select branch branchID, date_disbursed, \n
                 (select branch_name from branches br where br.id = branchID) as branch, sum(amount) disbursed, \n
                 (select sum(payment_amount) from schedule_history sh where sh.status = 1 and sh.applicationID in (select ap.ID from applications ap where ap.status = 2)) collected\n
                 from disbursement_history\n
                 where status = 1 \n
-                AND TIMESTAMP(date_disbursed) between TIMESTAMP('+start+') and TIMESTAMP('+end+')\n
+                AND TIMESTAMP(date_disbursed) between TIMESTAMP(${start}) and TIMESTAMP(${end})\n
                 group by branchID`;
     }
     db.query(query, function (error, results, fields) {
