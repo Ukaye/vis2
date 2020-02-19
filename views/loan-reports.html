@@ -178,6 +178,7 @@
                                         </div>
                                     </div>
                                 </div>
+                                <!-- added -->
                                 <div class="row">
                                     &nbsp; &nbsp; &nbsp; <button style="float: right;" onclick="refresh()" class="btn btn-default pull-right"><i class="fa fa-refresh"></i> Refresh Cards</button>
                                 </div>
@@ -259,7 +260,9 @@
                                                     <div class="card">
                                                         <div class="card-header">
                                                             <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
-                                                                <strong role="button" onclick="refreshDisbursements()" >Disbursements &nbsp; &nbsp;&nbsp; &nbsp; <a href="#" title="Click to refresh table"><i class="fa fa-refresh"></i></a></strong>
+                                                                <strong role="button" hidden="true" onclick="refreshDisbursements()" >Disbursements &nbsp; &nbsp;&nbsp; &nbsp;
+                                                                     <a href="#" title="Click to refresh table"><i class="fa fa-refresh"></i></a>
+                                                                    </strong>
                                                                 <span style="float: right">Total: <span id="total-disbursements"></span></span>
                                                             </div>
                                                             <div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">
@@ -2132,24 +2135,26 @@
     }
 
     function loadDisbursed(){
-        if (localStorage.getItem('disbursed')){
-            $('#disbursed-table').DataTable({
-                dom: 'Blfrtip',
-                bDestroy: true,
-                data: JSON.parse(localStorage.getItem('disbursed')),
-                search: {search: ' '},
-                buttons: [
-                    'copy', 'csv', 'excel', 'pdf', 'print'
-                ],
-                columns: [
-                    { data: "id" },
-                    { data: "fullname" },
-                    { data: "principal" },
-                    { data: "date" }
-                ]
-            });
-            $('#total-disbursements').html(formatter.format(localStorage.getItem('total-disbursements')));
-        } else {
+        // if (localStorage.getItem('disbursed')){
+            // $('#disbursed-table').DataTable({
+            //     dom: 'Blfrtip',
+            //     bDestroy: true,
+            //     data: JSON.parse(localStorage.getItem('disbursed')),
+            //     search: {search: ' '},
+            //     buttons: [
+            //         'copy', 'csv', 'excel', 'pdf', 'print'
+            //     ],
+            //     columns: [
+            //         { data: "id" },
+            //         { data: "fullname" },
+            //         { data: "principal" },
+            //         { data: "date" }
+            //     ]
+            // });
+            // //added
+            // // $('#total-disbursements').html(formatter.format(localStorage.getItem('total-disbursements')));
+            //  $("#total-disbursements").text();
+        // } else {
             let start = $("#startDate").val(),
                 end = $("#endDate").val(),
                 url;
@@ -2165,7 +2170,7 @@
                     swal('Error in Connection!','','error')
                 }
             });
-        }
+        
     }
 
     function reloadDisbursed(){
@@ -2343,9 +2348,14 @@
                 ]
             });
             localStorage.setItem('disbursed', JSON.stringify(processed_data));
-            localStorage.setItem('total-disbursements', total);
+            // localStorage.setItem('total-disbursements', total);
+            $("#total-disbursements").text(total);
             $('#total-disbursements').html(formatter.format(total));
         }
+    }
+
+    function getTotal(){
+
     }
 
     function populateGLP(dets){
@@ -2975,7 +2985,6 @@
             'url': url,
             'type': 'get',
             'success': function (data) {
-                console.log('DATA', data);
                 let applications = data.response;
                 results = applications;
                 populateLoanByBranch(applications);
