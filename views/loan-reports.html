@@ -2135,26 +2135,26 @@
     }
 
     function loadDisbursed(){
-        if (localStorage.getItem('disbursed')){
-            $('#disbursed-table').DataTable({
-                dom: 'Blfrtip',
-                bDestroy: true,
-                data: JSON.parse(localStorage.getItem('disbursed')),
-                search: {search: ' '},
-                buttons: [
-                    'copy', 'csv', 'excel', 'pdf', 'print'
-                ],
-                columns: [
-                    { data: "id" },
-                    { data: "fullname" },
-                    { data: "principal" },
-                    { data: "date" }
-                ]
-            });
-            //added
-            // $('#total-disbursements').html(formatter.format(localStorage.getItem('total-disbursements')));
-             $("#total-disbursements").text();
-        } else {
+        // if (localStorage.getItem('disbursed')){
+            // $('#disbursed-table').DataTable({
+            //     dom: 'Blfrtip',
+            //     bDestroy: true,
+            //     data: JSON.parse(localStorage.getItem('disbursed')),
+            //     search: {search: ' '},
+            //     buttons: [
+            //         'copy', 'csv', 'excel', 'pdf', 'print'
+            //     ],
+            //     columns: [
+            //         { data: "id" },
+            //         { data: "fullname" },
+            //         { data: "principal" },
+            //         { data: "date" }
+            //     ]
+            // });
+            // //added
+            // // $('#total-disbursements').html(formatter.format(localStorage.getItem('total-disbursements')));
+            //  $("#total-disbursements").text();
+        // } else {
             let start = $("#startDate").val(),
                 end = $("#endDate").val(),
                 url;
@@ -2170,7 +2170,7 @@
                     swal('Error in Connection!','','error')
                 }
             });
-        }
+        
     }
 
     function reloadDisbursed(){
@@ -2348,10 +2348,9 @@
                 ]
             });
             localStorage.setItem('disbursed', JSON.stringify(processed_data));
-            //added
             // localStorage.setItem('total-disbursements', total);
-            $('#total-disbursements').html(formatter.format(total));
             $("#total-disbursements").text(total);
+            $('#total-disbursements').html(formatter.format(total));
         }
     }
 
@@ -2494,10 +2493,9 @@
         }
     }
 
-    //added
-    // function refreshDisbursements(){
-    //     reloadDisbursed();
-    // }
+    function refreshDisbursements(){
+        reloadDisbursed();
+    }
 
     function refresh(){
         loadInfo();
@@ -2987,7 +2985,6 @@
             'url': url,
             'type': 'get',
             'success': function (data) {
-                console.log('DATA', data);
                 let applications = data.response;
                 results = applications;
                 populateLoanByBranch(applications);
