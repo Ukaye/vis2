@@ -710,6 +710,12 @@ function previousStage(state,states) {
     });
 }
 
+function addComment() {
+    comment_id = false;
+    $('#comment').text('');
+    $('#addCommentModal').modal('show');
+}
+
 function comment(){
     let payload = {},
         $comment = $("#comment");
