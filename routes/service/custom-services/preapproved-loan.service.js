@@ -368,10 +368,6 @@ router.get('/get', function (req, res, next) {
     });
 });
 
-
-
-// remita error 
-
 router.get('/get/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT 
@@ -414,7 +410,6 @@ router.get('/get/:id', function (req, res, next) {
         LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) INNER JOIN applications a ON a.ID = p.applicationID 
         WHERE p.applicationID = '${req.params.id}' AND p.status = 1`;
     }
-    console.log(query)
     axios.get(url, {
         params: {
             query: query
