@@ -368,24 +368,53 @@ router.get('/get', function (req, res, next) {
     });
 });
 
+
+
+// remita error 
+
 router.get('/get/:id', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
-    let query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, 
-        r.requestId, r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
-        LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) 
-        WHERE (p.ID = '${decodeURIComponent(req.params.id)}' OR p.hash = '${decodeURIComponent(req.params.id)}') AND p.status = 1`,
+    let query = `SELECT 
+                    p.*,
+                    c.fullname,
+                    c.email,
+                    c.salary,
+                    c.phone,
+                    (CASE WHEN (a.bank IS NOT NULL) THEN a.bank ELSE c.bank END) bank, 
+                    (CASE WHEN (a.account IS NOT NULL) THEN a.account ELSE c.account END) account,
+                    r.mandateId,
+                    r.requestId,
+                    r.remitaTransRef,
+                    r.authParams
+                FROM
+                    preapproved_loans p
+                        INNER JOIN
+                    clients c ON p.userID = c.ID
+                        LEFT JOIN
+                    remita_mandates r ON (r.applicationID = p.applicationID
+                        AND r.status = 1)
+                        INNER JOIN
+                    applications a ON a.ID = p.applicationID
+                WHERE
+                    (p.ID = '${decodeURIComponent(req.params.id)}' OR p.hash = '${decodeURIComponent(req.params.id)}')
+                AND p.status = 1`,
         endpoint = '/core-service/get',
         url = `${HOST}${endpoint}`;
     if (req.query.key === 'userID') {
-        query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, 
+        query = `SELECT p.*, c.fullname, c.email, c.salary, r.mandateId, 
+        (CASE WHEN (a.bank IS NOT NULL) THEN a.bank ELSE c.bank END) bank, (CASE WHEN (a.account IS NOT NULL) THEN a.account ELSE c.account END) account, 
         r.requestId, r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
-        LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) WHERE p.userID = '${req.params.id}' AND p.status = 1`;
+        LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) INNER JOIN applications a ON a.ID = p.applicationID 
+        WHERE p.userID = '${req.params.id}' AND p.status = 1`;
     }
     if (req.query.key === 'applicationID') {
-        query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, 
+        query = `SELECT p.*, c.fullname, c.email, c.salary, r.mandateId, 
+        (CASE WHEN (a.bank IS NOT NULL) THEN a.bank ELSE c.bank END) bank, (CASE WHEN (a.account IS NOT NULL) THEN a.account ELSE c.account END) account, 
         r.requestId, r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
-        LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) WHERE p.applicationID = '${req.params.id}' AND p.status = 1`;
+        LEFT JOIN remita_mandates r ON (r.applicationID = p.applicationID AND r.status = 1) INNER JOIN applications a ON a.ID = p.applicationID 
+        WHERE p.applicationID = '${req.params.id}' AND p.status = 1`;
     }
+    console.log(query)
     axios.get(url, {
         params: {
             query: query

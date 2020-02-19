@@ -422,8 +422,9 @@ functions.getFilesInformation = (folder_path, files) => {
         const info = {
             name: file_.join('_'),
             datetime: fs.statSync(path.join(folder_path, file)).ctime,
-            file: `${process.env.HOST || req.HOST}/${folder_path}${file}`
+            file: `${process.env.HOST}/${folder_path}${file}`
         };
+        
         check[info.name] = info;
     }
     return check;

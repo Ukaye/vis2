@@ -635,9 +635,12 @@
                     obj.agentID = (JSON.parse(localStorage.getItem("user_obj"))).ID;
                     obj.client_type = preapplication.client_type;
 
-                    obj.bank = preapplication.bank;
-                    obj.account = preapplication.account;
-                    obj.account_name = preapplication.account_name;
+                    if(preapplication.account) {
+                        obj.bank = preapplication.bank || undefined;
+                        obj.account = preapplication.account || undefined;
+                        obj.account_name = preapplication.account_name || undefined;
+                    }
+             
 
 
                     if (preapplication && preapplication.ID)

@@ -178,6 +178,7 @@
                                         </div>
                                     </div>
                                 </div>
+                                <!-- added -->
                                 <div class="row">
                                     &nbsp; &nbsp; &nbsp; <button style="float: right;" onclick="refresh()" class="btn btn-default pull-right"><i class="fa fa-refresh"></i> Refresh Cards</button>
                                 </div>
@@ -259,7 +260,9 @@
                                                     <div class="card">
                                                         <div class="card-header">
                                                             <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
-                                                                <strong role="button" onclick="refreshDisbursements()" >Disbursements &nbsp; &nbsp;&nbsp; &nbsp; <a href="#" title="Click to refresh table"><i class="fa fa-refresh"></i></a></strong>
+                                                                <strong role="button" hidden="true" onclick="refreshDisbursements()" >Disbursements &nbsp; &nbsp;&nbsp; &nbsp;
+                                                                     <a href="#" title="Click to refresh table"><i class="fa fa-refresh"></i></a>
+                                                                    </strong>
                                                                 <span style="float: right">Total: <span id="total-disbursements"></span></span>
                                                             </div>
                                                             <div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">
@@ -1563,7 +1566,7 @@
 
 
         </div><!-- .animated -->
-        <div id="wait" style=";width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;"><img src='spinner.gif' width="100" height="100" style="background-color: transparent"/></div>
+        <div id="wait" style="width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;"><img src='spinner.gif' width="100" height="100" style="background-color: transparent"/></div>
     </div><!-- .content -->
 
 
@@ -2132,24 +2135,26 @@
     }
 
     function loadDisbursed(){
-        if (localStorage.getItem('disbursed')){
-            $('#disbursed-table').DataTable({
-                dom: 'Blfrtip',
-                bDestroy: true,
-                data: JSON.parse(localStorage.getItem('disbursed')),
-                search: {search: ' '},
-                buttons: [
-                    'copy', 'csv', 'excel', 'pdf', 'print'
-                ],
-                columns: [
-                    { data: "id" },
-                    { data: "fullname" },
-                    { data: "principal" },
-                    { data: "date" }
-                ]
-            });
-            $('#total-disbursements').html(formatter.format(localStorage.getItem('total-disbursements')));
-        } else {
+        // if (localStorage.getItem('disbursed')){
+            // $('#disbursed-table').DataTable({
+            //     dom: 'Blfrtip',
+            //     bDestroy: true,
+            //     data: JSON.parse(localStorage.getItem('disbursed')),
+            //     search: {search: ' '},
+            //     buttons: [
+            //         'copy', 'csv', 'excel', 'pdf', 'print'
+            //     ],
+            //     columns: [
+            //         { data: "id" },
+            //         { data: "fullname" },
+            //         { data: "principal" },
+            //         { data: "date" }
+            //     ]
+            // });
+            // //added
+            // // $('#total-disbursements').html(formatter.format(localStorage.getItem('total-disbursements')));
+            //  $("#total-disbursements").text();
+        // } else {
             let start = $("#startDate").val(),
                 end = $("#endDate").val(),
                 url;
@@ -2165,7 +2170,7 @@
                     swal('Error in Connection!','','error')
                 }
             });
-        }
+        
     }
 
     function reloadDisbursed(){
@@ -2314,6 +2319,11 @@
                 v = dets[i];
                 if (v){
                     total += (v.loan_amount) ? parseFloat(v.loan_amount) : 0;
+                    // if (v.loan_amount) {
+                    //     total = total + parseFloat(v.loan_amount);
+                    // } else {
+                    //     total = total + 0;
+                    // }
                     v.id = padWithZeroes(parseInt(v.applicationID),6);
                     v.balance = formatter.format(parseFloat((v.loan_amount - v.valid_payment) < 0 ? 0 : v.loan_amount - v.valid_payment));
                     v.principal = (v.loan_amount) ? formatter.format(parseFloat(v.loan_amount)) : 0;
@@ -2338,9 +2348,14 @@
                 ]
             });
             localStorage.setItem('disbursed', JSON.stringify(processed_data));
-            localStorage.setItem('total-disbursements', total);
+            // localStorage.setItem('total-disbursements', total);
+            $("#total-disbursements").text(total);
             $('#total-disbursements').html(formatter.format(total));
         }
+    }
+
+    function getTotal(){
+
     }
 
     function populateGLP(dets){
@@ -2635,7 +2650,8 @@
         e.preventDefault();
 
         let start = $("#startGLPDate").val(),
-            end = $("#endGLPDate").val(),
+            end = $("#endGLPDate").val(), 
+            officer = $("#filter-glp-officers").val(),
             url = '/user/disbursements/filter?start='+formatDate(start)+'&&end='+formatDate(end);
         if (!start || !end ) {
             return loadGLP();
@@ -3273,7 +3289,6 @@
             end = $("#filterprincipalend").val(),
             url;
         url = (start === "" || start === null || end === "" || end === null ) ? 'user/principal' : 'user/principal?start='+formatDate(start)+'&&end='+formatDate(end)
-
         $.ajax({
             'url': url,
             'type': 'get',
@@ -3440,12 +3455,13 @@
         e.preventDefault();
 
         let start = $("#filterprincipalstart").val(),
-            end = $("#filterprincipal").val(),
+            end = $("#filterprincipalend").val(),
             officer = $('#principal-officers').find('option:selected').attr('id')
         url = '/user/principal?start='+formatDate(start)+'&&end='+formatDate(end);
         if (start && end && officer==0){
             url = '/user/principal?start='+formatDate(start)+'&&end='+formatDate(end);
         }
+
         if ((!start || !end) && officer==0 ) {
             return loadPrincipalReceived();
         }
@@ -3710,8 +3726,8 @@
     });
 
     function formatDate(date) {
-        if (!date)
-            return '1970-01-01';
+        // if (!date)
+            // return '1970-01-01';
         let separator;
         if (date.indexOf('-') > -1){
             separator = '-';
@@ -3755,7 +3771,7 @@
                     $("#irchartfilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#irrecchartfilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#interest-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
-                    $("#interest-rec-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                    $("#interest-rec-officers") .append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#prchartfilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#prrecchartfilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#principal-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
@@ -4003,13 +4019,18 @@
     }
 
     function loanclassFilter(classification){
+        console.log('CLASSIFICATION', classification);
         let start = $("#startDate").val(),
             end = $("#endDate").val(),
             officer = $('#badloans-officers').val(),
-//            unmax = $('#loan-classes').attr('un_max') ;
+        //    unmax = $('#loan-classes').attr('un_max') ;
             url = '/user/badloans?';
-        let class_ = classification.value.split('-')[0],
-            unmax = classification.value.split('-')[1] ;
+        let class_ = classification.value.split('-')[0];
+        unmax = classification.value.split('-')[1] ;
+        console.log('OFFICER', officer);
+        console.log('URL', url);
+        console.log('CLASS', class_);
+        console.log('UNMAX', unmax);
         if (class_ == -1 && officer === "false"){
             return loadBadLoans();
         }
