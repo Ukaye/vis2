@@ -1,5 +1,5 @@
-(function( $ ) {
-    jQuery(document).ready(function() {
+(function ($) {
+    jQuery(document).ready(function () {
         getWorkflows();
         getApplicationSettings();
     });
@@ -84,7 +84,7 @@
                     $('#guarantor_phone').val(response.guarantor_phone);
                 if (response.guarantor_relationship)
                     $('#guarantor_relationship').val(response.guarantor_relationship);
-                if (response.loan_amount){
+                if (response.loan_amount) {
                     $('#loan_amount').val(response.loan_amount);
                     $('#amount').val(response.loan_amount);
                 }
@@ -142,23 +142,23 @@
     }
 
     $('#product').change(function () {
-       switch (this.value) {
-           case 'general': {
-               $('.market_name-div').hide();
-               break;
-           }
-           case 'market_loan': {
-               $('.market_name-div').show();
-               break;
-           }
-       }
+        switch (this.value) {
+            case 'general': {
+                $('.market_name-div').hide();
+                break;
+            }
+            case 'market_loan': {
+                $('.market_name-div').show();
+                break;
+            }
+        }
     });
 
-    $('input[name=contribution_status]').change(function() {
+    $('input[name=contribution_status]').change(function () {
         $('#contribution-div').toggle();
     });
 
-    function getClients(callback){
+    function getClients(callback) {
         $('#wait').show();
         $.ajax({
             type: 'get',
@@ -180,7 +180,7 @@
         });
     }
 
-    function getCorporates(callback){
+    function getCorporates(callback) {
         $('#wait').show();
         $.ajax({
             type: 'get',
@@ -202,27 +202,27 @@
         });
     }
 
-    function getWorkflows(){
+    function getWorkflows() {
         $.ajax({
             type: "GET",
             url: "/workflows",
             success: function (response) {
                 $.each(response.response, function (key, val) {
-                    $("#workflows").append('<option value = "'+val.ID+'"">'+val.name+'</option>');
+                    $("#workflows").append('<option value = "' + val.ID + '"">' + val.name + '</option>');
                 });
             }
         });
     }
 
-    function getLoanPurposes(){
+    function getLoanPurposes() {
         $.ajax({
             type: "GET",
             url: "/settings/application/loan_purpose",
             success: function (response) {
                 getLoanBusinesses();
                 $.each(response.response, function (key, val) {
-                    $("#purposes").append('<option value = "'+val.ID+'"">'+val.title+'</option>');
-                    $("#loan_purposes").append('<option value = "'+val.ID+'"">'+val.title+'</option>');
+                    $("#purposes").append('<option value = "' + val.ID + '"">' + val.title + '</option>');
+                    $("#loan_purposes").append('<option value = "' + val.ID + '"">' + val.title + '</option>');
                 });
                 $("#purposes").select2();
                 $("#loan_purposes").select2();
@@ -230,13 +230,13 @@
         });
     }
 
-    function getLoanBusinesses(){
+    function getLoanBusinesses() {
         $.ajax({
             type: "GET",
             url: "/settings/application/business",
             success: function (response) {
                 $.each(response.response, function (key, val) {
-                    $("#businesses").append('<option value = "'+val.ID+'"">'+val.name+'</option>');
+                    $("#businesses").append('<option value = "' + val.ID + '"">' + val.name + '</option>');
                 });
                 $("#businesses").select2();
                 if (preapplication_id) {
@@ -342,33 +342,33 @@
             total_principal = 0,
             amount = $('#amount').val(),
             date = $('#repayment-date').val();
-        for (let i=-2; i<schedule.length-1; i++){
-            if (i === -2){
+        for (let i = -2; i < schedule.length - 1; i++) {
+            if (i === -2) {
                 result.push("PRINCIPAL,,,INTEREST,,,BALANCE");
-            } else if (i === -1){
+            } else if (i === -1) {
                 result.push("INVOICE DATE,COLLECTION DATE,AMOUNT,INVOICE DATE,COLLECTION DATE,AMOUNT,AMOUNT");
             } else {
                 total_principal = (total_principal + schedule[i][1]).round(2);
                 amount = parseFloat(amount);
-                if (i === schedule.length-2){
-                    let excess = (total_principal > amount)? (total_principal - amount).round(2) : (amount - total_principal).round(2);
+                if (i === schedule.length - 2) {
+                    let excess = (total_principal > amount) ? (total_principal - amount).round(2) : (amount - total_principal).round(2);
                     schedule[i][2] = (schedule[i][2] + schedule[i][3] + excess).round(2);
                     schedule[i][1] = (schedule[i][1] - excess).round(2);
                     schedule[i][3] = 0;
                 }
                 let cells;
-                if (date){
-                    cells = date+","+date+","+schedule[i][1]+","+date+","+date+","+schedule[i][2]+","+schedule[i][3];
+                if (date) {
+                    cells = date + "," + date + "," + schedule[i][1] + "," + date + "," + date + "," + schedule[i][2] + "," + schedule[i][3];
                     let date_array = date.split('-');
-                    date = new Date(date_array[0], (parseInt(date_array[1])-1), date_array[2]);
+                    date = new Date(date_array[0], (parseInt(date_array[1]) - 1), date_array[2]);
                     if (preapplication.tenor_type && preapplication.tenor_type === 'weekly') {
-                        date.setDate(date.getDate()+7);
+                        date.setDate(date.getDate() + 7);
                     } else {
-                        date.setMonth(date.getMonth()+1);
+                        date.setMonth(date.getMonth() + 1);
                     }
                     date = formatDate(date);
                 } else {
-                    cells = "0,0,"+schedule[i][1]+",0,0,"+schedule[i][2]+","+schedule[i][3];
+                    cells = "0,0," + schedule[i][1] + ",0,0," + schedule[i][2] + "," + schedule[i][3];
                 }
                 result.push(cells);
             }
@@ -402,24 +402,24 @@
                     interestRate = $('#interest-rate').val(),
                     duration = $('#term').val();
                 if (!loanAmount || !interestRate || !duration)
-                    return $message.text('Kindly fill all required fields!','','warning');
+                    return $message.text('Kindly fill all required fields!', '', 'warning');
                 duration = parseFloat(duration);
                 loanAmount = parseFloat(loanAmount);
                 interestRate = parseFloat(interestRate);
                 if (duration < settings.tenor_min || duration > settings.tenor_max)
                     return $message.text(`Minimum tenor is ${numberToCurrencyformatter(settings.tenor_min)} (month)
-                     and Maximum is ${numberToCurrencyformatter(settings.tenor_max)} (months)`,'','warning');
+                     and Maximum is ${numberToCurrencyformatter(settings.tenor_max)} (months)`, '', 'warning');
                 if (interestRate < settings.interest_rate_min || interestRate > settings.interest_rate_max)
                     return $message.text(`Minimum interest rate is ${numberToCurrencyformatter(settings.interest_rate_min)}% 
-                    and Maximum is ${numberToCurrencyformatter(settings.interest_rate_max)}%`,'','warning');
+                    and Maximum is ${numberToCurrencyformatter(settings.interest_rate_max)}%`, '', 'warning');
                 if (loanAmount < settings.loan_requested_min || loanAmount > settings.loan_requested_max)
                     return $message.text(`Minimum loan amount is ₦${numberToCurrencyformatter(settings.loan_requested_min)} 
-                    and Maximum is ₦${numberToCurrencyformatter(settings.loan_requested_max)}`,'','warning');
+                    and Maximum is ₦${numberToCurrencyformatter(settings.loan_requested_max)}`, '', 'warning');
                 $message.hide();
 
-                let years = duration/12,
+                let years = duration / 12,
                     paymentsPerYear = 12, //tenor: monthly = 12, biweekly = 26, weekly = 52
-                    rate_ = (interestRate/100)/paymentsPerYear,
+                    rate_ = (interestRate / 100) / paymentsPerYear,
                     numberOfPayments = paymentsPerYear * years,
                     payment = (pmt(rate_, numberOfPayments, -loanAmount, $amortization.val())).toFixed(2),
                     schedule_ = computeSchedule(loanAmount, interestRate, paymentsPerYear, years, parseFloat(payment), $amortization.val()),
@@ -429,11 +429,11 @@
                 for (let i = 0; i < rows.length; i++) {
                     let invoice = {},
                         row = $("<tr />"),
-                        cells = (rows[i].split(",").length > 7)? rows[i].split(",").slice(0, 7) : rows[i].split(",");
+                        cells = (rows[i].split(",").length > 7) ? rows[i].split(",").slice(0, 7) : rows[i].split(",");
                     if (i === 0) {
-                        cells = ["PRINCIPAL","INTEREST","BALANCE"];
+                        cells = ["PRINCIPAL", "INTEREST", "BALANCE"];
                     } else if (i === 1) {
-                        cells = ["INVOICE DATE","COLLECTION DATE","AMOUNT","INVOICE DATE","COLLECTION DATE","AMOUNT","AMOUNT"];
+                        cells = ["INVOICE DATE", "COLLECTION DATE", "AMOUNT", "INVOICE DATE", "COLLECTION DATE", "AMOUNT", "AMOUNT"];
                     }
                     if (cells.join(' ').length > 10) {
                         for (let j = 0; j < cells.length; j++) {
@@ -489,7 +489,7 @@
                             }
                         }
                     }
-                    if (i>1 && cells.length === 7 && !$.isEmptyObject(invoice))
+                    if (i > 1 && cells.length === 7 && !$.isEmptyObject(invoice))
                         schedule.push(invoice);
                     table.append(row);
                 }
@@ -511,11 +511,11 @@
                         for (let i = 0; i < rows.length; i++) {
                             let invoice = {},
                                 row = $("<tr />"),
-                                cells = (rows[i].split(",").length > 7)? rows[i].split(",").slice(0, 7) : rows[i].split(",");
+                                cells = (rows[i].split(",").length > 7) ? rows[i].split(",").slice(0, 7) : rows[i].split(",");
                             if (i === 0) {
-                                cells = ["PRINCIPAL","INTEREST","BALANCE"];
+                                cells = ["PRINCIPAL", "INTEREST", "BALANCE"];
                             } else if (i === 1) {
-                                cells = ["INVOICE DATE","COLLECTION DATE","AMOUNT","INVOICE DATE","COLLECTION DATE","AMOUNT","AMOUNT"];
+                                cells = ["INVOICE DATE", "COLLECTION DATE", "AMOUNT", "INVOICE DATE", "COLLECTION DATE", "AMOUNT", "AMOUNT"];
                             }
                             if (cells.join(' ').length > 10) {
                                 for (let j = 0; j < cells.length; j++) {
@@ -572,7 +572,7 @@
                                     }
                                 }
                             }
-                            if (i>1 && cells.length === 7 && !$.isEmptyObject(invoice))
+                            if (i > 1 && cells.length === 7 && !$.isEmptyObject(invoice))
                                 schedule.push(invoice);
                             table.append(row);
                         }
@@ -581,22 +581,22 @@
                     };
                     reader.readAsText($csvUpload[0].files[0]);
                 } else {
-                    return notification('This browser does not support HTML5.','','warning');
+                    return notification('This browser does not support HTML5.', '', 'warning');
                 }
             } else {
-                return notification('Please select a valid CSV file.','Note that symbols and special characters are not allowed in the filename!','warning');
+                return notification('Please select a valid CSV file.', 'Note that symbols and special characters are not allowed in the filename!', 'warning');
             }
         });
 
         $("#addApplication").click(function () {
             if (!schedule[0])
-                return notification('Please upload a valid CSV file.','','warning');
+                return notification('Please upload a valid CSV file.', '', 'warning');
             validateSchedule(schedule, function (validation) {
-                if (validation.status){
+                if (validation.status) {
                     let obj = {},
                         schedule = validation.data,
                         $purposes = $('#purposes'),
-                        user = ($user_list.val() !== '-- Choose Client --')? JSON.parse(decodeURIComponent($user_list.val())) : false;
+                        user = ($user_list.val() !== '-- Choose Client --') ? JSON.parse(decodeURIComponent($user_list.val())) : false;
                     if (user) {
                         obj.userID = user.ID;
                         obj.email = user.email;
@@ -614,18 +614,18 @@
                     if (preapplication && preapplication.ID)
                         obj.preapplicationID = preapplication.ID;
                     if (!user || isNaN(obj.workflowID) || !obj.loan_amount || !obj.interest_rate || !obj.duration || $purposes.val() === '-- Choose Loan Purpose --')
-                        return notification('Kindly fill all required fields!','','warning');
+                        return notification('Kindly fill all required fields!', '', 'warning');
                     if (parseFloat(obj.duration) < settings.tenor_min || parseFloat(obj.duration) > settings.tenor_max)
                         return notification(`Minimum tenor is ${numberToCurrencyformatter(settings.tenor_min)} (month) 
-                        and Maximum is ${numberToCurrencyformatter(settings.tenor_max)} (months)`,'','warning');
+                        and Maximum is ${numberToCurrencyformatter(settings.tenor_max)} (months)`, '', 'warning');
                     if (parseFloat(obj.interest_rate) < settings.interest_rate_min || parseFloat(obj.interest_rate) > settings.interest_rate_max)
                         return notification(`Minimum interest rate is ${numberToCurrencyformatter(settings.interest_rate_min)}% 
-                        and Maximum is ${numberToCurrencyformatter(settings.interest_rate_max)}%`,'','warning');
+                        and Maximum is ${numberToCurrencyformatter(settings.interest_rate_max)}%`, '', 'warning');
                     if (parseFloat(obj.loan_amount) < settings.loan_requested_min || parseFloat(obj.loan_amount) > settings.loan_requested_max)
                         return notification(`Minimum loan amount is ₦${numberToCurrencyformatter(settings.loan_requested_min)} 
-                        and Maximum is ₦${numberToCurrencyformatter(settings.loan_requested_max)}`,'','warning');
+                        and Maximum is ₦${numberToCurrencyformatter(settings.loan_requested_max)}`, '', 'warning');
                     if (loan_amount !== parseFloat(obj.loan_amount))
-                        return notification('Loan amount ('+parseFloat(obj.loan_amount)+') and schedule ('+loan_amount+') mismatch','','warning');
+                        return notification('Loan amount (' + parseFloat(obj.loan_amount) + ') and schedule (' + loan_amount + ') mismatch', '', 'warning');
                     $('#wait').show();
                     $.ajax({
                         'url': '/user/apply',
@@ -644,11 +644,11 @@
                         'error': function (err) {
                             console.log(err);
                             $('#wait').hide();
-                            notification('No internet connection','','error');
+                            notification('No internet connection', '', 'error');
                         }
                     });
                 } else {
-                    notification('There are error(s) in the uploaded schedule!','','warning');
+                    notification('There are error(s) in the uploaded schedule!', '', 'warning');
                 }
             });
         });
@@ -683,7 +683,7 @@
                             $('#rate').val('');
                             $('#contribution').val('');
                             preapplication = data;
-                            notification('Loan Application (Step 1) was successful!','','success');
+                            notification('Loan Application (Step 1) was successful!', '', 'success');
                             if (obj.product === 'market_loan') {
                                 $('#saveApplication').hide();
                                 $('.form-group').hide();
@@ -696,7 +696,7 @@
                         'error': function (err) {
                             console.log(err);
                             $('#wait').hide();
-                            notification('No internet connection','','error');
+                            notification('No internet connection', '', 'error');
                         }
                     });
                 }
@@ -723,17 +723,17 @@
                                     'success': function (data) {
                                         $('#wait').hide();
                                         if (data.status !== 500) {
-                                            notification('Loan Application approved successfully','','success');
+                                            notification('Loan Application approved successfully', '', 'success');
                                             window.location.href = '/all-preapplications';
                                         } else {
                                             console.log(data.error);
-                                            notification(data.error,'','error');
+                                            notification(data.error, '', 'error');
                                         }
                                     },
                                     'error': function (err) {
                                         console.log(err);
                                         $('#wait').hide();
-                                        notification('No internet connection','','error');
+                                        notification('No internet connection', '', 'error');
                                     }
                                 });
                             }
@@ -745,17 +745,17 @@
 
     function uploadSchedule(schedule, application_id) {
         $.ajax({
-            'url': '/user/application/schedule/'+application_id,
+            'url': '/user/application/schedule/' + application_id,
             'type': 'post',
-            'data': {schedule:schedule},
+            'data': { schedule: schedule },
             'success': function (data) {
                 // updatePreapplicationStatus(application_id);
-                notification('Loan Application created successfully!','','success');
+                notification('Loan Application created successfully!', '', 'success');
                 window.location.href = `/application?id=${application_id}`;
             },
             'error': function (err) {
                 $('#wait').hide();
-                notification('Oops! An error occurred while saving schedule','','error');
+                notification('Oops! An error occurred while saving schedule', '', 'error');
             }
         });
     }
@@ -767,17 +767,17 @@
             'success': function (data) {
                 $('#wait').hide();
                 if (data.status !== 500) {
-                    notification('Loan Application created successfully!','','success');
+                    notification('Loan Application created successfully!', '', 'success');
                     window.location.href = `/application?id=${application_id}`;
                 } else {
                     console.log(data.error);
-                    notification(data.error,'','error');
+                    notification(data.error, '', 'error');
                 }
             },
             'error': function (err) {
                 console.log(err);
                 $('#wait').hide();
-                notification('No internet connection','','error');
+                notification('No internet connection', '', 'error');
             }
         });
     }
@@ -785,15 +785,15 @@
     function validateSchedule(schedule, callback) {
         let errors = [],
             validated_schedule = [];
-        for (let i=0; i<schedule.length; i++){
+        for (let i = 0; i < schedule.length; i++) {
             let invoice = {},
-                $col0 = $('#invoice-'+(i+2)+'-0'),
-                $col1 = $('#invoice-'+(i+2)+'-1'),
-                $col2 = $('#invoice-'+(i+2)+'-2'),
-                $col3 = $('#invoice-'+(i+2)+'-3'),
-                $col4 = $('#invoice-'+(i+2)+'-4'),
-                $col5 = $('#invoice-'+(i+2)+'-5'),
-                $col6 = $('#invoice-'+(i+2)+'-6'),
+                $col0 = $('#invoice-' + (i + 2) + '-0'),
+                $col1 = $('#invoice-' + (i + 2) + '-1'),
+                $col2 = $('#invoice-' + (i + 2) + '-2'),
+                $col3 = $('#invoice-' + (i + 2) + '-3'),
+                $col4 = $('#invoice-' + (i + 2) + '-4'),
+                $col5 = $('#invoice-' + (i + 2) + '-5'),
+                $col6 = $('#invoice-' + (i + 2) + '-6'),
                 a = $col0.val(),
                 b = $col1.val(),
                 c = schedule[i]['payment_amount'],
@@ -801,61 +801,61 @@
                 e = $col4.val(),
                 f = schedule[i]['interest_amount'],
                 g = schedule[i]['balance'];
-            if (isValidDate(a)){
+            if (isValidDate(a)) {
                 $col0.removeClass('invalid');
                 invoice.payment_create_date = a;
             } else {
                 $col0.addClass('invalid');
-                errors.push(a+' is not a valid date');
+                errors.push(a + ' is not a valid date');
             }
-            if (isValidDate(b)){
+            if (isValidDate(b)) {
                 $col1.removeClass('invalid');
                 invoice.payment_collect_date = b;
             } else {
                 $col1.addClass('invalid');
-                errors.push(b+' is not a valid date');
+                errors.push(b + ' is not a valid date');
             }
-            if (!isNaN(c)){
+            if (!isNaN(c)) {
                 $col2.removeClass('invalid');
                 invoice.payment_amount = c;
             } else {
                 $col2.addClass('invalid');
-                errors.push(c+' is not a valid number');
+                errors.push(c + ' is not a valid number');
             }
-            if (isValidDate(d)){
+            if (isValidDate(d)) {
                 $col3.removeClass('invalid');
                 invoice.interest_create_date = d;
             } else {
                 $col3.addClass('invalid');
-                errors.push(d+' is not a valid date');
+                errors.push(d + ' is not a valid date');
             }
-            if (isValidDate(e)){
+            if (isValidDate(e)) {
                 $col4.removeClass('invalid');
                 invoice.interest_collect_date = e;
             } else {
                 $col4.addClass('invalid');
-                errors.push(e+' is not a valid date');
+                errors.push(e + ' is not a valid date');
             }
-            if (!isNaN(f)){
+            if (!isNaN(f)) {
                 $col5.removeClass('invalid');
                 invoice.interest_amount = f;
             } else {
                 $col5.addClass('invalid');
-                errors.push(f+' is not a valid number');
+                errors.push(f + ' is not a valid number');
             }
-            if (!isNaN(g)){
+            if (!isNaN(g)) {
                 $col6.removeClass('invalid');
                 invoice.balance = g;
             } else {
                 $col6.addClass('invalid');
-                errors.push(g+' is not a valid number');
+                errors.push(g + ' is not a valid number');
             }
             validated_schedule.push(invoice);
         }
-        if (errors[0]){
-            callback({status: false, data: errors});
+        if (errors[0]) {
+            callback({ status: false, data: errors });
         } else {
-            callback({status: true, data: validated_schedule});
+            callback({ status: true, data: validated_schedule });
         }
     }
 
@@ -913,17 +913,17 @@
                                 $('#saveApplication').hide();
                                 $('#rejectApplication').hide();
                                 $('#approveApplication').hide();
-                                notification('Loan Application rejected successfully','','success');
+                                notification('Loan Application rejected successfully', '', 'success');
                                 window.location.href = '/all-preapplications';
                             } else {
                                 console.log(data.error);
-                                notification(data.error,'','error');
+                                notification(data.error, '', 'error');
                             }
                         },
                         'error': function (err) {
                             console.log(err);
                             $('#wait').hide();
-                            notification('No internet connection','','error');
+                            notification('No internet connection', '', 'error');
                         }
                     });
                 }
@@ -933,7 +933,7 @@
     function validateApplication(settings, callback) {
         let obj = {},
             contribution_status = $('input[name=contribution_status]:checked').val(),
-            user = ($name.val() !== '-- Choose Client --')? JSON.parse(decodeURIComponent($name.val())) : false;
+            user = ($name.val() !== '-- Choose Client --') ? JSON.parse(decodeURIComponent($name.val())) : false;
         if (user)
             obj.userID = user.ID;
         obj.name = user.fullname || user.name;
@@ -973,42 +973,42 @@
             obj.spouse_knowledge = $('input[name=spouse_knowledge]:checked').val();
         obj.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
         if (!user || !obj.product || (!obj.loan_amount && obj.loan_amount !== 0) || (!obj.rate && obj.rate !== 0)
-                || (!obj.tenor && obj.tenor !== 0) || !obj.tenor_type  || obj.loan_purpose === '-- Choose Loan Purpose --' ||
-                (!obj.loan_serviced && obj.loan_serviced !== 0)) {
-            notification('Kindly fill all required fields!','','warning');
+            || (!obj.tenor && obj.tenor !== 0) || !obj.tenor_type || obj.loan_purpose === '-- Choose Loan Purpose --' ||
+            (!obj.loan_serviced && obj.loan_serviced !== 0)) {
+            notification('Kindly fill all required fields!', '', 'warning');
             return callback(false);
         }
         if (obj.product === 'market_loan' && (!obj.market_name || !obj.market_leader_name || !obj.market_leader_phone || !obj.guarantor_name
-                || !obj.guarantor_phone || !obj.guarantor_relationship || !obj.guarantor_address || (!obj.stock_value && obj.stock_value !== 0)
-                || !obj.businesses || !obj.capital_source|| (!obj.business_turnover && obj.business_turnover !== 0) || !obj.spouse_knowledge)) {
-            notification('Kindly fill all required fields!','','warning');
+            || !obj.guarantor_phone || !obj.guarantor_relationship || !obj.guarantor_address || (!obj.stock_value && obj.stock_value !== 0)
+            || !obj.businesses || !obj.capital_source || (!obj.business_turnover && obj.business_turnover !== 0) || !obj.spouse_knowledge)) {
+            notification('Kindly fill all required fields!', '', 'warning');
             return callback(false);
         }
         if (contribution_status === 'yes' && !obj.contribution) {
-            notification('Kindly fill the name of the ajo/contribution!','','warning');
+            notification('Kindly fill the name of the ajo/contribution!', '', 'warning');
             return callback(false);
         }
         if (parseFloat(obj.tenor) < settings.tenor_min || parseFloat(obj.tenor) > settings.tenor_max) {
             notification(`Minimum tenor is ${numberToCurrencyformatter(settings.tenor_min)} (month) 
-                        and Maximum is ${numberToCurrencyformatter(settings.tenor_max)} (months)`,'','warning');
+                        and Maximum is ${numberToCurrencyformatter(settings.tenor_max)} (months)`, '', 'warning');
             return callback(false);
         }
         if (parseFloat(obj.rate) < settings.interest_rate_min || parseFloat(obj.rate) > settings.interest_rate_max) {
             notification(`Minimum interest rate is ${numberToCurrencyformatter(settings.interest_rate_min)}% 
-                        and Maximum is ${numberToCurrencyformatter(settings.interest_rate_max)}%`,'','warning');
+                        and Maximum is ${numberToCurrencyformatter(settings.interest_rate_max)}%`, '', 'warning');
             return callback(false);
         }
         if (parseFloat(obj.loan_amount) < settings.loan_requested_min || parseFloat(obj.loan_amount) > settings.loan_requested_max) {
             notification(`Minimum loan amount is ₦${numberToCurrencyformatter(settings.loan_requested_min)} 
-                        and Maximum is ₦${numberToCurrencyformatter(settings.loan_requested_max)}`,'','warning');
+                        and Maximum is ₦${numberToCurrencyformatter(settings.loan_requested_max)}`, '', 'warning');
             return callback(false);
         }
         if (obj.product === 'market_loan' && !(parseFloat(obj.stock_value) > 0)) {
-            notification(`Minimum stock value is ₦0`,'','warning');
+            notification(`Minimum stock value is ₦0`, '', 'warning');
             return callback(false);
         }
         if (obj.product === 'market_loan' && !(parseFloat(obj.business_turnover) > 0)) {
-            notification(`Minimum business turnover is ₦0`,'','warning');
+            notification(`Minimum business turnover is ₦0`, '', 'warning');
             return callback(false);
         }
         return callback(obj);
@@ -1016,9 +1016,9 @@
 
     function read_write_custom() {
         let perms = JSON.parse(localStorage.getItem("permissions")),
-            approveInitialApplication = ($.grep(perms, function(e){return e.module_name === 'approveInitiateApplication';}))[0],
-            rejectInitialApplication = ($.grep(perms, function(e){return e.module_name === 'rejectInitiateApplication';}))[0],
-            saveInitialApplication = ($.grep(perms, function(e){return e.module_name === 'saveInitiateApplication';}))[0];
+            approveInitialApplication = ($.grep(perms, function (e) { return e.module_name === 'approveInitiateApplication'; }))[0],
+            rejectInitialApplication = ($.grep(perms, function (e) { return e.module_name === 'rejectInitiateApplication'; }))[0],
+            saveInitialApplication = ($.grep(perms, function (e) { return e.module_name === 'saveInitiateApplication'; }))[0];
 
         if (approveInitialApplication && approveInitialApplication['read_only'] === '0')
             $('#approveApplication').hide();
