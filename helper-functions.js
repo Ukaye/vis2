@@ -75,7 +75,7 @@ functions.workflowApprovalNotification = function (process, stage, workflow_id) 
                 query = `SELECT fullname, email FROM users WHERE user_role = ${role_id}`;
                 connection.query(query, (error, users) => {
                     async.forEach(users, (user, callback_user) => {
-                        if (!user || !user.email) callback_user();
+                        if (!user || !user.email) return callback_user();
                         query = `SELECT c.name, c.fullname FROM clients c, applications a 
                             WHERE c.ID = a.userID AND a.ID = ${process.applicationID}`;
                         connection.query(query, (error, client_) => {

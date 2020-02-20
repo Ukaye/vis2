@@ -724,7 +724,7 @@ function previousStage(state,states) {
 
 function addComment() {
     comment_id = false;
-    $('#comment').text('');
+    $('#comment').val('');
     $('#addCommentModal').modal('show');
 }
 
@@ -2522,7 +2522,7 @@ function showWorkEmail() {
 
 function editComment(origin, id) {
     comment_id = origin;
-    $('#comment').text(($.grep(workflow_comments, e => {return e.ID === id}))[0]['text']);
+    $('#comment').val(($.grep(workflow_comments, e => {return e.ID === id}))[0]['text']);
     $('#addCommentModal').modal('show');
 }
 
