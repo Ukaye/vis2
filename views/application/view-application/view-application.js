@@ -73,19 +73,31 @@ function getApplicationSettings(application) {
         url: "/settings/product/"+ application.workflowID,
         success: function (data) {
             if (data.response) {
-                settings_obj = data.response;
-                if (settings_obj.loan_requested_min)
+                const settings_obj_ = data.response;
+                if (settings_obj_.loan_requested_min) {
+                    settings_obj.loan_requested_min = settings_obj_.loan_requested_min;
                     $('.loan_requested_min').text(numberToCurrencyformatter(settings_obj.loan_requested_min));
-                if (settings_obj.loan_requested_max)
+                }
+                if (settings_obj_.loan_requested_max) {
+                    settings_obj.loan_requested_max = settings_obj_.loan_requested_max;
                     $('.loan_requested_max').text(numberToCurrencyformatter(settings_obj.loan_requested_max));
-                if (settings_obj.tenor_min)
+                }
+                if (settings_obj_.tenor_min) {
+                    settings_obj.tenor_min = settings_obj_.tenor_min;
                     $('.tenor_min').text(numberToCurrencyformatter(settings_obj.tenor_min));
-                if (settings_obj.tenor_max)
+                }
+                if (settings_obj_.tenor_max) {
+                    settings_obj.tenor_max = settings_obj_.tenor_max;
                     $('.tenor_max').text(numberToCurrencyformatter(settings_obj.tenor_max));
-                if (settings_obj.interest_rate_min)
+                }
+                if (settings_obj_.interest_rate_min) {
+                    settings_obj.interest_rate_min = settings_obj_.interest_rate_min;
                     $('.interest_rate_min').text(numberToCurrencyformatter(settings_obj.interest_rate_min));
-                if (settings_obj.interest_rate_max)
+                }
+                if (settings_obj_.interest_rate_max) {
+                    settings_obj.interest_rate_max = settings_obj_.interest_rate_max;
                     $('.interest_rate_max').text(numberToCurrencyformatter(settings_obj.interest_rate_max));
+                }
             }
             getFeeSettings();
             initCSVUpload(application);
@@ -708,6 +720,12 @@ function previousStage(state,states) {
             notification('No internet connection','','error');
         }
     });
+}
+
+function addComment() {
+    comment_id = false;
+    $('#comment').val('');
+    $('#addCommentModal').modal('show');
 }
 
 function comment(){
@@ -2504,7 +2522,7 @@ function showWorkEmail() {
 
 function editComment(origin, id) {
     comment_id = origin;
-    $('#comment').text(($.grep(workflow_comments, e => {return e.ID === id}))[0]['text']);
+    $('#comment').val(($.grep(workflow_comments, e => {return e.ID === id}))[0]['text']);
     $('#addCommentModal').modal('show');
 }
 
@@ -2572,7 +2590,8 @@ function read_write_2(){
         $('#rejectCSV2').hide();
     if (($.grep(perms, function(e){return e.module_name === 'close-loan';}))[0]['read_only'] === '0')
         $('#close_loan').hide();
-    if (($.grep(perms, function(e){return e.module_name === 'makeLoanOffer';}))[0]['read_only'] === '0') {
+    const makeLoanOffer = ($.grep(perms, function(e){return e.module_name === 'makeLoanOffer';}))[0];
+    if (makeLoanOffer && makeLoanOffer['read_only'] === '0') {
         $('#newOffer').hide();
         $('#newOfferModalBtn').hide();
     }

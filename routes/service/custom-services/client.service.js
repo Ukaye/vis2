@@ -873,9 +873,9 @@ router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
         (select branch_name from branches b where b.ID = clients.branch) branch, 
         (select count(*) from applications where userID = clients.ID and status = 2) total_active_loan_count, 
         (select sum(loan_amount) from applications where userID = clients.ID and status = 2) total_active_loan_sum, 
-        (select (select sum(loan_amount) from applications where userID = clients.ID and status = 2) - 
-        sum(payment_amount) from schedule_history where applicationID in (select id from applications where userid = clients.ID and status = 2) 
-        and status = 1) total_active_loan_balance
+        ((select sum(loan_amount) from applications where userID = clients.ID and status = 2) - 
+        (select coalesce(sum(payment_amount), 0) from schedule_history where applicationID in 
+            (select id from applications where userid = clients.ID and status = 2) and status = 1)) total_active_loan_balance
         FROM clients WHERE ID = ${req.params.id}`;
     db.query(query, (error, response) => {
         if (error) return res.send({
