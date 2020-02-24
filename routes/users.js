@@ -2505,7 +2505,7 @@ users.put('/workflow_process/:application_id', (req, res) => {
         } else {
             processes.shift();
             async.forEach(processes, (process, callback) => {
-                query = `UPDATE * FROM workflow_processes SET status = 0 WHERE ID = ${process.ID}`
+                query = `UPDATE workflow_processes SET status = 0 WHERE ID = ${process.ID}`
                 db.query(query, function (error, processes) {
                     if (error) console.log(error);
                     callback();
