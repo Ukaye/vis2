@@ -226,8 +226,12 @@ router.post('/loan-offer/:id', (req, res) => {
                         "error": error,
                         "response": null
                     });
-                let preapplication = {
-                    date_modified: date
+                const  preapplication = {
+                    loan_amount: application.loan_amount,
+                    tenor: application.duration,
+                    rate: application.interest_rate,
+                    repayment_date: application.repayment_date,
+                    date_modified: application.date_modified
                 };
                 connection.query(`UPDATE preapplications Set ? WHERE ID = ${app[0]['preapplicationID']}`, preapplication, (error) => {
                     if(error) return res.send({

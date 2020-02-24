@@ -1095,7 +1095,8 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
         (CASE 
             WHEN (SELECT COUNT(*) FROM application_information_requests WHERE a.ID = applicationID) > 0 THEN 1
             ELSE 0
-        END) information_request_status
+        END) information_request_status,
+        (SELECT COALESCE(SUM(amount), 0) FROM disbursement_history WHERE loan_id = a.ID) disbursement_amount
         FROM clients c, preapplications p LEFT JOIN applications a ON p.ID = a.preapplicationID AND a.userID = ${id} 
         LEFT JOIN application_schedules s ON s.ID = (SELECT MIN(ID) FROM application_schedules WHERE a.ID = applicationID AND payment_status = 0)
         WHERE p.userID = ${id} AND p.userID = c.ID AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) 
@@ -3400,7 +3401,7 @@ router.post('/forgot-pin/get', (req, res) => {
     });
 });
 
-router.get('/product/:product_id', helperFunctions.verifyJWT, function (req, res) {
+router.get('/product/:product_id', helperFunctions.verifyJWT, (req, res) => {
     let query = `SELECT w.*, (SELECT GROUP_CONCAT(NULLIF(s.document,"")) FROM workflow_stages s WHERE w.ID = s.workflowID) document 
         FROM workflows w WHERE w.enable_client_product = 1 AND w.ID = ${req.params.product_id}`;
     db.query(query, function (error, product) {
@@ -3419,7 +3420,12 @@ router.get('/product/:product_id', helperFunctions.verifyJWT, function (req, res
     });
 });
 
-router.get('/clientbanks/:clientId', function (req, res) {
+
+/**
+ * get table list of clientBanks
+ * 
+ */
+router.get('/clientbanks/:clientId', (req, res) => {
     const userId = req.params.clientId;
     let query = `SELECT * from client_banks WHERE status = 1 AND user_id = ${userId}`;
 
@@ -3434,20 +3440,26 @@ router.get('/clientbanks/:clientId', function (req, res) {
     })
 });
 
-router.post('/clientbanks/:clientId', function (req, res) {
+/**
+ * Creates a bank information in table of clientBanks
+ * 
+ */
+router.post('/clientbanks/:clientId',  (req, res) => {
+    // get user Id
     const userId = req.params.clientId;
 
-    // check for duplicate
+    /**  check for duplicate **/
     const account = req.body.account;
     let query = `SELECT * from client_banks WHERE status = 1 AND user_id = ${userId} AND account = ${account}`;
 
+    // query clientbanks
     db.query(query, (err, result) => {
         if(result.length >0) {
             res.send({ "status": 500, "error": 'Account number already exixts', "response": "Err!" });
             return;
         }
 
-        // check the normal account number
+        // query normal client table
         query = `SELECT * from clients WHERE ID = ${userId} `;
         db.query(query, (err, result) => {
             if (result.length > 0) {
@@ -3457,7 +3469,7 @@ router.post('/clientbanks/:clientId', function (req, res) {
                 }
             }
 
-            // insert
+            // insert the data at this point
             query = `INSERT INTO client_banks SET ?`;
             db.query(query, req.body, (err, result) => {
                 if (err) {
@@ -3474,8 +3486,11 @@ router.post('/clientbanks/:clientId', function (req, res) {
         })
     })
 });
-
-router.delete('/clientbanks/:clientId/:bankId', function (req, res) {
+/**
+ * Delete a bank from the table of clientBanks
+ * 
+ */
+router.delete('/clientbanks/:clientId/:bankId',  (req, res) => {
     const userId = req.params.clientId;
     const bankId = req.params.bankId;
     let query = `DELETE FROM client_banks WHERE ID = ${bankId}`;
@@ -3486,7 +3501,11 @@ router.delete('/clientbanks/:clientId/:bankId', function (req, res) {
             res.send({ "status": 500, "error": er, "response": "Err!" });
             return
         }
-        res.status(201).json(true)
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": "Successfully Deleted Card"
+        });
     });
 });
 
