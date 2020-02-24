@@ -2483,7 +2483,6 @@ users.get('/revert_workflow_process/:application_id', function (req, res, next) 
 
 users.put('/application/reset/:application_id', function (req, res) {
     let query = `UPDATE applications SET status = 1 WHERE ID =  ${req.params.application_id}`;
-    console.log('QUERY', query);
     db.query(query, function (error, results) {
         if (error) {
             res.send({ "status": 500, "error": error, "response": null });
@@ -2498,7 +2497,6 @@ users.put('/application/reset/:application_id', function (req, res) {
 // update workflow processes starts
 users.put('/workflow_process/:application_id', (req, res) => {
     let query = `SELECT * FROM workflow_processes WHERE applicationID = ${req.params.application_id} AND status=1`;
-    console.log('QUERY', query);
     db.query(query, function (error, processes) {
         if (error) {
             res.send({ "status": 500, "error": error, "response": null });
