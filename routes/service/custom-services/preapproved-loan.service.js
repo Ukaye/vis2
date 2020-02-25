@@ -230,6 +230,7 @@ router.get('/recommendations/get/:id', function (req, res, next) {
  * 2. Direct Debit Mandate Setup
  */
 router.post('/create', function (req, res, next) {
+    console.log('here')
     const HOST = `${req.protocol}://${req.get('host')}`;
     let data = {},
         postData = Object.assign({},req.body.application),

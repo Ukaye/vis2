@@ -1,6 +1,7 @@
 // Loads the environment variables from the .env file
 require('dotenv').config();
 
+
 let express = require('express');
 let fs = require('fs'),
     db = require('./db'),
@@ -38,8 +39,6 @@ if (fs.existsSync('./files')) {
         console.log('Activities folder exists');
     }
 }
-
-console.log(process.env)
 
 let app = express(),
     cors = require('cors'),
