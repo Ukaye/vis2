@@ -14,8 +14,6 @@ const fs = require('fs'),
     paystack = require('paystack')(process.env.PAYSTACK_SECRET_KEY),
     emailService = require('../../service/custom-services/email.service');
 
-if (!process.env.HOST) process.env.HOST = 'https://x3.finratus.com';
-
 router.get('/all', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
@@ -2069,9 +2067,6 @@ router.get('/preapproved-loan/create/:id/:loan_id', helperFunctions.verifyJWT, f
                 data.contact = contact;
                 data.amount = helperFunctions.numberToCurrencyFormatter(preapproved_loan.loan_amount);
                 data.offer_url = `${process.env.HOST || req.HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}&i=${req.params.loan_id}`;
-                console.log(process.env.HOST)
-                console.log(req.HOST)
-                console.log(data.offer_url)
                 emailService.send({
                     to: email,
                     subject: `Mandate Setup`,

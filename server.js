@@ -40,6 +40,8 @@ if (fs.existsSync('./files')) {
     }
 }
 
+console.log(process.env)
+
 let app = express(),
     cors = require('cors'),
     user = require('./routes/users'),

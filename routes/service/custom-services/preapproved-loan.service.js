@@ -273,7 +273,7 @@ router.post('/create', function (req, res, next) {
                         data.expiry = preapproved_loan.expiry_date;
                         data.contact = response_['data'][0]['contact'];
                         data.amount = helperFunctions.numberToCurrencyFormatter(postData.loan_amount);
-                        data.offer_url = `${HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}`;
+                        data.offer_url = `${process.env.HOST || req.HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}`;
                         if (req.body.applicationID)
                             data.offer_url = data.offer_url.concat(`&i=${req.body.applicationID}`);
                         let mailOptions = {
