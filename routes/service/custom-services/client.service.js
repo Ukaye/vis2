@@ -2069,6 +2069,9 @@ router.get('/preapproved-loan/create/:id/:loan_id', helperFunctions.verifyJWT, f
                 data.contact = contact;
                 data.amount = helperFunctions.numberToCurrencyFormatter(preapproved_loan.loan_amount);
                 data.offer_url = `${process.env.HOST || req.HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}&i=${req.params.loan_id}`;
+                console.log(process.env.HOST)
+                console.log(req.HOST)
+                console.log(data.offer_url)
                 emailService.send({
                     to: email,
                     subject: `Mandate Setup`,
