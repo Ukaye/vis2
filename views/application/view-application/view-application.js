@@ -72,6 +72,7 @@ function getApplicationSettings(application) {
         type: "GET",
         url: "/settings/product/"+ application.workflowID,
         success: function (data) {
+
             if (data.response) {
                 const settings_obj_ = data.response;
                 if (settings_obj_.loan_requested_min) {
@@ -136,6 +137,44 @@ function getFeeSettings() {
 
 function calculateVAT(fees, rate) {
     return (fees * (parseFloat(rate) / 100)).round(2);
+}
+
+// Reschedule Function
+
+function rescheduleLoan(){
+    $('#wait').show();
+    $.ajax({
+        type: "PUT",
+        url: `/user/workflow_process/${application.ID}`, 
+        success: data => {
+            $('#wait').hide();
+            response_ = data;
+            console.log('RESPONSE', response_);
+            resetDisbursement();
+            window.location.reload();
+        },
+        error: err=>{
+            $('#wait').hide();
+            console.log('Error', err);
+        }
+    });
+}
+
+function resetDisbursement(){
+    $('#wait').show();
+    $.ajax({
+        type: "PUT",
+        url: `/user/application/reset/${application.ID}`,
+        success: data => {
+            $('#wait').hide();
+            response_ = data;
+            console.log('RESPONSE', response_);
+        },
+        error: err => {
+            $('#wait').hide();
+            console.log('Error', err);
+        }
+    }); 
 }
 
 function calculateFee(amount, grades) {
@@ -483,10 +522,10 @@ function loadWorkflowStages(state) {
                 li.innerHTML += '<a><h4 class="list-group-item-heading">Step '+(count+1)+'</h4>\n' +
                     '<p class="list-group-item-text">'+stage.name+'<br> ('+stage.stage_name+')</p></a>';
             }
-
+// Client has accepted the loan
             if (application.client_applications_status === 4) 
                 $('#infoRequestModalBtn').hide();
-
+// Client has declined the loan
             if (application.client_applications_status === 5) {
                 $("#newOfferModalBtn").show();
                 $("#current_stage").hide();
@@ -499,7 +538,7 @@ function loadWorkflowStages(state) {
                 let user_comments = $.grep(workflow_comments, (e) => {return e.user_type === 'client'});
                 if (user_comments[0]) $('#decline-reason').text(`"${user_comments[0]['text']}"`);
             }
-
+// Admin has canceled the loan
             if (application.status === 0) {
                 $("#next-actions").hide();
                 $('.previous').hide();
@@ -507,9 +546,13 @@ function loadWorkflowStages(state) {
                 $(".next").hide();
                 $("#current_stage").html('<span>CANCELLED</span>');
             }
-
+// status === 1 means loan is active but not disbursed
             if (stage.stage_name === 'Pending Approval')
                 $('.next').text('Approved (Approved)');
+// show approved button condition
+            if (stage.stage_name === 'Approved')
+                $("#approveRescheduleModalBtn").show();
+
 
             if (stage.stage_name === 'Approved' || stage.stage_name === 'Disbursed' || application.status === 2) {
                 $('#infoRequestModalBtn').hide();
@@ -520,6 +563,8 @@ function loadWorkflowStages(state) {
             }
 
             if (application.status === 2) {
+            // show reschedule button condition
+                $("#rescheduleBtn").show();
                 $('#collect-payment-button').show();
                 $('#generate-schedule-v2').show();
                 $('#principal-total-text').hide();
@@ -1251,7 +1296,7 @@ function checkTotalDue() {
         }
     }
 }
-
+// check this
 function disburse() {
     if (reschedule_status) return;
     if (workflow.admin_application_override === 0 && application.status === 1
