@@ -10,53 +10,53 @@ let functions = {},
     paystack = require('paystack')(process.env.PAYSTACK_SECRET_KEY),
     emailService = require('./routes/service/custom-services/email.service');
 
-functions.getNextWorkflowProcess = function(application_id, workflow_id, stage, callback) {
-    db.query('SELECT * FROM workflow_stages WHERE workflowID=? ORDER BY ID asc',[workflow_id], function (error, stages, fields) {
-        if(stages){
-            stages.push({name:"Denied",stageID:4,stage_name:"Denied",workflowID:workflow_id,approverID:1});
-            if(application_id && !stage){
-                db.query('SELECT * FROM workflow_processes WHERE ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=? AND status=1)',[application_id], function (error, application_last_process, fields) {
-                    if (application_last_process){
-                        let next_stage_index = stages.map(function(e) { return e.stageID; }).indexOf(parseInt(application_last_process[0]['next_stage'])),
-                            current_stage_index = stages.map(function(e) { return e.stageID; }).indexOf(parseInt(application_last_process[0]['current_stage']));
-                        if (stages[next_stage_index+1]){
-                            if (application_last_process[0]['next_stage'] !== stages[next_stage_index+1]['stageID']){//current stage must not be equal to next stage
-                                callback({previous_stage:application_last_process[0]['current_stage'],current_stage:application_last_process[0]['next_stage'],next_stage:stages[next_stage_index+1]['stageID'], approver_id:stages[current_stage_index]['approverID']}, stages[next_stage_index]);
+functions.getNextWorkflowProcess = function (application_id, workflow_id, stage, callback) {
+    db.query('SELECT * FROM workflow_stages WHERE workflowID=? ORDER BY ID asc', [workflow_id], function (error, stages, fields) {
+        if (stages) {
+            stages.push({ name: "Denied", stageID: 4, stage_name: "Denied", workflowID: workflow_id, approverID: 1 });
+            if (application_id && !stage) {
+                db.query('SELECT * FROM workflow_processes WHERE ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=? AND status=1)', [application_id], function (error, application_last_process, fields) {
+                    if (application_last_process) {
+                        let next_stage_index = stages.map(function (e) { return e.stageID; }).indexOf(parseInt(application_last_process[0]['next_stage'])),
+                            current_stage_index = stages.map(function (e) { return e.stageID; }).indexOf(parseInt(application_last_process[0]['current_stage']));
+                        if (stages[next_stage_index + 1]) {
+                            if (application_last_process[0]['next_stage'] !== stages[next_stage_index + 1]['stageID']) {//current stage must not be equal to next stage
+                                callback({ previous_stage: application_last_process[0]['current_stage'], current_stage: application_last_process[0]['next_stage'], next_stage: stages[next_stage_index + 1]['stageID'], approver_id: stages[current_stage_index]['approverID'] }, stages[next_stage_index]);
                             } else {
-                                if (stages[next_stage_index+2]){
-                                    callback({previous_stage:application_last_process[0]['current_stage'],current_stage:application_last_process[0]['next_stage'],next_stage:stages[next_stage_index+2]['stageID'], approver_id:stages[current_stage_index]['approverID']}, stages[next_stage_index]);
+                                if (stages[next_stage_index + 2]) {
+                                    callback({ previous_stage: application_last_process[0]['current_stage'], current_stage: application_last_process[0]['next_stage'], next_stage: stages[next_stage_index + 2]['stageID'], approver_id: stages[current_stage_index]['approverID'] }, stages[next_stage_index]);
                                 } else {
-                                    callback({previous_stage:application_last_process[0]['current_stage'],current_stage:application_last_process[0]['next_stage'], approver_id:stages[current_stage_index]['approverID']});
+                                    callback({ previous_stage: application_last_process[0]['current_stage'], current_stage: application_last_process[0]['next_stage'], approver_id: stages[current_stage_index]['approverID'] });
                                 }
                             }
                         } else {
-                            callback({previous_stage:application_last_process[0]['current_stage'],current_stage:application_last_process[0]['next_stage'], approver_id:stages[current_stage_index]['approverID']});
+                            callback({ previous_stage: application_last_process[0]['current_stage'], current_stage: application_last_process[0]['next_stage'], approver_id: stages[current_stage_index]['approverID'] });
                         }
                     } else {
                         callback({});
                     }
                 });
-            } else if(application_id && stage){
-                let previous_stage_index = stages.map(function(e) { return e.stageID; }).indexOf(parseInt(stage['previous_stage'])),
-                    current_stage_index = stages.map(function(e) { return e.stageID; }).indexOf(parseInt(stage['current_stage'])),
-                    next_stage_index = current_stage_index+1;
-                if (stage['next_stage']){
-                    callback({previous_stage:stage['previous_stage'],current_stage:stage['current_stage'],next_stage:stage['next_stage'], approver_id:stages[previous_stage_index]['approverID']}, stages[current_stage_index]);
-                }else if (stages[next_stage_index]){
-                    if (stage['current_stage'] !== stages[next_stage_index]['stageID']){
-                        callback({previous_stage:stage['previous_stage'],current_stage:stage['current_stage'],next_stage:stages[next_stage_index]['stageID'], approver_id:stages[previous_stage_index]['approverID']}, stages[current_stage_index]);
+            } else if (application_id && stage) {
+                let previous_stage_index = stages.map(function (e) { return e.stageID; }).indexOf(parseInt(stage['previous_stage'])),
+                    current_stage_index = stages.map(function (e) { return e.stageID; }).indexOf(parseInt(stage['current_stage'])),
+                    next_stage_index = current_stage_index + 1;
+                if (stage['next_stage']) {
+                    callback({ previous_stage: stage['previous_stage'], current_stage: stage['current_stage'], next_stage: stage['next_stage'], approver_id: stages[previous_stage_index]['approverID'] }, stages[current_stage_index]);
+                } else if (stages[next_stage_index]) {
+                    if (stage['current_stage'] !== stages[next_stage_index]['stageID']) {
+                        callback({ previous_stage: stage['previous_stage'], current_stage: stage['current_stage'], next_stage: stages[next_stage_index]['stageID'], approver_id: stages[previous_stage_index]['approverID'] }, stages[current_stage_index]);
                     } else {
-                        if (stages[next_stage_index+1]){
-                            callback({previous_stage:stage['previous_stage'],current_stage:stage['current_stage'],next_stage:stages[next_stage_index+1]['stageID'], approver_id:stages[previous_stage_index]['approverID']}, stages[current_stage_index]);
+                        if (stages[next_stage_index + 1]) {
+                            callback({ previous_stage: stage['previous_stage'], current_stage: stage['current_stage'], next_stage: stages[next_stage_index + 1]['stageID'], approver_id: stages[previous_stage_index]['approverID'] }, stages[current_stage_index]);
                         } else {
-                            callback({previous_stage:stage['previous_stage'],current_stage:stage['current_stage'], approver_id:stages[previous_stage_index]['approverID']});
+                            callback({ previous_stage: stage['previous_stage'], current_stage: stage['current_stage'], approver_id: stages[previous_stage_index]['approverID'] });
                         }
                     }
                 } else {
-                    callback({previous_stage:stage['previous_stage'],current_stage:stage['current_stage'], approver_id:stages[previous_stage_index]['approverID']});
+                    callback({ previous_stage: stage['previous_stage'], current_stage: stage['current_stage'], approver_id: stages[previous_stage_index]['approverID'] });
                 }
             } else {
-                callback({current_stage:stages[0]['stageID'],next_stage:stages[1]['stageID']}, stages[0]);
+                callback({ current_stage: stages[0]['stageID'], next_stage: stages[1]['stageID'] }, stages[0]);
             }
         } else {
             callback({})
@@ -111,13 +111,13 @@ functions.formatJSONP = function (body) {
     let json;
     try {
         json = JSON.parse(jsonpData);
-    } catch(e) {
+    } catch (e) {
         const startPos = jsonpData.indexOf('({'),
             endPos = jsonpData.indexOf('})'),
-            jsonString = jsonpData.substring(startPos+1, endPos+1);
+            jsonString = jsonpData.substring(startPos + 1, endPos + 1);
         try {
             json = JSON.parse(jsonString);
-        } catch(e) {
+        } catch (e) {
             json = {};
         }
     }
@@ -176,7 +176,7 @@ functions.remitaTimeStampFormat = function (date) {
         hours = date.getUTCHours(),
         minutes = date.getUTCMinutes(),
         seconds = date.getUTCSeconds();
-    return yyyy+'-'+mm+'-'+dd+'T'+hours+':'+minutes+':'+seconds+'+000000';
+    return yyyy + '-' + mm + '-' + dd + 'T' + hours + ':' + minutes + ':' + seconds + '+000000';
 };
 
 functions.authorizeMandate = function (payload, type, callback) {
@@ -363,7 +363,7 @@ functions.verifyJWT = function (req, res, next) {
         "response": "No token provided!"
     });
 
-    jwt.verify(token, process.env.SECRET_KEY, function(err, decoded) {
+    jwt.verify(token, process.env.SECRET_KEY, function (err, decoded) {
         if (err) return res.send({
             "status": 500,
             "error": err,
@@ -386,9 +386,9 @@ functions.verifyJWT = function (req, res, next) {
 functions.removeFileDuplicates = (folder_path, files) => {
     let check = {},
         files_ = [];
-    for (let i=0; i<files.length; i++) {
+    for (let i = 0; i < files.length; i++) {
         let file = files[i],
-            file__ = file.split('.')[(folder_path.indexOf('files/users/') > -1)? 1:0];
+            file__ = file.split('.')[(folder_path.indexOf('files/users/') > -1) ? 1 : 0];
         if (!file__) continue;
         let file_ = file__.split('_');
         file_.shift();
@@ -401,7 +401,7 @@ functions.removeFileDuplicates = (folder_path, files) => {
                 check.datetime = datetime;
                 check.file = file;
             }
-        } else {  
+        } else {
             check.name = name;
             check.datetime = datetime;
             check.file = file;
@@ -413,9 +413,9 @@ functions.removeFileDuplicates = (folder_path, files) => {
 
 functions.getFilesInformation = (folder_path, files) => {
     let check = {};
-    for (let i=0; i<files.length; i++) {
+    for (let i = 0; i < files.length; i++) {
         let file = files[i],
-            file__ = file.split('.')[(folder_path.indexOf('files/users/') > -1)? 1:0];
+            file__ = file.split('.')[(folder_path.indexOf('files/users/') > -1) ? 1 : 0];
         if (!file__) continue;
         let file_ = file__.split('_');
         file_.shift();
@@ -430,12 +430,12 @@ functions.getFilesInformation = (folder_path, files) => {
     return check;
 }
 
-Number.prototype.round = function(p) {
+Number.prototype.round = function (p) {
     p = p || 10;
     return parseFloat(parseFloat(this).toFixed(p));
 };
 
-String.prototype.round = function(p) {
+String.prototype.round = function (p) {
     p = p || 10;
     return parseFloat(this).toFixed(p);
 };
@@ -452,7 +452,7 @@ functions.calculatePaystackFee = value => {
     } else {
         fee = (0.01523 * value) + 102;
     }
-    return Math.ceil(fee > 2000? 2000 : fee);
+    return Math.ceil(fee > 2000 ? 2000 : fee);
 };
 
 functions.resolveBVN = (bvn, callback) => {
@@ -527,7 +527,7 @@ functions.formatToNigerianPhone = (phone) => {
 };
 
 functions.chargePaymentMethod = (payload, callback) => {
-    const fee  = functions.calculatePaystackFee(payload.amount);
+    const fee = functions.calculatePaystackFee(payload.amount);
     payload.amount = Number(Number(payload.amount) + fee) * 100;
     paystack.transaction.charge(payload)
         .then(body => {
