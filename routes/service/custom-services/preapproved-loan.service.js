@@ -282,6 +282,9 @@ router.post('/create', function (req, res, next) {
                             template: 'offer',
                             context: data
                         };
+                        console.log(process.env.HOST)
+                        console.log(req.HOST)
+                        console.log(data.offer_url)
                         if (req.body.applicationID) {
                             mailOptions.template = 'mandate';
                             mailOptions.subject = 'Mandate Setup';

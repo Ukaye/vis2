@@ -1,7 +1,6 @@
 // Loads the environment variables from the .env file
 require('dotenv').config();
 
-
 let express = require('express');
 let fs = require('fs'),
     db = require('./db'),

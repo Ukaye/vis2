@@ -14,6 +14,8 @@ const fs = require('fs'),
     paystack = require('paystack')(process.env.PAYSTACK_SECRET_KEY),
     emailService = require('../../service/custom-services/email.service');
 
+if (!process.env.HOST) process.env.HOST = 'https://x3.finratus.com';
+
 router.get('/all', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
