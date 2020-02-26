@@ -230,6 +230,7 @@ router.get('/recommendations/get/:id', function (req, res, next) {
  * 2. Direct Debit Mandate Setup
  */
 router.post('/create', function (req, res, next) {
+    console.log('here')
     const HOST = `${req.protocol}://${req.get('host')}`;
     let data = {},
         postData = Object.assign({},req.body.application),
@@ -273,7 +274,7 @@ router.post('/create', function (req, res, next) {
                         data.expiry = preapproved_loan.expiry_date;
                         data.contact = response_['data'][0]['contact'];
                         data.amount = helperFunctions.numberToCurrencyFormatter(postData.loan_amount);
-                        data.offer_url = `${HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}`;
+                        data.offer_url = `${process.env.HOST || req.HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}`;
                         if (req.body.applicationID)
                             data.offer_url = data.offer_url.concat(`&i=${req.body.applicationID}`);
                         let mailOptions = {
@@ -282,6 +283,9 @@ router.post('/create', function (req, res, next) {
                             template: 'offer',
                             context: data
                         };
+                        console.log(process.env.HOST)
+                        console.log(req.HOST)
+                        console.log(data.offer_url)
                         if (req.body.applicationID) {
                             mailOptions.template = 'mandate';
                             mailOptions.subject = 'Mandate Setup';
