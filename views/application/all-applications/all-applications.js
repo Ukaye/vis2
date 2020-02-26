@@ -165,6 +165,10 @@ function loadApplications() {
                     if (full.close_status === 0) {
                         if (full.status === 1){
                             switch (full.current_stage){
+                                case 0: {
+                                    status = '<span class="badge badge-danger">Cancelled</span>';
+                                    break;
+                                }
                                 case 2: {
                                     status = '<span class="badge badge-info">Pending Approval</span>';
                                     break;

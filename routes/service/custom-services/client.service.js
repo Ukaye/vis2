@@ -1606,7 +1606,7 @@ router.get('/applications/get', function (req, res) {
     let draw = req.query.draw;
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
-    let query_status = `(${enums.CLIENT_APPLICATION.STATUS.ACTIVE},${enums.CLIENT_APPLICATION.STATUS.APPROVED})`;
+    let query_status = `(${enums.CLIENT_APPLICATION.STATUS.REJECTED},${enums.CLIENT_APPLICATION.STATUS.ACTIVE},${enums.CLIENT_APPLICATION.STATUS.APPROVED})`;
     let query = `SELECT p.*, c.fullname, c.phone FROM preapplications p, clients c WHERE p.userID = c.ID AND p.status in 
      ${query_status} AND p.ID NOT IN (SELECT a.preapplicationID FROM applications a WHERE p.ID = a.preapplicationID) AND p.creator_type = "client"
      AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 

@@ -103,6 +103,9 @@ function bindDataTable() {
                 className: "text-right",
                 mRender: function (data, type, full) {
                     switch (full.status){
+                        case 0: {
+                            return '<span class="badge badge-danger">Rejected</span>'
+                        }
                         case 1: {
                             return '<span class="badge badge-primary">Pending Review</span>'
                         }
