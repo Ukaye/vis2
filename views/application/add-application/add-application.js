@@ -110,6 +110,10 @@
                     $('#rate').val(response.rate);
                     $('#interest-rate').val(response.rate);
                 }
+                if (response.rate_type) {
+                    $('#rate_type').val(response.rate_type);
+                    $('#interest_type').val(response.rate_type);
+                }
                 if (response.spouse_knowledge)
                     $(`input[name='spouse_knowledge'][value='${response.spouse_knowledge}']`).prop('checked', true);
                 if (response.stock_value)
@@ -118,8 +122,10 @@
                     $('#tenor').val(response.tenor);
                     $('#term').val(response.tenor);
                 }
-                if (response.tenor_type)
+                if (response.tenor_type) {
                     $('#tenor_type').val(response.tenor_type);
+                    $('#term_type').val(response.tenor_type);
+                }
                 if (response.files) {
                     if (response.files.shop_picture_1) {
                         $('#image-preview-1').show();
@@ -320,10 +326,16 @@
     $('#term').keyup(function () {
         triggerAmortization();
     });
+    $('#term_type').change(e => {
+        triggerAmortization();
+    });
     $('#amount').keyup(function () {
         triggerAmortization();
     });
     $('#interest-rate').keyup(function () {
+        triggerAmortization();
+    });
+    $('#interest_type').change(e => {
         triggerAmortization();
     });
     $('#repayment-date').change(function () {
@@ -341,6 +353,7 @@
         let result = [],
             total_principal = 0,
             amount = $('#amount').val(),
+            term_type = $('#term_type').val(),
             date = $('#repayment-date').val();
         for (let i = -2; i < schedule.length - 1; i++) {
             if (i === -2) {
@@ -361,7 +374,7 @@
                     cells = date + "," + date + "," + schedule[i][1] + "," + date + "," + date + "," + schedule[i][2] + "," + schedule[i][3];
                     let date_array = date.split('-');
                     date = new Date(date_array[0], (parseInt(date_array[1]) - 1), date_array[2]);
-                    if (preapplication.tenor_type && preapplication.tenor_type === 'weekly') {
+                    if (term_type && term_type === 'weekly') {
                         date.setDate(date.getDate() + 7);
                     } else {
                         date.setMonth(date.getMonth() + 1);
@@ -400,25 +413,27 @@
                 $('#payment-amount-div').show();
                 let loanAmount = $('#amount').val(),
                     interestRate = $('#interest-rate').val(),
-                    duration = $('#term').val();
-                if (!loanAmount || !interestRate || !duration)
+                    duration = $('#term').val(),
+                    term_type = $('#term_type').val(),
+                    interest_type = $('#interest_type').val();
+                if (!loanAmount || !interestRate || !duration || !term_type || !interest_type)
                     return $message.text('Kindly fill all required fields!', '', 'warning');
                 duration = parseFloat(duration);
                 loanAmount = parseFloat(loanAmount);
-                interestRate = parseFloat(interestRate);
+                interestRate = parseFloat(interestRate) * getPaymentsPerYear(interest_type);
                 if (duration < settings.tenor_min || duration > settings.tenor_max)
-                    return $message.text(`Minimum tenor is ${numberToCurrencyformatter(settings.tenor_min)} (month)
-                     and Maximum is ${numberToCurrencyformatter(settings.tenor_max)} (months)`, '', 'warning');
+                    return $message.text(`Minimum tenor cycle is ${numberToCurrencyformatter(settings.tenor_min)} 
+                        and Maximum is ${numberToCurrencyformatter(settings.tenor_max)}`, '', 'warning');
                 if (interestRate < settings.interest_rate_min || interestRate > settings.interest_rate_max)
-                    return $message.text(`Minimum interest rate is ${numberToCurrencyformatter(settings.interest_rate_min)}% 
-                    and Maximum is ${numberToCurrencyformatter(settings.interest_rate_max)}%`, '', 'warning');
+                    return $message.text(`Minimum annual interest rate is ${numberToCurrencyformatter(settings.interest_rate_min)}% 
+                        and Maximum is ${numberToCurrencyformatter(settings.interest_rate_max)}%`, '', 'warning');
                 if (loanAmount < settings.loan_requested_min || loanAmount > settings.loan_requested_max)
                     return $message.text(`Minimum loan amount is ₦${numberToCurrencyformatter(settings.loan_requested_min)} 
-                    and Maximum is ₦${numberToCurrencyformatter(settings.loan_requested_max)}`, '', 'warning');
+                        and Maximum is ₦${numberToCurrencyformatter(settings.loan_requested_max)}`, '', 'warning');
                 $message.hide();
 
-                let years = duration / 12,
-                    paymentsPerYear = 12, //tenor: monthly = 12, biweekly = 26, weekly = 52
+                let paymentsPerYear = getPaymentsPerYear(term_type),
+                    years = duration / paymentsPerYear,
                     rate_ = (interestRate / 100) / paymentsPerYear,
                     numberOfPayments = paymentsPerYear * years,
                     payment = (pmt(rate_, numberOfPayments, -loanAmount, $amortization.val())).toFixed(2),
@@ -679,8 +694,9 @@
                             $('#capital_source').val('');
                             $('#business_turnover').val('');
                             $('#tenor').val('');
-                            $('#tenor_type').val('');
+                            $('#tenor_type').val('monthly');
                             $('#rate').val('');
+                            $('#rate_type').val('yearly');
                             $('#contribution').val('');
                             preapplication = data;
                             notification('Loan Application (Step 1) was successful!', '', 'success');
@@ -940,6 +956,7 @@
         obj.product = $('#product').val();
         obj.loan_amount = currencyToNumberformatter($('#loan_amount').val());
         obj.rate = currencyToNumberformatter($('#rate').val());
+        obj.rate_type = $('#rate_type').val();
         obj.tenor = currencyToNumberformatter($('#tenor').val());
         obj.tenor_type = $('#tenor_type').val();
         obj.loan_purpose = $('#loan_purposes').val();
@@ -972,7 +989,7 @@
         if ($('input[name=spouse_knowledge]:checked').val())
             obj.spouse_knowledge = $('input[name=spouse_knowledge]:checked').val();
         obj.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
-        if (!user || !obj.product || (!obj.loan_amount && obj.loan_amount !== 0) || (!obj.rate && obj.rate !== 0)
+        if (!user || !obj.product || (!obj.loan_amount && obj.loan_amount !== 0) || (!obj.rate && obj.rate !== 0) || !obj.rate_type
             || (!obj.tenor && obj.tenor !== 0) || !obj.tenor_type || obj.loan_purpose === '-- Choose Loan Purpose --' ||
             (!obj.loan_serviced && obj.loan_serviced !== 0)) {
             notification('Kindly fill all required fields!', '', 'warning');

@@ -255,6 +255,11 @@
                                     <div class="input-group">
                                         <div class="input-group-addon"><i class="fa fa-money"></i></div>
                                         <input type="text" id="rate" class="form-control" required="required">
+                                        <select id="rate_type" class="form-control" required="required">
+                                            <option value="yearly" selected="selected">Yearly</option>
+                                            <option value="monthly">Monthly</option>
+                                            <option value="weekly">Weekly</option>
+                                        </select>
                                     </div>
                                     <small class="form-text text-muted">Min: <span id="interest_rate_min_">1</span>%  Max: <span id="interest_rate_max_">1000</span>% </small>
                                 </div>
@@ -352,31 +357,40 @@
                                     </div>
                                 </div>
                                 <div class="col-sm-6 form-group">
-                                    <label class="form-control-label">Loan Requested</label><strong style="color:red"> *</strong><span id="amount-error" style="padding-left:50px; text-align: center"></span>
+                                    <label class="form-control-label">Loan Requested</label><strong style="color:red"> *</strong>
                                     <div class="input-group">
                                         <div class="input-group-addon"><i class="fa fa-money"></i></div>
-                                        <input type="number" id="amount" class="form-control" required="required" value="50000" min="1" max="100000000">
+                                        <input type="number" id="amount" class="form-control" required="required">
                                     </div>
                                     <small class="form-text text-muted">Min: <span id="loan_requested_min">1.00</span>(NGN) Max: <span id="loan_requested_max">100,000,000.00</span>(NGN)</small>
                                 </div>
                                 <div class="col-sm-6 form-group">
-                                    <label class="form-control-label">Interest Rate</label><strong style="color:red"> *</strong><span id="interest-rate-error" style="padding-left:50px; text-align: center"></span>
+                                    <label class="form-control-label">Interest Rate</label><strong style="color:red"> *</strong>
                                     <div class="input-group">
                                         <div class="input-group-addon"><i class="fa fa-plus"></i></div>
-                                        <input type="number" id="interest-rate" class="form-control" required="required" value="120" min="1" max="1000">
+                                        <input type="number" id="interest-rate" class="form-control" required="required">
+                                        <select id="interest_type" class="form-control" required="required">
+                                            <option value="yearly" selected="selected">Yearly</option>
+                                            <option value="monthly">Monthly</option>
+                                            <option value="weekly">Weekly</option>
+                                        </select>
                                     </div>
                                     <small class="form-text text-muted">Min: <span id="interest_rate_min">1</span>%  Max: <span id="interest_rate_max">1000</span>% </small>
                                 </div>
                                 <div class="col-sm-6 form-group">
-                                    <label class="form-control-label">Tenor</label><strong style="color:red"> *</strong><span id="term-error" style="padding-left:50px; text-align: center"></span>
+                                    <label for="term" class="form-control-label">Tenor<strong style="color:red"> *</strong></label>
                                     <div class="input-group">
-                                        <div class="input-group-addon"><i class="fa fa-money"></i></div>
-                                        <input type="number" id="term" class="form-control" required="required" value="12" min="1" max="60">
+                                        <div class="input-group-addon"><i class="fa fa-refresh"></i></div>
+                                        <input type="text" id="term" class="form-control" required="required">
+                                        <select id="term_type" class="form-control" required="required">
+                                            <option value="monthly" selected="selected">Monthly</option>
+                                            <option value="weekly">Weekly</option>
+                                        </select>
                                     </div>
-                                    <small class="form-text text-muted">Min: <span id="tenor_min">1</span>  Max: <span id="tenor_max">60</span> </small>
+                                    <small class="form-text text-muted">Min: <span id="tenor_min">1</span>  Max: <span id="tenor_min">60</span> </small>
                                 </div>
                                 <div class="col-sm-6 form-group">
-                                    <label class="form-control-label">First Repayment Date</label><span id="repayment-date-error" style="padding-left:50px; text-align: center"></span>
+                                    <label class="form-control-label">First Repayment Date</label>
                                     <div class="input-group">
                                         <div class="input-group-addon"><i class="fa fa-calendar"></i></div>
                                         <input type="date" id="repayment-date" class="form-control" required="required">
@@ -403,7 +417,7 @@
                                     </div>
                                 </div>
                                 <div id="payment-amount-div" class="col-sm-6 form-group" style="display: none;">
-                                    <label class="form-control-label">Payment Amount</label><strong style="color:red"> *</strong><span id="payment-amount-error" style="padding-left:50px; text-align: center"></span>
+                                    <label class="form-control-label">Payment Amount</label><strong style="color:red"> *</strong>
                                     <div class="input-group">
                                         <div class="input-group-addon"><i class="fa fa-money"></i></div>
                                         <input type="number" id="payment-amount" class="form-control" required="required" disabled="disabled">
@@ -431,7 +445,7 @@
                                 </div>
                             </div>
                             <div class = "form-group">
-                                <input id="addApplication" type="submit" class="btn btn-success btn-flat m-b-30 m-t-30 write" value="Add New Application"/><span id="submit-error" style="padding-left:50px; text-align: center"></span>
+                                <input id="addApplication" type="submit" class="btn btn-success btn-flat m-b-30 m-t-30 write" value="Add New Application"/>
                             </div>
                         </div>
                     </div>
