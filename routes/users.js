@@ -3976,9 +3976,10 @@ users.post('/application/pay-off/:id/:agentID', function (req, res, next) {
                                             invoice.invoiceID = invoice_obj.ID;
                                             invoice.applicationID = req.params.id;
                                             invoice.payment_amount = invoice_obj.payment_amount;
-                                            invoice.interest_amount = invoice_obj.interest_amount;
-                                            invoice.fees_amount = invoice_obj.fees_amount;
-                                            invoice.penalty_amount = invoice_obj.penalty_amount;
+                                            if (data.close_include_interest)
+                                                invoice.interest_amount = invoice_obj.interest_amount;
+                                            // invoice.fees_amount = invoice_obj.fees_amount;
+                                            // invoice.penalty_amount = invoice_obj.penalty_amount;
                                             invoice.agentID = req.params.agentID;
                                             invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                                             invoice.payment_date = moment().utcOffset('+0100').format('YYYY-MM-DD');
