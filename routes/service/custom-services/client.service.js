@@ -3530,4 +3530,39 @@ router.get('/loans/history/get/:id', (req, res) => {
     });
 });
 
+router.get('/account/statement/get/:id', (req, res) => {
+    let query = `SELECT date_disbursed date, loan_id reference, COALESCE(amount, 0) amount, 'debit' type FROM disbursement_history 
+        WHERE client_id = ${req.params.id} AND status = 1 AND date_disbursed IS NOT NULL`;
+    db.query(query, (error, debits) => {
+        if (error)
+            return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+        query = `SELECT payment_date date, applicationID reference, 
+            (COALESCE(payment_amount, 0) + COALESCE(interest_amount, 0) + COALESCE(fees_amount, 0) + COALESCE(penalty_amount, 0) + COALESCE(escrow_amount, 0)) amount, 
+            'credit' type FROM schedule_history WHERE clientID = ${req.params.id} AND status = 1 AND payment_date IS NOT NULL`;
+        db.query(query, (error, credits) => {
+            if (error)
+                return res.send({
+                    "status": 500,
+                    "error": error,
+                    "response": null
+                });
+    
+            const results = debits.concat(credits);
+            results.sort((a, b) => {
+                return new Date(a.date) - new Date(b.date);
+            });
+            res.send({
+                "status": 200,
+                "error": null,
+                "response": results
+            });
+        });
+    });
+});
+
 module.exports = router;

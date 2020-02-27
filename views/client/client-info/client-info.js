@@ -486,6 +486,7 @@ function getBadCheques() {
         url: `/client/bad_cheque/${client_det[0]['ID']}`,
         success: function (response) {
             populateBadChequeReasons(response.response);
+            getAccountStatement();
         }
     });
 }
@@ -571,4 +572,48 @@ function removeBadChequeReason(id) {
                 });
             }
         });
+}
+
+function getAccountStatement() {
+    $.ajax({
+        type: 'GET',
+        url: `/client/account/statement/get/${client_det[0]['ID']}`,
+        success: function (response) {
+            populateAccountStatement(response.response);
+        }
+    });
+}
+
+function populateAccountStatement(data){
+    let $statement = $("#account-statement");
+    $statement.DataTable().clear();
+    let balance = 0,
+        statement = [];
+    $.each(data, function(k, v){
+        v.credit = v.debit = '';
+        v.date = (v.date.split(' '))[0];
+        v.reference = `#LOAN ID: ${padWithZeroes(v.reference, 9)}`;
+        if (v.type === 'credit') {
+            v.credit = formatter.format(v.amount);
+            balance += Number(v.amount);
+        } else if (v.type === 'debit') {
+            v.debit = formatter.format(v.amount);
+            balance -= Number(v.amount);
+        }
+        v.balance = formatter.format(balance);
+        statement.push(v);
+    });
+    $statement.DataTable({
+        dom: 'Bfrtip',
+        bDestroy: true,
+        data: statement,
+        buttons: [],
+        columns: [
+            { data: "date" },
+            { data: "reference" },
+            { data: "credit" },
+            { data: "debit" },
+            { data: "balance" }
+        ]
+    });
 }
