@@ -1129,7 +1129,7 @@ function initCSVUpload(application) {
 
 function invoiceHistory(invoice_id) {
     $.ajax({
-        'url': '/user/application/invoice-history/'+invoice_id,
+        'url': `/user/application/invoice-history?id=${invoice_id}`,
         'type': 'get',
         'success': function (data) {
             $("#invoice-history").dataTable().fnClearTable();
