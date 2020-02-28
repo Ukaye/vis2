@@ -2447,7 +2447,7 @@ router.get('/application/comment/:id/:loan_id', (req, res) => {
         });
     });
 });
-
+//
 router.get('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req, res) => {
     let query = `SELECT * FROM applications WHERE ID = ${req.params.loan_id} AND userID = ${req.params.id}`;
     let query1 = `SELECT COALESCE(SUM(payment_amount+interest_amount), 0) amount FROM application_schedules 
@@ -2522,8 +2522,8 @@ router.post('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, func
                                     "error": error,
                                     "response": null
                                 });
-                                connection.query(`SELECT * FROM application_schedules WHERE applicationID = ${req.params.loan_id} 
-                                AND status = 1 AND payment_status = 0`, function (error, invoices) {
+                                connection.query(`SELECT s.*, a.userID, c.branch, c.loan_officer FROM application_schedules s, applications a, clients c 
+                                    WHERE s.applicationID = ${req.params.loan_id} AND s.status = 1 AND s.payment_status = 0 AND s.applicationID = a.ID AND a.userID = c.ID`, (error, invoices) => {
                                     if (error) return res.send({
                                         "status": 500,
                                         "error": error,
@@ -2534,19 +2534,26 @@ router.post('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, func
                                         invoice.invoiceID = invoice_obj.ID;
                                         invoice.applicationID = req.params.loan_id;
                                         invoice.payment_amount = invoice_obj.payment_amount;
-                                        invoice.interest_amount = invoice_obj.interest_amount;
+                                        invoice.interest_amount = (new Date(invoice_obj.interest_collect_date) <= new Date())? invoice_obj.interest_amount : '0';
                                         invoice.fees_amount = invoice_obj.fees_amount;
                                         invoice.penalty_amount = invoice_obj.penalty_amount;
+                                        invoice.actual_amount = Number(invoice.payment_amount) + Number(invoice.interest_amount) + 
+                                            Number(invoice.fees_amount) + Number(invoice.penalty_amount);
                                         invoice.agentID = 1;
                                         invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                                         invoice.payment_date = moment().utcOffset('+0100').format('YYYY-MM-DD');
                                         invoice.payment_source = 'paystack';
+                                        invoice.clientID = invoice_obj.userID;
+                                        invoice.loan_officerID = invoice_obj.loan_officer;
+                                        invoice.branchID = invoice_obj.branch;
+                                        invoice.type = 'multiple';
+                                        invoice.status = 2;
                                         connection.query(`UPDATE application_schedules SET payment_status = 1 WHERE ID = ${invoice_obj.ID}`, () => {
                                             connection.query('INSERT INTO schedule_history SET ?', invoice, () => {
                                                 callback();
                                             });
                                         });
-                                    }, function (data) {
+                                    }, data => {
                                         connection.release();
                                         let payload = {}
                                         payload.category = 'Application';
