@@ -127,6 +127,33 @@ function padWithZeroes(n, width, z) {
     return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
+function getPaymentsPerYear(tenor_type) {
+    let paymentsPerYear;
+    switch (tenor_type) {
+        case 'weekly': {
+            paymentsPerYear = 52;
+            break;
+        }
+        case 'biweekly': {
+            paymentsPerYear = 26;
+            break;
+        }
+        case 'monthly': {
+            paymentsPerYear = 12;
+            break;
+        }
+        case 'quarterly': {
+            paymentsPerYear = 4;
+            break;
+        }
+        case 'yearly': {
+            paymentsPerYear = 1;
+            break;
+        }
+    }
+    return paymentsPerYear;
+}
+
 function pmt(rate, nper, pv, type) {
     let pvif, pmt;
 
