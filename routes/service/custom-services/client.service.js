@@ -3541,8 +3541,7 @@ router.get('/account/statement/get/:id', (req, res) => {
                 "response": null
             });
 
-        query = `SELECT payment_date date, applicationID reference, 
-            (COALESCE(payment_amount, 0) + COALESCE(interest_amount, 0) + COALESCE(fees_amount, 0) + COALESCE(penalty_amount, 0) + COALESCE(escrow_amount, 0)) amount, 
+        query = `SELECT payment_date date, applicationID reference, COALESCE(payment_amount, 0) amount, 
             'credit' type FROM schedule_history WHERE clientID = ${req.params.id} AND status = 1 AND payment_date IS NOT NULL`;
         db.query(query, (error, credits) => {
             if (error)
