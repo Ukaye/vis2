@@ -4376,6 +4376,24 @@ users.get('/disbursements-new/filter', function (req, res, next) {
     });
 });
 
+/* Payoffs Report  */
+users.get('/report/payoffs', (req, res) => {
+    let start = req.query.start,
+        end = req.query.end,
+        loan_officer = req.query.officer,
+        query;
+    query = `SELECT a.userID user, c.loan_officer, c.fullname, a.ID applicationID, a.close_amount amount, a.close_date date 
+        FROM applications a, clients c WHERE a.close_status = 1 AND a.userID = c.ID`;
+    if (loan_officer && loan_officer !== 'false')
+        query = query.concat(`and c.loan_officer = ${loan_officer} `);
+    if (start && end)
+        query = (query.concat(`AND (TIMESTAMP(a.close_date) between TIMESTAMP('${start}') and TIMESTAMP('${end}')) `));
+    db.query(query, (error, results) => {
+        if (error) return res.send({ "status": 500, "error": error, "response": null });
+        res.send({ "status": 200, "error": null, "response": results});
+    });
+});
+
 /* Interest Received  */
 users.get('/interests/', function (req, res, next) {
     let start = req.query.start,
