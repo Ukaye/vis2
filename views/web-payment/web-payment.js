@@ -233,8 +233,7 @@ function confirmPayment() {
     if (invoice.payment_source === '0')
         return notification('Kindly select a payment source to proceed','','warning');
     if (overpayment < 0)
-        return notification(`Actual payment cannot be less than ₦${numberToCurrencyformatter((parseFloat(invoice.actual_payment_amount) + 
-            parseFloat(invoice.actual_interest_amount)).round(2))}`,'','warning');
+        return notification(`Actual payment amount should be ₦${numberToCurrencyformatter(total_payment)}`,'','warning');
     if (xero_config && xero_config.xero_collection_description === 1 && 
         invoice.payment_source !== 'escrow' && !$('#collection_description').val()) {
             return notification('Kindly specify a statement description to proceed','','warning');
