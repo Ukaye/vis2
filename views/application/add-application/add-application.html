@@ -114,7 +114,7 @@
                             <strong>Add Application Data (Step 1)</strong> <small> Loan Information</small>
                         </div>
                         <div class="card-body card-block">
-                            <div class="row">
+                            <div class="row" id='workflow_block'>
                                 <div class="col-sm-6 form-group">
                                     <label for="product" class="col-form-label">Select Loan Application Product <strong style="color:red"> *</strong></label>
                                     <div class="input-group">
@@ -125,7 +125,18 @@
                                         </select>
                                     </div>
                                 </div>
+
+                                <div class="col-sm-6 form-group">
+                                    <label class="col-form-label">Select Loan Process <strong style="color:red"> *</strong></label>
+                                    <div class="input-group">
+                                        <div class="input-group-addon"><i class="fa fa-line-chart"></i></div>
+                                        <select id="workflows" class="form-control" required="required">
+                                            <option selected="selected">-- Choose Workflow --</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
+                            <div id='extrastuff' class='row extrastuff'></div>
                             <div class="row">
                                 <div class="col-sm-6 form-group">
                                     <label for="name" class="col-form-label">Name <strong style="color:red"> *</strong></label>
@@ -347,15 +358,10 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="col-sm-6 form-group">
-                                    <label class="col-form-label">Select Loan Process <strong style="color:red"> *</strong></label>
-                                    <div class="input-group">
-                                        <div class="input-group-addon"><i class="fa fa-line-chart"></i></div>
-                                        <select id="workflows" class="form-control" required="required">
-                                            <option selected="selected">-- Choose Workflow --</option>
-                                        </select>
-                                    </div>
                                 </div>
+                                <div id='extrastuff' class='row extrastuff'></div>
+                                <div class='row'>
+                          
                                 <div class="col-sm-6 form-group">
                                     <label class="form-control-label">Loan Requested</label><strong style="color:red"> *</strong>
                                     <div class="input-group">
@@ -424,6 +430,7 @@
                                     </div>
                                 </div>
                             </div>
+ 
                             <div class="row">
                                 <div class="col-sm-12">
                                     <div class="row amortization-div">

@@ -1,13 +1,19 @@
 (function ($) {
     jQuery(document).ready(function () {
         getWorkflows();
-        getApplicationSettings();
     });
 
     let preapplication;
     const urlParams = new URLSearchParams(window.location.search);
     const preapplication_id = urlParams.get('id');
     const client_type = urlParams.get('type');
+    const workFlowHash = {
+        
+    }
+    let preApplicationHash = {
+        
+    }
+    let clientInformationArr;
 
     let client_list = [],
         $name = $('#name'),
@@ -49,6 +55,19 @@
                         break;
                     }
                 }
+                preApplicationHash = response;
+                console.log(response)
+                console.log(workFlowHash)
+                console.log(response.product)
+              
+               if(response.product) {
+                $('#workflow_block').html(`..... getting name for ${response.product}`)
+                   setTimeout(() =>$('#workflow_block').html(`<p class='pr-2'><b>${workFlowHash[response.product].name}</b></p>`), 100)
+                
+
+                getWorkflowInput(response.product)
+               }
+          
                 if (response.product) {
                     $('#product').val(response.product).trigger('change');
                     if (response.product === 'market_loan') {
@@ -56,6 +75,7 @@
                     }
                 }
                 if (response.name && response.email) {
+                  
                     $name.val($name.find(`option[name='${response.email}']`).val());
                     $name.select2('destroy');
                     $name.select2();
@@ -142,6 +162,7 @@
                     $('a.grouped_elements').fancybox();
                     $('.thumbnail').tooltip();
                 }
+                getApplicationSettings();
                 read_write_custom();
             }
         });
@@ -214,11 +235,83 @@
             url: "/workflows",
             success: function (response) {
                 $.each(response.response, function (key, val) {
+                  
+                    workFlowHash[val.ID] = val;
                     $("#workflows").append('<option value = "' + val.ID + '"">' + val.name + '</option>');
                 });
             }
         });
     }
+    function getWorkflowInput(ID) {
+        settings_obj = workFlowHash[ID];
+        setSettings();
+
+       const clientInformation =  workFlowHash[ID].client_information
+  const clientInformationArr_ = clientInformation ? clientInformation.split(','): [];
+  clientInformationArr = clientInformationArr_;
+  let HtmlToAppend = ''
+  for (let info of clientInformationArr_) {
+
+    console.log(info)
+    let obj = {
+        title: '',
+        placeholder: '',
+        id:'',
+        fa: ''
+    }
+         switch (info) {
+            case 'salary':
+                obj = {
+                    title:'Enter Cient Salary',
+                    placeholder:'Enter Salary',
+                    id:'salary',
+                    fa: 'fa-coins'
+                }
+                
+                break;
+            case "work_email":
+                    obj = {
+                        title:'Enter Client Work Email',
+                        placeholder:'Enter Client Work Email',
+                        id:'work_email',
+                        fa: 'fa-envelope'
+                    }
+                
+                break;
+        
+            default:
+                break;
+        }
+    
+        if(!obj.title) {
+            continue;
+        }
+         HtmlToAppend += `        
+            <div class='col-6 mb-2'> 
+        <label class="col-form-label">${obj.title} <strong style="color:red"> *</strong></label>
+        <div class="input-group">
+            <div class="input-group-addon"><i class="fa ${obj.fa}"></i></div>
+            <input placeholder='${obj.placeholder}' id="${obj.id}" value="${preApplicationHash[obj.id] || ''}" class="form-control" required="required" />
+    
+    </div>              
+    </div>              
+        `
+    
+
+      
+    
+    
+  }
+
+  const extraStuffEls = document.querySelectorAll('.extrastuff')
+
+  extraStuffEls.forEach(extraStuffEl => extraStuffEl.innerHTML = HtmlToAppend)
+
+
+    }
+    $("#workflows").change(e => {
+        getWorkflowInput(e.target.value)
+    })
 
     function getLoanPurposes() {
         $.ajax({
@@ -261,40 +354,44 @@
         interest_rate_max: 1000
     };
     $('#amortization').prop('disabled', true);
+
+    function setSettings() {
+        if (settings_obj.loan_requested_min) {
+            $('#loan_requested_min').text(numberToCurrencyformatter(settings_obj.loan_requested_min));
+            $('#loan_requested_min_').text(numberToCurrencyformatter(settings_obj.loan_requested_min));
+        }
+        if (settings_obj.loan_requested_max) {
+            $('#loan_requested_max').text(numberToCurrencyformatter(settings_obj.loan_requested_max));
+            $('#loan_requested_max_').text(numberToCurrencyformatter(settings_obj.loan_requested_max));
+        }
+        if (settings_obj.tenor_min) {
+            $('#tenor_min').text(numberToCurrencyformatter(settings_obj.tenor_min));
+            $('#tenor_min_').text(numberToCurrencyformatter(settings_obj.tenor_min));
+        }
+        if (settings_obj.tenor_max) {
+            $('#tenor_max').text(numberToCurrencyformatter(settings_obj.tenor_max));
+            $('#tenor_max_').text(numberToCurrencyformatter(settings_obj.tenor_max));
+        }
+        if (settings_obj.interest_rate_min) {
+            $('#interest_rate_min').text(numberToCurrencyformatter(settings_obj.interest_rate_min));
+            $('#interest_rate_min_').text(numberToCurrencyformatter(settings_obj.interest_rate_min));
+        }
+        if (settings_obj.interest_rate_max) {
+            $('#interest_rate_max').text(numberToCurrencyformatter(settings_obj.interest_rate_max));
+            $('#interest_rate_max_').text(numberToCurrencyformatter(settings_obj.interest_rate_max));
+        }
+    }
     function getApplicationSettings() {
         $('#wait').show();
         $.ajax({
             type: "GET",
-            url: "/settings/application",
+            url: `/settings/product/${preapplication.product}`,
             success: function (data) {
                 if (data.response) {
                     settings_obj = data.response;
-                    if (settings_obj.loan_requested_min) {
-                        $('#loan_requested_min').text(numberToCurrencyformatter(settings_obj.loan_requested_min));
-                        $('#loan_requested_min_').text(numberToCurrencyformatter(settings_obj.loan_requested_min));
-                    }
-                    if (settings_obj.loan_requested_max) {
-                        $('#loan_requested_max').text(numberToCurrencyformatter(settings_obj.loan_requested_max));
-                        $('#loan_requested_max_').text(numberToCurrencyformatter(settings_obj.loan_requested_max));
-                    }
-                    if (settings_obj.tenor_min) {
-                        $('#tenor_min').text(numberToCurrencyformatter(settings_obj.tenor_min));
-                        $('#tenor_min_').text(numberToCurrencyformatter(settings_obj.tenor_min));
-                    }
-                    if (settings_obj.tenor_max) {
-                        $('#tenor_max').text(numberToCurrencyformatter(settings_obj.tenor_max));
-                        $('#tenor_max_').text(numberToCurrencyformatter(settings_obj.tenor_max));
-                    }
-                    if (settings_obj.interest_rate_min) {
-                        $('#interest_rate_min').text(numberToCurrencyformatter(settings_obj.interest_rate_min));
-                        $('#interest_rate_min_').text(numberToCurrencyformatter(settings_obj.interest_rate_min));
-                    }
-                    if (settings_obj.interest_rate_max) {
-                        $('#interest_rate_max').text(numberToCurrencyformatter(settings_obj.interest_rate_max));
-                        $('#interest_rate_max_').text(numberToCurrencyformatter(settings_obj.interest_rate_max));
-                    }
+                setSettings()
                 }
-                initCSVUpload2(settings_obj);
+                initCSVUpload2();
             }
         });
     }
@@ -389,7 +486,8 @@
         return result;
     }
 
-    function initCSVUpload2(settings) {
+    function initCSVUpload2() {
+      const   settings = settings_obj
         let schedule = [],
             loan_amount = 0,
             $dvCSV = $("#dvCSV2"),
@@ -421,6 +519,8 @@
                 duration = parseFloat(duration);
                 loanAmount = parseFloat(loanAmount);
                 interestRate = parseFloat(interestRate) * getPaymentsPerYear(interest_type);
+                console.log(settings)
+                console.log(settings_obj)
                 if (duration < settings.tenor_min || duration > settings.tenor_max)
                     return $message.text(`Minimum tenor cycle is ${numberToCurrencyformatter(settings.tenor_min)} 
                         and Maximum is ${numberToCurrencyformatter(settings.tenor_max)}`, '', 'warning');
@@ -604,9 +704,12 @@
         });
 
         $("#addApplication").click(function () {
+            const settings = settings_obj;
+                console.log(settings)
             if (!schedule[0])
                 return notification('Please upload a valid CSV file.', '', 'warning');
             validateSchedule(schedule, function (validation) {
+                
                 if (validation.status) {
                     let obj = {},
                         schedule = validation.data,
@@ -618,7 +721,7 @@
                         obj.username = user.username || user.name;
                         obj.name = user.fullname || user.name;
                     }
-                    obj.workflowID = $('#workflows').val();
+                    obj.workflowID =( $('#workflows').val() || preApplicationHash.product);
                     obj.loan_amount = $('#amount').val();
                     obj.interest_rate = $('#interest-rate').val();
                     obj.duration = $('#term').val();
@@ -669,7 +772,7 @@
         });
 
         $("#saveApplication").click(function () {
-            validateApplication(settings, function (obj) {
+            validateApplication(function (obj) {
                 if (obj) {
                     $('#wait').show();
                     $.ajax({
@@ -720,7 +823,7 @@
         });
 
         $('#approveApplication').click(function () {
-            validateApplication(settings, function (obj) {
+            validateApplication(function (obj) {
                 if (obj) {
                     swal({
                         title: "Are you sure?",
@@ -946,7 +1049,8 @@
             });
     });
 
-    function validateApplication(settings, callback) {
+    function validateApplication(callback) {
+        const   settings = settings_obj
         let obj = {},
             contribution_status = $('input[name=contribution_status]:checked').val(),
             user = ($name.val() !== '-- Choose Client --') ? JSON.parse(decodeURIComponent($name.val())) : false;
@@ -958,6 +1062,12 @@
         obj.rate = currencyToNumberformatter($('#rate').val());
         obj.rate_type = $('#rate_type').val();
         obj.tenor = currencyToNumberformatter($('#tenor').val());
+        obj.product = ( $('#workflows').val() || preApplicationHash.product)
+        clientInformationArr.forEach(key => {
+            if ($('#'+key).val())
+            obj[key] = $('#' +key).val();
+        })
+
         obj.tenor_type = $('#tenor_type').val();
         obj.loan_purpose = $('#loan_purposes').val();
         obj.loan_serviced = currencyToNumberformatter($('#loan_serviced').val());
@@ -992,13 +1102,31 @@
         if (!user || !obj.product || (!obj.loan_amount && obj.loan_amount !== 0) || (!obj.rate && obj.rate !== 0) || !obj.rate_type
             || (!obj.tenor && obj.tenor !== 0) || !obj.tenor_type || obj.loan_purpose === '-- Choose Loan Purpose --' ||
             (!obj.loan_serviced && obj.loan_serviced !== 0)) {
+             
             notification('Kindly fill all required fields!', '', 'warning');
             return callback(false);
+        }
+        for(key of clientInformationArr) {
+ 
+            if ($('#'+key).val() === ''){
+                notification(`Kindly fill all required fields! Check ${key}`, '', 'warning');
+
+                 return callback(false);
+            }
+            if(key === 'work_email' && !$('#'+key).val().match(/^([\w.-]+)@(\[(\d{1,3}\.){3}|(?!hotmail|gmail|googlemail|yahoo|gmx|ymail|outlook|bluewin|protonmail|t\-online|web\.|online\.|aol\.|live\.)(([a-zA-Z\d-]+\.)+))([a-zA-Z]{2,4}|\d{1,3})(\]?)$/)){
+
+                notification('Free email domains like Gmail, Yahoo, Hotmail, AOL, Outlook, Live are not allowed!', '', 'warning')
+             return callback(false);
+            }
+
+
+        
         }
         if (obj.product === 'market_loan' && (!obj.market_name || !obj.market_leader_name || !obj.market_leader_phone || !obj.guarantor_name
             || !obj.guarantor_phone || !obj.guarantor_relationship || !obj.guarantor_address || (!obj.stock_value && obj.stock_value !== 0)
             || !obj.businesses || !obj.capital_source || (!obj.business_turnover && obj.business_turnover !== 0) || !obj.spouse_knowledge)) {
-            notification('Kindly fill all required fields!', '', 'warning');
+            
+                notification('Kindly fill all required fields!', '', 'warning');
             return callback(false);
         }
         if (contribution_status === 'yes' && !obj.contribution) {
