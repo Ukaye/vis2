@@ -4395,7 +4395,7 @@ users.get('/report/payoffs', (req, res) => {
     });
 });
 
-/* Writeoffs Report  */
+/* Loan Writeoffs Report  */
 users.get('/report/writeoffs', (req, res) => {
     let start = req.query.start,
         end = req.query.end,
@@ -4407,6 +4407,61 @@ users.get('/report/writeoffs', (req, res) => {
         query = query.concat(`AND c.loan_officer = ${loan_officer} `);
     if (start && end)
         query = (query.concat(`AND (TIMESTAMP(a.close_date) between TIMESTAMP('${start}') and TIMESTAMP('${end}')) `));
+    db.query(query, (error, results) => {
+        if (error) return res.send({ "status": 500, "error": error, "response": null });
+        res.send({ "status": 200, "error": null, "response": results});
+    });
+});
+
+/* Invoice Writeoffs Report  */
+users.get('/report/writeoffs2', (req, res) => {
+    let start = req.query.start,
+        end = req.query.end,
+        loan_officer = req.query.officer,
+        query;
+    query = `SELECT a.userID user, c.loan_officer, c.fullname, s.applicationID, 
+        (COALESCE(s.payment_amount, 0) + COALESCE(s.interest_amount, 0) + COALESCE(s.fees_amount, 0) + COALESCE(s.penalty_amount, 0)) amount, s.date_modified date 
+        FROM application_schedules s, applications a, clients c WHERE s.payment_status = 2 AND s.applicationID = a.ID AND a.userID = c.ID `;
+    if (loan_officer && loan_officer !== 'false')
+        query = query.concat(`AND c.loan_officer = ${loan_officer} `);
+    if (start && end)
+        query = (query.concat(`AND (TIMESTAMP(s.date_modified) between TIMESTAMP('${start}') and TIMESTAMP('${end}')) `));
+    db.query(query, (error, results) => {
+        if (error) return res.send({ "status": 500, "error": error, "response": null });
+        res.send({ "status": 200, "error": null, "response": results});
+    });
+});
+
+/* Loan Fees Report  */
+users.get('/report/fees', (req, res) => {
+    let start = req.query.start,
+        end = req.query.end,
+        loan_officer = req.query.officer,
+        query;
+    query = `SELECT a.userID user, c.loan_officer, c.fullname, a.ID applicationID, a.fees amount, a.disbursement_date date 
+        FROM applications a, clients c WHERE a.fees IS NOT NULL AND a.userID = c.ID `;
+    if (loan_officer && loan_officer !== 'false')
+        query = query.concat(`AND c.loan_officer = ${loan_officer} `);
+    if (start && end)
+        query = (query.concat(`AND (TIMESTAMP(a.disbursement_date) between TIMESTAMP('${start}') and TIMESTAMP('${end}')) `));
+    db.query(query, (error, results) => {
+        if (error) return res.send({ "status": 500, "error": error, "response": null });
+        res.send({ "status": 200, "error": null, "response": results});
+    });
+});
+
+/* Invoice Fees Report  */
+users.get('/report/fees2', (req, res) => {
+    let start = req.query.start,
+        end = req.query.end,
+        loan_officer = req.query.officer,
+        query;
+    query = `SELECT a.userID user, c.loan_officer, c.fullname, s.applicationID, COALESCE(s.fees_amount, 0) amount, s.date_modified date 
+        FROM application_schedules s, applications a, clients c WHERE s.fees_amount IS NOT NULL AND s.fees_amount > 0 AND s.applicationID = a.ID AND a.userID = c.ID `;
+    if (loan_officer && loan_officer !== 'false')
+        query = query.concat(`AND c.loan_officer = ${loan_officer} `);
+    if (start && end)
+        query = (query.concat(`AND (TIMESTAMP(s.date_modified) between TIMESTAMP('${start}') and TIMESTAMP('${end}')) `));
     db.query(query, (error, results) => {
         if (error) return res.send({ "status": 500, "error": error, "response": null });
         res.send({ "status": 200, "error": null, "response": results});
@@ -6369,6 +6424,34 @@ users.get('/analytics', function (req, res, next) {
             //Default
             query = `SELECT u.fullname officer, SUM(a.close_amount) amount FROM applications a, clients c, users u 
                 WHERE a.close_status = 2 AND a.userID = c.ID AND c.loan_officer = u.ID `;
+            //An Officer
+            if (officer && officer !== 'false')
+                query = query.concat(`AND c.loan_officer = ${officer} `);
+            query = query.concat(`GROUP BY c.loan_officer`);
+            break;
+        case 'writeoffs2':
+            //Default
+            query = `SELECT u.fullname officer, s.applicationID, 
+                SUM(COALESCE(s.payment_amount, 0) + COALESCE(s.interest_amount, 0) + COALESCE(s.fees_amount, 0) + COALESCE(s.penalty_amount, 0)) amount, s.date_modified date 
+                FROM application_schedules s, applications a, clients c, users u  WHERE s.payment_status = 2 AND s.applicationID = a.ID AND a.userID = c.ID AND c.loan_officer = u.ID `;
+            //An Officer
+            if (officer && officer !== 'false')
+                query = query.concat(`AND c.loan_officer = ${officer} `);
+            query = query.concat(`GROUP BY c.loan_officer`);
+            break;
+        case 'fees':
+            //Default
+            query = `SELECT u.fullname officer, SUM(a.fees) amount FROM applications a, clients c, users u 
+                WHERE a.fees IS NOT NULL AND a.userID = c.ID AND c.loan_officer = u.ID `;
+            //An Officer
+            if (officer && officer !== 'false')
+                query = query.concat(`AND c.loan_officer = ${officer} `);
+            query = query.concat(`GROUP BY c.loan_officer`);
+            break;
+        case 'fees2':
+            //Default
+            query = `SELECT u.fullname officer, s.applicationID, SUM(COALESCE(s.fees_amount, 0)) amount, s.date_modified date 
+                FROM application_schedules s, applications a, clients c, users u  WHERE s.fees_amount IS NOT NULL AND s.fees_amount > 0 AND s.applicationID = a.ID AND a.userID = c.ID AND c.loan_officer = u.ID `;
             //An Officer
             if (officer && officer !== 'false')
                 query = query.concat(`AND c.loan_officer = ${officer} `);
