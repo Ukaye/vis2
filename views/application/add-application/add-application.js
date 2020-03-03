@@ -1,6 +1,7 @@
 (function ($) {
     jQuery(document).ready(function () {
         getWorkflows();
+        initCSVUpload2();
     });
 
     let preapplication;
@@ -13,7 +14,7 @@
     let preApplicationHash = {
         
     }
-    let clientInformationArr;
+    let clientInformationArr = [];
 
     let client_list = [],
         $name = $('#name'),
@@ -162,6 +163,7 @@
                     $('a.grouped_elements').fancybox();
                     $('.thumbnail').tooltip();
                 }
+                
                 getApplicationSettings();
                 read_write_custom();
             }
@@ -334,6 +336,7 @@
             type: "GET",
             url: "/settings/application/business",
             success: function (response) {
+                console.log(response)
                 $.each(response.response, function (key, val) {
                     $("#businesses").append('<option value = "' + val.ID + '"">' + val.name + '</option>');
                 });
@@ -387,11 +390,11 @@
             type: "GET",
             url: `/settings/product/${preapplication.product}`,
             success: function (data) {
+                console.log(data)
                 if (data.response) {
                     settings_obj = data.response;
                 setSettings()
                 }
-                initCSVUpload2();
             }
         });
     }
@@ -487,6 +490,7 @@
     }
 
     function initCSVUpload2() {
+        console.log('here')
       const   settings = settings_obj
         let schedule = [],
             loan_amount = 0,
