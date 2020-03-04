@@ -245,7 +245,25 @@
         });
     }
     function getWorkflowInput(ID) {
+        const default_settings_obj = {
+            loan_requested_min: 1,
+            loan_requested_max: 100000000,
+            tenor_min: 1,
+            tenor_max: 60,
+            interest_rate_min: 1,
+            interest_rate_max: 1000
+        };
         settings_obj = workFlowHash[ID];
+        Object.keys(default_settings_obj).forEach(key => {
+            if(!settings_obj[key]) {
+                settings_obj[key] = default_settings_obj[key]
+            }
+        })
+
+ 
+
+
+
         setSettings();
 
        const clientInformation =  workFlowHash[ID].client_information
@@ -264,10 +282,10 @@
          switch (info) {
             case 'salary':
                 obj = {
-                    title:'Enter Cient Salary',
+                    title:'Enter Client Salary',
                     placeholder:'Enter Salary',
                     id:'salary',
-                    fa: 'fa-coins'
+                    fa: 'fa-money'
                 }
                 
                 break;
@@ -359,6 +377,7 @@
     $('#amortization').prop('disabled', true);
 
     function setSettings() {
+        console.log(settings_obj)
         if (settings_obj.loan_requested_min) {
             $('#loan_requested_min').text(numberToCurrencyformatter(settings_obj.loan_requested_min));
             $('#loan_requested_min_').text(numberToCurrencyformatter(settings_obj.loan_requested_min));
@@ -372,8 +391,8 @@
             $('#tenor_min_').text(numberToCurrencyformatter(settings_obj.tenor_min));
         }
         if (settings_obj.tenor_max) {
-            $('#tenor_max').text(numberToCurrencyformatter(settings_obj.tenor_max));
-            $('#tenor_max_').text(numberToCurrencyformatter(settings_obj.tenor_max));
+            $('.tenor_max').text(numberToCurrencyformatter(settings_obj.tenor_max));
+            $('.tenor_max_').text(numberToCurrencyformatter(settings_obj.tenor_max));
         }
         if (settings_obj.interest_rate_min) {
             $('#interest_rate_min').text(numberToCurrencyformatter(settings_obj.interest_rate_min));
@@ -490,8 +509,8 @@
     }
 
     function initCSVUpload2() {
-        console.log('here')
-      const   settings = settings_obj
+        let   settings = settings_obj
+
         let schedule = [],
             loan_amount = 0,
             $dvCSV = $("#dvCSV2"),
@@ -523,8 +542,9 @@
                 duration = parseFloat(duration);
                 loanAmount = parseFloat(loanAmount);
                 interestRate = parseFloat(interestRate) * getPaymentsPerYear(interest_type);
-                console.log(settings)
-                console.log(settings_obj)
+                settings = settings_obj
+                setSettings()
+      
                 if (duration < settings.tenor_min || duration > settings.tenor_max)
                     return $message.text(`Minimum tenor cycle is ${numberToCurrencyformatter(settings.tenor_min)} 
                         and Maximum is ${numberToCurrencyformatter(settings.tenor_max)}`, '', 'warning');
