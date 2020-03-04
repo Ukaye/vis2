@@ -1811,16 +1811,20 @@ function validateSchedule(schedule, callback) {
 }
 
 function openPayOffModal() {
-    $('#payoff-amount').val($('#total-due-text').text());
-    let interest = 0;
+    let interest = 0,
+        principal = currencyToNumberformatter($('#total-due-text').text());
     let invoices = $.grep(application.schedule,function (e) {return (parseInt(e.status)===1 && parseInt(e.payment_status)===0)});
     if (invoices && invoices[0]){
         invoices.forEach(function (invoice) {
             interest += parseFloat(invoice.interest_amount);
             $('#payoff-interest').val(interest);
+            if (new Date(invoice.interest_collect_date) <= new Date())
+                principal += Number(invoice.interest_amount);
+            $('#payoff-amount').val(principal);
         });
     } else {
-        $('#payoff-interest').val(0);
+        $('#payoff-interest').val(interest);
+        $('#payoff-amount').val(principal);
     }
 }
 

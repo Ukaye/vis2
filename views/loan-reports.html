@@ -216,6 +216,15 @@
                                 <li class="nav-item">
                                     <a class="nav-link" id="export-reports" href="#general-reports" role="tab" data-toggle="tab">General Reports</a>
                                 </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="payoffs" href="#payoff-reports" role="tab" data-toggle="tab">Pay Off Report</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="writeoffs" href="#writeoff-reports" role="tab" data-toggle="tab">Write Off Report</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="writeoffs" href="#fees-reports" role="tab" data-toggle="tab">Fees Report</a>
+                                </li>
                             </ul>
 
                             <!-- Tab panes -->
@@ -223,269 +232,74 @@
                                 <div role="tabpanel" class="tab-pane fade active show in" id="intelliboard">
                                     <div class="card">
                                         <div class="card-body">
-                                            <div class="row">
-                                                <div id="disbursement-div" class="col-sm-12" >
-                                                    <div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">
-                                                        <div class="col-sm-4 card" style="background-color: transparent; border-color: transparent">
-                                                            <div class="form-group">
-                                                                <div class="input-group">
-                                                                    <select id="chartfilterofficers" onchange="dFilterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-sm-4 card" id="dis-freq" style="background-color: transparent; border-color: transparent">
-                                                            <div class="form-group">
-                                                                <div class="input-group">
-                                                                    <select id="disburse-frequency" onchange="dFrequencyChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
-                                                                        <option value="-1"> -- Select Period --</option>
-                                                                        <option value="2">Monthly</option>
-                                                                        <option value="4">Quarterly</option>
-                                                                        <option value="3">Yearly</option>
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-sm-4 card" id="dis-year" style="background-color: transparent; border-color: transparent; display: none">
-                                                            <div class="form-group">
-                                                                <div class="input-group">
-                                                                    <select id="disburse-year" onchange="dFilterYear(this)" class="year form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
-                                                                        <option value="0">Select Year</option>
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div id="chart-container" style="text-align: center">FusionCharts XT will load here!</div><hr/>
-                                                    <div class="card">
-                                                        <div class="card-header">
-                                                            <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
-                                                                <strong role="button" hidden="true" onclick="refreshDisbursements()" >Disbursements &nbsp; &nbsp;&nbsp; &nbsp;
-                                                                     <a href="#" title="Click to refresh table"><i class="fa fa-refresh"></i></a>
-                                                                    </strong>
-                                                                <span style="float: right">Total: <span id="total-disbursements"></span></span>
-                                                            </div>
-                                                            <div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">
-                                                                <form id="filterdisbursements" class="form-inline" style="float: right;">
-                                                                    <div class="form-group">
-                                                                        <label class="" for="startDate">Start date</label>
-                                                                        <input type="date" class="form-control" id="startDate" placeholder="Start date">
-                                                                    </div>&nbsp;
-                                                                    <div class="form-group">
-                                                                        <label class="" for="endDate">End date</label>
-                                                                        <input type="date" class="form-control" id="endDate" placeholder="End date">
-                                                                    </div>
-                                                                    <button type="submit" class="btn btn-success">Filter</button>
-                                                                </form>
-                                                            </div>
-                                                            <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
-                                                                <div class="form-group">
-                                                                    <div class="input-group">
-                                                                        <select id="filter-officers" onchange="filterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
-                                                                        <!--<option value="1" selected="selected">All</option>-->
-                                                                        <!--<option value="2">Started</option>-->
-                                                                        <!--<option value="3">Pending Approval</option>-->
-                                                                        <!--<option value="4">Pending Disbursal</option>-->
-                                                                        <!--<option value="5">Active</option>-->
-                                                                        <!--<option value="6">Closed</option>-->
-                                                                        </select>&nbsp;&nbsp;
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="card-body">
-                                                            <table id="disbursed-table" class="table table-striped table-bordered" width="100%">
-                                                                <thead>
-                                                                <tr>
-                                                                    <th>Loan ID</th>
-                                                                    <th>Name</th>
-                                                                    <th>Principal</th>
-                                                                    <!--<th>Balance</th>-->
-                                                                    <th>Date Disbursed</th>
-                                                                </tr>
-                                                                </thead>
-                                                                <tbody></tbody>
-                                                            </table>
+                                            <div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">
+                                                <div class="col-sm-4 card" style="background-color: transparent; border-color: transparent">
+                                                    <div class="form-group">
+                                                        <div class="input-group">
+                                                            <select id="chartfilterofficers" onchange="dFilterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                            </select>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div>
-                                                <!--<div id="rescheduled-div" class="col-sm-12" style="display: none">-->
-                                                    <!--<div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">-->
-                                                        <!--<div class="col-sm-4 card" style="background-color: transparent; border-color: transparent">-->
-                                                            <!--<div class="form-group">-->
-                                                                <!--<div class="input-group">-->
-                                                                    <!--<select id="chartfilterofficers" onchange="dFilterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">-->
-                                                                    <!--</select>-->
-                                                                <!--</div>-->
-                                                            <!--</div>-->
-                                                        <!--</div>-->
-                                                        <!--<div class="col-sm-4 card" id="dis-freq" style="background-color: transparent; border-color: transparent">-->
-                                                            <!--<div class="form-group">-->
-                                                                <!--<div class="input-group">-->
-                                                                    <!--<select id="disburse-frequency" onchange="dFrequencyChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">-->
-                                                                        <!--<option value="-1"> &#45;&#45; Select Period &#45;&#45;</option>-->
-                                                                        <!--<option value="2">Monthly</option>-->
-                                                                        <!--<option value="4">Quarterly</option>-->
-                                                                        <!--<option value="3">Yearly</option>-->
-                                                                    <!--</select>-->
-                                                                <!--</div>-->
-                                                            <!--</div>-->
-                                                        <!--</div>-->
-                                                        <!--<div class="col-sm-4 card" id="dis-year" style="background-color: transparent; border-color: transparent; display: none">-->
-                                                            <!--<div class="form-group">-->
-                                                                <!--<div class="input-group">-->
-                                                                    <!--<select id="disburse-year" onchange="dFilterYear(this)" class="year form-control" style="width:200px; margin: 0 5px; margin-left: 50px">-->
-                                                                        <!--<option value="0">Select Year</option>-->
-                                                                    <!--</select>-->
-                                                                <!--</div>-->
-                                                            <!--</div>-->
-                                                        <!--</div>-->
-                                                    <!--</div>-->
-                                                    <!--<div id="chart-container" style="text-align: center">FusionCharts XT will load here!</div><hr/>-->
-                                                    <!--<div class="card">-->
-                                                        <!--<div class="card-header">-->
-                                                            <!--<div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">-->
-                                                                <!--<strong>Disbursements</strong>-->
-                                                                <!--<span style="float: right">Total: <span id="total-disbursements"></span></span>-->
-                                                            <!--</div>-->
-                                                            <!--<div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">-->
-                                                                <!--<form id="filterdisbursements" class="form-inline" style="float: right;">-->
-                                                                    <!--<div class="form-group">-->
-                                                                        <!--<label class="" for="startDate">Start date</label>-->
-                                                                        <!--<input type="date" class="form-control" id="startDate" placeholder="Start date">-->
-                                                                    <!--</div>&nbsp;-->
-                                                                    <!--<div class="form-group">-->
-                                                                        <!--<label class="" for="endDate">End date</label>-->
-                                                                        <!--<input type="date" class="form-control" id="endDate" placeholder="End date">-->
-                                                                    <!--</div>-->
-                                                                    <!--<button type="submit" class="btn btn-success">Filter</button>-->
-                                                                <!--</form>-->
-                                                            <!--</div>-->
-                                                            <!--<div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">-->
-                                                                <!--<div class="form-group">-->
-                                                                    <!--<div class="input-group">-->
-                                                                        <!--<select id="filter-officers" onchange="filterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">-->
-                                                                            <!--&lt;!&ndash;<option value="1" selected="selected">All</option>&ndash;&gt;-->
-                                                                            <!--&lt;!&ndash;<option value="2">Started</option>&ndash;&gt;-->
-                                                                            <!--&lt;!&ndash;<option value="3">Pending Approval</option>&ndash;&gt;-->
-                                                                            <!--&lt;!&ndash;<option value="4">Pending Disbursal</option>&ndash;&gt;-->
-                                                                            <!--&lt;!&ndash;<option value="5">Active</option>&ndash;&gt;-->
-                                                                            <!--&lt;!&ndash;<option value="6">Closed</option>&ndash;&gt;-->
-                                                                        <!--</select>-->
-                                                                    <!--</div>-->
-                                                                <!--</div>-->
-                                                            <!--</div>-->
-                                                        <!--</div>-->
-                                                        <!--<div class="card-body">-->
-                                                            <!--<table id="disbursed-table" class="table table-striped table-bordered" width="100%">-->
-                                                                <!--<thead>-->
-                                                                <!--<tr>-->
-                                                                    <!--<th>Loan ID</th>-->
-                                                                    <!--<th>Name</th>-->
-                                                                    <!--<th>Principal</th>-->
-                                                                    <!--<th>Balance</th>-->
-                                                                    <!--<th>Date Disbursed</th>-->
-                                                                <!--</tr>-->
-                                                                <!--</thead>-->
-                                                                <!--<tbody></tbody>-->
-                                                            <!--</table>-->
-                                                        <!--</div>-->
-                                                    <!--</div>-->
-                                                <!--</div>-->
+                                                <div class="col-sm-4 card" id="dis-freq" style="background-color: transparent; border-color: transparent">
+                                                    <div class="form-group">
+                                                        <div class="input-group">
+                                                            <select id="disburse-frequency" onchange="dFrequencyChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                <option value="-1"> -- Select Period --</option>
+                                                                <option value="2">Monthly</option>
+                                                                <option value="4">Quarterly</option>
+                                                                <option value="3">Yearly</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                <!--<div id="loan-by-branch-div" style="display: none" >-->
-                                                    <!--<div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">-->
-                                                        <!--<div class="col-sm-2 card" style="background-color: transparent; border-color: transparent">-->
-                                                            <!--<div class="form-group">-->
-                                                                <!--<div class="input-group">-->
-                                                                    <!--<select id="reportview" onchange="changeview(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">-->
-                                                                        <!--<option value="1">Single Chart</option>-->
-                                                                        <!--<option value="2">Comparison Chart</option>-->
-                                                                    <!--</select>-->
-                                                                <!--</div>-->
-                                                            <!--</div>-->
-                                                        <!--</div>-->
-                                                        <!--<div class="col-sm-2 card" style="background-color: transparent; border-color: transparent">-->
-                                                            <!--<div class="form-group">-->
-                                                                <!--<div class="input-group">-->
-                                                                    <!--<select id="branchreport" onchange="changereport(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">-->
-                                                                        <!--<option value="1">Disbursements</option>-->
-                                                                        <!--<option value="2">Interests</option>-->
-                                                                    <!--</select>-->
-                                                                <!--</div>-->
-                                                            <!--</div>-->
-                                                        <!--</div>-->
-                                                        <!--<div class="col-sm-3 card" id="sel-brn" style="background-color: transparent; border-color: transparent">-->
-                                                            <!--<div class="form-group">-->
-                                                                <!--<div class="input-group">-->
-                                                                    <!--<select id="chartfilterbranches" onchange="bFilterBranch(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">-->
-                                                                    <!--</select>-->
-                                                                <!--</div>-->
-                                                            <!--</div>-->
-                                                        <!--</div>-->
-                                                        <!--<div class="col-sm-2 card" id="brn-freq" style="background-color: transparent; border-color: transparent">-->
-                                                            <!--<div class="form-group">-->
-                                                                <!--<div class="input-group">-->
-                                                                    <!--<select id="branch-frequency" onchange="bFrequencyChange(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">-->
-                                                                        <!--<option value="-1"> &#45;&#45; Select Period &#45;&#45;</option>-->
-                                                                        <!--<option value="2">Monthly</option>-->
-                                                                        <!--<option value="4">Quarterly</option>-->
-                                                                        <!--<option value="3">Yearly</option>-->
-                                                                    <!--</select>-->
-                                                                <!--</div>-->
-                                                            <!--</div>-->
-                                                        <!--</div>-->
-                                                        <!--<div class="col-sm-3 card" id="brn-year" style="background-color: transparent; border-color: transparent; display: none">-->
-                                                            <!--<div class="form-group">-->
-                                                                <!--<div class="input-group">-->
-                                                                    <!--<select id="branch-year" onchange="bFilterYear(this)" class="year form-control" style="width:200px; margin: 0 5px; margin-left: 50px">-->
-                                                                        <!--<option value="0">Select Year</option>-->
-                                                                    <!--</select>-->
-                                                                <!--</div>-->
-                                                            <!--</div>-->
-                                                        <!--</div>-->
-                                                    <!--</div>-->
-                                                    <!--<div id="branch-chart" style="text-align: center">FusionCharts XT will load here!</div><hr/>-->
-                                                    <!--<div class="card">-->
-                                                        <!--<div class="card-header">-->
-                                                            <!--<div class="col-sm-5">-->
-                                                                <!--<strong>Loans by Branch</strong>&nbsp;&nbsp;&nbsp;-->
-                                                                <!--<span>Total: <span id="total-loans-by-branch"></span></span>-->
-                                                            <!--</div>-->
-                                                            <!--<div class="col-sm-7">-->
-                                                                <!--<form id="filterbybranch" class="form-inline" style="float: right;">-->
-                                                                <!--<div class="form-group">-->
-                                                                    <!--<label class="" for="startDate">Start date</label>-->
-                                                                    <!--<input type="date" class="form-control" id="filterbranchstart" placeholder="Start date">-->
-                                                                <!--</div>-->
-                                                                <!--<div class="form-group">-->
-                                                                    <!--<label class="" for="endDate">End date</label>-->
-                                                                    <!--<input type="date" class="form-control" id="filterbranchend" placeholder="End date">-->
-                                                                <!--</div>-->
-                                                                <!--<button type="submit" class="btn btn-success">Filter</button>-->
-                                                            <!--</form>-->
-                                                            <!--</div>-->
-                                                            <!--&lt;!&ndash;<select id="branch-filter" onchange="filterBranch(this)" style="width: 200px">&ndash;&gt;-->
-                                                            <!--&lt;!&ndash;</select>&ndash;&gt;-->
-                                                        <!--</div>-->
-                                                        <!--<div class="card-body">-->
-                                                            <!--<table id="loan-by-branch-table" class="table table-striped table-bordered">-->
-                                                                <!--<thead>-->
-                                                                <!--<tr>-->
-                                                                    <!--<th>Branch ID</th>-->
-                                                                    <!--<th>Branch Name</th>-->
-                                                                    <!--<th>Disbursed</th>-->
-                                                                    <!--<th>Collected</th>-->
-                                                                    <!--<th>GLP</th>-->
-                                                                <!--</tr>-->
-                                                                <!--</thead>-->
-                                                                <!--<tbody></tbody>-->
-                                                            <!--</table>-->
-                                                        <!--</div>-->
-                                                    <!--</div>-->
-                                                <!--</div>-->
+                                                <div class="col-sm-4 card" id="dis-year" style="background-color: transparent; border-color: transparent; display: none">
+                                                    <div class="form-group">
+                                                        <div class="input-group">
+                                                            <select id="disburse-year" onchange="dFilterYear(this)" class="year form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                <option value="0">Select Year</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div id="chart-container" style="text-align: center">FusionCharts XT will load here!</div><hr/>
+                                            <div class="card">
+                                                <div class="card-header">
+                                                    <div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">
+                                                        <form id="filterdisbursements" class="form-inline" style="float: right;">
+                                                            <div class="form-group">
+                                                                <label for="startDate">Start date</label>
+                                                                <input type="date" class="form-control" id="startDate" placeholder="Start date">
+                                                            </div>&nbsp;
+                                                            <div class="form-group">
+                                                                <label for="endDate">End date</label>
+                                                                <input type="date" class="form-control" id="endDate" placeholder="End date">
+                                                            </div>
+                                                            <button type="submit" class="btn btn-success">Filter</button>
+                                                        </form>
+                                                    </div>
+                                                    <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
+                                                        <div class="form-group">
+                                                            <div class="input-group">
+                                                                <select id="filter-officers" onchange="filterOfficer(this)" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                </select>&nbsp;&nbsp;
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="card-body">
+                                                    <table id="disbursed-table" class="table table-striped table-bordered" width="100%">
+                                                        <thead>
+                                                        <tr>
+                                                            <th>Loan ID</th>
+                                                            <th>Name</th>
+                                                            <th>Principal</th>
+                                                            <th>Date Disbursed</th>
+                                                        </tr>
+                                                        </thead>
+                                                        <tbody></tbody>
+                                                    </table>
                                                 </div>
                                             </div>
                                         </div>
@@ -560,11 +374,11 @@
                                                             <div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">
                                                                 <form id="filterprincipal" class="form-inline" style="float: right;">
                                                                     <div class="form-group">
-                                                                        <label class="" for="startDate">Start date</label>
+                                                                        <label for="startDate">Start date</label>
                                                                         <input type="date" class="form-control" id="filterprincipalstart" placeholder="Start date">
                                                                     </div>
                                                                     <div class="form-group">
-                                                                        <label class="" for="endDate">End date</label>
+                                                                        <label for="endDate">End date</label>
                                                                         <input type="date" class="form-control" id="filterprincipalend" placeholder="End date">
                                                                     </div>
                                                                     <button type="submit" class="btn btn-success">Filter</button>
@@ -636,11 +450,11 @@
                                                             <div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">
                                                                 <form id="filterprincipalrec" class="form-inline" style="float: right;">
                                                                     <div class="form-group">
-                                                                        <label class="" for="startDate">Start date</label>
+                                                                        <label for="startDate">Start date</label>
                                                                         <input type="date" class="form-control" id="filterprincipalrecstart" placeholder="Start date">
                                                                     </div>
                                                                     <div class="form-group">
-                                                                        <label class="" for="endDate">End date</label>
+                                                                        <label for="endDate">End date</label>
                                                                         <input type="date" class="form-control" id="filterprincipalrecend" placeholder="End date">
                                                                     </div>
                                                                     <button type="submit" class="btn btn-success">Filter</button>
@@ -697,11 +511,11 @@
                                                             <div class="col-sm-7">
                                                                 <form id="filteraggprojectedinterest" class="form-inline" style="float: right;">
                                                                     <div class="form-group">
-                                                                        <label class="" for="startDate">Start date</label>
+                                                                        <label for="startDate">Start date</label>
                                                                         <input type="date" class="form-control" id="filteraggprointstart" name="filteraggprointstart" placeholder="Start date">
                                                                     </div>
                                                                     <div class="form-group">
-                                                                        <label class="" for="endDate">End date</label>
+                                                                        <label for="endDate">End date</label>
                                                                         <input type="date" class="form-control" id="filteraggprointend" name="filteraggprointend" placeholder="End date">
                                                                     </div>
                                                                     <button type="submit" class="btn btn-success">Filter</button>
@@ -772,11 +586,11 @@
                                                             <div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">
                                                                 <form id="filterinterests" class="form-inline" style="float: right;">
                                                                     <div class="form-group">
-                                                                        <label class="" for="startDate">Start date</label>
+                                                                        <label for="startDate">Start date</label>
                                                                         <input type="date" class="form-control" id="filterintereststart" placeholder="Start date">
                                                                     </div>
                                                                     <div class="form-group">
-                                                                        <label class="" for="endDate">End date</label>
+                                                                        <label for="endDate">End date</label>
                                                                         <input type="date" class="form-control" id="filterinterestend" placeholder="End date">
                                                                     </div>
                                                                     <button type="submit" class="btn btn-success">Filter</button>
@@ -848,11 +662,11 @@
                                                             <div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">
                                                                 <form id="filterinterestsrec" class="form-inline" style="float: right;">
                                                                     <div class="form-group">
-                                                                        <label class="" for="startDate">Start date</label>
+                                                                        <label for="startDate">Start date</label>
                                                                         <input type="date" class="form-control" id="filterinterestrecstart" placeholder="Start date">
                                                                     </div>
                                                                     <div class="form-group">
-                                                                        <label class="" for="endDate">End date</label>
+                                                                        <label for="endDate">End date</label>
                                                                         <input type="date" class="form-control" id="filterinterestrecend" placeholder="End date">
                                                                     </div>
                                                                     <button type="submit" class="btn btn-success">Filter</button>
@@ -886,11 +700,11 @@
                                                             <!--<div class="col-sm-7">-->
                                                                 <!--<form id="filterprojectedinterest" class="form-inline" style="float: right;">-->
                                                                     <!--<div class="form-group">-->
-                                                                        <!--<label class="" for="startDate">Start date</label>-->
+                                                                        <!--<label for="startDate">Start date</label>-->
                                                                         <!--<input type="date" class="form-control" id="filterprointstart" placeholder="Start date">-->
                                                                     <!--</div>-->
                                                                     <!--<div class="form-group">-->
-                                                                        <!--<label class="" for="endDate">End date</label>-->
+                                                                        <!--<label for="endDate">End date</label>-->
                                                                         <!--<input type="date" class="form-control" id="filterprointend" placeholder="End date">-->
                                                                     <!--</div>-->
                                                                     <!--<button type="submit" class="btn btn-success">Filter</button>-->
@@ -994,11 +808,11 @@
                                                             <div class="col-sm-4">
                                                                 <!--<form id="filterbadloans" class="form-inline" style="float: right;">-->
                                                                     <!--<div class="form-group">-->
-                                                                        <!--<label class="" for="startDate">Start date</label>-->
+                                                                        <!--<label for="startDate">Start date</label>-->
                                                                         <!--<input type="date" class="form-control" id="filterbadloanstart" placeholder="Start date">-->
                                                                     <!--</div>-->
                                                                     <!--<div class="form-group">-->
-                                                                        <!--<label class="" for="endDate">End date</label>-->
+                                                                        <!--<label for="endDate">End date</label>-->
                                                                         <!--<input type="date" class="form-control" id="filterbadloanend" placeholder="End date">-->
                                                                     <!--</div>-->
                                                                     <!--<button type="submit" class="btn btn-success">Filter</button>-->
@@ -1047,11 +861,11 @@
                                                             <div class="col-sm-6">
                                                                 <form id="filteroverdueloans" class="form-inline" style="float: right;">
                                                                     <div class="form-group">
-                                                                        <label class="" for="startDate">Start date</label>
+                                                                        <label for="startDate">Start date</label>
                                                                         <input type="date" class="form-control" id="filteroverduestart" placeholder="Start date">
                                                                     </div>
                                                                     <div class="form-group">
-                                                                        <label class="" for="endDate">End date</label>
+                                                                        <label for="endDate">End date</label>
                                                                         <input type="date" class="form-control" id="filteroverdueend" placeholder="End date">
                                                                     </div>
                                                                     <button type="submit" class="btn btn-success">Filter</button>
@@ -1096,11 +910,11 @@
                                                             <div class="col-sm-7" style="background-color: transparent; border-color: transparent">
                                                                 <form id="filterglp" class="form-inline" style="float: right;">
                                                                     <div class="form-group">
-                                                                        <label class="" for="startDate">Start date</label>
+                                                                        <label for="startDate">Start date</label>
                                                                         <input type="date" class="form-control" id="startGLPDate" placeholder="Start date">
                                                                     </div>
                                                                     <div class="form-group">
-                                                                        <label class="" for="endDate">End date</label>
+                                                                        <label for="endDate">End date</label>
                                                                         <input type="date" class="form-control" id="endGLPDate" placeholder="End date">
                                                                     </div>
                                                                     <button type="submit" class="btn btn-success">Filter</button>
@@ -1177,11 +991,11 @@
                                                             <strong>Payments</strong>
                                                             <form id="filterpayments" class="form-inline" style="float: right;">
                                                                 <div class="form-group">
-                                                                    <label class="" for="startDate">Start date</label>
+                                                                    <label for="startDate">Start date</label>
                                                                     <input type="date" class="form-control" id="paystart" placeholder="Start date">
                                                                 </div>
                                                                 <div class="form-group">
-                                                                    <label class="" for="endDate">End date</label>
+                                                                    <label for="endDate">End date</label>
                                                                     <input type="date" class="form-control" id="payend" placeholder="End date">
                                                                 </div>
                                                                 <button type="submit" class="btn btn-success">Filter</button>
@@ -1276,11 +1090,11 @@
                                                             <div class="col-sm-7">
                                                                 <form id="filterbybranch" class="form-inline" style="float: right;">
                                                                     <div class="form-group">
-                                                                        <label class="" for="startDate">Start date</label>
+                                                                        <label for="startDate">Start date</label>
                                                                         <input type="date" class="form-control" id="filterbranchstart" placeholder="Start date">
                                                                     </div>
                                                                     <div class="form-group">
-                                                                        <label class="" for="endDate">End date</label>
+                                                                        <label for="endDate">End date</label>
                                                                         <input type="date" class="form-control" id="filterbranchend" placeholder="End date">
                                                                     </div>
                                                                     <button type="submit" class="btn btn-success">Filter</button>
@@ -1313,11 +1127,11 @@
                                                             <div class="col-sm-7">
                                                                 <form id="filterinterestbybranch" class="form-inline" style="float: right;">
                                                                     <div class="form-group">
-                                                                        <label class="" for="startDate">Start date</label>
+                                                                        <label for="startDate">Start date</label>
                                                                         <input type="date" class="form-control" id="filterinterestbranchstart" placeholder="Start date">
                                                                     </div>
                                                                     <div class="form-group">
-                                                                        <label class="" for="endDate">End date</label>
+                                                                        <label for="endDate">End date</label>
                                                                         <input type="date" class="form-control" id="filterinterestbranchend" placeholder="End date">
                                                                     </div>
                                                                     <button type="submit" class="btn btn-success">Filter</button>
@@ -1349,11 +1163,11 @@
                                                             <div class="col-sm-7">
                                                                 <form id="filterpaymentsbybranch" class="form-inline" style="float: right;">
                                                                     <div class="form-group">
-                                                                        <label class="" for="startDate">Start date</label>
+                                                                        <label for="startDate">Start date</label>
                                                                         <input type="date" class="form-control" id="filterpaymentsbranchstart" placeholder="Start date">
                                                                     </div>
                                                                     <div class="form-group">
-                                                                        <label class="" for="endDate">End date</label>
+                                                                        <label for="endDate">End date</label>
                                                                         <input type="date" class="form-control" id="filterpaymentsbranchend" placeholder="End date">
                                                                     </div>
                                                                     <button type="submit" class="btn btn-success">Filter</button>
@@ -1385,11 +1199,11 @@
                                                             <div class="col-sm-7">
                                                                 <form id="filterbadloansbybranch" class="form-inline" style="float: right;">
                                                                     <div class="form-group">
-                                                                        <label class="" for="startDate">Start date</label>
+                                                                        <label for="startDate">Start date</label>
                                                                         <input type="date" class="form-control" id="filterbadloanssbranchstart" placeholder="Start date">
                                                                     </div>
                                                                     <div class="form-group">
-                                                                        <label class="" for="endDate">End date</label>
+                                                                        <label for="endDate">End date</label>
                                                                         <input type="date" class="form-control" id="filterbadloansbranchend" placeholder="End date">
                                                                     </div>
                                                                     <button type="submit" class="btn btn-success">Filter</button>
@@ -1558,6 +1372,291 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div role="tabpanel" class="tab-pane fade" id="payoff-reports">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-sm-12">
+                                                    <div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">
+                                                        <div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">
+                                                            <div class="form-group">
+                                                                <div class="input-group">
+                                                                    <select id="payoffChartfilterofficers" onchange="loadPayoffsChart()" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="payoffsChart" style="text-align: center">FusionCharts XT will load here!</div><hr/>
+                                                    <div class="card">
+                                                        <div class="card-header">
+                                                            <div class="col-sm-2">
+                                                                <strong>Total Payoffs: </strong><span id="total-payoffs"></span>
+                                                            </div>
+                                                            <div class="col-sm-7 card" style="background-color: transparent; border-color: transparent">
+                                                                <form id="filterPayoffs" class="form-inline">
+                                                                    <div class="form-group">
+                                                                        <label for="payoffs-start">Start Date</label>
+                                                                        <input type="date" class="form-control" id="payoffs-start" placeholder="Start date">
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label for="payoffs-end">End Date</label>
+                                                                        <input type="date" class="form-control" id="payoffs-end" placeholder="End date">
+                                                                    </div>
+                                                                    <button type="submit" class="btn btn-success" onclick="loadPayoffsTable(this)">Filter</button>
+                                                                </form>
+                                                            </div>
+                                                            <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
+                                                                <select id="payoffs-officers" onchange="loadPayoffsTable()" class="form-control"></select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <table id="payoffs-table" class="table table-striped table-bordered" width="100%">
+                                                                <thead>
+                                                                <tr>
+                                                                    <th>Loan ID</th>
+                                                                    <th>Name</th>
+                                                                    <th>Amount</th>
+                                                                    <th>Date</th>
+                                                                </tr>
+                                                                </thead>
+                                                                <tbody></tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div role="tabpanel" class="tab-pane fade" id="writeoff-reports">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="row" style="padding-bottom: 10px">
+                                                <div class="col-sm-6">
+                                                    <button id="loan-writeoffs-button" class="btn col-sm-12">Loan Write Off</button>
+                                                </div>
+                                                <div class="col-sm-6">
+                                                    <button id="invoice-writeoffs-button" class="btn col-sm-12">Invoice Write Off</button>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div id="loan-writeoffs-div" class="col-sm-12" style="display: none;">
+                                                    <div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">
+                                                        <div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">
+                                                            <div class="form-group">
+                                                                <div class="input-group">
+                                                                    <select id="writeoffChartfilterofficers" onchange="loadWriteoffsChart()" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="writeoffsChart" style="text-align: center">FusionCharts XT will load here!</div><hr/>
+                                                    <div class="card">
+                                                        <div class="card-header">
+                                                            <div class="col-sm-2">
+                                                                <strong>Total Writeoffs: </strong><span id="total-writeoffs"></span>
+                                                            </div>
+                                                            <div class="col-sm-7 card" style="background-color: transparent; border-color: transparent">
+                                                                <form id="filterWriteoffs" class="form-inline">
+                                                                    <div class="form-group">
+                                                                        <label for="writeoffs-start">Start Date</label>
+                                                                        <input type="date" class="form-control" id="writeoffs-start" placeholder="Start date">
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label for="writeoffs-end">End Date</label>
+                                                                        <input type="date" class="form-control" id="writeoffs-end" placeholder="End date">
+                                                                    </div>
+                                                                    <button type="submit" class="btn btn-success" onclick="loadWriteoffsTable()">Filter</button>
+                                                                </form>
+                                                            </div>
+                                                            <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
+                                                                <select id="writeoffs-officers" onchange="loadWriteoffsTable()" class="form-control"></select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <table id="writeoffs-table" class="table table-striped table-bordered" width="100%">
+                                                                <thead>
+                                                                <tr>
+                                                                    <th>Loan ID</th>
+                                                                    <th>Name</th>
+                                                                    <th>Amount</th>
+                                                                    <th>Date</th>
+                                                                </tr>
+                                                                </thead>
+                                                                <tbody></tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div id="invoice-writeoffs-div" class="col-sm-12" style="display: none;">
+                                                    <div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">
+                                                        <div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">
+                                                            <div class="form-group">
+                                                                <div class="input-group">
+                                                                    <select id="writeoffChartfilterofficers2" onchange="loadWriteoffsChart2()" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="writeoffsChart2" style="text-align: center">FusionCharts XT will load here!</div><hr/>
+                                                    <div class="card">
+                                                        <div class="card-header">
+                                                            <div class="col-sm-2">
+                                                                <strong>Total Writeoffs: </strong><span id="total-writeoffs2"></span>
+                                                            </div>
+                                                            <div class="col-sm-7 card" style="background-color: transparent; border-color: transparent">
+                                                                <form id="filterWriteoffs2" class="form-inline">
+                                                                    <div class="form-group">
+                                                                        <label for="writeoffs-start2">Start Date</label>
+                                                                        <input type="date" class="form-control" id="writeoffs-start2" placeholder="Start date">
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label for="writeoffs-end2">End Date</label>
+                                                                        <input type="date" class="form-control" id="writeoffs-end2" placeholder="End date">
+                                                                    </div>
+                                                                    <button type="submit" class="btn btn-success" onclick="loadWriteoffsTable2()">Filter</button>
+                                                                </form>
+                                                            </div>
+                                                            <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
+                                                                <select id="writeoffs-officers2" onchange="loadWriteoffsTable2()" class="form-control"></select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <table id="writeoffs-table2" class="table table-striped table-bordered" width="100%">
+                                                                <thead>
+                                                                <tr>
+                                                                    <th>Loan ID</th>
+                                                                    <th>Name</th>
+                                                                    <th>Amount</th>
+                                                                    <th>Date</th>
+                                                                </tr>
+                                                                </thead>
+                                                                <tbody></tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div role="tabpanel" class="tab-pane fade" id="fees-reports">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="row" style="padding-bottom: 10px">
+                                                <div class="col-sm-6">
+                                                    <button id="loan-fees-button" class="btn col-sm-12">Loan Fees</button>
+                                                </div>
+                                                <div class="col-sm-6">
+                                                    <button id="invoice-fees-button" class="btn col-sm-12">Invoice Fees</button>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div id="loan-fees-div" class="col-sm-12" style="display: none;">
+                                                    <div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">
+                                                        <div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">
+                                                            <div class="form-group">
+                                                                <div class="input-group">
+                                                                    <select id="feesChartfilterofficers" onchange="loadFeesChart()" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="feesChart" style="text-align: center">FusionCharts XT will load here!</div><hr/>
+                                                    <div class="card">
+                                                        <div class="card-header">
+                                                            <div class="col-sm-2">
+                                                                <strong>Total Fees: </strong><span id="total-fees"></span>
+                                                            </div>
+                                                            <div class="col-sm-7 card" style="background-color: transparent; border-color: transparent">
+                                                                <form id="filterFees" class="form-inline">
+                                                                    <div class="form-group">
+                                                                        <label for="fees-start">Start Date</label>
+                                                                        <input type="date" class="form-control" id="fees-start" placeholder="Start date">
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label for="fees-end">End Date</label>
+                                                                        <input type="date" class="form-control" id="fees-end" placeholder="End date">
+                                                                    </div>
+                                                                    <button type="submit" class="btn btn-success" onclick="loadFeesTable()">Filter</button>
+                                                                </form>
+                                                            </div>
+                                                            <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
+                                                                <select id="fees-officers" onchange="loadFeesTable()" class="form-control"></select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <table id="fees-table" class="table table-striped table-bordered" width="100%">
+                                                                <thead>
+                                                                <tr>
+                                                                    <th>Loan ID</th>
+                                                                    <th>Name</th>
+                                                                    <th>Amount</th>
+                                                                    <th>Date</th>
+                                                                </tr>
+                                                                </thead>
+                                                                <tbody></tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div id="invoice-fees-div" class="col-sm-12" style="display: none;">
+                                                    <div class="row" style="background-color: rgba(0,0,0,.03); padding: .75rem 1.25rem; padding-bottom: 0px">
+                                                        <div class="col-sm-6 card" style="background-color: transparent; border-color: transparent">
+                                                            <div class="form-group">
+                                                                <div class="input-group">
+                                                                    <select id="feesChartfilterofficers2" onchange="loadFeesChart2()" class="form-control" style="width:200px; margin: 0 5px; margin-left: 50px">
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="feesChart2" style="text-align: center">FusionCharts XT will load here!</div><hr/>
+                                                    <div class="card">
+                                                        <div class="card-header">
+                                                            <div class="col-sm-2">
+                                                                <strong>Total Fees: </strong><span id="total-fees2"></span>
+                                                            </div>
+                                                            <div class="col-sm-7 card" style="background-color: transparent; border-color: transparent">
+                                                                <form id="filterFees2" class="form-inline">
+                                                                    <div class="form-group">
+                                                                        <label for="fees-start2">Start Date</label>
+                                                                        <input type="date" class="form-control" id="fees-start2" placeholder="Start date">
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label for="fees-end2">End Date</label>
+                                                                        <input type="date" class="form-control" id="fees-end2" placeholder="End date">
+                                                                    </div>
+                                                                    <button type="submit" class="btn btn-success" onclick="loadFeesTable2()">Filter</button>
+                                                                </form>
+                                                            </div>
+                                                            <div class="col-sm-3 card" style="background-color: transparent; border-color: transparent">
+                                                                <select id="fees-officers2" onchange="loadFeesTable2()" class="form-control"></select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <table id="fees-table2" class="table table-striped table-bordered" width="100%">
+                                                                <thead>
+                                                                <tr>
+                                                                    <th>Loan ID</th>
+                                                                    <th>Name</th>
+                                                                    <th>Amount</th>
+                                                                    <th>Date</th>
+                                                                </tr>
+                                                                </thead>
+                                                                <tbody></tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1604,6 +1703,7 @@
 
 <script src="js/notifications.js"></script>
 <script src="js/excelexportjs.js"></script>
+<script src="js/helper-functions.js"></script>
 <script>
     jQuery(document).ready(function() {
         trends();
@@ -1624,7 +1724,6 @@
         reloadAvgCards();
         disbursed();
         loadDisbursed();
-//        initDisbursedGLP();
         var today = new Date().toISOString().split('T')[0];
         document.getElementsByName("filteraggprointend")[0].setAttribute('min', today);
         document.getElementsByName("filteraggprointstart")[0].setAttribute('min', today);
@@ -1828,7 +1927,6 @@
         loadPortfolioLoanRiskReport();
     });
 
-
     $(document).on("click", "#payments", function (e){
         loadPayments();
         payments();
@@ -1837,6 +1935,47 @@
     $(document).on("click", "#branches", function (e){
         loadLoansByBranch();
         branches($('#branchreport').val());
+    });
+
+    $(document).on("click", "#payoffs", function (e){
+        loadPayoffsTable();
+        loadPayoffsChart();
+    });
+
+    $(document).on("click", "#loan-writeoffs-button", e => {
+        loadWriteoffsTable();
+        loadWriteoffsChart();
+        $("#loan-writeoffs-div").show();
+        $("#invoice-writeoffs-div").hide();
+        $("#loan-writeoffs-button").addClass('btn-primary');
+        $("#invoice-writeoffs-button").removeClass('btn-primary');
+    });
+
+    $(document).on("click", "#invoice-writeoffs-button", e => {
+        loadWriteoffsTable2();
+        loadWriteoffsChart2();
+        $("#loan-writeoffs-div").hide();
+        $("#invoice-writeoffs-div").show();
+        $("#loan-writeoffs-button").removeClass('btn-primary');
+        $("#invoice-writeoffs-button").addClass('btn-primary');
+    });
+
+    $(document).on("click", "#loan-fees-button", e => {
+        loadFeesTable();
+        loadFeesChart();
+        $("#loan-fees-div").show();
+        $("#invoice-fees-div").hide();
+        $("#loan-fees-button").addClass('btn-primary');
+        $("#invoice-fees-button").removeClass('btn-primary');
+    });
+
+    $(document).on("click", "#invoice-fees-button", e => {
+        loadFeesTable2();
+        loadFeesChart2();
+        $("#loan-fees-div").hide();
+        $("#invoice-fees-div").show();
+        $("#loan-fees-button").removeClass('btn-primary');
+        $("#invoice-fees-button").addClass('btn-primary');
     });
 
     $(document).on("click", "#disburse-button", function (e) {
@@ -2080,7 +2219,6 @@
                 if (data.status === 200) {
                     let disbursed = $.extend(true, {}, data.response),
                         glp = $.extend(true, {}, data.response);
-//                    populateDisbursed(disbursed);
                     populateGLP(glp);
                 } else {
                     swal({"icon": "error", "text": 'Database Error'});
@@ -2135,42 +2273,21 @@
     }
 
     function loadDisbursed(){
-        // if (localStorage.getItem('disbursed')){
-            // $('#disbursed-table').DataTable({
-            //     dom: 'Blfrtip',
-            //     bDestroy: true,
-            //     data: JSON.parse(localStorage.getItem('disbursed')),
-            //     search: {search: ' '},
-            //     buttons: [
-            //         'copy', 'csv', 'excel', 'pdf', 'print'
-            //     ],
-            //     columns: [
-            //         { data: "id" },
-            //         { data: "fullname" },
-            //         { data: "principal" },
-            //         { data: "date" }
-            //     ]
-            // });
-            // //added
-            // // $('#total-disbursements').html(formatter.format(localStorage.getItem('total-disbursements')));
-            //  $("#total-disbursements").text();
-        // } else {
-            let start = $("#startDate").val(),
-                end = $("#endDate").val(),
-                url;
-            url = (start === "" || start === null || end === "" || end === null ) ? 'user/disbursements-new/filter' : 'user/disbursements-new/filter?start='+formatDate(start)+'&&end='+formatDate(end)
+        let start = $("#startDate").val(),
+            end = $("#endDate").val(),
+            url;
+        url = (start === "" || start === null || end === "" || end === null ) ? 'user/disbursements-new/filter' : 'user/disbursements-new/filter?start='+formatDate(start)+'&&end='+formatDate(end)
 
-            $.ajax({
-                'url': url,
-                'type': 'get',
-                'success': function (data) {
-                    (data.status === 200) ? populateDisbursed(data.response) :  swal({"icon": "error", "text": 'Database Error'})
-                },
-                'error': function (err) {
-                    swal('Error in Connection!','','error')
-                }
-            });
-        
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                (data.status === 200) ? populateDisbursed(data.response) :  swal({"icon": "error", "text": 'Database Error'})
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error')
+            }
+        });
     }
 
     function reloadDisbursed(){
@@ -2208,104 +2325,6 @@
             }
         });
     }
-
-//    function populateDisbursed(dets){
-//        $("#disbursed-table").dataTable().fnClearTable();
-//        if (dets.length === 0){
-//            $("#disbursed-table").dataTable().fnClearTable();
-//        }else{
-//            var total = 0; var totalglp = 0; var totalbalance = 0; var num_all = 0; var num_paid = 0; var pay = 0; var loa = 0;
-//            let d = []; let processed_data = [];
-//            var totalhere = 0;
-//            const delimit = (dets.without_pay.length > dets.with_payments.length)? dets.without_pay.length : dets.with_payments.length;
-//            const limit = (dets.with_invalid_payments.length > delimit)? dets.with_invalid_payments.length : delimit;
-//            for (let i=0; i<limit; i++){
-//                let v = {};
-//                v = dets.without_pay[i];
-//                if (v){
-//                    let nopay = [];
-//                    amount_paid[v.ID] = 0;
-//                    totalhere += parseFloat(v.loan_amount);
-//                    total+= (v.loan_amount) ? parseFloat(v.loan_amount) : 0
-//                    totalglp += (v.loan_amount) ? parseFloat(v.loan_amount) : 0
-//                    totalbalance += (v.loan_amount) ? parseFloat(v.loan_amount) : 0
-//                    num_all++;
-//                    v.id = padWithZeroes(parseInt(v.ID),6);
-//                    v.balance = formatter.format(parseFloat(v.loan_amount));
-//                    v.principal = formatter.format(parseFloat(v.loan_amount));
-//                    if (v.reschedule_amount)
-//                        v.date_ = formatDate(v.date_modified.split(' ')[0]);
-//                    else
-//                        v.date_ = formatDate(v.disbursement_date);
-//                    processed_data.push(v);
-//                }
-//
-//                v = {};
-//                v = dets.with_payments[i];
-//                if (v){
-//                    amount_paid[v.applicationID] = v.valid_payment;
-//                    loa += v.loan_amount;
-//                    num_all++;
-//                    num_paid++;
-//                    total += (v.loan_amount) ? parseFloat(v.loan_amount) : 0
-//                    pay+=v.valid_payment;
-//                    totalbalance += (v.paid) ? ((v.invalid_payment === null) ? parseFloat(v.balance) :  v.loan_amount - (parseFloat(v.paid) - parseFloat(v.invalid_payment))) : 0;
-//                    v.id = padWithZeroes(parseInt(v.applicationID),6);
-//                    v.balance = formatter.format(parseFloat((v.loan_amount - v.valid_payment) < 0 ? 0 : v.loan_amount - v.valid_payment));
-//                    v.principal = formatter.format(parseFloat(v.loan_amount));
-//                    if (v.reschedule_amount)
-//                        v.date_ = formatDate(v.date_modified.split(' ')[0]);
-//                    else
-//                        v.date_ = formatDate(v.date);
-//                    processed_data.push(v);
-//                }
-//
-//                v={}
-//                v = dets.with_invalid_payments[i];
-//                if (v){
-//                    amount_paid[v.applicationID] = v.valid_payment;
-//                    loa += v.loan_amount;
-//                    num_all++;
-//                    num_paid++;
-//                    total += (v.loan_amount) ? parseFloat(v.loan_amount) : 0
-//                    pay+=v.valid_payment;
-////                    totalbalance += (v.paid) ? ((v.invalid_payment === null) ? parseFloat(v.balance) :  v.loan_amount - (parseFloat(v.paid) - parseFloat(v.invalid_payment))) : 0;
-//                    totalbalance += parseFloat(v.loan_amount);
-//                    v.id = padWithZeroes(parseInt(v.applicationID),6);
-//                    v.balance = formatter.format(parseFloat(v.loan_amount));
-//                    v.principal = formatter.format(parseFloat(v.loan_amount));
-//                    if (v.reschedule_amount)
-//                        v.date_ = formatDate(v.date_modified.split(' ')[0]);
-//                    else
-//                        v.date_ = formatDate(v.date);
-//                    processed_data.push(v);
-//                }
-//
-//                if (i === limit-1){
-//                    $('#disbursed-table').DataTable({
-//                        dom: 'Blfrtip',
-//                        bDestroy: true,
-//                        data: processed_data,
-//                        search: {search: ' '},
-//                        buttons: [
-//                            'copy', 'csv', 'excel', 'pdf', 'print'
-//                        ],
-//                        columns: [
-//                            { data: "id" },
-//                            { data: "fullname" },
-//                            { data: "principal" },
-////                            { data: "balance" },
-//                            { data: "date_" }
-//                        ]
-//                    });
-//                }
-//            }
-//            $('#total-disbursements').html(formatter.format(total));
-////            $('#glp').html(formatter.format(totalglp));
-////            $('#avg-loan-balance').html(formatter.format((num_all === 0) ? 0: totalbalance/num_all));
-////            $('#avg-loan-disbursed').html(formatter.format((num_all === 0) ? 0: total/num_all));
-//        }
-//    }
 
     function populateDisbursed(dets){
         $("#disbursed-table").dataTable().fnClearTable();
@@ -2502,78 +2521,6 @@
         reloadAvgCards();
     }
 
-//    $("#filterdisbursements").submit(function (e) {
-//        e.preventDefault();
-//
-//        let start = $("#startDate").val(),
-//            end = $("#endDate").val(),
-//            type = $("#type-filter").val(),
-//            officer = $('#filter-officers').find('option:selected').attr('id'),
-//            url = '/user/disbursements/filter?start='+formatDate(start)+'&&end='+formatDate(end);
-//        let urlAn;
-//        if (start && end && officer==0){
-//            urlAn = 'user/analytics?t=disbursements&&start='+formatDate(start)+'&&end='+formatDate(end);
-//            url = '/user/disbursements/filter?start='+formatDate(start)+'&&end='+formatDate(end);
-//        }
-//        if ((!start || !end) && officer==0 ) {
-//            return loadDisbursed();
-//        }
-//        if (officer != 0){
-//            url = url.concat('&&officer='+officer);
-//            urlAn = 'user/analytics?t=disbursements&&start='+formatDate(start)+'&&end='+formatDate(end)+'&&officer='+officer;
-//        }
-//        let d=[];
-//        $.ajax({
-//            'url': url,
-//            'type': 'get',
-//            'success': function (data) {
-//                let applications = data.response;
-//                results = applications;
-//                populateDisbursed(applications);
-//            },
-//            'error': function (err) {
-//                console.log(err);
-//            }
-//        });
-////        $.ajax({
-////            'url': urlAn,
-////            'type': 'get',
-////            'success': function (data) {
-//////                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
-////                jQuery.each(data.response, function(k, v){
-////                    if (v.name)
-////                        d.push({label: v.name , value: v.amount_disbursed}, );
-////                    if (v.DisburseYearMonth)
-////                        d.push({label: v.DisburseMonth , value: v.AmountDisbursed}, );
-////
-////                });
-////                var chartConfigs = {
-////                    type: 'column2d', // The chart type
-////                    width: '100%', // Width of the chart
-////                    height: '400', // Height of the chart
-////                    dataFormat: 'json', // Data type
-////                    dataSource: {
-////                        // Chart Configuration
-////                        "chart": {
-////                            "caption": "Disbursements by Loan Officer(s)",
-//////                            "subCaption": "In MMbbl = One Million barrels",
-////                            "xAxisName": "Loan Officers",
-////                            "yAxisName": "Amount Disbursed (Naira)",
-////                            "numberSuffix": " Naira",
-////                            "theme": "fusion",
-////                        },
-////                        // Chart Data
-////                        "data": d
-////                    }
-////                };
-////                $("#chart-container").insertFusionCharts(chartConfigs);
-////            },
-////            'error': function (err) {
-////                swal('Error in Connection!','','error')
-////            }
-////        });
-//    });
-
     $("#filterdisbursements").submit(function (e) {
         e.preventDefault();
 
@@ -2607,43 +2554,6 @@
                 console.log(err);
             }
         });
-//        $.ajax({
-//            'url': urlAn,
-//            'type': 'get',
-//            'success': function (data) {
-////                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
-//                jQuery.each(data.response, function(k, v){
-//                    if (v.name)
-//                        d.push({label: v.name , value: v.amount_disbursed}, );
-//                    if (v.DisburseYearMonth)
-//                        d.push({label: v.DisburseMonth , value: v.AmountDisbursed}, );
-//
-//                });
-//                var chartConfigs = {
-//                    type: 'column2d', // The chart type
-//                    width: '100%', // Width of the chart
-//                    height: '400', // Height of the chart
-//                    dataFormat: 'json', // Data type
-//                    dataSource: {
-//                        // Chart Configuration
-//                        "chart": {
-//                            "caption": "Disbursements by Loan Officer(s)",
-////                            "subCaption": "In MMbbl = One Million barrels",
-//                            "xAxisName": "Loan Officers",
-//                            "yAxisName": "Amount Disbursed (Naira)",
-//                            "numberSuffix": " Naira",
-//                            "theme": "fusion",
-//                        },
-//                        // Chart Data
-//                        "data": d
-//                    }
-//                };
-//                $("#chart-container").insertFusionCharts(chartConfigs);
-//            },
-//            'error': function (err) {
-//                swal('Error in Connection!','','error')
-//            }
-//        });
     });
 
     $("#filterglp").submit(function (e) {
@@ -3624,36 +3534,6 @@
         });
     }
 
-//    function populateOverdues(dets){
-//        $("#overdues-table").dataTable().fnClearTable();
-//        if (dets.length === 0){
-//            $("#overdues-table").dataTable().fnClearTable();
-//            $('#total-overdue').html(formatter.format(0));
-//        }else{
-//            var total = 0;
-//            var today = new Date();
-//            var dd = today.getDate();
-//            var mm = today.getMonth()+1;
-//            var yyyy = today.getFullYear();
-//            var now = yyyy+'-'+mm+'-'+dd;
-//            jQuery.each(dets, function(k, v){
-//                var ddate = new Date(v.duedate);
-//                now = new Date(now);
-//                if (ddate < now){
-//                    total+= parseFloat(v.amount_due);
-//                    $("#overdues-table").dataTable().fnAddData([
-//                        padWithZeroes(parseInt(v.applicationID),6),
-//                        v.client,
-//                        formatter.format(parseFloat(v.principal)),
-//                        formatter.format(parseFloat(v.amount_due)),
-//                        formatter.format(parseFloat(v.interest_due))
-//                    ]);
-//                }
-//            });
-//            $('#total-overdue').html(formatter.format(total));
-//        }
-//    }
-
     function populateOverdues(dets){
         $("#overdues-table").dataTable().fnClearTable();
         if (dets.length === 0){
@@ -3762,6 +3642,16 @@
                 $("#principal-rec-officers").empty().append('<option value="false" id="false">All Loan Officers</option>');
                 $("#pvifilterofficers").empty().append('<option value="false" id="false">All Loan Officers</option>');
                 $("#filter-glp-officers").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#payoffChartfilterofficers").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#payoffs-officers").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#writeoffChartfilterofficers").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#writeoffs-officers").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#writeoffChartfilterofficers2").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#writeoffs-officers2").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#feesChartfilterofficers").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#fees-officers").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#feesChartfilterofficers2").empty().append('<option value="false" id="false">All Loan Officers</option>');
+                $("#fees-officers2").empty().append('<option value="false" id="false">All Loan Officers</option>');
                 $.each(JSON.parse(response), function (key, val) {
                     $("#filter-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#overdue-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
@@ -3778,6 +3668,16 @@
                     $("#principal-rec-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#pvifilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                     $("#filter-glp-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                    $("#payoffChartfilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                    $("#payoffs-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                    $("#writeoffChartfilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                    $("#writeoffs-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                    $("#writeoffChartfilterofficers2").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                    $("#writeoffs-officers2").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                    $("#feesChartfilterofficers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                    $("#fees-officers").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                    $("#feesChartfilterofficers2").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
+                    $("#fees-officers2").append('<option value = "' + val.ID + '" id="' + val.ID + '">' + val.fullname + '</option>');
                 });
             }
         });
@@ -4120,7 +4020,6 @@
             'url': 'user/analytics?t=disbursements',
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     d.push({label: v.name , value: v.amount_disbursed}, );
                 });
@@ -4144,7 +4043,6 @@
                     }
                 };
                 $("#chart-container").insertFusionCharts(chartConfigs);
-//                loadDisbursed();
             },
             'error': function (err) {
                 swal('Error in Connection!','','error')
@@ -4169,7 +4067,6 @@
             'url': url,
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     if (v.name){
                         agent = '';
@@ -4268,7 +4165,6 @@
             'url': url,
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     if (v.name){
                         agent = '';
@@ -4361,7 +4257,6 @@
             'url': urlAn,
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     if (v.name){
                         agent = '';
@@ -4465,7 +4360,6 @@
             'url': url,
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     let value;
                     if (v.amount_disbursed)
@@ -4542,7 +4436,6 @@
             'url': url,
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     if ($('#branchreport').val() == '1'){
                         yaxis = "Amount Disbursed (Naira)";
@@ -4645,203 +4538,6 @@
             }
         });
     }
-
-//    function bFrequencyChange(frequency){
-//        let url = ($('#reportview').val() == '1') ? 'user/analytics?t=branches&&bt='+$('#branchreport').val()+'&&' : 'user/multi-analytics?bt='+$('#branchreport').val()+'&&';
-//            year = $('#branch-year').val(), report = $('#reportview').val(),
-//            branch = $('#chartfilterbranches').val();
-////        if (branch === "false"){
-////            return swal('Please select a branch!', '','warning');
-////        }
-//        if (frequency.value == 2 || frequency.value == 4){
-//            $('#brn-year').show();
-//            if (branch && year){
-//                url = url.concat('branch='+branch+'&&year='+year+'&&freq='+frequency.value);
-//            }
-//        }
-//        else {
-//            $('#brn-year').hide();
-//            url = url.concat('branch='+branch+'&&freq='+frequency.value);
-//        }
-//        let d = [], agent = '', xaxis, yaxis, caption, categories = [], dataset = [];
-//
-//        $.ajax({
-//            'url': url,
-//            'type': 'get',
-//            'success': function (data) {
-////                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
-//                if (report == '1'){
-//                    jQuery.each(data.response, function(k, v){
-//                        if ($('#branchreport').val() == '1') {
-//                            yaxis = "Amount Disbursed (Naira)";
-//                            caption = 'Disbursements by Branches: ';
-//                            if (v.branch)
-//                                d.push({label: v.name, value: v.amount_disbursed},);
-//                            if (v.year) {
-//                                agent = ': ' + v.office;
-//                                xaxis = 'Years'
-//                                d.push({label: v.year, value: v.AmountDisbursed},);
-//                            }
-//                            if (v.month) {
-//                                agent = ': ' + v.branch;
-//                                xaxis = 'Months';
-//                                d.push({label: v.DisburseMonth, value: v.AmountDisbursed},)
-//                            }
-//                            if (v.Quarter) {
-//                                agent = ': ' + v.office;
-//                                xaxis = 'Years'
-//                                d.push({label: v.Quarter, value: v.AmountDisbursed},);
-//                            }
-//                        }
-//                        if ($('#branchreport').val() == '2'){
-//                            yaxis = 'Interest Earned (Naira)';
-//                            caption = 'Interest Earned by Branches: ';
-//                            if (v.branch)
-//                                d.push({label: v.branch , value: v.amount_received}, );
-//                            if (v.PaymentYear){
-//                                agent = ': '+v.office;
-//                                xaxis = 'Years'
-//                                d.push({label: v.PaymentYear , value: v.amount_received}, );
-//                            }
-//                            if (v.monthpayed){
-//                                agent = ': '+v.office;
-//                                xaxis = 'Months';
-//                                d.push({label: v.monthpayed , value: v.amount_received}, )
-//                            }
-//                            if (v.branchQuarter){
-//                                agent = ': '+v.office;
-//                                xaxis = 'Years'
-//                                d.push({label: v.branchQuarter , value: v.amount_received}, );
-//                            }
-//                        }
-//                    });
-//                    var chartConfigs = {
-//                        type: 'column2d', // The chart type
-//                        width: '100%', // Width of the chart
-//                        height: '400', // Height of the chart
-//                        dataFormat: 'json', // Data type
-//                        dataSource: {
-//                            // Chart Configuration
-//                            "chart": {
-//                                "caption": caption+''+agent,
-////                            "subCaption": "In MMbbl = One Million barrels",
-//                                "xAxisName": xaxis,
-//                                "yAxisName": yaxis,
-//                                "numberSuffix": " Naira",
-//                                "theme": "fusion",
-//                            },
-//                            // Chart Data
-//                            "data": d
-//                        }
-//                    };
-//                }
-//                else if (report == '2'){
-//                    console.log(data.response)
-//                    jQuery.each(data.response, function(k, v){
-//                        if ($('#branchreport').val() == '1') {
-//                            yaxis = "Amount Disbursed (Naira)";
-//                            caption = 'Disbursements by Branches: ';
-//                            if (v.branch)
-//                                d.push({label: v.name, value: v.amount_disbursed},);
-//                            if (v.year) {
-//                                agent = ': ' + v.office;
-//                                xaxis = 'Years'
-//                                d.push({label: v.year, value: v.AmountDisbursed},);
-//                            }
-//                            if (v.month) {
-//                                agent = ': ' + v.branch;
-//                                xaxis = 'Months';
-//                                d.push({label: v.DisburseMonth, value: v.AmountDisbursed},)
-//                            }
-//                            if (v.Quarter) {
-//                                agent = ': ' + v.office;
-//                                xaxis = 'Years'
-//                                d.push({label: v.Quarter, value: v.AmountDisbursed},);
-//                            }
-//                        }
-//                        if ($('#branchreport').val() == '2'){
-//                            yaxis = 'Interest Earned (Naira)';
-//                            caption = 'Interest Earned by Branches: ';
-//                            if (v.branch)
-//                                d.push({label: v.branch , value: v.amount_received}, );
-//                            if (v.PaymentYear){
-//                                agent = ': '+v.office;
-//                                xaxis = 'Years'
-//                                d.push({label: v.PaymentYear , value: v.amount_received}, );
-//                            }
-//                            if (v.monthpayed){
-//                                agent = ': '+v.office;
-//                                xaxis = 'Months';
-//                                d.push({label: v.monthpayed , value: v.amount_received}, )
-//                            }
-//                            if (v.branchQuarter){
-//                                agent = ': '+v.office;
-//                                xaxis = 'Years'
-//                                d.push({label: v.branchQuarter , value: v.amount_received}, );
-//                            }
-//                        }
-//                    });
-//                    var chartConfigs = {
-//                        type: 'mscolumn2d',
-////                        renderAt: 'chart-container',
-//                        width: '100%',
-//                        height: '400',
-//                        dataFormat: 'json',
-//                        dataSource: {
-//                            "chart": {
-//                                "theme": "fusion",
-//                                "caption": "Comparison of Branches",
-//                                "xAxisname": "Quarter",
-//                                "yAxisName": "Amount (In Naira)",
-//                                "plotFillAlpha": "80",
-//                                "divLineIsDashed": "1",
-//                                "divLineDashLen": "1",
-//                                "divLineGapLen": "1"
-//                            },
-//                            "categories": [{
-//                                "category": [{
-//                                    "label": "Q1"
-//                                }, {
-//                                    "label": "Q2"
-//                                }, {
-//                                    "label": "Q3"
-//                                }, {
-//                                    "label": "Q4"
-//                                }]
-//                            }],
-//                            "dataset": [{
-//                                "seriesname": "Previous Year",
-//                                "data": [{
-//                                    "value": "10000"
-//                                }, {
-//                                    "value": "11500"
-//                                }, {
-//                                    "value": "12500"
-//                                }, {
-//                                    "value": "15000"
-//                                }]
-//                            }, {
-//                                "seriesname": "Current Year",
-//                                "data": [{
-//                                    "value": "25400"
-//                                }, {
-//                                    "value": "29800"
-//                                }, {
-//                                    "value": "21800"
-//                                }, {
-//                                    "value": "26800"
-//                                }]
-//                            }]
-//                        }
-//                    };
-//                }
-//                $("#branch-chart").insertFusionCharts(chartConfigs);
-//            },
-//            'error': function (err) {
-//                swal('Error in Connection!','','error')
-//            }
-//        });
-//    }
 
     function bFrequencyChange(frequency){
         let url = ($('#reportview').val() == '1') ? 'user/analytics?t=branches&&bt='+$('#branchreport').val()+'&&' : 'user/multi-analytics?bt='+$('#branchreport').val()+'&&';
@@ -5464,7 +5160,6 @@
             'url': 'user/analytics?t=payments',
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     d.push({label: v.officer , value: v.amount_payed}, );
                 });
@@ -5522,7 +5217,6 @@
             'url': url,
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     if (v.officer){
                         agent = ': '+v.officer;
@@ -5604,7 +5298,6 @@
             'url': url,
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     if (v.officer){
                         agent = ': '+v.officer;
@@ -5677,7 +5370,6 @@
             'url': urlAn,
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     if (v.officer){
                         agent = ': '+v.officer;
@@ -5752,7 +5444,6 @@
             'url': 'user/analytics?t=interest-received',
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     d.push({label: v.officer , value: v.amount_received}, );
                 });
@@ -5807,7 +5498,6 @@
             'url': url,
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     if (v.officer){
                         agent = ': '+v.officer;
@@ -5902,7 +5592,6 @@
             'url': url,
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     if (v.officer){
                         agent = ': '+v.officer;
@@ -5987,7 +5676,6 @@
             'url': urlAn,
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     if (v.officer){
                         agent = ': '+v.officer;
@@ -6070,7 +5758,6 @@
             'url': 'user/analytics?t=interest-receivable',
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     d.push({label: v.officer , value: v.amount_due}, );
                 });
@@ -6125,7 +5812,6 @@
             'url': url,
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     if (v.officer){
                         agent = ': '+v.officer;
@@ -6220,7 +5906,6 @@
             'url': url,
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     if (v.officer){
                         agent = ': '+v.officer;
@@ -6305,7 +5990,6 @@
             'url': urlAn,
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     if (v.officer){
                         agent = ': '+v.officer;
@@ -6392,7 +6076,6 @@
             'url': 'user/analytics?t=principal-received',
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     d.push({label: v.officer , value: v.amount_received}, );
                 });
@@ -6447,7 +6130,6 @@
             'url': url,
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     if (v.officer){
                         agent = ': '+v.officer;
@@ -6542,7 +6224,6 @@
             'url': url,
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     if (v.officer){
                         agent = ': '+v.officer;
@@ -6627,7 +6308,6 @@
             'url': urlAn,
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     if (v.officer){
                         agent = ': '+v.officer;
@@ -6710,7 +6390,6 @@
             'url': 'user/analytics?t=principal-receivable',
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     d.push({label: v.officer , value: v.amount_due}, );
                 });
@@ -6766,7 +6445,6 @@
             'url': url,
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     if (v.officer){
                         agent = ': '+v.officer;
@@ -6861,7 +6539,6 @@
             'url': url,
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     if (v.officer){
                         agent = ': '+v.officer;
@@ -6946,7 +6623,6 @@
             'url': urlAn,
             'type': 'get',
             'success': function (data) {
-//                (data.status === 200) ? populateDisbursed(data.response) : swal({"icon": "error", "text": 'Database Error'})
                 jQuery.each(data.response, function(k, v){
                     if (v.officer){
                         agent = ': '+v.officer;
@@ -8578,6 +8254,487 @@
         });
     }
 
+    function loadPayoffsTable() {
+        let url = 'user/report/payoffs?',
+            start = $("#payoffs-start").val(),
+            end = $("#payoffs-end").val(),
+            officer = $('#payoffs-officers').val();
+        if (start && end) url = url.concat(`start=${formatDate(start)}&end=${formatDate(end)}`);
+        if (officer && officer !== "false") url = url.concat(`&officer=${officer}`);
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                if (data.status !== 200) return swal('Error in Connection!','','error');
+                $("#payoffs-table").dataTable().fnClearTable();
+                $('#payoffs-table').DataTable({
+                    dom: 'Blfrtip',
+                    bDestroy: true,
+                    data: data.response,
+                    search: {search: ' '},
+                    buttons: [
+                        'copy', 'csv', 'excel', 'pdf', 'print'
+                    ],
+                    columns: [
+                        {
+                            width: "20%",
+                            mRender: (data, type, full) => {
+                                return padWithZeroes(full.applicationID, 9);
+                            }
+                        },
+                        {
+                            width: "30%",
+                            data: "fullname"
+                        },
+                        {
+                            width: "30%",
+                            className: "text-right",
+                            mRender: (data, type, full) => {
+                                return numberToCurrencyformatter(full.amount);
+                            }
+                         },
+                        {
+                            width: "20%",
+                            data: "date"
+                        }
+                    ]
+                });
+                const total_payoffs = data.response.reduce((a, b) => {
+                    return a + Number(b.amount);
+                }, 0);
+                $('#total-payoffs').text(formatter.format(total_payoffs));
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error');
+            }
+        });
+    }
+
+    function loadPayoffsChart() {
+        let d = [],
+            url = 'user/analytics?t=payoffs',
+            officer = $('#payoffChartfilterofficers').val();
+        if (officer && officer !== "false") url = url.concat(`&officer=${officer}`);
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                jQuery.each(data.response, function(k, v){
+                    d.push({label: v.officer , value: v.amount}, );
+                });
+                var chartConfigs = {
+                    type: 'column2d',
+                    width: '100%',
+                    height: '400',
+                    dataFormat: 'json',
+                    dataSource: {
+                        "chart": {
+                            "caption": "Payoffs by Loan Officer(s)",
+                            "xAxisName": "Loan Officers",
+                            "yAxisName": "Payoff Amount (In Naira)",
+                            "numberSuffix": "",
+                            "theme": "fusion",
+                        },
+                        "data": d
+                    }
+                };
+                $("#payoffsChart").insertFusionCharts(chartConfigs);
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error');
+            }
+        });
+    }
+
+    $("#filterPayoffs").submit(e => {
+        e.preventDefault();
+    });
+
+    function loadWriteoffsTable() {
+        let url = 'user/report/writeoffs?',
+            start = $("#writeoffs-start").val(),
+            end = $("#writeoffs-end").val(),
+            officer = $('#writeoffs-officers').val();
+        if (start && end) url = url.concat(`start=${formatDate(start)}&end=${formatDate(end)}`);
+        if (officer && officer !== "false") url = url.concat(`&officer=${officer}`);
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                if (data.status !== 200) return swal('Error in Connection!','','error');
+                $("#writeoffs-table").dataTable().fnClearTable();
+                $('#writeoffs-table').DataTable({
+                    dom: 'Blfrtip',
+                    bDestroy: true,
+                    data: data.response,
+                    search: {search: ' '},
+                    buttons: [
+                        'copy', 'csv', 'excel', 'pdf', 'print'
+                    ],
+                    columns: [
+                        {
+                            width: "20%",
+                            mRender: (data, type, full) => {
+                                return padWithZeroes(full.applicationID, 9);
+                            }
+                        },
+                        {
+                            width: "30%",
+                            data: "fullname"
+                        },
+                        {
+                            width: "30%",
+                            className: "text-right",
+                            mRender: (data, type, full) => {
+                                return numberToCurrencyformatter(full.amount);
+                            }
+                         },
+                        {
+                            width: "20%",
+                            data: "date"
+                        }
+                    ]
+                });
+                const total_writeoffs = data.response.reduce((a, b) => {
+                    return a + Number(b.amount);
+                }, 0);
+                $('#total-writeoffs').text(formatter.format(total_writeoffs));
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error');
+            }
+        });
+    }
+
+    function loadWriteoffsChart() {
+        let d = [],
+            url = 'user/analytics?t=writeoffs',
+            officer = $('#writeoffChartfilterofficers').val();
+        if (officer && officer !== "false") url = url.concat(`&officer=${officer}`);
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                jQuery.each(data.response, function(k, v){
+                    d.push({label: v.officer , value: v.amount}, );
+                });
+                var chartConfigs = {
+                    type: 'column2d',
+                    width: '100%',
+                    height: '400',
+                    dataFormat: 'json',
+                    dataSource: {
+                        "chart": {
+                            "caption": "Writeoffs by Loan Officer(s)",
+                            "xAxisName": "Loan Officers",
+                            "yAxisName": "Writeoff Amount (In Naira)",
+                            "numberSuffix": "",
+                            "theme": "fusion",
+                        },
+                        "data": d
+                    }
+                };
+                $("#writeoffsChart").insertFusionCharts(chartConfigs);
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error');
+            }
+        });
+    }
+
+    $("#filterWriteoffs").submit(e => {
+        e.preventDefault();
+    });
+
+    function loadWriteoffsTable2() {
+        let url = 'user/report/writeoffs2?',
+            start = $("#writeoffs-start2").val(),
+            end = $("#writeoffs-end2").val(),
+            officer = $('#writeoffs-officers2').val();
+        if (start && end) url = url.concat(`start=${formatDate(start)}&end=${formatDate(end)}`);
+        if (officer && officer !== "false") url = url.concat(`&officer=${officer}`);
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                if (data.status !== 200) return swal('Error in Connection!','','error');
+                $("#writeoffs-table2").dataTable().fnClearTable();
+                $('#writeoffs-table2').DataTable({
+                    dom: 'Blfrtip',
+                    bDestroy: true,
+                    data: data.response,
+                    search: {search: ' '},
+                    buttons: [
+                        'copy', 'csv', 'excel', 'pdf', 'print'
+                    ],
+                    columns: [
+                        {
+                            width: "20%",
+                            mRender: (data, type, full) => {
+                                return padWithZeroes(full.applicationID, 9);
+                            }
+                        },
+                        {
+                            width: "30%",
+                            data: "fullname"
+                        },
+                        {
+                            width: "30%",
+                            className: "text-right",
+                            mRender: (data, type, full) => {
+                                return numberToCurrencyformatter(full.amount);
+                            }
+                         },
+                        {
+                            width: "20%",
+                            data: "date"
+                        }
+                    ]
+                });
+                const total_writeoffs = data.response.reduce((a, b) => {
+                    return a + Number(b.amount);
+                }, 0);
+                $('#total-writeoffs2').text(formatter.format(total_writeoffs));
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error');
+            }
+        });
+    }
+
+    function loadWriteoffsChart2() {
+        let d = [],
+            url = 'user/analytics?t=writeoffs2',
+            officer = $('#writeoffChartfilterofficers2').val();
+        if (officer && officer !== "false") url = url.concat(`&officer=${officer}`);
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                jQuery.each(data.response, function(k, v){
+                    d.push({label: v.officer , value: v.amount}, );
+                });
+                var chartConfigs = {
+                    type: 'column2d',
+                    width: '100%',
+                    height: '400',
+                    dataFormat: 'json',
+                    dataSource: {
+                        "chart": {
+                            "caption": "Writeoffs by Loan Officer(s)",
+                            "xAxisName": "Loan Officers",
+                            "yAxisName": "Writeoff Amount (In Naira)",
+                            "numberSuffix": "",
+                            "theme": "fusion",
+                        },
+                        "data": d
+                    }
+                };
+                $("#writeoffsChart2").insertFusionCharts(chartConfigs);
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error');
+            }
+        });
+    }
+
+    $("#filterWriteoffs2").submit(e => {
+        e.preventDefault();
+    });
+
+    function loadFeesTable() {
+        let url = 'user/report/fees?',
+            start = $("#fees-start").val(),
+            end = $("#fees-end").val(),
+            officer = $('#fees-officers').val();
+        if (start && end) url = url.concat(`start=${formatDate(start)}&end=${formatDate(end)}`);
+        if (officer && officer !== "false") url = url.concat(`&officer=${officer}`);
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                if (data.status !== 200) return swal('Error in Connection!','','error');
+                $("#fees-table").dataTable().fnClearTable();
+                $('#fees-table').DataTable({
+                    dom: 'Blfrtip',
+                    bDestroy: true,
+                    data: data.response,
+                    search: {search: ' '},
+                    buttons: [
+                        'copy', 'csv', 'excel', 'pdf', 'print'
+                    ],
+                    columns: [
+                        {
+                            width: "20%",
+                            mRender: (data, type, full) => {
+                                return padWithZeroes(full.applicationID, 9);
+                            }
+                        },
+                        {
+                            width: "30%",
+                            data: "fullname"
+                        },
+                        {
+                            width: "30%",
+                            className: "text-right",
+                            mRender: (data, type, full) => {
+                                return numberToCurrencyformatter(full.amount);
+                            }
+                         },
+                        {
+                            width: "20%",
+                            data: "date"
+                        }
+                    ]
+                });
+                const total_fees = data.response.reduce((a, b) => {
+                    return a + Number(b.amount);
+                }, 0);
+                $('#total-fees').text(formatter.format(total_fees));
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error');
+            }
+        });
+    }
+
+    function loadFeesChart() {
+        let d = [],
+            url = 'user/analytics?t=fees',
+            officer = $('#feesChartfilterofficers').val();
+        if (officer && officer !== "false") url = url.concat(`&officer=${officer}`);
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                jQuery.each(data.response, function(k, v){
+                    d.push({label: v.officer , value: v.amount}, );
+                });
+                var chartConfigs = {
+                    type: 'column2d',
+                    width: '100%',
+                    height: '400',
+                    dataFormat: 'json',
+                    dataSource: {
+                        "chart": {
+                            "caption": "Fees by Loan Officer(s)",
+                            "xAxisName": "Loan Officers",
+                            "yAxisName": "Fees Amount (In Naira)",
+                            "numberSuffix": "",
+                            "theme": "fusion",
+                        },
+                        "data": d
+                    }
+                };
+                $("#feesChart").insertFusionCharts(chartConfigs);
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error');
+            }
+        });
+    }
+
+    $("#filterFees").submit(e => {
+        e.preventDefault();
+    });
+
+    function loadFeesTable2() {
+        let url = 'user/report/fees2?',
+            start = $("#fees-start2").val(),
+            end = $("#fees-end2").val(),
+            officer = $('#fees-officers2').val();
+        if (start && end) url = url.concat(`start=${formatDate(start)}&end=${formatDate(end)}`);
+        if (officer && officer !== "false") url = url.concat(`&officer=${officer}`);
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                if (data.status !== 200) return swal('Error in Connection!','','error');
+                $("#fees-table2").dataTable().fnClearTable();
+                $('#fees-table2').DataTable({
+                    dom: 'Blfrtip',
+                    bDestroy: true,
+                    data: data.response,
+                    search: {search: ' '},
+                    buttons: [
+                        'copy', 'csv', 'excel', 'pdf', 'print'
+                    ],
+                    columns: [
+                        {
+                            width: "20%",
+                            mRender: (data, type, full) => {
+                                return padWithZeroes(full.applicationID, 9);
+                            }
+                        },
+                        {
+                            width: "30%",
+                            data: "fullname"
+                        },
+                        {
+                            width: "30%",
+                            className: "text-right",
+                            mRender: (data, type, full) => {
+                                return numberToCurrencyformatter(full.amount);
+                            }
+                         },
+                        {
+                            width: "20%",
+                            mRender: (data, type, full) => {
+                                return (full.date.split(' '))[0];
+                            }
+                        }
+                    ]
+                });
+                const total_fees = data.response.reduce((a, b) => {
+                    return a + Number(b.amount);
+                }, 0);
+                $('#total-fees2').text(formatter.format(total_fees));
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error');
+            }
+        });
+    }
+
+    function loadFeesChart2() {
+        let d = [],
+            url = 'user/analytics?t=fees2',
+            officer = $('#feesChartfilterofficers2').val();
+        if (officer && officer !== "false") url = url.concat(`&officer=${officer}`);
+        $.ajax({
+            'url': url,
+            'type': 'get',
+            'success': function (data) {
+                jQuery.each(data.response, function(k, v){
+                    d.push({label: v.officer , value: v.amount}, );
+                });
+                var chartConfigs = {
+                    type: 'column2d',
+                    width: '100%',
+                    height: '400',
+                    dataFormat: 'json',
+                    dataSource: {
+                        "chart": {
+                            "caption": "Fees by Loan Officer(s)",
+                            "xAxisName": "Loan Officers",
+                            "yAxisName": "Fees Amount (In Naira)",
+                            "numberSuffix": "",
+                            "theme": "fusion",
+                        },
+                        "data": d
+                    }
+                };
+                $("#feesChart2").insertFusionCharts(chartConfigs);
+            },
+            'error': function (err) {
+                swal('Error in Connection!','','error');
+            }
+        });
+    }
+
+    $("#filterFees2").submit(e => {
+        e.preventDefault();
+    });
 </script>
 
 </body>
