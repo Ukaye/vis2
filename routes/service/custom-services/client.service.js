@@ -2263,6 +2263,21 @@ router.get('/payment-method/get/:id', helperFunctions.verifyJWT, function (req, 
             });
         });
 });
+router.get('/payment-method/v2/:id',  function (req, res) {
+    db.query(`SELECT * FROM client_payment_methods WHERE userID = ${req.params.id} AND status = 1`,
+        (error, payment_methods) => {
+            if (error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+            return res.send({
+                "status": 200,
+                "error": null,
+                "response": payment_methods
+            });
+        });
+});
 
 router.delete('/payment-method/delete/:id/:payment_method_id', helperFunctions.verifyJWT, function (req, res) {
     db.query(`UPDATE client_payment_methods SET status = 0 
