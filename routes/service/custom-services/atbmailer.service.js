@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const extract = require('mention-hashtag');
+const extract = require('tildemention-hashtag');
 const replaceOnce = require('replace-once');
 const he = require('he')
 const db = require('../../../db');
