@@ -411,7 +411,7 @@
             success: function (data) {
                 console.log(data)
                 if (data.response) {
-                    settings_obj = data.response;
+                    getWorkflowInput(preapplication.product)
                 setSettings()
                 }
             }
