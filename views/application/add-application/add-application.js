@@ -409,9 +409,9 @@
             type: "GET",
             url: `/settings/product/${preapplication.product}`,
             success: function (data) {
-                console.log(data)
+              
                 if (data.response) {
-                    getWorkflowInput(preapplication.product)
+                    getWorkflowInput(preapplication.product,data.response)
                 setSettings()
                 }
             }
