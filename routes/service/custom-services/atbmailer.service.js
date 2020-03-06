@@ -95,7 +95,7 @@ router.post('/trigger/send', function(req, res, next) {
                                     msg = {
                                         to: recipient,
                                         subject,
-                                        from: 'no-reply@app.finratus.com',
+                                        from: {name: 'X3 Leasing', address: 'no-reply@app.finratus.com'},
                                         html: sterilizedMsg
                                         };
                                         emailService.sendHtmlByDomain(msg)
