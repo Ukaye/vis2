@@ -4419,8 +4419,7 @@ users.get('/report/writeoffs2', (req, res) => {
         end = req.query.end,
         loan_officer = req.query.officer,
         query;
-    query = `SELECT a.userID user, c.loan_officer, c.fullname, s.applicationID, 
-        (COALESCE(s.payment_amount, 0) + COALESCE(s.interest_amount, 0) + COALESCE(s.fees_amount, 0) + COALESCE(s.penalty_amount, 0)) amount, s.date_modified date 
+    query = `SELECT a.userID user, c.loan_officer, c.fullname, s.applicationID, COALESCE(s.payment_amount, 0) amount, s.date_modified date 
         FROM application_schedules s, applications a, clients c WHERE s.payment_status = 2 AND s.applicationID = a.ID AND a.userID = c.ID `;
     if (loan_officer && loan_officer !== 'false')
         query = query.concat(`AND c.loan_officer = ${loan_officer} `);
@@ -6431,8 +6430,7 @@ users.get('/analytics', function (req, res, next) {
             break;
         case 'writeoffs2':
             //Default
-            query = `SELECT u.fullname officer, s.applicationID, 
-                SUM(COALESCE(s.payment_amount, 0) + COALESCE(s.interest_amount, 0) + COALESCE(s.fees_amount, 0) + COALESCE(s.penalty_amount, 0)) amount, s.date_modified date 
+            query = `SELECT u.fullname officer, s.applicationID, SUM(COALESCE(s.payment_amount, 0)) amount, s.date_modified date 
                 FROM application_schedules s, applications a, clients c, users u  WHERE s.payment_status = 2 AND s.applicationID = a.ID AND a.userID = c.ID AND c.loan_officer = u.ID `;
             //An Officer
             if (officer && officer !== 'false')

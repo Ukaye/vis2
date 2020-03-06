@@ -1813,6 +1813,8 @@ function validateSchedule(schedule, callback) {
     }
 }
 
+let payoff_amount,
+    unearned_interest = 0;
 function openPayOffModal() {
     let interest = 0,
         principal = currencyToNumberformatter($('#total-due-text').text());
@@ -1821,11 +1823,16 @@ function openPayOffModal() {
         invoices.forEach(function (invoice) {
             interest += parseFloat(invoice.interest_amount);
             $('#payoff-interest').val(interest);
-            if (new Date(invoice.interest_collect_date) <= new Date())
+            if (new Date(invoice.interest_collect_date) <= new Date()) {
                 principal += Number(invoice.interest_amount);
+            } else {
+                unearned_interest += Number(invoice.interest_amount);
+            }
+            payoff_amount = principal;
             $('#payoff-amount').val(principal);
         });
     } else {
+        payoff_amount = principal;
         $('#payoff-interest').val(interest);
         $('#payoff-amount').val(principal);
     }
@@ -1853,6 +1860,12 @@ function writeOffLoan() {
         }
     });
 }
+
+$('input[name=payoff-include-interest]').on("change", e => {
+    let include_interest = $('input[name=payoff-include-interest]:checked').val();
+    if (include_interest === "none") $('#payoff-amount').val(payoff_amount);
+    if (include_interest === "all") $('#payoff-amount').val(payoff_amount + unearned_interest);
+});
 
 function payOffLoan() {
     let payoff = {};
