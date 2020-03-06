@@ -95,7 +95,6 @@ router.post('/trigger/send', function(req, res, next) {
                                     msg = {
                                         to: recipient,
                                         subject,
-                                        from: 'no-reply@app.finratus.com',
                                         html: sterilizedMsg
                                         };
                                         emailService.sendHtmlByDomain(msg)
@@ -107,7 +106,6 @@ router.post('/trigger/send', function(req, res, next) {
                         msg = {
                             to: recipient,
                             subject,
-                            from: 'no-reply@app.finratus.com',
                             html: unsterilizedMsg
                             };
                             emailService.sendHtmlByDomain(msg)                        
@@ -150,7 +148,6 @@ router.post('/mail/send', function(req, res, next) {
                                     msg = {
                                         to: recipient,
                                         subject,
-                                        from: 'no-reply@app.finratus.com',
                                         html: sterilizedMsg
                                         };
                                         emailService.sendHtmlByDomain(msg)
@@ -162,7 +159,6 @@ router.post('/mail/send', function(req, res, next) {
                         msg = {
                             to: recipient,
                             subject,
-                            from: 'no-reply@app.finratus.com',
                             html: unsterilizedMsg
                             };
                             emailService.sendHtmlByDomain(msg)                        
@@ -214,7 +210,6 @@ router.post('/mail/promotions', function(req, res, next) {
                                                 msg = {
                                                         to: recipient,
                                                         subject,
-                                                        from: 'no-reply@app.finratus.com',
                                                         html: sterilizedMsg
                                                     };
                                                         emailService.sendHtmlByDomain(msg)
@@ -225,7 +220,6 @@ router.post('/mail/promotions', function(req, res, next) {
                                     msg = {
                                             to: recipient,
                                             subject,
-                                            from: 'no-reply@app.finratus.com',
                                             html: unsterilizedMsg
                                         };
                                         emailService.sendHtmlByDomain(msg)                        
