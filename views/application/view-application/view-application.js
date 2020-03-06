@@ -2617,37 +2617,29 @@ function otherClientInformation(clientID) {
         
            const cards = data.response
            if(cards.length == 0) {
-               html = 'Client has not added his card'
+               html = '<h3>Client has not added his card</h3>'
            } else {
                html = `<div class='row'>`
                cards.forEach((card, index) => {
-                   html+= `<div class='col-md-6 col-lg-4'>
-                   <div class='border rounded p-4 bg-info text-white' style="position:relative"> 
-                   
-                   <div class='d-inline-block font-weight-bold text-primary' style="position: absolute; right: 2%; top:2%">
-                   ${index+1}
-                   </div>
-
- <b>Last 4 digits</b>: **** **** **** ${card.last4} ( ${card.brand} )
- <br>
- <b>Expiry</b>: ${card.exp_month} / ${card.exp_year}
- <br>
-
-
- <b>Card type</b>: ${card.card_type}
- <br>
- <b> Bank</b>: ${card.bank}
- <br>
-
-
- <b>Status</b>: ${card.status == 1 ? 'Valid': 'Invalid'}
- <br>
- <b>Date Created</b>: ${card.date_created}
-
-
-                   
-
-                   </div>
+                   html+= `
+                   <div class='col-md-6 col-lg-4'>
+                    <div class='border rounded p-4 bg-info text-white' style="position:relative"> 
+                    
+                    <div class='d-inline-block font-weight-bold text-primary' style="position: absolute; right: 2%; top:2%">
+                    ${index+1}
+                    </div>
+                        <b>Last 4 digits</b>: **** **** **** ${card.last4} ( ${card.brand} )
+                        <br>
+                        <b>Expiry</b>: ${card.exp_month} / ${card.exp_year}
+                        <br>
+                        <b>Card type</b>: ${card.card_type}
+                        <br>
+                        <b> Bank</b>: ${card.bank}
+                        <br>
+                        <b>Status</b>: ${card.status == 1 ? 'Valid': 'Invalid'}
+                        <br>
+                        <b>Date Created</b>: ${card.date_created}       
+                    </div>
                    </div>
                    `
 

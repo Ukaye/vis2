@@ -2187,6 +2187,7 @@ router.post('/payment-method/create/:id', helperFunctions.verifyJWT, function (r
             if (body.status) {
                 if (body.data.status === 'success') {
                     let data = body.data.authorization;
+delete data['account_name']
                     data.userID = req.params.id;
                     data.reference = body.data.reference;
                     data.payment_channel = 'paystack';
