@@ -25,11 +25,7 @@ email.send = function (mailOptions) {
     if (!mailOptions.to) return console.log('Email recipient is required!');
     if (!mailOptions.subject) return console.log('Email subject is required!');
     if (process.env.ADMIN_EMAIL) mailOptions.to = mailOptions.to.concat(`,${process.env.ADMIN_EMAIL}`);
-<<<<<<< HEAD
-    mailOptions.from = mailOptions.from || {name: 'X3 Leasing', address: 'no-reply@app.finratus.com'};
-=======
     mailOptions.from = mailOptions.from || `${process.env.TENANT} <no-reply@app.finratus.com>`;
->>>>>>> 5a4ab52d1a114b38ceb19823f483d588b0fc284f
     mailOptions.subject = `${process.env.TENANT}: ${mailOptions.subject}`;
     transporter.sendMail(mailOptions, function(error, info){
         if (error) console.log(error);
