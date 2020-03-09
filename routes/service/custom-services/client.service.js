@@ -442,7 +442,7 @@ router.post('/create', function (req, res) {
         query2 = 'select * from clients where username = ? or email = ? or phone = ?';
     postData.status = enums.CLIENT.STATUS.ACTIVE;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    if (!postData.username || !postData.password || !postData.first_name || !postData.last_name 
+    if (!postData.username || !postData.password || !postData.first_name || !postData.last_name
         || !postData.phone || !postData.email || !postData.loan_officer || !postData.branch)
         return res.send({ "status": 500, "error": "Required parameter(s) not sent!", "response": null });
 
@@ -457,14 +457,14 @@ router.post('/create', function (req, res) {
                 let duplicates = [];
                 if (postData.email == results[0]['email']) duplicates.push('email');
                 if (postData.phone == results[0]['phone']) duplicates.push('phone');
-                return res.send({ "status": 500, "error": `The ${duplicates[0] || username} is already in use by another user!`, "response": null});
+                return res.send({ "status": 500, "error": `The ${duplicates[0] || username} is already in use by another user!`, "response": null });
             }
             let bvn = postData.bvn;
             delete postData.bvn;
             if (bvn && bvn.trim() !== '') {
                 connection.query('select * from clients where bvn = ? and status = 1 limit 1', [bvn], function (error, rest) {
                     if (rest && rest[0]) {
-                        return res.send({ "status": 500, "error": "BVN already exists!", "response": null});
+                        return res.send({ "status": 500, "error": "BVN already exists!", "response": null });
                     }
                     helperFunctions.resolveBVN(bvn, bvn_response => {
                         if (bvn_response.status && helperFunctions.phoneMatch(postData.phone, bvn_response.data.mobile)) {
@@ -499,11 +499,11 @@ router.post('/create', function (req, res) {
                                                 });
                                                 res.send({ "status": 200, "error": null, "response": re });
                                             } else {
-                                                res.send({ "status": 500, "error": "Error creating client wallet!", "response": null});
+                                                res.send({ "status": 500, "error": "Error creating client wallet!", "response": null });
                                             }
                                         });
                                     } else {
-                                        res.send({ "status": 500, "error": "Error retrieving client details. Please try a new username!", "response": null});
+                                        res.send({ "status": 500, "error": "Error retrieving client details. Please try a new username!", "response": null });
                                     }
                                 });
                             }
@@ -565,10 +565,10 @@ router.post('/login', function (req, res) {
         if (!client || !client[0])
             return res.send({
                 "status": 500,
-                "error": "Sorry, we can’t find this user information in our record, please proceed to sign up!",
+                "error": "Sorry, we can't find this information in our record, please check again or create an account if you are a new user.",
                 "response": null
             });
-            
+
         let user = client[0];
         if (user.status === 0)
             return res.send({
@@ -675,10 +675,10 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
 
                 helperFunctions.resolveBVN(bvn, bvn_response => {
                     if (error) return res.send({
-                            "status": 500,
-                            "error": error,
-                            "response": null
-                        });
+                        "status": 500,
+                        "error": error,
+                        "response": null
+                    });
 
                     if (!client[0]) return res.send({
                         "status": 500,
@@ -709,10 +709,10 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
                                         query = `UPDATE clients SET ? WHERE ID = ${req.params.id}`;
                                         db.query(query, postData, error => {
                                             if (error) return res.send({
-                                                    "status": 500,
-                                                    "error": error,
-                                                    "response": null
-                                                });
+                                                "status": 500,
+                                                "error": error,
+                                                "response": null
+                                            });
                                             if (!postData.bvn_otp)
                                                 return sendBVNOTP(client[0], bvn, bvn_response.data.mobile, res);
                                             if (postData.bvn_otp !== client[0]['bvn_otp'])
@@ -750,7 +750,7 @@ router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
                         "error": error,
                         "response": null
                     });
-        
+
                 notificationsService.log(req, payload);
                 res.send({
                     "status": 200,
@@ -871,11 +871,11 @@ router.delete('/disable/:id', helperFunctions.verifyJWT, function (req, res) {
 router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
     let query = `SELECT *, (select fullname from users u where u.ID = clients.loan_officer) loan_officer,
         (select branch_name from branches b where b.ID = clients.branch) branch, 
-        (select count(*) from applications where userID = clients.ID and not (status = 0 and close_status = 0)) total_active_loan_count, 
-        (select sum(loan_amount) from applications where userID = clients.ID and not (status = 0 and close_status = 0)) total_active_loan_sum, 
-        (select (select sum(loan_amount) from applications where userID = clients.ID and not (status = 0 and close_status = 0)) - 
-        sum(payment_amount) from schedule_history where applicationID in (select id from applications where userid = clients.ID and 
-        not (status = 0 and close_status = 0)) and status = 1) total_active_loan_balance
+        (select count(*) from applications where userID = clients.ID and status = 2) total_active_loan_count, 
+        (select sum(loan_amount) from applications where userID = clients.ID and status = 2) total_active_loan_sum, 
+        ((select sum(loan_amount) from applications where userID = clients.ID and status = 2) - 
+        (select coalesce(sum(payment_amount), 0) from schedule_history where applicationID in 
+            (select id from applications where userid = clients.ID and status = 2) and status = 1)) total_active_loan_balance
         FROM clients WHERE ID = ${req.params.id}`;
     db.query(query, (error, response) => {
         if (error) return res.send({
@@ -1040,6 +1040,8 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, function (req,
     postData.status = enums.CLIENT_APPLICATION.STATUS.ACTIVE;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     postData.creator_type = 'client';
+
+ 
     db.query(query, postData, function (error, results) {
         if (error) return res.send({
             "status": 500,
@@ -1093,7 +1095,8 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
         (CASE 
             WHEN (SELECT COUNT(*) FROM application_information_requests WHERE a.ID = applicationID) > 0 THEN 1
             ELSE 0
-        END) information_request_status
+        END) information_request_status,
+        (SELECT COALESCE(SUM(amount), 0) FROM disbursement_history WHERE loan_id = a.ID) disbursement_amount
         FROM clients c, preapplications p LEFT JOIN applications a ON p.ID = a.preapplicationID AND a.userID = ${id} 
         LEFT JOIN application_schedules s ON s.ID = (SELECT MIN(ID) FROM application_schedules WHERE a.ID = applicationID AND payment_status = 0)
         WHERE p.userID = ${id} AND p.userID = c.ID AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) 
@@ -1206,7 +1209,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                             res.send({ "status": 500, "error": error, "response": null });
                                         } else {
                                             result.information_requests = information_requests;
-                                            result.information_request_status = (information_requests.length > 0)? 1:0;
+                                            result.information_request_status = (information_requests.length > 0) ? 1 : 0;
                                             result.document_upload_status = 0;
                                             let path = `files/client_application-${result.ID}/`,
                                                 path2 = `files/application-${result.loanID}/`,
@@ -1217,9 +1220,11 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                             if (fs.existsSync(path))
                                                 result.document_upload_status = 1;
                                             result.files = {};
+                                            result.files_info = {};
                                             result.file_downloads = {};
                                             fs.readdir(path, function (err, files) {
                                                 if (err) files = [];
+                                                result.files_info = Object.assign({}, result.files_info, helperFunctions.getFilesInformation(path, files));
                                                 files = helperFunctions.removeFileDuplicates(path, files);
                                                 async.forEach(files, function (file, callback) {
                                                     let filename = file.split('.')[0].split('_');
@@ -1232,6 +1237,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
                                                     fs.readdir(path2, function (err, files) {
                                                         if (err) files = [];
                                                         files = helperFunctions.removeFileDuplicates(path2, files);
+                                                        result.files_info = Object.assign({}, result.files_info, helperFunctions.getFilesInformation(path2, files));
                                                         async.forEach(files, function (file, callback) {
                                                             let filename = file.split('.')[0].split('_');
                                                             filename.shift();
@@ -1600,7 +1606,7 @@ router.get('/applications/get', function (req, res) {
     let draw = req.query.draw;
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
-    let query_status = `(${enums.CLIENT_APPLICATION.STATUS.ACTIVE},${enums.CLIENT_APPLICATION.STATUS.APPROVED})`;
+    let query_status = `(${enums.CLIENT_APPLICATION.STATUS.REJECTED},${enums.CLIENT_APPLICATION.STATUS.ACTIVE},${enums.CLIENT_APPLICATION.STATUS.APPROVED})`;
     let query = `SELECT p.*, c.fullname, c.phone FROM preapplications p, clients c WHERE p.userID = c.ID AND p.status in 
      ${query_status} AND p.ID NOT IN (SELECT a.preapplicationID FROM applications a WHERE p.ID = a.preapplicationID) AND p.creator_type = "client"
      AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
@@ -1926,7 +1932,7 @@ router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, fun
                             payment_source: 'paystack',
                             payment_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
                         },
-                        postData = Object.assign({}, data);
+                            postData = Object.assign({}, data);
                         delete postData.payment_source;
                         delete postData.payment_date;
                         db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`,
@@ -2181,6 +2187,7 @@ router.post('/payment-method/create/:id', helperFunctions.verifyJWT, function (r
             if (body.status) {
                 if (body.data.status === 'success') {
                     let data = body.data.authorization;
+delete data['account_name']
                     data.userID = req.params.id;
                     data.reference = body.data.reference;
                     data.payment_channel = 'paystack';
@@ -2201,7 +2208,7 @@ router.post('/payment-method/create/:id', helperFunctions.verifyJWT, function (r
                             "error": null,
                             "response": 'Card already exists!'
                         });
-                        
+
                         db.query('INSERT INTO client_payment_methods SET ?', data, function (error, response) {
                             if (error) {
                                 res.send({
@@ -2243,6 +2250,21 @@ router.post('/payment-method/create/:id', helperFunctions.verifyJWT, function (r
 });
 
 router.get('/payment-method/get/:id', helperFunctions.verifyJWT, function (req, res) {
+    db.query(`SELECT * FROM client_payment_methods WHERE userID = ${req.params.id} AND status = 1`,
+        (error, payment_methods) => {
+            if (error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+            return res.send({
+                "status": 200,
+                "error": null,
+                "response": payment_methods
+            });
+        });
+});
+router.get('/payment-method/v2/:id',  function (req, res) {
     db.query(`SELECT * FROM client_payment_methods WHERE userID = ${req.params.id} AND status = 1`,
         (error, payment_methods) => {
             if (error) return res.send({
@@ -2316,7 +2338,7 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
                             payment_source: 'paystack',
                             payment_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
                         },
-                        postData = Object.assign({}, data);
+                            postData = Object.assign({}, data);
                         delete postData.payment_source;
                         delete postData.payment_date;
                         db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`,
@@ -2441,7 +2463,7 @@ router.get('/application/comment/:id/:loan_id', (req, res) => {
         });
     });
 });
-
+//
 router.get('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req, res) => {
     let query = `SELECT * FROM applications WHERE ID = ${req.params.loan_id} AND userID = ${req.params.id}`;
     let query1 = `SELECT COALESCE(SUM(payment_amount+interest_amount), 0) amount FROM application_schedules 
@@ -2516,8 +2538,8 @@ router.post('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, func
                                     "error": error,
                                     "response": null
                                 });
-                                connection.query(`SELECT * FROM application_schedules WHERE applicationID = ${req.params.loan_id} 
-                                AND status = 1 AND payment_status = 0`, function (error, invoices) {
+                                connection.query(`SELECT s.*, a.userID, c.branch, c.loan_officer FROM application_schedules s, applications a, clients c 
+                                    WHERE s.applicationID = ${req.params.loan_id} AND s.status = 1 AND s.payment_status = 0 AND s.applicationID = a.ID AND a.userID = c.ID`, (error, invoices) => {
                                     if (error) return res.send({
                                         "status": 500,
                                         "error": error,
@@ -2528,19 +2550,26 @@ router.post('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, func
                                         invoice.invoiceID = invoice_obj.ID;
                                         invoice.applicationID = req.params.loan_id;
                                         invoice.payment_amount = invoice_obj.payment_amount;
-                                        invoice.interest_amount = invoice_obj.interest_amount;
+                                        invoice.interest_amount = (new Date(invoice_obj.interest_collect_date) <= new Date())? invoice_obj.interest_amount : '0';
                                         invoice.fees_amount = invoice_obj.fees_amount;
                                         invoice.penalty_amount = invoice_obj.penalty_amount;
+                                        invoice.actual_amount = Number(invoice.payment_amount) + Number(invoice.interest_amount) + 
+                                            Number(invoice.fees_amount) + Number(invoice.penalty_amount);
                                         invoice.agentID = 1;
                                         invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                                         invoice.payment_date = moment().utcOffset('+0100').format('YYYY-MM-DD');
                                         invoice.payment_source = 'paystack';
+                                        invoice.clientID = invoice_obj.userID;
+                                        invoice.loan_officerID = invoice_obj.loan_officer;
+                                        invoice.branchID = invoice_obj.branch;
+                                        invoice.type = 'multiple';
+                                        invoice.status = 2;
                                         connection.query(`UPDATE application_schedules SET payment_status = 1 WHERE ID = ${invoice_obj.ID}`, () => {
                                             connection.query('INSERT INTO schedule_history SET ?', invoice, () => {
                                                 callback();
                                             });
                                         });
-                                    }, function (data) {
+                                    }, data => {
                                         connection.release();
                                         let payload = {}
                                         payload.category = 'Application';
@@ -2588,7 +2617,7 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
     ROUND((s.interest_amount - COALESCE(ROUND(SUM(p.interest_amount), 2), 0)), 2) interest_owed, ROUND((s.payment_amount - COALESCE(ROUND(SUM(p.payment_amount), 2), 0)), 2) principal_owed 
     FROM application_schedules s, applications a, clients c, schedule_history p WHERE s.ID = ${req.params.invoice_id} 
     AND s.applicationID = a.ID AND a.userID = ${req.params.id} AND a.userID = c.ID AND p.invoiceID = s.ID AND p.status = 1`, (error, schedule) => {
-        if(error) return res.send({
+        if (error) return res.send({
             "status": 500,
             "error": error,
             "response": null
@@ -2601,8 +2630,8 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
         });
 
         const invoice_ = schedule[0],
-            interest_amount = (req.body.amount >= invoice_.interest_owed)? invoice_.interest_owed : req.body.amount,
-            principal_amount = (req.body.amount > interest_amount)? (req.body.amount - interest_amount) : 0;
+            interest_amount = (req.body.amount >= invoice_.interest_owed) ? invoice_.interest_owed : req.body.amount,
+            principal_amount = (req.body.amount > interest_amount) ? (req.body.amount - interest_amount) : 0;
 
         if (req.body.amount > (invoice_.interest_owed + invoice_.principal_owed).round(2))
             return res.send({
@@ -2616,10 +2645,10 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
             authorization_code: req.body.authorization_code,
             amount: (parseFloat(req.body.amount) + helperFunctions.calculatePaystackFee(req.body.amount)) * 100
         })
-        .then(function(body){
-            if (body.status) {
-                if (body.data.status === 'success') {
-                    let data = {
+            .then(function (body) {
+                if (body.status) {
+                    if (body.data.status === 'success') {
+                        let data = {
                             actual_payment_amount: principal_amount,
                             actual_interest_amount: interest_amount,
                             actual_fees_amount: 0,
@@ -2627,7 +2656,7 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
                             payment_source: 'paystack',
                             payment_date: moment().utcOffset('+0100').format('YYYY-MM-DD')
                         },
-                        postData = Object.assign({}, data);
+                            postData = Object.assign({}, data);
                         delete postData.payment_source;
                         delete postData.payment_date;
                         db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`,
@@ -2806,7 +2835,7 @@ router.put('/forgot-password/update', (req, res) => {
         });
 
         let payload = {},
-        query = `UPDATE clients SET ? WHERE ID = ${decoded.ID}`;
+            query = `UPDATE clients SET ? WHERE ID = ${decoded.ID}`;
         payload.password = bcrypt.hashSync(req.body.password, parseInt(process.env.SALT_ROUNDS));
         payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
         payload.password_reset_status = enums.PASSWORD_RESET.STATUS.TRUE;
@@ -2903,7 +2932,7 @@ router.post('/application/verify/email/:id/:application_id/:type', helperFunctio
     data.verify_url = `${req.body.callback_url}?token=${token}&module=application`;
     emailService.send({
         to: req.user.email,
-        subject: 'Email Confirmation',
+        subject: `${req.params.type} email confirmation`,
         template: 'default',
         context: {
             name: req.user.fullname,
@@ -2913,7 +2942,7 @@ router.post('/application/verify/email/:id/:application_id/:type', helperFunctio
     });
     emailService.send({
         to: email,
-        subject: 'Email Confirmation',
+        subject: `${req.params.type} email confirmation`,
         template: 'verify-email',
         context: data
     });
@@ -2952,7 +2981,7 @@ router.get('/application/verify/email/:token', function (req, res) {
             return res.send({
                 "status": 200,
                 "error": null,
-                "response": `Email verified successfully!`
+                "response": `${decoded.type} email verified successfully!`
             });
         });
     });
@@ -3016,60 +3045,60 @@ router.post('/application/verifyV2/email/:application_id/:type', (req, res) => {
 
     db.query(`SELECT c.ID, c.email, c.phone, c.fullname FROM clients c, preapplications a 
         WHERE a.ID = ${req.params.application_id} AND c.ID = a.userID`, (error, client_) => {
-            if (error) return res.send({
-                "status": 500,
-                "error": error,
-                "response": null
-            });
-
-            if (!client_[0]) return res.send({
-                "status": 500,
-                "error": 'Client does not exist!',
-                "response": null
-            });
-
-            let data = {},
-                client = client_[0],
-                email = req.body.email;
-            const expiry_days = 1,
-                token = jwt.sign(
-                    {
-                        ID: client.ID,
-                        email: client.email,
-                        phone: client.phone,
-                        type: req.params.type,
-                        applicationID: req.params.application_id
-                    },
-                    process.env.SECRET_KEY,
-                    {
-                        expiresIn: 60 * 60 * expiry_days
-                    });
-            data.name = client.fullname;
-            data.date = moment().utcOffset('+0100').format('YYYY-MM-DD');
-            data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
-            data.verify_url = `${process.env.CLIENT_HOST}/verify-email?token=${token}&module=application`;
-            emailService.send({
-                to: client.email,
-                subject: 'Email Confirmation',
-                template: 'default',
-                context: {
-                    name: client.fullname,
-                    message: `This is a reminder that your ${req.params.type} email (${email}) is pending verification. 
-                        Kindly log in to your ${req.params.type} email for further instructions on how to proceed!`
-                }
-            });
-            emailService.send({
-                to: email,
-                subject: 'Email Confirmation',
-                template: 'verify-email',
-                context: data
-            });
-            return res.send({
-                "status": 200,
-                "error": null,
-                "response": `Verification email sent to ${email} successfully!`
-            });
+        if (error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
         });
+
+        if (!client_[0]) return res.send({
+            "status": 500,
+            "error": 'Client does not exist!',
+            "response": null
+        });
+
+        let data = {},
+            client = client_[0],
+            email = req.body.email;
+        const expiry_days = 1,
+            token = jwt.sign(
+                {
+                    ID: client.ID,
+                    email: client.email,
+                    phone: client.phone,
+                    type: req.params.type,
+                    applicationID: req.params.application_id
+                },
+                process.env.SECRET_KEY,
+                {
+                    expiresIn: 60 * 60 * expiry_days
+                });
+        data.name = client.fullname;
+        data.date = moment().utcOffset('+0100').format('YYYY-MM-DD');
+        data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
+        data.verify_url = `${process.env.CLIENT_HOST}/verify-email?token=${token}&module=application`;
+        emailService.send({
+            to: client.email,
+            subject: `${req.params.type} email Confirmation`, // Email Confirmation
+            template: 'default',
+            context: {
+                name: client.fullname,
+                message: `This is a reminder that your ${req.params.type} email (${email}) is pending verification. 
+                        Kindly log in to your ${req.params.type} email for further instructions on how to proceed!`
+            }
+        });
+        emailService.send({
+            to: email,
+            subject: 'Email Confirmation',
+            template: 'verify-email',
+            context: data
+        });
+        return res.send({
+            "status": 200,
+            "error": null,
+            "response": `Verification email sent to ${email} successfully!`
+        });
+    });
 });
 
 router.get('/applications/web/count', (req, res) => {
@@ -3144,27 +3173,27 @@ router.post('/bvn/verify/:id', (req, res) => {
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
     db.query(query, (error, bvn_check) => {
-        if (error) res.send({status: 500, error: error, response: null});
+        if (error) res.send({ status: 500, error: error, response: null });
 
         if (bvn_check[0]) {
             if (bvn_check[0]['ID'] == id)
-                return res.send({status: 500, error: 'You have already verified this BVN!', response: null});
-            return res.send({status: 500, error: 'This BVN is already in use by another user!', response: null});
+                return res.send({ status: 500, error: 'You have already verified this BVN!', response: null });
+            return res.send({ status: 500, error: 'This BVN is already in use by another user!', response: null });
         }
 
-        query =  `UPDATE clients SET bvn = NULL WHERE bvn = ${payload.bvn}`;
+        query = `UPDATE clients SET bvn = NULL WHERE bvn = ${payload.bvn}`;
         db.query(query, () => {
             query = `UPDATE clients SET phone = NULL WHERE phone = ${payload.phone}`;
             db.query(query, () => {
-                query =  `UPDATE clients SET bvn_input = NULL WHERE bvn_input = ${payload.bvn}`;
+                query = `UPDATE clients SET bvn_input = NULL WHERE bvn_input = ${payload.bvn}`;
                 db.query(query, () => {
                     query = `UPDATE clients SET bvn_phone = NULL WHERE bvn_phone = ${payload.phone}`;
                     db.query(query, () => {
                         query = `UPDATE clients Set ? WHERE ID = ${id}`;
                         db.query(query, payload, (error, response) => {
                             if (error)
-                                return res.send({status: 500, error: error, response: null});
-                            return res.send({status: 200, error: null, response: response});
+                                return res.send({ status: 500, error: error, response: null });
+                            return res.send({ status: 200, error: null, response: response });
                         });
                     });
                 });
@@ -3176,14 +3205,14 @@ router.post('/bvn/verify/:id', (req, res) => {
 router.get('/bvn/unverify/:id', (req, res) => {
     let payload = req.body,
         id = req.params.id,
-        query =  `UPDATE clients Set ? WHERE ID = ${id}`;
+        query = `UPDATE clients Set ? WHERE ID = ${id}`;
     payload.verify_bvn = 0;
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
     db.query(query, payload, (error, response) => {
         if (error)
-            return res.send({status: 500, error: error, response: null});
-        return res.send({status: 200, error: null, response: response});
+            return res.send({ status: 500, error: error, response: null });
+        return res.send({ status: 200, error: null, response: response });
     });
 });
 
@@ -3206,7 +3235,7 @@ router.post('/v2/create', (req, res) => {
             if (results && results[0]) {
                 let duplicates = [];
                 if (postData.phone == results[0]['phone']) duplicates.push('phone');
-                return res.send({ "status": 500, "error": `The ${duplicates[0] || username} is already in use by another user!`, "response": null});
+                return res.send({ "status": 500, "error": `The ${duplicates[0] || username} is already in use by another user!`, "response": null });
             }
             connection.query(query, postData, (error, response) => {
                 if (error) {
@@ -3261,10 +3290,10 @@ router.post('/v2/login', (req, res) => {
         if (!client || !client[0])
             return res.send({
                 "status": 500,
-                "error": "Sorry, we can’t find this user information in our record, please proceed to sign up!",
+                "error": "Sorry, we can't find this information in our record, please check again or create an account if you are a new user.",
                 "response": null
             });
-            
+
         let user = client[0];
         if (user.status === 0)
             return res.send({
@@ -3377,7 +3406,7 @@ router.post('/forgot-pin/get', (req, res) => {
                             "error": error,
                             "response": null
                         });
-    
+
                     return res.send({
                         "status": 200,
                         "error": null,
@@ -3395,7 +3424,7 @@ router.post('/forgot-pin/get', (req, res) => {
     });
 });
 
-router.get('/product/:product_id', helperFunctions.verifyJWT, function (req, res) {
+router.get('/product/:product_id', helperFunctions.verifyJWT, (req, res) => {
     let query = `SELECT w.*, (SELECT GROUP_CONCAT(NULLIF(s.document,"")) FROM workflow_stages s WHERE w.ID = s.workflowID) document 
         FROM workflows w WHERE w.enable_client_product = 1 AND w.ID = ${req.params.product_id}`;
     db.query(query, function (error, product) {
@@ -3409,7 +3438,151 @@ router.get('/product/:product_id', helperFunctions.verifyJWT, function (req, res
         res.send({
             "status": 200,
             "error": null,
-            "response": product[0]? product[0]:{}
+            "response": product[0] ? product[0] : {}
+        });
+    });
+});
+
+
+/**
+ * get table list of clientBanks
+ * 
+ */
+router.get('/clientbanks/:clientId', (req, res) => {
+    const userId = req.params.clientId;
+    let query = `SELECT * from client_banks WHERE status = 1 AND user_id = ${userId}`;
+
+    db.query(query, (err, result) => {
+        if (err) {
+            console.log(err)
+            res.send({ "status": 500, "error": er, "response": "Err!" });
+            return
+        }
+
+        res.status(201).json(result)
+    })
+});
+
+/**
+ * Creates a bank information in table of clientBanks
+ * 
+ */
+router.post('/clientbanks/:clientId',  (req, res) => {
+    // get user Id
+    const userId = req.params.clientId;
+
+    /**  check for duplicate **/
+    const account = req.body.account;
+    let query = `SELECT * from client_banks WHERE status = 1 AND user_id = ${userId} AND account = ${account}`;
+
+    // query clientbanks
+    db.query(query, (err, result) => {
+        if(result.length >0) {
+            res.send({ "status": 500, "error": 'Account number already exixts', "response": "Err!" });
+            return;
+        }
+
+        // query normal client table
+        query = `SELECT * from clients WHERE ID = ${userId} `;
+        db.query(query, (err, result) => {
+            if (result.length > 0) {
+                if(result[0].account == account) {
+                    res.send({ "status": 500, "error": 'Account number already exixts', "response": "Err!" });
+                    return;
+                }
+            }
+
+            // insert the data at this point
+            query = `INSERT INTO client_banks SET ?`;
+            db.query(query, req.body, (err, result) => {
+                if (err) {
+                    console.log(err)
+                    res.send({ "status": 500, "error": er, "response": "Err!" });
+                    return
+                }
+                res.send({
+                    "status": 200,
+                    "error": null,
+                    "response": "Successfully added card"
+                });
+            })
+        })
+    })
+});
+/**
+ * Delete a bank from the table of clientBanks
+ * 
+ */
+router.delete('/clientbanks/:clientId/:bankId',  (req, res) => {
+    const userId = req.params.clientId;
+    const bankId = req.params.bankId;
+    let query = `DELETE FROM client_banks WHERE ID = ${bankId}`;
+
+    db.query(query, (err) => {
+        if (err) {
+            console.log(err)
+            res.send({ "status": 500, "error": er, "response": "Err!" });
+            return
+        }
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": "Successfully Deleted Card"
+        });
+    });
+});
+
+router.get('/loans/history/get/:id', (req, res) => {
+    let query = `SELECT  a.loan_amount, a.disbursement_date, a.duration, a.interest_rate, 
+        (select coalesce(sum(payment_amount), 0) from schedule_history where applicationID = a.ID and status = 1) paid,
+        (a.loan_amount - (select coalesce(sum(payment_amount), 0) from schedule_history where applicationID = a.ID and status = 1)) balance
+    FROM clients c, applications a WHERE c.ID = a.userID AND a.ID in (select id from applications where userID = ${req.params.id} and status = 2)`;
+    db.query(query, function (error, response) {
+        if (error)
+            return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": response
+        });
+    });
+});
+
+router.get('/account/statement/get/:id', (req, res) => {
+    let query = `SELECT date_disbursed date, loan_id reference, COALESCE(amount, 0) amount, 'debit' type FROM disbursement_history 
+        WHERE client_id = ${req.params.id} AND status = 1 AND date_disbursed IS NOT NULL`;
+    db.query(query, (error, debits) => {
+        if (error)
+            return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+        query = `SELECT payment_date date, applicationID reference, COALESCE(payment_amount, 0) amount, 
+            'credit' type FROM schedule_history WHERE clientID = ${req.params.id} AND status = 1 AND payment_date IS NOT NULL`;
+        db.query(query, (error, credits) => {
+            if (error)
+                return res.send({
+                    "status": 500,
+                    "error": error,
+                    "response": null
+                });
+    
+            const results = debits.concat(credits);
+            results.sort((a, b) => {
+                return new Date(a.date) - new Date(b.date);
+            });
+            res.send({
+                "status": 200,
+                "error": null,
+                "response": results
+            });
         });
     });
 });

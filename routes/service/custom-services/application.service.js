@@ -21,7 +21,7 @@ router.get('/get', function (req, res, next) {
     let loan_officer = req.query.loan_officer;
     let search_string = req.query.search_string.toUpperCase();
     let query_condition = `FROM clients u, workflow_processes w, applications a LEFT JOIN corporates c ON a.userID = c.ID WHERE u.ID=a.userID 
-        AND a.status <> 0 AND w.ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=a.ID AND status=1)
+         AND w.ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=a.ID AND status=1)
         AND (upper(a.ID) LIKE "${search_string}%" OR upper(u.fullname) LIKE "${search_string}%" OR upper(u.phone) LIKE "${search_string}%" 
         OR upper(a.loan_amount) LIKE "${search_string}%" OR upper(a.date_created) LIKE "${search_string}%") `;
     let endpoint = '/core-service/get';
@@ -226,9 +226,12 @@ router.post('/loan-offer/:id', (req, res) => {
                         "error": error,
                         "response": null
                     });
-                let preapplication = {
-                    date_modified: date,
-                    status: enums.CLIENT_APPLICATION.STATUS.COMPLETED
+                const  preapplication = {
+                    loan_amount: application.loan_amount,
+                    tenor: application.duration,
+                    rate: application.interest_rate,
+                    repayment_date: application.repayment_date,
+                    date_modified: application.date_modified
                 };
                 connection.query(`UPDATE preapplications Set ? WHERE ID = ${app[0]['preapplicationID']}`, preapplication, (error) => {
                     if(error) return res.send({
@@ -237,11 +240,7 @@ router.post('/loan-offer/:id', (req, res) => {
                             "response": null
                         });
                     
-                    let update = {
-                        status: 0,
-                        date_modified: date
-                    };
-                    connection.query(`UPDATE application_schedules SET ? WHERE applicationID = ${req.params.id} AND status = 1`, update, (error) => {
+                    connection.query(`DELETE FROM application_schedules WHERE applicationID = ${req.params.id} AND status = 1`, (error) => {
                         if(error) return res.send({
                                 "status": 500,
                                 "error": error,

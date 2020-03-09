@@ -142,6 +142,9 @@ function bindDataTable() {
                         case 2: {
                             return '<span class="badge badge-success">Approved</span>'
                         }
+                        case 0: {
+                            return '<span class="badge badge-danger">Rejected</span>'
+                        }
                     }
                 }
             },

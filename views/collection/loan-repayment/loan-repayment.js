@@ -461,8 +461,8 @@ function confirmPaymentModal(id, id2) {
     $('#overpayment-message').text('');
     $('#principal').attr({max:invoice.payment_amount});
     $('#interest').attr({max:invoice.interest_amount});
-    $('#principal-payable').text('₦'+(parseFloat(invoice.payment_amount)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
-    $('#interest-payable').text('₦'+(parseFloat(invoice.interest_amount)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
+    $('#principal-payable').text(`₦${numberToCurrencyformatter(invoice.payment_amount)}`);
+    $('#interest-payable').text(`₦${numberToCurrencyformatter(invoice.interest_amount)}`);
     
     if (payment_id) {
         web_payment = ($.grep(invoice_history, e => {return (e.ID === parseInt(payment_id))}))[0];
@@ -610,8 +610,7 @@ function confirmPayment() {
     if (invoice.payment_source === 'escrow' && (total_payment > (parseFloat(application.escrow)).round(2)))
         return notification('Insufficient escrow funds ('+parseFloat(application.escrow).round(2)+')','','warning');
     if (overpayment < 0)
-        return notification(`Actual payment cannot be less than ₦${numberToCurrencyformatter((parseFloat(invoice.actual_payment_amount) + 
-            parseFloat(invoice.actual_interest_amount)).round(2))}`,'','warning');
+        return notification(`Actual payment amount should be ₦${numberToCurrencyformatter(total_payment)}`,'','warning');
     if (xero_config && xero_config.xero_collection_description === 1 && 
         invoice.payment_source !== 'escrow' && !$('#collection_description').val()) {
             return notification('Kindly specify a statement description to proceed','','warning');
@@ -639,7 +638,6 @@ function confirmPayment() {
                             'type': 'post',
                             'data': invoice,
                             'success': function (data) {
-                                $('#wait').hide();
                                 return escrow(overpayment, invoice.xeroCollectionBankID, invoice.payment_date);
                             },
                             'error': function (err) {
@@ -722,6 +720,7 @@ function escrow(amount, bank, date) {
             payment_date: date
         },
         'success': function (data) {
+            $('#wait').hide();
             notification('Payment confirmed successfully',`Overpayment of ₦${numberToCurrencyformatter(amount)} has been credited to escrow`,'success');
             window.location.reload();
         },

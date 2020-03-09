@@ -22,6 +22,7 @@ function getCollectionBank() {
 const urlParams = new URLSearchParams(window.location.search);
 const application_id = urlParams.get('id');
 
+
 let state_,
     stages_,
     workflow,
@@ -70,22 +71,34 @@ function getApplicationSettings(application) {
     $('#wait').show();
     $.ajax({
         type: "GET",
-        url: "/settings/application",
+        url: "/settings/product/"+ application.workflowID,
         success: function (data) {
             if (data.response) {
-                settings_obj = data.response;
-                if (settings_obj.loan_requested_min)
-                    $('#loan_requested_min').text(numberToCurrencyformatter(settings_obj.loan_requested_min));
-                if (settings_obj.loan_requested_max)
-                    $('#loan_requested_max').text(numberToCurrencyformatter(settings_obj.loan_requested_max));
-                if (settings_obj.tenor_min)
-                    $('#tenor_min').text(numberToCurrencyformatter(settings_obj.tenor_min));
-                if (settings_obj.tenor_max)
-                    $('#tenor_max').text(numberToCurrencyformatter(settings_obj.tenor_max));
-                if (settings_obj.interest_rate_min)
-                    $('#interest_rate_min').text(numberToCurrencyformatter(settings_obj.interest_rate_min));
-                if (settings_obj.interest_rate_max)
-                    $('#interest_rate_max').text(numberToCurrencyformatter(settings_obj.interest_rate_max));
+                const settings_obj_ = data.response;
+                if (settings_obj_.loan_requested_min) {
+                    settings_obj.loan_requested_min = settings_obj_.loan_requested_min;
+                    $('.loan_requested_min').text(numberToCurrencyformatter(settings_obj.loan_requested_min));
+                }
+                if (settings_obj_.loan_requested_max) {
+                    settings_obj.loan_requested_max = settings_obj_.loan_requested_max;
+                    $('.loan_requested_max').text(numberToCurrencyformatter(settings_obj.loan_requested_max));
+                }
+                if (settings_obj_.tenor_min) {
+                    settings_obj.tenor_min = settings_obj_.tenor_min;
+                    $('.tenor_min').text(numberToCurrencyformatter(settings_obj.tenor_min));
+                }
+                if (settings_obj_.tenor_max) {
+                    settings_obj.tenor_max = settings_obj_.tenor_max;
+                    $('.tenor_max').text(numberToCurrencyformatter(settings_obj.tenor_max));
+                }
+                if (settings_obj_.interest_rate_min) {
+                    settings_obj.interest_rate_min = settings_obj_.interest_rate_min;
+                    $('.interest_rate_min').text(numberToCurrencyformatter(settings_obj.interest_rate_min));
+                }
+                if (settings_obj_.interest_rate_max) {
+                    settings_obj.interest_rate_max = settings_obj_.interest_rate_max;
+                    $('.interest_rate_max').text(numberToCurrencyformatter(settings_obj.interest_rate_max));
+                }
             }
             getFeeSettings();
             initCSVUpload(application);
@@ -184,6 +197,8 @@ function loadApplication(user_id){
             getWorkflows(application);
             loadWorkflowState();
             $('#client-id').text(padWithZeroes(application.userID, 6));
+
+            otherClientInformation(application.userID)
             $('#application-id').text(padWithZeroes(application.ID, 9));
             if (application.reschedule_amount) {
                 $('#reschedule-info').show();
@@ -240,7 +255,7 @@ function loadApplication(user_id){
                 }
             }
 
-            if (application.downloads){
+            if (application.downloads && application.client_applications_status !== 4){
                 $('#downloads-form-div').show();
                 let downloads = application.downloads.split(',');
                 downloads.forEach(function (download) {
@@ -256,6 +271,7 @@ function loadApplication(user_id){
             getApplicationSettings(application);
             checkForExistingMandate(application);
             getFileDownloads();
+            getLoansHistory()
         },
         'error': function (err) {
             console.log(err);
@@ -286,20 +302,26 @@ function getWorkflows(data) {
     });
 }
 
-let workflow_comments;
+let workflow_comments,
+    comment_id = false;
 function loadComments(comments) {
     if (comments && comments[0]){
         workflow_comments = comments;
         let $comments = $('#comments');
         $comments.html('');
         comments.forEach(function (comment) {
+            let $edit_btn = '', $history_btn = '';
+            $edit_btn = `<span class="btn btn-outline btn-default" onclick="editComment(${comment.origin || comment.ID}, ${comment.ID})"><i class="fa fa-edit"></i></span>`;
+            if (comment.origin)
+                $history_btn = `<span class="btn btn-outline btn-default" onclick="showCommentHistory(${comment.origin})"><i class="fa fa-eye"></i></span>`;
             $comments.append('<div class="row">\n' +
                 '    <div class="col-sm-2">\n' +
                 '        <div class="thumbnail"><img class="img-responsive user-photo" src="https://ssl.gstatic.com/accounts/ui/avatar_2x.png"></div>\n' +
                 '    </div>\n' +
                 '    <div class="col-sm-10">\n' +
                 '        <div class="panel panel-default">\n' +
-                '            <div class="panel-heading"><strong>'+comment.fullname+'</strong> <span class="text-muted">commented on '+comment.date_created+'</span></div>\n' +
+                '            <div class="panel-heading"><strong>'+comment.fullname+'</strong> '+
+                '               <span class="text-muted">commented on '+comment.date_created+'</span><span style="float: right; margin-top: -5px;">'+$edit_btn+$history_btn+'</span></div>\n' +
                 '            <div class="panel-body">'+comment.text+'</div>\n' +
                 '        </div>\n' +
                 '    </div>\n' +
@@ -318,13 +340,18 @@ function loadComments(comments) {
                 $('#generateLoanFile').prop('disabled', false);
                 if (!comments[0]) return $comments.append('<h2 style="margin: auto;">No comments available yet!</h2>');
                 comments.forEach(function (comment) {
+                    let $edit_btn = '', $history_btn = '';
+                    $edit_btn = `<span class="btn btn-outline btn-default" onclick="editComment(${comment.origin || comment.ID}, ${comment.ID})"><i class="fa fa-edit"></i></span>`;
+                    if (comment.origin)
+                        $history_btn = `<span class="btn btn-outline btn-default" onclick="showCommentHistory(${comment.origin})"><i class="fa fa-eye"></i></span>`;
                     $comments.append('<div class="row">\n' +
                         '    <div class="col-sm-2">\n' +
                         '        <div class="thumbnail"><img class="img-responsive user-photo" src="https://ssl.gstatic.com/accounts/ui/avatar_2x.png"></div>\n' +
                         '    </div>\n' +
                         '    <div class="col-sm-10">\n' +
                         '        <div class="panel panel-default">\n' +
-                        '            <div class="panel-heading"><strong>'+comment.fullname+'</strong> <span class="text-muted">commented on '+comment.date_created+'</span></div>\n' +
+                        '            <div class="panel-heading"><strong>'+comment.fullname+'</strong> '+
+                        '               <span class="text-muted">commented on '+comment.date_created+'</span><span style="float: right; margin-top: -5px;">'+$edit_btn+$history_btn+'</span></div>\n' +
                         '            <div class="panel-body">'+comment.text+'</div>\n' +
                         '        </div>\n' +
                         '    </div>\n' +
@@ -460,6 +487,9 @@ function loadWorkflowStages(state) {
                     '<p class="list-group-item-text">'+stage.name+'<br> ('+stage.stage_name+')</p></a>';
             }
 
+            if (application.client_applications_status === 4) 
+                $('#infoRequestModalBtn').hide();
+
             if (application.client_applications_status === 5) {
                 $("#newOfferModalBtn").show();
                 $("#current_stage").hide();
@@ -487,6 +517,7 @@ function loadWorkflowStages(state) {
             if (stage.stage_name === 'Approved' || stage.stage_name === 'Disbursed' || application.status === 2) {
                 $('#infoRequestModalBtn').hide();
                 $('#downloadsForm').hide();
+                $("#newOffer").hide();
                 $('#disbursement-amount').val(numberToCurrencyformatter(application.loan_amount));
                 $('#stage-actions').append('<a href="#" id="stage-action-0" class="dropdown-item" data-toggle="modal" data-target="#disburseModal">Disburse Loan</a>');
             }
@@ -499,7 +530,6 @@ function loadWorkflowStages(state) {
                 $('#disburse-alert').show();
                 $("#current_stage").hide();
                 $("#next-actions").hide();
-                $("#newOffer").hide();
                 $(".previous").hide();
                 $(".cancel").hide();
                 $(".next").hide();
@@ -553,7 +583,7 @@ $('.cancel').on('click', function(e) {
                     'type': 'get',
                     'success': function (data) {
                         notification('Loan cancelled successfully','','success');
-                        window.location.reload();
+                        window.location.href = '/all-applications';
                     },
                     'error': function (err) {
                         console.log(err);
@@ -695,19 +725,28 @@ function previousStage(state,states) {
     });
 }
 
+function addComment() {
+    comment_id = false;
+    $('#comment').val('');
+    $('#addCommentModal').modal('show');
+}
+
 function comment(){
-    let $comment = $("#comment"),
-        comment = $comment.val();
-    if (!comment || comment === "")
+    let payload = {},
+        $comment = $("#comment");
+    payload.text = $comment.val();
+    if (!payload.text || payload.text === "")
         return notification('Kindly type a brief comment','','error');
+    if (comment_id) payload.origin = comment_id;
     $('#wait').show();
     $('#addCommentModal').modal('hide');
     $.ajax({
         'url': '/user/application/comments/'+application_id+'/'+(JSON.parse(localStorage.getItem('user_obj')))['ID'],
         'type': 'post',
-        'data': {text: comment},
+        'data': payload,
         'success': function (data) {
             $('#wait').hide();
+            comment_id = false;
             let comments = data.response;
             results = comments;
             loadComments(comments);
@@ -716,6 +755,7 @@ function comment(){
         },
         'error': function (err) {
             $('#wait').hide();
+            comment_id = false;
             $comment.val("");
             notification('Oops! An error occurred while saving comment','','error');
         }
@@ -1092,7 +1132,7 @@ function initCSVUpload(application) {
 
 function invoiceHistory(invoice_id) {
     $.ajax({
-        'url': '/user/application/invoice-history/'+invoice_id,
+        'url': `/user/application/invoice-history?id=${invoice_id}`,
         'type': 'get',
         'success': function (data) {
             $("#invoice-history").dataTable().fnClearTable();
@@ -1773,17 +1813,28 @@ function validateSchedule(schedule, callback) {
     }
 }
 
+let payoff_amount,
+    unearned_interest = 0;
 function openPayOffModal() {
-    $('#payoff-amount').val($('#total-due-text').text());
-    let interest = 0;
+    let interest = 0,
+        principal = currencyToNumberformatter($('#total-due-text').text());
     let invoices = $.grep(application.schedule,function (e) {return (parseInt(e.status)===1 && parseInt(e.payment_status)===0)});
     if (invoices && invoices[0]){
         invoices.forEach(function (invoice) {
             interest += parseFloat(invoice.interest_amount);
             $('#payoff-interest').val(interest);
+            if (new Date(invoice.interest_collect_date) <= new Date()) {
+                principal += Number(invoice.interest_amount);
+            } else {
+                unearned_interest += Number(invoice.interest_amount);
+            }
+            payoff_amount = principal;
+            $('#payoff-amount').val(principal);
         });
     } else {
-        $('#payoff-interest').val(0);
+        payoff_amount = principal;
+        $('#payoff-interest').val(interest);
+        $('#payoff-amount').val(principal);
     }
 }
 
@@ -1809,6 +1860,12 @@ function writeOffLoan() {
         }
     });
 }
+
+$('input[name=payoff-include-interest]').on("change", e => {
+    let include_interest = $('input[name=payoff-include-interest]:checked').val();
+    if (include_interest === "none") $('#payoff-amount').val(payoff_amount);
+    if (include_interest === "all") $('#payoff-amount').val(payoff_amount + unearned_interest);
+});
 
 function payOffLoan() {
     let payoff = {};
@@ -1940,6 +1997,17 @@ $("#setupDirectDebit").click(function () {
         });
 });
 
+let loans_history;
+function getLoansHistory() {
+    $.ajax({
+        type: 'get',
+        url: `/client/loans/history/get/${application.userID}`,
+        success: data => {
+            loans_history = data.response;
+        }
+    });
+}
+
 function generateLoanFile() {
     const loanFile = {
         id: application_id,
@@ -1960,7 +2028,8 @@ function generateLoanFile() {
         transaction_dynamics: (workflow_comments[workflow_comments.length-2])? workflow_comments[workflow_comments.length-2]['text'] : '',
         kyc: `${($.isEmptyObject(application.files))? 'Not':'Yes'} Attached`,
         security: `${($.isEmptyObject(application.files))? 'Not':'Yes'} Attached`,
-        workflow_processes: workflow_processes
+        workflow_processes: workflow_processes,
+        loans_history: loans_history
     };
     localStorage.loanFile = encodeURIComponent(JSON.stringify(loanFile));
     return window.open(`/loan-file?id=${application_id}`, '_blank');
@@ -2146,13 +2215,13 @@ function setDefaultOffer(type) {
     }
 }
 
-$('#term2').keyup(function () {
+$('#term2').change(function () {
     triggerAmortization2();
 });
-$('#amount2').keyup(function () {
+$('#amount2').change(function () {
     triggerAmortization2();
 });
-$('#interest-rate2').keyup(function () {
+$('#interest-rate2').change(function () {
     triggerAmortization2();
 });
 $('#repayment-date2').change(function () {
@@ -2190,9 +2259,9 @@ function initNewLoanOffer(application, settings) {
         } else {
             $('.amortization-div2').hide();
             $('#payment-amount-div').show();
-            loanAmount = $('#amount2').val();
-            interestRate = $('#interest-rate2').val();
-            duration = $('#term2').val();
+            loanAmount = $('#amount2').val() || '0';
+            interestRate = $('#interest-rate2').val() || '0';
+            duration = $('#term2').val() || '0';
             repaymentDate = $('#repayment-date2').val();
             if (!loanAmount || !interestRate || !duration)
                 return notification('Kindly fill all required fields!','','warning');
@@ -2471,6 +2540,42 @@ function showWorkEmail() {
     notification(`Success! The work email (${application.work_email}) has been verified.`, '', 'success', 10000);
 }
 
+function editComment(origin, id) {
+    comment_id = origin;
+    $('#comment').val(($.grep(workflow_comments, e => {return e.ID === id}))[0]['text']);
+    $('#addCommentModal').modal('show');
+}
+
+function showCommentHistory(id) {
+    $.ajax({
+        'url': `/user/application/comment/history/${id}`,
+        'type': 'get',
+        'success': data => {
+            $('#viewCommentHistoryModal').modal('show');
+            let comments = data.response;
+                $comments = $('#comment_history');
+            $comments.html('');
+            comments.forEach(function (comment) {
+                $comments.append('<div class="row">\n' +
+                    '    <div class="col-sm-2">\n' +
+                    '        <div class="thumbnail"><img class="img-responsive user-photo" src="https://ssl.gstatic.com/accounts/ui/avatar_2x.png"></div>\n' +
+                    '    </div>\n' +
+                    '    <div class="col-sm-10">\n' +
+                    '        <div class="panel panel-default">\n' +
+                    '            <div class="panel-heading"><strong>'+comment.fullname+'</strong> <span class="text-muted">commented on '+comment.date_created+'</span></div>\n' +
+                    '            <div class="panel-body">'+comment.text+'</div>\n' +
+                    '        </div>\n' +
+                    '    </div>\n' +
+                    '</div>');
+            });
+        },
+        'error': err => {
+            console.log(err);
+            notification('No internet connection','','error');
+        }
+    });
+}
+
 function read_write_1(){
     let perms = JSON.parse(localStorage.getItem("permissions")),
         applicationView = ($.grep(perms, function(e){return e.module_name === 'app-page';}))[0];
@@ -2505,4 +2610,61 @@ function read_write_2(){
         $('#rejectCSV2').hide();
     if (($.grep(perms, function(e){return e.module_name === 'close-loan';}))[0]['read_only'] === '0')
         $('#close_loan').hide();
+    const makeLoanOffer = ($.grep(perms, function(e){return e.module_name === 'makeLoanOffer';}))[0];
+    if (makeLoanOffer && makeLoanOffer['read_only'] === '0') {
+        $('#newOffer').hide();
+        $('#newOfferModalBtn').hide();
+    }
+}
+
+function otherClientInformation(clientID) {
+    const other_client_information = $('#other_client_information')
+
+///payment-method/v2/
+
+    $.ajax({
+        type: "GET",
+        url: "/client/payment-method/v2/"+ clientID,
+        success: function (data) {
+            let html = ``
+        
+           const cards = data.response
+           if(cards.length == 0) {
+               html = '<h3>Client has not added his card</h3>'
+           } else {
+               html = `<div class='row'>`
+               cards.forEach((card, index) => {
+                   html+= `
+                   <div class='col-md-6 col-lg-4'>
+                    <div class='border rounded p-4 bg-info text-white' style="position:relative"> 
+                    
+                    <div class='d-inline-block font-weight-bold text-primary' style="position: absolute; right: 2%; top:2%">
+                    ${index+1}
+                    </div>
+                        <b>Last 4 digits</b>: **** **** **** ${card.last4} ( ${card.brand} )
+                        <br>
+                        <b>Expiry</b>: ${card.exp_month} / ${card.exp_year}
+                        <br>
+                        <b>Card type</b>: ${card.card_type}
+                        <br>
+                        <b> Bank</b>: ${card.bank}
+                        <br>
+                        <b>Status</b>: ${card.status == 1 ? 'Valid': 'Invalid'}
+                        <br>
+                        <b>Date Created</b>: ${card.date_created}       
+                    </div>
+                   </div>
+                   `
+
+               })
+               html += `</div>`
+           }
+           $('#other_client_information #cards').html(html)
+        },
+        error: (e) => {
+            console.log(e)
+        }
+    });
+
+
 }

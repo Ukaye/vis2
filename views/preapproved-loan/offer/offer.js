@@ -31,7 +31,7 @@
                     $('#loan-amount-text').text(`₦${numberToCurrencyformatter(preapproved_loan.loan_amount)}`);
                     $('#tenor-text').text(`${numberToCurrencyformatter(preapproved_loan.duration)} month(s)`);
                     $('#first-repayment-text').text(preapproved_loan.schedule[0]['payment_collect_date'] || preapproved_loan.repayment_date);
-                    $('#expiry-text').html(`Please note that this loan is only valid till <strong>${preapproved_loan.expiry_date}</strong>`);
+                   // $('#expiry-text').html(`Please note that this loan is only valid till <strong>${preapproved_loan.expiry_date}</strong>`);
                     $('#fullname').text(preapproved_loan.fullname);
                     $('#email').text(preapproved_loan.email);
                     $('#phone').text(preapproved_loan.phone);

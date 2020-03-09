@@ -7,7 +7,7 @@ let token,
     users = express.Router(),
     async = require('async'),
     enums = require('../enums'),
-    moment  = require('moment'),
+    moment = require('moment'),
     bcrypt = require('bcryptjs'),
     jwt = require('jsonwebtoken'),
     auditLog = require('../routes/audit'),
@@ -16,12 +16,12 @@ let token,
     notificationsService = require('./notifications-service'),
     emailService = require('./service/custom-services/email.service');
 
-users.get('/import-bulk-clients', function(req, res) {
+users.get('/import-bulk-clients', function (req, res) {
     let clients = [],
-        count=0,
+        count = 0,
         errors = [];
 
-    db.getConnection(function(err, connection) {
+    db.getConnection(function (err, connection) {
         if (err) throw err;
         async.forEach(clients, function (client, callback) {
             client.status = 1;
@@ -42,17 +42,17 @@ users.get('/import-bulk-clients', function(req, res) {
             });
         }, function (data) {
             connection.release();
-            res.json({count: count, errors: errors})
+            res.json({ count: count, errors: errors })
         })
     });
 });
 
-users.get('/bulk-update-clients', function(req, res) {
+users.get('/bulk-update-clients', function (req, res) {
     let clients = [],
-        count=0,
+        count = 0,
         errors = [];
 
-    db.getConnection(function(err, connection) {
+    db.getConnection(function (err, connection) {
         if (err) throw err;
         async.forEach(clients, function (client, callback) {
             let query = 'UPDATE clients SET xeroContactID = ? WHERE ';
@@ -73,19 +73,19 @@ users.get('/bulk-update-clients', function(req, res) {
             });
         }, function (data) {
             connection.release();
-            res.json({count: count, errors: errors})
+            res.json({ count: count, errors: errors })
         });
     });
 });
 
-users.get('/bulk-import-escrow', function(req, res) {
+users.get('/bulk-import-escrow', function (req, res) {
     let escrow = [],
-        count=0,
+        count = 0,
         errors = [];
 
-    db.getConnection(function(err, connection) {
+    db.getConnection(function (err, connection) {
         if (err) throw err;
-        let overpayment = escrow.filter(e => {return e.Status === 'AUTHORISED'});
+        let overpayment = escrow.filter(e => { return e.Status === 'AUTHORISED' });
         async.forEach(overpayment, function (esc, callback) {
             connection.query(`SELECT ID FROM clients WHERE xeroContactID = '${esc.Contact.ContactID}'`, (err, client) => {
                 if (err || !client[0] || !client[0]['ID']) {
@@ -119,20 +119,20 @@ users.get('/bulk-import-escrow', function(req, res) {
             });
         }, function (data) {
             connection.release();
-            res.json({count: count, errors: errors})
+            res.json({ count: count, errors: errors })
         });
     });
 });
 
-users.get('/update-request-client', function(req, res) {
+users.get('/update-request-client', function (req, res) {
     let users = [],
-        count=0,
+        count = 0,
         errors = [];
-    db.getConnection(function(err, connection) {
+    db.getConnection(function (err, connection) {
         async.forEach(users, function (user, callback) {
             connection.query('SELECT * FROM clients WHERE username = ?', [user.username], function (err, client, field) {
-                if (client && client[0]){
-                    connection.query('UPDATE requests SET userID = ? WHERE userID = ?', [client[0]['ID'],user['ID']], function (err, result, fields) {
+                if (client && client[0]) {
+                    connection.query('UPDATE requests SET userID = ? WHERE userID = ?', [client[0]['ID'], user['ID']], function (err, result, fields) {
                         if (err) {
                             console.log(err);
                             errors.push(user);
@@ -143,25 +143,25 @@ users.get('/update-request-client', function(req, res) {
                         callback();
                     })
                 } else {
-                    console.log('No Client found for '+user.fullname);
+                    console.log('No Client found for ' + user.fullname);
                     callback();
                 }
             });
         }, function (data) {
             connection.release();
-            res.json({count: count, errors: errors})
+            res.json({ count: count, errors: errors })
         });
     });
 });
 
 /* User Authentication */
-users.post('/login', function(req, res) {
+users.post('/login', function (req, res) {
     let user = {},
         appData = {},
         username = req.body.username,
         password = req.body.password;
 
-    db.query('SELECT * FROM users WHERE username = ?', [username], function(err, rows, fields) {
+    db.query('SELECT * FROM users WHERE username = ?', [username], function (err, rows, fields) {
         if (err) {
             appData.error = 1;
             appData["data"] = "Error Occured!";
@@ -169,8 +169,8 @@ users.post('/login', function(req, res) {
         } else {
             user = rows[0];
             if (rows.length > 0) {
-                if (bcrypt.compareSync(password,user.password)) {
-                    let token = jwt.sign({data:user}, process.env.SECRET_KEY, {
+                if (bcrypt.compareSync(password, user.password)) {
+                    let token = jwt.sign({ data: user }, process.env.SECRET_KEY, {
                         expiresIn: 1440
                     });
                     appData.status = 0;
@@ -192,41 +192,41 @@ users.post('/login', function(req, res) {
 });
 
 /* Add New User */
-users.post('/new-user', function(req, res, next) {
+users.post('/new-user', function (req, res, next) {
     let data = [],
         postData = req.body,
-        query =  'INSERT INTO users Set ?',
+        query = 'INSERT INTO users Set ?',
         query2 = 'select * from users where username = ? or email = ?';
     data.username = req.body.username;
     data.email = req.body.email;
     postData.status = 1;
     postData.date_created = Date.now();
     postData.password = bcrypt.hashSync(postData.password, parseInt(process.env.SALT_ROUNDS));
-    db.getConnection(function(err, connection) {
+    db.getConnection(function (err, connection) {
         if (err) throw err;
 
-        connection.query(query2,[req.body.username, req.body.email], function (error, results, fields) {
-            if (results && results[0]){
-                res.send(JSON.stringify({"status": 200, "error": null, "response": results, "message": "User already exists!"}));
+        connection.query(query2, [req.body.username, req.body.email], function (error, results, fields) {
+            if (results && results[0]) {
+                res.send(JSON.stringify({ "status": 200, "error": null, "response": results, "message": "User already exists!" }));
             }
             else {
-                connection.query(query,postData, function (error, results, fields) {
-                    if(error){
-                        res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+                connection.query(query, postData, function (error, results, fields) {
+                    if (error) {
+                        res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
                     } else {
-                        connection.query('SELECT * from users where ID = (SELECT MAX(ID) FROM users)', function(err, re, fields) {
+                        connection.query('SELECT * from users where ID = (SELECT MAX(ID) FROM users)', function (err, re, fields) {
                             connection.release();
-                            if (!err){
+                            if (!err) {
                                 let payload = {}
                                 payload.category = 'Users'
                                 payload.userid = req.cookies.timeout
                                 payload.description = 'New User Created'
                                 payload.affected = re[0]['ID']
                                 notificationsService.log(req, payload)
-                                res.send(JSON.stringify({"status": 200, "error": null, "response": re}));
+                                res.send(JSON.stringify({ "status": 200, "error": null, "response": re }));
                             }
-                            else{
-                                res.send(JSON.stringify({"response": "Error retrieving user details. Please try a new username!"}));
+                            else {
+                                res.send(JSON.stringify({ "response": "Error retrieving user details. Please try a new username!" }));
                             }
                         });
                     }
@@ -237,26 +237,26 @@ users.post('/new-user', function(req, res, next) {
 });
 
 /* Add New Client */
-users.post('/new-client', function(req, res, next) {
+users.post('/new-client', function (req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_client', async () => {
         let id;
         let postData = req.body,
-            query =  'INSERT INTO clients Set ?',
+            query = 'INSERT INTO clients Set ?',
             query2 = 'select * from clients where username = ? or email = ? or phone = ?';
         postData.status = 1;
         postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
-        db.getConnection(function(err, connection) {
+        db.getConnection(function (err, connection) {
             if (err) throw err;
-            connection.query(query2,[req.body.username, req.body.email, req.body.phone], function (error, results, fields) {
-                if (results && results[0]){
-                    return res.send(JSON.stringify({"status": 200, "error": null, "response": results, "message": "Information in use by existing client!"}));
+            connection.query(query2, [req.body.username, req.body.email, req.body.phone], function (error, results, fields) {
+                if (results && results[0]) {
+                    return res.send(JSON.stringify({ "status": 200, "error": null, "response": results, "message": "Information in use by existing client!" }));
                 }
                 let bvn = req.body.bvn;
-                if (bvn.trim() !== ''){
-                    connection.query('select * from clients where bvn = ? and status = 1 limit 1', [req.body.bvn], function (error, rest, foelds){
-                        if (rest && rest[0]){
-                            return res.send(JSON.stringify({"status": 200, "error": null, "response": rest, "bvn_exists": "Yes"}));
+                if (bvn.trim() !== '') {
+                    connection.query('select * from clients where bvn = ? and status = 1 limit 1', [req.body.bvn], function (error, rest, foelds) {
+                        if (rest && rest[0]) {
+                            return res.send(JSON.stringify({ "status": 200, "error": null, "response": rest, "bvn_exists": "Yes" }));
                         }
                         xeroFunctions.authorizedOperation(req, res, 'xero_client', async (xeroClient) => {
                             if (xeroClient) {
@@ -276,31 +276,31 @@ users.post('/new-client', function(req, res, next) {
                                 let xeroContact = await xeroClient.contacts.create(contact);
                                 postData.xeroContactID = xeroContact.Contacts[0]['ContactID'];
                             }
-                            connection.query(query,postData, function (error, re, fields) {
-                                if(error){
-                                    res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+                            connection.query(query, postData, function (error, re, fields) {
+                                if (error) {
+                                    res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
                                 } else {
-                                    connection.query('SELECT * from clients where ID = (SELECT MAX(ID) FROM clients)', function(err, re, fields) {
-                                        if (!err){
+                                    connection.query('SELECT * from clients where ID = (SELECT MAX(ID) FROM clients)', function (err, re, fields) {
+                                        if (!err) {
                                             id = re[0]['ID'];
-                                            connection.query('INSERT into wallets Set ?', {client_id: id}, function(er, r, fields) {
+                                            connection.query('INSERT into wallets Set ?', { client_id: id }, function (er, r, fields) {
                                                 connection.release();
-                                                if (!er){
+                                                if (!er) {
                                                     let payload = {}
                                                     payload.category = 'Clients'
                                                     payload.userid = req.cookies.timeout
                                                     payload.description = 'New Client Created'
                                                     payload.affected = id
                                                     notificationsService.log(req, payload)
-                                                    res.send(JSON.stringify({"status": 200, "error": null, "response": re}));
+                                                    res.send(JSON.stringify({ "status": 200, "error": null, "response": re }));
                                                 }
-                                                else{
-                                                    res.send(JSON.stringify({"response": "Error creating client wallet!"}));
+                                                else {
+                                                    res.send(JSON.stringify({ "response": "Error creating client wallet!" }));
                                                 }
                                             });
                                         }
-                                        else{
-                                            res.send(JSON.stringify({"response": "Error retrieving client details. Please try a new username!"}));
+                                        else {
+                                            res.send(JSON.stringify({ "response": "Error retrieving client details. Please try a new username!" }));
                                         }
                                     });
                                 }
@@ -326,31 +326,31 @@ users.post('/new-client', function(req, res, next) {
                             let xeroContact = await xeroClient.contacts.create(contact);
                             postData.xeroContactID = xeroContact.Contacts[0]['ContactID'];
                         }
-                        connection.query(query,postData, function (error, re, fields) {
-                            if(error){
-                                res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+                        connection.query(query, postData, function (error, re, fields) {
+                            if (error) {
+                                res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
                             } else {
-                                connection.query('SELECT * from clients where ID = (SELECT MAX(ID) FROM clients)', function(err, re, fields) {
-                                    if (!err){
+                                connection.query('SELECT * from clients where ID = (SELECT MAX(ID) FROM clients)', function (err, re, fields) {
+                                    if (!err) {
                                         id = re[0]['ID'];
-                                        connection.query('INSERT into wallets Set ?', {client_id: id}, function(er, r, fields) {
+                                        connection.query('INSERT into wallets Set ?', { client_id: id }, function (er, r, fields) {
                                             connection.release();
-                                            if (!er){
+                                            if (!er) {
                                                 let payload = {}
                                                 payload.category = 'Clients'
                                                 payload.userid = req.cookies.timeout
                                                 payload.description = 'New Client Created'
                                                 payload.affected = id
                                                 notificationsService.log(req, payload)
-                                                res.send(JSON.stringify({"status": 200, "error": null, "response": re}));
+                                                res.send(JSON.stringify({ "status": 200, "error": null, "response": re }));
                                             }
-                                            else{
-                                                res.send(JSON.stringify({"response": "Error creating client wallet!"}));
+                                            else {
+                                                res.send(JSON.stringify({ "response": "Error creating client wallet!" }));
                                             }
                                         });
                                     }
-                                    else{
-                                        res.send(JSON.stringify({"response": "Error retrieving client details. Please try a new username!"}));
+                                    else {
+                                        res.send(JSON.stringify({ "response": "Error retrieving client details. Please try a new username!" }));
                                     }
                                 });
                             }
@@ -363,21 +363,21 @@ users.post('/new-client', function(req, res, next) {
 });
 
 /* Add New Team*/
-users.post('/new-team', function(req, res, next) {
+users.post('/new-team', function (req, res, next) {
     let postData = req.body,
-        query =  'SELECT * FROM teams WHERE name = ? AND status = 1';
-    query2 =  'INSERT INTO teams Set ?';
+        query = 'SELECT * FROM teams WHERE name = ? AND status = 1';
+    query2 = 'INSERT INTO teams Set ?';
     postData.status = 1;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.query(query,[postData.name], function (error, team, fields) {
-        if(team && team[0]){
-            res.send({"status": 500, "error": "Team already exists!"});
+    db.query(query, [postData.name], function (error, team, fields) {
+        if (team && team[0]) {
+            res.send({ "status": 500, "error": "Team already exists!" });
         } else {
-            db.query(query2,postData, function (error, results, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+            db.query(query2, postData, function (error, results, fields) {
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
-                    res.send({"status": 200, "error": null, "response": "New Team Added!"});
+                    res.send({ "status": 200, "error": null, "response": "New Team Added!" });
                 }
             });
         }
@@ -385,47 +385,47 @@ users.post('/new-team', function(req, res, next) {
 });
 
 /* Add New User Role*/
-users.post('/new-role', function(req, res, next) {
+users.post('/new-role', function (req, res, next) {
     let postData = req.body,
-        query =  'INSERT INTO user_roles Set ?',
+        query = 'INSERT INTO user_roles Set ?',
         query2 = 'select * from user_roles where role_name = ?';
     postData.status = 1;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.query(query2,req.body.role, function (error, results, fields) {
+    db.query(query2, req.body.role, function (error, results, fields) {
         if (results && results[0])
-            return res.send(JSON.stringify({"status": 200, "error": null, "response": results, "message": "Role name already exists!"}));
-        db.query(query,{"role_name":postData.role, "date_created": postData.date_created, "status": 1}, function (error, results, fields) {
-            if(error){
-                res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+            return res.send(JSON.stringify({ "status": 200, "error": null, "response": results, "message": "Role name already exists!" }));
+        db.query(query, { "role_name": postData.role, "date_created": postData.date_created, "status": 1 }, function (error, results, fields) {
+            if (error) {
+                res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
             } else {
-                res.send(JSON.stringify({"status": 200, "error": null, "response": "New User Role Added!"}));
+                res.send(JSON.stringify({ "status": 200, "error": null, "response": "New User Role Added!" }));
             }
         });
     });
 });
 
 /* Add New Branch*/
-users.post('/new-branch', function(req, res, next) {
+users.post('/new-branch', function (req, res, next) {
     let postData = req.body,
-        query =  'INSERT INTO branches Set ?',
+        query = 'INSERT INTO branches Set ?',
         query2 = 'select * from branches where branch_name = ?';
     postData.status = 1;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.query(query2,req.body.branch_name, function (error, results, fields) {
+    db.query(query2, req.body.branch_name, function (error, results, fields) {
         if (results && results[0])
-            return res.send(JSON.stringify({"status": 200, "error": null, "response": results, "message": "Branch name already exists!"}));
-        db.query(query,{"branch_name":postData.branch_name, "date_created": postData.date_created, "status": 1}, function (error, results, fields) {
-            if(error){
-                res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+            return res.send(JSON.stringify({ "status": 200, "error": null, "response": results, "message": "Branch name already exists!" }));
+        db.query(query, { "branch_name": postData.branch_name, "date_created": postData.date_created, "status": 1 }, function (error, results, fields) {
+            if (error) {
+                res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
             } else {
-                res.send(JSON.stringify({"status": 200, "error": null, "response": "New Branch Created!"}));
+                res.send(JSON.stringify({ "status": 200, "error": null, "response": "New Branch Created!" }));
             }
         });
     });
 });
 
 //File Upload - User Registration
-users.post('/upload/:id', function(req, res) {
+users.post('/upload/:id', function (req, res) {
     if (!req.files) return res.status(400).send('No files were uploaded.');
     if (!req.params) return res.status(400).send('No Number Plate specified!');
     let sampleFile = req.files.file,
@@ -434,28 +434,28 @@ users.post('/upload/:id', function(req, res) {
         extension = extArray[extArray.length - 1];
     if (extension) extension = extension.toLowerCase();
 
-    fs.stat('files/users/'+req.params.id+'/', function(err) {
+    fs.stat('files/users/' + req.params.id + '/', function (err) {
         if (!err) {
             console.log('file or directory exists');
         } else if (err.code === 'ENOENT') {
-            fs.mkdirSync('files/users/'+req.params.id+'/');
+            fs.mkdirSync('files/users/' + req.params.id + '/');
         }
     });
 
-    fs.stat('files/users/'+req.params.id+'/'+req.params.id+'.'+extension, function (err) {
+    fs.stat('files/users/' + req.params.id + '/' + req.params.id + '.' + extension, function (err) {
         if (err) {
-            sampleFile.mv('files/users/'+req.params.id+'/'+req.params.id+'.'+extension, function(err) {
+            sampleFile.mv('files/users/' + req.params.id + '/' + req.params.id + '.' + extension, function (err) {
                 if (err) return res.status(500).send(err);
                 res.send('File uploaded!');
             });
         }
-        else{
-            fs.unlink('files/users/'+req.params.id+'/'+req.params.id+'.'+extension,function(err){
-                if(err){
+        else {
+            fs.unlink('files/users/' + req.params.id + '/' + req.params.id + '.' + extension, function (err) {
+                if (err) {
                     res.send('Unable to delete file!');
                 }
-                else{
-                    sampleFile.mv('files/users/'+req.params.id+'/'+req.params.id+'.'+extension, function(err) {
+                else {
+                    sampleFile.mv('files/users/' + req.params.id + '/' + req.params.id + '.' + extension, function (err) {
                         if (err)
                             return res.status(500).send(err);
                         res.send('File uploaded!');
@@ -467,7 +467,7 @@ users.post('/upload/:id', function(req, res) {
 });
 
 //File Upload - New Client (Image and Signature)
-users.post('/upload-file/:id/:item', function(req, res) {
+users.post('/upload-file/:id/:item', function (req, res) {
     if (!req.files) return res.status(400).send('No files were uploaded.');
     if (!req.params) return res.status(400).send('No Number Plate specified!');
     let sampleFile = req.files.file,
@@ -475,29 +475,29 @@ users.post('/upload-file/:id/:item', function(req, res) {
         extArray = sampleFile.name.split("."),
         extension = extArray[extArray.length - 1];
     if (extension) extension = extension.toLowerCase();
-    fs.stat('files/users/'+req.params.id+'/', function(err) {
+    fs.stat('files/users/' + req.params.id + '/', function (err) {
         if (!err) {
             console.log('file or directory exists');
         }
         else if (err.code === 'ENOENT') {
-            fs.mkdirSync('files/users/'+req.params.id+'/');
+            fs.mkdirSync('files/users/' + req.params.id + '/');
         }
     });
 
-    fs.stat('files/users/'+req.params.id+'/'+req.params.id+'_'+req.params.item+'.'+extension, function (err) {
+    fs.stat('files/users/' + req.params.id + '/' + req.params.id + '_' + req.params.item + '.' + extension, function (err) {
         if (err) {
-            sampleFile.mv('files/users/'+req.params.id+'/'+req.params.id+'_'+req.params.item+'.'+extension, function(err) {
+            sampleFile.mv('files/users/' + req.params.id + '/' + req.params.id + '_' + req.params.item + '.' + extension, function (err) {
                 if (err) return res.status(500).send(err);
                 res.send('File uploaded!');
             });
         }
-        else{
-            fs.unlink('files/users/'+req.params.id+'/'+req.params.id+'_'+req.params.item+'.'+extension,function(err){
-                if(err){
+        else {
+            fs.unlink('files/users/' + req.params.id + '/' + req.params.id + '_' + req.params.item + '.' + extension, function (err) {
+                if (err) {
                     res.send('Unable to delete file!');
                 }
-                else{
-                    sampleFile.mv('files/users/'+req.params.id+'/'+req.params.id+'_'+req.params.item+'.'+extension, function(err) {
+                else {
+                    sampleFile.mv('files/users/' + req.params.id + '/' + req.params.id + '_' + req.params.item + '.' + extension, function (err) {
                         if (err)
                             return res.status(500).send(err);
                         res.send('File uploaded!');
@@ -509,22 +509,22 @@ users.post('/upload-file/:id/:item', function(req, res) {
 });
 
 /* GET users listing. */
-users.get('/all-users', function(req, res, next) {
+users.get('/all-users', function (req, res, next) {
     let array = [],
         query = 'SELECT * from users where status = 1';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
-            async.forEach(results, function(k, cb){
-                let path = 'files/users/'+k.username+'/';
-                if (fs.existsSync(path)){
-                    fs.readdir(path, function (err, files){
+            async.forEach(results, function (k, cb) {
+                let path = 'files/users/' + k.username + '/';
+                if (fs.existsSync(path)) {
+                    fs.readdir(path, function (err, files) {
                         files = helperFunctions.removeFileDuplicates(path, files);
-                        async.forEach(files, function (file, callback){
-                            k.image = path+file;
+                        async.forEach(files, function (file, callback) {
+                            k.image = path + file;
                             callback();
-                        }, function(data){
+                        }, function (data) {
                             array.push(k);
                             cb();
                         });
@@ -535,18 +535,18 @@ users.get('/all-users', function(req, res, next) {
                     cb();
                 }
 
-            }, function(data){
-                res.send(JSON.stringify({"status": 200, "error": null, "response": array}));
+            }, function (data) {
+                res.send(JSON.stringify({ "status": 200, "error": null, "response": array }));
             });
         }
     });
 });
 
-users.get('/users-list', function(req, res, next) {
+users.get('/users-list', function (req, res, next) {
     let query = 'SELECT *, (select u.role_name from user_roles u where u.ID = user_role) as Role from users where user_role not in (3, 4) and status = 1 order by ID desc';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
@@ -554,55 +554,55 @@ users.get('/users-list', function(req, res, next) {
 });
 
 /* Loan Officers Only */
-users.get('/loan-officers', function(req, res, next) {
+users.get('/loan-officers', function (req, res, next) {
     let query = 'SELECT *, (select u.role_name from user_roles u where u.ID = user_role) as Role from users where loan_officer_status = 1 and status = 1 order by ID desc';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
     });
 });
 
-users.get('/teams-list', function(req, res, next) {
+users.get('/teams-list', function (req, res, next) {
     let query = 'SELECT *, (select u.fullname from users u where u.ID = t.supervisor) as supervisor, (select count(*) from team_members m where m.teamID = t.ID and m.status = 1) as members, ' +
         '(select count(*) from user_targets m where m.userID = t.ID and m.status = 1) as targets from teams t where t.status = 1 order by t.ID desc';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "Teams fetched successfully", "response": results});
+            res.send({ "status": 200, "message": "Teams fetched successfully", "response": results });
         }
     });
 });
 
-users.get('/team/members/:id', function(req, res, next) {
+users.get('/team/members/:id', function (req, res, next) {
     let query = 'SELECT *,(select u.fullname from users u where u.ID = t.memberID) as member from team_members t where t.status = 1 and t.teamID = ? order by t.ID desc';
     db.query(query, [req.params.id], function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "Team members fetched successfully", "response": results});
+            res.send({ "status": 200, "message": "Team members fetched successfully", "response": results });
         }
     });
 });
 
-users.post('/team/members', function(req, res, next) {
+users.post('/team/members', function (req, res, next) {
     req.body.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.query('SELECT * FROM team_members WHERE teamID=? AND memberID=? AND status = 1', [req.body.teamID,req.body.memberID], function (error, result, fields) {
+    db.query('SELECT * FROM team_members WHERE teamID=? AND memberID=? AND status = 1', [req.body.teamID, req.body.memberID], function (error, result, fields) {
         if (result && result[0]) {
-            res.send({"status": 500, "error": "User has already been assigned to this team"});
+            res.send({ "status": 500, "error": "User has already been assigned to this team" });
         } else {
             db.query('INSERT INTO team_members SET ?', req.body, function (error, result, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
                     db.query('SELECT *,(select u.fullname from users u where u.ID = t.memberID) as member from team_members t where t.status = 1 and t.teamID = ? order by t.ID desc', [req.body.teamID], function (error, results, fields) {
-                        if(error){
-                            res.send({"status": 500, "error": error, "response": null});
+                        if (error) {
+                            res.send({ "status": 500, "error": error, "response": null });
                         } else {
-                            res.send({"status": 200, "message": "Team member assigned successfully", "response": results});
+                            res.send({ "status": 200, "message": "Team member assigned successfully", "response": results });
                         }
                     });
                 }
@@ -611,70 +611,70 @@ users.post('/team/members', function(req, res, next) {
     });
 });
 
-users.delete('/team/members/:id/:teamID', function(req, res, next) {
+users.delete('/team/members/:id/:teamID', function (req, res, next) {
     let date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('UPDATE team_members SET status = 0, date_modified = ? WHERE ID = ?', [date, req.params.id], function (error, result, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             db.query('SELECT *,(select u.fullname from users u where u.ID = t.memberID) as member from team_members t where t.status = 1 and t.teamID = ? order by t.ID desc', [req.params.teamID], function (error, results, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
-                    res.send({"status": 200, "message": "Team member deleted successfully", "response": results});
+                    res.send({ "status": 200, "message": "Team member deleted successfully", "response": results });
                 }
             });
         }
     });
 });
 
-users.get('/team/targets/:id', function(req, res, next) {
+users.get('/team/targets/:id', function (req, res, next) {
     let query = 'SELECT *,(select u.name from teams u where u.ID = t.userID) as user,(select u.name from sub_periods u where u.ID = t.sub_periodID AND u.periodID = t.periodID) as period,' +
         '(select u.title from targets u where u.ID = t.targetID) as target from user_targets t where t.status = 1 and t.userID = ? order by t.ID desc';
     db.query(query, [req.params.id], function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "Team targets fetched successfully", "response": results});
+            res.send({ "status": 200, "message": "Team targets fetched successfully", "response": results });
         }
     });
 });
 
-users.get('/user-targets/:id', function(req, res, next) {
+users.get('/user-targets/:id', function (req, res, next) {
     let query = 'SELECT *,(select u.fullname from users u where u.ID = t.userID) as user,(select u.name from sub_periods u where u.ID = t.sub_periodID AND u.periodID = t.periodID) as period,' +
         '(select u.title from targets u where u.ID = t.targetID) as target,(select u.type from targets u where u.ID = t.targetID) as type from user_targets t where t.status = 1 and t.userID = ? order by t.ID desc';
     db.query(query, [req.params.id], function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "User targets fetched successfully", "response": results});
+            res.send({ "status": 200, "message": "User targets fetched successfully", "response": results });
         }
     });
 });
 
-users.get('/user-assigned-target/:id', function(req, res, next) {
+users.get('/user-assigned-target/:id', function (req, res, next) {
     let query = 'SELECT t.targetID AS ID,sum(t.value) AS value,u.title as target,u.type,u.period from user_targets t, targets u where t.status = 1 and t.userID = ? and u.ID = t.targetID group by t.targetID order by t.targetID desc';
     db.query(query, [req.params.id], function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "User assigned target fetched successfully", "response": results});
+            res.send({ "status": 200, "message": "User assigned target fetched successfully", "response": results });
         }
     });
 });
 
-users.get('/user-assigned-period/:id/:targetID', function(req, res, next) {
+users.get('/user-assigned-period/:id/:targetID', function (req, res, next) {
     let query = 'SELECT t.sub_periodID AS ID,sum(t.value) AS value,u.name,u.type,u.periodID from user_targets t, sub_periods u where t.status = 1 and t.userID = ? and t.targetID = ? and u.ID = t.sub_periodID group by t.sub_periodID order by t.sub_periodID desc';
-    db.query(query, [req.params.id,req.params.targetID], function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+    db.query(query, [req.params.id, req.params.targetID], function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "User assigned period fetched successfully", "response": results});
+            res.send({ "status": 200, "message": "User assigned period fetched successfully", "response": results });
         }
     });
 });
 
-users.get('/targets-list', function(req, res, next) {
+users.get('/targets-list', function (req, res, next) {
     let type = req.query.type,
         target = req.query.target,
         sub_period = req.query.sub_period,
@@ -684,35 +684,35 @@ users.get('/targets-list', function(req, res, next) {
         query2 = 'SELECT *,(select u.fullname from users u where u.ID = t.userID) as owner,(select u.name from sub_periods u where u.ID = t.sub_periodID AND u.periodID = t.periodID) as period,' +
             '(select u.start from sub_periods u where u.ID = t.sub_periodID) as start,(select u.end from sub_periods u where u.ID = t.sub_periodID) as end,' +
             '(select u.title from targets u where u.ID = t.targetID) as target,(select u.type from targets u where u.ID = t.targetID) as type from user_targets t where t.status = 1 and t.user_type = "user"';
-    if (type){
-        query = query.concat(' AND (select u.type from targets u where u.ID = t.targetID) = "'+type+'"');
-        query2 = query2.concat(' AND (select u.type from targets u where u.ID = t.targetID) = "'+type+'"');
+    if (type) {
+        query = query.concat(' AND (select u.type from targets u where u.ID = t.targetID) = "' + type + '"');
+        query2 = query2.concat(' AND (select u.type from targets u where u.ID = t.targetID) = "' + type + '"');
     }
-    if (target){
-        query = query.concat(' AND t.targetID = '+target);
-        query2 = query2.concat(' AND t.targetID = '+target);
+    if (target) {
+        query = query.concat(' AND t.targetID = ' + target);
+        query2 = query2.concat(' AND t.targetID = ' + target);
     }
-    if (sub_period){
-        query = query.concat(' AND t.sub_periodID = '+sub_period);
-        query2 = query2.concat(' AND t.sub_periodID = '+sub_period);
+    if (sub_period) {
+        query = query.concat(' AND t.sub_periodID = ' + sub_period);
+        query2 = query2.concat(' AND t.sub_periodID = ' + sub_period);
     }
     db.query(query, function (error, team_targets, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             db.query(query2, function (error, user_targets, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
                     results = team_targets.concat(user_targets);
-                    res.send({"status": 200, "message": "Targets list fetched successfully", "response": results});
+                    res.send({ "status": 200, "message": "Targets list fetched successfully", "response": results });
                 }
             });
         }
     });
 });
 
-users.get('/targets-list/:officerID', function(req, res, next) {
+users.get('/targets-list/:officerID', function (req, res, next) {
     let type = req.query.type,
         id = req.params.officerID,
         target = req.query.target,
@@ -723,37 +723,37 @@ users.get('/targets-list/:officerID', function(req, res, next) {
         query2 = 'SELECT *,(select u.fullname from users u where u.ID = t.userID) as owner,(select u.name from sub_periods u where u.ID = t.sub_periodID AND u.periodID = t.periodID) as period,' +
             '(select u.start from sub_periods u where u.ID = t.sub_periodID) as start,(select u.end from sub_periods u where u.ID = t.sub_periodID) as end,' +
             '(select u.title from targets u where u.ID = t.targetID) as target,(select u.type from targets u where u.ID = t.targetID) as type from user_targets t where t.status = 1 and t.user_type = "user"',
-        query3 = query2.concat(' AND t.userID = '+id+' '),
-        query4 = query2.concat(' AND (select supervisor from users where users.id = t.userID) =  '+id+' ');
+        query3 = query2.concat(' AND t.userID = ' + id + ' '),
+        query4 = query2.concat(' AND (select supervisor from users where users.id = t.userID) =  ' + id + ' ');
     if (id)
         query2 = query3;
-    if (type){
-        query = query.concat(' AND (select u.type from targets u where u.ID = t.targetID) = "'+type+'"');
-        query2 = query2.concat(' AND (select u.type from targets u where u.ID = t.targetID) = "'+type+'"');
+    if (type) {
+        query = query.concat(' AND (select u.type from targets u where u.ID = t.targetID) = "' + type + '"');
+        query2 = query2.concat(' AND (select u.type from targets u where u.ID = t.targetID) = "' + type + '"');
     }
-    if (target){
-        query = query.concat(' AND t.targetID = '+target);
-        query2 = query2.concat(' AND t.targetID = '+target);
+    if (target) {
+        query = query.concat(' AND t.targetID = ' + target);
+        query2 = query2.concat(' AND t.targetID = ' + target);
     }
-    if (sub_period){
-        query = query.concat(' AND t.sub_periodID = '+sub_period);
-        query2 = query2.concat(' AND t.sub_periodID = '+sub_period);
+    if (sub_period) {
+        query = query.concat(' AND t.sub_periodID = ' + sub_period);
+        query2 = query2.concat(' AND t.sub_periodID = ' + sub_period);
     }
-    if (id){
+    if (id) {
         db.query(query, function (error, team_targets, fields) {
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
+            if (error) {
+                res.send({ "status": 500, "error": error, "response": null });
             } else {
                 db.query(query2, function (error, user_targets, fields) {
-                    if(error){
-                        res.send({"status": 500, "error": error, "response": null});
+                    if (error) {
+                        res.send({ "status": 500, "error": error, "response": null });
                     } else {
                         db.query(query4, function (error, user_targets2, fields) {
-                            if(error){
-                                res.send({"status": 500, "error": error, "response": null});
+                            if (error) {
+                                res.send({ "status": 500, "error": error, "response": null });
                             } else {
-                                results = team_targets.concat(user_targets,user_targets2);
-                                res.send({"status": 200, "message": "Targets list fetched successfully", "response": results});
+                                results = team_targets.concat(user_targets, user_targets2);
+                                res.send({ "status": 200, "message": "Targets list fetched successfully", "response": results });
                             }
                         });
                     }
@@ -762,15 +762,15 @@ users.get('/targets-list/:officerID', function(req, res, next) {
         });
     } else {
         db.query(query, function (error, team_targets, fields) {
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
+            if (error) {
+                res.send({ "status": 500, "error": error, "response": null });
             } else {
                 db.query(query2, function (error, user_targets, fields) {
-                    if(error){
-                        res.send({"status": 500, "error": error, "response": null});
+                    if (error) {
+                        res.send({ "status": 500, "error": error, "response": null });
                     } else {
                         results = team_targets.concat(user_targets);
-                        res.send({"status": 200, "message": "Targets list fetched successfully", "response": results});
+                        res.send({ "status": 200, "message": "Targets list fetched successfully", "response": results });
                     }
                 });
             }
@@ -778,19 +778,19 @@ users.get('/targets-list/:officerID', function(req, res, next) {
     }
 });
 
-users.delete('/targets-list/delete/:id', function(req, res, next) {
+users.delete('/targets-list/delete/:id', function (req, res, next) {
     let date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.query('UPDATE user_targets SET status=0, date_modified=? WHERE ID = ?', [date,req.params.id], function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+    db.query('UPDATE user_targets SET status=0, date_modified=? WHERE ID = ?', [date, req.params.id], function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "Assigned target deleted successfully!"});
+            res.send({ "status": 200, "message": "Assigned target deleted successfully!" });
         }
     });
 });
 
 
-users.get('/committals/user/disbursement/:userID/:targetID', function(req, res, next) {
+users.get('/committals/user/disbursement/:userID/:targetID', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         query = 'SELECT count(*) count, sum(d.amount) total FROM disbursement_history d, (SELECT ID client_id FROM clients WHERE loan_officer = ? AND status = 1) AS c, ' +
@@ -798,31 +798,31 @@ users.get('/committals/user/disbursement/:userID/:targetID', function(req, res, 
         query2 = 'SELECT d.amount, a.duration, d.date_disbursed date, c.fullname client FROM disbursement_history d, applications AS a, ' +
             '(SELECT ID client_id, fullname FROM clients WHERE loan_officer = ? AND status = 1) AS c, ' +
             '(SELECT p.start,p.end FROM periods p WHERE p.ID = (SELECT period FROM targets WHERE status = 1 AND ID = ?)) AS ranges WHERE d.client_id = c.client_id AND d.loan_id = a.ID';
-    if (start && end){
-        query = query.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
-        query2 = query2.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
+    if (start && end) {
+        query = query.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("' + start + '") AND TIMESTAMP("' + end + '")');
+        query2 = query2.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("' + start + '") AND TIMESTAMP("' + end + '")');
     } else {
         query = query.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP(ranges.start) AND TIMESTAMP(ranges.end)');
         query2 = query2.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP(ranges.start) AND TIMESTAMP(ranges.end)');
     }
-    db.query(query, [req.params.userID,req.params.targetID], function (error, aggregate, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+    db.query(query, [req.params.userID, req.params.targetID], function (error, aggregate, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            db.query(query2, [req.params.userID,req.params.targetID], function (error, list, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+            db.query(query2, [req.params.userID, req.params.targetID], function (error, list, fields) {
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
                     let results = aggregate[0];
                     results.data = list;
-                    res.send({"status": 200, "message": "Committals fetched successfully", "response": results});
+                    res.send({ "status": 200, "message": "Committals fetched successfully", "response": results });
                 }
             });
         }
     });
 });
 
-users.get('/committals/user/interest/:userID/:targetID', function(req, res, next) {
+users.get('/committals/user/interest/:userID/:targetID', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         query = 'SELECT count(*) count, sum(s.interest_amount) total FROM schedule_history s, applications a, clients c, ' +
@@ -831,57 +831,57 @@ users.get('/committals/user/interest/:userID/:targetID', function(req, res, next
         query2 = 'SELECT s.interest_amount amount, s.payment_source channel, s.payment_date date, s.clientID userID, c.fullname client, a.ID application_id, a.duration ' +
             'FROM schedule_history s, applications a, clients c, (SELECT p.start,p.end FROM periods p WHERE p.ID = (SELECT period FROM targets WHERE status = 1 AND ID = ?)) AS ranges ' +
             'WHERE s.applicationID = a.ID AND s.clientID = c.ID AND s.loan_officerID = ? AND s.status = 1 AND s.interest_amount > 0';
-    if (start && end){
-        query = query.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
-        query2 = query2.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
+    if (start && end) {
+        query = query.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("' + start + '") AND TIMESTAMP("' + end + '")');
+        query2 = query2.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("' + start + '") AND TIMESTAMP("' + end + '")');
     } else {
         query = query.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP(ranges.start) AND TIMESTAMP(ranges.end)');
         query2 = query2.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP(ranges.start) AND TIMESTAMP(ranges.end)');
     }
     db.query(query, [req.params.targetID, req.params.userID], function (error, aggregate, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             db.query(query2, [req.params.targetID, req.params.userID], function (error, list, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
                     let results = aggregate[0];
                     results.data = list;
-                    res.send({"status": 200, "message": "Committals fetched successfully", "response": results});
+                    res.send({ "status": 200, "message": "Committals fetched successfully", "response": results });
                 }
             });
         }
     });
 });
 
-users.get('/committals/user/disbursement/:id', function(req, res, next) {
+users.get('/committals/user/disbursement/:id', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         query = 'SELECT count(*) count, sum(d.amount) total FROM disbursement_history d WHERE d.loan_officer = ?',
         query2 = 'SELECT d.amount, a.duration, d.date_disbursed date, c.fullname client FROM disbursement_history d, applications a, clients c WHERE d.loan_officer = ? AND d.loan_id = a.ID AND d.client_id = c.ID';
-    if (start && end){
-        query = query.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
-        query2 = query2.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
+    if (start && end) {
+        query = query.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("' + start + '") AND TIMESTAMP("' + end + '")');
+        query2 = query2.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("' + start + '") AND TIMESTAMP("' + end + '")');
     }
     db.query(query, [req.params.id], function (error, aggregate, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             db.query(query2, [req.params.id], function (error, list, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
                     let results = aggregate[0];
                     results.data = list;
-                    res.send({"status": 200, "message": "Committals fetched successfully", "response": results});
+                    res.send({ "status": 200, "message": "Committals fetched successfully", "response": results });
                 }
             });
         }
     });
 });
 
-users.get('/committals/user/interest/:id', function(req, res, next) {
+users.get('/committals/user/interest/:id', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         query = 'SELECT count(*) count, sum(s.interest_amount) total FROM schedule_history AS s, applications a ' +
@@ -889,28 +889,28 @@ users.get('/committals/user/interest/:id', function(req, res, next) {
         query2 = 'SELECT s.interest_amount amount, s.payment_source channel, s.payment_date date, s.clientID userID, c.fullname client, a.ID application_id, a.duration ' +
             'FROM schedule_history s, applications a, clients c ' +
             'WHERE s.applicationID = a.ID AND s.clientID = c.ID AND s.loan_officerID = ? AND s.status = 1 AND s.interest_amount > 0';
-    if (start && end){
-        query = query.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
-        query2 = query2.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
+    if (start && end) {
+        query = query.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("' + start + '") AND TIMESTAMP("' + end + '")');
+        query2 = query2.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("' + start + '") AND TIMESTAMP("' + end + '")');
     }
     db.query(query, [req.params.id], function (error, aggregate, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             db.query(query2, [req.params.id], function (error, list, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
                     let results = aggregate[0];
                     results.data = list;
-                    res.send({"status": 200, "message": "Committals fetched successfully", "response": results});
+                    res.send({ "status": 200, "message": "Committals fetched successfully", "response": results });
                 }
             });
         }
     });
 });
 
-users.get('/committals/team/disbursement/:id', function(req, res, next) {
+users.get('/committals/team/disbursement/:id', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         query = 'SELECT count(*) count, sum(d.amount) total FROM disbursement_history d, ' +
@@ -919,28 +919,28 @@ users.get('/committals/team/disbursement/:id', function(req, res, next) {
         query2 = 'SELECT d.amount, a.duration, d.date_disbursed date, c.fullname client FROM disbursement_history d, applications a, ' +
             '(SELECT cl.ID client_id, cl.fullname FROM clients AS cl, (SELECT memberID user_id FROM team_members WHERE teamID = ? AND status = 1) AS t WHERE cl.loan_officer = t.user_id AND cl.status = 1) AS c ' +
             'WHERE d.client_id = c.client_id AND d.loan_id = a.ID';
-    if (start && end){
-        query = query.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
-        query2 = query2.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
+    if (start && end) {
+        query = query.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("' + start + '") AND TIMESTAMP("' + end + '")');
+        query2 = query2.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("' + start + '") AND TIMESTAMP("' + end + '")');
     }
     db.query(query, [req.params.id], function (error, aggregate, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             db.query(query2, [req.params.id], function (error, list, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
                     let results = aggregate[0];
                     results.data = list;
-                    res.send({"status": 200, "message": "Committals fetched successfully", "response": results});
+                    res.send({ "status": 200, "message": "Committals fetched successfully", "response": results });
                 }
             });
         }
     });
 });
 
-users.get('/committals/team/interest/:id', function(req, res, next) {
+users.get('/committals/team/interest/:id', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         query = 'SELECT count(*) count, sum(s.interest_amount) total FROM schedule_history AS s, ' +
@@ -949,28 +949,28 @@ users.get('/committals/team/interest/:id', function(req, res, next) {
         query2 = 'SELECT s.interest_amount amount, s.payment_source channel, s.payment_date date, s.clientID userID, c.fullname client, apps.application_id, apps.duration ' +
             'FROM schedule_history s, clients c, (SELECT ID application_id, duration FROM applications AS a, (SELECT cl.ID client_id FROM clients AS cl, (SELECT memberID user_id FROM team_members WHERE teamID = ? AND status = 1) AS t WHERE cl.loan_officer = t.user_id AND cl.status = 1) AS c WHERE a.userID = c.client_id AND a.status = 2) AS apps ' +
             'WHERE s.applicationID = apps.application_id AND s.clientID = c.ID AND s.status = 1 AND s.interest_amount > 0';
-    if (start && end){
-        query = query.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
-        query2 = query2.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
+    if (start && end) {
+        query = query.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("' + start + '") AND TIMESTAMP("' + end + '")');
+        query2 = query2.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("' + start + '") AND TIMESTAMP("' + end + '")');
     }
     db.query(query, [req.params.id], function (error, aggregate, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             db.query(query2, [req.params.id], function (error, list, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
                     let results = aggregate[0];
                     results.data = list;
-                    res.send({"status": 200, "message": "Committals fetched successfully", "response": results});
+                    res.send({ "status": 200, "message": "Committals fetched successfully", "response": results });
                 }
             });
         }
     });
 });
 
-users.get('/committals/disbursement/:id', function(req, res, next) {
+users.get('/committals/disbursement/:id', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         query = 'SELECT d.ID, cast(d.amount as unsigned) amount, d.date_disbursed date, c.fullname client FROM disbursement_history d, applications a, ' +
@@ -979,33 +979,33 @@ users.get('/committals/disbursement/:id', function(req, res, next) {
         query2 = 'SELECT d.ID, cast(d.amount as unsigned) amount, d.date_disbursed date, c.fullname client FROM disbursement_history d, applications a, ' +
             '(SELECT cl.ID client_id, cl.fullname FROM clients AS cl, (SELECT memberID user_id FROM team_members WHERE status = 1 AND teamID in (SELECT t.userID FROM user_targets t WHERE t.status = 1 AND t.user_type = "team" AND t.targetID = ?)) AS t WHERE cl.loan_officer = t.user_id AND cl.status = 1) AS c, ' +
             '(SELECT p.start,p.end FROM periods p WHERE p.ID = (SELECT period FROM targets WHERE status = 1 AND ID = ?)) AS ranges WHERE d.loan_id = a.ID AND d.client_id = c.client_id';
-    if (start && end){
-        query = query.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
-        query2 = query2.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
+    if (start && end) {
+        query = query.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("' + start + '") AND TIMESTAMP("' + end + '")');
+        query2 = query2.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP("' + start + '") AND TIMESTAMP("' + end + '")');
     } else {
         query = query.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP(ranges.start) AND TIMESTAMP(ranges.end)');
         query2 = query2.concat(' AND TIMESTAMP(d.date_disbursed) BETWEEN TIMESTAMP(ranges.start) AND TIMESTAMP(ranges.end)');
     }
-    db.query(query, [req.params.id,req.params.id], function (error, result_user, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+    db.query(query, [req.params.id, req.params.id], function (error, result_user, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            db.query(query2, [req.params.id,req.params.id], function (error, result_team, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+            db.query(query2, [req.params.id, req.params.id], function (error, result_team, fields) {
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
                     let results = {};
-                    results.data = _.unionBy(result_team,result_user,'ID');
+                    results.data = _.unionBy(result_team, result_user, 'ID');
                     results.count = results.data.length;
-                    results.total = _.sumBy(results.data,'amount');
-                    res.send({"status": 200, "message": "Committals fetched successfully", "response": results});
+                    results.total = _.sumBy(results.data, 'amount');
+                    res.send({ "status": 200, "message": "Committals fetched successfully", "response": results });
                 }
             });
         }
     });
 });
 
-users.get('/committals/interest/:id', function(req, res, next) {
+users.get('/committals/interest/:id', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         query = 'SELECT cast(s.interest_amount as unsigned) amount, s.payment_source channel, s.payment_date date, c.fullname client, apps.application_id, apps.duration ' +
@@ -1017,85 +1017,85 @@ users.get('/committals/interest/:id', function(req, res, next) {
             '(SELECT ID application_id, duration FROM applications AS a, (SELECT cl.ID client_id FROM clients AS cl, (SELECT memberID user_id FROM team_members WHERE status = 1 AND teamID in (SELECT t.userID FROM user_targets t WHERE t.status = 1 AND t.user_type = "team" AND t.targetID = ?)) AS t ' +
             'WHERE cl.loan_officer = t.user_id AND cl.status = 1) AS c WHERE a.userID = c.client_id AND a.status = 2) AS apps, ' +
             '(SELECT p.start,p.end FROM periods p WHERE p.ID = (SELECT period FROM targets WHERE status = 1 AND ID = ?)) AS ranges WHERE s.applicationID = apps.application_id AND s.clientID = c.ID AND s.status = 1 AND s.interest_amount > 0';
-    if (start && end){
-        query = query.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
-        query2 = query2.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("'+start+'") AND TIMESTAMP("'+end+'")');
+    if (start && end) {
+        query = query.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("' + start + '") AND TIMESTAMP("' + end + '")');
+        query2 = query2.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP("' + start + '") AND TIMESTAMP("' + end + '")');
     } else {
         query = query.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP(ranges.start) AND TIMESTAMP(ranges.end)');
         query2 = query2.concat(' AND TIMESTAMP(s.payment_date) BETWEEN TIMESTAMP(ranges.start) AND TIMESTAMP(ranges.end)');
     }
-    db.query(query, [req.params.id,req.params.id], function (error, result_user, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+    db.query(query, [req.params.id, req.params.id], function (error, result_user, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            db.query(query2, [req.params.id,req.params.id], function (error, result_team, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+            db.query(query2, [req.params.id, req.params.id], function (error, result_team, fields) {
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
                     let results = {};
-                    results.data = _.unionBy(result_team,result_user,'ID');
+                    results.data = _.unionBy(result_team, result_user, 'ID');
                     results.count = results.data.length;
-                    results.total = _.sumBy(results.data,'amount');
-                    res.send({"status": 200, "message": "Committals fetched successfully", "response": results});
+                    results.total = _.sumBy(results.data, 'amount');
+                    res.send({ "status": 200, "message": "Committals fetched successfully", "response": results });
                 }
             });
         }
     });
 });
 
-users.get('/target/details/:id', function(req, res, next) {
+users.get('/target/details/:id', function (req, res, next) {
     let query = 'SELECT count(*) count, sum(t.value) total FROM user_targets AS t WHERE targetID = ? AND status = 1',
         query2 = 'SELECT userID, sum(value) as value, (SELECT name FROM sub_periods WHERE ID = t.sub_periodID) AS period, ' +
             '(CASE WHEN t.user_type = "user" THEN (SELECT fullname FROM users WHERE ID = userID) WHEN t.user_type = "team" THEN (SELECT name FROM teams WHERE ID = userID) END) AS owner ' +
             'FROM user_targets AS t WHERE t.targetID = ? AND t.status = 1 GROUP BY owner';
     db.query(query, [req.params.id], function (error, aggregate, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             db.query(query2, [req.params.id], function (error, list, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
                     let results = aggregate[0];
                     results.data = list;
-                    res.send({"status": 200, "message": "Target details fetched successfully", "response": results});
+                    res.send({ "status": 200, "message": "Target details fetched successfully", "response": results });
                 }
             });
         }
     });
 });
 
-users.get('/target/limit/:id', function(req, res, next) {
+users.get('/target/limit/:id', function (req, res, next) {
     let query = 'SELECT (CASE WHEN sum(t.value) IS NULL THEN 0 ELSE sum(t.value) END) allocated, (SELECT value FROM targets WHERE ID = ?) target, ' +
         '((SELECT value FROM targets WHERE ID = ?) - (CASE WHEN sum(t.value) IS NULL THEN 0 ELSE sum(t.value) END)) unallocated FROM user_targets AS t WHERE targetID = ? AND status = 1';
-    db.query(query, [req.params.id,req.params.id,req.params.id], function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+    db.query(query, [req.params.id, req.params.id, req.params.id], function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "Target limit fetched successfully", "response": results[0]});
+            res.send({ "status": 200, "message": "Target limit fetched successfully", "response": results[0] });
         }
     });
 });
 
-users.post('/team/targets', function(req, res, next) {
+users.post('/team/targets', function (req, res, next) {
     req.body.user_type = "team";
     req.body.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('SELECT * FROM user_targets WHERE userID=? AND targetID=? AND periodID=? AND sub_periodID=? AND status = 1',
-        [req.body.userID,req.body.targetID,req.body.periodID,req.body.sub_periodID], function (error, result, fields) {
+        [req.body.userID, req.body.targetID, req.body.periodID, req.body.sub_periodID], function (error, result, fields) {
             if (result && result[0]) {
-                res.send({"status": 500, "error": "Target has already been assigned to this team"});
+                res.send({ "status": 500, "error": "Target has already been assigned to this team" });
             } else {
                 db.query('INSERT INTO user_targets SET ?', req.body, function (error, result, fields) {
-                    if(error){
-                        res.send({"status": 500, "error": error, "response": null});
+                    if (error) {
+                        res.send({ "status": 500, "error": error, "response": null });
                     } else {
                         let query = 'SELECT *,(select u.name from teams u where u.ID = t.userID) as user,(select u.name from sub_periods u where u.ID = t.sub_periodID AND u.periodID = t.periodID) as period,' +
                             '(select u.title from targets u where u.ID = t.targetID) as target from user_targets t where t.status = 1 and t.userID = ? order by t.ID desc';
                         db.query(query, [req.body.userID], function (error, results, fields) {
-                            if(error){
-                                res.send({"status": 500, "error": error, "response": null});
+                            if (error) {
+                                res.send({ "status": 500, "error": error, "response": null });
                             } else {
-                                res.send({"status": 200, "message": "Team target assigned successfully", "response": results});
+                                res.send({ "status": 200, "message": "Team target assigned successfully", "response": results });
                             }
                         });
                     }
@@ -1104,31 +1104,31 @@ users.post('/team/targets', function(req, res, next) {
         });
 });
 
-users.post('/user-targets', function(req, res, next) {
+users.post('/user-targets', function (req, res, next) {
     req.body.user_type = "user";
     req.body.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('SELECT * FROM user_targets WHERE userID=? AND targetID=? AND periodID=? AND sub_periodID=? AND status = 1',
-        [req.body.userID,req.body.targetID,req.body.periodID,req.body.sub_periodID], function (error, result, fields) {
+        [req.body.userID, req.body.targetID, req.body.periodID, req.body.sub_periodID], function (error, result, fields) {
             if (result && result[0]) {
-                res.send({"status": 500, "error": "Target has already been assigned to this user"});
+                res.send({ "status": 500, "error": "Target has already been assigned to this user" });
             } else {
                 db.query('SELECT * FROM users WHERE ID=?', [req.body.userID], function (error, user, fields) {
-                    if(error){
-                        res.send({"status": 500, "error": error, "response": null});
+                    if (error) {
+                        res.send({ "status": 500, "error": error, "response": null });
                     } else {
                         if (user[0]['loan_officer_status'] !== 1)
-                            return res.send({"status": 500, "error": "User must be a loan officer"});
+                            return res.send({ "status": 500, "error": "User must be a loan officer" });
                         db.query('INSERT INTO user_targets SET ?', req.body, function (error, result, fields) {
-                            if(error){
-                                res.send({"status": 500, "error": error, "response": null});
+                            if (error) {
+                                res.send({ "status": 500, "error": error, "response": null });
                             } else {
                                 let query = 'SELECT *,(select u.fullname from users u where u.ID = t.userID) as user,(select u.name from sub_periods u where u.ID = t.sub_periodID AND u.periodID = t.periodID) as period,' +
                                     '(select u.title from targets u where u.ID = t.targetID) as target,(select u.type from targets u where u.ID = t.targetID) as type from user_targets t where t.status = 1 and t.userID = ? order by t.ID desc';
                                 db.query(query, [req.body.userID], function (error, results, fields) {
-                                    if(error){
-                                        res.send({"status": 500, "error": error, "response": null});
+                                    if (error) {
+                                        res.send({ "status": 500, "error": error, "response": null });
                                     } else {
-                                        res.send({"status": 200, "message": "User target assigned successfully", "response": results});
+                                        res.send({ "status": 200, "message": "User target assigned successfully", "response": results });
                                     }
                                 });
                             }
@@ -1139,142 +1139,142 @@ users.post('/user-targets', function(req, res, next) {
         });
 });
 
-users.delete('/team/targets/:id/:userID', function(req, res, next) {
+users.delete('/team/targets/:id/:userID', function (req, res, next) {
     let date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('UPDATE user_targets SET status = 0, date_modified = ? WHERE ID = ?', [date, req.params.id], function (error, result, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             let query = 'SELECT *,(select u.name from teams u where u.ID = t.userID) as user,(select u.name from sub_periods u where u.ID = t.sub_periodID AND u.periodID = t.periodID) as period,' +
                 '(select u.title from targets u where u.ID = t.targetID) as target from user_targets t where t.status = 1 and t.userID = ? order by t.ID desc';
             db.query(query, [req.params.userID], function (error, results, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
-                    res.send({"status": 200, "message": "Team target deleted successfully", "response": results});
+                    res.send({ "status": 200, "message": "Team target deleted successfully", "response": results });
                 }
             });
         }
     });
 });
 
-users.delete('/user-targets/:id/:userID', function(req, res, next) {
+users.delete('/user-targets/:id/:userID', function (req, res, next) {
     let date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('UPDATE user_targets SET status = 0, date_modified = ? WHERE ID = ?', [date, req.params.id], function (error, result, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             let query = 'SELECT *,(select u.fullname from users u where u.ID = t.userID) as user,(select u.name from sub_periods u where u.ID = t.sub_periodID AND u.periodID = t.periodID) as period,' +
                 '(select u.title from targets u where u.ID = t.targetID) as target,(select u.type from targets u where u.ID = t.targetID) as type from user_targets t where t.status = 1 and t.userID = ? order by t.ID desc';
             db.query(query, [req.params.userID], function (error, results, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
-                    res.send({"status": 200, "message": "User target deleted successfully", "response": results});
+                    res.send({ "status": 200, "message": "User target deleted successfully", "response": results });
                 }
             });
         }
     });
 });
 
-users.get('/users-list-full', function(req, res, next) {
+users.get('/users-list-full', function (req, res, next) {
     let query = 'SELECT *, (select u.fullname from users u where u.ID = s.supervisor) as supervisor, (select u.role_name from user_roles u where u.ID = s.user_role) as Role ' +
         'from users s where s.user_role not in (3, 4) order by s.ID desc';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
     });
 });
 
-users.get('/branches', function(req, res, next) {
+users.get('/branches', function (req, res, next) {
     let query = 'SELECT * from branches';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
     });
 });
 
-users.get('/states', function(req, res, next) {
+users.get('/states', function (req, res, next) {
     let query = 'SELECT * from state';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
     });
 });
 
-users.get('/countries', function(req, res, next) {
+users.get('/countries', function (req, res, next) {
     let query = 'SELECT * from country';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
     });
 });
 
-users.get('/clients-list', function(req, res, next) {
+users.get('/clients-list', function (req, res, next) {
     let query = 'select * from clients where status = 1';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
     });
 });
 
-users.get('/clients-list-full', function(req, res, next) {
+users.get('/clients-list-full', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         query = 'select *, (select l.fullname from users l where l.ID = loan_officer) as loan_officer_name from clients ';
-    if (start && end){
-        start = "'"+moment(start).utcOffset('+0100').format("YYYY-MM-DD")+"'";
-        end = "'"+moment(end).add(1, 'days').format("YYYY-MM-DD")+"'";
-        query = query.concat('where TIMESTAMP(date_created) between TIMESTAMP('+start+') and TIMESTAMP('+end+')')
+    if (start && end) {
+        start = "'" + moment(start).utcOffset('+0100').format("YYYY-MM-DD") + "'";
+        end = "'" + moment(end).add(1, 'days').format("YYYY-MM-DD") + "'";
+        query = query.concat('where TIMESTAMP(date_created) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + ')')
     }
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
     });
 });
 
-users.get('/clients-list-full/:officerID', function(req, res, next) {
+users.get('/clients-list-full/:officerID', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         id = req.params.officerID,
         query = 'select *, (select l.fullname from users l where l.ID = loan_officer) as loan_officer_name from clients ',
-        query2 = 'select *, (select l.fullname from users l where l.ID = loan_officer) as loan_officer_name from clients where loan_officer = '+id,
-        query3 = 'select *, (select l.fullname from users l where l.ID = loan_officer) as loan_officer_name from clients where (select supervisor from users where users.id = clients.loan_officer) = '+id;
+        query2 = 'select *, (select l.fullname from users l where l.ID = loan_officer) as loan_officer_name from clients where loan_officer = ' + id,
+        query3 = 'select *, (select l.fullname from users l where l.ID = loan_officer) as loan_officer_name from clients where (select supervisor from users where users.id = clients.loan_officer) = ' + id;
     if (id)
         query = query2;
-    if (start && end){
-        let start_query = "'"+moment(start).utcOffset('+0100').format("YYYY-MM-DD")+"'";
-        let end_query = "'"+moment(end).add(1, 'days').format("YYYY-MM-DD")+"'";
-        query = query.concat(' where TIMESTAMP(date_created) between TIMESTAMP('+start_query+') and TIMESTAMP('+end_query+')')
+    if (start && end) {
+        let start_query = "'" + moment(start).utcOffset('+0100').format("YYYY-MM-DD") + "'";
+        let end_query = "'" + moment(end).add(1, 'days').format("YYYY-MM-DD") + "'";
+        query = query.concat(' where TIMESTAMP(date_created) between TIMESTAMP(' + start_query + ') and TIMESTAMP(' + end_query + ')')
     }
-    if (id){
+    if (id) {
         db.query(query, function (error, results1, fields) {
-            if(error){
-                res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+            if (error) {
+                res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
             } else {
                 db.query(query3, function (error, results2, fields) {
-                    if(error){
-                        res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+                    if (error) {
+                        res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
                     } else {
-                        let results = _.unionBy(results1,results2,'ID');
+                        let results = _.unionBy(results1, results2, 'ID');
                         res.send(JSON.stringify(results));
                     }
                 });
@@ -1282,8 +1282,8 @@ users.get('/clients-list-full/:officerID', function(req, res, next) {
         });
     } else {
         db.query(query, function (error, results, fields) {
-            if(error){
-                res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+            if (error) {
+                res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
             } else {
                 res.send(JSON.stringify(results));
             }
@@ -1291,11 +1291,11 @@ users.get('/clients-list-full/:officerID', function(req, res, next) {
     }
 });
 
-users.get('/users-list-v2', function(req, res, next) {
+users.get('/users-list-v2', function (req, res, next) {
     let query = 'SELECT ID, username, fullname, email, status, date_created from clients where status = 1 AND client_type <> "corporate" order by fullname asc';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
@@ -1305,7 +1305,7 @@ users.get('/users-list-v2', function(req, res, next) {
 users.get('/get', (req, res) => {
     let query = 'SELECT ID, username, fullname, email, status, date_created from users where status = 1 AND user_role NOT IN (1, 3, 4) order by fullname asc';
     db.query(query, (error, results) => {
-        if(error){
+        if (error) {
             res.send({
                 "status": 500,
                 "error": error,
@@ -1321,44 +1321,44 @@ users.get('/get', (req, res) => {
     });
 });
 
-users.get('/user-dets/:id', function(req, res, next) {
+users.get('/user-dets/:id', function (req, res, next) {
     let query = 'SELECT *, (select u.role_name from user_roles u where u.ID = user_role) as Role, (select fullname from users where users.ID = u.supervisor) as Super from users u where id = ? order by ID desc ';
     db.query(query, req.params.id, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(results);
         }
     });
 });
 
-users.get('/client-dets/:id', function(req, res, next) {
+users.get('/client-dets/:id', function (req, res, next) {
     let query = 'SELECT *, (select fullname from users u where u.ID = clients.loan_officer) as officer, \n' +
         '(select branch_name from branches b where b.ID = clients.branch) as branchname, \n' +
         '(SELECT sum(amount) FROM escrow WHERE clientID=clients.ID AND status=1) AS escrow ,  \n' +
-        '(select sum(loan_amount) from applications where userID = clients.ID and not (status = 0 and close_status = 0)) as total_loans, \n'+
+        '(select sum(loan_amount) from applications where userID = clients.ID and not (status = 0 and close_status = 0)) as total_loans, \n' +
         '(select \n' +
         '(select sum(loan_amount) from applications where userID = clients.ID and not (status = 0 and close_status = 0)) - \n' +
         'sum(payment_amount)\n' +
         'from schedule_history\n' +
         'where applicationID in (select id from applications where userid = clients.ID and not (status = 0 and close_status = 0))\n' +
-        'and status = 1) as total_balance, \n'+
+        'and status = 1) as total_balance, \n' +
         '(select \n' +
         'sum(interest_amount)\n' +
         'from schedule_history\n' +
         'where applicationID in (select id from applications where userid = clients.ID and not (status = 0 and close_status = 0))\n' +
-        'and status = 1) as total_interests\n'+
+        'and status = 1) as total_interests\n' +
         'from clients where id = ? order by id desc \n';
     db.query(query, req.params.id, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(results);
         }
     });
 });
 
-users.get('/incomplete-records', function(req, res, next){
+users.get('/incomplete-records', function (req, res, next) {
     let query = `select * from clients where 
                 (fullname = ' ' or fullname is null) or 
                 (username = ' ' or username is null) or 
@@ -1406,30 +1406,30 @@ users.get('/incomplete-records', function(req, res, next){
                 (kin_phone = ' ' or kin_phone is null) or 
                 (kin_relationship = ' ' or kin_relationship is null)`
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(results);
         }
     });
 });
 
-users.get('/user-roles', function(req, res, next) {
+users.get('/user-roles', function (req, res, next) {
     let query = 'SELECT * from user_roles where status = 1 and id not in (1, 3, 4)';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
     });
 });
 
-users.get('/roles/:role', function(req, res, next) {
+users.get('/roles/:role', function (req, res, next) {
     let query = (req.params.role === '1') ? 'SELECT * from user_roles where id not in (3, 4, 1) ' : 'SELECT * from user_roles where id not in (3, 4) ';
     db.query(query, req.params.role, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
@@ -1437,11 +1437,11 @@ users.get('/roles/:role', function(req, res, next) {
 });
 
 /* GET users count. */
-users.get('/usersCount', function(req, res, next) {
+users.get('/usersCount', function (req, res, next) {
     let query = 'SELECT count(*) as total from users where status = 1';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
@@ -1449,11 +1449,11 @@ users.get('/usersCount', function(req, res, next) {
 });
 
 /* GET All Requests count. */
-users.get('/all-requests', function(req, res, next) {
+users.get('/all-requests', function (req, res, next) {
     let query = 'select count(*) as requests from requests, clients where clients.ID = requests.userID AND requests.status <> 0';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(results);
         }
@@ -1461,11 +1461,11 @@ users.get('/all-requests', function(req, res, next) {
 });
 
 /* GET All Applications count. */
-users.get('/all-applications', function(req, res, next) {
+users.get('/all-applications', function (req, res, next) {
     let query = 'select count(*) as applications from applications where applications.status = 1';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(results);
         }
@@ -1473,27 +1473,27 @@ users.get('/all-applications', function(req, res, next) {
 });
 
 /* GET Specific User. */
-users.get('/user/:id', function(req, res, next) {
-    let path = 'files/users/'+req.params.id+'/',
+users.get('/user/:id', function (req, res, next) {
+    let path = 'files/users/' + req.params.id + '/',
         query = 'SELECT * from users where username = ?';
     db.query(query, [req.params.id], function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
-            fs.stat(path, function(err) {
-                if (!err){
+            fs.stat(path, function (err) {
+                if (!err) {
                     let obj = {},
                         items = [],
                         image = "";
-                    fs.readdir(path, function (err, files){
+                    fs.readdir(path, function (err, files) {
                         files = helperFunctions.removeFileDuplicates(path, files);
-                        files.forEach(function (file){
-                            image = path+file;
+                        files.forEach(function (file) {
+                            image = path + file;
                         });
-                        res.send(JSON.stringify({"status": 200, "error": null, "response": results, "image": image}));
+                        res.send(JSON.stringify({ "status": 200, "error": null, "response": results, "image": image }));
                     });
-                }else{
-                    res.send(JSON.stringify({"status": 200, "error": null, "response": results, "path": "No Image Uploaded Yet"}));
+                } else {
+                    res.send(JSON.stringify({ "status": 200, "error": null, "response": results, "path": "No Image Uploaded Yet" }));
                 }
             });
         }
@@ -1501,15 +1501,15 @@ users.get('/user/:id', function(req, res, next) {
 });
 
 /* Edit User Info */
-users.post('/edit-user/:id/:user', function(req, res, next) {
+users.post('/edit-user/:id/:user', function (req, res, next) {
     let date = Date.now(),
         postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let payload = [postData.fullname, postData.user_role, postData.email, postData.branch, postData.supervisor, postData.loan_officer_status, postData.date_modified, req.params.id],
         query = 'Update users SET fullname=?, user_role=?, email=?, branch =?, supervisor =?, loan_officer_status =?, date_modified = ? where id=?';
     db.query(query, payload, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         }
         else {
             let payload = {}
@@ -1518,22 +1518,22 @@ users.post('/edit-user/:id/:user', function(req, res, next) {
             payload.description = 'User details updated.'
             payload.affected = req.params.id
             notificationsService.log(req, payload)
-            res.send(JSON.stringify({"status": 200, "error": null, "response": "User Details Updated"}));
+            res.send(JSON.stringify({ "status": 200, "error": null, "response": "User Details Updated" }));
         }
     });
 });
 
-users.post('/edit-client/:id', function(req, res, next) {
+users.post('/edit-client/:id', function (req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_client', async (xeroClient) => {
         let date = Date.now(),
             postData = req.body;
         postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
         let payload = [postData.username, postData.fullname, postData.first_name, postData.middle_name, postData.last_name, postData.phone, postData.address, postData.email,
-            postData.gender, postData.dob, postData.marital_status, postData.loan_officer, postData.branch, postData.bank, postData.account, postData.bvn, postData.client_state, postData.postcode, postData.client_country,
-            postData.years_add, postData.ownership , postData.employer_name ,postData.industry ,postData.job, postData.salary, postData.job_country , postData.off_address, postData.off_state,
-            postData.doe, postData.guarantor_name, postData.guarantor_occupation, postData.relationship, postData.years_known, postData.guarantor_phone, postData.guarantor_email,
-            postData.guarantor_address, postData.gua_country, postData.product_sold, postData.capital_invested, postData.market_name, postData.market_years,
-            postData.market_address, postData.kin_fullname, postData.kin_phone, postData.kin_relationship, postData.images_folder, postData.date_modified, req.params.id];
+        postData.gender, postData.dob, postData.marital_status, postData.loan_officer, postData.branch, postData.bank, postData.account, postData.bvn, postData.client_state, postData.postcode, postData.client_country,
+        postData.years_add, postData.ownership, postData.employer_name, postData.industry, postData.job, postData.salary, postData.job_country, postData.off_address, postData.off_state,
+        postData.doe, postData.guarantor_name, postData.guarantor_occupation, postData.relationship, postData.years_known, postData.guarantor_phone, postData.guarantor_email,
+        postData.guarantor_address, postData.gua_country, postData.product_sold, postData.capital_invested, postData.market_name, postData.market_years,
+        postData.market_address, postData.kin_fullname, postData.kin_phone, postData.kin_relationship, postData.images_folder, postData.date_modified, req.params.id];
         let query = 'Update clients SET username = ?, fullname=?, first_name=?, middle_name=?, last_name=?,  phone=?, address = ?, email=?, gender=?, dob = ?, marital_status=?, loan_officer=?, branch=?, bank=?, account=?, bvn = ?, ' +
             'client_state=?, postcode=?, client_country=?, years_add=?, ownership=?, employer_name=?, industry=?, job=?, salary=?, job_country=?, off_address=?, off_state=?, ' +
             'doe=?, guarantor_name=?, guarantor_occupation=?, relationship=?, years_known=?, guarantor_phone=?, guarantor_email=?, guarantor_address=?, gua_country=?, ' +
@@ -1556,8 +1556,8 @@ users.post('/edit-client/:id', function(req, res, next) {
             let xeroContact = await xeroClient.contacts.update(contact);
         }
         db.query(query, payload, function (error, results, fields) {
-            if(error){
-                res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+            if (error) {
+                res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
             } else {
                 let payload = {}
                 payload.category = 'Clients'
@@ -1565,110 +1565,110 @@ users.post('/edit-client/:id', function(req, res, next) {
                 payload.description = 'Client details updated.'
                 payload.affected = req.params.id
                 notificationsService.log(req, payload)
-                res.send(JSON.stringify({"status": 200, "error": null, "response": "Client Details Updated"}));
+                res.send(JSON.stringify({ "status": 200, "error": null, "response": "Client Details Updated" }));
             }
         });
     });
 });
 
 /* Change Branch Status */
-users.post('/del-branch/:id', function(req, res, next) {
+users.post('/del-branch/:id', function (req, res, next) {
     let date = Date.now(),
         postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let payload = [postData.date_modified, req.params.id],
         query = 'Update branches SET status = 0, date_modified = ? where id=?';
     db.query(query, payload, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
-            res.send(JSON.stringify({"status": 200, "error": null, "response": "Branch Disabled!"}));
+            res.send(JSON.stringify({ "status": 200, "error": null, "response": "Branch Disabled!" }));
         }
     });
 });
 
 /* Reactivate Branch */
-users.post('/en-branch/:id', function(req, res, next) {
+users.post('/en-branch/:id', function (req, res, next) {
     let date = Date.now(),
         postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let payload = [postData.date_modified, req.params.id],
         query = 'Update branches SET status = 1, date_modified = ? where id=?';
     db.query(query, payload, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
-            res.send(JSON.stringify({"status": 200, "error": null, "response": "Branch Re-enabled!"}));
+            res.send(JSON.stringify({ "status": 200, "error": null, "response": "Branch Re-enabled!" }));
         }
     });
 });
 
 /* Change Role Status */
-users.post('/del-role/:id', function(req, res, next) {
+users.post('/del-role/:id', function (req, res, next) {
     let date = Date.now(),
         postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let payload = [postData.date_modified, req.params.id],
         query = 'Update user_roles SET status = 0, date_modified = ? where id=?';
     db.query(query, payload, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
-            res.send(JSON.stringify({"status": 200, "error": null, "response": "Role Disabled!"}));
+            res.send(JSON.stringify({ "status": 200, "error": null, "response": "Role Disabled!" }));
         }
     });
 });
 
 /* Reactivate Role */
-users.post('/en-role/:id', function(req, res, next) {
+users.post('/en-role/:id', function (req, res, next) {
     let date = Date.now(),
         postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let payload = [postData.date_modified, req.params.id],
         query = 'Update user_roles SET status = 1, date_modified = ? where id=?';
     db.query(query, payload, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
-            res.send(JSON.stringify({"status": 200, "error": null, "response": "Role Re-enabled!"}));
+            res.send(JSON.stringify({ "status": 200, "error": null, "response": "Role Re-enabled!" }));
         }
     });
 });
 
 // Disable User
-users.post('/del-user/:id', function(req, res, next) {
+users.post('/del-user/:id', function (req, res, next) {
     let date = Date.now(),
         postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let payload = [postData.date_modified, req.params.id],
         query = 'Update users SET status = 0, date_modified = ? where id=?';
     db.query(query, payload, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
-            res.send(JSON.stringify({"status": 200, "error": null, "response": "User Disabled!"}));
+            res.send(JSON.stringify({ "status": 200, "error": null, "response": "User Disabled!" }));
         }
     });
 });
 
 // Enable User
-users.post('/en-user/:id', function(req, res, next) {
+users.post('/en-user/:id', function (req, res, next) {
     let date = Date.now(),
         postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let payload = [postData.date_modified, req.params.id],
         query = 'Update users SET status = 1, date_modified = ? where id=?';
     db.query(query, payload, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
-            res.send(JSON.stringify({"status": 200, "error": null, "response": "User Reactivated!"}));
+            res.send(JSON.stringify({ "status": 200, "error": null, "response": "User Reactivated!" }));
         }
     });
 });
 
 // Change Client Status
-users.post('/del-client/:id', function(req, res, next) {
+users.post('/del-client/:id', function (req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_client', async (xeroClient) => {
         let date = Date.now(),
             postData = req.body;
@@ -1682,17 +1682,17 @@ users.post('/del-client/:id', function(req, res, next) {
             });
         }
         db.query(query, payload, function (error, results, fields) {
-            if(error){
-                res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+            if (error) {
+                res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
             } else {
-                res.send(JSON.stringify({"status": 200, "error": null, "response": "Client Disabled!"}));
+                res.send(JSON.stringify({ "status": 200, "error": null, "response": "Client Disabled!" }));
             }
         });
     });
 });
 
 // Enable Client
-users.post('/en-client/:id', function(req, res, next) {
+users.post('/en-client/:id', function (req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_client', async (xeroClient) => {
         let date = Date.now(),
             postData = req.body;
@@ -1706,34 +1706,35 @@ users.post('/en-client/:id', function(req, res, next) {
         //     });
         // }
         db.query(query, payload, function (error, results, fields) {
-            if(error){
-                res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+            if (error) {
+                res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
             } else {
-                res.send(JSON.stringify({"status": 200, "error": null, "response": "Client Reactivated!"}));
+                res.send(JSON.stringify({ "status": 200, "error": null, "response": "Client Reactivated!" }));
             }
         });
     });
 });
 
 /* Change User Password */
-users.post('/changePassword/:id', function(req, res, next) {
+users.post('/changePassword/:id', function (req, res, next) {
     let date_modified = Date.now(),
         query = 'Update users SET password = ?, date_modified = ?  where id=?';
-    db.query(query, [bcrypt.hashSync(req.body.password, parseInt(process.env.SALT_ROUNDS)), date_modified, req.params.id], function (error, results, fields) {                   ;
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+    db.query(query, [bcrypt.hashSync(req.body.password, parseInt(process.env.SALT_ROUNDS)), date_modified, req.params.id], function (error, results, fields) {
+        ;
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "User password updated!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "User password updated!" });
         }
     });
 });
 
 /* GET Vehicle Owners listing. */
-users.get('/owners/', function(req, res, next) {
+users.get('/owners/', function (req, res, next) {
     let query = 'SELECT * from users where user_role = 4';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
@@ -1741,15 +1742,15 @@ users.get('/owners/', function(req, res, next) {
 });
 
 /* Add New Vehicle Owner*/
-users.post('/new-owner', function(req, res, next) {
+users.post('/new-owner', function (req, res, next) {
     let postData = req.body;
     postData.date_created = Date.now();
-    let query =  'INSERT INTO vehicle_owners Set ?';
-    db.query(query,postData, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+    let query = 'INSERT INTO vehicle_owners Set ?';
+    db.query(query, postData, function (error, results, fields) {
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
-            res.send(JSON.stringify({"status": 200, "error": null, "response": "New Vehicle Owner Added!"}));
+            res.send(JSON.stringify({ "status": 200, "error": null, "response": "New Vehicle Owner Added!" }));
         }
     });
 });
@@ -1759,19 +1760,19 @@ users.post('/new-owner', function(req, res, next) {
  * Payload => Firstname, Lastname, Phone, Collateral
  */
 
-users.post('/apply', function(req, res) {
+users.post('/apply', function (req, res) {
     let workflow_id = req.body.workflowID,
-        postData = Object.assign({},req.body),
-        query =  'INSERT INTO applications Set ?';
+        postData = Object.assign({}, req.body),
+        query = 'INSERT INTO applications Set ?';
     if (!workflow_id)
-        query =  'INSERT INTO requests Set ?';
+        query = 'INSERT INTO requests Set ?';
     delete postData.name;
     delete postData.email;
     delete postData.username;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query(query, postData, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             if (!workflow_id) {
                 emailService.send({
@@ -1779,11 +1780,11 @@ users.post('/apply', function(req, res) {
                     subject: 'Application Successful',
                     template: 'main'
                 });
-                return res.send({"status": 200, "message": "New Application Added!"});
+                return res.send({ "status": 200, "message": "New Application Added!" });
             }
-            let process_ =  process;
-            helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process, stage) {
-                db.query('SELECT MAX(ID) AS ID from applications', function(err, application, fields) {
+            let process_ = process;
+            helperFunctions.getNextWorkflowProcess(false, workflow_id, false, function (process, stage) {
+                db.query('SELECT MAX(ID) AS ID from applications', function (err, application, fields) {
                     process.workflowID = workflow_id;
                     process.agentID = postData.agentID;
                     process.applicationID = application[0]['ID'];
@@ -1795,9 +1796,9 @@ users.post('/apply', function(req, res) {
                     payload.description = 'New Application Created'
                     payload.affected = application[0]['ID']
                     notificationsService.log(req, payload)
-                    db.query('INSERT INTO workflow_processes SET ?',process, function (error, results, fields) {
-                        if(error){
-                            return res.send({"status": 500, "error": error, "response": null});
+                    db.query('INSERT INTO workflow_processes SET ?', process, function (error, results, fields) {
+                        if (error) {
+                            return res.send({ "status": 500, "error": error, "response": null });
                         } else {
                             let x3_link = '',
                                 required_docs = '';
@@ -1814,8 +1815,8 @@ users.post('/apply', function(req, res) {
                                 }
                             };
                             sendApplyEmail(mailOptions, workflow_id);
-                            if(stage) helperFunctions.workflowApprovalNotification(process, stage, workflow_id);
-                            return res.send({"status": 200, "message": "New Application Added!", "response": application[0]});
+                            if (stage) helperFunctions.workflowApprovalNotification(process, stage, workflow_id);
+                            return res.send({ "status": 200, "message": "New Application Added!", "response": application[0] });
                         }
                     });
                 });
@@ -1827,28 +1828,28 @@ users.post('/apply', function(req, res) {
 function sendApplyEmail(mailOptions, workflow_id) {
     let query = `SELECT * FROM workflows WHERE ID = ${workflow_id}`;
     db.query(query, (error, worklow) => {
-        if (!worklow || !worklow[0] || worklow[0]['client_email'] === 1) 
+        if (!worklow || !worklow[0] || worklow[0]['client_email'] === 1)
             return emailService.send(mailOptions);
         return;
     });
 }
 
-users.post('/contact', function(req, res) {
+users.post('/contact', function (req, res) {
     let data = req.body;
     if (!data.fullname || !data.email || !data.subject || !data.message)
-        return res.send({"status": 500, "message": "Please send all required parameters"});
+        return res.send({ "status": 500, "message": "Please send all required parameters" });
     data.date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let mailOptions = {
         to: 'getloan@loan35.com',
-        subject: 'Feedback: '+data.subject,
+        subject: 'Feedback: ' + data.subject,
         template: 'contact',
         context: data
     };
     emailService.send(mailOptions);
-    return res.send({"status": 200, "message": "Feedback sent successfully!"});
+    return res.send({ "status": 200, "message": "Feedback sent successfully!" });
 });
 
-users.post('/sendmail', function(req, res) {
+users.post('/sendmail', function (req, res) {
     let data = req.body;
     if (!data.name || !data.email || !data.company || !data.phone)
         return res.send("Required Parameters not sent!");
@@ -1856,7 +1857,7 @@ users.post('/sendmail', function(req, res) {
     let mailOptions = {
         from: 'ATB Cisco <solutions@atbtechsoft.com>',
         to: 'sibironke@atbtechsoft.com',
-        subject: 'ATB Cisco Application: '+data.name,
+        subject: 'ATB Cisco Application: ' + data.name,
         template: 'mail',
         context: data
     };
@@ -1865,7 +1866,7 @@ users.post('/sendmail', function(req, res) {
 });
 
 /* GET User Applications. */
-users.get('/applications', function(req, res, next) {
+users.get('/applications', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         type = req.query.type;
@@ -1880,8 +1881,8 @@ users.get('/applications', function(req, res, next) {
         '(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status ' +
         'FROM clients AS u, workflow_processes AS w, applications AS a LEFT JOIN corporates AS c ON a.userID = c.ID ' +
         'WHERE u.ID=a.userID AND a.status <> 0 AND w.ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=a.ID AND status=1) ';
-    if (type){
-        switch (type){
+    if (type) {
+        switch (type) {
             case '1': {
                 //do nothing
                 break;
@@ -1909,47 +1910,47 @@ users.get('/applications', function(req, res, next) {
         }
     }
     if (start && end)
-        query = query.concat("AND TIMESTAMP(a.date_created) < TIMESTAMP('"+end+"') AND TIMESTAMP(a.date_created) >= TIMESTAMP('"+start+"') ");
+        query = query.concat("AND TIMESTAMP(a.date_created) < TIMESTAMP('" + end + "') AND TIMESTAMP(a.date_created) >= TIMESTAMP('" + start + "') ");
     query = query.concat("ORDER BY a.ID desc");
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "User applications fetched successfully!", "response": results});
+            res.send({ "status": 200, "message": "User applications fetched successfully!", "response": results });
         }
     });
 });
 
-users.get('/requests', function(req, res, next) {
+users.get('/requests', function (req, res, next) {
     let query = 'SELECT u.fullname, u.phone, u.email, u.address, a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, ' +
         'a.loan_amount, a.date_modified, a.comment FROM clients AS u, requests AS a WHERE u.ID=a.userID AND a.status <> 0 ORDER BY a.ID desc';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "User applications fetched successfully!", "response": results});
+            res.send({ "status": 200, "message": "User applications fetched successfully!", "response": results });
         }
     });
 });
 
 //Get A User's Applications For Profile Page
-users.get('/user-applications/:id', function(req, res, next) {
+users.get('/user-applications/:id', function (req, res, next) {
     let query = 'SELECT * FROM applications WHERE userid = ? AND interest_rate <> 0 ORDER BY id desc';
     db.query(query, req.params.id, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             res.send(results);
         }
     });
 });
 
-users.get('/application-id/:id', function(req, res, next) {
+users.get('/application-id/:id', function (req, res, next) {
     let obj = {},
         application_id = req.params.id,
-        path = 'files/application-'+application_id+'/',
+        path = 'files/application-' + application_id + '/',
         query = 'SELECT u.ID userID, u.fullname, u.phone, u.email, u.address, u.industry, u.date_created client_date_created, a.fees, ' +
-            '(SELECT title FROM loan_purpose_settings WHERE ID = a.loan_purpose) loan_purpose, (SELECT GROUP_CONCAT(document) FROM workflow_stages WHERE workflowID = a.workflowID) documents, '+
+            '(SELECT title FROM loan_purpose_settings WHERE ID = a.loan_purpose) loan_purpose, (SELECT GROUP_CONCAT(document) FROM workflow_stages WHERE workflowID = a.workflowID) documents, ' +
             '(SELECT GROUP_CONCAT(download) FROM workflow_stages WHERE workflowID = a.workflowID) downloads, cast(u.loan_officer as unsigned) loan_officer, ' +
             'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.interest_rate, a.repayment_date, ' +
             'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, a.interest_rate, a.duration, a.preapplicationID, ' +
@@ -1962,23 +1963,23 @@ users.get('/application-id/:id', function(req, res, next) {
             'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
             'FROM clients AS u INNER JOIN applications AS a ON u.ID = a.userID LEFT JOIN remita_mandates r ' +
             'ON (r.applicationID = a.ID AND r.status = 1) WHERE a.ID = ?';
-    db.getConnection(function(err, connection) {
+    db.getConnection(function (err, connection) {
         if (err) throw err;
 
         connection.query(query, [application_id], function (error, result, fields) {
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
+            if (error) {
+                res.send({ "status": 500, "error": error, "response": null });
             } else {
-                result = (result[0])? result[0] : {};
+                result = (result[0]) ? result[0] : {};
                 connection.query('SELECT * FROM application_schedules WHERE applicationID=?', [application_id], function (error, schedule, fields) {
                     if (error) {
-                        res.send({"status": 500, "error": error, "response": null});
+                        res.send({ "status": 500, "error": error, "response": null });
                     } else {
                         result.schedule = schedule;
                         connection.query('SELECT * FROM schedule_history WHERE applicationID=? AND status=1 ORDER BY ID desc', [application_id], function (error, payment_history, fields) {
                             connection.release();
                             if (error) {
-                                res.send({"status": 500, "error": error, "response": null});
+                                res.send({ "status": 500, "error": error, "response": null });
                             } else {
                                 result.payment_history = payment_history;
                                 let path2 = `files/client_application-${result.preapplicationID}/`,
@@ -1986,50 +1987,50 @@ users.get('/application-id/:id', function(req, res, next) {
                                     path4 = `files/workflow_download-${result.workflowID}/`;
                                 result.files = {};
                                 result.file_downloads = {};
-                                fs.readdir(path, function (err, files){
+                                fs.readdir(path, function (err, files) {
                                     if (err) files = [];
                                     files = helperFunctions.removeFileDuplicates(path, files);
-                                    async.forEach(files, function (file, callback){
+                                    async.forEach(files, function (file, callback) {
                                         let filename = file.split('.')[0].split('_');
                                         filename.shift();
-                                        obj[filename.join('_')] = path+file;
+                                        obj[filename.join('_')] = path + file;
                                         callback();
-                                    }, function(data){
+                                    }, function (data) {
                                         result.files = Object.assign({}, result.files, obj);
                                         obj = {};
-                                        fs.readdir(path2, function (err, files){
+                                        fs.readdir(path2, function (err, files) {
                                             if (err) files = [];
                                             files = helperFunctions.removeFileDuplicates(path2, files);
-                                            async.forEach(files, function (file, callback){
+                                            async.forEach(files, function (file, callback) {
                                                 let filename = file.split('.')[0].split('_');
                                                 filename.shift();
-                                                obj[filename.join('_')] = path2+file;
+                                                obj[filename.join('_')] = path2 + file;
                                                 callback();
-                                            }, function(data){
+                                            }, function (data) {
                                                 result.files = Object.assign({}, result.files, obj);
                                                 obj = {};
-                                                fs.readdir(path3, function (err, files){
+                                                fs.readdir(path3, function (err, files) {
                                                     if (err) files = [];
                                                     files = helperFunctions.removeFileDuplicates(path3, files);
-                                                    async.forEach(files, function (file, callback){
+                                                    async.forEach(files, function (file, callback) {
                                                         let filename = file.split('.')[0].split('_');
                                                         filename.shift();
-                                                        obj[filename.join('_')] = path3+file;
+                                                        obj[filename.join('_')] = path3 + file;
                                                         callback();
-                                                    }, function(data){
+                                                    }, function (data) {
                                                         result.file_downloads = Object.assign({}, result.file_downloads, obj);
                                                         obj = {};
-                                                        fs.readdir(path4, function (err, files){
+                                                        fs.readdir(path4, function (err, files) {
                                                             if (err) files = [];
                                                             files = helperFunctions.removeFileDuplicates(path4, files);
-                                                            async.forEach(files, function (file, callback){
+                                                            async.forEach(files, function (file, callback) {
                                                                 let filename = file.split('.')[0].split('_');
                                                                 filename.shift();
-                                                                obj[filename.join('_')] = path4+file;
+                                                                obj[filename.join('_')] = path4 + file;
                                                                 callback();
-                                                            }, function(data){
+                                                            }, function (data) {
                                                                 result.file_downloads = Object.assign({}, result.file_downloads, obj);
-                                                                return res.send({"status": 200, "message": "User applications fetched successfully!", "response": result});
+                                                                return res.send({ "status": 200, "message": "User applications fetched successfully!", "response": result });
                                                             });
                                                         });
                                                     });
@@ -2048,7 +2049,7 @@ users.get('/application-id/:id', function(req, res, next) {
 });
 
 /* GET User Applications. */
-users.get('/applications/:officerID', function(req, res, next) {
+users.get('/applications/:officerID', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         type = req.query.type,
@@ -2064,12 +2065,12 @@ users.get('/applications/:officerID', function(req, res, next) {
         "(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status " +
         "FROM clients AS u, workflow_processes AS w, applications AS a LEFT JOIN corporates AS c ON a.userID = c.ID " +
         "WHERE u.ID=a.userID AND a.status <> 0 AND w.ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=a.ID AND status=1) ",
-        query2 = query.concat('AND u.loan_officer = '+id+' '),
-        query3 = query.concat('AND (select supervisor from users where users.id = u.loan_officer) =  '+id+' ');
+        query2 = query.concat('AND u.loan_officer = ' + id + ' '),
+        query3 = query.concat('AND (select supervisor from users where users.id = u.loan_officer) =  ' + id + ' ');
     if (id)
         query = query2;
-    if (type){
-        switch (type){
+    if (type) {
+        switch (type) {
             case '1': {
                 //do nothing
                 break;
@@ -2102,38 +2103,38 @@ users.get('/applications/:officerID', function(req, res, next) {
         }
     }
     if (start && end) {
-        query = query.concat("AND TIMESTAMP(a.date_created) < TIMESTAMP('"+end+"') AND TIMESTAMP(a.date_created) >= TIMESTAMP('"+start+"') ");
-        query3 = query3.concat("AND TIMESTAMP(a.date_created) < TIMESTAMP('"+end+"') AND TIMESTAMP(a.date_created) >= TIMESTAMP('"+start+"') ");
+        query = query.concat("AND TIMESTAMP(a.date_created) < TIMESTAMP('" + end + "') AND TIMESTAMP(a.date_created) >= TIMESTAMP('" + start + "') ");
+        query3 = query3.concat("AND TIMESTAMP(a.date_created) < TIMESTAMP('" + end + "') AND TIMESTAMP(a.date_created) >= TIMESTAMP('" + start + "') ");
     }
     query = query.concat("ORDER BY a.ID desc");
     query3 = query3.concat("ORDER BY a.ID desc");
-    if (id){
+    if (id) {
         db.query(query, function (error, results1, fields) {
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
+            if (error) {
+                res.send({ "status": 500, "error": error, "response": null });
             } else {
                 db.query(query3, function (error, results2, fields) {
-                    if(error){
-                        res.send({"status": 500, "error": error, "response": null});
+                    if (error) {
+                        res.send({ "status": 500, "error": error, "response": null });
                     } else {
                         results = results1.concat(results2);
-                        res.send({"status": 200, "message": "User applications fetched successfully!", "response": results});
+                        res.send({ "status": 200, "message": "User applications fetched successfully!", "response": results });
                     }
                 });
             }
         });
     } else {
         db.query(query, function (error, results, fields) {
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
+            if (error) {
+                res.send({ "status": 500, "error": error, "response": null });
             } else {
-                res.send({"status": 200, "message": "User applications fetched successfully!", "response": results});
+                res.send({ "status": 200, "message": "User applications fetched successfully!", "response": results });
             }
         });
     }
 });
 
-users.get('/collections/filter', function(req, res, next) {
+users.get('/collections/filter', function (req, res, next) {
     let type = req.query.type,
         range = parseInt(req.query.range),
         today = moment().utcOffset('+0100').format('YYYY-MM-DD');
@@ -2158,7 +2159,7 @@ users.get('/collections/filter', function(req, res, next) {
                 return res.send(response);
             let results_interest = response.response,
                 results = results_principal.concat(results_interest);
-            return res.send({"status": 200, "message": "Collections fetched successfully!", "response": results});
+            return res.send({ "status": 200, "message": "Collections fetched successfully!", "response": results });
         });
     });
 });
@@ -2176,97 +2177,97 @@ function collectionsQueryMiddleware(query, type, range, today, callback) {
     }
     query = query.concat(" ORDER BY ID desc");
     db.query(query, function (error, results, fields) {
-        if(error){
-            callback({"status": 500, "error": error, "response": null});
+        if (error) {
+            callback({ "status": 500, "error": error, "response": null });
         } else {
-            callback({"status": 200, "response": results});
+            callback({ "status": 200, "response": results });
         }
     });
 }
 
-function collectionDueRangeQuery(today, range){
-    switch (range){
+function collectionDueRangeQuery(today, range) {
+    switch (range) {
         case 0: {
-            return 'AND TIMESTAMP(payment_collect_date) = TIMESTAMP("'+today+'") ';
+            return 'AND TIMESTAMP(payment_collect_date) = TIMESTAMP("' + today + '") ';
         }
         case 1: {
-            return 'AND TIMESTAMP(payment_collect_date) = TIMESTAMP("'+moment(today).add(1, "days").format("YYYY-MM-DD")+'") ';
+            return 'AND TIMESTAMP(payment_collect_date) = TIMESTAMP("' + moment(today).add(1, "days").format("YYYY-MM-DD") + '") ';
         }
         case 7: {
-            return 'AND TIMESTAMP(payment_collect_date) >= TIMESTAMP("'+moment(today).add(2, "days").format("YYYY-MM-DD")+'") ' +
-                'AND TIMESTAMP(payment_collect_date) <= TIMESTAMP("'+moment(today).add(7, "days").format("YYYY-MM-DD")+'") ';
+            return 'AND TIMESTAMP(payment_collect_date) >= TIMESTAMP("' + moment(today).add(2, "days").format("YYYY-MM-DD") + '") ' +
+                'AND TIMESTAMP(payment_collect_date) <= TIMESTAMP("' + moment(today).add(7, "days").format("YYYY-MM-DD") + '") ';
         }
         case 14: {
-            return 'AND TIMESTAMP(payment_collect_date) >= TIMESTAMP("'+moment(today).add(8, "days").format("YYYY-MM-DD")+'") ' +
-                'AND TIMESTAMP(payment_collect_date) <= TIMESTAMP("'+moment(today).add(14, "days").format("YYYY-MM-DD")+'") ';
+            return 'AND TIMESTAMP(payment_collect_date) >= TIMESTAMP("' + moment(today).add(8, "days").format("YYYY-MM-DD") + '") ' +
+                'AND TIMESTAMP(payment_collect_date) <= TIMESTAMP("' + moment(today).add(14, "days").format("YYYY-MM-DD") + '") ';
         }
         case 30: {
-            return 'AND TIMESTAMP(payment_collect_date) >= TIMESTAMP("'+moment(today).add(15, "days").format("YYYY-MM-DD")+'") ' +
-                'AND TIMESTAMP(payment_collect_date) <= TIMESTAMP("'+moment(today).add(30, "days").format("YYYY-MM-DD")+'") ';
+            return 'AND TIMESTAMP(payment_collect_date) >= TIMESTAMP("' + moment(today).add(15, "days").format("YYYY-MM-DD") + '") ' +
+                'AND TIMESTAMP(payment_collect_date) <= TIMESTAMP("' + moment(today).add(30, "days").format("YYYY-MM-DD") + '") ';
         }
         case 60: {
-            return 'AND TIMESTAMP(payment_collect_date) >= TIMESTAMP("'+moment(today).add(31, "days").format("YYYY-MM-DD")+'") ' +
-                'AND TIMESTAMP(payment_collect_date) <= TIMESTAMP("'+moment(today).add(60, "days").format("YYYY-MM-DD")+'") ';
+            return 'AND TIMESTAMP(payment_collect_date) >= TIMESTAMP("' + moment(today).add(31, "days").format("YYYY-MM-DD") + '") ' +
+                'AND TIMESTAMP(payment_collect_date) <= TIMESTAMP("' + moment(today).add(60, "days").format("YYYY-MM-DD") + '") ';
         }
         case 61: {
-            return 'AND TIMESTAMP(payment_collect_date) > TIMESTAMP("'+moment(today).add(60, "days").format("YYYY-MM-DD")+'") ';
+            return 'AND TIMESTAMP(payment_collect_date) > TIMESTAMP("' + moment(today).add(60, "days").format("YYYY-MM-DD") + '") ';
         }
     }
 }
 
-function collectionOverdueRangeQuery(today, range){
-    switch (range){
+function collectionOverdueRangeQuery(today, range) {
+    switch (range) {
         case 0: {
-            return 'AND TIMESTAMP(payment_collect_date) <= TIMESTAMP("'+moment(today).subtract(1, "days").format("YYYY-MM-DD")+'") ';
+            return 'AND TIMESTAMP(payment_collect_date) <= TIMESTAMP("' + moment(today).subtract(1, "days").format("YYYY-MM-DD") + '") ';
         }
         case 1: {
-            return 'AND TIMESTAMP(payment_collect_date) = TIMESTAMP("'+moment(today).subtract(1, "days").format("YYYY-MM-DD")+'") ';
+            return 'AND TIMESTAMP(payment_collect_date) = TIMESTAMP("' + moment(today).subtract(1, "days").format("YYYY-MM-DD") + '") ';
         }
         case 7: {
-            return 'AND TIMESTAMP(payment_collect_date) <= TIMESTAMP("'+moment(today).subtract(2, "days").format("YYYY-MM-DD")+'") ' +
-                'AND TIMESTAMP(payment_collect_date) >= TIMESTAMP("'+moment(today).subtract(7, "days").format("YYYY-MM-DD")+'") ';
+            return 'AND TIMESTAMP(payment_collect_date) <= TIMESTAMP("' + moment(today).subtract(2, "days").format("YYYY-MM-DD") + '") ' +
+                'AND TIMESTAMP(payment_collect_date) >= TIMESTAMP("' + moment(today).subtract(7, "days").format("YYYY-MM-DD") + '") ';
         }
         case 14: {
-            return 'AND TIMESTAMP(payment_collect_date) <= TIMESTAMP("'+moment(today).subtract(8, "days").format("YYYY-MM-DD")+'") ' +
-                'AND TIMESTAMP(payment_collect_date) >= TIMESTAMP("'+moment(today).subtract(14, "days").format("YYYY-MM-DD")+'") ';
+            return 'AND TIMESTAMP(payment_collect_date) <= TIMESTAMP("' + moment(today).subtract(8, "days").format("YYYY-MM-DD") + '") ' +
+                'AND TIMESTAMP(payment_collect_date) >= TIMESTAMP("' + moment(today).subtract(14, "days").format("YYYY-MM-DD") + '") ';
         }
         case 30: {
-            return 'AND TIMESTAMP(payment_collect_date) <= TIMESTAMP("'+moment(today).subtract(15, "days").format("YYYY-MM-DD")+'") ' +
-                'AND TIMESTAMP(payment_collect_date) >= TIMESTAMP("'+moment(today).subtract(30, "days").format("YYYY-MM-DD")+'") ';
+            return 'AND TIMESTAMP(payment_collect_date) <= TIMESTAMP("' + moment(today).subtract(15, "days").format("YYYY-MM-DD") + '") ' +
+                'AND TIMESTAMP(payment_collect_date) >= TIMESTAMP("' + moment(today).subtract(30, "days").format("YYYY-MM-DD") + '") ';
         }
         case 60: {
-            return 'AND TIMESTAMP(payment_collect_date) <= TIMESTAMP("'+moment(today).subtract(31, "days").format("YYYY-MM-DD")+'") ' +
-                'AND TIMESTAMP(payment_collect_date) >= TIMESTAMP("'+moment(today).subtract(60, "days").format("YYYY-MM-DD")+'") ';
+            return 'AND TIMESTAMP(payment_collect_date) <= TIMESTAMP("' + moment(today).subtract(31, "days").format("YYYY-MM-DD") + '") ' +
+                'AND TIMESTAMP(payment_collect_date) >= TIMESTAMP("' + moment(today).subtract(60, "days").format("YYYY-MM-DD") + '") ';
         }
         case 61: {
-            return 'AND TIMESTAMP(payment_collect_date) < TIMESTAMP("'+moment(today).subtract(60, "days").format("YYYY-MM-DD")+'") ';
+            return 'AND TIMESTAMP(payment_collect_date) < TIMESTAMP("' + moment(today).subtract(60, "days").format("YYYY-MM-DD") + '") ';
         }
     }
 }
 
-users.get('/requests/filter/:start/:end', function(req, res, next) {
+users.get('/requests/filter/:start/:end', function (req, res, next) {
     let start = req.params.start,
         end = req.params.end;
     end = moment(end).add(1, 'days').format("YYYY-MM-DD");
     let query = "SELECT u.fullname, u.phone, u.email, u.address, a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, " +
         "a.loan_amount, a.date_modified, a.comment FROM clients AS u, requests AS a WHERE u.ID=a.userID AND a.status <> 0 " +
-        "AND TIMESTAMP(a.date_created) < TIMESTAMP('"+end+"') AND TIMESTAMP(a.date_created) >= TIMESTAMP('"+start+"') ORDER BY a.ID desc";
+        "AND TIMESTAMP(a.date_created) < TIMESTAMP('" + end + "') AND TIMESTAMP(a.date_created) >= TIMESTAMP('" + start + "') ORDER BY a.ID desc";
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "User applications fetched successfully!", "response": results});
+            res.send({ "status": 200, "message": "User applications fetched successfully!", "response": results });
         }
     });
 });
 
-users.get('/applications/delete/:id', function(req, res, next) {
+users.get('/applications/delete/:id', function (req, res, next) {
     let id = req.params.id,
         date_modified = Date.now(),
-        query =  'UPDATE applications SET status=0, date_modified=? where ID=?';
-    db.query(query,[date_modified, id], function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        query = 'UPDATE applications SET status=0, date_modified=? where ID=?';
+    db.query(query, [date_modified, id], function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             let query = 'SELECT u.fullname, u.phone, u.email, u.address, c.name corporate_name, c.email corporate_email, c.phone corporate_phone, c.address corporate_address, ' +
                 'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.client_type, ' +
@@ -2274,35 +2275,35 @@ users.get('/applications/delete/:id', function(req, res, next) {
                 '(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status ' +
                 'FROM clients AS u, applications AS a LEFT JOIN corporates AS c ON a.userID = c.ID WHERE u.ID=a.userID AND a.status <> 0 ORDER BY a.ID desc';
             db.query(query, function (error, results, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
                     let payload = {}
                     payload.category = 'Application'
                     payload.userid = req.cookies.timeout
                     payload.description = 'Loan Application Archived'
-                    payload.affected= id
+                    payload.affected = id
                     notificationsService.log(req, payload)
-                    res.send({"status": 200, "message": "Application archived successfully!", "response": results});
+                    res.send({ "status": 200, "message": "Application archived successfully!", "response": results });
                 }
             });
         }
     });
 });
 
-users.get('/requests/delete/:id', function(req, res, next) {
+users.get('/requests/delete/:id', function (req, res, next) {
     let id = req.params.id,
         date_modified = Date.now(),
-        query =  'UPDATE requests SET status=0, date_modified=? where ID=?';
-    db.query(query,[date_modified, id], function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        query = 'UPDATE requests SET status=0, date_modified=? where ID=?';
+    db.query(query, [date_modified, id], function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             let query = 'SELECT u.fullname, u.phone, u.email, u.address, a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, ' +
                 'a.loan_amount, a.date_modified, a.comment FROM clients AS u, requests AS a WHERE u.ID=a.userID AND a.status <> 0 ORDER BY a.ID desc';
             db.query(query, function (error, results, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
                     let payload = {}
                     payload.category = 'Application'
@@ -2310,21 +2311,21 @@ users.get('/requests/delete/:id', function(req, res, next) {
                     payload.description = 'Loan Request Archived'
                     payload.affected = id
                     notificationsService.log(req, payload)
-                    res.send({"status": 200, "message": "Application archived successfully!", "response": results});
+                    res.send({ "status": 200, "message": "Application archived successfully!", "response": results });
                 }
             });
         }
     });
 });
 
-users.post('/applications/comment/:id', function(req, res, next) {
+users.post('/applications/comment/:id', function (req, res, next) {
     let id = req.params.id,
         comment = req.body.comment,
         date_modified = Date.now(),
-        query =  'UPDATE applications SET comment=?, date_modified=? where ID=?';
-    db.query(query,[comment, date_modified, id], function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        query = 'UPDATE applications SET comment=?, date_modified=? where ID=?';
+    db.query(query, [comment, date_modified, id], function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             let query = 'SELECT u.fullname, u.phone, u.email, u.address, c.name corporate_name, c.email corporate_email, c.phone corporate_phone, c.address corporate_address, ' +
                 'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.client_type, ' +
@@ -2332,8 +2333,8 @@ users.post('/applications/comment/:id', function(req, res, next) {
                 '(SELECT (CASE WHEN (sum(s.payment_amount) > 0) THEN 1 ELSE 0 END) FROM application_schedules s WHERE s.applicationID=a.ID AND status = 2) AS reschedule_status ' +
                 'FROM clients AS u, applications AS a LEFT JOIN corporates AS c ON a.userID = c.ID WHERE u.ID=a.userID AND a.status <> 0 ORDER BY a.ID desc';
             db.query(query, function (error, results, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
                     let payload = {}
                     payload.category = 'Application'
@@ -2341,27 +2342,27 @@ users.post('/applications/comment/:id', function(req, res, next) {
                     payload.description = 'New comment on Loan Application'
                     payload.affected = id
                     notificationsService.log(req, payload)
-                    res.send({"status": 200, "message": "Application commented successfully!", "response": results});
+                    res.send({ "status": 200, "message": "Application commented successfully!", "response": results });
                 }
             });
         }
     });
 });
 
-users.post('/requests/comment/:id', function(req, res, next) {
+users.post('/requests/comment/:id', function (req, res, next) {
     let id = req.params.id,
         comment = req.body.comment,
         date_modified = Date.now(),
-        query =  'UPDATE requests SET comment=?, date_modified=? where ID=?';
-    db.query(query,[comment, date_modified, id], function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        query = 'UPDATE requests SET comment=?, date_modified=? where ID=?';
+    db.query(query, [comment, date_modified, id], function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             let query = 'SELECT u.fullname, u.phone, u.email, u.address, a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, ' +
                 'a.loan_amount, a.date_modified, a.comment FROM clients AS u, requests AS a WHERE u.ID=a.userID AND a.status <> 0 ORDER BY a.ID desc';
             db.query(query, function (error, results, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
                     let payload = {}
                     payload.category = 'Application'
@@ -2369,40 +2370,40 @@ users.post('/requests/comment/:id', function(req, res, next) {
                     payload.description = 'New comment on Loan Request'
                     payload.affected = id
                     notificationsService.log(req, payload)
-                    res.send({"status": 200, "message": "Application commented successfully!", "response": results});
+                    res.send({ "status": 200, "message": "Application commented successfully!", "response": results });
                 }
             });
         }
     });
 });
 
-users.get('/application/assign_workflow/:id/:workflow_id/:agent_id', function(req, res, next) {
+users.get('/application/assign_workflow/:id/:workflow_id/:agent_id', function (req, res, next) {
     let id = req.params.id,
         agent_id = req.params.agent_id,
         workflow_id = req.params.workflow_id,
         date_modified = Date.now(),
-        query =  'UPDATE applications SET workflowID=?, date_modified=? where ID=?';
-    db.query(query,[workflow_id, date_modified, id], function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        query = 'UPDATE applications SET workflowID=?, date_modified=? where ID=?';
+    db.query(query, [workflow_id, date_modified, id], function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process, stage) {
+            helperFunctions.getNextWorkflowProcess(false, workflow_id, false, function (process, stage) {
                 process.workflowID = workflow_id;
                 process.applicationID = id;
                 process.agentID = agent_id;
                 process.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                db.query('INSERT INTO workflow_processes SET ?',process, function (error, results, fields) {
-                    if(error){
-                        res.send({"status": 500, "error": error, "response": null});
+                db.query('INSERT INTO workflow_processes SET ?', process, function (error, results, fields) {
+                    if (error) {
+                        res.send({ "status": 500, "error": error, "response": null });
                     } else {
-                        if(stage) helperFunctions.workflowApprovalNotification(process, stage, workflow_id);
+                        if (stage) helperFunctions.workflowApprovalNotification(process, stage, workflow_id);
                         let query = 'SELECT u.fullname, u.phone, u.email, u.address, a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, ' +
                             'a.workflowID, a.loan_amount, a.date_modified, a.comment FROM clients AS u, applications AS a WHERE u.ID=a.userID AND a.status <> 0 ORDER BY a.ID desc';
                         db.query(query, function (error, results, fields) {
-                            if(error){
-                                res.send({"status": 500, "error": error, "response": null});
+                            if (error) {
+                                res.send({ "status": 500, "error": error, "response": null });
                             } else {
-                                res.send({"status": 200, "message": "Workflow assigned successfully!", "response": results});
+                                res.send({ "status": 200, "message": "Workflow assigned successfully!", "response": results });
                             }
                         });
                     }
@@ -2412,17 +2413,17 @@ users.get('/application/assign_workflow/:id/:workflow_id/:agent_id', function(re
     });
 });
 
-users.post('/workflow_process/:application_id/:workflow_id', function(req, res, next) {
+users.post('/workflow_process/:application_id/:workflow_id', function (req, res, next) {
     let stage = req.body.stage,
         agent_id = req.body.agentID,
         user_role = req.body.user_role,
         workflow_id = req.params.workflow_id,
         application_id = req.params.application_id;
     if (!application_id || !workflow_id || !user_role)
-        return res.send({"status": 500, "error": "Required Parameter(s) not sent!"});
+        return res.send({ "status": 500, "error": "Required Parameter(s) not sent!" });
     if (!stage || (Object.keys(stage).length === 0 && stage.constructor === Object))
         stage = false;
-    helperFunctions.getNextWorkflowProcess(application_id,workflow_id,stage, function (process, stage) {
+    helperFunctions.getNextWorkflowProcess(application_id, workflow_id, stage, function (process, stage) {
         process.workflowID = workflow_id;
         process.applicationID = application_id;
         if (!process.approver_id || (process.approver_id === 0))
@@ -2430,19 +2431,19 @@ users.post('/workflow_process/:application_id/:workflow_id', function(req, res, 
         process.agentID = agent_id;
         process.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
         db.query('SELECT * FROM workflow_processes WHERE ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=? AND status=1)', [application_id], function (error, last_process, fields) {
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
+            if (error) {
+                res.send({ "status": 500, "error": error, "response": null });
             } else {
-                db.query('UPDATE workflow_processes SET approval_status=? WHERE ID=? AND status=1',[1,last_process[0]['ID']], function (error, status, fields) {
-                    if(error){
-                        res.send({"status": 500, "error": error, "response": null});
+                db.query('UPDATE workflow_processes SET approval_status=? WHERE ID=? AND status=1', [1, last_process[0]['ID']], function (error, status, fields) {
+                    if (error) {
+                        res.send({ "status": 500, "error": error, "response": null });
                     } else {
                         if (!(((process.approver_id).split(',')).includes((user_role).toString())))
-                            return res.send({"status": 500, "message": "You do not have authorization rights"});
+                            return res.send({ "status": 500, "message": "You do not have authorization rights" });
                         delete process.approver_id;
-                        db.query('INSERT INTO workflow_processes SET ?',process, function (error, results, fields) {
-                            if(error){
-                                res.send({"status": 500, "error": error, "response": null});
+                        db.query('INSERT INTO workflow_processes SET ?', process, function (error, results, fields) {
+                            if (error) {
+                                res.send({ "status": 500, "error": error, "response": null });
                             } else {
                                 let payload = {};
                                 payload.category = 'Application';
@@ -2450,8 +2451,8 @@ users.post('/workflow_process/:application_id/:workflow_id', function(req, res, 
                                 payload.description = 'Loan Application moved to next Workflow Stage';
                                 payload.affected = application_id;
                                 notificationsService.log(req, payload);
-                                if(stage) helperFunctions.workflowApprovalNotification(process, stage, workflow_id);
-                                res.send({"status": 200, "message": "Workflow Process created successfully!"});
+                                if (stage) helperFunctions.workflowApprovalNotification(process, stage, workflow_id);
+                                res.send({ "status": 200, "message": "Workflow Process created successfully!" });
                             }
                         });
                     }
@@ -2461,53 +2462,69 @@ users.post('/workflow_process/:application_id/:workflow_id', function(req, res, 
     });
 });
 
-users.get('/revert_workflow_process/:application_id', function(req, res, next) {
+users.get('/revert_workflow_process/:application_id', function (req, res, next) {
     let query = 'SELECT * FROM workflow_processes WHERE ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=? AND status=1)';
     db.query(query, [req.params.application_id], function (error, last_process, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            db.query('UPDATE workflow_processes SET status=? WHERE ID=?',[0,last_process[0]['ID']], function (error, results, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+            db.query('UPDATE workflow_processes SET status=? WHERE ID=?', [0, last_process[0]['ID']], function (error, results, fields) {
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
-                    res.send({"status": 200, "message": "Workflow Process reverted successfully!", "response": null});
+                    res.send({ "status": 200, "message": "Workflow Process reverted successfully!", "response": null });
                 }
             });
         }
     });
 });
 
-users.get('/workflow_process/:application_id', function(req, res, next) {
+users.get('/workflow_process/:application_id', function (req, res, next) {
     let query = 'SELECT * FROM workflow_processes WHERE applicationID = ? AND status=1';
     db.query(query, [req.params.application_id], function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "Workflow Process fetched successfully!", "response": results});
+            res.send({ "status": 200, "message": "Workflow Process fetched successfully!", "response": results });
         }
     });
 });
 
-users.get('/workflow_process_all/:application_id', function(req, res, next) {
+users.get('/workflow_process_all/:application_id', function (req, res, next) {
     let query = 'SELECT w.ID, w.workflowID, w.previous_stage, w.current_stage, w.next_stage, w.approval_status, w.date_created, w.applicationID, w.status,' +
         'w.agentID, u.fullname AS agent, (SELECT role_name FROM user_roles WHERE ID = u.user_role) role, (SELECT name FROM workflow_stages WHERE workflowID = w.workflowID AND stageID = w.current_stage) stage ' +
         'FROM workflow_processes AS w, users AS u WHERE applicationID = ? AND w.agentID = u.ID';
     db.query(query, [req.params.application_id], function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "All Workflow Process fetched successfully!", "response": results});
+            res.send({ "status": 200, "message": "All Workflow Process fetched successfully!", "response": results });
         }
     });
 });
 
-users.post('/application/comments/:id/:user_id', function(req, res, next) {
-    db.query('INSERT INTO application_comments SET ?', [{applicationID:req.params.id,userID:req.params.user_id,text:req.body.text,date_created:moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')}],
-        function (error, response, fields) {
+users.post('/application/comments/:id/:user_id', (req, res) => {
+    const payload = {
+            ...req.body,
+            applicationID: req.params.id,
+            userID: req.params.user_id,
+            date_created: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
+        },
+        update = {
+            status : 0,
+            date_modified: payload.date_created
+        },
+        origin = payload.origin || 0;
+    db.query(`UPDATE application_comments SET ? WHERE status = 1 AND applicationID = ${req.params.id} AND (ID = ${origin} OR origin = ${origin})`, update, (error, response) => {
+        if(error || !response)
+            return res.send({"status": 500, "error": error, "response": null});
+        db.query('INSERT INTO application_comments SET ?', payload, (error, response) => {
             if(error || !response)
                 return res.send({"status": 500, "error": error, "response": null});
-            db.query('SELECT c.text, c.date_created, u.fullname FROM application_comments AS c, users AS u WHERE c.applicationID = ? AND c.userID=u.ID ORDER BY c.ID desc', [req.params.id], function (error, comments, fields) {
+            db.query(`SELECT c.ID, c.origin, c.text, c.date_created, c.user_type,
+                (CASE WHEN c.user_type = 'admin' THEN (SELECT fullname FROM users WHERE ID = c.userID)
+                WHEN c.user_type = 'client' THEN (SELECT fullname FROM clients WHERE ID = c.userID) END) fullname
+                FROM application_comments c WHERE c.applicationID = ${req.params.id} AND c.status = 1 ORDER BY c.ID DESC`, (error, comments) => {
                 if(error){
                     res.send({"status": 500, "error": error, "response": null});
                 } else {
@@ -2517,17 +2534,31 @@ users.post('/application/comments/:id/:user_id', function(req, res, next) {
                     payload.description = 'New comment on Loan Application'
                     payload.affected = req.params.id
                     notificationsService.log(req, payload)
-                    res.send({"status": 200, "message": "Application commented successfully!", "response": comments});
+                    res.send({ "status": 200, "message": "Application commented successfully!", "response": comments });
                 }
             });
         });
+    });
 });
 
 users.get('/application/comments/:id', function(req, res, next) {
+    db.query(`SELECT c.ID, c.origin, c.text, c.date_created, c.user_type,
+        (CASE WHEN c.user_type = 'admin' THEN (SELECT fullname FROM users WHERE ID = c.userID)
+        WHEN c.user_type = 'client' THEN (SELECT fullname FROM clients WHERE ID = c.userID) END) fullname
+        FROM application_comments c WHERE c.applicationID = ${req.params.id} AND c.status = 1 ORDER BY c.ID DESC`, (error, comments) => {
+        if(error){
+            res.send({"status": 500, "error": error, "response": null});
+        } else {
+            res.send({"status": 200, "message": "Application comments fetched successfully!", "response": comments});
+        }
+    })
+});
+
+users.get('/application/comment/history/:id', (req, res) => {
     db.query(`SELECT c.text, c.date_created, c.user_type,
         (CASE WHEN c.user_type = 'admin' THEN (SELECT fullname FROM users WHERE ID = c.userID)
         WHEN c.user_type = 'client' THEN (SELECT fullname FROM clients WHERE ID = c.userID) END) fullname
-        FROM application_comments c WHERE c.applicationID = ${req.params.id} ORDER BY c.ID DESC`, (error, comments) => {
+        FROM application_comments c WHERE c.ID = ${req.params.id} OR c.origin = ${req.params.id} ORDER BY c.ID DESC`, (error, comments) => {
         if(error){
             res.send({"status": 500, "error": error, "response": null});
         } else {
@@ -2545,7 +2576,7 @@ users.post('/application/information-request/:id', (req, res) => {
     payload.applicationID = req.params.id;
     payload.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('INSERT INTO application_information_requests SET ?', payload, (error, response) => {
-        if(error) return res.send({
+        if (error) return res.send({
             "status": 500,
             "error": error,
             "response": null
@@ -2568,29 +2599,29 @@ users.post('/application/information-request/:id', (req, res) => {
     });
 });
 
-users.get('/application/information-request/:id', function(req, res, next) {
+users.get('/application/information-request/:id', function (req, res, next) {
     db.query(`SELECT i.*, u.fullname FROM application_information_requests i, users u 
     WHERE i.applicationID = ${req.params.id} AND i.created_by=u.ID ORDER BY i.ID desc`, (error, information) => {
-        if(error) return res.send({
-            "status": 500,
-            "error": error,
-            "response": null
-        });
-        return res.send({
-            "status": 200,
-            "error": null,
-            "response": information
-        });
-    })
+            if (error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+            return res.send({
+                "status": 200,
+                "error": null,
+                "response": information
+            });
+        })
 });
 
-users.post('/application/schedule/:id', function(req, res, next) {
-    db.getConnection(function(err, connection) {
+users.post('/application/schedule/:id', function (req, res, next) {
+    db.getConnection(function (err, connection) {
         if (err) throw err;
 
         connection.query('SELECT * FROM application_schedules WHERE applicationID = ? AND status = 1', [req.params.id], function (error, invoices, fields) {
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
+            if (error) {
+                res.send({ "status": 500, "error": error, "response": null });
             } else {
                 async.forEach(invoices, function (invoice, callback) {
                     connection.query('UPDATE application_schedules SET status=0 WHERE ID = ?', [invoice.ID], function (error, response, fields) {
@@ -2601,12 +2632,12 @@ users.post('/application/schedule/:id', function(req, res, next) {
                     async.forEach(req.body.schedule, function (obj, callback2) {
                         obj.applicationID = req.params.id;
                         connection.query('INSERT INTO application_schedules SET ?', obj, function (error, response, fields) {
-                            if(!error) count++;
+                            if (!error) count++;
                             callback2();
                         });
                     }, function (data) {
                         connection.release();
-                        res.send({"status": 200, "message": "Application scheduled with "+count+" invoices successfully!", "response": null});
+                        res.send({ "status": 200, "message": "Application scheduled with " + count + " invoices successfully!", "response": null });
                     });
                 });
             }
@@ -2614,16 +2645,16 @@ users.post('/application/schedule/:id', function(req, res, next) {
     });
 });
 
-async function syncXeroSchedule (req, res, connection, client, schedule, xeroPrincipal, method) {
-    for (let i=0; i <schedule.length; i++)
+async function syncXeroSchedule(req, res, connection, client, schedule, xeroPrincipal, method) {
+    for (let i = 0; i < schedule.length; i++)
         await postXeroSchedule(req, res, connection, schedule[i], client, xeroPrincipal, method);
     return;
 }
 
-async function postXeroSchedule (req, res, connection, obj, client, xeroPrincipal, method) {
+async function postXeroSchedule(req, res, connection, obj, client, xeroPrincipal, method) {
     const xeroClient = await xeroFunctions.authorizedOperation(req, res, 'xero_loan_account');
     const date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    if (xeroClient && client.integration && client.integration.xero_interest_account && 
+    if (xeroClient && client.integration && client.integration.xero_interest_account &&
         client.integration.xero_loan_account_status && client.xeroContactID) {
         let xeroInterest = await xeroClient.invoices.create({
             Type: 'ACCREC',
@@ -2656,221 +2687,221 @@ async function postXeroSchedule (req, res, connection, obj, client, xeroPrincipa
         obj.status = 1;
         query = `UPDATE application_schedules SET ? WHERE ID = ${obj.ID}`;
     }
-    connection.query(query, obj, error => {});
+    connection.query(query, obj, error => { });
     return;
 }
 
-users.post('/application/approve-schedule/:id', function(req, res, next) {
+users.post('/application/approve-schedule/:id', function (req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async () => {
-        db.getConnection(function(err, connection) {
+        db.getConnection(function (err, connection) {
             if (err) throw err;
 
             connection.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID, c.fullname, c.xeroContactID 
                 FROM applications a, clients c WHERE a.ID=${req.params.id} AND a.userID=c.ID`, function (error, app, fields) {
-                if (error) {
-                    res.send({"status": 500, "error": error, "response": null});
-                } else if (!app[0]) {
-                    res.send({"status": 500, "error": "Application does not exist!", "response": null});
-                } else {
-                    let application = app[0],
-                        disbursal = req.body.disbursal,
-                        reschedule_amount = req.body.reschedule_amount,
-                        loan_amount_update = req.body.loan_amount_update,
-                        date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                    connection.query('UPDATE applications SET loan_amount = ?, reschedule_amount = ?, date_modified = ? WHERE ID = ?', 
-                    [loan_amount_update,reschedule_amount,date_modified,req.params.id], function (error, invoice) {
-                        if(error){
-                            res.send({"status": 500, "error": error, "response": null});
-                        } else {
-                            connection.query(`SELECT * FROM application_schedules WHERE applicationID = ${req.params.id} AND status = 1`, (error, old_schedule) => {
-                                let obj2 = {};
-                                async.forEach(old_schedule, (old_invoice, callback2) => {
-                                    if (old_invoice.principal_invoice_no) {
-                                        xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
-                                            if (xeroClient && old_invoice.payment_amount > 0 && integration.xero_principal_account) {
-                                                let xeroInvoice = await xeroClient.invoices.get({
-                                                    InvoiceNumber: old_invoice.principal_invoice_no
-                                                });
-                                                let principal_due = xeroInvoice.Invoices[0]['AmountDue'];
-                                                if (principal_due > 0) {
-                                                    let xeroPrincipal2 = await xeroClient.payments.create({
-                                                        Invoice: {
+                    if (error) {
+                        res.send({ "status": 500, "error": error, "response": null });
+                    } else if (!app[0]) {
+                        res.send({ "status": 500, "error": "Application does not exist!", "response": null });
+                    } else {
+                        let application = app[0],
+                            disbursal = req.body.disbursal,
+                            reschedule_amount = req.body.reschedule_amount,
+                            loan_amount_update = req.body.loan_amount_update,
+                            date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                        connection.query('UPDATE applications SET loan_amount = ?, reschedule_amount = ?, date_modified = ? WHERE ID = ?',
+                            [loan_amount_update, reschedule_amount, date_modified, req.params.id], function (error, invoice) {
+                                if (error) {
+                                    res.send({ "status": 500, "error": error, "response": null });
+                                } else {
+                                    connection.query(`SELECT * FROM application_schedules WHERE applicationID = ${req.params.id} AND status = 1`, (error, old_schedule) => {
+                                        let obj2 = {};
+                                        async.forEach(old_schedule, (old_invoice, callback2) => {
+                                            if (old_invoice.principal_invoice_no) {
+                                                xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
+                                                    if (xeroClient && old_invoice.payment_amount > 0 && integration.xero_principal_account) {
+                                                        let xeroInvoice = await xeroClient.invoices.get({
                                                             InvoiceNumber: old_invoice.principal_invoice_no
-                                                        },
-                                                        Account: {
-                                                            Code: integration.xero_principal_account
-                                                        },
-                                                        Date: date_modified,
-                                                        Amount: principal_due,
-                                                        IsReconciled: true,
-                                                        Reference: `Reschedule adjustment for LOAN ID: ${helperFunctions.padWithZeroes(old_invoice.applicationID, 9)}`
-                                                    });
-                                                    // auditLog.log({
-                                                    //     clientID: application.clientID,
-                                                    //     amount: principal_due,
-                                                    //     type: 'repayment',
-                                                    //     loanID: old_invoice.applicationID,
-                                                    //     module: 'collections',
-                                                    //     principal_amount: principal_due,
-                                                    //     payment_date: date_modified,
-                                                    //     bank: integration.xero_principal_account
-                                                    // });
-                                                }
+                                                        });
+                                                        let principal_due = xeroInvoice.Invoices[0]['AmountDue'];
+                                                        if (principal_due > 0) {
+                                                            let xeroPrincipal2 = await xeroClient.payments.create({
+                                                                Invoice: {
+                                                                    InvoiceNumber: old_invoice.principal_invoice_no
+                                                                },
+                                                                Account: {
+                                                                    Code: integration.xero_principal_account
+                                                                },
+                                                                Date: date_modified,
+                                                                Amount: principal_due,
+                                                                IsReconciled: true,
+                                                                Reference: `Reschedule adjustment for LOAN ID: ${helperFunctions.padWithZeroes(old_invoice.applicationID, 9)}`
+                                                            });
+                                                            // auditLog.log({
+                                                            //     clientID: application.clientID,
+                                                            //     amount: principal_due,
+                                                            //     type: 'repayment',
+                                                            //     loanID: old_invoice.applicationID,
+                                                            //     module: 'collections',
+                                                            //     principal_amount: principal_due,
+                                                            //     payment_date: date_modified,
+                                                            //     bank: integration.xero_principal_account
+                                                            // });
+                                                        }
+                                                    }
+                                                });
                                             }
-                                        });
-                                    }
-                                    if (old_invoice.interest_invoice_no) {
-                                        xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
-                                            if (xeroClient && integration && 
-                                                integration.xero_interest_account && application.xeroContactID) {
-                                                let xeroInterest2 = await xeroClient.invoices.update({
-                                                    Type: 'ACCREC',
-                                                    Contact: {
-                                                        ContactID: application.xeroContactID
-                                                    },
-                                                    Date: old_invoice.interest_create_date,
-                                                    DueDate: old_invoice.interest_collect_date,
-                                                    LineItems: [{
-                                                        Description: `LOAN ID: ${helperFunctions.padWithZeroes(old_invoice.applicationID, 9)} | 
+                                            if (old_invoice.interest_invoice_no) {
+                                                xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
+                                                    if (xeroClient && integration &&
+                                                        integration.xero_interest_account && application.xeroContactID) {
+                                                        let xeroInterest2 = await xeroClient.invoices.update({
+                                                            Type: 'ACCREC',
+                                                            Contact: {
+                                                                ContactID: application.xeroContactID
+                                                            },
+                                                            Date: old_invoice.interest_create_date,
+                                                            DueDate: old_invoice.interest_collect_date,
+                                                            LineItems: [{
+                                                                Description: `LOAN ID: ${helperFunctions.padWithZeroes(old_invoice.applicationID, 9)} | 
                                                             Interest receivable for this on ${old_invoice.interest_collect_date}`,
-                                                        Quantity: '1',
-                                                        UnitAmount: old_invoice.interest_amount,
-                                                        AccountCode: integration.xero_interest_account
-                                                    }],
-                                                    InvoiceNumber: old_invoice.interest_invoice_no,
-                                                    Status: "VOIDED",
-                                                    Reference: helperFunctions.padWithZeroes(old_invoice.applicationID, 9)
-                                                });
-                                            }
-                                        });
-                                    }
-                                    obj2.date_modified = date_modified;
-                                    obj2.status = 0;
-                                    connection.query(`UPDATE application_schedules SET ? WHERE ID = ${old_invoice.ID}`, 
-                                    obj2, function (error, response) {
-                                        if(error) console.log(error);
-                                        callback2();
-                                    });
-                                }, (data) => {
-                                    connection.query(`SELECT * FROM application_schedules WHERE applicationID = ${req.params.id} AND status = 2`, (error, new_schedule) => {
-                                        xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
-                                            let xeroPrincipal;
-                                            if (xeroClient && integration && 
-                                                integration.xero_principal_account && application.xeroContactID) {
-                                                let LineItems = [];
-                                                for (let i=0; i<new_schedule.length; i++) {
-                                                    let invoice = new_schedule[i];
-                                                    LineItems.push({
-                                                        Description: `LOAN ID: ${helperFunctions.padWithZeroes(req.params.id, 9)} | 
-                                                            Principal receivable for this on ${invoice.payment_collect_date}`,
-                                                        Quantity: '1',
-                                                        UnitAmount: invoice.payment_amount,
-                                                        AccountCode: integration.xero_principal_account
-                                                    });
-                                                }
-                                                xeroPrincipal = await xeroClient.invoices.create({
-                                                    Type: 'ACCREC',
-                                                    Contact: {
-                                                        ContactID: application.xeroContactID
-                                                    },
-                                                    Date: new_schedule[0]['payment_create_date'],
-                                                    DueDate: new_schedule[0]['payment_collect_date'],
-                                                    LineItems: LineItems,
-                                                    Status: integration.xero_loan_account_status,
-                                                    Reference: helperFunctions.padWithZeroes(req.params.id, 9)
-                                                });
-                                            }
-
-                                            let xeroDisbursement,
-                                                disbursement = {
-                                                    loan_id: application.ID,
-                                                    amount: reschedule_amount,
-                                                    client_id: application.clientID,
-                                                    loan_officer: application.loan_officerID,
-                                                    branch: application.branchID,
-                                                    date_disbursed: date_modified,
-                                                    status: 1,
-                                                    date_created: date_modified
-                                                };
-                                            if (xeroClient && integration && disbursal.disbursement_amount > 0 &&
-                                                integration.xero_disbursement_account && application.xeroContactID) {
-                                                xeroDisbursement = await xeroClient.bankTransactions.create({
-                                                    Type: 'SPEND',
-                                                    Status: 'AUTHORISED',
-                                                    Contact: {
-                                                        ContactID: application.xeroContactID
-                                                    },
-                                                    BankAccount: {
-                                                        Code: disbursal.funding_source
-                                                    },
-                                                    LineItems: [{
-                                                        Description: `Loan disbursement for ${application.fullname} | 
-                                                            LOAN ID: ${helperFunctions.padWithZeroes(application.ID, 9)}`,
-                                                        UnitAmount: disbursal.disbursement_amount,
-                                                        AccountCode: integration.xero_disbursement_account,
-                                                        TaxType: 'NONE'
-                                                    }],
-                                                    Date: disbursal.disbursement_date,
-                                                    Reference: helperFunctions.padWithZeroes(application.ID, 9),
-                                                    IsReconciled: 'true'
-                                                });
-                                                disbursement.xeroDisbursementID = xeroDisbursement.BankTransactions[0]['BankTransactionID'];
-                                                auditLog.log({
-                                                    clientID: application.clientID,
-                                                    amount: disbursal.disbursement_amount,
-                                                    type: 'disbursement',
-                                                    loanID: application.ID,
-                                                    module: 'collections',
-                                                    payment_date: disbursal.disbursement_date,
-                                                    bank: disbursal.bank
-                                                });
-                                            }
-                                            application.integration = integration;
-                                            syncXeroSchedule(req, res, connection, application, new_schedule, xeroPrincipal, 'put')
-                                            .then(response => {
-                                                connection.query(`INSERT INTO disbursement_history SET ?`, disbursement, function (error, result, fields) {
-                                                    if(error){
-                                                        res.send({"status": 500, "error": error, "response": null});
-                                                    } else {
-                                                        let payload = {};
-                                                        payload.category = 'Application';
-                                                        payload.userid = req.cookies.timeout;
-                                                        payload.description = 'Application Schedule Approved for Loan Application';
-                                                        payload.affected = req.params.id;
-                                                        notificationsService.log(req, payload);
-                                                        connection.release();
-                                                        res.send({
-                                                            "status": 200,
-                                                            "message": `Application schedule with ${new_schedule.length} invoice(s) approved successfully!`,
-                                                            "response": null
+                                                                Quantity: '1',
+                                                                UnitAmount: old_invoice.interest_amount,
+                                                                AccountCode: integration.xero_interest_account
+                                                            }],
+                                                            InvoiceNumber: old_invoice.interest_invoice_no,
+                                                            Status: "VOIDED",
+                                                            Reference: helperFunctions.padWithZeroes(old_invoice.applicationID, 9)
                                                         });
                                                     }
+                                                });
+                                            }
+                                            obj2.date_modified = date_modified;
+                                            obj2.status = 0;
+                                            connection.query(`UPDATE application_schedules SET ? WHERE ID = ${old_invoice.ID}`,
+                                                obj2, function (error, response) {
+                                                    if (error) console.log(error);
+                                                    callback2();
+                                                });
+                                        }, (data) => {
+                                            connection.query(`SELECT * FROM application_schedules WHERE applicationID = ${req.params.id} AND status = 2`, (error, new_schedule) => {
+                                                xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
+                                                    let xeroPrincipal;
+                                                    if (xeroClient && integration &&
+                                                        integration.xero_principal_account && application.xeroContactID) {
+                                                        let LineItems = [];
+                                                        for (let i = 0; i < new_schedule.length; i++) {
+                                                            let invoice = new_schedule[i];
+                                                            LineItems.push({
+                                                                Description: `LOAN ID: ${helperFunctions.padWithZeroes(req.params.id, 9)} | 
+                                                            Principal receivable for this on ${invoice.payment_collect_date}`,
+                                                                Quantity: '1',
+                                                                UnitAmount: invoice.payment_amount,
+                                                                AccountCode: integration.xero_principal_account
+                                                            });
+                                                        }
+                                                        xeroPrincipal = await xeroClient.invoices.create({
+                                                            Type: 'ACCREC',
+                                                            Contact: {
+                                                                ContactID: application.xeroContactID
+                                                            },
+                                                            Date: new_schedule[0]['payment_create_date'],
+                                                            DueDate: new_schedule[0]['payment_collect_date'],
+                                                            LineItems: LineItems,
+                                                            Status: integration.xero_loan_account_status,
+                                                            Reference: helperFunctions.padWithZeroes(req.params.id, 9)
+                                                        });
+                                                    }
+
+                                                    let xeroDisbursement,
+                                                        disbursement = {
+                                                            loan_id: application.ID,
+                                                            amount: reschedule_amount,
+                                                            client_id: application.clientID,
+                                                            loan_officer: application.loan_officerID,
+                                                            branch: application.branchID,
+                                                            date_disbursed: date_modified,
+                                                            status: 1,
+                                                            date_created: date_modified
+                                                        };
+                                                    if (xeroClient && integration && disbursal.disbursement_amount > 0 &&
+                                                        integration.xero_disbursement_account && application.xeroContactID) {
+                                                        xeroDisbursement = await xeroClient.bankTransactions.create({
+                                                            Type: 'SPEND',
+                                                            Status: 'AUTHORISED',
+                                                            Contact: {
+                                                                ContactID: application.xeroContactID
+                                                            },
+                                                            BankAccount: {
+                                                                Code: disbursal.funding_source
+                                                            },
+                                                            LineItems: [{
+                                                                Description: `Loan disbursement for ${application.fullname} | 
+                                                            LOAN ID: ${helperFunctions.padWithZeroes(application.ID, 9)}`,
+                                                                UnitAmount: disbursal.disbursement_amount,
+                                                                AccountCode: integration.xero_disbursement_account,
+                                                                TaxType: 'NONE'
+                                                            }],
+                                                            Date: disbursal.disbursement_date,
+                                                            Reference: helperFunctions.padWithZeroes(application.ID, 9),
+                                                            IsReconciled: 'true'
+                                                        });
+                                                        disbursement.xeroDisbursementID = xeroDisbursement.BankTransactions[0]['BankTransactionID'];
+                                                        auditLog.log({
+                                                            clientID: application.clientID,
+                                                            amount: disbursal.disbursement_amount,
+                                                            type: 'disbursement',
+                                                            loanID: application.ID,
+                                                            module: 'collections',
+                                                            payment_date: disbursal.disbursement_date,
+                                                            bank: disbursal.bank
+                                                        });
+                                                    }
+                                                    application.integration = integration;
+                                                    syncXeroSchedule(req, res, connection, application, new_schedule, xeroPrincipal, 'put')
+                                                        .then(response => {
+                                                            connection.query(`INSERT INTO disbursement_history SET ?`, disbursement, function (error, result, fields) {
+                                                                if (error) {
+                                                                    res.send({ "status": 500, "error": error, "response": null });
+                                                                } else {
+                                                                    let payload = {};
+                                                                    payload.category = 'Application';
+                                                                    payload.userid = req.cookies.timeout;
+                                                                    payload.description = 'Application Schedule Approved for Loan Application';
+                                                                    payload.affected = req.params.id;
+                                                                    notificationsService.log(req, payload);
+                                                                    connection.release();
+                                                                    res.send({
+                                                                        "status": 200,
+                                                                        "message": `Application schedule with ${new_schedule.length} invoice(s) approved successfully!`,
+                                                                        "response": null
+                                                                    });
+                                                                }
+                                                            });
+                                                        });
                                                 });
                                             });
                                         });
                                     });
-                                });     
+                                }
                             });
-                        }
-                    });
-                }
-            });
+                    }
+                });
         });
     });
 });
 
-users.get('/application/reject-schedule/:id', function(req, res, next) {
-    db.getConnection(function(err, connection) {
+users.get('/application/reject-schedule/:id', function (req, res, next) {
+    db.getConnection(function (err, connection) {
         if (err) throw err;
 
         connection.query('SELECT * FROM application_schedules WHERE applicationID = ? AND status = 2', [req.params.id], function (error, new_schedule, fields) {
             if (error) {
-                res.send({"status": 500, "error": error, "response": null});
+                res.send({ "status": 500, "error": error, "response": null });
             } else {
                 let count = 0;
                 async.forEach(new_schedule, function (obj, callback2) {
                     connection.query('DELETE FROM application_schedules WHERE ID = ?', [obj.ID], function (error, response, fields) {
-                        if(!error)
+                        if (!error)
                             count++;
                         callback2();
                     });
@@ -2882,15 +2913,15 @@ users.get('/application/reject-schedule/:id', function(req, res, next) {
                     payload.description = 'Schedule Rejected for Loan Application'
                     payload.affected = req.params.id
                     notificationsService.log(req, payload)
-                    res.send({"status": 200, "message": "Application schedule with "+count+" invoices deleted successfully!", "response": null});
+                    res.send({ "status": 200, "message": "Application schedule with " + count + " invoices deleted successfully!", "response": null });
                 });
             }
         });
     });
 });
 
-users.post('/application/add-schedule/:id', function(req, res, next) {
-    db.getConnection(function(err, connection) {
+users.post('/application/add-schedule/:id', function (req, res, next) {
+    db.getConnection(function (err, connection) {
         if (err) throw err;
 
         let count = 0;
@@ -2899,7 +2930,7 @@ users.post('/application/add-schedule/:id', function(req, res, next) {
             obj.status = 2;
             obj.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
             connection.query('INSERT INTO application_schedules SET ?', obj, function (error, response, fields) {
-                if(!error)
+                if (!error)
                     count++;
                 callback();
             });
@@ -2911,397 +2942,397 @@ users.post('/application/add-schedule/:id', function(req, res, next) {
             payload.description = 'New Schedule Uploaded for Loan Application'
             payload.affected = req.params.id
             notificationsService.log(req, payload)
-            res.send({"status": 200, "message": "Application scheduled with "+count+" invoices successfully!", "response": null});
+            res.send({ "status": 200, "message": "Application scheduled with " + count + " invoices successfully!", "response": null });
         })
     });
 });
 
-users.get('/application/schedule/:id', function(req, res, next) {
+users.get('/application/schedule/:id', function (req, res, next) {
     db.query('SELECT * FROM application_schedules WHERE applicationID = ? AND status = 1', [req.params.id], function (error, schedule, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "Application schedule fetched successfully!", "response": schedule});
+            res.send({ "status": 200, "message": "Application schedule fetched successfully!", "response": schedule });
         }
     });
 });
 
-users.post('/application/add-payment/:id/:agent_id', function(req, res, next) {
+users.post('/application/add-payment/:id/:agent_id', function (req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async () => {
-        db.query('SELECT c.fullname, c.xeroContactID FROM applications a, clients c '+
-        'WHERE a.ID = ? AND a.userID = c.ID', [req.params.id], function (error, application, fields) {
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
-            } else {
-                let data = req.body;
-                data.applicationID = req.params.id;
-                data.payment_create_date = data.interest_create_date;
-                data.payment_collect_date = data.interest_collect_date;
-                data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
-                    if (xeroClient && integration && 
-                        integration.xero_interest_account && application[0]['xeroContactID']) {
-                        let xeroInterest = await xeroClient.invoices.create({
-                            Type: 'ACCREC',
-                            Contact: {
-                                ContactID: application[0]['xeroContactID']
-                            },
-                            Date: data.interest_create_date,
-                            DueDate: data.interest_collect_date,
-                            LineItems: [{
-                                Description: `LOAN ID: ${helperFunctions.padWithZeroes(data.applicationID, 9)} | 
+        db.query('SELECT c.fullname, c.xeroContactID FROM applications a, clients c ' +
+            'WHERE a.ID = ? AND a.userID = c.ID', [req.params.id], function (error, application, fields) {
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
+                } else {
+                    let data = req.body;
+                    data.applicationID = req.params.id;
+                    data.payment_create_date = data.interest_create_date;
+                    data.payment_collect_date = data.interest_collect_date;
+                    data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                    xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
+                        if (xeroClient && integration &&
+                            integration.xero_interest_account && application[0]['xeroContactID']) {
+                            let xeroInterest = await xeroClient.invoices.create({
+                                Type: 'ACCREC',
+                                Contact: {
+                                    ContactID: application[0]['xeroContactID']
+                                },
+                                Date: data.interest_create_date,
+                                DueDate: data.interest_collect_date,
+                                LineItems: [{
+                                    Description: `LOAN ID: ${helperFunctions.padWithZeroes(data.applicationID, 9)} | 
                                     Interest receivable for this on ${data.interest_collect_date}`,
-                                Quantity: '1',
-                                UnitAmount: data.interest_amount,
-                                AccountCode: integration.xero_interest_account
-                            }],
-                            Status: integration.xero_loan_account_status,
-                            Reference: helperFunctions.padWithZeroes(data.applicationID, 9)
-                        });
-                        data.interest_invoice_no = xeroInterest.Invoices[0]['InvoiceNumber'];
-                    }
-                    db.query('INSERT INTO application_schedules SET ?', data, function (error, response, fields) {
-                        if(error){
-                            res.send({"status": 500, "error": error, "response": null});
-                        } else {
-                            let payload = {}
-                            payload.category = 'Application'
-                            payload.userid = req.cookies.timeout
-                            payload.description = 'New Loan Application Payment'
-                            payload.affected = req.params.id
-                            notificationsService.log(req, payload)
-                            return res.send({"status": 200, "message": "Payment added successfully!"});
+                                    Quantity: '1',
+                                    UnitAmount: data.interest_amount,
+                                    AccountCode: integration.xero_interest_account
+                                }],
+                                Status: integration.xero_loan_account_status,
+                                Reference: helperFunctions.padWithZeroes(data.applicationID, 9)
+                            });
+                            data.interest_invoice_no = xeroInterest.Invoices[0]['InvoiceNumber'];
                         }
+                        db.query('INSERT INTO application_schedules SET ?', data, function (error, response, fields) {
+                            if (error) {
+                                res.send({ "status": 500, "error": error, "response": null });
+                            } else {
+                                let payload = {}
+                                payload.category = 'Application'
+                                payload.userid = req.cookies.timeout
+                                payload.description = 'New Loan Application Payment'
+                                payload.affected = req.params.id
+                                notificationsService.log(req, payload)
+                                return res.send({ "status": 200, "message": "Payment added successfully!" });
+                            }
+                        });
                     });
-                });
-            }
-        });
+                }
+            });
     });
 });
 
-users.get('/application/confirm-payment/:id', function(req, res, next) {
+users.get('/application/confirm-payment/:id', function (req, res, next) {
     db.query('UPDATE application_schedules SET payment_status=1 WHERE ID = ?', [req.params.id], function (error, invoice, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "Invoice Payment confirmed successfully!"});
+            res.send({ "status": 200, "message": "Invoice Payment confirmed successfully!" });
         }
     });
 });
 
-users.post('/application/edit-schedule/:id/:modifier_id', function(req, res, next) {
+users.post('/application/edit-schedule/:id/:modifier_id', function (req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async () => {
         let data = req.body;
         data.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
         data.modifierID = req.params.modifier_id;
-        db.getConnection(function(err, connection) {
+        db.getConnection(function (err, connection) {
             if (err) throw err;
 
-            connection.query('UPDATE application_schedules SET ? WHERE ID = '+req.params.id, data, function (error, response, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+            connection.query('UPDATE application_schedules SET ? WHERE ID = ' + req.params.id, data, function (error, response, fields) {
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
-                    connection.query('SELECT s.*, c.fullname, c.xeroContactID FROM application_schedules s, applications a, clients c '+
-                    'WHERE s.ID = ? AND a.ID = s.applicationID AND c.ID = a.userID',[req.params.id], function (error, invoice_obj, fields) {
-                        if(error){
-                            res.send({"status": 500, "error": error, "response": null});
-                        } else {
-                            let invoice = {
-                                invoiceID: invoice_obj[0].ID,
-                                applicationID: invoice_obj[0].applicationID,
-                                interest_amount: invoice_obj[0].interest_amount,
-                                payment_amount: invoice_obj[0].payment_amount,
-                                payment_collect_date: invoice_obj[0].payment_collect_date,
-                                payment_create_date: invoice_obj[0].payment_create_date,
-                                interest_collect_date: invoice_obj[0].interest_collect_date,
-                                interest_create_date: invoice_obj[0].interest_create_date,
-                                fees_amount: invoice_obj[0].fees_amount,
-                                penalty_amount: invoice_obj[0].penalty_amount,
-                                date_modified: invoice_obj[0].date_modified,
-                                modifierID: invoice_obj[0].modifierID
-                            };
-                            if (invoice_obj[0]['interest_invoice_no'])
-                                invoice['interest_invoice_no'] = invoice_obj[0]['interest_invoice_no'];
-                            if (invoice_obj[0]['principal_invoice_no'])
-                                invoice['principal_invoice_no'] = invoice_obj[0]['principal_invoice_no'];
-                            connection.query('INSERT INTO edit_schedule_history SET ? ', invoice, function (error, response, fields) {
-                                connection.release();
-                                if(error){
-                                    res.send({"status": 500, "error": error, "response": null});
-                                } else {
-                                    if (invoice.interest_invoice_no) {
-                                        xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
-                                            if (xeroClient && integration && 
-                                                integration.xero_interest_account && invoice_obj[0]['xeroContactID']) {
-                                                let xeroInterest = await xeroClient.invoices.update({
-                                                    Type: 'ACCREC',
-                                                    Contact: {
-                                                        ContactID: invoice_obj[0]['xeroContactID']
-                                                    },
-                                                    Date: invoice.interest_create_date,
-                                                    DueDate: invoice.interest_collect_date,
-                                                    LineItems: [{
-                                                        Description: `LOAN ID: ${helperFunctions.padWithZeroes(invoice.applicationID, 9)} | 
+                    connection.query('SELECT s.*, c.fullname, c.xeroContactID FROM application_schedules s, applications a, clients c ' +
+                        'WHERE s.ID = ? AND a.ID = s.applicationID AND c.ID = a.userID', [req.params.id], function (error, invoice_obj, fields) {
+                            if (error) {
+                                res.send({ "status": 500, "error": error, "response": null });
+                            } else {
+                                let invoice = {
+                                    invoiceID: invoice_obj[0].ID,
+                                    applicationID: invoice_obj[0].applicationID,
+                                    interest_amount: invoice_obj[0].interest_amount,
+                                    payment_amount: invoice_obj[0].payment_amount,
+                                    payment_collect_date: invoice_obj[0].payment_collect_date,
+                                    payment_create_date: invoice_obj[0].payment_create_date,
+                                    interest_collect_date: invoice_obj[0].interest_collect_date,
+                                    interest_create_date: invoice_obj[0].interest_create_date,
+                                    fees_amount: invoice_obj[0].fees_amount,
+                                    penalty_amount: invoice_obj[0].penalty_amount,
+                                    date_modified: invoice_obj[0].date_modified,
+                                    modifierID: invoice_obj[0].modifierID
+                                };
+                                if (invoice_obj[0]['interest_invoice_no'])
+                                    invoice['interest_invoice_no'] = invoice_obj[0]['interest_invoice_no'];
+                                if (invoice_obj[0]['principal_invoice_no'])
+                                    invoice['principal_invoice_no'] = invoice_obj[0]['principal_invoice_no'];
+                                connection.query('INSERT INTO edit_schedule_history SET ? ', invoice, function (error, response, fields) {
+                                    connection.release();
+                                    if (error) {
+                                        res.send({ "status": 500, "error": error, "response": null });
+                                    } else {
+                                        if (invoice.interest_invoice_no) {
+                                            xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
+                                                if (xeroClient && integration &&
+                                                    integration.xero_interest_account && invoice_obj[0]['xeroContactID']) {
+                                                    let xeroInterest = await xeroClient.invoices.update({
+                                                        Type: 'ACCREC',
+                                                        Contact: {
+                                                            ContactID: invoice_obj[0]['xeroContactID']
+                                                        },
+                                                        Date: invoice.interest_create_date,
+                                                        DueDate: invoice.interest_collect_date,
+                                                        LineItems: [{
+                                                            Description: `LOAN ID: ${helperFunctions.padWithZeroes(invoice.applicationID, 9)} | 
                                                             Interest receivable for this on ${invoice.interest_collect_date}`,
-                                                        Quantity: '1',
-                                                        UnitAmount: invoice.interest_amount,
-                                                        AccountCode: integration.xero_interest_account
-                                                    }],
-                                                    InvoiceNumber: invoice.interest_invoice_no,
-                                                    Reference: helperFunctions.padWithZeroes(invoice.applicationID, 9)
-                                                });
-                                            }
-                                        });
+                                                            Quantity: '1',
+                                                            UnitAmount: invoice.interest_amount,
+                                                            AccountCode: integration.xero_interest_account
+                                                        }],
+                                                        InvoiceNumber: invoice.interest_invoice_no,
+                                                        Reference: helperFunctions.padWithZeroes(invoice.applicationID, 9)
+                                                    });
+                                                }
+                                            });
+                                        }
+                                        if (invoice.principal_invoice_no) {
+                                            xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
+                                                if (xeroClient && integration && integration.xero_principal_account) {
+                                                    let xeroPrincipal_ = await xeroClient.invoices.update({
+                                                        InvoiceNumber: invoice.principal_invoice_no
+                                                    });
+                                                    let principal = xeroPrincipal_.Invoices[0];
+                                                    principal.Date = invoice.payment_create_date;
+                                                    principal.DueDate = invoice.payment_collect_date;
+                                                    let xeroPrincipal = await xeroClient.invoices.update(principal);
+                                                }
+                                            });
+                                        }
+                                        let payload = {}
+                                        payload.category = 'Application'
+                                        payload.userid = req.cookies.timeout
+                                        payload.description = 'Loan Application Schedule updated'
+                                        payload.affected = req.params.id
+                                        notificationsService.log(req, payload)
+                                        res.send({ "status": 200, "message": "Schedule updated successfully!" });
                                     }
-                                    if (invoice.principal_invoice_no) {
-                                        xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
-                                            if (xeroClient && integration && integration.xero_principal_account) {
-                                                let xeroPrincipal_ = await xeroClient.invoices.update({
-                                                    InvoiceNumber: invoice.principal_invoice_no
-                                                });
-                                                let principal = xeroPrincipal_.Invoices[0];
-                                                principal.Date = invoice.payment_create_date;
-                                                principal.DueDate = invoice.payment_collect_date;
-                                                let xeroPrincipal = await xeroClient.invoices.update(principal);
-                                            }
-                                        });
-                                    }
-                                    let payload = {}
-                                    payload.category = 'Application'
-                                    payload.userid = req.cookies.timeout
-                                    payload.description = 'Loan Application Schedule updated'
-                                    payload.affected = req.params.id
-                                    notificationsService.log(req, payload)
-                                    res.send({"status": 200, "message": "Schedule updated successfully!"});
-                                }
-                            });
-                        }
-                    });
+                                });
+                            }
+                        });
                 }
             });
         });
     });
 });
 
-users.get('/application/edit-schedule-history/:id', function(req, res, next) {
+users.get('/application/edit-schedule-history/:id', function (req, res, next) {
     db.query('SELECT s.ID, s.invoiceID, s.payment_amount, s.interest_amount, s.fees_amount, s.penalty_amount, s.payment_collect_date, s.date_modified, s.modifierID,' +
         's.applicationID, u.fullname AS modified_by FROM edit_schedule_history AS s, users AS u WHERE s.modifierID=u.ID AND invoiceID = ? ORDER BY ID desc', [req.params.id], function (error, history, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
-        } else {
-            res.send({"status": 200, "message": "Edit schedule history fetched successfully!", "response":history});
-        }
-    });
+            if (error) {
+                res.send({ "status": 500, "error": error, "response": null });
+            } else {
+                res.send({ "status": 200, "message": "Edit schedule history fetched successfully!", "response": history });
+            }
+        });
 });
 
-users.get('/application/schedule-history/write-off/:id', function(req, res, next) {
+users.get('/application/schedule-history/write-off/:id', function (req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_writeoff', async () => {
         db.query(`SELECT xero_writeoff_account FROM integrations WHERE ID = (SELECT MAX(ID) FROM integrations)`, (error, integrations) => {
-            db.query('SELECT s.interest_invoice_no, s.interest_amount, a.ID applicationID, c.fullname, c.xeroContactID FROM application_schedules s, applications a, clients c '+
-            'WHERE s.ID = '+req.params.id+' AND s.applicationID = a.ID AND a.userID = c.ID', function (error, invoice, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
-                } else {
-                    let update = {
-                        payment_status: 2,
-                        date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
-                    };
-                    db.query('UPDATE application_schedules SET ? WHERE ID = '+req.params.id, update, function (error, result, fields) {
-                        if(error){
-                            res.send({"status": 500, "error": error, "response": null});
-                        } else {
-                            xeroFunctions.authorizedOperation(req, res, 'xero_writeoff', async (xeroClient) => {
-                                if (xeroClient && invoice[0]['interest_invoice_no'] && integrations[0] && 
-                                    integrations[0]['xero_writeoff_account'] && invoice[0]['xeroContactID']) {
-                                    let xeroWriteOff = await xeroClient.creditNotes.create({
-                                        Type: 'ACCRECCREDIT',
-                                        Status: 'AUTHORISED',
-                                        Contact: {
-                                            ContactID: invoice[0]['xeroContactID']
-                                        },
-                                        Date: update.date_modified,
-                                        LineItems: [{
-                                            Description: `LoanID: ${helperFunctions.padWithZeroes(invoice[0]['applicationID'], 9)}`,
-                                            Quantity: '1',
-                                            UnitAmount: invoice[0]['interest_amount'],
-                                            AccountCode: integrations[0]['xero_writeoff_account'],
-                                            TaxType: 'NONE'
-                                        }],
-                                        Reference: helperFunctions.padWithZeroes(invoice[0]['applicationID'], 9)
-                                    });
-                                    let xeroWriteOff2 = await xeroClient.creditNotes.update({
-                                        Type: 'ACCRECCREDIT',
-                                        CreditNoteNumber: xeroWriteOff.CreditNotes[0]['CreditNoteNumber'],
-                                        Contact: {
-                                            ContactID: invoice[0]['xeroContactID']
-                                        },
-                                        Amount: invoice[0]['interest_amount'],
-                                        Invoice: {
-                                            InvoiceNumber: invoice[0]['interest_invoice_no']
-                                        },
-                                        Date: update.date_modified
-                                    });
-                                }
-                            });
-                            res.send({"status": 200, "message": "Schedule write off successful!"});
-                        }
-                    });
-                }
-            });
+            db.query('SELECT s.interest_invoice_no, s.interest_amount, a.ID applicationID, c.fullname, c.xeroContactID FROM application_schedules s, applications a, clients c ' +
+                'WHERE s.ID = ' + req.params.id + ' AND s.applicationID = a.ID AND a.userID = c.ID', function (error, invoice, fields) {
+                    if (error) {
+                        res.send({ "status": 500, "error": error, "response": null });
+                    } else {
+                        let update = {
+                            payment_status: 2,
+                            date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
+                        };
+                        db.query('UPDATE application_schedules SET ? WHERE ID = ' + req.params.id, update, function (error, result, fields) {
+                            if (error) {
+                                res.send({ "status": 500, "error": error, "response": null });
+                            } else {
+                                xeroFunctions.authorizedOperation(req, res, 'xero_writeoff', async (xeroClient) => {
+                                    if (xeroClient && invoice[0]['interest_invoice_no'] && integrations[0] &&
+                                        integrations[0]['xero_writeoff_account'] && invoice[0]['xeroContactID']) {
+                                        let xeroWriteOff = await xeroClient.creditNotes.create({
+                                            Type: 'ACCRECCREDIT',
+                                            Status: 'AUTHORISED',
+                                            Contact: {
+                                                ContactID: invoice[0]['xeroContactID']
+                                            },
+                                            Date: update.date_modified,
+                                            LineItems: [{
+                                                Description: `LoanID: ${helperFunctions.padWithZeroes(invoice[0]['applicationID'], 9)}`,
+                                                Quantity: '1',
+                                                UnitAmount: invoice[0]['interest_amount'],
+                                                AccountCode: integrations[0]['xero_writeoff_account'],
+                                                TaxType: 'NONE'
+                                            }],
+                                            Reference: helperFunctions.padWithZeroes(invoice[0]['applicationID'], 9)
+                                        });
+                                        let xeroWriteOff2 = await xeroClient.creditNotes.update({
+                                            Type: 'ACCRECCREDIT',
+                                            CreditNoteNumber: xeroWriteOff.CreditNotes[0]['CreditNoteNumber'],
+                                            Contact: {
+                                                ContactID: invoice[0]['xeroContactID']
+                                            },
+                                            Amount: invoice[0]['interest_amount'],
+                                            Invoice: {
+                                                InvoiceNumber: invoice[0]['interest_invoice_no']
+                                            },
+                                            Date: update.date_modified
+                                        });
+                                    }
+                                });
+                                res.send({ "status": 200, "message": "Schedule write off successful!" });
+                            }
+                        });
+                    }
+                });
         });
     });
 });
 
-users.post('/application/confirm-payment/:id/:application_id/:agent_id', function(req, res, next) {
+users.post('/application/confirm-payment/:id/:application_id/:agent_id', function (req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async () => {
         db.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID, c.fullname, 
             s.principal_invoice_no, s.interest_invoice_no FROM applications a, clients c, application_schedules s 
             WHERE a.ID = ${req.params.application_id} AND a.userID = c.ID AND a.ID = s.applicationID AND s.ID = ${req.params.id}`, (error, app) => {
-            if (error) {
-                res.send({"status": 500, "error": error, "response": null});
-            } else if (!app[0]) {
-                res.send({"status": 500, "error": "Application does not exist!", "response": null});
-            } else {
-                let data = req.body,
-                    application = app[0],
-                    postData = Object.assign({},req.body);
-                postData.payment_status = 1;
-                delete postData.actual_amount;
-                delete postData.escrow_amount;
-                delete postData.payment_source;
-                delete postData.payment_date;
-                delete postData.remitaPaymentID;
-                delete postData.paystackPaymentID;
-                delete postData.xeroCollectionBank;
-                delete postData.xeroCollectionBankID;
-                delete postData.xeroCollectionDescription;
-                db.query('UPDATE application_schedules SET ? WHERE ID = '+req.params.id, postData, function (error, invoice, fields) {
-                    if(error){
-                        res.send({"status": 500, "error": error, "response": null});
-                    } else {
-                        let invoice = {};
-                        invoice.invoiceID = req.params.id;
-                        invoice.agentID = req.params.agent_id;
-                        invoice.applicationID = req.params.application_id;
-                        invoice.actual_amount = data.actual_amount;
-                        invoice.payment_amount = data.actual_payment_amount;
-                        invoice.interest_amount = data.actual_interest_amount;
-                        invoice.fees_amount = data.actual_fees_amount;
-                        invoice.penalty_amount = data.actual_penalty_amount;
-                        invoice.escrow_amount = data.escrow_amount;
-                        invoice.payment_source = data.payment_source;
-                        invoice.payment_date = data.payment_date;
-                        invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                        invoice.clientID = application.clientID;
-                        invoice.loan_officerID = application.loan_officerID;
-                        invoice.branchID = application.branchID;
-                        if (data.xeroCollectionBankID) {
-                            invoice.xeroCollectionBank = data.xeroCollectionBank;
-                            invoice.xeroCollectionBankID = data.xeroCollectionBankID;
-                        }
-                        if (data.xeroCollectionDescription)
-                            invoice.xeroCollectionDescription = data.xeroCollectionDescription;
-                        if (data.remitaPaymentID) invoice.remitaPaymentID = data.remitaPaymentID;
-                        if (data.paystackPaymentID) invoice.paystackPaymentID = data.paystackPaymentID;
-                        if (invoice.payment_amount > 0 && invoice.interest_amount > 0) {
-                            invoice.type = 'multiple';
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
+                } else if (!app[0]) {
+                    res.send({ "status": 500, "error": "Application does not exist!", "response": null });
+                } else {
+                    let data = req.body,
+                        application = app[0],
+                        postData = Object.assign({}, req.body);
+                    postData.payment_status = 1;
+                    delete postData.actual_amount;
+                    delete postData.escrow_amount;
+                    delete postData.payment_source;
+                    delete postData.payment_date;
+                    delete postData.remitaPaymentID;
+                    delete postData.paystackPaymentID;
+                    delete postData.xeroCollectionBank;
+                    delete postData.xeroCollectionBankID;
+                    delete postData.xeroCollectionDescription;
+                    db.query('UPDATE application_schedules SET ? WHERE ID = ' + req.params.id, postData, function (error, invoice, fields) {
+                        if (error) {
+                            res.send({ "status": 500, "error": error, "response": null });
                         } else {
-                            if (invoice.payment_amount > 0) {
-                                invoice.type = 'principal';
-                            } else if (invoice.interest_amount > 0) {
-                                invoice.type = 'interest';
-                            } else if (invoice.fees_amount > 0) {
-                                invoice.type = 'fees';
-                            } else if (invoice.penalty_amount > 0) {
-                                invoice.type = 'penalty';
+                            let invoice = {};
+                            invoice.invoiceID = req.params.id;
+                            invoice.agentID = req.params.agent_id;
+                            invoice.applicationID = req.params.application_id;
+                            invoice.actual_amount = data.actual_amount;
+                            invoice.payment_amount = data.actual_payment_amount;
+                            invoice.interest_amount = data.actual_interest_amount;
+                            invoice.fees_amount = data.actual_fees_amount;
+                            invoice.penalty_amount = data.actual_penalty_amount;
+                            invoice.escrow_amount = data.escrow_amount;
+                            invoice.payment_source = data.payment_source;
+                            invoice.payment_date = data.payment_date;
+                            invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                            invoice.clientID = application.clientID;
+                            invoice.loan_officerID = application.loan_officerID;
+                            invoice.branchID = application.branchID;
+                            if (data.xeroCollectionBankID) {
+                                invoice.xeroCollectionBank = data.xeroCollectionBank;
+                                invoice.xeroCollectionBankID = data.xeroCollectionBankID;
                             }
-                        }
-                        xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
-                            if (xeroClient && invoice.payment_amount > 0 && 
-                                application.principal_invoice_no && invoice.xeroCollectionBankID) {
-                                let xeroPayment = await xeroClient.payments.create({
-                                    Invoice: {
-                                        InvoiceNumber: application.principal_invoice_no
-                                    },
-                                    Account: {
-                                        Code: invoice.xeroCollectionBankID
-                                    },
-                                    Date: invoice.payment_date,
-                                    Amount: invoice.payment_amount,
-                                    IsReconciled: true,
-                                    Reference: (invoice.xeroCollectionDescription || '').concat(` | 
-                                        ${application.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(application.ID, 9)} | `)
-                                });
-                                invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
-                            }
-                            if (xeroClient && invoice.interest_amount > 0 && 
-                                application.interest_invoice_no && invoice.xeroCollectionBankID) {
-                                let xeroPayment = await xeroClient.payments.create({
-                                    Invoice: {
-                                        InvoiceNumber: application.interest_invoice_no
-                                    },
-                                    Account: {
-                                        Code: invoice.xeroCollectionBankID
-                                    },
-                                    Date: invoice.payment_date,
-                                    Amount: invoice.interest_amount,
-                                    IsReconciled: true,
-                                    Reference: (invoice.xeroCollectionDescription || '').concat(` | 
-                                        ${application.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(application.ID, 9)} | `)
-                                });
-                                invoice.xeroInterestPaymentID = xeroPayment.Payments[0]['PaymentID'];
-                            }
-                            db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response, fields) {
-                                if(error){
-                                    res.send({"status": 500, "error": error, "response": null});
-                                } else {
-                                    auditLog.log({
-                                        clientID: application.clientID,
-                                        amount: data.actual_amount,
-                                        type: 'repayment',
-                                        loanID: application.ID,
-                                        module: 'collections',
-                                        principal_amount: invoice.payment_amount,
-                                        interest_amount: invoice.interest_amount,
-                                        escrow_amount: data.escrow_amount,
-                                        payment_date: invoice.payment_date,
-                                        bank: invoice.xeroCollectionBank
-                                    });
-                                    let payload = {};
-                                    payload.category = 'Application';
-                                    payload.userid = req.cookies.timeout;
-                                    payload.description = 'Loan Application Payment Confirmed';
-                                    payload.affected = req.params.application_id;
-                                    notificationsService.log(req, payload);
-                                    if (!invoice.remitaPaymentID && !invoice.paystackPaymentID)
-                                        return res.send({"status": 200, "message": "Invoice Payment confirmed successfully!"});
-                                    let url = '',
-                                        update = {};
-                                    update.invoiceID = invoice.invoiceID;
-                                    if (invoice.remitaPaymentID) {
-                                        update.status = enums.REMITA_PAYMENT.STATUS.FULL_ASSIGNED;
-                                        url = `UPDATE remita_payments Set ? WHERE ID = ${invoice.remitaPaymentID}`;
-                                    }
-                                    if (invoice.paystackPaymentID) {
-                                        update.status = enums.PAYSTACK_PAYMENT.STATUS.FULL_ASSIGNED;
-                                        url = `UPDATE paystack_payments Set ? WHERE ID = ${invoice.paystackPaymentID}`;
-                                    }
-                                    update.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                                    db.query(url, update, (error, response) => {
-                                        if (error) console.log(error);
-                                        return res.send({"status": 200, "message": "Invoice Payment confirmed successfully!"});
-                                    });
+                            if (data.xeroCollectionDescription)
+                                invoice.xeroCollectionDescription = data.xeroCollectionDescription;
+                            if (data.remitaPaymentID) invoice.remitaPaymentID = data.remitaPaymentID;
+                            if (data.paystackPaymentID) invoice.paystackPaymentID = data.paystackPaymentID;
+                            if (invoice.payment_amount > 0 && invoice.interest_amount > 0) {
+                                invoice.type = 'multiple';
+                            } else {
+                                if (invoice.payment_amount > 0) {
+                                    invoice.type = 'principal';
+                                } else if (invoice.interest_amount > 0) {
+                                    invoice.type = 'interest';
+                                } else if (invoice.fees_amount > 0) {
+                                    invoice.type = 'fees';
+                                } else if (invoice.penalty_amount > 0) {
+                                    invoice.type = 'penalty';
                                 }
+                            }
+                            xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
+                                if (xeroClient && invoice.payment_amount > 0 &&
+                                    application.principal_invoice_no && invoice.xeroCollectionBankID) {
+                                    let xeroPayment = await xeroClient.payments.create({
+                                        Invoice: {
+                                            InvoiceNumber: application.principal_invoice_no
+                                        },
+                                        Account: {
+                                            Code: invoice.xeroCollectionBankID
+                                        },
+                                        Date: invoice.payment_date,
+                                        Amount: invoice.payment_amount,
+                                        IsReconciled: true,
+                                        Reference: (invoice.xeroCollectionDescription || '').concat(` | 
+                                        ${application.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(application.ID, 9)} | `)
+                                    });
+                                    invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                                }
+                                if (xeroClient && invoice.interest_amount > 0 &&
+                                    application.interest_invoice_no && invoice.xeroCollectionBankID) {
+                                    let xeroPayment = await xeroClient.payments.create({
+                                        Invoice: {
+                                            InvoiceNumber: application.interest_invoice_no
+                                        },
+                                        Account: {
+                                            Code: invoice.xeroCollectionBankID
+                                        },
+                                        Date: invoice.payment_date,
+                                        Amount: invoice.interest_amount,
+                                        IsReconciled: true,
+                                        Reference: (invoice.xeroCollectionDescription || '').concat(` | 
+                                        ${application.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(application.ID, 9)} | `)
+                                    });
+                                    invoice.xeroInterestPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                                }
+                                db.query('INSERT INTO schedule_history SET ?', invoice, function (error, response, fields) {
+                                    if (error) {
+                                        res.send({ "status": 500, "error": error, "response": null });
+                                    } else {
+                                        auditLog.log({
+                                            clientID: application.clientID,
+                                            amount: data.actual_amount,
+                                            type: 'repayment',
+                                            loanID: application.ID,
+                                            module: 'collections',
+                                            principal_amount: invoice.payment_amount,
+                                            interest_amount: invoice.interest_amount,
+                                            escrow_amount: data.escrow_amount,
+                                            payment_date: invoice.payment_date,
+                                            bank: invoice.xeroCollectionBank
+                                        });
+                                        let payload = {};
+                                        payload.category = 'Application';
+                                        payload.userid = req.cookies.timeout;
+                                        payload.description = 'Loan Application Payment Confirmed';
+                                        payload.affected = req.params.application_id;
+                                        notificationsService.log(req, payload);
+                                        if (!invoice.remitaPaymentID && !invoice.paystackPaymentID)
+                                            return res.send({ "status": 200, "message": "Invoice Payment confirmed successfully!" });
+                                        let url = '',
+                                            update = {};
+                                        update.invoiceID = invoice.invoiceID;
+                                        if (invoice.remitaPaymentID) {
+                                            update.status = enums.REMITA_PAYMENT.STATUS.FULL_ASSIGNED;
+                                            url = `UPDATE remita_payments Set ? WHERE ID = ${invoice.remitaPaymentID}`;
+                                        }
+                                        if (invoice.paystackPaymentID) {
+                                            update.status = enums.PAYSTACK_PAYMENT.STATUS.FULL_ASSIGNED;
+                                            url = `UPDATE paystack_payments Set ? WHERE ID = ${invoice.paystackPaymentID}`;
+                                        }
+                                        update.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                                        db.query(url, update, (error, response) => {
+                                            if (error) console.log(error);
+                                            return res.send({ "status": 200, "message": "Invoice Payment confirmed successfully!" });
+                                        });
+                                    }
+                                });
                             });
-                        });
-                    }
-                });
-            }
-        });
+                        }
+                    });
+                }
+            });
     });
 });
 
-users.post('/application/escrow', function(req, res, next) {
+users.post('/application/escrow', function (req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async () => {
         let data = req.body;
         data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -3311,10 +3342,10 @@ users.post('/application/escrow', function(req, res, next) {
                 delete data.schedule;
                 delete data.invoice;
                 db.query('INSERT INTO escrow SET ?', data, function (error, result, fields) {
-                    if(error){
-                        res.send({"status": 500, "error": error, "response": null});
+                    if (error) {
+                        res.send({ "status": 500, "error": error, "response": null });
                     } else {
-                        res.send({"status": 200, "message": "Escrow saved successfully!"});
+                        res.send({ "status": 200, "message": "Escrow saved successfully!" });
                     }
                 });
             } else {
@@ -3339,10 +3370,10 @@ users.post('/application/escrow', function(req, res, next) {
                     }
                     delete data.payment_date;
                     db.query('INSERT INTO escrow SET ?', data, function (error, result, fields) {
-                        if(error){
-                            res.send({"status": 500, "error": error, "response": null});
+                        if (error) {
+                            res.send({ "status": 500, "error": error, "response": null });
                         } else {
-                            res.send({"status": 200, "message": "Escrow saved successfully!"});
+                            res.send({ "status": 200, "message": "Escrow saved successfully!" });
                         }
                     });
                 });
@@ -3360,11 +3391,11 @@ function allocateXeroOverpayment(req, res, client) {
                 interest_amount = parseFloat(data.invoice.actual_interest_amount),
                 xeroOverpayments_ = await xeroClient.overpayments.get(),
                 xeroOverpayments = xeroOverpayments_.Overpayments.filter(e => {
-                    return e.RemainingCredit > 0 && e.Status === 'AUTHORISED' && 
+                    return e.RemainingCredit > 0 && e.Status === 'AUTHORISED' &&
                         e.Contact.ContactID === client.xeroContactID
                 });
             do {
-                let balance = (xeroOverpayments[index])? parseFloat(xeroOverpayments[index]['RemainingCredit']) : 0;
+                let balance = (xeroOverpayments[index]) ? parseFloat(xeroOverpayments[index]['RemainingCredit']) : 0;
                 if (principal_amount > 0) {
                     let xeroInvoice = await xeroClient.invoices.get({
                         InvoiceNumber: data.schedule.principal_invoice_no
@@ -3376,9 +3407,9 @@ function allocateXeroOverpayment(req, res, client) {
                             },
                             Amount: principal_amount
                         },
-                        {
-                            OverpaymentID: xeroOverpayments[index]['OverpaymentID']
-                        });
+                            {
+                                OverpaymentID: xeroOverpayments[index]['OverpaymentID']
+                            });
                         balance -= principal_amount;
                         principal_amount = 0;
                     } else {
@@ -3388,12 +3419,12 @@ function allocateXeroOverpayment(req, res, client) {
                             },
                             Amount: balance
                         },
-                        {
-                            OverpaymentID: xeroOverpayments[index]['OverpaymentID']
-                        });
+                            {
+                                OverpaymentID: xeroOverpayments[index]['OverpaymentID']
+                            });
                         principal_amount -= balance;
                         index++;
-                        balance = (xeroOverpayments[index])? parseFloat(xeroOverpayments[index]['RemainingCredit']) : 0;
+                        balance = (xeroOverpayments[index]) ? parseFloat(xeroOverpayments[index]['RemainingCredit']) : 0;
                     }
                 }
 
@@ -3408,9 +3439,9 @@ function allocateXeroOverpayment(req, res, client) {
                             },
                             Amount: interest_amount
                         },
-                        {
-                            OverpaymentID: xeroOverpayments[index]['OverpaymentID']
-                        });
+                            {
+                                OverpaymentID: xeroOverpayments[index]['OverpaymentID']
+                            });
                         balance -= interest_amount;
                         interest_amount = 0;
                     } else {
@@ -3420,12 +3451,12 @@ function allocateXeroOverpayment(req, res, client) {
                             },
                             Amount: balance
                         },
-                        {
-                            OverpaymentID: xeroOverpayments[index]['OverpaymentID']
-                        });
+                            {
+                                OverpaymentID: xeroOverpayments[index]['OverpaymentID']
+                            });
                         interest_amount -= balance;
                         index++;
-                        balance = (xeroOverpayments[index])? parseFloat(xeroOverpayments[index]['RemainingCredit']) : 0;
+                        balance = (xeroOverpayments[index]) ? parseFloat(xeroOverpayments[index]['RemainingCredit']) : 0;
                     }
                 }
             }
@@ -3434,322 +3465,322 @@ function allocateXeroOverpayment(req, res, client) {
     });
 }
 
-users.get('/application/escrow-history/:clientID', function(req, res, next) {
-    db.query('SELECT * FROM escrow WHERE clientID = '+req.params.clientID, function (error, result, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+users.get('/application/escrow-history/:clientID', function (req, res, next) {
+    db.query('SELECT * FROM escrow WHERE clientID = ' + req.params.clientID, function (error, result, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "Escrow fetched successfully!", response: result});
+            res.send({ "status": 200, "message": "Escrow fetched successfully!", response: result });
         }
     });
 });
 
-Number.prototype.round = function(p) {
+Number.prototype.round = function (p) {
     p = p || 10;
-    return parseFloat( this.toFixed(p) );
+    return parseFloat(this.toFixed(p));
 };
 
-users.post('/application/disburse/:id', function(req, res, next) {
+users.post('/application/disburse/:id', function (req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async () => {
         db.query(`SELECT a.ID, a.preapplicationID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID, c.fullname, c.xeroContactID 
             FROM applications a, clients c WHERE a.ID=${req.params.id} AND a.userID=c.ID`, function (error, app, fields) {
-            if (error) {
-                res.send({"status": 500, "error": error, "response": null});
-            } else if (!app[0]) {
-                res.send({"status": 500, "error": "Application does not exist!", "response": null});
-            } else {
-                let data = req.body,
-                    application = app[0];
-                data.status = 2;
-                data.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                db.query(`UPDATE applications SET ? WHERE ID = ${req.params.id}`, data, function (error, result, fields) {
-                    if(error){
-                        res.send({"status": 500, "error": error, "response": null});
-                    } else {
-                        xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
-                            let xeroDisbursement,
-                                disbursement = {
-                                    loan_id: application.ID,
-                                    amount: application.amount,
-                                    client_id: application.clientID,
-                                    loan_officer: application.loan_officerID,
-                                    branch: application.branchID,
-                                    bank: data.disbursement_bank,
-                                    date_disbursed: data.disbursement_date,
-                                    status: 1,
-                                    date_created: data.date_modified
-                                };
-                            if (xeroClient && integration && 
-                                integration.xero_disbursement_account && application.xeroContactID) {
-                                xeroDisbursement = await xeroClient.bankTransactions.create({
-                                    Type: 'SPEND',
-                                    Status: 'AUTHORISED',
-                                    Contact: {
-                                        ContactID: application.xeroContactID
-                                    },
-                                    BankAccount: {
-                                        Code: data.funding_source
-                                    },
-                                    LineItems: [{
-                                        Description: `Loan disbursement for ${application.fullname} | 
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
+                } else if (!app[0]) {
+                    res.send({ "status": 500, "error": "Application does not exist!", "response": null });
+                } else {
+                    let data = req.body,
+                        application = app[0];
+                    data.status = 2;
+                    data.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                    db.query(`UPDATE applications SET ? WHERE ID = ${req.params.id}`, data, function (error, result, fields) {
+                        if (error) {
+                            res.send({ "status": 500, "error": error, "response": null });
+                        } else {
+                            xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
+                                let xeroDisbursement,
+                                    disbursement = {
+                                        loan_id: application.ID,
+                                        amount: application.amount,
+                                        client_id: application.clientID,
+                                        loan_officer: application.loan_officerID,
+                                        branch: application.branchID,
+                                        bank: data.disbursement_bank,
+                                        date_disbursed: data.disbursement_date,
+                                        status: 1,
+                                        date_created: data.date_modified
+                                    };
+                                if (xeroClient && integration &&
+                                    integration.xero_disbursement_account && application.xeroContactID) {
+                                    xeroDisbursement = await xeroClient.bankTransactions.create({
+                                        Type: 'SPEND',
+                                        Status: 'AUTHORISED',
+                                        Contact: {
+                                            ContactID: application.xeroContactID
+                                        },
+                                        BankAccount: {
+                                            Code: data.funding_source
+                                        },
+                                        LineItems: [{
+                                            Description: `Loan disbursement for ${application.fullname} | 
                                             LOAN ID: ${helperFunctions.padWithZeroes(application.ID, 9)}`,
-                                        UnitAmount: application.amount,
-                                        AccountCode: integration.xero_disbursement_account,
-                                        TaxType: 'NONE'
-                                    }],
-                                    Date: data.disbursement_date,
-                                    Reference: helperFunctions.padWithZeroes(application.ID, 9),
-                                    IsReconciled: 'true'
-                                });
-                                disbursement.xeroDisbursementID = xeroDisbursement.BankTransactions[0]['BankTransactionID'];
-                                auditLog.log({
-                                    clientID: application.clientID,
-                                    amount: application.amount,
-                                    type: 'disbursement',
-                                    loanID: application.ID,
-                                    module: 'collections',
-                                    payment_date: data.disbursement_date,
-                                    bank: data.disbursement_bank
-                                });
-                            }
-                            db.query(`INSERT INTO disbursement_history SET ?`, disbursement, function (error, result, fields) {
-                                if(error){
-                                    res.send({"status": 500, "error": error, "response": null});
-                                } else {
-                                    let payload = {};
-                                    payload.category = 'Application';
-                                    payload.userid = req.cookies.timeout;
-                                    payload.description = 'Loan Disbursed';
-                                    payload.affected = req.params.id;
-                                    notificationsService.log(req, payload);
-                                    createXeroSchedule(req, res);
-
-                                    payload = {};
-                                    payload.status = enums.CLIENT_APPLICATION.STATUS.ACCEPTED;
-                                    payload.date_modified = data.date_modified;
-                                    db.query(`UPDATE preapplications Set ? WHERE ID = ${application.preapplicationID}`, payload, error => {
-                                        if (error) return res.send({"status": 500, "error": error, "response": null});
-                                        res.send({"status": 200, "message": "Loan disbursed successfully!"});
+                                            UnitAmount: application.amount,
+                                            AccountCode: integration.xero_disbursement_account,
+                                            TaxType: 'NONE'
+                                        }],
+                                        Date: data.disbursement_date,
+                                        Reference: helperFunctions.padWithZeroes(application.ID, 9),
+                                        IsReconciled: 'true'
+                                    });
+                                    disbursement.xeroDisbursementID = xeroDisbursement.BankTransactions[0]['BankTransactionID'];
+                                    auditLog.log({
+                                        clientID: application.clientID,
+                                        amount: application.amount,
+                                        type: 'disbursement',
+                                        loanID: application.ID,
+                                        module: 'collections',
+                                        payment_date: data.disbursement_date,
+                                        bank: data.disbursement_bank
                                     });
                                 }
+                                db.query(`INSERT INTO disbursement_history SET ?`, disbursement, function (error, result, fields) {
+                                    if (error) {
+                                        res.send({ "status": 500, "error": error, "response": null });
+                                    } else {
+                                        let payload = {};
+                                        payload.category = 'Application';
+                                        payload.userid = req.cookies.timeout;
+                                        payload.description = 'Loan Disbursed';
+                                        payload.affected = req.params.id;
+                                        notificationsService.log(req, payload);
+                                        createXeroSchedule(req, res);
+
+                                        payload = {};
+                                        payload.status = enums.CLIENT_APPLICATION.STATUS.ACCEPTED;
+                                        payload.date_modified = data.date_modified;
+                                        db.query(`UPDATE preapplications Set ? WHERE ID = ${application.preapplicationID}`, payload, error => {
+                                            if (error) return res.send({ "status": 500, "error": error, "response": null });
+                                            res.send({ "status": 200, "message": "Loan disbursed successfully!" });
+                                        });
+                                    }
+                                });
                             });
-                        });
-                    }
-                });
-            }
-        });
+                        }
+                    });
+                }
+            });
     });
 });
 
-function createXeroSchedule (req, res) {
-    db.getConnection(function(err, connection) {
+function createXeroSchedule(req, res) {
+    db.getConnection(function (err, connection) {
         if (err) throw err;
 
         connection.query(`SELECT c.fullname, c.xeroContactID FROM applications a, clients c WHERE a.ID = ${req.params.id} 
         AND a.userID = c.ID`, function (error, client) {
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
-            } else {
-                connection.query(`SELECT * FROM application_schedules WHERE applicationID = ${req.params.id} 
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
+                } else {
+                    connection.query(`SELECT * FROM application_schedules WHERE applicationID = ${req.params.id} 
                 AND status = 1`, function (error, invoices) {
-                    if(error){
-                        res.send({"status": 500, "error": error, "response": null});
-                    } else {
-                        xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
-                            let xeroPrincipal,
-                                schedule = invoices;
-                            if (xeroClient && integration && 
-                                integration.xero_principal_account && client[0]['xeroContactID']) {
-                                let LineItems = [];
-                                for (let i=0; i<schedule.length; i++) {
-                                    let invoice = schedule[i];
-                                    LineItems.push({
-                                        Description: `LOAN ID: ${helperFunctions.padWithZeroes(req.params.id, 9)} | 
+                            if (error) {
+                                res.send({ "status": 500, "error": error, "response": null });
+                            } else {
+                                xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async (xeroClient, integration) => {
+                                    let xeroPrincipal,
+                                        schedule = invoices;
+                                    if (xeroClient && integration &&
+                                        integration.xero_principal_account && client[0]['xeroContactID']) {
+                                        let LineItems = [];
+                                        for (let i = 0; i < schedule.length; i++) {
+                                            let invoice = schedule[i];
+                                            LineItems.push({
+                                                Description: `LOAN ID: ${helperFunctions.padWithZeroes(req.params.id, 9)} | 
                                             Principal receivable for this on ${invoice.payment_collect_date}`,
-                                        Quantity: '1',
-                                        UnitAmount: invoice.payment_amount,
-                                        AccountCode: integration.xero_principal_account
-                                    });
-                                }
-                                xeroPrincipal = await xeroClient.invoices.create({
-                                    Type: 'ACCREC',
-                                    Contact: {
-                                        ContactID: client[0]['xeroContactID']
-                                    },
-                                    Date: schedule[0]['payment_create_date'],
-                                    DueDate: schedule[0]['payment_collect_date'],
-                                    LineItems: LineItems,
-                                    Status: integration.xero_loan_account_status,
-                                    Reference: helperFunctions.padWithZeroes(req.params.id, 9)
+                                                Quantity: '1',
+                                                UnitAmount: invoice.payment_amount,
+                                                AccountCode: integration.xero_principal_account
+                                            });
+                                        }
+                                        xeroPrincipal = await xeroClient.invoices.create({
+                                            Type: 'ACCREC',
+                                            Contact: {
+                                                ContactID: client[0]['xeroContactID']
+                                            },
+                                            Date: schedule[0]['payment_create_date'],
+                                            DueDate: schedule[0]['payment_collect_date'],
+                                            LineItems: LineItems,
+                                            Status: integration.xero_loan_account_status,
+                                            Reference: helperFunctions.padWithZeroes(req.params.id, 9)
+                                        });
+                                    }
+                                    let client_ = client[0];
+                                    client_.integration = integration;
+                                    syncXeroSchedule(req, res, connection, client_, schedule, xeroPrincipal, 'put')
+                                        .then(response => {
+                                            connection.release();
+                                        });
                                 });
                             }
-                            let client_ = client[0];
-                            client_.integration = integration;
-                            syncXeroSchedule(req, res, connection, client_, schedule, xeroPrincipal, 'put')
-                            .then(response => {
-                                connection.release();
-                            });
                         });
-                    }
-                });
-            }
-        });
+                }
+            });
     });
 }
 
 users.get('/application/invoice-history/:id?/:status?/:clientID?', (req, res) => {
     db.query(`SELECT s.ID, s.invoiceID, s.actual_amount, s.payment_amount, s.interest_amount, s.escrow_amount, s.fees_amount, s.penalty_amount, 
         s.payment_date, s.payment_source, s.date_created, s.status, s.applicationID, u.fullname AS agent FROM schedule_history AS s, users AS u 
-        WHERE s.agentID=u.ID ${(req.query.id)? `AND s.invoiceID = ${req.query.id}`:''} ${(req.query.clientID)? `AND s.clientID = ${req.query.clientID}`:''} 
+        WHERE s.agentID=u.ID ${(req.query.id) ? `AND s.invoiceID = ${req.query.id}` : ''} ${(req.query.clientID) ? `AND s.clientID = ${req.query.clientID}` : ''} 
         AND s.status in (${req.query.status || '0,1'}) ORDER BY s.ID desc`, (error, history) => {
-        if(error) {
-            res.send({"status": 500, "error": error, "response": null});
-        } else {
-            res.send({"status": 200, "message": "Invoice history fetched successfully!", "response":history});
-        }
-    });
+            if (error) {
+                res.send({ "status": 500, "error": error, "response": null });
+            } else {
+                res.send({ "status": 200, "message": "Invoice history fetched successfully!", "response": history });
+            }
+        });
 });
 
 users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
     xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async () => {
         db.query(`select s.clientID, s.applicationID, s.xeroPrincipalPaymentID, s.xeroInterestPaymentID, 
             i.principal_invoice_no, i.interest_invoice_no, c.fullname, c.email from schedule_history s, application_schedules i, clients c 
-            where s.invoiceID = i.ID AND s.clientID = c.ID AND s.ID = ${req.params.id}`, 
-        (error, result) => {
-            if (error) {
-                res.send({"status": 500, "error": error, "response": null});
-            } else if (!result[0]) {
-                res.send({"status": 500, "error": "Payment does not exist!", "response": null});
-            } else {
-                let data = req.body,
-                    payment = result[0],
-                    postData = Object.assign({},req.body);
-                postData.payment_status = 1;
-                delete postData.agentID;
-                delete postData.actual_amount;
-                delete postData.escrow_amount;
-                delete postData.payment_source;
-                delete postData.payment_date;
-                delete postData.remitaPaymentID;
-                delete postData.paystackPaymentID;
-                delete postData.xeroCollectionBank;
-                delete postData.xeroCollectionBankID;
-                delete postData.xeroCollectionDescription;
-                db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`, postData, (error, invoice) => {
-                    if(error) {
-                        res.send({"status": 500, "error": error, "response": null});
-                    } else {
-                        let invoice = {};
-                        invoice.agentID = data.agentID;
-                        invoice.actual_amount = data.actual_amount;
-                        invoice.payment_amount = data.actual_payment_amount;
-                        invoice.interest_amount = data.actual_interest_amount;
-                        invoice.fees_amount = data.actual_fees_amount;
-                        invoice.penalty_amount = data.actual_penalty_amount;
-                        invoice.escrow_amount = data.escrow_amount;
-                        invoice.payment_source = data.payment_source;
-                        invoice.payment_date = data.payment_date;
-                        invoice.status = 1;
-                        invoice.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                        if (data.xeroCollectionBankID) {
-                            invoice.xeroCollectionBank = data.xeroCollectionBank;
-                            invoice.xeroCollectionBankID = data.xeroCollectionBankID;
-                        }
-                        if (data.xeroCollectionDescription)
-                            invoice.xeroCollectionDescription = data.xeroCollectionDescription;
-                        if (data.remitaPaymentID) invoice.remitaPaymentID = data.remitaPaymentID;
-                        if (data.paystackPaymentID) invoice.paystackPaymentID = data.paystackPaymentID;
-                        if (invoice.payment_amount > 0 && invoice.interest_amount > 0) {
-                            invoice.type = 'multiple';
+            where s.invoiceID = i.ID AND s.clientID = c.ID AND s.ID = ${req.params.id}`,
+            (error, result) => {
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
+                } else if (!result[0]) {
+                    res.send({ "status": 500, "error": "Payment does not exist!", "response": null });
+                } else {
+                    let data = req.body,
+                        payment = result[0],
+                        postData = Object.assign({}, req.body);
+                    postData.payment_status = 1;
+                    delete postData.agentID;
+                    delete postData.actual_amount;
+                    delete postData.escrow_amount;
+                    delete postData.payment_source;
+                    delete postData.payment_date;
+                    delete postData.remitaPaymentID;
+                    delete postData.paystackPaymentID;
+                    delete postData.xeroCollectionBank;
+                    delete postData.xeroCollectionBankID;
+                    delete postData.xeroCollectionDescription;
+                    db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`, postData, (error, invoice) => {
+                        if (error) {
+                            res.send({ "status": 500, "error": error, "response": null });
                         } else {
-                            if (invoice.payment_amount > 0) {
-                                invoice.type = 'principal';
-                            } else if (invoice.interest_amount > 0) {
-                                invoice.type = 'interest';
-                            } else if (invoice.fees_amount > 0) {
-                                invoice.type = 'fees';
-                            } else if (invoice.penalty_amount > 0) {
-                                invoice.type = 'penalty';
+                            let invoice = {};
+                            invoice.agentID = data.agentID;
+                            invoice.actual_amount = data.actual_amount;
+                            invoice.payment_amount = data.actual_payment_amount;
+                            invoice.interest_amount = data.actual_interest_amount;
+                            invoice.fees_amount = data.actual_fees_amount;
+                            invoice.penalty_amount = data.actual_penalty_amount;
+                            invoice.escrow_amount = data.escrow_amount;
+                            invoice.payment_source = data.payment_source;
+                            invoice.payment_date = data.payment_date;
+                            invoice.status = 1;
+                            invoice.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                            if (data.xeroCollectionBankID) {
+                                invoice.xeroCollectionBank = data.xeroCollectionBank;
+                                invoice.xeroCollectionBankID = data.xeroCollectionBankID;
                             }
-                        }
-                        xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
-                            if (xeroClient && invoice.payment_amount > 0 && 
-                                payment.principal_invoice_no && invoice.xeroCollectionBankID) {
-                                let xeroPayment = await xeroClient.payments.create({
-                                    Invoice: {
-                                        InvoiceNumber: payment.principal_invoice_no
-                                    },
-                                    Account: {
-                                        Code: invoice.xeroCollectionBankID
-                                    },
-                                    Date: invoice.payment_date,
-                                    Amount: invoice.payment_amount,
-                                    IsReconciled: true,
-                                    Reference: (invoice.xeroCollectionDescription || '').concat(` | 
-                                        ${payment.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(payment.applicationID, 9)} | `)
-                                });
-                                invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
-                            }
-                            if (xeroClient && invoice.interest_amount > 0 && 
-                                payment.interest_invoice_no && invoice.xeroCollectionBankID) {
-                                let xeroPayment = await xeroClient.payments.create({
-                                    Invoice: {
-                                        InvoiceNumber: payment.interest_invoice_no
-                                    },
-                                    Account: {
-                                        Code: invoice.xeroCollectionBankID
-                                    },
-                                    Date: invoice.payment_date,
-                                    Amount: invoice.interest_amount,
-                                    IsReconciled: true,
-                                    Reference: (invoice.xeroCollectionDescription || '').concat(` | 
-                                        ${payment.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(payment.applicationID, 9)} | `)
-                                });
-                                invoice.xeroInterestPaymentID = xeroPayment.Payments[0]['PaymentID'];
-                            }
-                        });
-                        db.query(`UPDATE schedule_history SET ? WHERE ID = ${req.params.id}`, invoice, (error, history) => {
-                            if(error){
-                                res.send({"status": 500, "error": error, "response": null});
+                            if (data.xeroCollectionDescription)
+                                invoice.xeroCollectionDescription = data.xeroCollectionDescription;
+                            if (data.remitaPaymentID) invoice.remitaPaymentID = data.remitaPaymentID;
+                            if (data.paystackPaymentID) invoice.paystackPaymentID = data.paystackPaymentID;
+                            if (invoice.payment_amount > 0 && invoice.interest_amount > 0) {
+                                invoice.type = 'multiple';
                             } else {
-                                let payload = {};
-                                payload.category = 'Application';
-                                payload.userid = req.cookies.timeout;
-                                payload.description = 'Payment confirmed for Loan';
-                                payload.affected = payment.applicationID;
-                                notificationsService.log(req, payload);
-                                auditLog.log({
-                                    clientID: payment.clientID,
-                                    amount: invoice.actual_amount,
-                                    type: 'repayment',
-                                    loanID: payment.applicationID,
-                                    module: 'collections',
-                                    principal_amount: invoice.payment_amount,
-                                    interest_amount: invoice.interest_amount,
-                                    escrow_amount: invoice.escrow_amount,
-                                    payment_date: invoice.payment_date,
-                                    bank: invoice.xeroCollectionBank
-                                });
-                                emailService.send({
-                                    to: payment.email,
-                                    subject: 'Payment Confirmation',
-                                    template: 'default',
-                                    context: {
-                                        name: payment.fullname,
-                                        message: `Your payment of ₦${invoice.actual_amount} was confirmed successfully!`
-                                    }
-                                });
-                                res.send({"status": 200, "message": "Payment confirmed successfully!", "response":history});
+                                if (invoice.payment_amount > 0) {
+                                    invoice.type = 'principal';
+                                } else if (invoice.interest_amount > 0) {
+                                    invoice.type = 'interest';
+                                } else if (invoice.fees_amount > 0) {
+                                    invoice.type = 'fees';
+                                } else if (invoice.penalty_amount > 0) {
+                                    invoice.type = 'penalty';
+                                }
                             }
-                        });
-                    }
-                });
-            }
-        });
+                            xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
+                                if (xeroClient && invoice.payment_amount > 0 &&
+                                    payment.principal_invoice_no && invoice.xeroCollectionBankID) {
+                                    let xeroPayment = await xeroClient.payments.create({
+                                        Invoice: {
+                                            InvoiceNumber: payment.principal_invoice_no
+                                        },
+                                        Account: {
+                                            Code: invoice.xeroCollectionBankID
+                                        },
+                                        Date: invoice.payment_date,
+                                        Amount: invoice.payment_amount,
+                                        IsReconciled: true,
+                                        Reference: (invoice.xeroCollectionDescription || '').concat(` | 
+                                        ${payment.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(payment.applicationID, 9)} | `)
+                                    });
+                                    invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                                }
+                                if (xeroClient && invoice.interest_amount > 0 &&
+                                    payment.interest_invoice_no && invoice.xeroCollectionBankID) {
+                                    let xeroPayment = await xeroClient.payments.create({
+                                        Invoice: {
+                                            InvoiceNumber: payment.interest_invoice_no
+                                        },
+                                        Account: {
+                                            Code: invoice.xeroCollectionBankID
+                                        },
+                                        Date: invoice.payment_date,
+                                        Amount: invoice.interest_amount,
+                                        IsReconciled: true,
+                                        Reference: (invoice.xeroCollectionDescription || '').concat(` | 
+                                        ${payment.fullname} with LOAN ID: ${helperFunctions.padWithZeroes(payment.applicationID, 9)} | `)
+                                    });
+                                    invoice.xeroInterestPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                                }
+                            });
+                            db.query(`UPDATE schedule_history SET ? WHERE ID = ${req.params.id}`, invoice, (error, history) => {
+                                if (error) {
+                                    res.send({ "status": 500, "error": error, "response": null });
+                                } else {
+                                    let payload = {};
+                                    payload.category = 'Application';
+                                    payload.userid = req.cookies.timeout;
+                                    payload.description = 'Payment confirmed for Loan';
+                                    payload.affected = payment.applicationID;
+                                    notificationsService.log(req, payload);
+                                    auditLog.log({
+                                        clientID: payment.clientID,
+                                        amount: invoice.actual_amount,
+                                        type: 'repayment',
+                                        loanID: payment.applicationID,
+                                        module: 'collections',
+                                        principal_amount: invoice.payment_amount,
+                                        interest_amount: invoice.interest_amount,
+                                        escrow_amount: invoice.escrow_amount,
+                                        payment_date: invoice.payment_date,
+                                        bank: invoice.xeroCollectionBank
+                                    });
+                                    emailService.send({
+                                        to: payment.email,
+                                        subject: 'Payment Confirmation',
+                                        template: 'default',
+                                        context: {
+                                            name: payment.fullname,
+                                            message: `Your payment of ₦${invoice.actual_amount} was confirmed successfully!`
+                                        }
+                                    });
+                                    res.send({ "status": 200, "message": "Payment confirmed successfully!", "response": history });
+                                }
+                            });
+                        }
+                    });
+                }
+            });
     });
 });
 
-users.get('/application/payment-reversal/:id/:invoice_id', function(req, res, next) {
+users.get('/application/payment-reversal/:id/:invoice_id', function (req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async () => {
         let id;
         const date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -3758,114 +3789,114 @@ users.get('/application/payment-reversal/:id/:invoice_id', function(req, res, ne
             date_modified: date_modified
         };
         db.query(`UPDATE schedule_history SET ? WHERE ID = ${req.params.id}`, update, (error, history) => {
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
+            if (error) {
+                res.send({ "status": 500, "error": error, "response": null });
             } else {
-                db.query('select h.applicationID, h.actual_amount, h.xeroPrincipalPaymentID, h.xeroInterestPaymentID, c.email, c.fullname '+
-                'from schedule_history h, clients c where h.clientID = c.ID AND h.ID = ?', 
-                [req.params.id], function(error, result, fields){
-                    if (error){
-                        res.send({"status": 500, "error": error, "response": null});
-                    } else {
-                        id = result[0]['applicationID'];
-                        if (result[0]['xeroPrincipalPaymentID'] || result[0]['xeroInterestPaymentID']) {
-                            xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
-                                if (xeroClient && result[0]['xeroPrincipalPaymentID']) {
-                                    let xeroPayment = await xeroClient.payments.update(
-                                        {
-                                            Status: 'DELETED'
-                                        },
-                                        {
-                                            PaymentID: result[0]['xeroPrincipalPaymentID']
-                                        }
-                                    );
-                                }
-                                if (xeroClient && result[0]['xeroInterestPaymentID']) {
-                                    let xeroPayment = await xeroClient.payments.update(
-                                        {
-                                            Status: 'DELETED'
-                                        },
-                                        {
-                                            PaymentID: result[0]['xeroInterestPaymentID']
-                                        }
-                                    );
-                                }
-                            });
-                        }
-                        update = {
-                            payment_status: 0,
-                            date_modified: date_modified
-                        };
-                        db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`, update, (error, history) => {
-                            if(error){
-                                res.send({"status": 500, "error": error, "response": null});
-                            } else {
-                                let payload = {};
-                                payload.category = 'Application';
-                                payload.userid = req.cookies.timeout;
-                                payload.description = 'Payment Reversed for Loan';
-                                payload.affected = id;
-                                notificationsService.log(req, payload);
-                                // emailService.send({
-                                //     to: result[0]['email'],
-                                //     subject: 'Payment Reversed',
-                                //     template: 'default',
-                                //     context: {
-                                //         name: result[0]['fullname'],
-                                //         message: `Your payment of ₦${helperFunctions.numberToCurrencyFormatter(result[0]['actual_amount'])} 
-                                //             was reversed!`
-                                //     }
-                                // });
-                                res.send({"status": 200, "message": "Payment reversed successfully!", "response":history});
+                db.query('select h.applicationID, h.actual_amount, h.xeroPrincipalPaymentID, h.xeroInterestPaymentID, c.email, c.fullname ' +
+                    'from schedule_history h, clients c where h.clientID = c.ID AND h.ID = ?',
+                    [req.params.id], function (error, result, fields) {
+                        if (error) {
+                            res.send({ "status": 500, "error": error, "response": null });
+                        } else {
+                            id = result[0]['applicationID'];
+                            if (result[0]['xeroPrincipalPaymentID'] || result[0]['xeroInterestPaymentID']) {
+                                xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
+                                    if (xeroClient && result[0]['xeroPrincipalPaymentID']) {
+                                        let xeroPayment = await xeroClient.payments.update(
+                                            {
+                                                Status: 'DELETED'
+                                            },
+                                            {
+                                                PaymentID: result[0]['xeroPrincipalPaymentID']
+                                            }
+                                        );
+                                    }
+                                    if (xeroClient && result[0]['xeroInterestPaymentID']) {
+                                        let xeroPayment = await xeroClient.payments.update(
+                                            {
+                                                Status: 'DELETED'
+                                            },
+                                            {
+                                                PaymentID: result[0]['xeroInterestPaymentID']
+                                            }
+                                        );
+                                    }
+                                });
                             }
-                        });
-                    }
-                });
-            }
-        });
-    });
-});
-
-users.get('/application/escrow-payment-reversal/:id', function(req, res, next) {
-    xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async () => {
-        let update = {};
-        update.status = 0,
-        update.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-        db.query(`SELECT clientID, amount, xeroOverpaymentID, xeroCollectionBankID FROM escrow WHERE ID = ${req.params.id}`, 
-        [req.params.id], function (error, escrow, fields) {
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
-            } else {
-                if (escrow[0]['xeroOverpaymentID'] && escrow[0]['xeroCollectionBankID']) {
-                    xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async (xeroClient) => {
-                        if (xeroClient) {
-                            let xeroPayment = await xeroClient.payments.update({
-                                Overpayment: {
-                                    OverpaymentID: escrow[0]['xeroOverpaymentID']
-                                },
-                                Account: {
-                                    Code: escrow[0]['xeroCollectionBankID']
-                                },
-                                Date: update.date_modified,
-                                Amount: escrow[0]['amount'],
-                                Reference: `CLIENT ID: ${helperFunctions.padWithZeroes(escrow[0]['clientID'], 6)} | Overpayment reversal`
+                            update = {
+                                payment_status: 0,
+                                date_modified: date_modified
+                            };
+                            db.query(`UPDATE application_schedules SET ? WHERE ID = ${req.params.invoice_id}`, update, (error, history) => {
+                                if (error) {
+                                    res.send({ "status": 500, "error": error, "response": null });
+                                } else {
+                                    let payload = {};
+                                    payload.category = 'Application';
+                                    payload.userid = req.cookies.timeout;
+                                    payload.description = 'Payment Reversed for Loan';
+                                    payload.affected = id;
+                                    notificationsService.log(req, payload);
+                                    // emailService.send({
+                                    //     to: result[0]['email'],
+                                    //     subject: 'Payment Reversed',
+                                    //     template: 'default',
+                                    //     context: {
+                                    //         name: result[0]['fullname'],
+                                    //         message: `Your payment of ₦${helperFunctions.numberToCurrencyFormatter(result[0]['actual_amount'])} 
+                                    //             was reversed!`
+                                    //     }
+                                    // });
+                                    res.send({ "status": 200, "message": "Payment reversed successfully!", "response": history });
+                                }
                             });
                         }
                     });
-                }
-                db.query(`UPDATE escrow SET ? WHERE ID = ${req.params.id}`, update, function (error, response, fields) {
-                    if(error){
-                        res.send({"status": 500, "error": error, "response": null});
-                    } else {
-                        res.send({"status": 200, "message": "Payment reversed successfully!"});
-                    }
-                });
             }
         });
     });
 });
 
-users.post('/application/escrow-payment-refund/:id', function(req, res, next) {
+users.get('/application/escrow-payment-reversal/:id', function (req, res, next) {
+    xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async () => {
+        let update = {};
+        update.status = 0,
+            update.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        db.query(`SELECT clientID, amount, xeroOverpaymentID, xeroCollectionBankID FROM escrow WHERE ID = ${req.params.id}`,
+            [req.params.id], function (error, escrow, fields) {
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
+                } else {
+                    if (escrow[0]['xeroOverpaymentID'] && escrow[0]['xeroCollectionBankID']) {
+                        xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async (xeroClient) => {
+                            if (xeroClient) {
+                                let xeroPayment = await xeroClient.payments.update({
+                                    Overpayment: {
+                                        OverpaymentID: escrow[0]['xeroOverpaymentID']
+                                    },
+                                    Account: {
+                                        Code: escrow[0]['xeroCollectionBankID']
+                                    },
+                                    Date: update.date_modified,
+                                    Amount: escrow[0]['amount'],
+                                    Reference: `CLIENT ID: ${helperFunctions.padWithZeroes(escrow[0]['clientID'], 6)} | Overpayment reversal`
+                                });
+                            }
+                        });
+                    }
+                    db.query(`UPDATE escrow SET ? WHERE ID = ${req.params.id}`, update, function (error, response, fields) {
+                        if (error) {
+                            res.send({ "status": 500, "error": error, "response": null });
+                        } else {
+                            res.send({ "status": 200, "message": "Payment reversed successfully!" });
+                        }
+                    });
+                }
+            });
+    });
+});
+
+users.post('/application/escrow-payment-refund/:id', function (req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async () => {
         let update = req.body,
             bank = update.bank,
@@ -3873,240 +3904,241 @@ users.post('/application/escrow-payment-refund/:id', function(req, res, next) {
         update.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
         delete update.bank;
         delete update.refund;
-        db.query(`SELECT clientID, amount, xeroOverpaymentID FROM escrow WHERE ID = ${req.params.id}`, 
-        [req.params.id], function (error, escrow, fields) {
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
-            } else {
-                if (escrow[0]['xeroOverpaymentID']) {
-                    xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async (xeroClient) => {
-                        if (xeroClient) {
-                            let xeroPayment = await xeroClient.payments.update({
-                                Overpayment: {
-                                    OverpaymentID: escrow[0]['xeroOverpaymentID']
-                                },
-                                Account: {
-                                    Code: bank
-                                },
-                                Date: update.date_modified,
-                                Amount: refund,
-                                Reference: `CLIENT ID: ${helperFunctions.padWithZeroes(escrow[0]['clientID'], 6)} | Overpayment refund`
-                            });
+        db.query(`SELECT clientID, amount, xeroOverpaymentID FROM escrow WHERE ID = ${req.params.id}`,
+            [req.params.id], function (error, escrow, fields) {
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
+                } else {
+                    if (escrow[0]['xeroOverpaymentID']) {
+                        xeroFunctions.authorizedOperation(req, res, 'xero_escrow', async (xeroClient) => {
+                            if (xeroClient) {
+                                let xeroPayment = await xeroClient.payments.update({
+                                    Overpayment: {
+                                        OverpaymentID: escrow[0]['xeroOverpaymentID']
+                                    },
+                                    Account: {
+                                        Code: bank
+                                    },
+                                    Date: update.date_modified,
+                                    Amount: refund,
+                                    Reference: `CLIENT ID: ${helperFunctions.padWithZeroes(escrow[0]['clientID'], 6)} | Overpayment refund`
+                                });
+                            }
+                        });
+                    }
+                    db.query(`UPDATE escrow SET ? WHERE ID = ${req.params.id}`, update, function (error, response, fields) {
+                        if (error) {
+                            res.send({ "status": 500, "error": error, "response": null });
+                        } else {
+                            res.send({ "status": 200, "message": "Payment refunded successfully!" });
                         }
                     });
                 }
-                db.query(`UPDATE escrow SET ? WHERE ID = ${req.params.id}`, update, function (error, response, fields) {
-                    if(error){
-                        res.send({"status": 500, "error": error, "response": null});
-                    } else {
-                        res.send({"status": 200, "message": "Payment refunded successfully!"});
-                    }
-                });
-            }
-        });
+            });
     });
 });
 
-users.post('/application/loancirrus-id/:application_id', function(req, res, next) {
-    db.query('UPDATE applications SET loanCirrusID=? WHERE ID=?', [req.body.id,req.params.application_id], function (error, result, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+users.post('/application/loancirrus-id/:application_id', function (req, res, next) {
+    db.query('UPDATE applications SET loanCirrusID=? WHERE ID=?', [req.body.id, req.params.application_id], function (error, result, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "Loan Cirrus ID updated successfully!"});
+            res.send({ "status": 200, "message": "Loan Cirrus ID updated successfully!" });
         }
     });
 });
 
-users.post('/application/pay-off/:id/:agentID', function(req, res, next) {
+users.post('/application/pay-off/:id/:agentID', function (req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async () => {
         let data = req.body;
         data.close_status = 1;
-        db.getConnection(function(err, connection) {
+        db.getConnection(function (err, connection) {
             if (err) throw err;
 
             connection.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID 
                 FROM applications a, clients c WHERE a.ID = ${req.params.id} AND a.userID = c.ID`, (error, app) => {
-                if (error) {
-                    res.send({"status": 500, "error": error, "response": null});
-                } else if (!app[0]) {
-                    res.send({"status": 500, "error": "Application does not exist!", "response": null});
-                } else {
-                    let application = app[0];
-                    connection.query('UPDATE applications SET ? WHERE ID = '+req.params.id, data, function (error, result, fields) {
-                        if(error){
-                            res.send({"status": 500, "error": error, "response": null});
-                        } else {
-                            connection.query('SELECT * FROM application_schedules WHERE applicationID = ? AND status = 1 AND payment_status = 0', [req.params.id], function (error, invoices, fields) {
-                                if(error){
-                                    res.send({"status": 500, "error": error, "response": null});
-                                } else {
-                                    async.forEach(invoices, function (invoice_obj, callback) {
-                                        let invoice = {};
-                                        invoice.invoiceID = invoice_obj.ID;
-                                        invoice.applicationID = req.params.id;
-                                        invoice.payment_amount = invoice_obj.payment_amount;
-                                        invoice.interest_amount = invoice_obj.interest_amount;
-                                        invoice.fees_amount = invoice_obj.fees_amount;
-                                        invoice.penalty_amount = invoice_obj.penalty_amount;
-                                        invoice.agentID = req.params.agentID;
-                                        invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                                        invoice.payment_date = moment().utcOffset('+0100').format('YYYY-MM-DD');
-                                        invoice.payment_source = 'cash';
-                                        invoice.clientID = application.clientID;
-                                        invoice.loan_officerID = application.loan_officerID;
-                                        invoice.branchID = application.branchID;
-                                        if (invoice.payment_amount > 0 && invoice.interest_amount > 0) {
-                                            invoice.type = 'multiple';
-                                        } else {
-                                            if (invoice.payment_amount > 0) {
-                                                invoice.type = 'principal';
-                                            } else if (invoice.interest_amount > 0) {
-                                                invoice.type = 'interest';
-                                            } else if (invoice.fees_amount > 0) {
-                                                invoice.type = 'fees';
-                                            } else if (invoice.penalty_amount > 0) {
-                                                invoice.type = 'penalty';
+                    if (error) {
+                        res.send({ "status": 500, "error": error, "response": null });
+                    } else if (!app[0]) {
+                        res.send({ "status": 500, "error": "Application does not exist!", "response": null });
+                    } else {
+                        let application = app[0];
+                        connection.query('UPDATE applications SET ? WHERE ID = ' + req.params.id, data, function (error, result, fields) {
+                            if (error) {
+                                res.send({ "status": 500, "error": error, "response": null });
+                            } else {
+                                connection.query('SELECT * FROM application_schedules WHERE applicationID = ? AND status = 1 AND payment_status = 0', [req.params.id], function (error, invoices, fields) {
+                                    if (error) {
+                                        res.send({ "status": 500, "error": error, "response": null });
+                                    } else {
+                                        async.forEach(invoices, function (invoice_obj, callback) {
+                                            let invoice = {};
+                                            invoice.invoiceID = invoice_obj.ID;
+                                            invoice.applicationID = req.params.id;
+                                            invoice.payment_amount = invoice_obj.payment_amount;
+                                            if ((data.close_include_interest && data.close_include_interest === "all")
+                                                || new Date(invoice_obj.interest_collect_date) <= new Date())
+                                                invoice.interest_amount = invoice_obj.interest_amount;
+                                            invoice.agentID = req.params.agentID;
+                                            invoice.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                                            invoice.payment_date = moment().utcOffset('+0100').format('YYYY-MM-DD');
+                                            invoice.payment_source = 'cash';
+                                            invoice.clientID = application.clientID;
+                                            invoice.loan_officerID = application.loan_officerID;
+                                            invoice.branchID = application.branchID;
+                                            if (invoice.payment_amount > 0 && invoice.interest_amount > 0) {
+                                                invoice.type = 'multiple';
+                                            } else {
+                                                if (invoice.payment_amount > 0) {
+                                                    invoice.type = 'principal';
+                                                } else if (invoice.interest_amount > 0) {
+                                                    invoice.type = 'interest';
+                                                } else if (invoice.fees_amount > 0) {
+                                                    invoice.type = 'fees';
+                                                } else if (invoice.penalty_amount > 0) {
+                                                    invoice.type = 'penalty';
+                                                }
                                             }
-                                        }
-                                        xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
-                                            if (xeroClient && invoice.payment_amount > 0 && 
-                                                invoice_obj.principal_invoice_no && data.close_bank) {
-                                                let xeroPayment = await xeroClient.payments.create({
-                                                    Invoice: {
-                                                        InvoiceNumber: invoice_obj.principal_invoice_no
-                                                    },
-                                                    Account: {
-                                                        Code: data.close_bank
-                                                    },
-                                                    Date: invoice.date_created,
-                                                    Amount: invoice.payment_amount,
-                                                    IsReconciled: true
+                                            xeroFunctions.authorizedOperation(req, res, 'xero_collection_bank', async (xeroClient) => {
+                                                if (xeroClient && invoice.payment_amount > 0 &&
+                                                    invoice_obj.principal_invoice_no && data.close_bank) {
+                                                    let xeroPayment = await xeroClient.payments.create({
+                                                        Invoice: {
+                                                            InvoiceNumber: invoice_obj.principal_invoice_no
+                                                        },
+                                                        Account: {
+                                                            Code: data.close_bank
+                                                        },
+                                                        Date: invoice.date_created,
+                                                        Amount: invoice.payment_amount,
+                                                        IsReconciled: true
+                                                    });
+                                                    invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                                                }
+                                                if (xeroClient && invoice.interest_amount > 0 &&
+                                                    invoice_obj.interest_invoice_no && data.close_bank) {
+                                                    let xeroPayment = await xeroClient.payments.create({
+                                                        Invoice: {
+                                                            InvoiceNumber: invoice_obj.interest_invoice_no
+                                                        },
+                                                        Account: {
+                                                            Code: data.close_bank
+                                                        },
+                                                        Date: invoice.date_created,
+                                                        Amount: invoice.interest_amount,
+                                                        IsReconciled: true
+                                                    });
+                                                    invoice.xeroInterestPaymentID = xeroPayment.Payments[0]['PaymentID'];
+                                                }
+                                                auditLog.log({
+                                                    clientID: application.clientID,
+                                                    amount: parseFloat(invoice.payment_amount) + parseFloat(invoice.interest_amount),
+                                                    type: 'repayment',
+                                                    loanID: invoice.applicationID,
+                                                    module: 'collections',
+                                                    principal_amount: invoice.payment_amount,
+                                                    interest_amount: invoice.interest_amount,
+                                                    payment_date: data.close_date,
+                                                    bank: data.close_bankname
                                                 });
-                                                invoice.xeroPrincipalPaymentID = xeroPayment.Payments[0]['PaymentID'];
-                                            }
-                                            if (xeroClient && invoice.interest_amount > 0 && 
-                                                invoice_obj.interest_invoice_no && data.close_bank) {
-                                                let xeroPayment = await xeroClient.payments.create({
-                                                    Invoice: {
-                                                        InvoiceNumber: invoice_obj.interest_invoice_no
-                                                    },
-                                                    Account: {
-                                                        Code: data.close_bank
-                                                    },
-                                                    Date: invoice.date_created,
-                                                    Amount: invoice.interest_amount,
-                                                    IsReconciled: true
+                                                connection.query('UPDATE application_schedules SET payment_status=1 WHERE ID = ?', [invoice_obj.ID], function (error, result, fields) {
+                                                    connection.query('INSERT INTO schedule_history SET ?', invoice, function (error, response, fields) {
+                                                        callback();
+                                                    });
                                                 });
-                                                invoice.xeroInterestPaymentID = xeroPayment.Payments[0]['PaymentID'];
-                                            }
-                                            auditLog.log({
-                                                clientID: application.clientID,
-                                                amount: parseFloat(invoice.payment_amount) + parseFloat(invoice.interest_amount),
-                                                type: 'repayment',
-                                                loanID: invoice.applicationID,
-                                                module: 'collections',
-                                                principal_amount: invoice.payment_amount,
-                                                interest_amount: invoice.interest_amount,
-                                                payment_date: data.close_date,
-                                                bank: data.close_bankname
                                             });
-                                            connection.query('UPDATE application_schedules SET payment_status=1 WHERE ID = ?', [invoice_obj.ID], function (error, result, fields) {
-                                                connection.query('INSERT INTO schedule_history SET ?', invoice, function (error, response, fields) {
-                                                    callback();
-                                                });
-                                            });
+                                        }, function (data) {
+                                            connection.release();
+                                            let payload = {};
+                                            payload.category = 'Application';
+                                            payload.userid = req.cookies.timeout;
+                                            payload.description = 'Loan Application Paid Off';
+                                            payload.affected = req.params.id;
+                                            notificationsService.log(req, payload);
+                                            res.send({ "status": 200, "message": "Application pay off successful!" });
                                         });
-                                    }, function (data) {
-                                        connection.release();
-                                        let payload = {};
-                                        payload.category = 'Application';
-                                        payload.userid = req.cookies.timeout;
-                                        payload.description = 'Loan Application Paid Off';
-                                        payload.affected = req.params.id;
-                                        notificationsService.log(req, payload);
-                                        res.send({"status": 200, "message": "Application pay off successful!"});
-                                    });
-                                }
-                            });
-                        }
-                    });
-                }
-            });
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
         });
     });
 });
 
-users.post('/application/write-off/:id/:agentID', function(req, res, next) {
+users.post('/application/write-off/:id/:agentID', function (req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_writeoff', async () => {
         db.query(`SELECT xero_writeoff_account FROM integrations WHERE ID = (SELECT MAX(ID) FROM integrations)`, (error, integrations) => {
-            db.query('SELECT s.principal_invoice_no, c.fullname, c.xeroContactID FROM applications a, application_schedules s, clients c '+
-            'WHERE a.ID = '+req.params.id+' AND s.ID = (SELECT MIN(ID) FROM application_schedules WHERE a.ID = applicationID AND status = 1) '+
-            'AND a.userID = c.ID', function (error, invoice, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
-                } else {
-                    let data = req.body;
-                    data.close_status = 2;
-                    data.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-                    db.query('UPDATE applications SET ? WHERE ID = '+req.params.id, data, function (error, result, fields) {
-                        if(error){
-                            res.send({"status": 500, "error": error, "response": null});
-                        } else {
-                            xeroFunctions.authorizedOperation(req, res, 'xero_writeoff', async (xeroClient) => {
-                                if (xeroClient && invoice[0]['principal_invoice_no'] && integrations[0] && 
-                                    integrations[0]['xero_writeoff_account'] && invoice[0]['xeroContactID']) {
-                                    let xeroWriteOff = await xeroClient.creditNotes.create({
-                                        Type: 'ACCRECCREDIT',
-                                        Status: 'AUTHORISED',
-                                        Contact: {
-                                            ContactID: invoice[0]['xeroContactID']
-                                        },
-                                        Date: data.date_modified,
-                                        LineItems: [{
-                                            Description: `LOAN ID: ${helperFunctions.padWithZeroes(req.params.id, 9)}`,
-                                            Quantity: '1',
-                                            UnitAmount: data.close_amount,
-                                            AccountCode: integrations[0]['xero_writeoff_account'],
-                                            TaxType: 'NONE'
-                                        }],
-                                        Reference: helperFunctions.padWithZeroes(req.params.id, 9)
-                                    });
-                                    let xeroWriteOff2 = await xeroClient.creditNotes.update({
-                                        Type: 'ACCRECCREDIT',
-                                        CreditNoteNumber: xeroWriteOff.CreditNotes[0]['CreditNoteNumber'],
-                                        Contact: {
-                                            ContactID: invoice[0]['xeroContactID']
-                                        },
-                                        Amount: data.close_amount,
-                                        Invoice: {
-                                            InvoiceNumber: invoice[0]['principal_invoice_no']
-                                        },
-                                        Date: data.date_modified
-                                    });
-                                }
-                            });
-                            let payload = {};
-                            payload.category = 'Application';
-                            payload.userid = req.cookies.timeout;
-                            payload.description = 'Loan Application Written Off';
-                            payload.affected = req.params.id;
-                            notificationsService.log(req, payload);
-                            res.send({"status": 200, "message": "Application write off successful!"});
-                        }
-                    });
-                }
-            });
+            db.query('SELECT s.principal_invoice_no, c.fullname, c.xeroContactID FROM applications a, application_schedules s, clients c ' +
+                'WHERE a.ID = ' + req.params.id + ' AND s.ID = (SELECT MIN(ID) FROM application_schedules WHERE a.ID = applicationID AND status = 1) ' +
+                'AND a.userID = c.ID', function (error, invoice, fields) {
+                    if (error) {
+                        res.send({ "status": 500, "error": error, "response": null });
+                    } else {
+                        let data = req.body;
+                        data.close_status = 2;
+                        data.close_date = moment().utcOffset('+0100').format('YYYY-MM-DD');
+                        data.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+                        db.query('UPDATE applications SET ? WHERE ID = ' + req.params.id, data, function (error, result, fields) {
+                            if (error) {
+                                res.send({ "status": 500, "error": error, "response": null });
+                            } else {
+                                xeroFunctions.authorizedOperation(req, res, 'xero_writeoff', async (xeroClient) => {
+                                    if (xeroClient && invoice[0]['principal_invoice_no'] && integrations[0] &&
+                                        integrations[0]['xero_writeoff_account'] && invoice[0]['xeroContactID']) {
+                                        let xeroWriteOff = await xeroClient.creditNotes.create({
+                                            Type: 'ACCRECCREDIT',
+                                            Status: 'AUTHORISED',
+                                            Contact: {
+                                                ContactID: invoice[0]['xeroContactID']
+                                            },
+                                            Date: data.date_modified,
+                                            LineItems: [{
+                                                Description: `LOAN ID: ${helperFunctions.padWithZeroes(req.params.id, 9)}`,
+                                                Quantity: '1',
+                                                UnitAmount: data.close_amount,
+                                                AccountCode: integrations[0]['xero_writeoff_account'],
+                                                TaxType: 'NONE'
+                                            }],
+                                            Reference: helperFunctions.padWithZeroes(req.params.id, 9)
+                                        });
+                                        let xeroWriteOff2 = await xeroClient.creditNotes.update({
+                                            Type: 'ACCRECCREDIT',
+                                            CreditNoteNumber: xeroWriteOff.CreditNotes[0]['CreditNoteNumber'],
+                                            Contact: {
+                                                ContactID: invoice[0]['xeroContactID']
+                                            },
+                                            Amount: data.close_amount,
+                                            Invoice: {
+                                                InvoiceNumber: invoice[0]['principal_invoice_no']
+                                            },
+                                            Date: data.date_modified
+                                        });
+                                    }
+                                });
+                                let payload = {};
+                                payload.category = 'Application';
+                                payload.userid = req.cookies.timeout;
+                                payload.description = 'Loan Application Written Off';
+                                payload.affected = req.params.id;
+                                notificationsService.log(req, payload);
+                                res.send({ "status": 200, "message": "Application write off successful!" });
+                            }
+                        });
+                    }
+                });
         });
     });
 });
 
-users.post('/application/close/:id', function(req, res, next) {
+users.post('/application/close/:id', function (req, res, next) {
     let data = req.body;
     data.close_status = 3;
     data.close_date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.query('UPDATE applications SET ? WHERE ID = '+req.params.id, data, function (error, result, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+    db.query('UPDATE applications SET ? WHERE ID = ' + req.params.id, data, function (error, result, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             let payload = {}
             payload.category = 'Application'
@@ -4114,17 +4146,17 @@ users.post('/application/close/:id', function(req, res, next) {
             payload.description = 'Loan Application Closed'
             payload.affected = req.params.id
             notificationsService.log(req, payload)
-            res.send({"status": 200, "message": "Application closed successful!"});
+            res.send({ "status": 200, "message": "Application closed successful!" });
         }
     });
 });
 
-users.get('/application/cancel/:id', function(req, res, next) {
+users.get('/application/cancel/:id', function (req, res, next) {
     let data = {};
     data.status = 0;
-    db.query('UPDATE applications SET ? WHERE ID = '+req.params.id, data, function (error, result, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+    db.query('UPDATE applications SET ? WHERE ID = ' + req.params.id, data, function (error, result, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             let payload = {}
             payload.category = 'Application'
@@ -4132,22 +4164,22 @@ users.get('/application/cancel/:id', function(req, res, next) {
             payload.description = 'Loan Application Cancelled'
             payload.affected = req.params.id
             notificationsService.log(req, payload)
-            res.send({"status": 200, "message": "Application cancellation successful!"});
+            res.send({ "status": 200, "message": "Application cancellation successful!" });
         }
     });
 });
 
-users.get('/forgot-password/:username', function(req, res) {
+users.get('/forgot-password/:username', function (req, res) {
     let username = req.params.username;
-    db.query('SELECT *, (select role_name from user_roles r where r.id = user_role) as role FROM users WHERE username = ?', username, function(err, rows, fields) {
+    db.query('SELECT *, (select role_name from user_roles r where r.id = user_role) as role FROM users WHERE username = ?', username, function (err, rows, fields) {
         if (err)
-            return res.send({"status": 500, "response": "Connection Error!"});
+            return res.send({ "status": 500, "response": "Connection Error!" });
 
         if (rows.length === 0)
-            return res.send({"status": 500, "response": "Incorrect Username/Password!"});
+            return res.send({ "status": 500, "response": "Incorrect Username/Password!" });
 
         if (rows[0].status === 0)
-            return res.send({"status": 500, "response": "User Disabled!"});
+            return res.send({ "status": 500, "response": "User Disabled!" });
 
         let user = rows[0];
         user.forgot_url = 'https://' + req.get('host') + '/forgot-password?t=' + encodeURIComponent(user.username);
@@ -4159,18 +4191,18 @@ users.get('/forgot-password/:username', function(req, res) {
             context: user
         };
         emailService.send(mailOptions);
-        return res.send({"status": 200, "message": "Forgot Password request sent successfully!"});
+        return res.send({ "status": 200, "message": "Forgot Password request sent successfully!" });
     });
 });
 
-users.post('/forgot-password', function(req, res) {
+users.post('/forgot-password', function (req, res) {
     let user = req.body,
         date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('UPDATE users SET password = ?, date_modified = ? WHERE username = ?', [bcrypt.hashSync(user.password, parseInt(process.env.SALT_ROUNDS)), date_modified, user.username], function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "User password updated!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "User password updated!" });
         }
     });
 });
@@ -4178,20 +4210,20 @@ users.post('/forgot-password', function(req, res) {
 ///////////////////////////////////////////////////////////////// REPORTS //////////////////////////////////////////////////////
 
 /* GET Client Loan Details */
-users.get('/client-loan-details/:id', function(req, res, next) {
+users.get('/client-loan-details/:id', function (req, res, next) {
     let id = req.params.id;
     let query, query1, query2;
-    query = 'select sum(loan_amount) as total_loans from applications where userID = '+id+' and not (status = 0 and close_status = 0)'
+    query = 'select sum(loan_amount) as total_loans from applications where userID = ' + id + ' and not (status = 0 and close_status = 0)'
     query1 = 'select \n' +
-        '(select sum(loan_amount) from applications where userID = '+id+' and not (status = 0 and close_status = 0)) - \n' +
+        '(select sum(loan_amount) from applications where userID = ' + id + ' and not (status = 0 and close_status = 0)) - \n' +
         'sum(payment_amount) as total_balance\n' +
         'from schedule_history\n' +
-        'where applicationID in (select id from applications where userid = '+id+' and not (status = 0 and close_status = 0))\n' +
+        'where applicationID in (select id from applications where userid = ' + id + ' and not (status = 0 and close_status = 0))\n' +
         'and status = 1'
     query2 = 'select \n' +
         'sum(interest_amount) as total_interests\n' +
         'from schedule_history\n' +
-        'where applicationID in (select id from applications where userid = '+id+' and not (status = 0 and close_status = 0))\n' +
+        'where applicationID in (select id from applications where userid = ' + id + ' and not (status = 0 and close_status = 0))\n' +
         'and status = 1'
     var items = {};
     db.query(query, function (error, results, fields) {
@@ -4200,14 +4232,14 @@ users.get('/client-loan-details/:id', function(req, res, next) {
             items.total_balance = results;
             db.query(query2, function (error, results, fields) {
                 items.total_interest = results;
-                res.send({"status": 200, "response": items})
+                res.send({ "status": 200, "response": items })
             });
         });
     });
 });
 
 /* GET Report Cards. */
-users.get('/report-cards', function(req, res, next) {
+users.get('/report-cards', function (req, res, next) {
     let query, query1, query2, query3;
     query = 'select count(*) as branches from branches'
     query1 = 'select count(*) as loan_officers from users where ID in (select loan_officer from clients where clients.id in (select userid from applications where applications.status = 2))'
@@ -4223,10 +4255,10 @@ users.get('/report-cards', function(req, res, next) {
                 items.active_loans = results
                 den = parseInt(items.loan_officers[0]["loan_officers"]);
                 num = parseInt(results[0]["all_applications"])
-                avg_loan_per_officers = parseInt(num/den)
+                avg_loan_per_officers = parseInt(num / den)
                 items.avg_loan_per_officers = avg_loan_per_officers;
                 db.query(query3, function (error, results, fields) {
-                    res.send({"status": 200, "response": items})
+                    res.send({ "status": 200, "response": items })
                 });
             });
         });
@@ -4234,7 +4266,7 @@ users.get('/report-cards', function(req, res, next) {
 });
 
 /* Disbursements  */
-users.get('/disbursements/filter', function(req, res, next) {
+users.get('/disbursements/filter', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         loan_officer = req.query.officer
@@ -4254,12 +4286,12 @@ users.get('/disbursements/filter', function(req, res, next) {
         'END as invalid_payment,\n' +
         'CASE\n' +
         '    WHEN status = 1 THEN sum(payment_amount)\n' +
-        'END as valid_payment '+
+        'END as valid_payment ' +
         'from schedule_history \n' +
         'where applicationID in (select applicationID from application_schedules\n' +
-        '\t\t\t\t\t\twhere applicationID in (select ID from applications where status = 2) and status = 1)\n'+
+        '\t\t\t\t\t\twhere applicationID in (select ID from applications where status = 2) and status = 1)\n' +
         'and status = 1 '
-    ;
+        ;
     queryPart2 = 'select (select reschedule_amount from applications where ID = applicationID) as reschedule_amount, \n' +
         '(select userID from applications where ID = applicationID) as user, (select fullname from clients where ID = user) as fullname, payment_amount, \n' +
         'applicationID, (select loan_amount from applications where ID = applicationID) as loan_amount, sum(payment_amount) as paid, \n' +
@@ -4270,13 +4302,13 @@ users.get('/disbursements/filter', function(req, res, next) {
         'END as invalid_payment,\n' +
         'CASE\n' +
         '    WHEN status = 1 THEN sum(payment_amount)\n' +
-        'END as valid_payment '+
+        'END as valid_payment ' +
         'from schedule_history \n' +
         'where applicationID in (select applicationID from application_schedules\n' +
-        '\t\t\t\t\t\twhere applicationID in (select ID from applications where status = 2) and status = 1)\n'+
-        'and applicationID not in (select applicationID from schedule_history where status = 1)\n'+
+        '\t\t\t\t\t\twhere applicationID in (select ID from applications where status = 2) and status = 1)\n' +
+        'and applicationID not in (select applicationID from schedule_history where status = 1)\n' +
         'and status = 0 '
-    ;
+        ;
     group = 'group by applicationID';
     query = queryPart.concat(group);
     query3 = queryPart2.concat(group);
@@ -4285,22 +4317,22 @@ users.get('/disbursements/filter', function(req, res, next) {
         'from applications where status = 2 and ID not in (select applicationID from schedule_history) '
 
     var items = {};
-    if (loan_officer){
-        queryPart = queryPart.concat('and (select loan_officer from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) = ?')
-        queryPart2 = queryPart2.concat('and (select loan_officer from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) = ?')
+    if (loan_officer && loan_officer !== 'false') {
+        queryPart = queryPart.concat('and loan_officerID = ?')
+        queryPart2 = queryPart2.concat('and loan_officerID = ?')
         query = queryPart.concat(group);
         query3 = queryPart2.concat(group);
-        query2 = query2.concat('and (select loan_officer from clients where clients.ID = userID) = '+loan_officer+' ');
+        query2 = query2.concat('and (select loan_officer from clients where clients.ID = userID) = ' + loan_officer + ' ');
     }
-    if (start  && end){
-        start = "'"+start+"'"
-        end = "'"+end+"'"
+    if (start && end) {
+        start = "'" + start + "'"
+        end = "'" + end + "'"
         // query = (queryPart.concat('AND (TIMESTAMP((select date_modified from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) OR (TIMESTAMP(select date_modified from applications ap where ap.ID = applicationID) between TIMESTAMP('+start+') AND TIMESTAMP('+end+'))')).concat(group);
-        query = (queryPart.concat('AND ((TIMESTAMP((select disbursement_date from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') and TIMESTAMP('+end+'))) ').concat(group) );
+        query = (queryPart.concat('AND ((TIMESTAMP((select disbursement_date from applications ap where ap.ID = applicationID)) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + '))) ').concat(group));
         // 'OR (TIMESTAMP((select date_modified from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') AND TIMESTAMP('+end+'))) ')).concat(group);
-        query3 = (queryPart2.concat('AND ((TIMESTAMP((select disbursement_date from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') and TIMESTAMP('+end+'))) ').concat(group));
+        query3 = (queryPart2.concat('AND ((TIMESTAMP((select disbursement_date from applications ap where ap.ID = applicationID)) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + '))) ').concat(group));
         // 'OR (TIMESTAMP((select date_modified from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') AND TIMESTAMP('+end+'))) ')).concat(group);
-        query2 = query2.concat('AND ((TIMESTAMP(disbursement_date) between TIMESTAMP('+start+') AND TIMESTAMP('+end+')) )');
+        query2 = query2.concat('AND ((TIMESTAMP(disbursement_date) between TIMESTAMP(' + start + ') AND TIMESTAMP(' + end + ')) )');
         // 'OR (TIMESTAMP(date_modified) between TIMESTAMP('+start+') AND TIMESTAMP('+end+')))');
     }
     db.query(query, [loan_officer], function (error, results, fields) {
@@ -4309,10 +4341,10 @@ users.get('/disbursements/filter', function(req, res, next) {
             items.with_invalid_payments = results;
             db.query(query2, [loan_officer], function (error, results, fields) {
                 if (error) {
-                    res.send({"status": 500, "error": error, "response": null});
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
                     items.without_pay = results;
-                    res.send({"status": 200, "error": null, "response": items, "message": "All Disbursements pulled!"});
+                    res.send({ "status": 200, "error": null, "response": items, "message": "All Disbursements pulled!" });
                 }
             });
         });
@@ -4320,7 +4352,7 @@ users.get('/disbursements/filter', function(req, res, next) {
 });
 
 /* Disbursements  */
-users.get('/disbursements-new/filter', function(req, res, next) {
+users.get('/disbursements-new/filter', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         loan_officer = req.query.officer,
@@ -4328,25 +4360,115 @@ users.get('/disbursements-new/filter', function(req, res, next) {
     query = 'select ' +
         'client_id as user, loan_officer, (select fullname from clients where ID = user) as fullname, loan_id as applicationID, amount as loan_amount, date_disbursed as date ' +
         'from disbursement_history where status = 1 ';
-    if (loan_officer){
-        query = query.concat('and loan_officer = '+loan_officer+' ');
+    if (loan_officer && loan_officer !== 'false') {
+        query = query.concat('and loan_officer = ' + loan_officer + ' ');
     }
-    if (start  && end){
-        start = "'"+start+"'"
-        end = "'"+end+"'"
-        query = (query.concat('AND ((TIMESTAMP(date_disbursed) between TIMESTAMP('+start+') and TIMESTAMP('+end+'))) ') );
+    if (start && end) {
+        start = "'" + start + "'"
+        end = "'" + end + "'"
+        query = (query.concat('AND ((TIMESTAMP(date_disbursed) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + '))) '));
     }
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "All Disbursements pulled!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "All Disbursements pulled!" });
         }
     });
 });
 
+/* Payoffs Report  */
+users.get('/report/payoffs', (req, res) => {
+    let start = req.query.start,
+        end = req.query.end,
+        loan_officer = req.query.officer,
+        query;
+    query = `SELECT a.userID user, c.loan_officer, c.fullname, a.ID applicationID, a.close_amount amount, a.close_date date 
+        FROM applications a, clients c WHERE a.close_status = 1 AND a.userID = c.ID `;
+    if (loan_officer && loan_officer !== 'false')
+        query = query.concat(`AND c.loan_officer = ${loan_officer} `);
+    if (start && end)
+        query = (query.concat(`AND (TIMESTAMP(a.close_date) between TIMESTAMP('${start}') and TIMESTAMP('${end}')) `));
+    db.query(query, (error, results) => {
+        if (error) return res.send({ "status": 500, "error": error, "response": null });
+        res.send({ "status": 200, "error": null, "response": results});
+    });
+});
+
+/* Loan Writeoffs Report  */
+users.get('/report/writeoffs', (req, res) => {
+    let start = req.query.start,
+        end = req.query.end,
+        loan_officer = req.query.officer,
+        query;
+    query = `SELECT a.userID user, c.loan_officer, c.fullname, a.ID applicationID, a.close_amount amount, a.close_date date 
+        FROM applications a, clients c WHERE a.close_status = 2 AND a.userID = c.ID `;
+    if (loan_officer && loan_officer !== 'false')
+        query = query.concat(`AND c.loan_officer = ${loan_officer} `);
+    if (start && end)
+        query = (query.concat(`AND (TIMESTAMP(a.close_date) between TIMESTAMP('${start}') and TIMESTAMP('${end}')) `));
+    db.query(query, (error, results) => {
+        if (error) return res.send({ "status": 500, "error": error, "response": null });
+        res.send({ "status": 200, "error": null, "response": results});
+    });
+});
+
+/* Invoice Writeoffs Report  */
+users.get('/report/writeoffs2', (req, res) => {
+    let start = req.query.start,
+        end = req.query.end,
+        loan_officer = req.query.officer,
+        query;
+    query = `SELECT a.userID user, c.loan_officer, c.fullname, s.applicationID, COALESCE(s.payment_amount, 0) amount, s.date_modified date 
+        FROM application_schedules s, applications a, clients c WHERE s.payment_status = 2 AND s.applicationID = a.ID AND a.userID = c.ID `;
+    if (loan_officer && loan_officer !== 'false')
+        query = query.concat(`AND c.loan_officer = ${loan_officer} `);
+    if (start && end)
+        query = (query.concat(`AND (TIMESTAMP(s.date_modified) between TIMESTAMP('${start}') and TIMESTAMP('${end}')) `));
+    db.query(query, (error, results) => {
+        if (error) return res.send({ "status": 500, "error": error, "response": null });
+        res.send({ "status": 200, "error": null, "response": results});
+    });
+});
+
+/* Loan Fees Report  */
+users.get('/report/fees', (req, res) => {
+    let start = req.query.start,
+        end = req.query.end,
+        loan_officer = req.query.officer,
+        query;
+    query = `SELECT a.userID user, c.loan_officer, c.fullname, a.ID applicationID, a.fees amount, a.disbursement_date date 
+        FROM applications a, clients c WHERE a.fees IS NOT NULL AND a.userID = c.ID `;
+    if (loan_officer && loan_officer !== 'false')
+        query = query.concat(`AND c.loan_officer = ${loan_officer} `);
+    if (start && end)
+        query = (query.concat(`AND (TIMESTAMP(a.disbursement_date) between TIMESTAMP('${start}') and TIMESTAMP('${end}')) `));
+    db.query(query, (error, results) => {
+        if (error) return res.send({ "status": 500, "error": error, "response": null });
+        res.send({ "status": 200, "error": null, "response": results});
+    });
+});
+
+/* Invoice Fees Report  */
+users.get('/report/fees2', (req, res) => {
+    let start = req.query.start,
+        end = req.query.end,
+        loan_officer = req.query.officer,
+        query;
+    query = `SELECT a.userID user, c.loan_officer, c.fullname, s.applicationID, COALESCE(s.fees_amount, 0) amount, s.date_modified date 
+        FROM application_schedules s, applications a, clients c WHERE s.fees_amount IS NOT NULL AND s.fees_amount > 0 AND s.applicationID = a.ID AND a.userID = c.ID `;
+    if (loan_officer && loan_officer !== 'false')
+        query = query.concat(`AND c.loan_officer = ${loan_officer} `);
+    if (start && end)
+        query = (query.concat(`AND (TIMESTAMP(s.date_modified) between TIMESTAMP('${start}') and TIMESTAMP('${end}')) `));
+    db.query(query, (error, results) => {
+        if (error) return res.send({ "status": 500, "error": error, "response": null });
+        res.send({ "status": 200, "error": null, "response": results});
+    });
+});
+
 /* Interest Received  */
-users.get('/interests/', function(req, res, next) {
+users.get('/interests/', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         officer = req.query.officer
@@ -4358,7 +4480,7 @@ users.get('/interests/', function(req, res, next) {
         '(select userID from applications where ID = applicationID) as user, (select fullname from clients where ID = user) as fullname, \n' +
         'applicationID, sum(interest_amount) as paid, \n' +
         '(select date_modified from applications where ID = applicationID) as date,\n' +
-        '(select fullname from users where users.id = (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid))) loan_officer\n'+
+        '(select fullname from users where users.id = loan_officerID) loan_officer\n' +
         'from schedule_history sh \n' +
         'where applicationID in (select applicationID from application_schedules\n' +
         '\t\t\t\t\t\twhere applicationID in (select ID from applications where status = 2) and status = 1)\n' +
@@ -4366,79 +4488,76 @@ users.get('/interests/', function(req, res, next) {
     group = 'group by applicationID';
     query = queryPart.concat(group);
     var items = {};
-    if (start  && end){
-        start = "'"+start+"'"
-        end = "'"+end+"'"
-        queryPart = queryPart.concat('AND (TIMESTAMP(payment_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')
-        // query = (queryPart.concat('AND (TIMESTAMP((select date_created from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
+    if (start && end) {
+        start = "'" + start + "'"
+        end = "'" + end + "'"
+        queryPart = queryPart.concat('AND (TIMESTAMP(payment_date) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + ')) ')
         query = queryPart.concat(group);
     }
-    if (officer){
-        queryPart = queryPart.concat('and (select loan_officer from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) = '+officer+' ')
+    if (officer && officer !== 'false') {
+        queryPart = queryPart.concat('and loan_officerID = ' + officer + ' ')
         query = queryPart.concat(group)
     }
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "All Interests Received pulled!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "All Interests Received pulled!" });
         }
     });
 });
 
 /* Interest Receivable  */
-users.get('/interests-receivable/', function(req, res, next) {
+// Added
+users.get('/interests-receivable/', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
-        officer = req.query.officer
-    // end = moment(end).add(1, 'days').format("YYYY-MM-DD");
+        officer = req.query.officer;
     let queryPart,
         query,
-        group
+        group;
     queryPart = 'select \n' +
         '(select userID from applications where ID = applicationID) as user, (select fullname from clients where ID = user) as fullname, \n' +
         'applicationID, sum(interest_amount) as due, interest_collect_date,\n' +
-        '(select fullname from users where users.id = (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid))) loan_officer\n'+
+        '(select fullname from users where users.id = (select loan_officer from clients where clients.ID = (select userID from applications where applications.ID = applicationID))) loan_officer\n' +
         'from application_schedules sh \n' +
         'where applicationID in (select ID from applications where status = 2)\n' +
         'and status = 1\n';
     group = 'group by applicationid order by applicationid';
     query = queryPart.concat(group);
     var items = {};
-    if (start  && end){
-        start = "'"+start+"'"
-        end = "'"+end+"'"
-        queryPart = queryPart.concat('AND (TIMESTAMP(interest_collect_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')
-        // query = (queryPart.concat('AND (TIMESTAMP((select date_created from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
+    if (start && end) {
+        start = "'" + start + "'"
+        end = "'" + end + "'"
+        queryPart = queryPart.concat('AND (TIMESTAMP(interest_collect_date) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + ')) ')
         query = queryPart.concat(group);
     }
-    if (officer){
-        queryPart = queryPart.concat('and (select loan_officer from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) = '+officer+' ')
+    if (officer && officer !== 'false') {
+        queryPart = queryPart.concat('and (select loan_officer from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) = ' + officer + ' ')
         query = queryPart.concat(group)
     }
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "All Interests Receivables pulled!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "All Interests Receivables pulled!" });
         }
     });
 });
 
 /* Principal Received  */
-users.get('/principal/', function(req, res, next) {
+users.get('/principal/', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
-        officer = req.query.officer
-    // end = moment(end).add(1, 'days').format("YYYY-MM-DD");
+        officer = req.query.officer;
     let queryPart,
         query,
-        group
+        group;
     queryPart = 'select \n' +
         '(select userID from applications where ID = applicationID) as user, (select fullname from clients where ID = user) as fullname, \n' +
         'applicationID, sum(payment_amount) as paid, \n' +
         '(select date_modified from applications where ID = applicationID) as date,\n' +
-        '(select fullname from users where users.id = (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid))) loan_officer\n'+
+        '(select fullname from users where users.id = loan_officerID) loan_officer\n' +
         'from schedule_history sh \n' +
         'where applicationID in (select applicationID from application_schedules\n' +
         '\t\t\t\t\t\twhere applicationID in (select ID from applications where status = 2) and status = 1)\n' +
@@ -4446,28 +4565,28 @@ users.get('/principal/', function(req, res, next) {
     group = 'group by applicationID';
     query = queryPart.concat(group);
     var items = {};
-    if (start  && end){
-        start = "'"+start+"'"
-        end = "'"+end+"'"
-        queryPart = queryPart.concat('AND (TIMESTAMP(payment_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')
-        // query = (queryPart.concat('AND (TIMESTAMP((select date_created from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
+    if (start && end) {
+        start = "'" + start + "'"
+        end = "'" + end + "'"
+        queryPart = queryPart.concat('AND (TIMESTAMP(payment_date) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + ')) ')
         query = queryPart.concat(group);
     }
-    if (officer){
-        queryPart = queryPart.concat('and (select loan_officer from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) = '+officer+' ')
+    // added
+    if (officer && officer !== 'false') {
+        queryPart = queryPart.concat('and loan_officerID = ' + officer + ' ')
         query = queryPart.concat(group)
     }
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "All Principal Payments Received pulled!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "All Principal Payments Received pulled!" });
         }
     });
 });
 
 /* Principal Receivable  */
-users.get('/principal-receivable/', function(req, res, next) {
+users.get('/principal-receivable/', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         officer = req.query.officer
@@ -4478,41 +4597,37 @@ users.get('/principal-receivable/', function(req, res, next) {
     queryPart = 'select \n' +
         '(select userID from applications where ID = applicationID) as user, (select fullname from clients where ID = user) as fullname, \n' +
         'applicationID, sum(payment_amount) as due, payment_collect_date,\n' +
-        '(select fullname from users where users.id = (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid))) loan_officer\n'+
+        '(select fullname from users where users.id = (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid))) loan_officer\n' +
         'from application_schedules sh \n' +
         'where applicationID in (select ID from applications where status = 2)\n' +
         'and status = 1\n';
     group = 'group by applicationid order by applicationid';
     query = queryPart.concat(group);
     var items = {};
-    if (start  && end){
-        start = "'"+start+"'"
-        end = "'"+end+"'"
-        queryPart = queryPart.concat('AND (TIMESTAMP(payment_collect_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')
-        // query = (queryPart.concat('AND (TIMESTAMP((select date_created from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
+    if (start && end) {
+        start = "'" + start + "'"
+        end = "'" + end + "'"
+        queryPart = queryPart.concat('AND (TIMESTAMP(payment_collect_date) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + ')) ');
         query = queryPart.concat(group);
     }
-    if (officer){
-        queryPart = queryPart.concat('and (select loan_officer from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) = '+officer+' ')
-        query = queryPart.concat(group)
+    if (officer && officer !== 'false') {
+        queryPart = queryPart.concat('and (select loan_officer from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) = ' + officer + ' ');
+        query = queryPart.concat(group);
     }
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "All Principal Receivables pulled!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "All Principal Receivables pulled!" });
         }
     });
 });
 
 /* Bad Loans - DeCommissioned  */
-users.get('/bad-loans/', function(req, res, next) {
+users.get('/bad-loans/', function (req, res, next) {
     let start = req.query.start,
-        end = req.query.end
-    // end = moment(end).add(1, 'days').format("YYYY-MM-DD");
-    let queryPart,
-        query,
-        group
+        end = req.query.end;
+    let query;
     query = '\n' +
         'select ID, \n' +
         '(select fullname from clients where clients.ID = userID) as client, \n' +
@@ -4520,115 +4635,115 @@ users.get('/bad-loans/', function(req, res, next) {
         'from applications \n' +
         'where status = 2 and close_status = 0 \n' +
         'and ID not in (select applicationID from schedule_history where status = 1)';
-    if (start  && end){
-        start = "'"+start+"'"
-        end = "'"+end+"'"
-        query = (query.concat('AND (TIMESTAMP(date_created) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) '));
+    if (start && end) {
+        start = "'" + start + "'"
+        end = "'" + end + "'"
+        query = (query.concat('AND (TIMESTAMP(date_created) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + ')) '));
     }
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "All Bad Loans pulled!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "All Bad Loans pulled!" });
         }
     });
 });
 
-users.get('/all-updates', function(req, res){
+users.get('/all-updates', function (req, res) {
     return res.send([]);
     let load = {}
     let data = []
     const HOST = `${req.protocol}://${req.get('host')}`;
     let user = req.query.bug, word = 'Application'
     let role = req.query.bugger
-    let query_ = 'select id from notification_preferences where userid = '+user+''
+    let query_ = 'select id from notification_preferences where userid = ' + user + ''
     // let query = `select notification_id, category, description, date_created, (select fullname from users where users.id = userid) user from pending_records inner join notifications on notification_id = notifications.id where status = 1 and view_status in (1,2) order by notification_id desc`;
     const endpoint = `/core-service/get?query=${query_}`;
     const url = `${HOST}${endpoint}`;
     try {
-        db.getConnection(function(error, connection){
+        db.getConnection(function (error, connection) {
             if (error || !connection)
-                return res.send({"status": 500, "error": error, "response": null});
-            connection.query(query_, function(err, results, fields){
+                return res.send({ "status": 500, "error": error, "response": null });
+            connection.query(query_, function (err, results, fields) {
                 if (err)
-                    return res.send({"status": 500, "error": err, "response": null});
-                else{
+                    return res.send({ "status": 500, "error": err, "response": null });
+                else {
                     let query;
-                    if (results.length > 0){
+                    if (results.length > 0) {
                         query = 'select *, notificationid as ID, category, description, unr.date_created, nt.userid, (select fullname from users where users.id = nt.userid) user \n' +
                             'from user_notification_rel unr inner join notifications nt on notificationid = nt.id \n' +
-                            'where status = 1 and view_status = 1 and unr.userid = '+user+'\n' +
-                            'and nt.userid <> '+user+' \n'+
+                            'where status = 1 and view_status = 1 and unr.userid = ' + user + '\n' +
+                            'and nt.userid <> ' + user + ' \n' +
                             'and ' +
                             '(select np.status from notification_preferences np where np.category = \n' +
                             '\t(select nc.id from notification_categories nc where nc.category_name = nt.category) \n' +
-                            'and np.userid = '+user+' and np.date_created = (select date_created from notification_preferences npf where npf.id = '+
-                            '(select max(id) from notification_preferences nop where nop.userid = '+user+' ))) = 1 \n' +
-                            'and category <> ?\n'+
-                            'and (select visible from notification_roles_rel nr where role_id = '+role+' and nr.category = \n' +
+                            'and np.userid = ' + user + ' and np.date_created = (select date_created from notification_preferences npf where npf.id = ' +
+                            '(select max(id) from notification_preferences nop where nop.userid = ' + user + ' ))) = 1 \n' +
+                            'and category <> ?\n' +
+                            'and (select visible from notification_roles_rel nr where role_id = ' + role + ' and nr.category = \n' +
                             '(select nc.id from notification_categories nc where nc.category_name = nt.category) \n' +
                             '\tand nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = \n' +
-                            '(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = nt.category)))) = 1\n'+
+                            '(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = nt.category)))) = 1\n' +
                             'order by nt.id desc'
                     }
                     else {
-                        query = 'select *, notification_id as ID, category, description, date_created, view_status, (select fullname from users where users.id = userid) user \n'+
-                            'from pending_records inner join notifications nt on notification_id = notifications.id \n'+
-                            'where status = 1 and userid <> '+user+' and category <> ? and view_status in (1,2) ' +
-                            'and (select visible from notification_roles_rel nr where role_id = '+role+' and nr.category = \n' +
+                        query = 'select *, notification_id as ID, category, description, date_created, view_status, (select fullname from users where users.id = userid) user \n' +
+                            'from pending_records inner join notifications nt on notification_id = notifications.id \n' +
+                            'where status = 1 and userid <> ' + user + ' and category <> ? and view_status in (1,2) ' +
+                            'and (select visible from notification_roles_rel nr where role_id = ' + role + ' and nr.category = \n' +
                             '(select nc.id from notification_categories nc where nc.category_name = nt.category) \n' +
                             '\tand nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = \n' +
-                            '(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = nt.category)))) = 1\n'+
+                            '(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = nt.category)))) = 1\n' +
                             'order by notifications.id desc';
                     }
-                    connection.query(query, ['Application'], function(er, response, field){
+                    connection.query(query, ['Application'], function (er, response, field) {
                         if (er)
-                            return res.send({"status": 500, "error": er, "response": null});
-                        else{
+                            return res.send({ "status": 500, "error": er, "response": null });
+                        else {
                             load.all = response;
-                            connection.query(query_, function(rrr, resp, fld){
+                            connection.query(query_, function (rrr, resp, fld) {
                                 if (rrr)
-                                    return res.send({"status": 500, "error": rrr, "response": null});
-                                else{
+                                    return res.send({ "status": 500, "error": rrr, "response": null });
+                                else {
                                     let query2;
-                                    if (resp.length > 0){
+                                    if (resp.length > 0) {
                                         query2 = 'select *, notificationid as ID, category, \n' +
                                             '(select GROUP_CONCAT(distinct(approverid)) from workflow_stages where workflowid = (select workflowid from applications where applications.id = affected)) approvers,\n' +
                                             'description, unr.date_created, nt.userid, (select fullname from users where users.id = nt.userid) user \n' +
                                             'from user_notification_rel unr inner join notifications nt on notificationid = nt.id \n' +
-                                            'where status = 1 and view_status = 1 and unr.userid = '+user+'\n' +
-                                            'and nt.userid <> '+user+' \n'+
+                                            'where status = 1 and view_status = 1 and unr.userid = ' + user + '\n' +
+                                            'and nt.userid <> ' + user + ' \n' +
                                             'and nt.category = ? and \n' +
                                             '(select np.status from notification_preferences np where np.category = \n' +
                                             '\t(select nc.id from notification_categories nc where nc.category_name = ?) \n' +
-                                            'and np.userid = '+user+' and np.date_created = (select date_created from notification_preferences npf where npf.id = '+
-                                            '(select max(id) from notification_preferences nop where nop.userid = '+user+' ))) = 1 \n' +
-                                            'and (select visible from notification_roles_rel nr where role_id = '+role+' and nr.category = (select nc.id from notification_categories nc where nc.category_name = ?) '+
-                                            'and nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = '+
-                                            '(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = ?)))) = 1\n'+
+                                            'and np.userid = ' + user + ' and np.date_created = (select date_created from notification_preferences npf where npf.id = ' +
+                                            '(select max(id) from notification_preferences nop where nop.userid = ' + user + ' ))) = 1 \n' +
+                                            'and (select visible from notification_roles_rel nr where role_id = ' + role + ' and nr.category = (select nc.id from notification_categories nc where nc.category_name = ?) ' +
+                                            'and nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = ' +
+                                            '(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = ?)))) = 1\n' +
                                             'order by nt.id desc'
                                     }
                                     else {
-                                        query2 = `select *, notification_id as ID, category, description, date_created, view_status, (select fullname from users where users.id = userid) user, \n`+
-                                            `(select GROUP_CONCAT(distinct(approverid)) as approvers from workflow_stages where workflowid = (select workflowid from applications where applications.id = affected)) approvers, `+
-                                            `affected  `+
-                                            `from pending_records inner join notifications on notification_id = notifications.id \n`+
-                                            `where status = 1 and userid <> ${user} and category = ? and view_status in (1,2) `+
-                                            `and `+
-                                            `(select visible from notification_roles_rel nr where role_id = ${role} and nr.category = (select nc.id from notification_categories nc where nc.category_name = ?) `+
-                                            `and nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = `+
-                                            `(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = ?)))) = 1 `+
+                                        query2 = `select *, notification_id as ID, category, description, date_created, view_status, (select fullname from users where users.id = userid) user, \n` +
+                                            `(select GROUP_CONCAT(distinct(approverid)) as approvers from workflow_stages where workflowid = (select workflowid from applications where applications.id = affected)) approvers, ` +
+                                            `affected  ` +
+                                            `from pending_records inner join notifications on notification_id = notifications.id \n` +
+                                            `where status = 1 and userid <> ${user} and category = ? and view_status in (1,2) ` +
+                                            `and ` +
+                                            `(select visible from notification_roles_rel nr where role_id = ${role} and nr.category = (select nc.id from notification_categories nc where nc.category_name = ?) ` +
+                                            `and nr.date_created = (select date_created from notification_roles_rel nrr where nrr.id = ` +
+                                            `(select max(id) from notification_roles_rel ntr where ntr.category = (select nc.id from notification_categories nc where nc.category_name = ?)))) = 1 ` +
                                             `order by notifications.id desc`;
                                     }
-                                    connection.query(query2, [word, word, word, word, word], function(e, r, f){
+                                    connection.query(query2, [word, word, word, word, word], function (e, r, f) {
                                         connection.release();
                                         if (e)
-                                            return res.send({"status": 500, "error": e, "response": null});
+                                            return res.send({ "status": 500, "error": e, "response": null });
                                         else {
-                                            for (let i = 0; i < r.length; i++){
+                                            for (let i = 0; i < r.length; i++) {
                                                 let dets = r[i]
-                                                if (dets.approvers !== null){
-                                                    if (Array.from(new Set(dets.approvers.split(','))).includes(role)){
+                                                if (dets.approvers !== null) {
+                                                    if (Array.from(new Set(dets.approvers.split(','))).includes(role)) {
                                                         data.push(dets)
                                                     }
                                                 }
@@ -4650,7 +4765,7 @@ users.get('/all-updates', function(req, res){
 });
 
 /* Overdue Loans  */
-users.get('/overdues/', function(req, res, next) {
+users.get('/overdues/', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         officer = req.query.officer;
@@ -4667,26 +4782,26 @@ users.get('/overdues/', function(req, res, next) {
         'and payment_collect_date < (select curdate()) ';
     group = 'group by applicationID';
     query = queryPart.concat(group);
-    if (officer){
-        queryPart = queryPart.concat('and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationID)) = '+officer+'\n');
+    if (officer) {
+        queryPart = queryPart.concat('and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationID)) = ' + officer + '\n');
         query = queryPart.concat(group);
     }
-    if (start  && end){
-        start = "'"+start+"'"
-        end = "'"+end+"'"
-        query = (queryPart.concat('AND (TIMESTAMP(payment_collect_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
+    if (start && end) {
+        start = "'" + start + "'"
+        end = "'" + end + "'"
+        query = (queryPart.concat('AND (TIMESTAMP(payment_collect_date) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + ')) ')).concat(group);
     }
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "All Overdue Loans pulled!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "All Overdue Loans pulled!" });
         }
     });
 });
 
 /* Bad Loans  */
-users.get('/badloans/', function(req, res, next) {
+users.get('/badloans/', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         officer = req.query.officer;
@@ -4697,30 +4812,29 @@ users.get('/badloans/', function(req, res, next) {
     queryPart = 'select ID, applicationID, \n' +
         '(payment_collect_date) as duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
         '(select loan_amount from applications where applications.ID = applicationID) as principal, payment_amount\n' +
-        // 'payment_amount, sum(payment_amount) sum,  (sum(interest_amount) - interest_amount) as interest_due\n' +
         'from application_schedules\n' +
-        'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) \n'+
+        'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) \n' +
         'and datediff(curdate(), payment_collect_date) > 0 ';
     group = 'group by applicationID';
     query = queryPart.concat(group);
-    if (start  && end){
-        start = "'"+start+"'";
-        end = "'"+end+"'";
-        query = (queryPart.concat('AND (TIMESTAMP(payment_collect_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
+    if (start && end) {
+        start = "'" + start + "'";
+        end = "'" + end + "'";
+        query = (queryPart.concat('AND (TIMESTAMP(payment_collect_date) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + ')) ')).concat(group);
     }
-    if (officer){
-        query = (queryPart.concat('and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationID)) = '+officer+'\n')).concat(group);
+    if (officer) {
+        query = (queryPart.concat('and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationID)) = ' + officer + '\n')).concat(group);
     }
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "All Overdue Loans pulled!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "All Overdue Loans pulled!" });
         }
     });
 });
 
-users.get('/badloanss/', function(req, res, next) {
+users.get('/badloanss/', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         classification = req.query.class,
@@ -4740,7 +4854,7 @@ users.get('/badloanss/', function(req, res, next) {
     // 'and datediff(curdate(), (payment_collect_date)) = 0';
     group = 'group by applicationID';
     query = queryPart.concat(group)
-    if (classification && classification === '0'){
+    if (classification && classification === '0') {
         queryPart = 'select ID, applicationID, \n' +
             'max(payment_collect_date) as duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
             '(select loan_amount from applications where applications.ID = applicationID) as principal, payment_amount\n' +
@@ -4749,46 +4863,46 @@ users.get('/badloanss/', function(req, res, next) {
             'and payment_collect_date < curdate() ';
         query = queryPart.concat(group);
     }
-    if (classification && classification != '0'){
+    if (classification && classification != '0') {
         queryPart = 'select ID, applicationID, \n' +
             '(payment_collect_date) as duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
             '(select loan_amount from applications where applications.ID = applicationID) as principal, payment_amount\n' +
             'from application_schedules\n' +
-            'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) \n'+
+            'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) \n' +
             'and datediff(curdate(), (payment_collect_date)) between ' +
-            '(select min_days from loan_classifications lc where lc.id = '+classification+') ' +
-            'and (select max_days from loan_classifications lc where lc.id = '+classification+') ';
+            '(select min_days from loan_classifications lc where lc.id = ' + classification + ') ' +
+            'and (select max_days from loan_classifications lc where lc.id = ' + classification + ') ';
         query = queryPart.concat(group);
     }
-    if (classification && classification != '0' && un_max == '1'){
+    if (classification && classification != '0' && un_max == '1') {
         queryPart = 'select ID, applicationID, \n' +
             '(payment_collect_date) as duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
             '(select loan_amount from applications where applications.ID = applicationID) as principal, payment_amount\n' +
             'from application_schedules\n' +
-            'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) \n'+
+            'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) \n' +
             'and datediff(curdate(), (payment_collect_date)) > ' +
-            '(select min_days from loan_classifications lc where lc.id = '+classification+') ';
+            '(select min_days from loan_classifications lc where lc.id = ' + classification + ') ';
         query = queryPart.concat(group);
     }
-    if (start  && end){
-        start = "'"+start+"'"
-        end = "'"+end+"'"
-        query = (queryPart.concat('AND (TIMESTAMP(payment_collect_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
+    if (start && end) {
+        start = "'" + start + "'"
+        end = "'" + end + "'"
+        query = (queryPart.concat('AND (TIMESTAMP(payment_collect_date) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + ')) ')).concat(group);
     }
-    if (officer && officer != '0'){
-        query = (queryPart.concat('and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationID)) = '+officer+'\n')).concat(group);
+    if (officer && officer != '0') {
+        query = (queryPart.concat('and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationID)) = ' + officer + '\n')).concat(group);
     }
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "All Overdue Loans pulled!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "All Overdue Loans pulled!" });
         }
     });
 });
 
 /* Payments */
-users.get('/payments', function(req, res, next) {
+users.get('/payments', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end
     // end = moment(end).add(1, 'days').format("YYYY-MM-DD");
@@ -4807,20 +4921,20 @@ users.get('/payments', function(req, res, next) {
         'where applicationID in (select ID from applications)\n' +
         'and status = 1 '
     var items = {};
-    if (start  && end){
-        start = "'"+start+"'"
-        end = "'"+end+"'"
-        query = (queryPart.concat('AND (TIMESTAMP(payment_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
-        query2 = query2.concat('AND (TIMESTAMP(payment_date) between TIMESTAMP('+start+') AND TIMESTAMP('+end+')) ');
+    if (start && end) {
+        start = "'" + start + "'"
+        end = "'" + end + "'"
+        query = (queryPart.concat('AND (TIMESTAMP(payment_date) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + ')) ')).concat(group);
+        query2 = query2.concat('AND (TIMESTAMP(payment_date) between TIMESTAMP(' + start + ') AND TIMESTAMP(' + end + ')) ');
     }
     db.query(query, function (error, results, fields) {
         items.payment = results;
         db.query(query2, function (error, results, fields) {
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
+            if (error) {
+                res.send({ "status": 500, "error": error, "response": null });
             } else {
                 items.total = results;
-                res.send({"status": 200, "error": null, "response": items, "message": "All Payments pulled!"});
+                res.send({ "status": 200, "error": null, "response": items, "message": "All Payments pulled!" });
             }
         });
     });
@@ -4872,15 +4986,15 @@ users.get('/payments', function(req, res, next) {
 //         }
 //     });
 // });
-
-users.get('/loans-by-branches', function(req, res, next) {
+// added
+users.get('/loans-by-branches', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end
     // end = moment(end).add(1, 'days').format("YYYY-MM-DD");
     let queryPart,
         query,
         group;
-    queryPart = `select branch branchID, \n
+    queryPart = `select branch branchID, date_disbursed, \n
                 (select branch_name from branches br where br.id = branchID) as branch, sum(amount) disbursed, \n
                 (select sum(payment_amount) from schedule_history sh where sh.status = 1 and sh.applicationID in (select ap.ID from applications ap where ap.status = 2)) collected\n
                 from disbursement_history\n
@@ -4888,28 +5002,28 @@ users.get('/loans-by-branches', function(req, res, next) {
     group = 'group by branchID';
     query = queryPart.concat(group);
     var items = {};
-    if (start  && end){
-        start = "'"+start+"'";
-        end = "'"+end+"'";
-        query = `select branch branchID, \n
+    if (start && end) {
+        start = "'" + start + "'";
+        end = "'" + end + "'";
+        query = `select branch branchID, date_disbursed, \n
                 (select branch_name from branches br where br.id = branchID) as branch, sum(amount) disbursed, \n
                 (select sum(payment_amount) from schedule_history sh where sh.status = 1 and sh.applicationID in (select ap.ID from applications ap where ap.status = 2)) collected\n
                 from disbursement_history\n
                 where status = 1 \n
-                AND TIMESTAMP(date_disbursed) between TIMESTAMP('+start+') and TIMESTAMP('+end+')\n
+                AND TIMESTAMP(date_disbursed) between TIMESTAMP(${start}) and TIMESTAMP(${end})\n
                 group by branchID`;
     }
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "All Payments pulled!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "All Payments pulled!" });
         }
     });
 });
 
 /* Interests by Branches */
-users.get('/interests-by-branches', function(req, res, next) {
+users.get('/interests-by-branches', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end
     // end = moment(end).add(1, 'days').format("YYYY-MM-DD");
@@ -4931,9 +5045,9 @@ users.get('/interests-by-branches', function(req, res, next) {
     group = 'group by branchID';
     query = queryPart.concat(group);
     var items = {};
-    if (start  && end){
-        start = "'"+start+"'"
-        end = "'"+end+"'"
+    if (start && end) {
+        start = "'" + start + "'"
+        end = "'" + end + "'"
         // query = (queryPart.concat('AND (TIMESTAMP(disbursement_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
         query = 'select (select branch from clients where ID = userID) as branchID, \n' +
             '(select branch_name from branches br where br.id = branchID) as branch,\n' +
@@ -4944,23 +5058,23 @@ users.get('/interests-by-branches', function(req, res, next) {
             'where sh.status = 1 and \n' +
             '(select branch from clients c where c.ID = (select userID from applications b where b.ID = sh.applicationID)) = branchID ' +
             'and sh.applicationID in (select ap.ID from applications ap where ap.status = 2)\n' +
-            'and TIMESTAMP(payment_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+') ) as collected\n' +
+            'and TIMESTAMP(payment_date) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + ') ) as collected\n' +
             'from applications a\n' +
-            'where status = 2\n '+
-            'AND TIMESTAMP(disbursement_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')\n '+
+            'where status = 2\n ' +
+            'AND TIMESTAMP(disbursement_date) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + ')\n ' +
             'group by branchID'
     }
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "Report pulled!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "Report pulled!" });
         }
     });
 });
 
 /* Payments by Branches */
-users.get('/payments-by-branches', function(req, res, next) {
+users.get('/payments-by-branches', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end
     // end = moment(end).add(1, 'days').format("YYYY-MM-DD");
@@ -4980,9 +5094,9 @@ users.get('/payments-by-branches', function(req, res, next) {
     group = 'group by branchID';
     query = queryPart.concat(group);
     var items = {};
-    if (start  && end){
-        start = "'"+start+"'"
-        end = "'"+end+"'"
+    if (start && end) {
+        start = "'" + start + "'"
+        end = "'" + end + "'"
         // query = (queryPart.concat('AND (TIMESTAMP(disbursement_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
         query = 'select (select branch from clients where ID = userID) as branchID, \n' +
             '(select branch_name from branches br where br.id = branchID) as branch,\n' +
@@ -4991,23 +5105,23 @@ users.get('/payments-by-branches', function(req, res, next) {
             'where sh.status = 1 and \n' +
             '(select branch from clients c where c.ID = (select userID from applications b where b.ID = sh.applicationID)) = branchID ' +
             'and sh.applicationID in (select ap.ID from applications ap where ap.status = 2)\n' +
-            'and TIMESTAMP(payment_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+') ) as collected\n' +
+            'and TIMESTAMP(payment_date) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + ') ) as collected\n' +
             'from applications a\n' +
-            'where status = 2\n '+
-            'AND TIMESTAMP(disbursement_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')\n '+
+            'where status = 2\n ' +
+            'AND TIMESTAMP(disbursement_date) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + ')\n ' +
             'group by branchID'
     }
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "Report pulled!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "Report pulled!" });
         }
     });
 });
 
 /* Bad Loans by Branches */
-users.get('/badloans-by-branches', function(req, res, next) {
+users.get('/badloans-by-branches', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end
     // end = moment(end).add(1, 'days').format("YYYY-MM-DD");
@@ -5035,9 +5149,9 @@ users.get('/badloans-by-branches', function(req, res, next) {
     group = 'group by branchID';
     // query = queryPart.concat(group);
     var items = {};
-    if (start  && end){
-        start = "'"+start+"'"
-        end = "'"+end+"'"
+    if (start && end) {
+        start = "'" + start + "'"
+        end = "'" + end + "'"
         // query = (queryPart.concat('AND (TIMESTAMP(disbursement_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
         query = 'select (select branch from clients where ID = userID) as branchID, \n' +
             '(select branch_name from branches br where br.id = branchID) as branch,\n' +
@@ -5046,10 +5160,10 @@ users.get('/badloans-by-branches', function(req, res, next) {
             'where sh.status = 1 and \n' +
             '(select branch from clients c where c.ID = (select userID from applications b where b.ID = sh.applicationID)) = branchID ' +
             'and sh.applicationID in (select ap.ID from applications ap where ap.status = 2)\n' +
-            'and TIMESTAMP(payment_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+') ) as collected\n' +
+            'and TIMESTAMP(payment_date) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + ') ) as collected\n' +
             'from applications a\n' +
-            'where status = 2\n '+
-            'AND TIMESTAMP(disbursement_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')\n '+
+            'where status = 2\n ' +
+            'AND TIMESTAMP(disbursement_date) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + ')\n ' +
             'group by branchID';
         query = `
                 select applicationid, (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) branchID ,     
@@ -5062,16 +5176,16 @@ users.get('/badloans-by-branches', function(req, res, next) {
                 `;
     }
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "All Badloans pulled!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "All Badloans pulled!" });
         }
     });
 });
 
 /* Projected Interests */
-users.get('/projected-interests', function(req, res, next) {
+users.get('/projected-interests', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end
     // end = moment(end).add(1, 'days').format("YYYY-MM-DD");
@@ -5090,29 +5204,29 @@ users.get('/projected-interests', function(req, res, next) {
         'from schedule_history\n' +
         'where status = 1\n' +
         'and applicationID in (select a.ID from applications a where a.status = 2) '
-    query2= queryPart2.concat(group);
+    query2 = queryPart2.concat(group);
     var items = {};
-    if (start && end){
-        start = "'"+start+"'"
-        end = "'"+end+"'"
-        query = (queryPart.concat('AND (TIMESTAMP((select date_created from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') and TIMESTAMP('+end+')) ')).concat(group);
-        query2 = (queryPart2.concat('AND (TIMESTAMP((select date_created from applications ap where ap.ID = applicationID)) between TIMESTAMP('+start+') AND TIMESTAMP('+end+')) ')).concat(group);
+    if (start && end) {
+        start = "'" + start + "'"
+        end = "'" + end + "'"
+        query = (queryPart.concat('AND (TIMESTAMP((select date_created from applications ap where ap.ID = applicationID)) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + ')) ')).concat(group);
+        query2 = (queryPart2.concat('AND (TIMESTAMP((select date_created from applications ap where ap.ID = applicationID)) between TIMESTAMP(' + start + ') AND TIMESTAMP(' + end + ')) ')).concat(group);
     }
     db.query(query, function (error, results, fields) {
         items.due = results;
         db.query(query2, function (error, results, fields) {
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
+            if (error) {
+                res.send({ "status": 500, "error": error, "response": null });
             } else {
                 items.paid = results;
-                res.send({"status": 200, "error": null, "response": items, "message": "All Payments pulled!"});
+                res.send({ "status": 200, "error": null, "response": items, "message": "All Payments pulled!" });
             }
         });
     });
 });
 
 /* Aggregate Projected Interests */
-users.get('/agg-projected-interests', function(req, res, next) {
+users.get('/agg-projected-interests', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end
     // end = moment(end).add(1, 'days').format("YYYY-MM-DD");
@@ -5123,21 +5237,21 @@ users.get('/agg-projected-interests', function(req, res, next) {
         'where applicationID in (select ID from applications where status = 2)\n' +
         'and status = 1 and payment_status = 0 '
 
-    if (start && end){
-        start = "'"+start+"'"
-        end = "'"+end+"'"
-        query = query.concat('and timestamp(interest_collect_date) between TIMESTAMP('+start+') and TIMESTAMP('+end+')');
+    if (start && end) {
+        start = "'" + start + "'"
+        end = "'" + end + "'"
+        query = query.concat('and timestamp(interest_collect_date) between TIMESTAMP(' + start + ') and TIMESTAMP(' + end + ')');
     }
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "Success!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "Success!" });
         }
     });
 });
 
-users.get('/analytics', function(req, res, next) {
+users.get('/analytics', function (req, res, next) {
     let start = req.query.start,
         end = req.query.end,
         t = req.query.t,
@@ -5145,238 +5259,107 @@ users.get('/analytics', function(req, res, next) {
         b = req.query.branch,
         freq = req.query.freq,
         officer = req.query.officer,
-        bt = req.query.bt
-    // end = moment(end).add(1, 'days').format("YYYY-MM-DD");
+        bt = req.query.bt;
     let query, load = [];
-    switch (t){
-        // case 'disbursements':
-        //     //Default
-        //     query = 'select ' +
-        //         'sum(amount) as amount_disbursed, (select fullname from users where users.id = loan_officer) name' +
-        //         'from disbursement_history where status = 1 group by name';
-        //     // query = 'select sum(loan_amount) amount_disbursed, (select fullname from users where users.id = (select loan_officer from clients where clients.id = userID)) name\n' +
-        //     //     'from disbursement_history where status = 1\n' +
-        //     //     'group by name'
-        //     //An Officer
-        //     if (officer){
-        //         query = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS DisburseMonth, \n' +
-        //             '         SUM(loan_amount) AmountDisbursed, (select fullname from users where users.id = '+officer+') agent,\n' +
-        //             '         EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //             'FROM     applications \n' +
-        //             // 'WHERE    EXTRACT(YEAR_MONTH FROM Disbursement_date) >= EXTRACT(YEAR_MONTH FROM CURDATE())-102\n' +
-        //             'WHERE      status =2\n'+
-        //             'AND      (select loan_officer from clients where clients.ID = userID) = '+officer+'\n' +
-        //             'GROUP BY agent\n' +
-        //             'ORDER BY DisburseYearMonth';
-        //         load = [officer]
-        //     }
-        //     //All Officers, Yearly
-        //     if (officer == 'false' && freq == '3'){
-        //         query = 'SELECT   DATE_FORMAT(Disbursement_date, \'%Y\') AS OfficersYear, \n' +
-        //             'SUM(loan_amount) AmountDisbursed, \n' +
-        //             'EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //             'FROM     applications \n' +
-        //             'WHERE    status =2\n' +
-        //             'GROUP BY DATE_FORMAT(Disbursement_date, \'%Y\')\n' +
-        //             'ORDER BY DisburseYearMonth'
-        //     }
-        //     //One Officer, Yearly
-        //     if (officer !== 'false' && freq == "3"){
-        //         query = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(Disbursement_date, \'%Y\') AS DisburseYear, \n' +
-        //             '                    SUM(loan_amount) AmountDisbursed, (select fullname from users where users.id = '+officer+') Agent, \n' +
-        //             '                    EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //             '    FROM     applications \n' +
-        //             '    WHERE    status =2\n' +
-        //             '    AND      (select loan_officer from clients where clients.ID = userID) = '+officer+'\n' +
-        //             '    GROUP BY DATE_FORMAT(Disbursement_date, \'%Y\')\n' +
-        //             '    ORDER BY DisburseYearMonth'
-        //     }
-        //     //One Officer, Monthly In One Year
-        //     if (officer !== 'false' && freq == "2"){
-        //         query = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(Disbursement_date, \'%Y\') AS Year, \n' +
-        //             'SUM(loan_amount) AmountDisbursed, (select fullname from users where users.id = '+officer+') Agent,\n' +
-        //             'EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //             'FROM     applications \n' +
-        //             'WHERE    status =2\n' +
-        //             'and      DATE_FORMAT(Disbursement_date, \'%Y\') = '+y+' OR DATE_FORMAT(date_modified, \'%Y\') = '+y+'\n'+
-        //             'AND      (select loan_officer from clients where clients.ID = userID) = '+officer+'\n' +
-        //             'GROUP BY DATE_FORMAT(Disbursement_date, \'%M%Y\')\n' +
-        //             'ORDER BY DisburseYearMonth'
-        //     }
-        //     //One Officer, Monthly
-        //     if (officer !== 'false' && freq == "2" && y == '0'){
-        //         query = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(Disbursement_date, \'%Y\') AS Year, \n' +
-        //             'SUM(loan_amount) AmountDisbursed, (select fullname from users where users.id = '+officer+') Agent,\n' +
-        //             'EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //             'FROM     applications \n' +
-        //             'WHERE    status =2\n' +
-        //             'AND      (select loan_officer from clients where clients.ID = userID) = '+officer+'\n' +
-        //             'GROUP BY DATE_FORMAT(Disbursement_date, \'%M%Y\')\n' +
-        //             'ORDER BY DisburseYearMonth'
-        //     }
-        //     //One Officer, Quarterly In One Year
-        //     if (officer !== 'false' && freq == "4"){
-        //         query = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS DisburseMonth, concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) quarter,\n' +
-        //             'SUM(loan_amount) AmountDisbursed, (select fullname from users where users.id = '+officer+') Agent,\n' +
-        //             'EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //             'FROM     applications \n' +
-        //             'WHERE    status =2\n' +
-        //             'and      DATE_FORMAT(Disbursement_date, \'%Y\') = '+y+' OR DATE_FORMAT(date_modified, \'%Y\') = '+y+'\n'+
-        //             'AND      (select loan_officer from clients where clients.ID = userID) = '+officer+'\n' +
-        //             'GROUP BY quarter\n' +
-        //             'ORDER BY DisburseYearMonth'
-        //     }
-        //     //One Officer, Quarterly
-        //     if (officer !== 'false' && freq == "4" && y == '0'){
-        //         query = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS DisburseMonth, concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) quarter, \n' +
-        //             'SUM(loan_amount) AmountDisbursed, (select fullname from users where users.id = '+officer+') Agent,\n' +
-        //             'EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //             'FROM     applications \n' +
-        //             'WHERE    status =2\n' +
-        //             'AND      (select loan_officer from clients where clients.ID = userID) = '+officer+'\n' +
-        //             'GROUP BY quarter\n' +
-        //             'ORDER BY DisburseYearMonth'
-        //     }
-        //     //All Officers, Monthly In One Year
-        //     if (officer == 'false' && freq == "2"){
-        //         query = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS OfficersMonth, \n' +
-        //             'SUM(loan_amount) AmountDisbursed, \n' +
-        //             'EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //             'FROM     applications \n' +
-        //             'WHERE    status =2\n' +
-        //             'and      DATE_FORMAT(Disbursement_date, \'%Y\') = '+y+' OR DATE_FORMAT(date_modified, \'%Y\') = '+y+'\n'+
-        //             'GROUP BY DATE_FORMAT(Disbursement_date, \'%M%Y\')\n' +
-        //             'ORDER BY DisburseYearMonth'
-        //     }
-        //     //All Officers, Monthly
-        //     if (officer == 'false' && freq == "2" && y == "0"){
-        //         query = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS Month, DATE_FORMAT(Disbursement_date, \'%Y\') AS AYear, \n' +
-        //             'SUM(loan_amount) AmountDisbursed, \n' +
-        //             'EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //             'FROM     applications \n' +
-        //             'WHERE    status =2\n' +
-        //             'GROUP BY DATE_FORMAT(Disbursement_date, \'%M%Y\')\n' +
-        //             'ORDER BY DisburseYearMonth'
-        //     }
-        //     //All Officers, Quarterly In One Year
-        //     if (officer == 'false' && freq == "4"){
-        //         query = 'SELECT   concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) OfficersQuarter, \n' +
-        //             'SUM(loan_amount) AmountDisbursed, \n' +
-        //             'EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //             'FROM     applications \n' +
-        //             'WHERE    status =2\n' +
-        //             'and      DATE_FORMAT(Disbursement_date, \'%Y\') = '+y+' OR DATE_FORMAT(date_modified, \'%Y\') = '+y+'\n'+
-        //             'GROUP BY OfficersQuarter\n' +
-        //             'ORDER BY DisburseYearMonth'
-        //     }
-        //     //All Officers, Quarterly
-        //     if (officer == 'false' && freq == "4" && y == "0"){
-        //         query = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS Month, concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) AQuarter, \n' +
-        //             'SUM(loan_amount) AmountDisbursed, \n' +
-        //             'EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //             'FROM     applications \n' +
-        //             'WHERE    status =2\n' +
-        //             'GROUP BY AQuarter\n' +
-        //             'ORDER BY DisburseYearMonth'
-        //     }
-        //     break;
+    switch (t) {
         case 'disbursements':
             //Default
             query = 'select ' +
                 'sum(amount) as amount_disbursed, (select fullname from users where users.id = loan_officer) name ' +
                 'from disbursement_history where status = 1 group by name';
             //An Officer
-            if (officer){
+            if (officer) {
                 query = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS DisburseMonth, \n' +
-                    '         SUM(amount) AmountDisbursed, (select fullname from users where users.id = '+officer+') agent,\n' +
+                    '         SUM(amount) AmountDisbursed, (select fullname from users where users.id = ' + officer + ') agent,\n' +
                     '         EXTRACT(YEAR_MONTH FROM date_disbursed) As DisburseYearMonth\n' +
                     'FROM     disbursement_history \n' +
-                    'WHERE      status =1\n'+
-                    'AND      loan_officer = '+officer+'\n' +
+                    'WHERE      status =1\n' +
+                    'AND      loan_officer = ' + officer + '\n' +
                     'GROUP BY agent\n' +
                     'ORDER BY DisburseYearMonth';
                 load = [officer]
             }
             //All Officers, Yearly
-            if (officer == 'false' && freq == '3'){
+            if (officer == 'false' && freq == '3') {
                 query = 'SELECT   DATE_FORMAT(date_disbursed, \'%Y\') AS OfficersYear, \n' +
                     'SUM(amount) AmountDisbursed, \n' +
-                    'EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
+                    // 'EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
+                    'EXTRACT(YEAR_MONTH FROM date_disbursed) As DisburseYearMonth\n' +
                     'FROM     disbursement_history \n' +
                     'WHERE    status =1\n' +
                     'GROUP BY DATE_FORMAT(date_disbursed, \'%Y\')\n' +
                     'ORDER BY DisburseYearMonth'
             }
             //One Officer, Yearly
-            if (officer !== 'false' && freq == "3"){
+            if (officer !== 'false' && freq == "3") {
                 query = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(date_disbursed, \'%Y\') AS DisburseYear, \n' +
-                    '                    SUM(amount) AmountDisbursed, (select fullname from users where users.id = '+officer+') Agent, \n' +
+                    '                    SUM(amount) AmountDisbursed, (select fullname from users where users.id = ' + officer + ') Agent, \n' +
                     '                    EXTRACT(YEAR_MONTH FROM date_disbursed) As DisburseYearMonth\n' +
                     '    FROM     disbursement_history \n' +
                     '    WHERE    status =1\n' +
-                    '    AND      loan_officer = '+officer+'\n' +
+                    '    AND      loan_officer = ' + officer + '\n' +
                     '    GROUP BY DATE_FORMAT(date_disbursed, \'%Y\')\n' +
                     '    ORDER BY DisburseYearMonth'
             }
             //One Officer, Monthly In One Year
-            if (officer !== 'false' && freq == "2"){
+            if (officer !== 'false' && freq == "2") {
                 query = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(date_disbursed, \'%Y\') AS Year, \n' +
-                    'SUM(amount) AmountDisbursed, (select fullname from users where users.id = '+officer+') Agent,\n' +
+                    'SUM(amount) AmountDisbursed, (select fullname from users where users.id = ' + officer + ') Agent,\n' +
                     'EXTRACT(YEAR_MONTH FROM date_disbursed) As DisburseYearMonth\n' +
                     'FROM     disbursement_history \n' +
                     'WHERE    status =1\n' +
-                    'and      DATE_FORMAT(date_disbursed, \'%Y\') = '+y+'\n'+
-                    'AND      loan_officer = '+officer+'\n' +
+                    'and      DATE_FORMAT(date_disbursed, \'%Y\') = ' + y + '\n' +
+                    'AND      loan_officer = ' + officer + '\n' +
                     'GROUP BY DATE_FORMAT(date_disbursed, \'%M%Y\')\n' +
                     'ORDER BY DisburseYearMonth'
             }
             //One Officer, Monthly
-            if (officer !== 'false' && freq == "2" && y == '0'){
+            if (officer !== 'false' && freq == "2" && y == '0') {
                 query = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(date_disbursed, \'%Y\') AS Year, \n' +
-                    'SUM(amount) AmountDisbursed, (select fullname from users where users.id = '+officer+') Agent,\n' +
+                    'SUM(amount) AmountDisbursed, (select fullname from users where users.id = ' + officer + ') Agent,\n' +
                     'EXTRACT(YEAR_MONTH FROM date_disbursed) As DisburseYearMonth\n' +
                     'FROM     disbursement_history \n' +
                     'WHERE    status =1\n' +
-                    'AND      loan_officer = '+officer+'\n' +
+                    'AND      loan_officer = ' + officer + '\n' +
                     'GROUP BY DATE_FORMAT(date_disbursed, \'%M%Y\')\n' +
                     'ORDER BY DisburseYearMonth'
             }
             //One Officer, Quarterly In One Year
-            if (officer !== 'false' && freq == "4"){
+            if (officer !== 'false' && freq == "4") {
                 query = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS DisburseMonth, concat(\'Q\',quarter(date_disbursed),\'-\', year(date_disbursed)) quarter,\n' +
-                    'SUM(amount) AmountDisbursed, (select fullname from users where users.id = '+officer+') Agent,\n' +
+                    'SUM(amount) AmountDisbursed, (select fullname from users where users.id = ' + officer + ') Agent,\n' +
                     'EXTRACT(YEAR_MONTH FROM date_disbursed) As DisburseYearMonth\n' +
                     'FROM     disbursement_history \n' +
                     'WHERE    status =1\n' +
-                    'and      DATE_FORMAT(date_disbursed, \'%Y\') = '+y+' \n'+
-                    'AND      loan_officer = userID) = '+officer+'\n' +
+                    'and      DATE_FORMAT(date_disbursed, \'%Y\') = ' + y + ' \n' +
+                    'AND      loan_officer = userID) = ' + officer + '\n' +
                     'GROUP BY quarter\n' +
                     'ORDER BY DisburseYearMonth'
             }
             //One Officer, Quarterly
-            if (officer !== 'false' && freq == "4" && y == '0'){
+            if (officer !== 'false' && freq == "4" && y == '0') {
                 query = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS DisburseMonth, concat(\'Q\',quarter(date_disbursed),\'-\', year(date_disbursed)) quarter, \n' +
-                    'SUM(amount) AmountDisbursed, (select fullname from users where users.id = '+officer+') Agent,\n' +
+                    'SUM(amount) AmountDisbursed, (select fullname from users where users.id = ' + officer + ') Agent,\n' +
                     'EXTRACT(YEAR_MONTH FROM date_disbursed) As DisburseYearMonth\n' +
                     'FROM     disbursement_history \n' +
                     'WHERE    status =1\n' +
-                    'AND      loan_officer = '+officer+'\n' +
+                    'AND      loan_officer = ' + officer + '\n' +
                     'GROUP BY quarter\n' +
                     'ORDER BY DisburseYearMonth'
             }
             //All Officers, Monthly In One Year
-            if (officer == 'false' && freq == "2"){
+            if (officer == 'false' && freq == "2") {
                 query = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS OfficersMonth, \n' +
                     'SUM(amount) AmountDisbursed, \n' +
                     'EXTRACT(YEAR_MONTH FROM date_disbursed) As DisburseYearMonth\n' +
                     'FROM     disbursement_history \n' +
                     'WHERE    status =1\n' +
-                    'and      DATE_FORMAT(date_disbursed, \'%Y\') = '+y+'\n'+
+                    'and      DATE_FORMAT(date_disbursed, \'%Y\') = ' + y + '\n' +
                     'GROUP BY DATE_FORMAT(date_disbursed, \'%M%Y\')\n' +
                     'ORDER BY DisburseYearMonth'
             }
             //All Officers, Monthly
-            if (officer == 'false' && freq == "2" && y == "0"){
+            if (officer == 'false' && freq == "2" && y == "0") {
                 query = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS Month, DATE_FORMAT(date_disbursed, \'%Y\') AS AYear, \n' +
                     'SUM(amount) AmountDisbursed, \n' +
                     'EXTRACT(YEAR_MONTH FROM date_disbursed) As DisburseYearMonth\n' +
@@ -5386,18 +5369,18 @@ users.get('/analytics', function(req, res, next) {
                     'ORDER BY DisburseYearMonth'
             }
             //All Officers, Quarterly In One Year
-            if (officer == 'false' && freq == "4"){
+            if (officer == 'false' && freq == "4") {
                 query = 'SELECT   concat(\'Q\',quarter(date_disbursed),\'-\', year(date_disbursed)) OfficersQuarter, \n' +
                     'SUM(amount) AmountDisbursed, \n' +
                     'EXTRACT(YEAR_MONTH FROM date_disbursed) As DisburseYearMonth\n' +
                     'FROM     disbursement_history \n' +
                     'WHERE    status =1\n' +
-                    'and      DATE_FORMAT(date_disbursed, \'%Y\') = '+y+'\n'+
+                    'and      DATE_FORMAT(date_disbursed, \'%Y\') = ' + y + '\n' +
                     'GROUP BY OfficersQuarter\n' +
                     'ORDER BY DisburseYearMonth'
             }
             //All Officers, Quarterly
-            if (officer == 'false' && freq == "4" && y == "0"){
+            if (officer == 'false' && freq == "4" && y == "0") {
                 query = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS Month, concat(\'Q\',quarter(date_disbursed),\'-\', year(date_disbursed)) AQuarter, \n' +
                     'SUM(amount) AmountDisbursed, \n' +
                     'EXTRACT(YEAR_MONTH FROM date_disbursed) As DisburseYearMonth\n' +
@@ -5407,372 +5390,9 @@ users.get('/analytics', function(req, res, next) {
                     'ORDER BY DisburseYearMonth'
             }
             break;
-        // case 'branches':
-        //     //Disbursements
-        //     if (bt == '1'){
-        //
-        //         query = 'select sum(loan_amount) amount_disbursed, \n' +
-        //             '(select branch_name from branches where branches.id = (select branch from clients where clients.id = userid)) branch\n' +
-        //             'from applications \n' +
-        //             'where status = 2\n' +
-        //             'group by branch'
-        //         //Specific Branch
-        //         if (b){
-        //             query = 'select sum(loan_amount) amount_disbursed, \n' +
-        //                 '(select branch_name from branches where branches.id = (select branch from clients where clients.id = userid)) branch\n' +
-        //                 'from applications \n' +
-        //                 'where status = 2\n' +
-        //                 'and (select branch from clients where clients.id = userid) = '+b+'\n'+
-        //                 'group by branch'
-        //         }
-        //         //Specific Branch, Monthly in a year
-        //         if (b != '0' && freq == "2"){
-        //             query = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(Disbursement_date, \'%M\') month,\n' +
-        //                 '(select branch_name from branches where branches.id = (select branch from clients where clients.id = userid)) office,\n' +
-        //                 '         SUM(loan_amount) AmountDisbursed,\n' +
-        //                 '         EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //                 'FROM     applications\n' +
-        //                 'WHERE  status = 2\n' +
-        //                 'AND   (select branches.id from branches where branches.id = (select branch from clients where clients.id = userid)) = '+b+'\n' +
-        //                 'AND   DATE_FORMAT(Disbursement_date, \'%Y\') = '+y+'\n' +
-        //                 'GROUP BY DisburseMonth, office\n' +
-        //                 'ORDER BY Disbursement_date'
-        //         }
-        //         //All Branches, Monthly in a year
-        //         if (b == '0' && freq == "2"){
-        //             query = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(Disbursement_date, \'%M\') month,\n' +
-        //                 '(select branch_name from branches where branches.id = (select branch from clients where clients.id = userid)) office,\n' +
-        //                 '         SUM(loan_amount) AmountDisbursed,\n' +
-        //                 '         EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //                 'FROM     applications\n' +
-        //                 'WHERE  status = 2\n' +
-        //                 'AND   DATE_FORMAT(Disbursement_date, \'%Y\') = '+y+'\n' +
-        //                 'GROUP BY office, DisburseMonth\n' +
-        //                 'ORDER BY office, Disbursement_date'
-        //         }
-        //         //All Branches, Monthly
-        //         if (b == '0' && freq == "2" && y == '0'){
-        //             query = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(Disbursement_date, \'%M\') month,\n' +
-        //                 '(select branch_name from branches where branches.id = (select branch from clients where clients.id = userid)) office,\n' +
-        //                 '         SUM(loan_amount) AmountDisbursed,\n' +
-        //                 '         EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //                 'FROM     applications\n' +
-        //                 'WHERE  status = 2\n' +
-        //                 'GROUP BY office, DisburseMonth\n' +
-        //                 'ORDER BY Disbursement_date'
-        //         }
-        //         if (b != '0' && freq == "2" && y == '0'){
-        //             query = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(Disbursement_date, \'%M\') month,\n' +
-        //                 '(select branch_name from branches where branches.id = (select branch from clients where clients.id = userid)) office,\n' +
-        //                 '         SUM(loan_amount) AmountDisbursed,\n' +
-        //                 '         EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //                 'FROM     applications\n' +
-        //                 'WHERE  status = 2\n' +
-        //                 'AND   (select branches.id from branches where branches.id = (select branch from clients where clients.id = userid)) = '+b+'\n' +
-        //                 'GROUP BY DisburseMonth, office\n' +
-        //                 'ORDER BY Disbursement_date'
-        //         }
-        //         //Specific Branch, Yearly
-        //         if (b != '0' && freq == "3"){
-        //             query = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(Disbursement_date, \'%Y\') year,\n' +
-        //                 '(select branch_name from branches where branches.id = '+b+') office,\n' +
-        //                 '         SUM(loan_amount) AmountDisbursed,\n' +
-        //                 '         EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //                 'FROM     applications\n' +
-        //                 'WHERE  status = 2 and date_format(disbursement_date, \'%Y\') = '+y+'\n' +
-        //                 'AND     (select branches.id from branches where branches.id = (select branch from clients where clients.id = userid)) = '+b+'\n' +
-        //                 'GROUP BY DATE_FORMAT(Disbursement_date, \'%Y\')'
-        //         }
-        //         if (b != '0' && freq == "3" && y == '0'){
-        //             query = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(Disbursement_date, \'%Y\') year,\n' +
-        //                 '(select branch_name from branches where branches.id = '+b+') office,\n' +
-        //                 '         SUM(loan_amount) AmountDisbursed,\n' +
-        //                 '         EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //                 'FROM     applications\n' +
-        //                 'WHERE  status = 2\n' +
-        //                 'AND     (select branches.id from branches where branches.id = (select branch from clients where clients.id = userid)) = '+b+'\n' +
-        //                 'GROUP BY DATE_FORMAT(Disbursement_date, \'%Y\')'
-        //         }
-        //         if (b != '0' && freq == "4"){
-        //             query = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS DisburseMonth, concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) Quarter,\n' +
-        //                 '(select branch_name from branches where branches.id = '+b+') office,\n' +
-        //                 '         SUM(loan_amount) AmountDisbursed,\n' +
-        //                 '         EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //                 'FROM     applications\n' +
-        //                 'WHERE  status = 2\n' +
-        //                 'AND     (select branches.id from branches where branches.id = (select branch from clients where clients.id = userid)) = '+b+'\n' +
-        //                 'GROUP BY Quarter order by DisburseYearMonth'
-        //         }
-        //         if (b != '0' && freq == "4" && y != '0'){
-        //             query = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS DisburseMonth, concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) Quarter,\n' +
-        //                 '(select branch_name from branches where branches.id = '+b+') office,\n' +
-        //                 '         SUM(loan_amount) AmountDisbursed,\n' +
-        //                 '         EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //                 'FROM     applications\n' +
-        //                 'WHERE  status = 2\n' +
-        //                 'AND     (select branches.id from branches where branches.id = (select branch from clients where clients.id = userid)) = '+b+'\n' +
-        //                 'and date_format(Disbursement_date, \'%Y\') = '+y+'\n'+
-        //                 'GROUP BY Quarter order by DisburseYearMonth'
-        //         }
-        //     }
-        //     //Interests
-        //     if (bt == '2'){
-        //         query = 'select sum(interest_amount) amount_received, \n' +
-        //             '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch\n' +
-        //             'from schedule_history \n' +
-        //             'where status = 1 and applicationid in (select id from applications where applications.status <> 0)\n' +
-        //             'group by branch'
-        //         //Specific Branch
-        //         if (b){
-        //             query = 'select sum(interest_amount) amount_received, \n' +
-        //                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch\n' +
-        //                     'from schedule_history \n' +
-        //                     'where status = 1 and applicationid in (select id from applications where applications.status <> 0)\n' +
-        //                     'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-        //                     'group by branch'
-        //         }
-        //         //Specific Branch, Monthly, Specific Year
-        //         if (b !== '0' && freq == "2"){
-        //             query = 'select sum(interest_amount) amount_received, \n' +
-        //                 'DATE_FORMAT(payment_date, \'%M %Y\') monthpayed, \n'+
-        //                 '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
-        //                 'from schedule_history \n' +
-        //                 'where status = 1\n' +
-        //                 'and applicationid in (select id from applications where status <> 0)\n'+
-        //                 'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-        //                 'and Date_format(Payment_date, \'%Y\') = '+y+'\n'+
-        //                 'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)'
-        //         }
-        //         if (b !== '0' && freq == "2" && y == '0'){
-        //             query = 'select sum(interest_amount) amount_received, \n' +
-        //                 'DATE_FORMAT(payment_date, \'%M %Y\') monthpayed, \n'+
-        //                 '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
-        //                 'from schedule_history \n' +
-        //                 'where status = 1\n' +
-        //                 'and applicationid in (select id from applications where status <> 0)\n'+
-        //                 'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-        //                 'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)'
-        //         }
-        //         //Specific Branch, Yearly
-        //         if (b !== '0' && freq == "3"){
-        //             query = 'select sum(interest_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') PaymentYear, \n' +
-        //                 '(select branch_name from branches where branches.id = '+b+') office \n'+
-        //                 'from schedule_history \n' +
-        //                 'where status = 1\n' +
-        //                 'and applicationid in (select id from applications where status <> 0)\n'+
-        //                 'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-        //                 'and date_format(payment_date, \'%Y\') = '+y+'\n'+
-        //                 'group by officer, DATE_FORMAT(Payment_date, \'%Y\')'
-        //         }
-        //         if (b !== '0' && freq == "3" && y == '0'){
-        //             query = 'select sum(interest_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') PaymentYear, \n' +
-        //                 '(select branch_name from branches where branches.id = '+b+') office \n'+
-        //                 'from schedule_history \n' +
-        //                 'where status = 1\n' +
-        //                 'and applicationid in (select id from applications where status <> 0)\n'+
-        //                 'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-        //                 'group by officer, DATE_FORMAT(Payment_date, \'%Y\')'
-        //         }
-        //         if (b !== '0' && freq == "4"){
-        //             query = 'select sum(interest_amount) amount_received, \n' +
-        //                 '(select branch_name from branches where branches.id = '+b+') office, \n'+
-        //                 'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) branchQuarter\n'+
-        //                 'from schedule_history \n' +
-        //                 'where status = 1\n' +
-        //                 'and applicationid in (select id from applications where status <> 0)\n'+
-        //                 'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-        //                 'and Date_format(Payment_date, \'%Y\') = '+y+'\n'+
-        //                 'group by branchQuarter order by EXTRACT(YEAR_MONTH FROM payment_date)'
-        //         }
-        //         if (b !== '0' && freq == "4" && y == '0'){
-        //             query = 'select sum(interest_amount) amount_received, \n' +
-        //                 '(select branch_name from branches where branches.id = '+b+') office, \n'+
-        //                 'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) branchQuarter\n'+
-        //                 'from schedule_history \n' +
-        //                 'where status = 1\n' +
-        //                 'and applicationid in (select id from applications where status <> 0)\n'+
-        //                 'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-        //                 'group by branchQuarter order by EXTRACT(YEAR_MONTH FROM payment_date)'
-        //         }
-        //     }
-        //     //Payments
-        //     if (bt == '3'){
-        //         query = 'select sum(payment_amount) amount_received, \n' +
-        //             '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch\n' +
-        //             'from schedule_history \n' +
-        //             'where status = 1 and applicationid in (select id from applications where applications.status <> 0)\n' +
-        //             'group by branch'
-        //         //Specific Branch
-        //         if (b){
-        //             query = 'select sum(payment_amount) amount_received, \n' +
-        //                 '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch\n' +
-        //                 'from schedule_history \n' +
-        //                 'where status = 1 and applicationid in (select id from applications where applications.status <> 0)\n' +
-        //                 'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-        //                 'group by branch'
-        //         }
-        //         //Specific Branch, Monthly, Specific Year
-        //         if (b !== '0' && freq == "2"){
-        //             query = 'select sum(payment_amount) amount_received, \n' +
-        //                 'DATE_FORMAT(payment_date, \'%M %Y\') monthpayed, \n'+
-        //                 '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
-        //                 'from schedule_history \n' +
-        //                 'where status = 1\n' +
-        //                 'and applicationid in (select id from applications where status <> 0)\n'+
-        //                 'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-        //                 'and Date_format(Payment_date, \'%Y\') = '+y+'\n'+
-        //                 'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)'
-        //         }
-        //         if (b !== '0' && freq == "2" && y == '0'){
-        //             query = 'select sum(payment_amount) amount_received, \n' +
-        //                 'DATE_FORMAT(payment_date, \'%M %Y\') monthpayed, \n'+
-        //                 '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
-        //                 'from schedule_history \n' +
-        //                 'where status = 1\n' +
-        //                 'and applicationid in (select id from applications where status <> 0)\n'+
-        //                 'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-        //                 'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)'
-        //         }
-        //         //Specific Branch, Yearly
-        //         if (b !== '0' && freq == "3"){
-        //             query = 'select sum(payment_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') PaymentYear, \n' +
-        //                 '(select branch_name from branches where branches.id = '+b+') office \n'+
-        //                 'from schedule_history \n' +
-        //                 'where status = 1\n' +
-        //                 'and applicationid in (select id from applications where status <> 0)\n'+
-        //                 'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-        //                 'and date_format(payment_date, \'%Y\') = '+y+'\n'+
-        //                 'group by office, DATE_FORMAT(Payment_date, \'%Y\')'
-        //         }
-        //         if (b !== '0' && freq == "3" && y == '0'){
-        //             query = 'select sum(payment_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') PaymentYear, \n' +
-        //                 '(select branch_name from branches where branches.id = '+b+') office \n'+
-        //                 'from schedule_history \n' +
-        //                 'where status = 1\n' +
-        //                 'and applicationid in (select id from applications where status <> 0)\n'+
-        //                 'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-        //                 'group by office, DATE_FORMAT(Payment_date, \'%Y\')'
-        //         }
-        //         if (b !== '0' && freq == "4"){
-        //             query = 'select sum(payment_amount) amount_received, \n' +
-        //                 '(select branch_name from branches where branches.id = '+b+') office, \n'+
-        //                 'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) branchQuarter\n'+
-        //                 'from schedule_history \n' +
-        //                 'where status = 1\n' +
-        //                 'and applicationid in (select id from applications where status <> 0)\n'+
-        //                 'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-        //                 'and Date_format(Payment_date, \'%Y\') = '+y+'\n'+
-        //                 'group by branchQuarter order by EXTRACT(YEAR_MONTH FROM payment_date)'
-        //         }
-        //         if (b !== '0' && freq == "4" && y == '0'){
-        //             query = 'select sum(payment_amount) amount_received, \n' +
-        //                 '(select branch_name from branches where branches.id = '+b+') office, \n'+
-        //                 'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) branchQuarter\n'+
-        //                 'from schedule_history \n' +
-        //                 'where status = 1\n' +
-        //                 'and applicationid in (select id from applications where status <> 0)\n'+
-        //                 'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-        //                 'group by branchQuarter order by EXTRACT(YEAR_MONTH FROM payment_date)'
-        //         }
-        //     }
-        //     //Bad Loans
-        //     if (bt == '4'){
-        //         query = `
-        //                 select  applicationid,
-        //                 sum(payment_amount) amount,
-        //                 (select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch
-        //                 from application_schedules ap
-        //                 where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0
-        //                 and datediff(curdate(), payment_collect_date) > 90 group by branch
-        //                 `;
-        //         //Specific Branch
-        //         if (b){
-        //             query = `
-        //                     select  applicationid,
-        //                     sum(payment_amount) amount,
-        //                     (select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch
-        //                     from application_schedules ap
-        //                     where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0
-        //                     and (select branch from clients where clients.id = (select userid from applications where applications.id = ap.applicationid)) = ${b}
-        //                     and datediff(curdate(), payment_collect_date) > 90 group by branch
-        //                     `;
-        //         }
-        //         //Specific Branch, Monthly, Specific Year
-        //         if (b !== '0' && freq == "2"){
-        //             query = `
-        //                     select  applicationid,
-        //                     sum(payment_amount) amount, DATE_FORMAT(payment_collect_date, \'%M %Y\') period,
-        //                     (select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch
-        //                     from application_schedules ap
-        //                     where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0
-        //                     and (select branch from clients where clients.id = (select userid from applications where applications.id = ap.applicationid)) = ${b}
-        //                     and Date_format(Payment_collect_date, \'%Y\') = ${y}
-        //                     and datediff(curdate(), payment_collect_date) > 90 group by branch, EXTRACT(YEAR_MONTH FROM payment_collect_date) order by EXTRACT(YEAR_MONTH FROM payment_collect_date)
-        //                     `;
-        //         }
-        //         if (b !== '0' && freq == "2" && y == '0'){
-        //             query = `
-        //                     select  applicationid,
-        //                     sum(payment_amount) amount, DATE_FORMAT(payment_collect_date, \'%M %Y\') period,
-        //                     (select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch
-        //                     from application_schedules ap
-        //                     where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0
-        //                     and (select branch from clients where clients.id = (select userid from applications where applications.id = ap.applicationid)) = ${b}
-        //                     and datediff(curdate(), payment_collect_date) > 90 group by branch, EXTRACT(YEAR_MONTH FROM payment_collect_date) order by EXTRACT(YEAR_MONTH FROM payment_collect_date)
-        //                     `;
-        //         }
-        //         //Specific Branch, Yearly
-        //         if (b !== '0' && freq == "3"){
-        //             query = `
-        //                     select applicationid,
-        //                     sum(payment_amount) amount, DATE_FORMAT(payment_collect_date, \'%Y\') period,
-        //                     (select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch
-        //                     from application_schedules ap
-        //                     where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0
-        //                     and (select branch from clients where clients.id = (select userid from applications where applications.id = ap.applicationid)) = ${b}
-        //                     and Date_format(Payment_collect_date, \'%Y\') = ${y}
-        //                     and datediff(curdate(), payment_collect_date) > 90 group by branch, EXTRACT(YEAR FROM payment_collect_date) order by EXTRACT(YEAR FROM payment_collect_date)
-        //                     `;
-        //         }
-        //         if (b !== '0' && freq == "3" && y == '0'){
-        //             query = `
-        //                     select applicationid,
-        //                     sum(payment_amount) amount, DATE_FORMAT(payment_collect_date, \'%Y\') period,
-        //                     (select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch
-        //                     from application_schedules ap
-        //                     where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0
-        //                     and (select branch from clients where clients.id = (select userid from applications where applications.id = ap.applicationid)) = ${b}
-        //                     and datediff(curdate(), payment_collect_date) > 90 group by branch, EXTRACT(YEAR FROM payment_collect_date) order by EXTRACT(YEAR FROM payment_collect_date)
-        //                     `;
-        //         }
-        //         if (b !== '0' && freq == "4"){
-        //             query = `
-        //                     select applicationid,
-        //                     sum(payment_amount) amount, concat('Q',quarter(payment_collect_date),'-', year(payment_collect_date)) period,
-        //                     (select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch
-        //                     from application_schedules ap
-        //                     where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0
-        //                     and (select branch from clients where clients.id = (select userid from applications where applications.id = ap.applicationid)) = ${b}
-        //                     and Date_format(Payment_collect_date, \'%Y\') = ${y}
-        //                     and datediff(curdate(), payment_collect_date) > 90 group by branch, EXTRACT(YEAR_MONTH FROM payment_collect_date) order by EXTRACT(YEAR_MONTH FROM payment_collect_date)
-        //                     `;
-        //         }
-        //         if (b !== '0' && freq == "4" && y == '0'){
-        //             query = `
-        //                     select applicationid,
-        //                     sum(payment_amount) amount, concat('Q',quarter(payment_collect_date),'-', year(payment_collect_date)) period,
-        //                     (select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch
-        //                     from application_schedules ap
-        //                     where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0
-        //                     and (select branch from clients where clients.id = (select userid from applications where applications.id = ap.applicationid)) = ${b}
-        //                     and datediff(curdate(), payment_collect_date) > 90 group by branch, EXTRACT(YEAR_MONTH FROM payment_collect_date) order by EXTRACT(YEAR_MONTH FROM payment_collect_date)
-        //                     `;
-        //         }
-        //     }
-        //     break;
         case 'branches':
             //Disbursements
-            if (bt == '1'){
+            if (bt == '1') {
 
                 query = 'select sum(amount) amount_disbursed, \n' +
                     '(select branch_name from branches where branches.id = branch) branch\n' +
@@ -5780,41 +5400,41 @@ users.get('/analytics', function(req, res, next) {
                     'where status = 1\n' +
                     'group by branch'
                 //Specific Branch
-                if (b){
+                if (b) {
                     query = 'select sum(amount) amount_disbursed, \n' +
                         '(select branch_name from branches where branches.id = branch) branch\n' +
                         'from disbursement_history \n' +
                         'where status = 1\n' +
-                        'and branch = '+b+'\n'+
+                        'and branch = ' + b + '\n' +
                         'group by branch'
                 }
                 //Specific Branch, Monthly in a year
-                if (b != '0' && freq == "2"){
+                if (b != '0' && freq == "2") {
                     query = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(date_disbursed, \'%M\') month,\n' +
                         '(select branch_name from branches where branches.id = branch) office,\n' +
                         '         SUM(amount) AmountDisbursed,\n' +
                         '         EXTRACT(YEAR_MONTH FROM date_disbursed) As DisburseYearMonth\n' +
                         'FROM     disbursement_history\n' +
                         'WHERE  status = 1\n' +
-                        'AND   branch = '+b+'\n' +
-                        'AND   DATE_FORMAT(date_disbursed, \'%Y\') = '+y+'\n' +
+                        'AND   branch = ' + b + '\n' +
+                        'AND   DATE_FORMAT(date_disbursed, \'%Y\') = ' + y + '\n' +
                         'GROUP BY DisburseMonth, office\n' +
                         'ORDER BY date_disbursed'
                 }
                 //All Branches, Monthly in a year
-                if (b == '0' && freq == "2"){
+                if (b == '0' && freq == "2") {
                     query = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(date_disbursed, \'%M\') month,\n' +
                         '(select branch_name from branches where branches.id = branch) office,\n' +
                         '         SUM(amount) AmountDisbursed,\n' +
                         '         EXTRACT(YEAR_MONTH FROM date_disbursed) As DisburseYearMonth\n' +
                         'FROM     disbursement_history\n' +
                         'WHERE  status = 1\n' +
-                        'AND   DATE_FORMAT(date_disbursed, \'%Y\') = '+y+'\n' +
+                        'AND   DATE_FORMAT(date_disbursed, \'%Y\') = ' + y + '\n' +
                         'GROUP BY office, DisburseMonth\n' +
                         'ORDER BY office, date_disbursed'
                 }
                 //All Branches, Monthly
-                if (b == '0' && freq == "2" && y == '0'){
+                if (b == '0' && freq == "2" && y == '0') {
                     query = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(date_disbursed, \'%M\') month,\n' +
                         '(select branch_name from branches where branches.id = branch) office,\n' +
                         '         SUM(amount) AmountDisbursed,\n' +
@@ -5824,222 +5444,222 @@ users.get('/analytics', function(req, res, next) {
                         'GROUP BY office, DisburseMonth\n' +
                         'ORDER BY date_disbursed'
                 }
-                if (b != '0' && freq == "2" && y == '0'){
+                if (b != '0' && freq == "2" && y == '0') {
                     query = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(date_disbursed, \'%M\') month,\n' +
                         '(select branch_name from branches where branches.id = branch) office,\n' +
                         '         SUM(amount) AmountDisbursed,\n' +
                         '         EXTRACT(YEAR_MONTH FROM date_disbursed) As DisburseYearMonth\n' +
                         'FROM     disbursement_history\n' +
                         'WHERE  status = 1\n' +
-                        'AND   branch = '+b+'\n' +
+                        'AND   branch = ' + b + '\n' +
                         'GROUP BY DisburseMonth, office\n' +
                         'ORDER BY date_disbursed'
                 }
                 //Specific Branch, Yearly
-                if (b != '0' && freq == "3"){
+                if (b != '0' && freq == "3") {
                     query = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(date_disbursed, \'%Y\') year,\n' +
-                        '(select branch_name from branches where branches.id = '+b+') office,\n' +
+                        '(select branch_name from branches where branches.id = ' + b + ') office,\n' +
                         '         SUM(amount) AmountDisbursed,\n' +
                         '         EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
                         'FROM     disbursement_history\n' +
-                        'WHERE  status = 1 and date_format(date_disbursed, \'%Y\') = '+y+'\n' +
-                        'AND     branch = '+b+'\n' +
+                        'WHERE  status = 1 and date_format(date_disbursed, \'%Y\') = ' + y + '\n' +
+                        'AND     branch = ' + b + '\n' +
                         'GROUP BY DATE_FORMAT(date_disbursed, \'%Y\')'
                 }
-                if (b != '0' && freq == "3" && y == '0'){
+                if (b != '0' && freq == "3" && y == '0') {
                     query = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(date_disbursed, \'%Y\') year,\n' +
-                        '(select branch_name from branches where branches.id = '+b+') office,\n' +
+                        '(select branch_name from branches where branches.id = ' + b + ') office,\n' +
                         '         SUM(amount) AmountDisbursed,\n' +
                         '         EXTRACT(YEAR_MONTH FROM date_disbursed) As DisburseYearMonth\n' +
                         'FROM     applications\n' +
                         'WHERE  status = 1\n' +
-                        'AND     branch = '+b+'\n' +
+                        'AND     branch = ' + b + '\n' +
                         'GROUP BY DATE_FORMAT(date_disbursed, \'%Y\')'
                 }
-                if (b != '0' && freq == "4"){
+                if (b != '0' && freq == "4") {
                     query = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS DisburseMonth, concat(\'Q\',quarter(date_disbursed),\'-\', year(date_disbursed)) Quarter,\n' +
-                        '(select branch_name from branches where branches.id = '+b+') office,\n' +
+                        '(select branch_name from branches where branches.id = ' + b + ') office,\n' +
                         '         SUM(amount) AmountDisbursed,\n' +
                         '         EXTRACT(YEAR_MONTH FROM date_disbursed) As DisburseYearMonth\n' +
                         'FROM     disbursement_history\n' +
                         'WHERE  status = 1\n' +
-                        'AND     branch = '+b+'\n' +
+                        'AND     branch = ' + b + '\n' +
                         'GROUP BY Quarter order by DisburseYearMonth'
                 }
-                if (b != '0' && freq == "4" && y != '0'){
+                if (b != '0' && freq == "4" && y != '0') {
                     query = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS DisburseMonth, concat(\'Q\',quarter(date_disbursed),\'-\', year(date_disbursed)) Quarter,\n' +
-                        '(select branch_name from branches where branches.id = '+b+') office,\n' +
+                        '(select branch_name from branches where branches.id = ' + b + ') office,\n' +
                         '         SUM(amount) AmountDisbursed,\n' +
                         '         EXTRACT(YEAR_MONTH FROM date_disbursed) As DisburseYearMonth\n' +
                         'FROM     disbursement_history\n' +
                         'WHERE  status = 2\n' +
-                        'AND     branch = '+b+'\n' +
-                        'and date_format(date_disbursed, \'%Y\') = '+y+'\n'+
+                        'AND     branch = ' + b + '\n' +
+                        'and date_format(date_disbursed, \'%Y\') = ' + y + '\n' +
                         'GROUP BY Quarter order by DisburseYearMonth'
                 }
             }
             //Interests
-            if (bt == '2'){
+            if (bt == '2') {
                 query = 'select sum(interest_amount) amount_received, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch\n' +
                     'from schedule_history \n' +
                     'where status = 1 and applicationid in (select id from applications where applications.status <> 0)\n' +
                     'group by branch'
                 //Specific Branch
-                if (b){
+                if (b) {
                     query = 'select sum(interest_amount) amount_received, \n' +
                         '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch\n' +
                         'from schedule_history \n' +
                         'where status = 1 and applicationid in (select id from applications where applications.status <> 0)\n' +
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
+                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + b + '\n' +
                         'group by branch'
                 }
                 //Specific Branch, Monthly, Specific Year
-                if (b !== '0' && freq == "2"){
+                if (b !== '0' && freq == "2") {
                     query = 'select sum(interest_amount) amount_received, \n' +
-                        'DATE_FORMAT(payment_date, \'%M %Y\') monthpayed, \n'+
+                        'DATE_FORMAT(payment_date, \'%M %Y\') monthpayed, \n' +
                         '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-                        'and Date_format(Payment_date, \'%Y\') = '+y+'\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + b + '\n' +
+                        'and Date_format(Payment_date, \'%Y\') = ' + y + '\n' +
                         'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)'
                 }
-                if (b !== '0' && freq == "2" && y == '0'){
+                if (b !== '0' && freq == "2" && y == '0') {
                     query = 'select sum(interest_amount) amount_received, \n' +
-                        'DATE_FORMAT(payment_date, \'%M %Y\') monthpayed, \n'+
+                        'DATE_FORMAT(payment_date, \'%M %Y\') monthpayed, \n' +
                         '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + b + '\n' +
                         'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)'
                 }
                 //Specific Branch, Yearly
-                if (b !== '0' && freq == "3"){
+                if (b !== '0' && freq == "3") {
                     query = 'select sum(interest_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') PaymentYear, \n' +
-                        '(select branch_name from branches where branches.id = '+b+') office \n'+
+                        '(select branch_name from branches where branches.id = ' + b + ') office \n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-                        'and date_format(payment_date, \'%Y\') = '+y+'\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + b + '\n' +
+                        'and date_format(payment_date, \'%Y\') = ' + y + '\n' +
                         'group by officer, DATE_FORMAT(Payment_date, \'%Y\')'
                 }
-                if (b !== '0' && freq == "3" && y == '0'){
+                if (b !== '0' && freq == "3" && y == '0') {
                     query = 'select sum(interest_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') PaymentYear, \n' +
-                        '(select branch_name from branches where branches.id = '+b+') office \n'+
+                        '(select branch_name from branches where branches.id = ' + b + ') office \n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + b + '\n' +
                         'group by officer, DATE_FORMAT(Payment_date, \'%Y\')'
                 }
-                if (b !== '0' && freq == "4"){
+                if (b !== '0' && freq == "4") {
                     query = 'select sum(interest_amount) amount_received, \n' +
-                        '(select branch_name from branches where branches.id = '+b+') office, \n'+
-                        'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) branchQuarter\n'+
+                        '(select branch_name from branches where branches.id = ' + b + ') office, \n' +
+                        'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) branchQuarter\n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-                        'and Date_format(Payment_date, \'%Y\') = '+y+'\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + b + '\n' +
+                        'and Date_format(Payment_date, \'%Y\') = ' + y + '\n' +
                         'group by branchQuarter order by EXTRACT(YEAR_MONTH FROM payment_date)'
                 }
-                if (b !== '0' && freq == "4" && y == '0'){
+                if (b !== '0' && freq == "4" && y == '0') {
                     query = 'select sum(interest_amount) amount_received, \n' +
-                        '(select branch_name from branches where branches.id = '+b+') office, \n'+
-                        'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) branchQuarter\n'+
+                        '(select branch_name from branches where branches.id = ' + b + ') office, \n' +
+                        'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) branchQuarter\n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + b + '\n' +
                         'group by branchQuarter order by EXTRACT(YEAR_MONTH FROM payment_date)'
                 }
             }
             //Payments
-            if (bt == '3'){
+            if (bt == '3') {
                 query = 'select sum(payment_amount) amount_received, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch\n' +
                     'from schedule_history \n' +
                     'where status = 1 and applicationid in (select id from applications where applications.status <> 0)\n' +
                     'group by branch'
                 //Specific Branch
-                if (b){
+                if (b) {
                     query = 'select sum(payment_amount) amount_received, \n' +
                         '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) branch\n' +
                         'from schedule_history \n' +
                         'where status = 1 and applicationid in (select id from applications where applications.status <> 0)\n' +
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
+                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + b + '\n' +
                         'group by branch'
                 }
                 //Specific Branch, Monthly, Specific Year
-                if (b !== '0' && freq == "2"){
+                if (b !== '0' && freq == "2") {
                     query = 'select sum(payment_amount) amount_received, \n' +
-                        'DATE_FORMAT(payment_date, \'%M %Y\') monthpayed, \n'+
+                        'DATE_FORMAT(payment_date, \'%M %Y\') monthpayed, \n' +
                         '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-                        'and Date_format(Payment_date, \'%Y\') = '+y+'\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + b + '\n' +
+                        'and Date_format(Payment_date, \'%Y\') = ' + y + '\n' +
                         'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)'
                 }
-                if (b !== '0' && freq == "2" && y == '0'){
+                if (b !== '0' && freq == "2" && y == '0') {
                     query = 'select sum(payment_amount) amount_received, \n' +
-                        'DATE_FORMAT(payment_date, \'%M %Y\') monthpayed, \n'+
+                        'DATE_FORMAT(payment_date, \'%M %Y\') monthpayed, \n' +
                         '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + b + '\n' +
                         'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)'
                 }
                 //Specific Branch, Yearly
-                if (b !== '0' && freq == "3"){
+                if (b !== '0' && freq == "3") {
                     query = 'select sum(payment_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') PaymentYear, \n' +
-                        '(select branch_name from branches where branches.id = '+b+') office \n'+
+                        '(select branch_name from branches where branches.id = ' + b + ') office \n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-                        'and date_format(payment_date, \'%Y\') = '+y+'\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + b + '\n' +
+                        'and date_format(payment_date, \'%Y\') = ' + y + '\n' +
                         'group by office, DATE_FORMAT(Payment_date, \'%Y\')'
                 }
-                if (b !== '0' && freq == "3" && y == '0'){
+                if (b !== '0' && freq == "3" && y == '0') {
                     query = 'select sum(payment_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') PaymentYear, \n' +
-                        '(select branch_name from branches where branches.id = '+b+') office \n'+
+                        '(select branch_name from branches where branches.id = ' + b + ') office \n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + b + '\n' +
                         'group by office, DATE_FORMAT(Payment_date, \'%Y\')'
                 }
-                if (b !== '0' && freq == "4"){
+                if (b !== '0' && freq == "4") {
                     query = 'select sum(payment_amount) amount_received, \n' +
-                        '(select branch_name from branches where branches.id = '+b+') office, \n'+
-                        'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) branchQuarter\n'+
+                        '(select branch_name from branches where branches.id = ' + b + ') office, \n' +
+                        'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) branchQuarter\n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
-                        'and Date_format(Payment_date, \'%Y\') = '+y+'\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + b + '\n' +
+                        'and Date_format(Payment_date, \'%Y\') = ' + y + '\n' +
                         'group by branchQuarter order by EXTRACT(YEAR_MONTH FROM payment_date)'
                 }
-                if (b !== '0' && freq == "4" && y == '0'){
+                if (b !== '0' && freq == "4" && y == '0') {
                     query = 'select sum(payment_amount) amount_received, \n' +
-                        '(select branch_name from branches where branches.id = '+b+') office, \n'+
-                        'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) branchQuarter\n'+
+                        '(select branch_name from branches where branches.id = ' + b + ') office, \n' +
+                        'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) branchQuarter\n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+b+'\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + b + '\n' +
                         'group by branchQuarter order by EXTRACT(YEAR_MONTH FROM payment_date)'
                 }
             }
             //Bad Loans
-            if (bt == '4'){
+            if (bt == '4') {
                 query = `
                         select  applicationid,      
                         sum(payment_amount) amount,
@@ -6049,7 +5669,7 @@ users.get('/analytics', function(req, res, next) {
                         and datediff(curdate(), payment_collect_date) > 90 group by branch
                         `;
                 //Specific Branch
-                if (b){
+                if (b) {
                     query = `
                             select  applicationid,      
                             sum(payment_amount) amount, 
@@ -6061,7 +5681,7 @@ users.get('/analytics', function(req, res, next) {
                             `;
                 }
                 //Specific Branch, Monthly, Specific Year
-                if (b !== '0' && freq == "2"){
+                if (b !== '0' && freq == "2") {
                     query = `
                             select  applicationid,      
                             sum(payment_amount) amount, DATE_FORMAT(payment_collect_date, \'%M %Y\') period,
@@ -6073,7 +5693,7 @@ users.get('/analytics', function(req, res, next) {
                             and datediff(curdate(), payment_collect_date) > 90 group by branch, EXTRACT(YEAR_MONTH FROM payment_collect_date) order by EXTRACT(YEAR_MONTH FROM payment_collect_date)
                             `;
                 }
-                if (b !== '0' && freq == "2" && y == '0'){
+                if (b !== '0' && freq == "2" && y == '0') {
                     query = `
                             select  applicationid,      
                             sum(payment_amount) amount, DATE_FORMAT(payment_collect_date, \'%M %Y\') period,
@@ -6085,7 +5705,7 @@ users.get('/analytics', function(req, res, next) {
                             `;
                 }
                 //Specific Branch, Yearly
-                if (b !== '0' && freq == "3"){
+                if (b !== '0' && freq == "3") {
                     query = `
                             select applicationid,      
                             sum(payment_amount) amount, DATE_FORMAT(payment_collect_date, \'%Y\') period,
@@ -6097,7 +5717,7 @@ users.get('/analytics', function(req, res, next) {
                             and datediff(curdate(), payment_collect_date) > 90 group by branch, EXTRACT(YEAR FROM payment_collect_date) order by EXTRACT(YEAR FROM payment_collect_date)
                             `;
                 }
-                if (b !== '0' && freq == "3" && y == '0'){
+                if (b !== '0' && freq == "3" && y == '0') {
                     query = `
                             select applicationid,      
                             sum(payment_amount) amount, DATE_FORMAT(payment_collect_date, \'%Y\') period,
@@ -6108,7 +5728,7 @@ users.get('/analytics', function(req, res, next) {
                             and datediff(curdate(), payment_collect_date) > 90 group by branch, EXTRACT(YEAR FROM payment_collect_date) order by EXTRACT(YEAR FROM payment_collect_date)
                             `;
                 }
-                if (b !== '0' && freq == "4"){
+                if (b !== '0' && freq == "4") {
                     query = `
                             select applicationid,      
                             sum(payment_amount) amount, concat('Q',quarter(payment_collect_date),'-', year(payment_collect_date)) period,
@@ -6120,7 +5740,7 @@ users.get('/analytics', function(req, res, next) {
                             and datediff(curdate(), payment_collect_date) > 90 group by branch, EXTRACT(YEAR_MONTH FROM payment_collect_date) order by EXTRACT(YEAR_MONTH FROM payment_collect_date)
                             `;
                 }
-                if (b !== '0' && freq == "4" && y == '0'){
+                if (b !== '0' && freq == "4" && y == '0') {
                     query = `
                             select applicationid,      
                             sum(payment_amount) amount, concat('Q',quarter(payment_collect_date),'-', year(payment_collect_date)) period,
@@ -6141,134 +5761,134 @@ users.get('/analytics', function(req, res, next) {
                 ' (select userid from applications where applications.id = applicationid))) officer\n' +
                 'from schedule_history \n' +
                 'where status = 1\n' +
-                'and applicationid in (select id from applications where applications.status <> 0)\n'+
+                'and applicationid in (select id from applications where applications.status <> 0)\n' +
                 'group by officer\n'
             //One officer
-            if (officer){
+            if (officer) {
                 query = 'SELECT   DATE_FORMAT(payment_date, \'%M, %Y\') AS PaymentMonth,\n' +
-                    '  (select fullname from users where users.id = '+officer+') officer,\n' +
+                    '  (select fullname from users where users.id = ' + officer + ') officer,\n' +
                     '         SUM(payment_amount) AmountPayed,\n' +
                     '         EXTRACT(YEAR_MONTH FROM payment_date) As DisburseYearMonth\n' +
                     'FROM     schedule_history\n' +
                     'WHERE  status = 1\n' +
-                    'and applicationid in (select id from applications where applications.status <> 0)\n'+
-                    'AND (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'
+                    'and applicationid in (select id from applications where applications.status <> 0)\n' +
+                    'AND loan_officerID = ' + officer + '\n'
                 load = [officer]
             }
             //One Officer, Yearly
-            if (officer !== 'false' && freq == "3"){
+            if (officer !== 'false' && freq == "3") {
                 query = 'SELECT   DATE_FORMAT(payment_date, \'%M, %Y\') AS PaymentMonth, DATE_FORMAT(Payment_date, \'%Y\') year,\n' +
-                    ' (select fullname from users where users.id = '+officer+') name,\n' +
+                    ' (select fullname from users where users.id = ' + officer + ') name,\n' +
                     '         SUM(payment_amount) AmountPayed,\n' +
                     '         EXTRACT(YEAR_MONTH FROM payment_date) As PaymentYearMonth\n' +
                     'FROM     schedule_history\n' +
                     'WHERE status = 1\n' +
-                    'and applicationid in (select id from applications where applications.status <> 0)\n'+
-                    'AND (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n' +
+                    'and applicationid in (select id from applications where applications.status <> 0)\n' +
+                    'AND loan_officerID = ' + officer + '\n' +
                     'group by year'
             }
             //All Officers, Yearly
-            if (officer == 'false' && freq == "3"){
+            if (officer == 'false' && freq == "3") {
                 query = 'SELECT   DATE_FORMAT(payment_date, \'%M, %Y\') AS PaymentMonth, DATE_FORMAT(Payment_date, \'%Y\') allpaymentyear,\n' +
                     '         SUM(payment_amount) AmountPayed\n' +
                     'FROM     schedule_history\n' +
                     'WHERE status = 1\n' +
-                    'and applicationid in (select id from applications where applications.status <> 0)\n'+
-                    'and  DATE_FORMAT(Payment_date, \'%Y\') is not null\n'+
+                    'and applicationid in (select id from applications where applications.status <> 0)\n' +
+                    'and  DATE_FORMAT(Payment_date, \'%Y\') is not null\n' +
                     'group by allpaymentyear'
             }
             //One Officer, Monthly in One Year
-            if (officer !== 'false' && freq == '2'){
+            if (officer !== 'false' && freq == '2') {
                 query = 'SELECT   DATE_FORMAT(payment_date, \'%M, %Y\') AS PaymentMonth, DATE_FORMAT(Payment_date, \'%M\') month,\n' +
-                    '\t\t (select fullname from users where users.id = '+officer+') name,\n' +
+                    '\t\t (select fullname from users where users.id = ' + officer + ') name,\n' +
                     '         SUM(payment_amount) AmountPayed,\n' +
                     '         EXTRACT(YEAR_MONTH FROM payment_date) As DisburseYearMonth\n' +
                     'FROM     schedule_history\n' +
                     'WHERE\t\t status = 1\n' +
-                    'and applicationid in (select id from applications where applications.status <> 0)\n'+
-                    'AND (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n' +
-                    'AND DATE_FORMAT(Payment_date, \'%Y\') = '+y+'\n'+
+                    'and applicationid in (select id from applications where applications.status <> 0)\n' +
+                    'AND loan_officerID = ' + officer + '\n' +
+                    'AND DATE_FORMAT(Payment_date, \'%Y\') = ' + y + '\n' +
                     'GROUP BY DATE_FORMAT(Payment_date, \'%M%Y\') order by DisburseYearMonth'
             }
             //One Officer, Monthly
-            if (officer !== 'false' && freq == '2' && y == '0'){
+            if (officer !== 'false' && freq == '2' && y == '0') {
                 query = 'SELECT   DATE_FORMAT(payment_date, \'%M, %Y\') AS PaymentMonth, DATE_FORMAT(Payment_date, \'%M\') month,\n' +
-                    ' (select fullname from users where users.id = '+officer+') name,\n' +
+                    ' (select fullname from users where users.id = ' + officer + ') name,\n' +
                     '         SUM(payment_amount) AmountPayed,\n' +
                     '         EXTRACT(YEAR_MONTH FROM payment_date) As DisburseYearMonth\n' +
                     'FROM     schedule_history\n' +
                     'WHERE status = 1\n' +
-                    'and applicationid in (select id from applications where applications.status <> 0)\n'+
-                    'AND (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n' +
+                    'and applicationid in (select id from applications where applications.status <> 0)\n' +
+                    'AND loan_officerID = ' + officer + '\n' +
                     'GROUP BY DATE_FORMAT(Payment_date, \'%M%Y\') order by DisburseYearMonth'
             }
             //One Officer, Quarterly in One Year
-            if (officer !== 'false' && freq == '4'){
+            if (officer !== 'false' && freq == '4') {
                 query = 'SELECT   DATE_FORMAT(payment_date, \'%M, %Y\') AS PaymentMonth, concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) Officersquarter,\n' +
-                    '\t\t (select fullname from users where users.id = '+officer+') name,\n' +
+                    '\t\t (select fullname from users where users.id = ' + officer + ') name,\n' +
                     '         SUM(payment_amount) AmountPayed,\n' +
                     '         EXTRACT(YEAR_MONTH FROM payment_date) As DisburseYearMonth\n' +
                     'FROM     schedule_history\n' +
                     'WHERE\t\t status = 1\n' +
-                    'and applicationid in (select id from applications where applications.status <> 0)\n'+
-                    'AND (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n' +
-                    'AND DATE_FORMAT(Payment_date, \'%Y\') = '+y+'\n'+
+                    'and applicationid in (select id from applications where applications.status <> 0)\n' +
+                    'AND loan_officerID = ' + officer + '\n' +
+                    'AND DATE_FORMAT(Payment_date, \'%Y\') = ' + y + '\n' +
                     'GROUP BY Officersquarter'
             }
             //One Officer, Quarterly
-            if (officer !== 'false' && freq == '4' && y == '0'){
+            if (officer !== 'false' && freq == '4' && y == '0') {
                 query = 'SELECT   DATE_FORMAT(payment_date, \'%M, %Y\') AS PaymentMonth, concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) Officersquarter,\n' +
-                    ' (select fullname from users where users.id = '+officer+') name,\n' +
+                    ' (select fullname from users where users.id = ' + officer + ') name,\n' +
                     '         SUM(payment_amount) AmountPayed,\n' +
                     '         EXTRACT(YEAR_MONTH FROM payment_date) As DisburseYearMonth\n' +
                     'FROM     schedule_history\n' +
                     'WHERE status = 1\n' +
-                    'and applicationid in (select id from applications where applications.status <> 0)\n'+
-                    'AND (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n' +
+                    'and applicationid in (select id from applications where applications.status <> 0)\n' +
+                    'AND loan_officerID = ' + officer + '\n' +
                     'GROUP BY Officersquarter'
             }
             //All Officers, Monthly in One Year
-            if (officer == 'false' && freq == '2'){
+            if (officer == 'false' && freq == '2') {
                 query = 'SELECT   DATE_FORMAT(payment_date, \'%M, %Y\') AS PaymentMonth, DATE_FORMAT(Payment_date, \'%M\') Officersmonth,\n' +
                     '         SUM(payment_amount) AmountPayed,\n' +
                     '         EXTRACT(YEAR_MONTH FROM payment_date) As DisburseYearMonth\n' +
                     'FROM     schedule_history\n' +
                     'WHERE  status = 1\n' +
-                    'and applicationid in (select id from applications where applications.status <> 0)\n'+
-                    'AND DATE_FORMAT(Payment_date, \'%Y\') = '+y+'\n'+
-                    'GROUP BY DATE_FORMAT(Payment_date, \'%M%Y\')\n'+
+                    'and applicationid in (select id from applications where applications.status <> 0)\n' +
+                    'AND DATE_FORMAT(Payment_date, \'%Y\') = ' + y + '\n' +
+                    'GROUP BY DATE_FORMAT(Payment_date, \'%M%Y\')\n' +
                     'ORDER BY DisburseYearMonth'
             }
             //All Officers, Monthly
-            if (officer == 'false' && freq == '2' && y == '0'){
+            if (officer == 'false' && freq == '2' && y == '0') {
                 query = 'SELECT   DATE_FORMAT(payment_date, \'%M, %Y\') AS PaymentMonth, DATE_FORMAT(Payment_date, \'%M\') Officersmonth,\n' +
                     '         SUM(payment_amount) AmountPayed,\n' +
                     '         EXTRACT(YEAR_MONTH FROM payment_date) As DisburseYearMonth\n' +
                     'FROM     schedule_history\n' +
                     'WHERE  status = 1\n' +
-                    'and applicationid in (select id from applications where applications.status <> 0)\n'+
-                    'GROUP BY DATE_FORMAT(Payment_date, \'%M%Y\')\n'+
+                    'and applicationid in (select id from applications where applications.status <> 0)\n' +
+                    'GROUP BY DATE_FORMAT(Payment_date, \'%M%Y\')\n' +
                     'ORDER BY DisburseYearMonth'
             }
             //All Officers, Monthly in One Year
-            if (officer == 'false' && freq == '4'){
+            if (officer == 'false' && freq == '4') {
                 query = 'SELECT   DATE_FORMAT(payment_date, \'%M, %Y\') AS PaymentMonth, concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) Quarter,\n' +
                     '         SUM(payment_amount) AmountPayed,\n' +
                     '         EXTRACT(YEAR_MONTH FROM payment_date) As DisburseYearMonth\n' +
                     'FROM     schedule_history\n' +
                     'WHERE  status = 1\n' +
-                    'and applicationid in (select id from applications where applications.status <> 0)\n'+
-                    'AND DATE_FORMAT(Payment_date, \'%Y\') = '+y+'\n'+
+                    'and applicationid in (select id from applications where applications.status <> 0)\n' +
+                    'AND DATE_FORMAT(Payment_date, \'%Y\') = ' + y + '\n' +
                     'GROUP BY Quarter'
             }
             //All Officers, Monthly
-            if (officer == 'false' && freq == '4' && y == '0'){
+            if (officer == 'false' && freq == '4' && y == '0') {
                 query = 'SELECT   DATE_FORMAT(payment_date, \'%M, %Y\') AS PaymentMonth, concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) Quarter,\n' +
                     '         SUM(payment_amount) AmountPayed,\n' +
                     '         EXTRACT(YEAR_MONTH FROM payment_date) As DisburseYearMonth\n' +
                     'FROM     schedule_history\n' +
                     'WHERE  status = 1\n' +
-                    'and applicationid in (select id from applications where applications.status <> 0)\n'+
+                    'and applicationid in (select id from applications where applications.status <> 0)\n' +
                     'GROUP BY Quarter'
             }
             break;
@@ -6280,120 +5900,120 @@ users.get('/analytics', function(req, res, next) {
                 '(select userid from applications where applications.id = applicationid))) officer\n' +
                 'from schedule_history \n' +
                 'where status = 1\n' +
-                'and applicationid in (select id from applications where status <> 0)\n'+
+                'and applicationid in (select id from applications where status <> 0)\n' +
                 'group by officer'
             //One Officer
-            if (officer){
+            if (officer) {
                 query = 'select sum(interest_amount) amount_received, \n' +
                     '(select fullname from users where users.id = \n' +
                     '(select loan_officer from clients where clients.id = \n' +
                     '(select userid from applications where applications.id = applicationid))) officer\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and loan_officerID = ' + officer + '\n'
                 'group by officer'
             }
             //One Officer, Monthly in Specific Year
-            if (officer !== 'false' && freq == '2'){
+            if (officer !== 'false' && freq == '2') {
                 query = 'select sum(interest_amount) amount_received, \n' +
-                    '(select fullname from users where users.id = '+officer+') agent, \n' +
-                    'DATE_FORMAT(payment_date, \'%M, %Y\') paymonth\n'+
+                    '(select fullname from users where users.id = ' + officer + ') agent, \n' +
+                    'DATE_FORMAT(payment_date, \'%M, %Y\') paymonth\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
-                    'and Date_format(Payment_date, \'%Y\') = '+y+'\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and loan_officerID = ' + officer + '\n' +
+                    'and Date_format(Payment_date, \'%Y\') = ' + y + '\n' +
                     'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)'
             }
             //One Officer, Monthly
-            if (officer !== 'false' && freq == '2' && y == '0'){
+            if (officer !== 'false' && freq == '2' && y == '0') {
                 query = 'select sum(interest_amount) amount_received, \n' +
-                    '(select fullname from users where users.id = '+officer+') agent, DATE_FORMAT(payment_date, \'%M, %Y\') paymonth\n' +
+                    '(select fullname from users where users.id = ' + officer + ') agent, DATE_FORMAT(payment_date, \'%M, %Y\') paymonth\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and loan_officerID = ' + officer + '\n' +
                     'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)'
             }
             //One Officer, Quarterly in Specific Year
-            if (officer !== 'false' && freq == '4'){
+            if (officer !== 'false' && freq == '4') {
                 query = 'select sum(interest_amount) amount_received, \n' +
-                    '(select fullname from users where users.id = '+officer+') agent, \n' +
-                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) OfficerQuarter\n'+
+                    '(select fullname from users where users.id = ' + officer + ') agent, \n' +
+                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) OfficerQuarter\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
-                    'and Date_format(Payment_date, \'%Y\') = '+y+'\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and loan_officerID = ' + officer + '\n' +
+                    'and Date_format(Payment_date, \'%Y\') = ' + y + '\n' +
                     'group by OfficerQuarter order by EXTRACT(YEAR_MONTH FROM payment_date)'
             }
             //One Officer, Quarterly
-            if (officer !== 'false' && freq == '4' && y == '0'){
+            if (officer !== 'false' && freq == '4' && y == '0') {
                 query = 'select sum(interest_amount) amount_received, \n' +
-                    '(select fullname from users where users.id = '+officer+') agent, concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) OfficerQuarter\n' +
+                    '(select fullname from users where users.id = ' + officer + ') agent, concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) OfficerQuarter\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and loan_officerID = ' + officer + '\n' +
                     'group by OfficerQuarter order by EXTRACT(YEAR_MONTH FROM payment_date)'
             }
             //All Officers, Monthly in Specific Year
-            if (officer == 'false' && freq == '2'){
+            if (officer == 'false' && freq == '2') {
                 query = 'select sum(interest_amount) amount_received, \n' +
                     'DATE_FORMAT(payment_date, \'%M, %Y\') Monthyear  \n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and Date_format(Payment_date, \'%Y\') = '+y+'\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and Date_format(Payment_date, \'%Y\') = ' + y + '\n' +
                     'group by Date_format(Payment_date, \'%M, %Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)'
             }
             //All Officers, Monthly
-            if (officer == 'false' && freq == '2' && y == '0'){
+            if (officer == 'false' && freq == '2' && y == '0') {
                 query = 'select sum(interest_amount) amount_received, \n' +
                     'DATE_FORMAT(payment_date, \'%M, %Y\') Monthyear  \n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
                     'group by Date_format(Payment_date, \'%M %Y\')  order by EXTRACT(YEAR_MONTH FROM payment_date)'
             }
             //All Officers, Quarterly in Specific Year
-            if (officer == 'false' && freq == '4'){
+            if (officer == 'false' && freq == '4') {
                 query = 'select sum(interest_amount) amount_received, \n' +
                     'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) Quarter  \n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and Date_format(Payment_date, \'%Y\') = '+y+'\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and Date_format(Payment_date, \'%Y\') = ' + y + '\n' +
                     'group by Quarter  order by EXTRACT(YEAR_MONTH FROM payment_date)'
             }
             //All Officers, Quarterly
-            if (officer == 'false' && freq == '4' && y == '0'){
+            if (officer == 'false' && freq == '4' && y == '0') {
                 query = 'select sum(interest_amount) amount_received, \n' +
                     'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) Quarter \n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
                     'group by Quarter  order by EXTRACT(YEAR_MONTH FROM payment_date)'
             }
             //One Officer, Yearly
-            if (officer !== 'false' && freq == '3'){
+            if (officer !== 'false' && freq == '3') {
                 query = 'select sum(interest_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') OfficerYear, \n' +
                     '(select fullname from users where users.id = \n' +
                     '(select loan_officer from clients where clients.id = \n' +
                     '(select userid from applications where applications.id = applicationid))) agent\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and loan_officerID = ' + officer + '\n' +
                     'group by agent, DATE_FORMAT(Payment_date, \'%Y\')'
             }
             //All Officers, Yearly
-            if (officer == 'false' && freq == '3'){
+            if (officer == 'false' && freq == '3') {
                 query = 'select sum(interest_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') PaymentYear \n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
                     'group by DATE_FORMAT(Payment_date, \'%Y\')'
             }
             break;
@@ -6401,130 +6021,130 @@ users.get('/analytics', function(req, res, next) {
             //Default
             query = 'select \n' +
                 'sum(interest_amount) as amount_due,\n' +
-                '(select fullname from users where users.id = (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid))) officer\n'+
+                '(select fullname from users where users.id = (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid))) officer\n' +
                 'from application_schedules sh \n' +
                 'where applicationID in (select ID from applications where status = 2)\n' +
                 'and status = 1 group by officer\n';
             //One Officer
-            if (officer){
+            if (officer) {
                 query = 'select \n' +
                     'sum(interest_amount) as amount_due,\n' +
-                    '(select fullname from users where users.id = (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid))) officer\n'+
+                    '(select fullname from users where users.id = (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid))) officer\n' +
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n' +
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + officer + '\n' +
                     'and status = 1 group by officer\n';
             }
             //One Officer, Monthly in Specific Year
-            if (officer !== 'false' && freq == '2'){
+            if (officer !== 'false' && freq == '2') {
                 query = 'select \n' +
                     'sum(interest_amount) as amount_due,\n' +
-                    '(select fullname from users where users.id = '+officer+') agent,\n'+
-                    'DATE_FORMAT(interest_collect_date, \'%M, %Y\') paymonth\n'+
+                    '(select fullname from users where users.id = ' + officer + ') agent,\n' +
+                    'DATE_FORMAT(interest_collect_date, \'%M, %Y\') paymonth\n' +
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
-                    'and status = 1 \n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
-                    'and Date_format(interest_collect_date, \'%Y\') = '+y+'\n'+
+                    'and status = 1 \n' +
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + officer + '\n' +
+                    'and Date_format(interest_collect_date, \'%Y\') = ' + y + '\n' +
                     'group by Date_format(interest_collect_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM interest_collect_date)'
             }
             //One Officer, Monthly
-            if (officer !== 'false' && freq == '2' && y == '0'){
+            if (officer !== 'false' && freq == '2' && y == '0') {
                 query = 'select \n' +
                     'sum(interest_amount) as amount_due,\n' +
-                    '(select fullname from users where users.id = '+officer+') agent,\n'+
-                    'DATE_FORMAT(interest_collect_date, \'%M, %Y\') paymonth\n'+
-                    'from application_schedules\n'+
+                    '(select fullname from users where users.id = ' + officer + ') agent,\n' +
+                    'DATE_FORMAT(interest_collect_date, \'%M, %Y\') paymonth\n' +
+                    'from application_schedules\n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
-                    'and status = 1 \n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
+                    'and status = 1 \n' +
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + officer + '\n' +
                     'group by paymonth order by EXTRACT(YEAR_MONTH FROM interest_collect_date)'
             }
             //One Officer, Quarterly in Specific Year
-            if (officer !== 'false' && freq == '4'){
+            if (officer !== 'false' && freq == '4') {
                 query = 'select \n' +
                     'sum(interest_amount) as amount_due,\n' +
-                    '(select fullname from users where users.id = '+officer+') agent, \n' +
-                    'concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) OfficerQuarter\n'+
+                    '(select fullname from users where users.id = ' + officer + ') agent, \n' +
+                    'concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) OfficerQuarter\n' +
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
-                    'and status = 1 \n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
-                    'and Date_format(interest_collect_date, \'%Y\') = '+y+'\n'+
+                    'and status = 1 \n' +
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + officer + '\n' +
+                    'and Date_format(interest_collect_date, \'%Y\') = ' + y + '\n' +
                     'group by OfficerQuarter  order by EXTRACT(YEAR_MONTH FROM interest_collect_date)'
             }
             //One Officer, Quarterly
-            if (officer !== 'false' && freq == '4' && y == '0'){
+            if (officer !== 'false' && freq == '4' && y == '0') {
                 query = 'select \n' +
                     'sum(interest_amount) as amount_due,\n' +
-                    '(select fullname from users where users.id = '+officer+') agent, \n' +
-                    'concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) OfficerQuarter\n'+
+                    '(select fullname from users where users.id = ' + officer + ') agent, \n' +
+                    'concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) OfficerQuarter\n' +
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
-                    'and status = 1 \n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
+                    'and status = 1 \n' +
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + officer + '\n' +
                     'group by OfficerQuarter order by EXTRACT(YEAR_MONTH FROM interest_collect_date)'
             }
             //All Officers, Monthly in Specific Year
-            if (officer == 'false' && freq == '2'){
+            if (officer == 'false' && freq == '2') {
                 query = 'select \n' +
                     'sum(interest_amount) as amount_due,\n' +
-                    'DATE_FORMAT(interest_collect_date, \'%M, %Y\') Monthyear\n'+
+                    'DATE_FORMAT(interest_collect_date, \'%M, %Y\') Monthyear\n' +
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
-                    'and status = 1 \n'+
-                    'and Date_format(interest_collect_date, \'%Y\') = '+y+'\n'+
+                    'and status = 1 \n' +
+                    'and Date_format(interest_collect_date, \'%Y\') = ' + y + '\n' +
                     'group by Date_format(interest_collect_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM interest_collect_date)'
             }
             //All Officers, Monthly
-            if (officer == 'false' && freq == '2' && y == '0'){
+            if (officer == 'false' && freq == '2' && y == '0') {
                 query = 'select \n' +
                     'sum(interest_amount) as amount_due,\n' +
-                    'DATE_FORMAT(interest_collect_date, \'%M, %Y\') Monthyear\n'+
+                    'DATE_FORMAT(interest_collect_date, \'%M, %Y\') Monthyear\n' +
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
-                    'and status = 1 \n'+
+                    'and status = 1 \n' +
                     'group by Date_format(interest_collect_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM interest_collect_date)'
             }
             //All Officers, Quarterly in Specific Year
-            if (officer == 'false' && freq == '4'){
+            if (officer == 'false' && freq == '4') {
                 query = 'select \n' +
                     'sum(interest_amount) as amount_due,\n' +
-                    'concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) Quarter\n'+
+                    'concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) Quarter\n' +
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
-                    'and status = 1 \n'+
-                    'and Date_format(interest_collect_date, \'%Y\') = '+y+'\n'+
+                    'and status = 1 \n' +
+                    'and Date_format(interest_collect_date, \'%Y\') = ' + y + '\n' +
                     'group by Quarter order by EXTRACT(YEAR_MONTH FROM interest_collect_date)'
             }
             //All Officers, Quarterly
-            if (officer == 'false' && freq == '4' && y == '0'){
+            if (officer == 'false' && freq == '4' && y == '0') {
                 query = 'select \n' +
                     'sum(interest_amount) as amount_due,\n' +
-                    'concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) Quarter\n'+
+                    'concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) Quarter\n' +
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
-                    'and status = 1 \n'+
+                    'and status = 1 \n' +
                     'group by Quarter order by EXTRACT(YEAR_MONTH FROM interest_collect_date)'
             }
             //One Officer, Yearly
-            if (officer !== 'false' && freq == '3'){
+            if (officer !== 'false' && freq == '3') {
                 query = 'select sum(interest_amount) amount_due, DATE_FORMAT(interest_collect_date, \'%Y\') OfficerYear, \n' +
                     '(select fullname from users where users.id = \n' +
                     '(select loan_officer from clients where clients.id = \n' +
                     '(select userid from applications where applications.id = applicationid))) agent\n' +
                     'from application_schedules \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status = 2)\n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
+                    'and applicationid in (select id from applications where status = 2)\n' +
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + officer + '\n' +
                     'group by agent, DATE_FORMAT(interest_collect_date, \'%Y\')'
             }
             //All Officers, Yearly
-            if (officer == 'false' && freq == '3'){
+            if (officer == 'false' && freq == '3') {
                 query = 'select sum(interest_amount) amount_due, DATE_FORMAT(interest_collect_date, \'%Y\') PaymentYear \n' +
                     'from application_schedules \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status = 2)\n'+
+                    'and applicationid in (select id from applications where status = 2)\n' +
                     'group by DATE_FORMAT(interest_collect_date, \'%Y\')'
             }
             break;
@@ -6536,120 +6156,120 @@ users.get('/analytics', function(req, res, next) {
                 '(select userid from applications where applications.id = applicationid))) officer\n' +
                 'from schedule_history \n' +
                 'where status = 1\n' +
-                'and applicationid in (select id from applications where status <> 0)\n'+
+                'and applicationid in (select id from applications where status <> 0)\n' +
                 'group by officer'
             //One Officer
-            if (officer){
+            if (officer) {
                 query = 'select sum(payment_amount) amount_received, \n' +
                     '(select fullname from users where users.id = \n' +
                     '(select loan_officer from clients where clients.id = \n' +
                     '(select userid from applications where applications.id = applicationid))) officer\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and loan_officerID) = ' + officer + '\n'
                 'group by officer'
             }
             //One Officer, Monthly in Specific Year
-            if (officer !== 'false' && freq == '2'){
+            if (officer !== 'false' && freq == '2') {
                 query = 'select sum(payment_amount) amount_received, \n' +
-                    '(select fullname from users where users.id = '+officer+') agent, \n' +
-                    'DATE_FORMAT(payment_date, \'%M, %Y\') paymonth\n'+
+                    '(select fullname from users where users.id = ' + officer + ') agent, \n' +
+                    'DATE_FORMAT(payment_date, \'%M, %Y\') paymonth\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
-                    'and Date_format(Payment_date, \'%Y\') = '+y+'\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and loan_officerID = ' + officer + '\n' +
+                    'and Date_format(Payment_date, \'%Y\') = ' + y + '\n' +
                     'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)'
             }
             //One Officer, Monthly
-            if (officer !== 'false' && freq == '2' && y == '0'){
+            if (officer !== 'false' && freq == '2' && y == '0') {
                 query = 'select sum(payment_amount) amount_received, \n' +
-                    '(select fullname from users where users.id = '+officer+') agent, DATE_FORMAT(payment_date, \'%M, %Y\') paymonth\n' +
+                    '(select fullname from users where users.id = ' + officer + ') agent, DATE_FORMAT(payment_date, \'%M, %Y\') paymonth\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and loan_officerID = ' + officer + '\n' +
                     'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)'
             }
             //One Officer, Quarterly in Specific Year
-            if (officer !== 'false' && freq == '4'){
+            if (officer !== 'false' && freq == '4') {
                 query = 'select sum(payment_amount) amount_received, \n' +
-                    '(select fullname from users where users.id = '+officer+') agent, \n' +
-                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) OfficerQuarter\n'+
+                    '(select fullname from users where users.id = ' + officer + ') agent, \n' +
+                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) OfficerQuarter\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
-                    'and Date_format(Payment_date, \'%Y\') = '+y+'\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and loan_officerID = ' + officer + '\n' +
+                    'and Date_format(Payment_date, \'%Y\') = ' + y + '\n' +
                     'group by OfficerQuarter order by EXTRACT(YEAR_MONTH FROM payment_date)'
             }
             //One Officer, Quarterly
-            if (officer !== 'false' && freq == '4' && y == '0'){
+            if (officer !== 'false' && freq == '4' && y == '0') {
                 query = 'select sum(payment_amount) amount_received, \n' +
-                    '(select fullname from users where users.id = '+officer+') agent, concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) OfficerQuarter\n' +
+                    '(select fullname from users where users.id = ' + officer + ') agent, concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) OfficerQuarter\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and loan_officerID = ' + officer + '\n' +
                     'group by OfficerQuarter order by EXTRACT(YEAR_MONTH FROM payment_date)'
             }
             //All Officers, Monthly in Specific Year
-            if (officer == 'false' && freq == '2'){
+            if (officer == 'false' && freq == '2') {
                 query = 'select sum(payment_amount) amount_received, \n' +
                     'DATE_FORMAT(payment_date, \'%M, %Y\') Monthyear  \n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and Date_format(Payment_date, \'%Y\') = '+y+'\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and Date_format(Payment_date, \'%Y\') = ' + y + '\n' +
                     'group by Date_format(Payment_date, \'%M, %Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)'
             }
             //All Officers, Monthly
-            if (officer == 'false' && freq == '2' && y == '0'){
+            if (officer == 'false' && freq == '2' && y == '0') {
                 query = 'select sum(payment_amount) amount_received, \n' +
                     'DATE_FORMAT(payment_date, \'%M, %Y\') Monthyear  \n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
                     'group by Date_format(Payment_date, \'%M %Y\')  order by EXTRACT(YEAR_MONTH FROM payment_date)'
             }
             //All Officers, Quarterly in Specific Year
-            if (officer == 'false' && freq == '4'){
+            if (officer == 'false' && freq == '4') {
                 query = 'select sum(payment_amount) amount_received, \n' +
                     'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) Quarter  \n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and Date_format(Payment_date, \'%Y\') = '+y+'\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and Date_format(Payment_date, \'%Y\') = ' + y + '\n' +
                     'group by Quarter order by EXTRACT(YEAR_MONTH FROM payment_date)'
             }
             //All Officers, Quarterly
-            if (officer == 'false' && freq == '4' && y == '0'){
+            if (officer == 'false' && freq == '4' && y == '0') {
                 query = 'select sum(payment_amount) amount_received, \n' +
                     'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) Quarter \n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
                     'group by Quarter order by EXTRACT(YEAR_MONTH FROM payment_date)'
             }
             //One Officer, Yearly
-            if (officer !== 'false' && freq == '3'){
+            if (officer !== 'false' && freq == '3') {
                 query = 'select sum(payment_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') OfficerYear, \n' +
                     '(select fullname from users where users.id = \n' +
                     '(select loan_officer from clients where clients.id = \n' +
                     '(select userid from applications where applications.id = applicationid))) agent\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and loan_officerID = ' + officer + '\n' +
                     'group by agent, DATE_FORMAT(Payment_date, \'%Y\')'
             }
             //All Officers, Yearly
-            if (officer == 'false' && freq == '3'){
+            if (officer == 'false' && freq == '3') {
                 query = 'select sum(payment_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') PaymentYear \n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
                     'group by DATE_FORMAT(Payment_date, \'%Y\')'
             }
             break;
@@ -6657,130 +6277,130 @@ users.get('/analytics', function(req, res, next) {
             //Default
             query = 'select \n' +
                 'sum(payment_amount) as amount_due,\n' +
-                '(select fullname from users where users.id = (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid))) officer\n'+
+                '(select fullname from users where users.id = (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid))) officer\n' +
                 'from application_schedules sh \n' +
                 'where applicationID in (select ID from applications where status = 2)\n' +
                 'and status = 1 group by officer\n';
             //One Officer
-            if (officer){
+            if (officer) {
                 query = 'select \n' +
                     'sum(payment_amount) as amount_due,\n' +
-                    '(select fullname from users where users.id = (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid))) officer\n'+
+                    '(select fullname from users where users.id = (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid))) officer\n' +
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n' +
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + officer + '\n' +
                     'and status = 1 group by officer\n';
             }
             //One Officer, Monthly in Specific Year
-            if (officer !== 'false' && freq == '2'){
+            if (officer !== 'false' && freq == '2') {
                 query = 'select \n' +
                     'sum(payment_amount) as amount_due,\n' +
-                    '(select fullname from users where users.id = '+officer+') agent,\n'+
-                    'DATE_FORMAT(payment_collect_date, \'%M, %Y\') paymonth\n'+
+                    '(select fullname from users where users.id = ' + officer + ') agent,\n' +
+                    'DATE_FORMAT(payment_collect_date, \'%M, %Y\') paymonth\n' +
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
-                    'and status = 1 \n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
-                    'and Date_format(payment_collect_date, \'%Y\') = '+y+'\n'+
+                    'and status = 1 \n' +
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + officer + '\n' +
+                    'and Date_format(payment_collect_date, \'%Y\') = ' + y + '\n' +
                     'group by Date_format(payment_collect_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_collect_date)'
             }
             //One Officer, Monthly
-            if (officer !== 'false' && freq == '2' && y == '0'){
+            if (officer !== 'false' && freq == '2' && y == '0') {
                 query = 'select \n' +
                     'sum(payment_amount) as amount_due,\n' +
-                    '(select fullname from users where users.id = '+officer+') agent,\n'+
-                    'DATE_FORMAT(payment_collect_date, \'%M, %Y\') paymonth\n'+
-                    'from application_schedules\n'+
+                    '(select fullname from users where users.id = ' + officer + ') agent,\n' +
+                    'DATE_FORMAT(payment_collect_date, \'%M, %Y\') paymonth\n' +
+                    'from application_schedules\n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
-                    'and status = 1 \n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
+                    'and status = 1 \n' +
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + officer + '\n' +
                     'group by paymonth order by EXTRACT(YEAR_MONTH FROM payment_collect_date)'
             }
             //One Officer, Quarterly in Specific Year
-            if (officer !== 'false' && freq == '4'){
+            if (officer !== 'false' && freq == '4') {
                 query = 'select \n' +
                     'sum(payment_amount) as amount_due,\n' +
-                    '(select fullname from users where users.id = '+officer+') agent, \n' +
-                    'concat(\'Q\',quarter(payment_collect_date),\'-\', year(payment_collect_date)) OfficerQuarter\n'+
+                    '(select fullname from users where users.id = ' + officer + ') agent, \n' +
+                    'concat(\'Q\',quarter(payment_collect_date),\'-\', year(payment_collect_date)) OfficerQuarter\n' +
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
-                    'and status = 1 \n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
-                    'and Date_format(payment_collect_date, \'%Y\') = '+y+'\n'+
+                    'and status = 1 \n' +
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + officer + '\n' +
+                    'and Date_format(payment_collect_date, \'%Y\') = ' + y + '\n' +
                     'group by OfficerQuarter order by EXTRACT(YEAR_MONTH FROM payment_collect_date)'
             }
             //One Officer, Quarterly
-            if (officer !== 'false' && freq == '4' && y == '0'){
+            if (officer !== 'false' && freq == '4' && y == '0') {
                 query = 'select \n' +
                     'sum(payment_amount) as amount_due,\n' +
-                    '(select fullname from users where users.id = '+officer+') agent, \n' +
-                    'concat(\'Q\',quarter(payment_collect_date),\'-\', year(payment_collect_date)) OfficerQuarter\n'+
+                    '(select fullname from users where users.id = ' + officer + ') agent, \n' +
+                    'concat(\'Q\',quarter(payment_collect_date),\'-\', year(payment_collect_date)) OfficerQuarter\n' +
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
-                    'and status = 1 \n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
+                    'and status = 1 \n' +
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + officer + '\n' +
                     'group by OfficerQuarter order by EXTRACT(YEAR_MONTH FROM payment_collect_date)'//date_format(payment_collect_date, \'%Y%M\')'
             }
             //All Officers, Monthly in Specific Year
-            if (officer == 'false' && freq == '2'){
+            if (officer == 'false' && freq == '2') {
                 query = 'select \n' +
                     'sum(payment_amount) as amount_due,\n' +
-                    'DATE_FORMAT(payment_collect_date, \'%M, %Y\') Monthyear\n'+
+                    'DATE_FORMAT(payment_collect_date, \'%M, %Y\') Monthyear\n' +
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
-                    'and status = 1 \n'+
-                    'and Date_format(payment_collect_date, \'%Y\') = '+y+'\n'+
+                    'and status = 1 \n' +
+                    'and Date_format(payment_collect_date, \'%Y\') = ' + y + '\n' +
                     'group by Date_format(payment_collect_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_collect_date)'
             }
             //All Officers, Monthly
-            if (officer == 'false' && freq == '2' && y == '0'){
+            if (officer == 'false' && freq == '2' && y == '0') {
                 query = 'select \n' +
                     'sum(payment_amount) as amount_due,\n' +
-                    'DATE_FORMAT(payment_collect_date, \'%M, %Y\') Monthyear\n'+
+                    'DATE_FORMAT(payment_collect_date, \'%M, %Y\') Monthyear\n' +
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
-                    'and status = 1 \n'+
+                    'and status = 1 \n' +
                     'group by Date_format(payment_collect_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_collect_date)'
             }
             //All Officers, Quarterly in Specific Year
-            if (officer == 'false' && freq == '4'){
+            if (officer == 'false' && freq == '4') {
                 query = 'select \n' +
                     'sum(interest_amount) as amount_due,\n' +
-                    'concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) Quarter\n'+
+                    'concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) Quarter\n' +
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
-                    'and status = 1 \n'+
-                    'and Date_format(interest_collect_date, \'%Y\') = '+y+'\n'+
+                    'and status = 1 \n' +
+                    'and Date_format(interest_collect_date, \'%Y\') = ' + y + '\n' +
                     'group by Quarter order by EXTRACT(YEAR_MONTH FROM payment_collect_date)' //date_format(payment_collect_date, \'%Y%M\')'
             }
             //All Officers, Quarterly
-            if (officer == 'false' && freq == '4' && y == '0'){
+            if (officer == 'false' && freq == '4' && y == '0') {
                 query = 'select \n' +
                     'sum(payment_amount) as amount_due,\n' +
-                    'concat(\'Q\',quarter(payment_collect_date),\'-\', year(payment_collect_date)) Quarter\n'+
+                    'concat(\'Q\',quarter(payment_collect_date),\'-\', year(payment_collect_date)) Quarter\n' +
                     'from application_schedules sh \n' +
                     'where applicationID in (select ID from applications where status = 2) \n' +
-                    'and status = 1 \n'+
+                    'and status = 1 \n' +
                     'group by Quarter order by EXTRACT(YEAR_MONTH FROM payment_collect_date) '//date_format(payment_collect_date, \'%Y%M\')'
             }
             //One Officer, Yearly
-            if (officer !== 'false' && freq == '3'){
+            if (officer !== 'false' && freq == '3') {
                 query = 'select sum(payment_amount) amount_due, DATE_FORMAT(payment_collect_date, \'%Y\') OfficerYear, \n' +
                     '(select fullname from users where users.id = \n' +
                     '(select loan_officer from clients where clients.id = \n' +
                     '(select userid from applications where applications.id = applicationid))) agent\n' +
                     'from application_schedules \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status = 2)\n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
+                    'and applicationid in (select id from applications where status = 2)\n' +
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + officer + '\n' +
                     'group by agent, DATE_FORMAT(payment_collect_date, \'%Y\')'
             }
             //All Officers, Yearly
-            if (officer == 'false' && freq == '3'){
+            if (officer == 'false' && freq == '3') {
                 query = 'select sum(payment_amount) amount_due, DATE_FORMAT(payment_collect_date, \'%Y\') PaymentYear \n' +
                     'from application_schedules \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status = 2)\n'+
+                    'and applicationid in (select id from applications where status = 2)\n' +
                     'group by DATE_FORMAT(payment_collect_date, \'%Y\')'
             }
             break;
@@ -6790,17 +6410,62 @@ users.get('/analytics', function(req, res, next) {
             break;
         case 'overdue-loans':
             break;
-    }
+        case 'payoffs':
+            //Default
+            query = `SELECT u.fullname officer, SUM(a.close_amount) amount FROM applications a, clients c, users u 
+                WHERE a.close_status = 1 AND a.userID = c.ID AND c.loan_officer = u.ID `;
+            //An Officer
+            if (officer && officer !== 'false')
+                query = query.concat(`AND c.loan_officer = ${officer} `);
+            query = query.concat(`GROUP BY c.loan_officer`);
+            break;
+        case 'writeoffs':
+            //Default
+            query = `SELECT u.fullname officer, SUM(a.close_amount) amount FROM applications a, clients c, users u 
+                WHERE a.close_status = 2 AND a.userID = c.ID AND c.loan_officer = u.ID `;
+            //An Officer
+            if (officer && officer !== 'false')
+                query = query.concat(`AND c.loan_officer = ${officer} `);
+            query = query.concat(`GROUP BY c.loan_officer`);
+            break;
+        case 'writeoffs2':
+            //Default
+            query = `SELECT u.fullname officer, s.applicationID, SUM(COALESCE(s.payment_amount, 0)) amount, s.date_modified date 
+                FROM application_schedules s, applications a, clients c, users u  WHERE s.payment_status = 2 AND s.applicationID = a.ID AND a.userID = c.ID AND c.loan_officer = u.ID `;
+            //An Officer
+            if (officer && officer !== 'false')
+                query = query.concat(`AND c.loan_officer = ${officer} `);
+            query = query.concat(`GROUP BY c.loan_officer`);
+            break;
+        case 'fees':
+            //Default
+            query = `SELECT u.fullname officer, SUM(a.fees) amount FROM applications a, clients c, users u 
+                WHERE a.fees IS NOT NULL AND a.userID = c.ID AND c.loan_officer = u.ID `;
+            //An Officer
+            if (officer && officer !== 'false')
+                query = query.concat(`AND c.loan_officer = ${officer} `);
+            query = query.concat(`GROUP BY c.loan_officer`);
+            break;
+        case 'fees2':
+            //Default
+            query = `SELECT u.fullname officer, s.applicationID, SUM(COALESCE(s.fees_amount, 0)) amount, s.date_modified date 
+                FROM application_schedules s, applications a, clients c, users u  WHERE s.fees_amount IS NOT NULL AND s.fees_amount > 0 AND s.applicationID = a.ID AND a.userID = c.ID AND c.loan_officer = u.ID `;
+            //An Officer
+            if (officer && officer !== 'false')
+                query = query.concat(`AND c.loan_officer = ${officer} `);
+            query = query.concat(`GROUP BY c.loan_officer`);
+            break;
+        }
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "Success!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "Success!" });
         }
     });
 });
 
-users.get('/multi-analytics', function (req, res, next){
+users.get('/multi-analytics', function (req, res, next) {
     let bt = req.query.bt,
         pvi = req.query.pvi,
         freq = req.query.freq,
@@ -6808,85 +6473,9 @@ users.get('/multi-analytics', function (req, res, next){
         y = req.query.year;
     let query1;
     let query2;
-    switch (bt){
-        // case '1':
-        //     if (freq == '2' && y == '0'){
-        //         query1 = 'select distinct(DATE_FORMAT(Disbursement_date, \'%M, %Y\')) periods from applications where status = 2 ' +
-        //             ' order by EXTRACT(YEAR_MONTH FROM Disbursement_date)';
-        //         query2 = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS period, DATE_FORMAT(Disbursement_date, \'%M\') month,\n' +
-        //             '(select branch_name from branches where branches.id = (select branch from clients where clients.id = userid)) branch,\n' +
-        //             '         SUM(loan_amount) AmountDisbursed,\n' +
-        //             '         EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //             'FROM     applications\n' +
-        //             'WHERE  status = 2\n' +
-        //             'and DATE_FORMAT(Disbursement_date, \'%M, %Y\') = ?\n' +
-        //             'GROUP BY branch, period\n' +
-        //             'ORDER BY branch, Disbursement_date'
-        //     }
-        //     if (freq == '2' && y != '0'){
-        //         query1 = 'select distinct(DATE_FORMAT(Disbursement_date, \'%M, %Y\')) periods from applications where status = 2 ' +
-        //             ' and DATE_FORMAT(Disbursement_date, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM Disbursement_date)';
-        //         query2 = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS period, DATE_FORMAT(Disbursement_date, \'%M\') month,\n' +
-        //             '(select branch_name from branches where branches.id = (select branch from clients where clients.id = userid)) branch,\n' +
-        //             '         SUM(loan_amount) AmountDisbursed,\n' +
-        //             '         EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //             'FROM     applications\n' +
-        //             'WHERE  status = 2\n' +
-        //             'and DATE_FORMAT(Disbursement_date, \'%M, %Y\') = ?\n' +
-        //             'GROUP BY branch, period\n' +
-        //             'ORDER BY branch, Disbursement_date'
-        //     }
-        //     if (freq == '3' && y == '0'){
-        //         query1 = 'select distinct(DATE_FORMAT(Disbursement_date, \'%Y\')) periods from applications where status = 2 ' +
-        //             ' order by EXTRACT(YEAR_MONTH FROM Disbursement_date)';
-        //         query2 = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(Disbursement_date, \'%Y\') period,\n' +
-        //             '(select branch_name from branches where branches.id = (select branch from clients where clients.id = userid)) branch,\n' +
-        //             '         SUM(loan_amount) AmountDisbursed,\n' +
-        //             '         EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //             'FROM     applications\n' +
-        //             'WHERE  status = 2\n' +
-        //             'and DATE_FORMAT(Disbursement_date, \'%Y\') = ?\n' +
-        //             'GROUP BY branch, DATE_FORMAT(Disbursement_date, \'%Y\') order by branch'
-        //     }
-        //     if (freq == '3' && y != '0'){
-        //         query1 = 'select distinct(DATE_FORMAT(Disbursement_date, \'%Y\')) periods from applications where status = 2 ' +
-        //             ' and DATE_FORMAT(Disbursement_date, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM Disbursement_date)';
-        //         query2 = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(Disbursement_date, \'%Y\') period,\n' +
-        //             '(select branch_name from branches where branches.id = (select branch from clients where clients.id = userid)) branch,\n' +
-        //             '         SUM(loan_amount) AmountDisbursed,\n' +
-        //             '         EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //             'FROM     applications\n' +
-        //             'WHERE  status = 2\n' +
-        //             'and DATE_FORMAT(Disbursement_date, \'%Y\') = ?\n' +
-        //             'GROUP BY branch, DATE_FORMAT(Disbursement_date, \'%Y\') order by branch'
-        //     }
-        //     if (freq == '4' && y == '0'){
-        //         query1 = 'select distinct(concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date))) periods from applications where status = 2 ' +
-        //             ' order by EXTRACT(YEAR_MONTH FROM Disbursement_date)';
-        //         query2 = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS DisburseMonth, concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) period,\n' +
-        //             '(select branch_name from branches where branches.id = (select branch from clients where clients.id = userid)) branch,\n' +
-        //             '         SUM(loan_amount) AmountDisbursed,\n' +
-        //             '         EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //             'FROM     applications\n' +
-        //             'WHERE  status = 2\n' +
-        //             'and concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) = ?\n' +
-        //             'GROUP BY branch, period'
-        //     }
-        //     if (freq == '4' && y != '0'){
-        //         query1 = 'select distinct(concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date))) periods from applications where status = 2 ' +
-        //             ' and DATE_FORMAT(Disbursement_date, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM Disbursement_date)';
-        //         query2 = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS DisburseMonth, concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) period,\n' +
-        //             '(select branch_name from branches where branches.id = (select branch from clients where clients.id = userid)) branch,\n' +
-        //             '         SUM(loan_amount) AmountDisbursed,\n' +
-        //             '         EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
-        //             'FROM     applications\n' +
-        //             'WHERE  status = 2\n' +
-        //             'and concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) = ?\n' +
-        //             'GROUP BY branch, period'
-        //     }
-        //     break;
+    switch (bt) {
         case '1':
-            if (freq == '2' && y == '0'){
+            if (freq == '2' && y == '0') {
                 query1 = 'select distinct(DATE_FORMAT(date_disbursed, \'%M, %Y\')) periods from disbursement_history where status = 1 ' +
                     ' order by EXTRACT(YEAR_MONTH FROM date_disbursed)';
                 query2 = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS period, DATE_FORMAT(date_disbursed, \'%M\') month,\n' +
@@ -6899,9 +6488,9 @@ users.get('/multi-analytics', function (req, res, next){
                     'GROUP BY branch, period\n' +
                     'ORDER BY branch, date_disbursed'
             }
-            if (freq == '2' && y != '0'){
+            if (freq == '2' && y != '0') {
                 query1 = 'select distinct(DATE_FORMAT(date_disbursed, \'%M, %Y\')) periods from disbursement_history where status = 1 ' +
-                    ' and DATE_FORMAT(date_disbursed, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM date_disbursed)';
+                    ' and DATE_FORMAT(date_disbursed, \'%Y\') = ' + y + ' order by EXTRACT(YEAR_MONTH FROM date_disbursed)';
                 query2 = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS period, DATE_FORMAT(date_disbursed, \'%M\') month,\n' +
                     '(select branch_name from branches where branches.id = branch) branch,\n' +
                     '         SUM(amount) AmountDisbursed,\n' +
@@ -6912,7 +6501,7 @@ users.get('/multi-analytics', function (req, res, next){
                     'GROUP BY branch, period\n' +
                     'ORDER BY branch, date_disbursed'
             }
-            if (freq == '3' && y == '0'){
+            if (freq == '3' && y == '0') {
                 query1 = 'select distinct(DATE_FORMAT(date_disbursed, \'%Y\')) periods from disbursement_history where status = 1 ' +
                     ' order by EXTRACT(YEAR_MONTH FROM date_disbursed)';
                 query2 = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(date_disbursed, \'%Y\') period,\n' +
@@ -6924,9 +6513,9 @@ users.get('/multi-analytics', function (req, res, next){
                     'and DATE_FORMAT(date_disbursed, \'%Y\') = ?\n' +
                     'GROUP BY branch, DATE_FORMAT(date_disbursed, \'%Y\') order by branch'
             }
-            if (freq == '3' && y != '0'){
+            if (freq == '3' && y != '0') {
                 query1 = 'select distinct(DATE_FORMAT(date_disbursed, \'%Y\')) periods from disbursement_history where status = 1 ' +
-                    ' and DATE_FORMAT(date_disbursed, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM date_disbursed)';
+                    ' and DATE_FORMAT(date_disbursed, \'%Y\') = ' + y + ' order by EXTRACT(YEAR_MONTH FROM date_disbursed)';
                 query2 = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS DisburseMonth, DATE_FORMAT(date_disbursed, \'%Y\') period,\n' +
                     '(select branch_name from branches where branches.id = branch) branch,\n' +
                     '         SUM(amount) AmountDisbursed,\n' +
@@ -6936,7 +6525,7 @@ users.get('/multi-analytics', function (req, res, next){
                     'and DATE_FORMAT(date_disbursed, \'%Y\') = ?\n' +
                     'GROUP BY branch, DATE_FORMAT(date_disbursed, \'%Y\') order by branch'
             }
-            if (freq == '4' && y == '0'){
+            if (freq == '4' && y == '0') {
                 query1 = 'select distinct(concat(\'Q\',quarter(date_disbursed),\'-\', year(date_disbursed))) periods from disbursement_history where status = 1 ' +
                     ' order by EXTRACT(YEAR_MONTH FROM date_disbursed)';
                 query2 = 'SELECT   DATE_FORMAT(date_disbursed, \'%M, %Y\') AS DisburseMonth, concat(\'Q\',quarter(date_disbursed),\'-\', year(date_disbursed)) period,\n' +
@@ -6948,9 +6537,9 @@ users.get('/multi-analytics', function (req, res, next){
                     'and concat(\'Q\',quarter(date_disbursed),\'-\', year(date_disbursed)) = ?\n' +
                     'GROUP BY branch, period'
             }
-            if (freq == '4' && y != '0'){
+            if (freq == '4' && y != '0') {
                 query1 = 'select distinct(concat(\'Q\',quarter(date_disbursed),\'-\', year(date_disbursed))) periods from disbursement_history where status = 1 ' +
-                    ' and DATE_FORMAT(date_disbursed, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM date_disbursed)';
+                    ' and DATE_FORMAT(date_disbursed, \'%Y\') = ' + y + ' order by EXTRACT(YEAR_MONTH FROM date_disbursed)';
                 query2 = 'SELECT   DATE_FORMAT(Disbursement_date, \'%M, %Y\') AS DisburseMonth, concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) period,\n' +
                     '(select branch_name from branches where branches.id = branch) branch,\n' +
                     '         SUM(amount) AmountDisbursed,\n' +
@@ -6962,599 +6551,588 @@ users.get('/multi-analytics', function (req, res, next){
             }
             break;
         case '2':
-            if (freq == '2' && y == '0'){
+            if (freq == '2' && y == '0') {
                 query1 = 'select distinct(DATE_FORMAT(payment_date, \'%M, %Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
                     ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(interest_amount) amount_received, \n' +
-                    'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n'+
+                    'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n' +
                     'group by office, Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
             }
-            if (freq == '2' && y != '0'){
+            if (freq == '2' && y != '0') {
                 query1 = 'select distinct(DATE_FORMAT(payment_date, \'%M, %Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                    ' and date_format(payment_date, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                    ' and date_format(payment_date, \'%Y\') = ' + y + ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(interest_amount) amount_received, \n' +
-                    'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n'+
+                    'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n' +
                     'group by office, Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
             }
-            if (freq == '3' && y == '0'){
+            if (freq == '3' && y == '0') {
                 query1 = 'select distinct(DATE_FORMAT(payment_date, \'%Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
                     ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(interest_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') period, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and DATE_FORMAT(payment_date, \'%Y\') = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and DATE_FORMAT(payment_date, \'%Y\') = ?\n' +
                     'group by office, DATE_FORMAT(Payment_date, \'%Y\')'
             }
-            if (freq == '3' && y != '0'){
+            if (freq == '3' && y != '0') {
                 query1 = 'select distinct(DATE_FORMAT(payment_date, \'%Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                    ' and date_format(payment_date, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                    ' and date_format(payment_date, \'%Y\') = ' + y + ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(interest_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') period, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and DATE_FORMAT(payment_date, \'%Y\') = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and DATE_FORMAT(payment_date, \'%Y\') = ?\n' +
                     'group by office, DATE_FORMAT(Payment_date, \'%Y\')'
             }
-            if (freq == '4' && y == '0'){
+            if (freq == '4' && y == '0') {
                 query1 = 'select distinct(concat(\'Q\',quarter(payment_date),\'-\', year(payment_date))) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
                     ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(interest_amount) amount_received, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office,\n' +
-                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period\n'+
+                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n' +
                     'group by office, period'
             }
-            if (freq == '4' && y != '0'){
+            if (freq == '4' && y != '0') {
                 query1 = 'select distinct(concat(\'Q\',quarter(payment_date),\'-\', year(payment_date))) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                    ' and DATE_FORMAT(payment_date, \'%Y\') ='+y+'  order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                    ' and DATE_FORMAT(payment_date, \'%Y\') =' + y + '  order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(interest_amount) amount_received, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office,\n' +
-                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period\n'+
+                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n' +
                     'group by office, period'
             }
             break;
         case '3':
-            if (freq == '2' && y == '0'){
+            if (freq == '2' && y == '0') {
                 query1 = 'select distinct(DATE_FORMAT(payment_date, \'%M, %Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
                     ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(payment_amount) amount_received, \n' +
-                    'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n'+
+                    'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n' +
                     'group by office, Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
             }
-            if (freq == '2' && y != '0'){
+            if (freq == '2' && y != '0') {
                 query1 = 'select distinct(DATE_FORMAT(payment_date, \'%M, %Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                    ' and date_format(payment_date, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                    ' and date_format(payment_date, \'%Y\') = ' + y + ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(payment_amount) amount_received, \n' +
-                    'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n'+
+                    'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n' +
                     'group by office, Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
             }
-            if (freq == '3' && y == '0'){
+            if (freq == '3' && y == '0') {
                 query1 = 'select distinct(DATE_FORMAT(payment_date, \'%Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
                     ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(payment_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') period, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and DATE_FORMAT(payment_date, \'%Y\') = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and DATE_FORMAT(payment_date, \'%Y\') = ?\n' +
                     'group by office, DATE_FORMAT(Payment_date, \'%Y\')'
             }
-            if (freq == '3' && y != '0'){
+            if (freq == '3' && y != '0') {
                 query1 = 'select distinct(DATE_FORMAT(payment_date, \'%Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                    ' and date_format(payment_date, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                    ' and date_format(payment_date, \'%Y\') = ' + y + ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(payment_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') period, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and DATE_FORMAT(payment_date, \'%Y\') = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and DATE_FORMAT(payment_date, \'%Y\') = ?\n' +
                     'group by office, DATE_FORMAT(Payment_date, \'%Y\')'
             }
-            if (freq == '4' && y == '0'){
+            if (freq == '4' && y == '0') {
                 query1 = 'select distinct(concat(\'Q\',quarter(payment_date),\'-\', year(payment_date))) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
                     ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(payment_amount) amount_received, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office,\n' +
-                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period\n'+
+                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n' +
                     'group by office, period'
             }
-            if (freq == '4' && y != '0'){
+            if (freq == '4' && y != '0') {
                 query1 = 'select distinct(concat(\'Q\',quarter(payment_date),\'-\', year(payment_date))) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                    ' and DATE_FORMAT(payment_date, \'%Y\') ='+y+'  order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                    ' and DATE_FORMAT(payment_date, \'%Y\') =' + y + '  order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(payment_amount) amount_received, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office,\n' +
-                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period\n'+
+                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n' +
                     'group by office, period'
             }
             break;
         case '4':
-            query1 = 'select distinct(DATE_FORMAT(payment_collect_date, \'%M, %Y\')) periods from application_schedules where status = 1 and \n'+
+            query1 = 'select distinct(DATE_FORMAT(payment_collect_date, \'%M, %Y\')) periods from application_schedules where status = 1 and \n' +
                 'payment_collect_date is not null and applicationid in (select id from applications where status = 2) ' +
-                'and extract(year_month from payment_collect_date) < (select extract(year_month from curdate())) '+
+                'and extract(year_month from payment_collect_date) < (select extract(year_month from curdate())) ' +
                 'order by EXTRACT(YEAR_MONTH from payment_collect_date)'
             query2 = 'select ID, applicationID, DATE_FORMAT(payment_collect_date, \'%M, %Y\') period,\n' +
                 'min(payment_collect_date) duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
                 '(sum(payment_amount)) as amount_due,\n' +
-                '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n'+
+                '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                 'from application_schedules\n' +
-                'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n'+
-                'and DATEDIFF(curdate(), payment_collect_date) > 90\n'+
+                'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n' +
+                'and DATEDIFF(curdate(), payment_collect_date) > 90\n' +
                 'and date_format(payment_collect_date, \'%M, %Y\') = ? group by office';
-            if (freq == '2' && y == '0'){
-                query1 = 'select distinct(DATE_FORMAT(payment_collect_date, \'%M, %Y\')) periods from application_schedules where status = 1 and \n'+
+            if (freq == '2' && y == '0') {
+                query1 = 'select distinct(DATE_FORMAT(payment_collect_date, \'%M, %Y\')) periods from application_schedules where status = 1 and \n' +
                     'payment_collect_date is not null and applicationid in (select id from applications where status = 2) ' +
-                    'and extract(year_month from payment_collect_date) < (select extract(year_month from curdate())) '+
+                    'and extract(year_month from payment_collect_date) < (select extract(year_month from curdate())) ' +
                     'order by EXTRACT(YEAR_MONTH from payment_collect_date)'
                 query2 = 'select ID, applicationID, DATE_FORMAT(payment_collect_date, \'%M, %Y\') period, \n' +
                     'min(payment_collect_date) duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
                     '(sum(payment_amount)) as amount_due,\n' +
-                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n'+
+                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from application_schedules\n' +
-                    'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n'+
-                    'and DATEDIFF(curdate(), payment_collect_date) > 90\n'+
+                    'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n' +
+                    'and DATEDIFF(curdate(), payment_collect_date) > 90\n' +
                     'and date_format(payment_collect_date, \'%M, %Y\') = ? group by office, Date_format(Payment_collect_date, \'%M%Y\')';
             }
-            if (freq == '2' && y != '0'){
-                query1 = 'select distinct(DATE_FORMAT(payment_collect_date, \'%M, %Y\')) periods from application_schedules where status = 1 and \n'+
+            if (freq == '2' && y != '0') {
+                query1 = 'select distinct(DATE_FORMAT(payment_collect_date, \'%M, %Y\')) periods from application_schedules where status = 1 and \n' +
                     'payment_collect_date is not null and applicationid in (select id from applications where status = 2) ' +
-                    'and extract(year_month from payment_collect_date) < (select extract(year_month from curdate())) '+
-                    'and DATE_FORMAT(payment_collect_date, \'%Y\') = '+y+' \n'+
+                    'and extract(year_month from payment_collect_date) < (select extract(year_month from curdate())) ' +
+                    'and DATE_FORMAT(payment_collect_date, \'%Y\') = ' + y + ' \n' +
                     'order by EXTRACT(YEAR_MONTH from payment_collect_date)'
                 query2 = 'select ID, applicationID, DATE_FORMAT(payment_collect_date, \'%M, %Y\') period,\n' +
                     'min(payment_collect_date) duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
                     '(sum(payment_amount)) as amount_due,\n' +
-                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n'+
+                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from application_schedules\n' +
-                    'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n'+
-                    'and DATEDIFF(curdate(), payment_collect_date) > 90\n'+
-                    'and DATE_FORMAT(payment_collect_date, \'%Y\') = '+y+' \n'+
+                    'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n' +
+                    'and DATEDIFF(curdate(), payment_collect_date) > 90\n' +
+                    'and DATE_FORMAT(payment_collect_date, \'%Y\') = ' + y + ' \n' +
                     'and date_format(payment_collect_date, \'%M, %Y\') = ? group by office, Date_format(Payment_collect_date, \'%M%Y\')';
             }
-            if (freq == '3' && y == '0'){
-                query1 = 'select distinct(DATE_FORMAT(payment_collect_date, \' %Y\')) periods from application_schedules where status = 1 and \n'+
+            if (freq == '3' && y == '0') {
+                query1 = 'select distinct(DATE_FORMAT(payment_collect_date, \' %Y\')) periods from application_schedules where status = 1 and \n' +
                     'payment_collect_date is not null and applicationid in (select id from applications where status = 2) ' +
-                    'and extract(year from payment_collect_date) <= (select extract(year from curdate())) '+
+                    'and extract(year from payment_collect_date) <= (select extract(year from curdate())) ' +
                     'order by EXTRACT(YEAR_MONTH from payment_collect_date)'
                 query2 = 'select ID, applicationID, DATE_FORMAT(payment_collect_date, \'%Y\') period,\n' +
                     'min(payment_collect_date) duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
                     '(sum(payment_amount)) as amount_due,\n' +
-                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n'+
+                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from application_schedules\n' +
-                    'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n'+
-                    'and DATEDIFF(curdate(), payment_collect_date) > 90\n'+
+                    'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n' +
+                    'and DATEDIFF(curdate(), payment_collect_date) > 90\n' +
                     'and date_format(payment_collect_date, \'%Y\') = ? group by office, Date_format(Payment_collect_date, \'%Y\')';
             }
-            if (freq == '3' && y != '0'){
-                query1 = 'select distinct(DATE_FORMAT(payment_collect_date, \' %Y\')) periods from application_schedules where status = 1 and \n'+
+            if (freq == '3' && y != '0') {
+                query1 = 'select distinct(DATE_FORMAT(payment_collect_date, \' %Y\')) periods from application_schedules where status = 1 and \n' +
                     'payment_collect_date is not null and applicationid in (select id from applications where status = 2) ' +
-                    'and extract(year from payment_collect_date) <= (select extract(year from curdate())) '+
-                    'and DATE_FORMAT(payment_collect_date, \'%Y\') = '+y+' \n'+
+                    'and extract(year from payment_collect_date) <= (select extract(year from curdate())) ' +
+                    'and DATE_FORMAT(payment_collect_date, \'%Y\') = ' + y + ' \n' +
                     'order by EXTRACT(YEAR_MONTH from payment_collect_date)'
                 query2 = 'select ID, applicationID, DATE_FORMAT(payment_collect_date, \'%Y\') period,\n' +
                     'min(payment_collect_date) duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
                     '(sum(payment_amount)) as amount_due,\n' +
-                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n'+
+                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from application_schedules\n' +
-                    'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n'+
-                    'and DATEDIFF(curdate(), payment_collect_date) > 90\n'+
-                    'and DATE_FORMAT(payment_collect_date, \'%Y\') = '+y+' \n'
+                    'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n' +
+                    'and DATEDIFF(curdate(), payment_collect_date) > 90\n' +
+                    'and DATE_FORMAT(payment_collect_date, \'%Y\') = ' + y + ' \n'
                 'and date_format(payment_collect_date, \'%Y\') = ? group by office';
             }
-            if (freq == '4' && y == '0'){
-                query1 = 'select distinct(concat(\'Q\',quarter(payment_collect_date),\'-\', year(payment_collect_date))) periods from application_schedules where status = 1 and \n'+
+            if (freq == '4' && y == '0') {
+                query1 = 'select distinct(concat(\'Q\',quarter(payment_collect_date),\'-\', year(payment_collect_date))) periods from application_schedules where status = 1 and \n' +
                     'payment_collect_date is not null and applicationid in (select id from applications where status = 2) ' +
-                    'and (quarter(payment_collect_date) + year(payment_collect_date)) < ((select quarter(curdate()) + (select year(curdate())))) '+
+                    'and (quarter(payment_collect_date) + year(payment_collect_date)) < ((select quarter(curdate()) + (select year(curdate())))) ' +
                     'order by EXTRACT(YEAR_MONTH from payment_collect_date)'
                 query2 = 'select ID, applicationID, concat(\'Q\',quarter(payment_collect_date),\'-\', year(payment_collect_date)) period,\n' +
                     'min(payment_collect_date) duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
                     '(sum(payment_amount)) as amount_due,\n' +
-                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n'+
+                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from application_schedules\n' +
-                    'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n'+
-                    'and DATEDIFF(curdate(), payment_collect_date) > 90\n'+
+                    'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n' +
+                    'and DATEDIFF(curdate(), payment_collect_date) > 90\n' +
                     'and (concat(\'Q\',quarter(payment_collect_date),\'-\', year(payment_collect_date))) = ? group by office';
             }
-            if (freq == '4' && y != '0'){
-                query1 = 'select distinct(concat(\'Q\',quarter(payment_collect_date),\'-\', year(payment_collect_date))) periods from application_schedules where status = 1 and \n'+
+            if (freq == '4' && y != '0') {
+                query1 = 'select distinct(concat(\'Q\',quarter(payment_collect_date),\'-\', year(payment_collect_date))) periods from application_schedules where status = 1 and \n' +
                     'payment_collect_date is not null and applicationid in (select id from applications where status = 2) ' +
-                    'and (quarter(payment_collect_date) + year(payment_collect_date)) <= ((select quarter(curdate()) + (select year(curdate())))) '+
-                    'and DATE_FORMAT(payment_collect_date, \'%Y\') = '+y+' \n'+
+                    'and (quarter(payment_collect_date) + year(payment_collect_date)) <= ((select quarter(curdate()) + (select year(curdate())))) ' +
+                    'and DATE_FORMAT(payment_collect_date, \'%Y\') = ' + y + ' \n' +
                     'order by EXTRACT(YEAR_MONTH from payment_collect_date)'
                 query2 = 'select ID, applicationID, concat(\'Q\',quarter(payment_collect_date),\'-\', year(payment_collect_date)) period, \n' +
                     'min(payment_collect_date) duedate, (select fullname from clients where clients.ID = (select userID from applications where applications.ID = applicationID)) as client,\n' +
                     '(sum(payment_amount)) as amount_due,\n' +
-                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n'+
+                    '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from application_schedules\n' +
-                    'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n'+
-                    'and DATEDIFF(curdate(), payment_collect_date) > 90\n'+
-                    'and DATE_FORMAT(payment_collect_date, \'%Y\') = '+y+' \n'+
+                    'where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2)\n' +
+                    'and DATEDIFF(curdate(), payment_collect_date) > 90\n' +
+                    'and DATE_FORMAT(payment_collect_date, \'%Y\') = ' + y + ' \n' +
                     'and (concat(\'Q\',quarter(payment_collect_date),\'-\', year(payment_collect_date))) = ? group by office';
             }
             break;
         case '5':
-            if (freq == '2' && y == '0'){
+            if (freq == '2' && y == '0') {
                 query1 = 'select distinct(DATE_FORMAT(payment_date, \'%M, %Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
                     ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(interest_amount) amount_received, \n' +
-                    'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n'+
+                    'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n' +
                     'group by office, Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
             }
-            if (freq == '2' && y != '0'){
+            if (freq == '2' && y != '0') {
                 query1 = 'select distinct(DATE_FORMAT(payment_date, \'%M, %Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                    ' and date_format(payment_date, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                    ' and date_format(payment_date, \'%Y\') = ' + y + ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(interest_amount) amount_received, \n' +
-                    'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n'+
+                    'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n' +
                     'group by office, Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
             }
-            if (freq == '3' && y == '0'){
+            if (freq == '3' && y == '0') {
                 query1 = 'select distinct(DATE_FORMAT(payment_date, \'%Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
                     ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(interest_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') period, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and DATE_FORMAT(payment_date, \'%Y\') = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and DATE_FORMAT(payment_date, \'%Y\') = ?\n' +
                     'group by office, DATE_FORMAT(Payment_date, \'%Y\')'
             }
-            if (freq == '3' && y != '0'){
+            if (freq == '3' && y != '0') {
                 query1 = 'select distinct(DATE_FORMAT(payment_date, \'%Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                    ' and date_format(payment_date, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                    ' and date_format(payment_date, \'%Y\') = ' + y + ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(interest_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') period, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and DATE_FORMAT(payment_date, \'%Y\') = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and DATE_FORMAT(payment_date, \'%Y\') = ?\n' +
                     'group by office, DATE_FORMAT(Payment_date, \'%Y\')'
             }
-            if (freq == '4' && y == '0'){
+            if (freq == '4' && y == '0') {
                 query1 = 'select distinct(concat(\'Q\',quarter(payment_date),\'-\', year(payment_date))) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
                     ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(interest_amount) amount_received, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office,\n' +
-                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period\n'+
+                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n' +
                     'group by office, period'
             }
-            if (freq == '4' && y != '0'){
+            if (freq == '4' && y != '0') {
                 query1 = 'select distinct(concat(\'Q\',quarter(payment_date),\'-\', year(payment_date))) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                    ' and DATE_FORMAT(payment_date, \'%Y\') ='+y+'  order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                    ' and DATE_FORMAT(payment_date, \'%Y\') =' + y + '  order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(interest_amount) amount_received, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office,\n' +
-                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period\n'+
+                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n' +
                     'group by office, period'
             }
             break;
         case '6':
-            if (freq == '2' && y == '0'){
+            if (freq == '2' && y == '0') {
                 query1 = 'select distinct(DATE_FORMAT(payment_date, \'%M, %Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
                     ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(interest_amount) amount_received, \n' +
-                    'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n'+
+                    'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n' +
                     'group by office, Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
             }
-            if (freq == '2' && y != '0'){
+            if (freq == '2' && y != '0') {
                 query1 = 'select distinct(DATE_FORMAT(payment_date, \'%M, %Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                    ' and date_format(payment_date, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                    ' and date_format(payment_date, \'%Y\') = ' + y + ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(interest_amount) amount_received, \n' +
-                    'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n'+
+                    'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n' +
                     'group by office, Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
             }
-            if (freq == '3' && y == '0'){
+            if (freq == '3' && y == '0') {
                 query1 = 'select distinct(DATE_FORMAT(payment_date, \'%Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
                     ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(interest_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') period, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and DATE_FORMAT(payment_date, \'%Y\') = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and DATE_FORMAT(payment_date, \'%Y\') = ?\n' +
                     'group by office, DATE_FORMAT(Payment_date, \'%Y\')'
             }
-            if (freq == '3' && y != '0'){
+            if (freq == '3' && y != '0') {
                 query1 = 'select distinct(DATE_FORMAT(payment_date, \'%Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                    ' and date_format(payment_date, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                    ' and date_format(payment_date, \'%Y\') = ' + y + ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(interest_amount) amount_received, DATE_FORMAT(payment_date, \'%Y\') period, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and DATE_FORMAT(payment_date, \'%Y\') = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and DATE_FORMAT(payment_date, \'%Y\') = ?\n' +
                     'group by office, DATE_FORMAT(Payment_date, \'%Y\')'
             }
-            if (freq == '4' && y == '0'){
+            if (freq == '4' && y == '0') {
                 query1 = 'select distinct(concat(\'Q\',quarter(payment_date),\'-\', year(payment_date))) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
                     ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(interest_amount) amount_received, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office,\n' +
-                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period\n'+
+                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n' +
                     'group by office, period'
             }
-            if (freq == '4' && y != '0'){
+            if (freq == '4' && y != '0') {
                 query1 = 'select distinct(concat(\'Q\',quarter(payment_date),\'-\', year(payment_date))) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                    ' and DATE_FORMAT(payment_date, \'%Y\') ='+y+'  order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                    ' and DATE_FORMAT(payment_date, \'%Y\') =' + y + '  order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'select sum(interest_amount) amount_received, \n' +
                     '(select branch_name from branches where branches.id = (select branch from clients where clients.id = (select userid from applications where applications.id = applicationid))) office,\n' +
-                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period\n'+
+                    'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n'+
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n' +
                     'group by office, period'
             }
             break;
     }
     let word = 'All Time';
-    switch (pvi){
+    switch (pvi) {
         case 'received':
-            if (!officer && !freq && !y){
+            if (!officer && !freq && !y) {
                 query1 = 'select ? from schedule_history limit 1';
                 query2 = 'select sum(interest_amount) interest_received, sum(payment_amount) principal_received,\n' +
-                    // 'DATE_FORMAT(payment_date, \'%M, %Y\') period \n'+
-                    '(select ? from schedule_history limit 1) period\n'+
+                    '(select ? from schedule_history limit 1) period\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
                     'and applicationid in (select id from applications where status <> 0)\n';
-                // 'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
-                // 'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer;
-                // 'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
             }
-            if (officer && freq == '-1' && y == '0'){
+            if (officer && freq == '-1' && y == '0') {
                 query1 = 'select ? from schedule_history limit 1';
                 query2 = 'select sum(interest_amount) interest_received, sum(payment_amount) principal_received,\n' +
-                    // 'DATE_FORMAT(payment_date, \'%M, %Y\') period \n'+
-                    '(select ? from schedule_history limit 1) period,\n'+
-                    '(select fullname from users where users.id = '+officer+') officer\n'+
+                    '(select ? from schedule_history limit 1) period,\n' +
+                    '(select fullname from users where users.id = ' + officer + ') officer\n' +
                     'from schedule_history \n' +
                     'where status = 1\n' +
-                    'and applicationid in (select id from applications where status <> 0)\n'+
-                    // 'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer;
-                // 'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                    'and applicationid in (select id from applications where status <> 0)\n' +
+                    'and loan_officerID = ' + officer;
             }
-            if (officer == '0'){
-                if (freq == '-1' && y == '0'){
+            if (officer == '0') {
+                if (freq == '-1' && y == '0') {
                     query1 = 'select ? from schedule_history limit 1';
                     query2 = 'select sum(interest_amount) interest_received, sum(payment_amount) principal_received,\n' +
-                        // 'DATE_FORMAT(payment_date, \'%M, %Y\') period \n'+
-                        '(select ? from schedule_history limit 1) period\n'+
+                        '(select ? from schedule_history limit 1) period\n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
                         'and applicationid in (select id from applications where status <> 0)\n';
-                    // 'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
-                    // 'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer;
-                    // 'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
-                if (freq == '2' && y != '0'){
+                if (freq == '2' && y != '0') {
                     query1 = 'select distinct(DATE_FORMAT(payment_date, \'%M, %Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                        ' and DATE_FORMAT(payment_date, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                        ' and DATE_FORMAT(payment_date, \'%Y\') = ' + y + ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                     query2 = 'select sum(interest_amount) interest_received, sum(payment_amount) principal_received,\n' +
-                        'DATE_FORMAT(payment_date, \'%M, %Y\') period \n'+
+                        'DATE_FORMAT(payment_date, \'%M, %Y\') period \n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n' +
                         'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
-                if (freq == '3' && y != '0'){
+                if (freq == '3' && y != '0') {
                     query1 = 'select distinct(DATE_FORMAT(payment_date, \'%Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                        ' and DATE_FORMAT(payment_date, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                        ' and DATE_FORMAT(payment_date, \'%Y\') = ' + y + ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                     query2 = 'select sum(interest_amount) interest_received, sum(payment_amount) principal_received,\n' +
-                        'DATE_FORMAT(payment_date, \'%Y\') period \n'+
+                        'DATE_FORMAT(payment_date, \'%Y\') period \n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and DATE_FORMAT(payment_date, \'%Y\') = ?\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and DATE_FORMAT(payment_date, \'%Y\') = ?\n' +
                         'group by Date_format(Payment_date, \'%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
-                if (freq == '4' && y != '0'){
+                if (freq == '4' && y != '0') {
                     query1 = 'select distinct(concat(\'Q\',quarter(payment_date),\'-\', year(payment_date))) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                        ' and DATE_FORMAT(payment_date, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                        ' and DATE_FORMAT(payment_date, \'%Y\') = ' + y + ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                     query2 = 'select sum(interest_amount) interest_received, sum(payment_amount) principal_received,\n' +
-                        'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period \n'+
+                        'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period \n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n' +
                         'group by period order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
-                if (freq == '2' && y == '0'){
+                if (freq == '2' && y == '0') {
                     query1 = 'select distinct(DATE_FORMAT(payment_date, \'%M, %Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
                         ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                     query2 = 'select sum(interest_amount) interest_received, sum(payment_amount) principal_received,\n' +
-                        'DATE_FORMAT(payment_date, \'%M, %Y\') period \n'+
+                        'DATE_FORMAT(payment_date, \'%M, %Y\') period \n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n' +
                         'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
-                if (freq == '3' && y == '0'){
+                if (freq == '3' && y == '0') {
                     query1 = 'select distinct(DATE_FORMAT(payment_date, \'%Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
                         ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                     query2 = 'select sum(interest_amount) interest_received, sum(payment_amount) principal_received,\n' +
-                        'DATE_FORMAT(payment_date, \'%Y\') period \n'+
+                        'DATE_FORMAT(payment_date, \'%Y\') period \n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and DATE_FORMAT(payment_date, \'%Y\') = ?\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and DATE_FORMAT(payment_date, \'%Y\') = ?\n' +
                         'group by Date_format(Payment_date, \'%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
-                if (freq == '4' && y == '0'){
+                if (freq == '4' && y == '0') {
                     query1 = 'select distinct(concat(\'Q\',quarter(payment_date),\'-\', year(payment_date))) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
                         ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                     query2 = 'select sum(interest_amount) interest_received, sum(payment_amount) principal_received,\n' +
-                        'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period \n'+
+                        'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period \n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n' +
                         'group by period order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
             }
             else {
-                if (freq == '2' && y == '0'){
+                if (freq == '2' && y == '0') {
                     query1 = 'select distinct(DATE_FORMAT(payment_date, \'%M, %Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
                         ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                     query2 = 'select sum(interest_amount) interest_received, sum(payment_amount) principal_received,\n' +
-                        'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n'+
-                        '(select fullname from users where users.id = '+officer+') officer \n'+
+                        'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n' +
+                        '(select fullname from users where users.id = ' + officer + ') officer \n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
-                        'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n' +
+                        'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + officer + '\n' +
                         'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
-                if (freq == '2' && y!= '0'){
+                if (freq == '2' && y != '0') {
                     query1 = 'select distinct(DATE_FORMAT(payment_date, \'%M, %Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                        ' and DATE_FORMAT(payment_date, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                        ' and DATE_FORMAT(payment_date, \'%Y\') = ' + y + ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                     query2 = 'select sum(interest_amount) interest_received, sum(payment_amount) principal_received,\n' +
-                        'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n'+
-                        '(select fullname from users where users.id = '+officer+') officer\n'+
+                        'DATE_FORMAT(payment_date, \'%M, %Y\') period, \n' +
+                        '(select fullname from users where users.id = ' + officer + ') officer\n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n'+
-                        'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n' +
+                        'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + officer + '\n' +
                         'group by Date_format(Payment_date, \'%M%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
-                if (freq == '3' && y== '0'){
+                if (freq == '3' && y == '0') {
                     query1 = 'select distinct(DATE_FORMAT(payment_date, \'%Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
                         ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                     query2 = 'select sum(interest_amount) interest_received, sum(payment_amount) principal_received,\n' +
-                        'DATE_FORMAT(payment_date, \'%Y\') period, \n'+
-                        '(select fullname from users where users.id = '+officer+') officer\n'+
+                        'DATE_FORMAT(payment_date, \'%Y\') period, \n' +
+                        '(select fullname from users where users.id = ' + officer + ') officer\n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and DATE_FORMAT(payment_date, \'%Y\') = ?\n'+
-                        'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and DATE_FORMAT(payment_date, \'%Y\') = ?\n' +
+                        'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + officer + '\n' +
                         'group by Date_format(Payment_date, \'%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
-                if (freq == '3' && y!= '0'){
+                if (freq == '3' && y != '0') {
                     query1 = 'select distinct(DATE_FORMAT(payment_date, \'%Y\')) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                        ' and DATE_FORMAT(payment_date, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                        ' and DATE_FORMAT(payment_date, \'%Y\') = ' + y + ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                     query2 = 'select sum(interest_amount) interest_received, sum(payment_amount) principal_received,\n' +
-                        'DATE_FORMAT(payment_date, \'%Y\') period, \n'+
-                        '(select fullname from users where users.id = '+officer+') officer\n'+
+                        'DATE_FORMAT(payment_date, \'%Y\') period, \n' +
+                        '(select fullname from users where users.id = ' + officer + ') officer\n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and DATE_FORMAT(payment_date, \'%Y\') = ?\n'+
-                        'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and DATE_FORMAT(payment_date, \'%Y\') = ?\n' +
+                        'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + officer + '\n' +
                         'group by Date_format(Payment_date, \'%Y\') order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
-                if (freq == '4' && y== '0'){
+                if (freq == '4' && y == '0') {
                     query1 = 'select distinct(concat(\'Q\',quarter(payment_date),\'-\', year(payment_date))) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
                         ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                     query2 = 'select sum(interest_amount) interest_received, sum(payment_amount) principal_received,\n' +
-                        'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period, \n'+
-                        '(select fullname from users where users.id = '+officer+') officer\n'+
+                        'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period, \n' +
+                        '(select fullname from users where users.id = ' + officer + ') officer\n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n'+
-                        'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n' +
+                        'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + officer + '\n' +
                         'group by period order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
-                if (freq == '4' && y!= '0'){
+                if (freq == '4' && y != '0') {
                     query1 = 'select distinct(concat(\'Q\',quarter(payment_date),\'-\', year(payment_date))) periods from schedule_history where status = 1 and payment_date is not null and applicationid in (select id from applications where status <> 0)' +
-                        ' and DATE_FORMAT(payment_date, \'%Y\') = '+y+' order by EXTRACT(YEAR_MONTH FROM payment_date)';
+                        ' and DATE_FORMAT(payment_date, \'%Y\') = ' + y + ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                     query2 = 'select sum(interest_amount) interest_received, sum(payment_amount) principal_received,\n' +
-                        'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period, \n'+
-                        '(select fullname from users where users.id = '+officer+') officer\n'+
+                        'concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period, \n' +
+                        '(select fullname from users where users.id = ' + officer + ') officer\n' +
                         'from schedule_history \n' +
                         'where status = 1\n' +
-                        'and applicationid in (select id from applications where status <> 0)\n'+
-                        'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n'+
-                        'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
+                        'and applicationid in (select id from applications where status <> 0)\n' +
+                        'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) = ?\n' +
+                        'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + officer + '\n' +
                         'group by period order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 }
             }
             break;
         case 'receivable':
-            if (freq == '2' && y == '0'){
+            if (freq == '2' && y == '0') {
                 query1 = 'select distinct(DATE_FORMAT(payment_date, \'%M, %Y\')) periods from application_schedules where status = 1 ' +
                     ' order by EXTRACT(YEAR_MONTH FROM payment_date)';
                 query2 = 'SELECT DATE_FORMAT(payment_date, \'%M, %Y\') AS period, DATE_FORMAT(Disbursement_date, \'%M\') month,\n' +
-                    '(select fullname from users where user.id = '+officer+') officer,\n' +
+                    '(select fullname from users where user.id = ' + officer + ') officer,\n' +
                     '         SUM(payment_amount) AmountDisbursed,\n' +
                     '         EXTRACT(YEAR_MONTH FROM Disbursement_date) As DisburseYearMonth\n' +
                     'FROM     application_schedules\n' +
                     'WHERE  status = 2\n' +
                     'and DATE_FORMAT(payment_date, \'%M, %Y\') = ?\n' +
-                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = '+officer+'\n'+
+                    'and (select loan_officer from clients where clients.id = (select userid from applications where applications.id = applicationid)) = ' + officer + '\n' +
                     'GROUP BY period\n' +
                     'ORDER BY payment_date'
             }
@@ -7562,7 +7140,7 @@ users.get('/multi-analytics', function (req, res, next){
     }
     let load = {};
     db.query(query1, [word], function (error, results, fields) {
-        db.getConnection(function(err, connection) {
+        db.getConnection(function (err, connection) {
             if (err) throw err;
             async.forEachOf(results, function (result, key, callback) {
                 connection.query(query2, [(result['periods']) ? result['periods'] : 'All Time'], function (err, rest) {
@@ -7576,13 +7154,13 @@ users.get('/multi-analytics', function (req, res, next){
                 });
             }, function (data) {
                 connection.release();
-                res.send({"status": 200, "error": null, "response": load, "message": "Success!"});
+                res.send({ "status": 200, "error": null, "response": load, "message": "Success!" });
             });
         });
     });
 });
 
-users.get('/individual-borrowers', function(req, res, next) {
+users.get('/individual-borrowers', function (req, res, next) {
     query =
         `select
 
@@ -7637,15 +7215,15 @@ users.get('/individual-borrowers', function(req, res, next) {
         from clients`;
 
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "Success!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "Success!" });
         }
     });
 });
 
-users.get('/corporate-borrowers', function(req, res, next) {
+users.get('/corporate-borrowers', function (req, res, next) {
     query =
         `select 
 
@@ -7667,15 +7245,15 @@ users.get('/corporate-borrowers', function(req, res, next) {
         from clients WHERE status = 1 AND client_type = 'corporate'`;
 
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "Success!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "Success!" });
         }
     });
 });
 
-users.get('/principal-officers', function(req, res, next) {
+users.get('/principal-officers', function (req, res, next) {
     query =
         `select 
 
@@ -7701,15 +7279,15 @@ users.get('/principal-officers', function(req, res, next) {
         from corporates`;
 
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "Success!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "Success!" });
         }
     });
 });
 
-users.get('/credit-information', function(req, res, next) {
+users.get('/credit-information', function (req, res, next) {
     query =
         `select 
 
@@ -7788,15 +7366,15 @@ users.get('/credit-information', function(req, res, next) {
 `;
 
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "Success!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "Success!" });
         }
     });
 });
 
-users.get('/portfolio-loan-risk', function(req, res, next) {
+users.get('/portfolio-loan-risk', function (req, res, next) {
     query =
         `select 
 
@@ -7927,20 +7505,20 @@ users.get('/portfolio-loan-risk', function(req, res, next) {
 `;
 
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "error": null, "response": results, "message": "Success!"});
+            res.send({ "status": 200, "error": null, "response": results, "message": "Success!" });
         }
     });
 });
 
-users.get('/trends', function(req, res, next){
+users.get('/trends', function (req, res, next) {
     let report = req.query.trend,
         filter = req.query.filter,
         query;
-    if (filter === 'Gender'){
-        if (report === 'Interest'){
+    if (filter === 'Gender') {
+        if (report === 'Interest') {
             query = `select sum(interest_amount) amount, 
                     (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender 
                     from schedule_history
@@ -7948,7 +7526,7 @@ users.get('/trends', function(req, res, next){
                     applicationid in (select id from applications where status <> 0) 
                     group by gender`;
         }
-        if (report === 'Bad Loans'){
+        if (report === 'Bad Loans') {
             query = `select
                     sum(payment_amount) amount, 
                     (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender
@@ -7956,7 +7534,7 @@ users.get('/trends', function(req, res, next){
                     where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) 
                     and datediff(curdate(), payment_collect_date) > 90 group by gender  `;
         }
-        if (report === 'Overdue Loans'){
+        if (report === 'Overdue Loans') {
             query = `select
                     sum(payment_amount) amount, 
                     (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender
@@ -7965,8 +7543,8 @@ users.get('/trends', function(req, res, next){
                     and payment_collect_date < (select curdate()) group by gender  `;
         }
     }
-    if (filter === 'Age'){
-        if (report === 'Interest'){
+    if (filter === 'Age') {
+        if (report === 'Interest') {
             query = `select (interest_amount) amount,
                     (select dob from clients where clients.id = (select userid from applications where applications.id = applicationid)) dob, 
                     ((select TIMESTAMPDIFF(YEAR, dob, CURDATE()) from clients where clients.id = (select userid from applications where applications.id = applicationid))) age 
@@ -7975,7 +7553,7 @@ users.get('/trends', function(req, res, next){
                     applicationid in (select id from applications where status <> 0) group by age`;
             // group by age`;
         }
-        if (report === 'Bad Loans'){
+        if (report === 'Bad Loans') {
             query = `select
                     sum(payment_amount) amount, 
                     (select dob from clients where clients.id = (select userid from applications where applications.id = applicationid)) dob,
@@ -7984,7 +7562,7 @@ users.get('/trends', function(req, res, next){
                     where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) 
                     and datediff(curdate(), payment_collect_date) > 90 group by age  `;
         }
-        if (report === 'Overdue Loans'){
+        if (report === 'Overdue Loans') {
             query = `select
                     sum(payment_amount) amount, 
                     (select dob from clients where clients.id = (select userid from applications where applications.id = applicationid)) dob,
@@ -7994,17 +7572,17 @@ users.get('/trends', function(req, res, next){
                     and payment_collect_date < (select curdate()) group by age  `;
         }
     }
-    db.query(query, function (error, result, fields){
-        if (error){
-            res.send({'status': 500, 'error': error, 'response': null});
+    db.query(query, function (error, result, fields) {
+        if (error) {
+            res.send({ 'status': 500, 'error': error, 'response': null });
         }
         else {
-            res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
+            res.send({ "status": 200, "error": null, "response": "Success", 'message': payload });
         }
     });
 });
 
-users.get('/demographic-interest-report', function(req, res, next){
+users.get('/demographic-interest-report', function (req, res, next) {
     let report = req.query.trend,
         filter = req.query.filter,
         period = req.query.period,
@@ -8012,14 +7590,14 @@ users.get('/demographic-interest-report', function(req, res, next){
         year = req.query.year,
         frequency = req.query.frequency;
     payload = {};
-    if (filter === 'Gender'){
+    if (filter === 'Gender') {
         query = `select sum(interest_amount) amount, 
                     (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender 
                     from schedule_history
                     where status = 1 and 
                     applicationid in (select id from applications where status <> 0) 
                     group by gender`;
-        if (period !== '-1' && year !== '0'){
+        if (period !== '-1' && year !== '0') {
             query = `select sum(interest_amount) amount, 
                     (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender 
                     from schedule_history
@@ -8029,7 +7607,7 @@ users.get('/demographic-interest-report', function(req, res, next){
                     group by gender`;
         }
     }
-    if (filter === 'Age'){
+    if (filter === 'Age') {
         query = `select (interest_amount) amount,
                 (select dob from clients where clients.id = (select userid from applications where applications.id = applicationid)) dob, 
                 CASE
@@ -8046,7 +7624,7 @@ users.get('/demographic-interest-report', function(req, res, next){
                 from schedule_history
                 where status = 1 and 
                 applicationid in (select id from applications where status <> 0) group by age_range`;
-        if (period !== '-1' && year !== '0'){
+        if (period !== '-1' && year !== '0') {
             query = `select (interest_amount) amount,
                     (select dob from clients where clients.id = (select userid from applications where applications.id = applicationid)) dob, 
                     CASE
@@ -8067,18 +7645,18 @@ users.get('/demographic-interest-report', function(req, res, next){
                     `;
         }
     }
-    db.query(query, function(error, results, fields){
-        if (error){
-            res.send({"status": 500, "error": error, "response": null, 'message': payload});
+    db.query(query, function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null, 'message': payload });
         }
         else {
             payload.interest = results;
-            res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
+            res.send({ "status": 200, "error": null, "response": "Success", 'message': payload });
         }
     });
 });
 
-users.get('/demographic-badloans-report', function(req, res, next){
+users.get('/demographic-badloans-report', function (req, res, next) {
     let report = req.query.trend,
         filter = req.query.filter,
         period = req.query.period,
@@ -8086,14 +7664,14 @@ users.get('/demographic-badloans-report', function(req, res, next){
         year = req.query.year,
         frequency = req.query.frequency;
     payload = {};
-    if (filter === 'Gender'){
+    if (filter === 'Gender') {
         query = `select
                 sum(payment_amount) amount, 
                 (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender
                 from application_schedules 
                 where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0 
                 and datediff(curdate(), payment_collect_date) > 90 group by gender  `;
-        if (period !== '-1' && year !== '0'){
+        if (period !== '-1' && year !== '0') {
             query = `select
                 sum(payment_amount) amount, 
                 (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender
@@ -8103,7 +7681,7 @@ users.get('/demographic-badloans-report', function(req, res, next){
                 and datediff(curdate(), payment_collect_date) > 90 group by gender  `;
         }
     }
-    if (filter === 'Age'){
+    if (filter === 'Age') {
         query = `
                 select sum(payment_amount) amount, 
                 (select dob from clients where clients.id = (select userid from applications where applications.id = applicationid)) dob,
@@ -8123,7 +7701,7 @@ users.get('/demographic-badloans-report', function(req, res, next){
                 applicationid in (select id from applications where status = 2) and (select close_status from applications where applications.id = applicationID) = 0 
                 group by age_range
                 `;
-        if (period !== '-1' && year !== '0'){
+        if (period !== '-1' && year !== '0') {
             query = `
                 select sum(payment_amount) amount, 
                 (select dob from clients where clients.id = (select userid from applications where applications.id = applicationid)) dob,
@@ -8146,18 +7724,18 @@ users.get('/demographic-badloans-report', function(req, res, next){
                 `;
         }
     }
-    db.query(query, function(error, results, fields){
-        if (error){
-            res.send({"status": 500, "error": error, "response": null, 'message': payload});
+    db.query(query, function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null, 'message': payload });
         }
         else {
             payload.badloans = results;
-            res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
+            res.send({ "status": 200, "error": null, "response": "Success", 'message': payload });
         }
     });
 });
 
-users.get('/demographic-overdues-report', function(req, res, next){
+users.get('/demographic-overdues-report', function (req, res, next) {
     let report = req.query.trend,
         filter = req.query.filter,
         period = req.query.period,
@@ -8165,14 +7743,14 @@ users.get('/demographic-overdues-report', function(req, res, next){
         year = req.query.year,
         frequency = req.query.frequency,
         payload = {};
-    if (filter === 'Gender'){
+    if (filter === 'Gender') {
         query = `select
                 sum(payment_amount) amount, 
                 (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender
                 from application_schedules 
                 where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0  
                 and payment_collect_date < (select curdate()) group by gender  `;
-        if (period !== '-1' && year !== '0'){
+        if (period !== '-1' && year !== '0') {
             query = `select
                 sum(payment_amount) amount, 
                 (select gender from clients where clients.id = (select userid from applications where applications.id = applicationid)) gender
@@ -8182,7 +7760,7 @@ users.get('/demographic-overdues-report', function(req, res, next){
                 and payment_collect_date < (select curdate()) group by gender  `;
         }
     }
-    if (filter === 'Age'){
+    if (filter === 'Age') {
         query = `select
                 sum(payment_amount) amount, 
                 (select dob from clients where clients.id = (select userid from applications where applications.id = applicationid)) dob,
@@ -8200,7 +7778,7 @@ users.get('/demographic-overdues-report', function(req, res, next){
                 from application_schedules 
                 where payment_status = 0 and status = 1 and applicationID in (select a.ID from applications a where a.status = 2) and (select close_status from applications where applications.id = applicationID) = 0  
                 and payment_collect_date < (select curdate()) group by age_range  `;
-        if (period !== '-1' && year !== '0'){
+        if (period !== '-1' && year !== '0') {
             query = `select
                 sum(payment_amount) amount, 
                 (select dob from clients where clients.id = (select userid from applications where applications.id = applicationid)) dob,
@@ -8221,23 +7799,23 @@ users.get('/demographic-overdues-report', function(req, res, next){
                 and payment_collect_date < (select curdate()) group by age_range  `;
         }
     }
-    db.query(query, function(error, results, fields){
-        if (error){
-            res.send({"status": 500, "error": error, "response": null, 'message': payload});
+    db.query(query, function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null, 'message': payload });
         }
         else {
             payload.overdues = results;
-            res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
+            res.send({ "status": 200, "error": null, "response": "Success", 'message': payload });
         }
     });
 });
 
-users.get('/demographic-age-reports', function(req, res, next){
+users.get('/demographic-age-reports', function (req, res, next) {
 
 });
 
 /*Unfortunately won't be called anymore*/
-users.get('/growth-trends', function(req, res, next){
+users.get('/growth-trends', function (req, res, next) {
     let query, query1, query2, payload;
     query = 'select sum(loan_amount) amount, DATE_FORMAT(disbursement_date, \'%M, %Y\') period ' +
         'from applications ' +
@@ -8251,25 +7829,25 @@ users.get('/growth-trends', function(req, res, next){
         'and applicationid in (select id from applications where status = 2)' +
         'group by extract(year_month from interest_collect_date)';
     payload = {};
-    db.query(query, function(error, results, fields){
-        if (error){
-            res.send({"status": 500, "error": error, "response": null, 'message': payload});
+    db.query(query, function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null, 'message': payload });
         }
         else {
             payload.disbursements = results;
-            db.query(query1, function(error, results, fields) {
-                if (error){
-                    res.send({"status": 500, "error": error, "response": null, 'message': payload});
+            db.query(query1, function (error, results, fields) {
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null, 'message': payload });
                 }
                 else {
                     payload.interest_received = results;
-                    db.query(query2, function(error, results, fields) {
-                        if (error){
-                            res.send({"status": 500, "error": error, "response": null, 'message': payload});
+                    db.query(query2, function (error, results, fields) {
+                        if (error) {
+                            res.send({ "status": 500, "error": error, "response": null, 'message': payload });
                         }
                         else {
                             payload.interest_receivable = results;
-                            res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
+                            res.send({ "status": 200, "error": null, "response": "Success", 'message': payload });
                         }
                     });
                 }
@@ -8278,7 +7856,7 @@ users.get('/growth-trends', function(req, res, next){
     });
 });
 
-users.get('/disbursement-trends', function(req, res, next){
+users.get('/disbursement-trends', function (req, res, next) {
     let query,
         year = req.query.year,
         frequency = req.query.frequency;
@@ -8287,53 +7865,53 @@ users.get('/disbursement-trends', function(req, res, next){
         'from applications ' +
         'where status = 2 and extract(year_month from disbursement_date) <> (select extract(year_month from curdate())) ' +
         'group by extract(year_month from disbursement_date)';
-    if (!frequency || frequency === '-1' || frequency === '2' && year === '0'){
+    if (!frequency || frequency === '-1' || frequency === '2' && year === '0') {
         query = 'select sum(loan_amount) amount, DATE_FORMAT(disbursement_date, \'%M, %Y\') period ' +
             'from applications ' +
             'where status = 2 and extract(year_month from disbursement_date) <> (select extract(year_month from curdate())) ' +
             'group by extract(year_month from disbursement_date)';
     }
-    if (frequency && frequency === '2' && year !== '0'){
+    if (frequency && frequency === '2' && year !== '0') {
         query = 'select sum(loan_amount) amount, DATE_FORMAT(disbursement_date, \'%M, %Y\') period ' +
             'from applications ' +
             'where status = 2 ' +
-            'and DATE_FORMAT(disbursement_date, \'%Y\') = '+year+' ' +
+            'and DATE_FORMAT(disbursement_date, \'%Y\') = ' + year + ' ' +
             'and extract(year_month from disbursement_date) <> (select extract(year_month from curdate())) ' +
             'group by extract(year_month from disbursement_date)';
     }
-    if (frequency && frequency === '3'){
+    if (frequency && frequency === '3') {
         query = 'select sum(loan_amount) amount, DATE_FORMAT(disbursement_date, \'%Y\') period ' +
             'from applications ' +
             'where status = 2 and extract(year from disbursement_date) <> (select extract(year from curdate())) ' +
             'group by period';
     }
-    if (frequency && frequency === '4' && year !== '0'){
+    if (frequency && frequency === '4' && year !== '0') {
         query = 'select sum(loan_amount) amount, concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) period ' +
             'from applications ' +
             'where status = 2 ' +
             'and concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) <> (select concat(\'Q\', extract(quarter from curdate()),\'-\' , extract(year from curdate()))) ' +
-            'and DATE_FORMAT(disbursement_date, \'%Y\') = '+year+' ' +
+            'and DATE_FORMAT(disbursement_date, \'%Y\') = ' + year + ' ' +
             'group by period';
     }
-    if (frequency && frequency === '4' && year === '0'){
+    if (frequency && frequency === '4' && year === '0') {
         query = 'select sum(loan_amount) amount, concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) period ' +
             'from applications ' +
             'where status = 2 ' +
             'and concat(\'Q\',quarter(disbursement_date),\'-\', year(disbursement_date)) <> (select concat(\'Q\', extract(quarter from curdate()),\'-\' , extract(year from curdate()))) ' +
             'group by period order by extract(year_month from disbursement_date)';
     }
-    db.query(query, function(error, results, fields){
-        if (error){
-            res.send({"status": 500, "error": error, "response": null, 'message': payload});
+    db.query(query, function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null, 'message': payload });
         }
         else {
             payload.disbursements = results;
-            res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
+            res.send({ "status": 200, "error": null, "response": "Success", 'message': payload });
         }
     });
 });
 
-users.get('/interest-received-trends', function(req, res, next){
+users.get('/interest-received-trends', function (req, res, next) {
     let query,
         year = req.query.year,
         frequency = req.query.frequency;
@@ -8342,51 +7920,51 @@ users.get('/interest-received-trends', function(req, res, next){
         'from schedule_history ' +
         'where status = 1 and extract(year_month from payment_date) <> (select extract(year_month from curdate())) ' +
         'and applicationid in (select id from applications where status = 2) group by extract(year_month from payment_date)';
-    if (!frequency || frequency === '-1' || frequency === '2' && year === '0'){
+    if (!frequency || frequency === '-1' || frequency === '2' && year === '0') {
         query = 'select sum(interest_amount) amount, DATE_FORMAT(payment_date, \'%M, %Y\') period ' +
             'from schedule_history ' +
             'where status = 1 and extract(year_month from payment_date) <> (select extract(year_month from curdate())) ' +
             'and applicationid in (select id from applications where status = 2) group by extract(year_month from payment_date)';
     }
-    if (frequency && frequency === '2' && year !== '0'){
+    if (frequency && frequency === '2' && year !== '0') {
         query = 'select sum(interest_amount) amount, DATE_FORMAT(payment_date, \'%M, %Y\') period ' +
             'from schedule_history ' +
             'where status = 1  and extract(year_month from payment_date) <> (select extract(year_month from curdate())) ' +
-            'and DATE_FORMAT(payment_date, \'%Y\') = '+year+' and applicationid in (select id from applications where status = 2) group by extract(year_month from payment_date)';
+            'and DATE_FORMAT(payment_date, \'%Y\') = ' + year + ' and applicationid in (select id from applications where status = 2) group by extract(year_month from payment_date)';
     }
-    if (frequency && frequency === '3'){
+    if (frequency && frequency === '3') {
         query = 'select sum(interest_amount) amount, DATE_FORMAT(payment_date, \'%Y\') period ' +
             'from schedule_history ' +
             'where status = 1  and extract(year from payment_date) <> (select extract(year from curdate())) ' +
             'and applicationid in (select id from applications where status = 2) group by period'
     }
-    if (frequency && frequency === '4' && year !== '0'){
+    if (frequency && frequency === '4' && year !== '0') {
         query = 'select sum(interest_amount) amount, concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period ' +
             'from schedule_history ' +
             'where status = 1 and applicationid in (select id from applications where status = 2) ' +
-            'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) <> (select concat(\'Q\', extract(quarter from curdate()),\'-\' , extract(year from curdate()))) '+
-            'and DATE_FORMAT(payment_date, \'%Y\') = '+year+' ' +
+            'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) <> (select concat(\'Q\', extract(quarter from curdate()),\'-\' , extract(year from curdate()))) ' +
+            'and DATE_FORMAT(payment_date, \'%Y\') = ' + year + ' ' +
             'group by period order by extract(year_month from payment_date)';
     }
-    if (frequency && frequency === '4' && year === '0'){
+    if (frequency && frequency === '4' && year === '0') {
         query = 'select sum(interest_amount) amount, concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) period ' +
             'from schedule_history ' +
             'where status = 1 and applicationid in (select id from applications where status = 2) ' +
-            'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) <> (select concat(\'Q\', extract(quarter from curdate()),\'-\' , extract(year from curdate()))) '+
+            'and concat(\'Q\',quarter(payment_date),\'-\', year(payment_date)) <> (select concat(\'Q\', extract(quarter from curdate()),\'-\' , extract(year from curdate()))) ' +
             'group by period order by extract(year_month from payment_date)';
     }
-    db.query(query, function(error, results, fields){
-        if (error){
-            res.send({"status": 500, "error": error, "response": null, 'message': payload});
+    db.query(query, function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null, 'message': payload });
         }
         else {
             payload.interest_received = results;
-            res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
+            res.send({ "status": 200, "error": null, "response": "Success", 'message': payload });
         }
     });
 });
 
-users.get('/interest-receivable-trends', function(req, res, next){
+users.get('/interest-receivable-trends', function (req, res, next) {
     let query,
         year = req.query.year,
         frequency = req.query.frequency,
@@ -8396,35 +7974,35 @@ users.get('/interest-receivable-trends', function(req, res, next){
         'where status = 1 and extract(year_month from interest_collect_date) < (select extract(year_month from curdate())) ' +
         'and applicationid in (select id from applications where status = 2)' +
         'group by extract(year_month from interest_collect_date)';
-    if (!frequency || frequency === '-1' || frequency === '2' && year === '0'){
+    if (!frequency || frequency === '-1' || frequency === '2' && year === '0') {
         query = 'select sum(interest_amount) amount, DATE_FORMAT(interest_collect_date, \'%M, %Y\') period ' +
             'from application_schedules ' +
             'where status = 1  and extract(year_month from interest_collect_date) < (select extract(year_month from curdate())) ' +
             'and applicationid in (select id from applications where status = 2)' +
             'group by extract(year_month from interest_collect_date)';
     }
-    if (frequency && frequency === '2' && year !== '0'){
+    if (frequency && frequency === '2' && year !== '0') {
         query = 'select sum(interest_amount) amount, DATE_FORMAT(interest_collect_date, \'%M, %Y\') period ' +
             'from application_schedules ' +
             'where status = 1 and extract(year_month from interest_collect_date) < (select extract(year_month from curdate()))  ' +
-            'and DATE_FORMAT(interest_collect_date, \'%Y\') = '+year+' and applicationid in (select id from applications where status = 2) group by extract(year_month from interest_collect_date)';
+            'and DATE_FORMAT(interest_collect_date, \'%Y\') = ' + year + ' and applicationid in (select id from applications where status = 2) group by extract(year_month from interest_collect_date)';
     }
-    if (frequency && frequency === '3'){
+    if (frequency && frequency === '3') {
         query = 'select sum(interest_amount) amount, DATE_FORMAT(interest_collect_date, \'%Y\') period ' +
             'from application_schedules ' +
             'where status = 1  and extract(year from interest_collect_date) < (select extract(year from curdate())) ' +
             'and applicationid in (select id from applications where status = 2) group by period'
     }
-    if (frequency && frequency === '4' && year !== '0'){
+    if (frequency && frequency === '4' && year !== '0') {
         query = 'select sum(interest_amount) amount, concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) period ' +
             'from application_schedules ' +
             'where status = 1 and applicationid in (select id from applications where status = 2) ' +
             // 'and concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) < (select concat(\'Q\', extract(quarter from curdate()),\'-\' , extract(year from curdate()))) '+
             'and (quarter(interest_collect_date) + year(interest_collect_date)) < ((select quarter(curdate()) + (select year(curdate()))) ' +
-            'and DATE_FORMAT(interest_collect_date, \'%Y\') = '+year+' ' +
+            'and DATE_FORMAT(interest_collect_date, \'%Y\') = ' + year + ' ' +
             'group by period order by extract(year_month from interest_collect_date)';
     }
-    if (frequency && frequency === '4' && year === '0'){
+    if (frequency && frequency === '4' && year === '0') {
         query = 'select sum(interest_amount) amount, concat(\'Q\',quarter(interest_collect_date),\'-\', year(interest_collect_date)) period ' +
             'from application_schedules ' +
             'where status = 1 and applicationid in (select id from applications where status = 2) ' +
@@ -8432,19 +8010,19 @@ users.get('/interest-receivable-trends', function(req, res, next){
             'and (quarter(interest_collect_date) + year(interest_collect_date)) < ((select quarter(curdate()) + (select year(curdate())))) ' +
             'group by period order by extract(year_month from interest_collect_date)';
     }
-    db.query(query, function(error, results, fields){
-        if (error){
-            res.send({"status": 500, "error": error, "response": null, 'message': payload});
+    db.query(query, function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null, 'message': payload });
         }
         else {
             payload.interest_receivable = results;
-            res.send({"status": 200, "error": null, "response": "Success", 'message': payload});
+            res.send({ "status": 200, "error": null, "response": "Success", 'message': payload });
         }
     });
 });
 
 ///// Treasury Management
-users.get('/treasury/expenses', function(req, res, next){
+users.get('/treasury/expenses', function (req, res, next) {
     let capitalQuery, interestQuery, expensesQuery, disbursementQuery, period = req.query.period, start = req.query.start, end = req.query.end;
     capitalQuery = `
                 select (
@@ -8487,7 +8065,7 @@ users.get('/treasury/expenses', function(req, res, next){
                                     where day(date_disbursed) = day(curdate()))
                             end
                         as average`;
-    if (period && period === '0'){
+    if (period && period === '0') {
         capitalQuery = `
                 select (
                     (select case when sum(b.amount) is null then 0 else sum(b.amount) end 
@@ -8531,7 +8109,7 @@ users.get('/treasury/expenses', function(req, res, next){
                             end
                         as average`;
     }
-    if (period && period === '1'){
+    if (period && period === '1') {
         capitalQuery = `
                 select (
                     (select case when sum(b.amount) is null then 0 else sum(b.amount) end 
@@ -8574,7 +8152,7 @@ users.get('/treasury/expenses', function(req, res, next){
                             end
                         as average`;
     }
-    if (period && period === '2'){
+    if (period && period === '2') {
         capitalQuery = `
                 select (
                     (select case when sum(b.amount) is null then 0 else sum(b.amount) end 
@@ -8618,7 +8196,7 @@ users.get('/treasury/expenses', function(req, res, next){
                                 end
                             as average`;
     }
-    if (period && period === '3'){
+    if (period && period === '3') {
         capitalQuery = `
                 select (
                     (select case when sum(b.amount) is null then 0 else sum(b.amount) end  
@@ -8666,31 +8244,31 @@ users.get('/treasury/expenses', function(req, res, next){
                             `;
     }
     let response = {};
-    db.query(capitalQuery, function(error, results, fields){
-        if (error){
-            res.send({"status": 500, "error": error, "response": null});
+    db.query(capitalQuery, function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         }
         else {
             response.capital = results;
-            db.query(interestQuery, function(error, results, fields){
-                if (error){
-                    res.send({"status": 500, "error": error, "response": null});
+            db.query(interestQuery, function (error, results, fields) {
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 }
                 else {
                     response.interests = results;
-                    db.query(expensesQuery, function(error, results, fields){
-                        if (error){
-                            res.send({"status": 500, "error": error, "response": null});
+                    db.query(expensesQuery, function (error, results, fields) {
+                        if (error) {
+                            res.send({ "status": 500, "error": error, "response": null });
                         }
                         else {
                             response.expenses = results;
-                            db.query(disbursementQuery, function(error, results, fields){
-                                if (error){
-                                    res.send({"status": 500, "error": error, "response": null});
+                            db.query(disbursementQuery, function (error, results, fields) {
+                                if (error) {
+                                    res.send({ "status": 500, "error": error, "response": null });
                                 }
                                 else {
                                     response.disbursements = results;
-                                    res.send({"status": 200, "error": null, "response": "Success", 'message': response});
+                                    res.send({ "status": 200, "error": null, "response": "Success", 'message': response });
                                 }
                             });
                         }
@@ -8701,7 +8279,7 @@ users.get('/treasury/expenses', function(req, res, next){
     });
 });
 
-users.get('/treasury/income', function(req, res, next){
+users.get('/treasury/income', function (req, res, next) {
     let principalQuery, interestQuery, period = req.query.period, start = req.query.start, end = req.query.end;
     principalQuery = `
                 select sum(payment_amount) as due
@@ -8715,7 +8293,7 @@ users.get('/treasury/income', function(req, res, next){
                 where applicationID in (select ID from applications where status = 2)
                 and status = 1 and payment_collect_date = curdate()
                 `;
-    if (period && period === '0'){
+    if (period && period === '0') {
         principalQuery = `
                 select sum(payment_amount) as due
                 from application_schedules sh
@@ -8729,7 +8307,7 @@ users.get('/treasury/income', function(req, res, next){
                 and status = 1 and timestamp(payment_collect_date) between timestamp("${start}") and timestamp("${end}")
                 `;
     }
-    if (period && period === '1'){
+    if (period && period === '1') {
         principalQuery = `
                 select sum(payment_amount) as due
                 from application_schedules sh
@@ -8743,7 +8321,7 @@ users.get('/treasury/income', function(req, res, next){
                 and status = 1 and payment_collect_date = curdate()
                 `;
     }
-    if (period && period === '2'){
+    if (period && period === '2') {
         principalQuery = `
                 select sum(payment_amount) as due
                 from application_schedules sh
@@ -8757,7 +8335,7 @@ users.get('/treasury/income', function(req, res, next){
                 and status = 1 and yearweek(payment_collect_date) = yearweek(curdate())
                 `;
     }
-    if (period && period === '3'){
+    if (period && period === '3') {
         principalQuery = `
                 select sum(payment_amount) as due
                 from application_schedules sh
@@ -8772,26 +8350,26 @@ users.get('/treasury/income', function(req, res, next){
                 `;
     }
     let response = {};
-    db.query(principalQuery, function(error, results, fields){
-        if (error){
-            res.send({"status": 500, "error": error, "response": null});
+    db.query(principalQuery, function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         }
         else {
             response.capital = results;
-            db.query(interestQuery, function(error, results, fields){
-                if (error){
-                    res.send({"status": 500, "error": error, "response": null});
+            db.query(interestQuery, function (error, results, fields) {
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 }
                 else {
                     response.interests = results;
-                    res.send({"status": 200, "error": null, "response": "Success", 'message': response});
+                    res.send({ "status": 200, "error": null, "response": "Success", 'message': response });
                 }
             });
         }
     });
 });
 
-users.get('/investment-figures', function(req, res, next){
+users.get('/investment-figures', function (req, res, next) {
     let period = req.query.period,
         day = req.query.day,
         capitalQuery, interestQuery;
@@ -8822,8 +8400,8 @@ users.get('/investment-figures', function(req, res, next){
                     and a.investment_mature_date = curdate())
                 ) as amount
                 `;
-    if (day && day!== ''){
-        day = "'"+day+"'";
+    if (day && day !== '') {
+        day = "'" + day + "'";
         capitalQuery = `
                 select (
                     (select case when sum(b.amount) is null then 0 else sum(b.amount) end  
@@ -8851,8 +8429,8 @@ users.get('/investment-figures', function(req, res, next){
                 ) as amount
                 `;
     }
-    if (period && period == '1'){ //daily
-        day = "'"+day+"'";
+    if (period && period == '1') { //daily
+        day = "'" + day + "'";
         capitalQuery = `
                 select (
                     (select case when sum(b.amount) is null then 0 else sum(b.amount) end  
@@ -8880,8 +8458,8 @@ users.get('/investment-figures', function(req, res, next){
                 ) as amount
                         `;
     }
-    if (period && period == '2'){ //weekly
-        day = "'"+day+"'";
+    if (period && period == '2') { //weekly
+        day = "'" + day + "'";
         capitalQuery = `
                 select (
                     (select case when sum(b.amount) is null then 0 else sum(b.amount) end 
@@ -8909,8 +8487,8 @@ users.get('/investment-figures', function(req, res, next){
                 ) as amount
                 `;
     }
-    if (day && day!== '' && period && period == '3'){ //monthly
-        day = "'"+day+"'";
+    if (day && day !== '' && period && period == '3') { //monthly
+        day = "'" + day + "'";
         capitalQuery = `
                 select (
                     (select case when sum(b.amount) is null then 0 else sum(b.amount) end  
@@ -9055,26 +8633,26 @@ users.get('/investment-figures', function(req, res, next){
     //             `;
     // }
     let response = {};
-    db.query(capitalQuery, function(error, results, fields){
-        if (error){
-            res.send({"status": 500, "error": error, "response": null});
+    db.query(capitalQuery, function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         }
         else {
             response.capital = results;
-            db.query(interestQuery, function(error, results, fields){
-                if (error){
-                    res.send({"status": 500, "error": error, "response": null});
+            db.query(interestQuery, function (error, results, fields) {
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 }
                 else {
                     response.interests = results;
-                    res.send({"status": 200, "error": null, "response": "Success", 'message': response});
+                    res.send({ "status": 200, "error": null, "response": "Success", 'message': response });
                 }
             });
         }
     });
 });
 
-users.get('/loan-figures', function(req, res, next){
+users.get('/loan-figures', function (req, res, next) {
     let period = req.query.period,
         day = req.query.day,
         principalQuery, interestQuery;
@@ -9090,8 +8668,8 @@ users.get('/loan-figures', function(req, res, next){
                 where applicationID in (select ID from applications where status = 2)
                 and status = 1 and payment_collect_date = curdate()
                 `;
-    if (day && day!== ''){
-        day = "'"+day+"'";
+    if (day && day !== '') {
+        day = "'" + day + "'";
         principalQuery = `
                 select sum(payment_amount+interest_amount) as due
                 from application_schedules sh
@@ -9105,8 +8683,8 @@ users.get('/loan-figures', function(req, res, next){
                 and status = 1 and payment_collect_date = ${day}
                 `;
     }
-    if (period && period == '1'){ //daily
-        day = "'"+day+"'";
+    if (period && period == '1') { //daily
+        day = "'" + day + "'";
         principalQuery = `
                 select sum(payment_amount+interest_amount) as due
                 from application_schedules sh
@@ -9120,8 +8698,8 @@ users.get('/loan-figures', function(req, res, next){
                 and status = 1 and payment_collect_date = curdate()
                 `;
     }
-    if (period && period == '2'){ //weekly
-        day = "'"+day+"'";
+    if (period && period == '2') { //weekly
+        day = "'" + day + "'";
         principalQuery = `
                 select sum(payment_amount+interest_amount) as due
                 from application_schedules sh
@@ -9135,8 +8713,8 @@ users.get('/loan-figures', function(req, res, next){
                 and status = 1 and yearweek(payment_collect_date) = yearweek(curdate())
                 `;
     }
-    if (period && period == '3'){ //monthly
-        day = "'"+day+"'";
+    if (period && period == '3') { //monthly
+        day = "'" + day + "'";
         principalQuery = `
                 select sum(payment_amount+interest_amount) as due
                 from application_schedules sh
@@ -9211,30 +8789,30 @@ users.get('/loan-figures', function(req, res, next){
     //             `;
     // }
     let response = {};
-    db.query(principalQuery, function(error, results, fields){
-        if (error){
-            res.send({"status": 500, "error": error, "response": null});
+    db.query(principalQuery, function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         }
         else {
             response.capital = results;
-            db.query(interestQuery, function(error, results, fields){
-                if (error){
-                    res.send({"status": 500, "error": error, "response": null});
+            db.query(interestQuery, function (error, results, fields) {
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 }
                 else {
                     response.interests = results;
-                    res.send({"status": 200, "error": null, "response": "Success", 'message': response});
+                    res.send({ "status": 200, "error": null, "response": "Success", 'message': response });
                 }
             });
         }
     });
 });
 
-users.get('/predicted-loan-figures', function(req, res, next){
+users.get('/predicted-loan-figures', function (req, res, next) {
     let period = req.query.period,
         day = req.query.day,
         principalQuery, interestQuery;
-    day = "'"+day+"'";
+    day = "'" + day + "'";
     principalQuery = `
                 select 
                     case 
@@ -9251,7 +8829,7 @@ users.get('/predicted-loan-figures', function(req, res, next){
                     end
                 as average
                 `;
-    if (day && day!== ''){
+    if (day && day !== '') {
         principalQuery = `
                 select 
                     case 
@@ -9269,7 +8847,7 @@ users.get('/predicted-loan-figures', function(req, res, next){
                 as average
                 `;
     }
-    if (day && day!== '' && period && period == '1'){ //daily
+    if (day && day !== '' && period && period == '1') { //daily
         principalQuery = `
                 select 
                     case 
@@ -9287,7 +8865,7 @@ users.get('/predicted-loan-figures', function(req, res, next){
                 as average
                 `;
     }
-    if (period && period == '2'){ //weekly
+    if (period && period == '2') { //weekly
         principalQuery = `
                 select 
                     case 
@@ -9306,7 +8884,7 @@ users.get('/predicted-loan-figures', function(req, res, next){
                 as average
                 `;
     }
-    if (period && period == '3'){ //monthly
+    if (period && period == '3') { //monthly
         principalQuery = `
                 select 
                     case 
@@ -9326,17 +8904,17 @@ users.get('/predicted-loan-figures', function(req, res, next){
                 as average
                 `;
     }
-    db.query(principalQuery, function(error, results, fields){
-        if (error){
-            res.send({"status": 500, "error": error, "response": null});
+    db.query(principalQuery, function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         }
         else {
-            res.send({"status": 200, "error": null, "response": "Success", 'message': results});
+            res.send({ "status": 200, "error": null, "response": "Success", 'message': results });
         }
     });
 });
 
-users.get('/investment-payouts', function(req, res, next){
+users.get('/investment-payouts', function (req, res, next) {
     let period = req.query.period,
         day = req.query.day,
         capitalQuery, interestQuery;
@@ -9347,8 +8925,8 @@ users.get('/investment-payouts', function(req, res, next){
                 where a.investment_mature_date <> ''
                 and investment_mature_date = curdate()
                 `;
-    if (period && period == '1'){
-        day = "'"+day+"'";
+    if (period && period == '1') {
+        day = "'" + day + "'";
         capitalQuery = `
                 select id, (select fullname from clients where clients.id = a.clientId) client, a.amount, investment_mature_date
                 from investments a
@@ -9356,8 +8934,8 @@ users.get('/investment-payouts', function(req, res, next){
                 and investment_mature_date = curdate()
                 `;
     }
-    if (period && period == '2'){
-        day = "'"+day+"'";
+    if (period && period == '2') {
+        day = "'" + day + "'";
         capitalQuery = `
                 select id, (select fullname from clients where clients.id = a.clientId) client, a.amount, investment_mature_date
                 from investments a
@@ -9365,8 +8943,8 @@ users.get('/investment-payouts', function(req, res, next){
                 and yearweek(a.investment_mature_date) = yearweek(curdate()) 
                 `;
     }
-    if (period && period == '3'){
-        day = "'"+day+"'";
+    if (period && period == '3') {
+        day = "'" + day + "'";
         capitalQuery = `
                 select id, (select fullname from clients where clients.id = a.clientId) client, a.amount, investment_mature_date
                 from investments a
@@ -9374,17 +8952,17 @@ users.get('/investment-payouts', function(req, res, next){
                 and extract(year_month from a.investment_mature_date) = extract(year_month from curdate())
                 `;
     }
-    db.query(capitalQuery, function(error, results, fields){
-        if (error){
-            res.send({"status": 500, "error": error, "response": null});
+    db.query(capitalQuery, function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         }
         else {
-            res.send({"status": 200, "error": null, "response": "Success", 'message': results});
+            res.send({ "status": 200, "error": null, "response": "Success", 'message': results });
         }
     });
 });
 
-users.get('/investment-interests', function(req, res, next){
+users.get('/investment-interests', function (req, res, next) {
     let period = req.query.period,
         day = req.query.day,
         capitalQuery, interestQuery;
@@ -9397,8 +8975,8 @@ users.get('/investment-interests', function(req, res, next){
                 and (select investment_mature_date from investments i where i.id = investmentid) = curdate()
                 group by investmentid
                 `;
-    if (period && period == '1'){
-        day = "'"+day+"'";
+    if (period && period == '1') {
+        day = "'" + day + "'";
         capitalQuery = `
                 select investmentid, (select fullname from clients where clients.id = clientId) client, sum(amount) amount, clientId,
                 (select investment_mature_date from investments where investments.id = investmentid) investment_mature_date
@@ -9408,8 +8986,8 @@ users.get('/investment-interests', function(req, res, next){
                 group by investmentid
                 `;
     }
-    if (period && period == '2'){
-        day = "'"+day+"'";
+    if (period && period == '2') {
+        day = "'" + day + "'";
         capitalQuery = `
                 select investmentid, (select fullname from clients where clients.id = clientId) client, sum(amount) amount, 
                 (select investment_mature_date from investments where investments.id = investmentid) investment_mature_date
@@ -9419,8 +8997,8 @@ users.get('/investment-interests', function(req, res, next){
                 group by investmentid
                 `;
     }
-    if (period && period == '3'){
-        day = "'"+day+"'";
+    if (period && period == '3') {
+        day = "'" + day + "'";
         capitalQuery = `
                 select investmentid, (select fullname from clients where clients.id = clientId) client, sum(amount) amount, 
                 (select investment_mature_date from investments where investments.id = investmentid) investment_mature_date
@@ -9430,17 +9008,17 @@ users.get('/investment-interests', function(req, res, next){
                 group by investmentid
                 `;
     }
-    db.query(capitalQuery, function(error, results, fields){
-        if (error){
-            res.send({"status": 500, "error": error, "response": null});
+    db.query(capitalQuery, function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         }
         else {
-            res.send({"status": 200, "error": null, "response": "Success", 'message': results});
+            res.send({ "status": 200, "error": null, "response": "Success", 'message': results });
         }
     });
 });
 
-users.get('/loan-receivables', function(req, res, next){
+users.get('/loan-receivables', function (req, res, next) {
     let period = req.query.period,
         day = req.query.day,
         principalQuery, interestQuery;
@@ -9451,8 +9029,8 @@ users.get('/loan-receivables', function(req, res, next){
                 and status = 1 and payment_collect_date = curdate()
                 group by applicationID
                 `;
-    if (period && period== '1'){
-        day = "'"+day+"'";
+    if (period && period == '1') {
+        day = "'" + day + "'";
         principalQuery = `
                 select applicationID, (select fullname from clients c where c.id = (select userid from applications a where a.id = applicationID)) client, payment_amount, interest_amount, payment_collect_date
                 from application_schedules sh
@@ -9462,8 +9040,8 @@ users.get('/loan-receivables', function(req, res, next){
                 `;
     }
 
-    if (period && period== '2'){
-        day = "'"+day+"'";
+    if (period && period == '2') {
+        day = "'" + day + "'";
         principalQuery = `
                 select applicationID, (select fullname from clients c where c.id = (select userid from applications a where a.id = applicationID)) client, payment_amount, interest_amount, payment_collect_date
                 from application_schedules sh
@@ -9473,8 +9051,8 @@ users.get('/loan-receivables', function(req, res, next){
                 `;
     }
 
-    if (period && period == '3'){
-        day = "'"+day+"'";
+    if (period && period == '3') {
+        day = "'" + day + "'";
         principalQuery = `
                 select applicationID, (select fullname from clients c where c.id = (select userid from applications a where a.id = applicationID)) client, payment_amount, interest_amount, payment_collect_date
                 from application_schedules sh
@@ -9485,40 +9063,40 @@ users.get('/loan-receivables', function(req, res, next){
     }
 
     let response = {};
-    db.query(principalQuery, function(error, results, fields){
-        if (error){
-            res.send({"status": 500, "error": error, "response": null});
+    db.query(principalQuery, function (error, results, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         }
         else {
-            res.send({"status": 200, "error": null, "response": "Success", 'message': results});
+            res.send({ "status": 200, "error": null, "response": "Success", 'message': results });
         }
     });
 });
 
-users.post('/new-expense', function(req, res, next) {
+users.post('/new-expense', function (req, res, next) {
     let postData = req.body,
-        query =  'INSERT INTO expenses Set ?',
+        query = 'INSERT INTO expenses Set ?',
         query2 = 'select * from expenses where expense_name = ?';
     postData.status = 1;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.query(query2,req.body.expense_name, function (error, results, fields) {
+    db.query(query2, req.body.expense_name, function (error, results, fields) {
         if (results && results[0])
-            return res.send(JSON.stringify({"status": 200, "error": null, "response": results, "message": "Expense already exists!"}));
-        db.query(query,{"expense_name":postData.expense_name, "amount":postData.amount, "date_of_spend":postData.date_of_spend, "date_created": postData.date_created, "status": 1}, function (error, results, fields) {
-            if(error){
-                res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+            return res.send(JSON.stringify({ "status": 200, "error": null, "response": results, "message": "Expense already exists!" }));
+        db.query(query, { "expense_name": postData.expense_name, "amount": postData.amount, "date_of_spend": postData.date_of_spend, "date_created": postData.date_created, "status": 1 }, function (error, results, fields) {
+            if (error) {
+                res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
             } else {
-                res.send(JSON.stringify({"status": 200, "error": null, "response": "New Expense Added!"}));
+                res.send(JSON.stringify({ "status": 200, "error": null, "response": "New Expense Added!" }));
             }
         });
     });
 });
 
-users.get('/expenses', function(req, res, next) {
+users.get('/expenses', function (req, res, next) {
     let query = 'SELECT * from expenses';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
@@ -9526,33 +9104,33 @@ users.get('/expenses', function(req, res, next) {
 });
 
 /* Change Expense Status */
-users.post('/del-expense/:id', function(req, res, next) {
+users.post('/del-expense/:id', function (req, res, next) {
     let date = Date.now(),
         postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let payload = [postData.date_modified, req.params.id],
         query = 'Update expenses SET status = 0, date_modified = ? where id=?';
     db.query(query, payload, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
-            res.send(JSON.stringify({"status": 200, "error": null, "response": "Expense Disabled!"}));
+            res.send(JSON.stringify({ "status": 200, "error": null, "response": "Expense Disabled!" }));
         }
     });
 });
 
 /* Reactivate Expense Type */
-users.post('/en-expense/:id', function(req, res, next) {
+users.post('/en-expense/:id', function (req, res, next) {
     let date = Date.now(),
         postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let payload = [postData.date_modified, req.params.id],
         query = 'Update expenses SET status = 1, date_modified = ? where id=?';
     db.query(query, payload, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
-            res.send(JSON.stringify({"status": 200, "error": null, "response": "Expense Re-enabled!"}));
+            res.send(JSON.stringify({ "status": 200, "error": null, "response": "Expense Re-enabled!" }));
         }
     });
 });
@@ -9561,57 +9139,57 @@ users.post('/en-expense/:id', function(req, res, next) {
 /* Create New Loan Classification
  */
 
-users.post('/new-classification-type', function(req, res, next) {
+users.post('/new-classification-type', function (req, res, next) {
     let postData = req.body,
-        query =  'INSERT INTO loan_classifications Set ?',
+        query = 'INSERT INTO loan_classifications Set ?',
         query2 = 'select * from loan_classifications where description = ?';
     postData.status = 1;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.query(query2,req.body.description, function (error, results, fields) {
+    db.query(query2, req.body.description, function (error, results, fields) {
         if (results && results[0])
-            return res.send(JSON.stringify({"status": 200, "error": null, "response": results, "message": "Classifcation already exists!"}));
-        db.query(query,{"description":postData.description, "min_days":postData.min_days, "max_days":postData.max_days, "un_max":postData.un_max, "date_created": postData.date_created, "status": 1}, function (error, results, fields) {
-            if(error){
-                res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+            return res.send(JSON.stringify({ "status": 200, "error": null, "response": results, "message": "Classifcation already exists!" }));
+        db.query(query, { "description": postData.description, "min_days": postData.min_days, "max_days": postData.max_days, "un_max": postData.un_max, "date_created": postData.date_created, "status": 1 }, function (error, results, fields) {
+            if (error) {
+                res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
             } else {
-                res.send(JSON.stringify({"status": 200, "error": null, "response": "New Loan Classifcation Added!"}));
+                res.send(JSON.stringify({ "status": 200, "error": null, "response": "New Loan Classifcation Added!" }));
             }
         });
     });
 });
 
-users.post('/edit-classification/:id/', function(req, res, next) {
+users.post('/edit-classification/:id/', function (req, res, next) {
     let date = Date.now(),
         postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let payload = [postData.description, postData.min_days, postData.max_days, postData.un_max, postData.date_modified, req.params.id],
         query = 'Update loan_classifications SET description=?, min_days=?, max_days=?, un_max =?, date_modified =? where id=?';
     db.query(query, payload, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         }
         else {
-            res.send(JSON.stringify({"status": 200, "error": null, "response": "Classification Details Updated"}));
+            res.send(JSON.stringify({ "status": 200, "error": null, "response": "Classification Details Updated" }));
         }
     });
 });
 
-users.get('/classification-types', function(req, res, next) {
+users.get('/classification-types', function (req, res, next) {
     let query = 'SELECT * from loan_classifications where status = 1';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
     });
 });
 
-users.get('/classification-types-full', function(req, res, next) {
+users.get('/classification-types-full', function (req, res, next) {
     let query = 'SELECT * from loan_classifications';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
@@ -9619,42 +9197,42 @@ users.get('/classification-types-full', function(req, res, next) {
 });
 
 /* Change Classification Type Status */
-users.post('/del-class-type/:id', function(req, res, next) {
+users.post('/del-class-type/:id', function (req, res, next) {
     let date = Date.now(),
         postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let payload = [postData.date_modified, req.params.id],
         query = 'Update loan_classifications SET status = 0, date_modified = ? where id=?';
     db.query(query, payload, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
-            res.send(JSON.stringify({"status": 200, "error": null, "response": "Role Disabled!"}));
+            res.send(JSON.stringify({ "status": 200, "error": null, "response": "Role Disabled!" }));
         }
     });
 });
 
 /* Reactivate Classification Type */
-users.post('/en-class-type/:id', function(req, res, next) {
+users.post('/en-class-type/:id', function (req, res, next) {
     let date = Date.now(),
         postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let payload = [postData.date_modified, req.params.id],
         query = 'Update loan_classifications SET status = 1, date_modified = ? where id=?';
     db.query(query, payload, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
-            res.send(JSON.stringify({"status": 200, "error": null, "response": "Role Re-enabled!"}));
+            res.send(JSON.stringify({ "status": 200, "error": null, "response": "Role Re-enabled!" }));
         }
     });
 });
 
-users.get('/class-dets/:id', function(req, res, next) {
+users.get('/class-dets/:id', function (req, res, next) {
     let query = 'SELECT * from loan_classifications where id = ? ';
     db.query(query, req.params.id, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(results);
         }
@@ -9664,41 +9242,41 @@ users.get('/class-dets/:id', function(req, res, next) {
 
 /////// Activity
 /*Create New Activity Type*/
-users.post('/new-activity-type', function(req, res, next) {
+users.post('/new-activity-type', function (req, res, next) {
     let postData = req.body,
-        query =  'INSERT INTO activity_types Set ?',
+        query = 'INSERT INTO activity_types Set ?',
         query2 = 'select * from activity_types where activity_name = ?';
     postData.status = 1;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.query(query2,req.body.role, function (error, results, fields) {
+    db.query(query2, req.body.role, function (error, results, fields) {
         if (results && results[0])
-            return res.send(JSON.stringify({"status": 200, "error": null, "response": results, "message": "Activity type already exists!"}));
-        db.query(query,{"activity_name":postData.role, "date_created": postData.date_created, "status": 1}, function (error, results, fields) {
-            if(error){
-                res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+            return res.send(JSON.stringify({ "status": 200, "error": null, "response": results, "message": "Activity type already exists!" }));
+        db.query(query, { "activity_name": postData.role, "date_created": postData.date_created, "status": 1 }, function (error, results, fields) {
+            if (error) {
+                res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
             } else {
-                res.send(JSON.stringify({"status": 200, "error": null, "response": "New Activity Type Added!"}));
+                res.send(JSON.stringify({ "status": 200, "error": null, "response": "New Activity Type Added!" }));
             }
         });
     });
 });
 
-users.get('/activity-types', function(req, res, next) {
+users.get('/activity-types', function (req, res, next) {
     let query = 'SELECT * from activity_types where status = 1';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
     });
 });
 
-users.get('/activity-types-full', function(req, res, next) {
+users.get('/activity-types-full', function (req, res, next) {
     let query = 'SELECT * from activity_types';
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
@@ -9706,30 +9284,30 @@ users.get('/activity-types-full', function(req, res, next) {
 });
 
 /* Add New Activity */
-users.post('/new-activity', function(req, res, next) {
+users.post('/new-activity', function (req, res, next) {
     let data = [],
         postData = req.body,
-        query =  'INSERT INTO activities Set ?',
+        query = 'INSERT INTO activities Set ?',
         query2 = 'SELECT ID from activities where ID = (SELECT MAX(ID) FROM activities)';
     postData.status = 1;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.getConnection(function(err, connection) {
+    db.getConnection(function (err, connection) {
         if (err) throw err;
 
-        connection.query(query,postData, function (error, results, fields) {
-            if(error){
-                res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        connection.query(query, postData, function (error, results, fields) {
+            if (error) {
+                res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
             } else {
-                connection.query(query2, function(error, results, fields){
+                connection.query(query2, function (error, results, fields) {
                     let id = results[0].ID;
-                    connection.query('update activities set attachments = ? where activities.id = ?', [postData.attachments, id], function(error, results, fields){
+                    connection.query('update activities set attachments = ? where activities.id = ?', [postData.attachments, id], function (error, results, fields) {
                         connection.release();
                         let payload = {}
                         payload.category = 'Activity'
                         payload.userid = postData.for_
                         payload.description = 'New Activity Created'
                         notificationsService.log(req, payload)
-                        res.send(JSON.stringify({"status": 200, "error": null, "response": "New Activity Created", "result": id}));
+                        res.send(JSON.stringify({ "status": 200, "error": null, "response": "New Activity Created", "result": id }));
                     });
                 });
             }
@@ -9738,7 +9316,7 @@ users.post('/new-activity', function(req, res, next) {
 });
 
 /* All Activities */
-users.get('/activities', function(req, res, next) {
+users.get('/activities', function (req, res, next) {
     let current_user = req.query.user;
     let team = req.query.team;
     let officer = req.query.officer;
@@ -9750,11 +9328,11 @@ users.get('/activities', function(req, res, next) {
         '(select name from teams where teams.Id = ?) as team_name, ' +
         '(select activity_name from activity_types at where at.id = activity_type) as activity ' +
         'from activities where status = 1 and for_ = ? ';
-    if (team){
+    if (team) {
         query = query.concat(' and category = ?').concat('  and team = ? order by id desc')
         load = [team, current_user, word, team]
     }
-    if (officer){
+    if (officer) {
         query = 'SELECT *, (select count(*) from activity_comments where activityID = activities.ID group by activityID) as comment_count, ' +
             '(select fullname from clients c where c.ID = client) as clients, ' +
             '(select fullname from users where users.id = for_) as user, ' +
@@ -9764,15 +9342,15 @@ users.get('/activities', function(req, res, next) {
         load = [officer]
     }
     db.query(query, load, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
     });
 });
 
-users.get('/all-activities', function(req, res, next) {
+users.get('/all-activities', function (req, res, next) {
     let current_user = req.query.user;
     let team = req.query.team;
     let officer = req.query.officer;
@@ -9785,8 +9363,8 @@ users.get('/all-activities', function(req, res, next) {
         '(select activity_name from activity_types at where at.id = activity_type) as activity ' +
         'from activities where status = 1 and for_ is not null order by ID desc';
     db.query(query, load, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
@@ -9794,7 +9372,7 @@ users.get('/all-activities', function(req, res, next) {
 });
 
 /* Teams */
-users.get('/teams', function(req, res, next) {
+users.get('/teams', function (req, res, next) {
     let current_user = req.query.user;
     let query = 'select teamID, ' +
         '(select name from teams where teams.id = teamID) as team_name ' +
@@ -9802,8 +9380,8 @@ users.get('/teams', function(req, res, next) {
         // '(select users.ID from users where users.fullname = ? and users.status = 1) ' +
         'and status = 1'
     db.query(query, [current_user], function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
@@ -9811,7 +9389,7 @@ users.get('/teams', function(req, res, next) {
 });
 
 /* Team Activities */
-users.get('/team-activities', function(req, res, next) {
+users.get('/team-activities', function (req, res, next) {
     let current_user = req.query.user;
     let word = 'team'
     let query = 'select *, (select count(*) from activity_comments where activityID = activities.ID group by activityID) as comment_count, ' +
@@ -9834,8 +9412,8 @@ users.get('/team-activities', function(req, res, next) {
         'team = 0 and for_ = ? order by id desc';
     db.query(query, [word, current_user, current_user], function (error, results_team, fields) {
         db.query(query2, [current_user], function (error, results_personal, fields) {
-            if(error){
-                res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+            if (error) {
+                res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
             } else {
                 let results = _.orderBy(results_team.concat(results_personal), ['ID'], ['desc']);
                 res.send(JSON.stringify(results));
@@ -9845,17 +9423,17 @@ users.get('/team-activities', function(req, res, next) {
 });
 
 /* Add Comment */
-users.post('/save-comment', function(req, res, next) {
+users.post('/save-comment', function (req, res, next) {
     let data = [],
         postData = req.body,
-        query =  'INSERT INTO activity_comments Set ?';
+        query = 'INSERT INTO activity_comments Set ?';
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
-    db.getConnection(function(err, connection) {
+    db.getConnection(function (err, connection) {
         if (err) throw err;
 
-        connection.query(query,postData, function (error, results, fields) {
-            if(error){
-                res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        connection.query(query, postData, function (error, results, fields) {
+            if (error) {
+                res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
             } else {
                 let payload = {}
                 payload.category = 'Activity'
@@ -9863,19 +9441,19 @@ users.post('/save-comment', function(req, res, next) {
                 payload.description = 'New Activity Comment'
                 payload.affected = postData.activityID
                 notificationsService.log(req, payload)
-                res.send(JSON.stringify({"status": 200, "error": null, "response": "Comment Posted"}));
+                res.send(JSON.stringify({ "status": 200, "error": null, "response": "Comment Posted" }));
             }
         });
     });
 });
 
 /* Activity Comments */
-users.get('/activity-comments', function(req, res, next) {
+users.get('/activity-comments', function (req, res, next) {
     let activity = req.query.activity;
     let query = 'select *, (select fullname from users where users.ID = commenter) as maker from activity_comments where activityID = ?'
     db.query(query, [activity], function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             res.send(results);
         }
@@ -9883,7 +9461,7 @@ users.get('/activity-comments', function(req, res, next) {
 });
 
 /* Activity Details */
-users.get('/activity-details', function(req, res, next) {
+users.get('/activity-details', function (req, res, next) {
     var load = {}
     let activity = req.query.id;
     let query = 'select *, (select count(*) from activity_comments where activityID = ? group by activityID) as comment_count, ' +
@@ -9897,8 +9475,8 @@ users.get('/activity-details', function(req, res, next) {
         load.activity_details = results
         db.query(query2, [activity], function (error, results, fields) {
             load.activity_comments = results
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
+            if (error) {
+                res.send({ "status": 500, "error": error, "response": null });
             } else {
                 res.send(load);
             }
@@ -9907,7 +9485,7 @@ users.get('/activity-details', function(req, res, next) {
 });
 
 /* Client Activities */
-users.get('/client-activities', function(req, res, next) {
+users.get('/client-activities', function (req, res, next) {
     var load = {}
     let client = req.query.id;
     let query = 'select *, ' +
@@ -9917,15 +9495,15 @@ users.get('/client-activities', function(req, res, next) {
         'from activities where client = ?'
     let query2 = 'select *, (select fullname from users where users.ID = commenter) as maker from activity_comments where activityID = ?'
     db.query(query, [client], function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             res.send(results);
         }
     });
 });
 
-users.get('/clients-act', function(req, res, next) {
+users.get('/clients-act', function (req, res, next) {
     let user = req.query.user;
     let team = req.query.team;
     let params;
@@ -9933,13 +9511,13 @@ users.get('/clients-act', function(req, res, next) {
         'from clients where loan_officer = ? ' +
         'and status = 1';
     params = [user];
-    if (team){
+    if (team) {
         query = 'select * from clients where loan_officer in (select memberID from team_members where teamID = ?)';
         params = [team];
     }
     db.query(query, params, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
             res.send(JSON.stringify(results));
         }
@@ -9947,48 +9525,48 @@ users.get('/clients-act', function(req, res, next) {
 });
 
 /* Change Activity Type Status */
-users.post('/del-act-type/:id', function(req, res, next) {
+users.post('/del-act-type/:id', function (req, res, next) {
     let date = Date.now(),
         postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let payload = [postData.date_modified, req.params.id],
         query = 'Update activity_types SET status = 0, date_modified = ? where id=?';
     db.query(query, payload, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
-            res.send(JSON.stringify({"status": 200, "error": null, "response": "Role Disabled!"}));
+            res.send(JSON.stringify({ "status": 200, "error": null, "response": "Role Disabled!" }));
         }
     });
 });
 
 /* Reactivate Role */
-users.post('/en-act-type/:id', function(req, res, next) {
+users.post('/en-act-type/:id', function (req, res, next) {
     let date = Date.now(),
         postData = req.body;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     let payload = [postData.date_modified, req.params.id],
         query = 'Update activity_types SET status = 1, date_modified = ? where id=?';
     db.query(query, payload, function (error, results, fields) {
-        if(error){
-            res.send(JSON.stringify({"status": 500, "error": error, "response": null}));
+        if (error) {
+            res.send(JSON.stringify({ "status": 500, "error": error, "response": null }));
         } else {
-            res.send(JSON.stringify({"status": 200, "error": null, "response": "Role Re-enabled!"}));
+            res.send(JSON.stringify({ "status": 200, "error": null, "response": "Role Re-enabled!" }));
         }
     });
 });
 
 //File Attachments - Activities
-users.post('/attach-files/:id', function(req, res) {
+users.post('/attach-files/:id', function (req, res) {
     if (!req.files) return res.status(400).send('No files were uploaded.');
     if (!req.params.id) return res.status(400).send('No Folder specified!');
-    if (req.body.num === '1'){
-        fs.stat('files/activities/'+req.params.id+'/', function(err) {
+    if (req.body.num === '1') {
+        fs.stat('files/activities/' + req.params.id + '/', function (err) {
             if (!err) {
                 console.log('file or directory exists');
             }
             else if (err.code === 'ENOENT') {
-                fs.mkdirSync('files/activities/'+req.params.id+'/');
+                fs.mkdirSync('files/activities/' + req.params.id + '/');
             }
             let sampleFile = req.files.file,
                 name = sampleFile.name,
@@ -9996,20 +9574,20 @@ users.post('/attach-files/:id', function(req, res) {
                 extension = extArray[extArray.length - 1];
             if (extension) extension = extension.toLowerCase();
 
-            fs.stat('files/activities/'+req.params.id+'/'+name, function (err) {
+            fs.stat('files/activities/' + req.params.id + '/' + name, function (err) {
                 if (err) {
-                    sampleFile.mv('files/activities/'+req.params.id+'/'+name, function(err) {
+                    sampleFile.mv('files/activities/' + req.params.id + '/' + name, function (err) {
                         if (err) return res.status(500).send(err);
                         res.send('File uploaded!');
                     });
                 }
-                else{
-                    fs.unlink('files/activities/'+req.params.id+'/'+name,function(err){
-                        if(err){
+                else {
+                    fs.unlink('files/activities/' + req.params.id + '/' + name, function (err) {
+                        if (err) {
                             res.send('Unable to delete file!');
                         }
-                        else{
-                            sampleFile.mv('files/activities/'+req.params.id+'/'+name, function(err) {
+                        else {
+                            sampleFile.mv('files/activities/' + req.params.id + '/' + name, function (err) {
                                 if (err)
                                     return res.status(500).send(err);
                                 res.send('File uploaded!');
@@ -10023,63 +9601,63 @@ users.post('/attach-files/:id', function(req, res) {
 });
 
 /* GET Activity Attachments. */
-users.get('/attached-images/:folder/', function(req, res, next) {
+users.get('/attached-images/:folder/', function (req, res, next) {
     var array = [];
-    var path = 'files/activities/'+req.params.folder+'/';
-    if (fs.existsSync(path)){
-        fs.readdir(path, function (err, files){
+    var path = 'files/activities/' + req.params.folder + '/';
+    if (fs.existsSync(path)) {
+        fs.readdir(path, function (err, files) {
             var obj = [];
             files = helperFunctions.removeFileDuplicates(path, files);
-            async.forEach(files, function (file, callback){
-                obj.push(path+file)
+            async.forEach(files, function (file, callback) {
+                obj.push(path + file)
                 callback();
-            }, function(data){
+            }, function (data) {
                 //array.push(res);
-                res.send(JSON.stringify({"status": 200, "response":obj}));
+                res.send(JSON.stringify({ "status": 200, "response": obj }));
             });
-        })	;
+        });
     }
     else {
-        res.send(JSON.stringify({"status":500, "response": "No Attachments!"}));
+        res.send(JSON.stringify({ "status": 500, "response": "No Attachments!" }));
     }
 });
 
-users.get('/user-commissions/:id', function(req, res, next) {
+users.get('/user-commissions/:id', function (req, res, next) {
     let query = 'SELECT *,(select u.fullname from users u where u.ID = c.userID) as user,(select s.title from commissions s where s.ID = c.commissionID) as commission,' +
         '(select t.title from targets t where t.ID = c.targetID) as target,(select p.name from sub_periods p where p.ID = c.sub_periodID) as period from user_commissions c where c.status = 1 and c.userID = ? order by c.ID desc';
     db.query(query, [req.params.id], function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "User commissions fetched successfully", "response": results});
+            res.send({ "status": 200, "message": "User commissions fetched successfully", "response": results });
         }
     });
 });
 
-users.post('/user-commissions', function(req, res, next) {
+users.post('/user-commissions', function (req, res, next) {
     req.body.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('SELECT * FROM user_commissions WHERE userID=? AND type=? AND sub_periodID=? AND status = 1',
-        [req.body.userID,req.body.type,req.body.sub_periodID], function (error, result, fields) {
+        [req.body.userID, req.body.type, req.body.sub_periodID], function (error, result, fields) {
             if (result && result[0]) {
-                res.send({"status": 500, "error": "The "+req.body.type+" commission for the same period has already been assigned to this user"});
+                res.send({ "status": 500, "error": "The " + req.body.type + " commission for the same period has already been assigned to this user" });
             } else {
                 db.query('SELECT * FROM users WHERE ID=?', [req.body.userID], function (error, user, fields) {
-                    if(error){
-                        res.send({"status": 500, "error": error, "response": null});
+                    if (error) {
+                        res.send({ "status": 500, "error": error, "response": null });
                     } else {
                         if (user[0]['loan_officer_status'] !== 1)
-                            return res.send({"status": 500, "error": "User must be a loan officer"});
+                            return res.send({ "status": 500, "error": "User must be a loan officer" });
                         db.query('INSERT INTO user_commissions SET ?', req.body, function (error, result, fields) {
-                            if(error){
-                                res.send({"status": 500, "error": error, "response": null});
+                            if (error) {
+                                res.send({ "status": 500, "error": error, "response": null });
                             } else {
                                 let query = 'SELECT *,(select u.fullname from users u where u.ID = c.userID) as user,(select s.title from commissions s where s.ID = c.commissionID) as commission,' +
                                     '(select t.title from targets t where t.ID = c.targetID) as target,(select p.name from sub_periods p where p.ID = c.sub_periodID) as period from user_commissions c where c.status = 1 and c.userID = ? order by c.ID desc';
                                 db.query(query, [req.body.userID], function (error, results, fields) {
-                                    if(error){
-                                        res.send({"status": 500, "error": error, "response": null});
+                                    if (error) {
+                                        res.send({ "status": 500, "error": error, "response": null });
                                     } else {
-                                        res.send({"status": 200, "message": "User commission assigned successfully", "response": results});
+                                        res.send({ "status": 200, "message": "User commission assigned successfully", "response": results });
                                     }
                                 });
                             }
@@ -10090,26 +9668,26 @@ users.post('/user-commissions', function(req, res, next) {
         });
 });
 
-users.delete('/user-commissions/:id/:userID', function(req, res, next) {
+users.delete('/user-commissions/:id/:userID', function (req, res, next) {
     let date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('UPDATE user_commissions SET status = 0, date_modified = ? WHERE ID = ?', [date, req.params.id], function (error, result, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
             let query = 'SELECT *,(select u.fullname from users u where u.ID = c.userID) as user,(select s.title from commissions s where s.ID = c.commissionID) as commission,' +
                 '(select t.title from targets t where t.ID = c.targetID) as target,(select p.name from sub_periods p where p.ID = c.sub_periodID) as period from user_commissions c where c.status = 1 and c.userID = ? order by c.ID desc';
             db.query(query, [req.params.userID], function (error, results, fields) {
-                if(error){
-                    res.send({"status": 500, "error": error, "response": null});
+                if (error) {
+                    res.send({ "status": 500, "error": error, "response": null });
                 } else {
-                    res.send({"status": 200, "message": "User commission deleted successfully", "response": results});
+                    res.send({ "status": 200, "message": "User commission deleted successfully", "response": results });
                 }
             });
         }
     });
 });
 
-users.get('/commissions-list', function(req, res, next) {
+users.get('/commissions-list', function (req, res, next) {
     let type = req.query.type,
         user = req.query.user,
         target = req.query.target,
@@ -10118,25 +9696,25 @@ users.get('/commissions-list', function(req, res, next) {
         query = 'SELECT c.ID,c.userID,c.commissionID,c.targetID,c.periodID,c.sub_periodID,c.type,c.threshold,c.target_value,c.status,c.date_created,c.date_modified,(SELECT CASE WHEN sum(p.amount) IS NULL THEN 0 ELSE sum(p.AMOUNT) END FROM commission_payments p WHERE c.ID=p.user_commissionID AND p.status=1) AS value,' +
             '(select u.fullname from users u where u.ID = c.userID) as user,(select u.title from targets u where u.ID = c.targetID) as target,m.title as commission,m.rate,m.accelerator,m.accelerator_type,c.accelerator_threshold,p.name as period,p.start,p.end from user_commissions c, commissions m, sub_periods p where c.status = 1 and c.commissionID = m.ID and p.ID = c.sub_periodID';
     if (user)
-        query = query.concat(' AND c.userID = "'+user+'"');
+        query = query.concat(' AND c.userID = "' + user + '"');
     if (type)
-        query = query.concat(' AND c.type = "'+type+'"');
+        query = query.concat(' AND c.type = "' + type + '"');
     if (target)
-        query = query.concat(' AND c.targetID = '+target);
+        query = query.concat(' AND c.targetID = ' + target);
     if (sub_period)
-        query = query.concat(' AND c.sub_periodID = '+sub_period);
+        query = query.concat(' AND c.sub_periodID = ' + sub_period);
     if (commission)
-        query = query.concat(' AND c.commissionID = '+commission);
+        query = query.concat(' AND c.commissionID = ' + commission);
     db.query(query, function (error, results, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "Commissions list fetched successfully", "response": results});
+            res.send({ "status": 200, "message": "Commissions list fetched successfully", "response": results });
         }
     });
 });
 
-users.get('/commissions-list/:officerID', function(req, res, next) {
+users.get('/commissions-list/:officerID', function (req, res, next) {
     let type = req.query.type,
         user = req.query.user,
         id = req.params.officerID,
@@ -10145,111 +9723,111 @@ users.get('/commissions-list/:officerID', function(req, res, next) {
         commission = req.query.commission,
         query = 'SELECT c.ID,c.userID,c.commissionID,c.targetID,c.periodID,c.sub_periodID,c.type,c.threshold,c.target_value,c.status,c.date_created,c.date_modified,(SELECT CASE WHEN sum(p.amount) IS NULL THEN 0 ELSE sum(p.AMOUNT) END FROM commission_payments p WHERE c.ID=p.user_commissionID AND p.status=1) AS value,' +
             '(select u.fullname from users u where u.ID = c.userID) as user,(select u.title from targets u where u.ID = c.targetID) as target,m.title as commission,m.rate,m.accelerator,m.accelerator_type,c.accelerator_threshold,p.name as period,p.start,p.end from user_commissions c, commissions m, sub_periods p where c.status = 1 and c.commissionID = m.ID and p.ID = c.sub_periodID',
-        query2 = query.concat(' AND c.userID = '+id+' '),
-        query3 = query.concat(' AND (select supervisor from users where users.id = c.userID) =  '+id+' ');
+        query2 = query.concat(' AND c.userID = ' + id + ' '),
+        query3 = query.concat(' AND (select supervisor from users where users.id = c.userID) =  ' + id + ' ');
     if (id)
         query = query2;
     if (user)
-        query = query.concat(' AND c.userID = "'+user+'"');
+        query = query.concat(' AND c.userID = "' + user + '"');
     if (type)
-        query = query.concat(' AND c.type = "'+type+'"');
+        query = query.concat(' AND c.type = "' + type + '"');
     if (target)
-        query = query.concat(' AND c.targetID = '+target);
+        query = query.concat(' AND c.targetID = ' + target);
     if (sub_period)
-        query = query.concat(' AND c.sub_periodID = '+sub_period);
+        query = query.concat(' AND c.sub_periodID = ' + sub_period);
     if (commission)
-        query = query.concat(' AND c.commissionID = '+commission);
-    if (id){
+        query = query.concat(' AND c.commissionID = ' + commission);
+    if (id) {
         db.query(query, function (error, commissions, fields) {
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
+            if (error) {
+                res.send({ "status": 500, "error": error, "response": null });
             } else {
                 db.query(query3, function (error, commissions2, fields) {
-                    if(error){
-                        res.send({"status": 500, "error": error, "response": null});
+                    if (error) {
+                        res.send({ "status": 500, "error": error, "response": null });
                     } else {
                         let results = commissions.concat(commissions2);
-                        res.send({"status": 200, "message": "Commissions list fetched successfully", "response": results});
+                        res.send({ "status": 200, "message": "Commissions list fetched successfully", "response": results });
                     }
                 });
             }
         });
     } else {
         db.query(query, function (error, results, fields) {
-            if(error){
-                res.send({"status": 500, "error": error, "response": null});
+            if (error) {
+                res.send({ "status": 500, "error": error, "response": null });
             } else {
-                res.send({"status": 200, "message": "Commissions list fetched successfully", "response": results});
+                res.send({ "status": 200, "message": "Commissions list fetched successfully", "response": results });
             }
         });
     }
 });
 
-users.post('/commission/payments', function(req, res, next) {
+users.post('/commission/payments', function (req, res, next) {
     let data = req.body;
     data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('INSERT INTO commission_payments SET ?', data, function (error, result, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "Commission payment saved successfully!"});
+            res.send({ "status": 200, "message": "Commission payment saved successfully!" });
         }
     });
 });
 
-users.get('/commission/payment-history/:user_commissionID', function(req, res, next) {
-    db.query('SELECT * FROM commission_payments WHERE user_commissionID = '+req.params.user_commissionID, function (error, result, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+users.get('/commission/payment-history/:user_commissionID', function (req, res, next) {
+    db.query('SELECT * FROM commission_payments WHERE user_commissionID = ' + req.params.user_commissionID, function (error, result, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "Commission payment fetched successfully!", response: result});
+            res.send({ "status": 200, "message": "Commission payment fetched successfully!", response: result });
         }
     });
 });
 
-users.post('/commission/processes', function(req, res, next) {
+users.post('/commission/processes', function (req, res, next) {
     let data = req.body;
     data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('INSERT INTO commission_processes SET ?', data, function (error, result, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "Commission process saved successfully!"});
+            res.send({ "status": 200, "message": "Commission process saved successfully!" });
         }
     });
 });
 
-users.get('/commission/processes/:user_commissionID', function(req, res, next) {
-    db.query('SELECT * FROM commission_processes WHERE status = 1 AND user_commissionID = '+req.params.user_commissionID, function (error, result, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+users.get('/commission/processes/:user_commissionID', function (req, res, next) {
+    db.query('SELECT * FROM commission_processes WHERE status = 1 AND user_commissionID = ' + req.params.user_commissionID, function (error, result, fields) {
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "Commission process fetched successfully!", response: result});
+            res.send({ "status": 200, "message": "Commission process fetched successfully!", response: result });
         }
     });
 });
 
-users.get('/application/commission-payment-reversal/:id', function(req, res, next) {
+users.get('/application/commission-payment-reversal/:id', function (req, res, next) {
     db.query('UPDATE commission_payments SET status=0 WHERE ID=?', [req.params.id], function (error, history, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "Payment reversed successfully!"});
+            res.send({ "status": 200, "message": "Payment reversed successfully!" });
         }
     });
 });
 
-users.get('/application/commission-process-reversal/:id', function(req, res, next) {
+users.get('/application/commission-process-reversal/:id', function (req, res, next) {
     db.query('UPDATE commission_processes SET status=0 WHERE ID=?', [req.params.id], function (error, history, fields) {
-        if(error){
-            res.send({"status": 500, "error": error, "response": null});
+        if (error) {
+            res.send({ "status": 500, "error": error, "response": null });
         } else {
-            res.send({"status": 200, "message": "Process reversed successfully!"});
+            res.send({ "status": 200, "message": "Process reversed successfully!" });
         }
     });
 });
 
-users.get('/banks', function(req, res) {
+users.get('/banks', function (req, res) {
     res.send(require('../banks.json'));
 });
 
