@@ -4,7 +4,7 @@ const extract = require('tildemention-hashtag');
 const replaceOnce = require('replace-once');
 const he = require('he')
 const db = require('../../../db');
-const emailService = require('./email.service')
+const emailService = require('./email.service');
 
 router.post('/trigger/save', function(req, res, next) {
 
@@ -119,8 +119,8 @@ router.post('/trigger/send', function(req, res, next) {
         })
 
 })
-
-router.post('/mail/send', function(req, res, next) {
+// to be used for general mails
+router.post('/mail/blast', function(req, res, next) {
 
     let msg
     let mailData = req.body,
@@ -171,8 +171,8 @@ router.post('/mail/send', function(req, res, next) {
             })
 
 })
-
-router.post('/mail/promotions', function(req, res, next) {
+// to be used for promotions
+router.post('/mail/send', function(req, res, next) {
 
     let msg
     let mailData = req.body,
@@ -245,28 +245,43 @@ router.post('/mail/unsubscribe', function(req, res) {
             return console.log('Email address does not exist')
         } else {
             if(results[0].rows > 0) {
-                const query = `INSERT INTO unsubscribed_list SET email = '${emailAddress}'`
+                query = `SELECT count(*) as rows FROM unsubscribed_list WHERE email = '${emailAddress.trim()}'`
                 db.query(query, function(error, results) {
                     if(error) {
                         return console.log(error)
-                    } else {
-                        res.send({
-                            status: 200,
-                            error: null,
-                            alert: 'success',
-                            response: 'You have been removed from ATB promotional mail list.'
-                        })
-                    }
-                })
-            } else {
+                    }else if(results[0].rows > 0) {
                         res.send({
                             status: 404,
                             error: null,
                             alert: 'warning',
-                            response: 'Email address not found in database'
+                            response: 'You have previously unsubscribed.'
                         })
+                    } else {
+                        const query = `INSERT INTO unsubscribed_list SET email = '${emailAddress}'`
+                        db.query(query, function(error, results) {
+                            if(error) {
+                                return console.log(error)
+                            } else {
+                                res.send({
+                                    status: 200,
+                                    error: null,
+                                    alert: 'success',
+                                    response: 'You have been removed from ATB promotional mail list.'
+                                    })
+                            }
+                        })
+                    }
+                })
+            } else if(results[0].rows === 0) {
+                res.send({
+                    status: 200,
+                    error: null,
+                    alert: 'success',
+                    response: 'You are not currently subscribed to this mailing list.'
+                    })
             }
         }
+
     })
 
 })
