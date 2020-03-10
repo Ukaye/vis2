@@ -2682,6 +2682,10 @@ function read_write_2(){
         $('#rejectCSV2').hide();
     if (($.grep(perms, function(e){return e.module_name === 'close-loan';}))[0]['read_only'] === '0')
         $('#close_loan').hide();
+    if (($.grep(perms, function(e){return e.module_name === 'autoApprove';}))[0]['read_only'] === '0')
+        $('#autoApprove').hide();
+    if (($.grep(perms, function(e){return e.module_name === 'autoDisburse';}))[0]['read_only'] === '0')
+        $('#autoDisburse').hide();
     const makeLoanOffer = ($.grep(perms, function(e){return e.module_name === 'makeLoanOffer';}))[0];
     if (makeLoanOffer && makeLoanOffer['read_only'] === '0') {
         $('#newOffer').hide();
