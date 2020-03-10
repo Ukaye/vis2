@@ -388,7 +388,7 @@ functions.removeFileDuplicates = (folder_path, files) => {
         files_ = [];
     for (let i = 0; i < files.length; i++) {
         let file = files[i],
-            file__ = file.split('.')[(folder_path.indexOf('files/users/') > -1) ? 1 : 0];
+            file__ = file.split('.')[functions.getClientFilenameIndex(folder_path, file)];
         if (!file__) continue;
         let file_ = file__.split('_');
         file_.shift();
@@ -411,11 +411,15 @@ functions.removeFileDuplicates = (folder_path, files) => {
     return files_;
 }
 
+functions.getClientFilenameIndex = (folder_path, file) => {
+    return (folder_path.indexOf('files/users/') > -1 && file.split('.').length - 1 > 1) ? 1 : 0;
+}
+
 functions.getFilesInformation = (folder_path, files) => {
     let check = {};
     for (let i = 0; i < files.length; i++) {
         let file = files[i],
-            file__ = file.split('.')[(folder_path.indexOf('files/users/') > -1) ? 1 : 0];
+            file__ = file.split('.')[functions.getClientFilenameIndex(folder_path, file)];
         if (!file__) continue;
         let file_ = file__.split('_');
         file_.shift();

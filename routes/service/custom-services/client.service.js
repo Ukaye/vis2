@@ -868,7 +868,7 @@ router.delete('/disable/:id', helperFunctions.verifyJWT, function (req, res) {
     });
 });
 
-router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
+router.get('/get/:id', function (req, res) {
     let query = `SELECT *, (select fullname from users u where u.ID = clients.loan_officer) loan_officer,
         (select branch_name from branches b where b.ID = clients.branch) branch, 
         (select count(*) from applications where userID = clients.ID and status = 2) total_active_loan_count, 
@@ -903,7 +903,7 @@ router.get('/get/:id', helperFunctions.verifyJWT, function (req, res) {
             fs.readdir(path, function (err, files) {
                 files = helperFunctions.removeFileDuplicates(path, files);
                 async.forEach(files, function (file, callback) {
-                    let filename = file.split('.')[1].split('_');
+                    let filename = file.split('.')[helperFunctions.getClientFilenameIndex(path, file)].split('_');
                     filename.shift();
                     obj[filename.join('_')] = `${process.env.HOST || req.HOST}/${path}${file}`;
                     callback();
