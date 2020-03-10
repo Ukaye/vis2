@@ -505,6 +505,8 @@ function loadWorkflowStages(state) {
 
             if (application.status === 0) {
                 $("#next-actions").hide();
+                $("#autoDisburse").hide();
+                $("#autoApprove").hide();
                 $('.previous').hide();
                 $('.cancel').hide();
                 $(".next").hide();
@@ -514,12 +516,16 @@ function loadWorkflowStages(state) {
             if (stage.stage_name === 'Pending Approval')
                 $('.next').text('Approved (Approved)');
 
+            if (stage.stage_name === 'Approved')
+                $('#autoDisburse').prop('disabled', false);
+
             if (stage.stage_name === 'Approved' || stage.stage_name === 'Disbursed' || application.status === 2) {
+                $('#stage-actions').append('<a href="#" id="stage-action-0" class="dropdown-item" data-toggle="modal" data-target="#disburseModal">Disburse Loan</a>');
+                $('#disbursement-amount').val(numberToCurrencyformatter(application.loan_amount));
                 $('#infoRequestModalBtn').hide();
                 $('#downloadsForm').hide();
+                $('#autoApprove').hide();
                 $("#newOffer").hide();
-                $('#disbursement-amount').val(numberToCurrencyformatter(application.loan_amount));
-                $('#stage-actions').append('<a href="#" id="stage-action-0" class="dropdown-item" data-toggle="modal" data-target="#disburseModal">Disburse Loan</a>');
             }
 
             if (application.status === 2) {
@@ -529,6 +535,7 @@ function loadWorkflowStages(state) {
                 $('#disbursement-cards').show();
                 $('#disburse-alert').show();
                 $("#current_stage").hide();
+                $("#autoDisburse").hide();
                 $("#next-actions").hide();
                 $(".previous").hide();
                 $(".cancel").hide();
@@ -2576,6 +2583,71 @@ function showCommentHistory(id) {
     });
 }
 
+function otherClientInformation(clientID) {
+    $.ajax({
+        type: "GET",
+        url: "/client/payment-method/v2/"+ clientID,
+        success: function (data) {
+            let html = ``
+        
+           const cards = data.response
+           if(cards.length == 0) {
+               html = '<h3>Client has not added his card</h3>'
+           } else {
+               $('#other_client_information').show();
+               html = `<div class='row'>`
+               cards.forEach((card, index) => {
+                   html+= `
+                   <div class='col-md-6 col-lg-4'>
+                    <div class='border rounded p-4 bg-info text-white' style="position:relative"> 
+                    
+                    <div class='d-inline-block font-weight-bold text-primary' style="position: absolute; right: 2%; top:2%">
+                    ${index+1}
+                    </div>
+                        <b>Last 4 digits</b>: **** **** **** ${card.last4} ( ${card.brand} )
+                        <br>
+                        <b>Expiry</b>: ${card.exp_month} / ${card.exp_year}
+                        <br>
+                        <b>Card type</b>: ${card.card_type}
+                        <br>
+                        <b> Bank</b>: ${card.bank}
+                        <br>
+                        <b>Status</b>: ${card.status == 1 ? 'Valid': 'Invalid'}
+                        <br>
+                        <b>Date Created</b>: ${card.date_created}       
+                    </div>
+                   </div>
+                   `
+
+               })
+               html += `</div>`
+           }
+           $('#other_client_information #cards').html(html)
+        },
+        error: (e) => {
+            console.log(e)
+        }
+    });
+}
+
+$('#autoApprove').click(e => {
+    swal({
+        title: "Are you sure?",
+        text: "Proceed to move this loan to stage 'Approved'",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true
+    })
+        .then(yes => {
+            if (yes) {
+                let approved_stage_id = ($.grep(stages_, e => {return e.name === 'Approved';}))[0]['ID'];
+                if (!state_ || !workflow_stages_ || !approved_stage_id)
+                    return notification('Kindly try again, page is not fully loaded yet!','','warning');
+                nextStage(state_, workflow_stages_, approved_stage_id);
+            }
+        });
+});
+
 function read_write_1(){
     let perms = JSON.parse(localStorage.getItem("permissions")),
         applicationView = ($.grep(perms, function(e){return e.module_name === 'app-page';}))[0];
@@ -2615,56 +2687,4 @@ function read_write_2(){
         $('#newOffer').hide();
         $('#newOfferModalBtn').hide();
     }
-}
-
-function otherClientInformation(clientID) {
-    const other_client_information = $('#other_client_information')
-
-///payment-method/v2/
-
-    $.ajax({
-        type: "GET",
-        url: "/client/payment-method/v2/"+ clientID,
-        success: function (data) {
-            let html = ``
-        
-           const cards = data.response
-           if(cards.length == 0) {
-               html = '<h3>Client has not added his card</h3>'
-           } else {
-               html = `<div class='row'>`
-               cards.forEach((card, index) => {
-                   html+= `
-                   <div class='col-md-6 col-lg-4'>
-                    <div class='border rounded p-4 bg-info text-white' style="position:relative"> 
-                    
-                    <div class='d-inline-block font-weight-bold text-primary' style="position: absolute; right: 2%; top:2%">
-                    ${index+1}
-                    </div>
-                        <b>Last 4 digits</b>: **** **** **** ${card.last4} ( ${card.brand} )
-                        <br>
-                        <b>Expiry</b>: ${card.exp_month} / ${card.exp_year}
-                        <br>
-                        <b>Card type</b>: ${card.card_type}
-                        <br>
-                        <b> Bank</b>: ${card.bank}
-                        <br>
-                        <b>Status</b>: ${card.status == 1 ? 'Valid': 'Invalid'}
-                        <br>
-                        <b>Date Created</b>: ${card.date_created}       
-                    </div>
-                   </div>
-                   `
-
-               })
-               html += `</div>`
-           }
-           $('#other_client_information #cards').html(html)
-        },
-        error: (e) => {
-            console.log(e)
-        }
-    });
-
-
 }
