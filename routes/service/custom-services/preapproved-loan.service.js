@@ -229,10 +229,10 @@ router.get('/recommendations/get/:id', function (req, res, next) {
  * 1. Preapproved Loan Offer
  * 2. Direct Debit Mandate Setup
  */
+router.post('/create', function (req, res, next) {
 console.log(process.env.HOST)
 console.log(req.HOST)
 console.log(process.env.HOST || req.HOST)
-router.post('/create', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let data = {},
         postData = Object.assign({},req.body.application),
