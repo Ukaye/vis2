@@ -514,7 +514,7 @@ router.post('/create', function (req, res) {
                                                 res.send({
                                                     "status": 200,
                                                     "error": null,
-                                                    "response": user
+                                                    "response": [user]
                                                 });
                                             } else {
                                                 res.send({ "status": 500, "error": "Error creating client wallet!", "response": null });
@@ -568,7 +568,7 @@ router.post('/create', function (req, res) {
                                         res.send({
                                             "status": 200,
                                             "error": null,
-                                            "response": user
+                                            "response": [user]
                                         });
                                     } else {
                                         res.send({ "status": 500, "error": JSON.stringify(er), "response": "Error creating client wallet!" });
