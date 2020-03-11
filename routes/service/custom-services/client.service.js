@@ -497,7 +497,25 @@ router.post('/create', function (req, res) {
                                                     template: 'client',
                                                     context: postData
                                                 });
-                                                res.send({ "status": 200, "error": null, "response": re });
+                                                let user = re[0];
+                                                user.token = jwt.sign({
+                                                    ID: user.ID,
+                                                    username: user.username,
+                                                    fullname: user.fullname,
+                                                    email: user.email,
+                                                    phone: user.phone
+                                                },
+                                                    process.env.SECRET_KEY,
+                                                    {
+                                                        expiresIn: 60 * 60 * 24
+                                                    });
+                                                user.tenant = process.env.TENANT;
+                                                user.environment = process.env.STATUS;
+                                                res.send({
+                                                    "status": 200,
+                                                    "error": null,
+                                                    "response": user
+                                                });
                                             } else {
                                                 res.send({ "status": 500, "error": "Error creating client wallet!", "response": null });
                                             }
@@ -533,7 +551,25 @@ router.post('/create', function (req, res) {
                                             template: 'client',
                                             context: postData
                                         });
-                                        res.send({ "status": 200, "error": null, "response": re });
+                                        let user = re[0];
+                                        user.token = jwt.sign({
+                                            ID: user.ID,
+                                            username: user.username,
+                                            fullname: user.fullname,
+                                            email: user.email,
+                                            phone: user.phone
+                                        },
+                                            process.env.SECRET_KEY,
+                                            {
+                                                expiresIn: 60 * 60 * 24
+                                            });
+                                        user.tenant = process.env.TENANT;
+                                        user.environment = process.env.STATUS;
+                                        res.send({
+                                            "status": 200,
+                                            "error": null,
+                                            "response": user
+                                        });
                                     } else {
                                         res.send({ "status": 500, "error": JSON.stringify(er), "response": "Error creating client wallet!" });
                                     }
