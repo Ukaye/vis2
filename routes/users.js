@@ -2438,8 +2438,6 @@ users.post('/workflow_process/:application_id/:workflow_id', function (req, res,
                     if (error) {
                         res.send({ "status": 500, "error": error, "response": null });
                     } else {
-                        console.log(process)
-                        console.log(user_role)
                         if (!(((process.approver_id).split(',')).includes((user_role).toString())))
                             return res.send({ "status": 500, "message": "You do not have authorization rights" });
                         delete process.approver_id;
