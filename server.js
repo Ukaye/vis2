@@ -94,7 +94,7 @@ app.use(session({
     ephemeral: true
 }));
 
-app.use(function (req, res, next) {
+app.use((req, res, next) => {
     if (Number(req.headers['content-length']) > Number(process.env.FILE_SIZE_LIMIT))
         return res.status(413).send('File exceeds the maximum upload size limit!');
     next();
