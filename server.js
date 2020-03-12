@@ -95,6 +95,8 @@ app.use(session({
 }));
 
 app.use((req, res, next) => {
+    if (process.env.STATUS && process.env.STATUS !== 'test')
+        req.HOST = `https://${req.get('host')}`;
     if (Number(req.headers['content-length']) > Number(process.env.FILE_SIZE_LIMIT))
         return res.status(413).send('File exceeds the maximum upload size limit!');
     next();

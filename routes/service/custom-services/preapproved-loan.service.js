@@ -333,8 +333,8 @@ router.post('/reject', function (req, res, next) {
 
 router.get('/get', function (req, res, next) {
     console.log(process.env.HOST)
-    console.log(req.HOST)
-    console.log(req.headers.origin)
+    console.log(req.protocol)
+    console.log(req.headers)
     console.log(req.hostname)
     console.log(req.get('host'))
     const HOST = `${req.protocol}://${req.get('host')}`;

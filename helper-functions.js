@@ -378,7 +378,6 @@ functions.verifyJWT = function (req, res, next) {
             });
 
         req.user = decoded;
-        req.HOST = `https://${req.get('host')}`;
         next();
     });
 };
