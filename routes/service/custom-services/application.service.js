@@ -23,31 +23,35 @@ router.get('/get', function (req, res, next) {
     let query_condition = `FROM clients u, workflow_processes w, applications a LEFT JOIN corporates c ON a.userID = c.ID WHERE u.ID=a.userID 
          AND w.ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=a.ID AND status=1)
         AND (upper(a.ID) LIKE "${search_string}%" OR upper(u.fullname) LIKE "${search_string}%" OR upper(u.phone) LIKE "${search_string}%" 
-        OR upper(a.loan_amount) LIKE "${search_string}%" OR upper(a.date_created) LIKE "${search_string}%") `;
+        OR upper(a.loan_amount) LIKE "${search_string}%" OR upper(a.date_created) LIKE "${search_string}%") AND a.status <> ${enums.APPLICATION.STATUS.RESCHEDULE} `;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     end = moment(end).add(1, 'days').format("YYYY-MM-DD");
 
     if (type){
         switch (type){
+            case '0': {
+                query_condition = query_condition.concat(`AND a.status = ${enums.APPLICATION.STATUS.CANCELLED} `);
+                break;
+            }
             case '1': {
                 //do nothing
                 break;
             }
             case '2': {
-                query_condition = query_condition.concat('AND a.status = 1 AND a.close_status = 0 AND w.current_stage <> 2  AND w.current_stage <> 3 ');
+                query_condition = query_condition.concat(`AND a.status = ${enums.APPLICATION.STATUS.ACTIVE} AND a.close_status = 0 AND w.current_stage <> 2  AND w.current_stage <> 3 `);
                 break;
             }
             case '3': {
-                query_condition = query_condition.concat('AND a.status = 1 AND a.close_status = 0 AND w.current_stage = 2 ');
+                query_condition = query_condition.concat(`AND a.status = ${enums.APPLICATION.STATUS.ACTIVE} AND a.close_status = 0 AND w.current_stage = 2 `);
                 break;
             }
             case '4': {
-                query_condition = query_condition.concat('AND a.status = 1 AND a.close_status = 0 AND w.current_stage = 3 ');
+                query_condition = query_condition.concat(`AND a.status = ${enums.APPLICATION.STATUS.ACTIVE} AND a.close_status = 0 AND w.current_stage = 3 `);
                 break;
             }
             case '5': {
-                query_condition = query_condition.concat('AND a.status = 2  AND a.close_status = 0 ');
+                query_condition = query_condition.concat(`AND a.status = ${enums.APPLICATION.STATUS.DISBURSED}  AND a.close_status = 0 `);
                 break;
             }
             case '6': {

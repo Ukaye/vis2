@@ -163,12 +163,10 @@ function loadApplications() {
                 mRender: function (data, type, full) {
                     let status = full.current_stage;
                     if (full.close_status === 0) {
-                        if (full.status === 1){
+                        if (full.status === 0){
+                            status = '<span class="badge badge-danger">Cancelled</span>';
+                        } else if (full.status === 1){
                             switch (full.current_stage){
-                                case 0: {
-                                    status = '<span class="badge badge-danger">Cancelled</span>';
-                                    break;
-                                }
                                 case 2: {
                                     status = '<span class="badge badge-info">Pending Approval</span>';
                                     break;

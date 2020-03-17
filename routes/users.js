@@ -1952,14 +1952,15 @@ users.get('/application-id/:id', function (req, res, next) {
         query = 'SELECT u.ID userID, u.fullname, u.phone, u.email, u.address, u.industry, u.date_created client_date_created, a.fees, ' +
             '(SELECT title FROM loan_purpose_settings WHERE ID = a.loan_purpose) loan_purpose, (SELECT GROUP_CONCAT(document) FROM workflow_stages WHERE workflowID = a.workflowID) documents, ' +
             '(SELECT GROUP_CONCAT(download) FROM workflow_stages WHERE workflowID = a.workflowID) downloads, cast(u.loan_officer as unsigned) loan_officer, ' +
-            'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.interest_rate, a.repayment_date, ' +
-            'a.reschedule_amount, a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, a.interest_rate, a.duration, a.preapplicationID, ' +
+            'a.ID, a.status, a.collateral, a.brand, a.model, a.year, a.jewelry, a.date_created, a.workflowID, a.interest_rate, a.repayment_date, a.reschedule_amount, a.reschedule_status, ' +
+            'a.loanCirrusID, a.loan_amount, a.date_modified, a.comment, a.close_status, a.duration, a.client_type, a.interest_rate, a.duration, a.preapplicationID, ' +
             '(SELECT l.supervisor FROM users l WHERE l.ID = u.loan_officer) AS supervisor, ' +
             '(SELECT sum(amount) FROM escrow WHERE clientID=u.ID AND status=1) AS escrow, ' +
             '(SELECT status FROM preapplications WHERE ID = a.preapplicationID AND creator_type = "client") AS client_applications_status, ' +
             '(SELECT work_email FROM preapplications WHERE ID = a.preapplicationID AND creator_type = "client") AS work_email, ' +
             '(SELECT verify_work_email FROM preapplications WHERE ID = a.preapplicationID AND creator_type = "client") AS verify_work_email, ' +
             '(CASE WHEN (SELECT COUNT(*) FROM client_payment_methods WHERE a.userID = userID AND payment_channel = "paystack" AND status = 1) > 0 THEN 1 ELSE 0 END) paystack_payment_status, ' +
+            '(SELECT MAX(ID) FROM applications WHERE rescheduleID = a.ID) rescheduleID, ' +
             'r.payerBankCode, r.payerAccount, r.requestId, r.mandateId, r.remitaTransRef ' +
             'FROM clients AS u INNER JOIN applications AS a ON u.ID = a.userID LEFT JOIN remita_mandates r ' +
             'ON (r.applicationID = a.ID AND r.status = 1) WHERE a.ID = ?';
@@ -2491,10 +2492,11 @@ users.get('/workflow_process/:application_id', function (req, res, next) {
 });
 
 users.get('/workflow_process_all/:application_id', function (req, res, next) {
-    let query = 'SELECT w.ID, w.workflowID, w.previous_stage, w.current_stage, w.next_stage, w.approval_status, w.date_created, w.applicationID, w.status,' +
-        'w.agentID, u.fullname AS agent, (SELECT role_name FROM user_roles WHERE ID = u.user_role) role, (SELECT name FROM workflow_stages WHERE workflowID = w.workflowID AND stageID = w.current_stage) stage ' +
-        'FROM workflow_processes AS w, users AS u WHERE applicationID = ? AND w.agentID = u.ID';
-    db.query(query, [req.params.application_id], function (error, results, fields) {
+    let query = `SELECT w.ID, w.workflowID, w.previous_stage, w.current_stage, w.next_stage, w.approval_status, w.date_created, w.applicationID, w.status,
+    w.agentID, u.fullname AS agent, (SELECT role_name FROM user_roles WHERE ID = u.user_role) role, 
+    (SELECT name FROM workflow_stages WHERE workflowID = w.workflowID AND stageID = w.current_stage) stage FROM workflow_processes AS w, users AS u 
+    WHERE w.applicationID = ${req.params.application_id} OR w.applicationID in (SELECT ID FROM applications WHERE rescheduleID = ${req.params.application_id}) AND w.agentID = u.ID GROUP BY w.ID`;
+    db.query(query, (error, results) => {
         if (error) {
             res.send({ "status": 500, "error": error, "response": null });
         } else {
@@ -2920,6 +2922,42 @@ users.get('/application/reject-schedule/:id', function (req, res, next) {
     });
 });
 
+users.delete('/application/reschedule/:id/:rescheduleID', (req, res) => {
+    db.getConnection((err, connection) => {
+        if (err) throw err;
+
+        connection.query(`DELETE FROM applications WHERE ID = ${req.params.rescheduleID}`, error => {
+            if (error) {
+                res.send({ "status": 500, "error": error, "response": null });
+            } else {
+                connection.query(`SELECT * FROM application_schedules WHERE applicationID = ${req.params.id} AND status = 2`, (error, new_schedule) => {
+                    if (error) {
+                        res.send({ "status": 500, "error": error, "response": null });
+                    } else {
+                        let count = 0;
+                        async.forEach(new_schedule, (obj, callback2) => {
+                            connection.query(`DELETE FROM application_schedules WHERE ID = ${obj.ID}`, error => {
+                                if (!error)
+                                    count++;
+                                callback2();
+                            });
+                        }, function (data) {
+                            connection.release();
+                            let payload = {};
+                            payload.category = 'Application';
+                            payload.userid = req.cookies.timeout;
+                            payload.description = 'Schedule Rejected for Loan Application';
+                            payload.affected = req.params.id;
+                            notificationsService.log(req, payload);
+                            res.send({ "status": 200, "message": `Application schedule with ${count} invoices deleted successfully!`, "response": null });
+                        });
+                    }
+                });
+            }
+        });
+    });
+});
+
 users.post('/application/add-schedule/:id', function (req, res, next) {
     db.getConnection(function (err, connection) {
         if (err) throw err;
@@ -2944,6 +2982,93 @@ users.post('/application/add-schedule/:id', function (req, res, next) {
             notificationsService.log(req, payload)
             res.send({ "status": 200, "message": "Application scheduled with " + count + " invoices successfully!", "response": null });
         })
+    });
+});
+
+users.post('/application/reschedule/:id', (req, res) => {
+    db.getConnection((err, connection) => {
+        if (err) throw err;
+
+        let applicationID = req.params.id,
+            application = req.body.application,
+            query = 'INSERT INTO applications Set ?';
+        application.rescheduleID = applicationID;
+        application.status = enums.APPLICATION.STATUS.RESCHEDULE;
+        application.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        connection.query(query, application, (error, response) => {
+            if (error) return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+            let count = 0;
+            async.forEach(req.body.schedule, (obj, callback) => {
+                obj.status = 2;
+                obj.applicationID = applicationID;
+                obj.date_created = application.date_created;
+                query = 'INSERT INTO application_schedules SET ?';
+                connection.query(query, obj, (error, response) => {
+                    if (!error)
+                        count++;
+                    callback();
+                });
+            }, data => {
+                const process_ = process,
+                    workflow_id = application.workflowID;
+                helperFunctions.getNextWorkflowProcess(false, workflow_id, false, (process, stage) => {
+                    query = 'SELECT MAX(ID) AS ID from applications';
+                    connection.query(query, (err, application_) => {
+                        const rescheduleID = application_[0]['ID'];
+                        let update = {
+                            reschedule_status: 1
+                        };
+                        query = `UPDATE applications SET ? WHERE ID = ${applicationID}`;
+                        connection.query(query, update, () => {
+                            process.workflowID = workflow_id;
+                            process.agentID = application.agentID;
+                            process.applicationID = rescheduleID;
+                            process.date_created = application.date_created;
+                            connection.query('INSERT INTO workflow_processes SET ?', process, error => {
+                                if (error) return res.send({
+                                    "status": 500,
+                                    "error": error,
+                                    "response": null
+                                });
+                                
+                                let x3_link = '',
+                                    required_docs = '';
+                                if (stage.document) required_docs = `, pending document uploads (${stage.document})`;
+                                if (process_.env.CLIENT_HOST) x3_link = `(${process_.env.CLIENT_HOST})`;
+                                let mailOptions = {
+                                    to: req.body.email,
+                                    subject: 'Loan Request Reviewed',
+                                    template: 'default',
+                                    context: {
+                                        name: req.body.name,
+                                        date: application.date_created,
+                                        message: `Your loan request has been reviewed${required_docs}. Please log in to my X3${x3_link} to proceed!`
+                                    }
+                                };
+                                sendApplyEmail(mailOptions, workflow_id);
+                                if (stage) helperFunctions.workflowApprovalNotification(process, stage, workflow_id);
+                                connection.release();
+                                let payload = {};
+                                payload.category = 'Application';
+                                payload.userid = req.cookies.timeout;
+                                payload.description = 'New Schedule Uploaded for Loan Application';
+                                payload.affected = rescheduleID;
+                                notificationsService.log(req, payload);return res.send({
+                                    "status": 200,
+                                    "error": null,
+                                    "response": `Application reschedule initiated with ${count} invoice(s) successfully!`
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
     });
 });
 
@@ -3491,7 +3616,7 @@ users.post('/application/disburse/:id', function (req, res, next) {
                 } else {
                     let data = req.body,
                         application = app[0];
-                    data.status = 2;
+                    data.status = enums.APPLICATION.STATUS.DISBURSED;
                     data.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                     db.query(`UPDATE applications SET ? WHERE ID = ${req.params.id}`, data, function (error, result, fields) {
                         if (error) {
@@ -4152,9 +4277,11 @@ users.post('/application/close/:id', function (req, res, next) {
 });
 
 users.get('/application/cancel/:id', function (req, res, next) {
-    let data = {};
-    data.status = 0;
-    db.query('UPDATE applications SET ? WHERE ID = ' + req.params.id, data, function (error, result, fields) {
+    let update = {
+        status: enums.APPLICATION.STATUS.CANCELLED,
+        date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
+    };
+    db.query(`UPDATE applications SET ? WHERE ID = ${req.params.id}`, update, error => {
         if (error) {
             res.send({ "status": 500, "error": error, "response": null });
         } else {

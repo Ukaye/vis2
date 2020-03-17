@@ -8,7 +8,7 @@ $(document).ready(function() {
 
 function getCollectionBank() {
     $.ajax({
-        type: "GET",
+        type: "get",
         url: "/settings/collection_bank",
         success: function (data) {
             $.each(data.response, function (key, funding_source) {
@@ -26,6 +26,7 @@ const application_id = urlParams.get('id');
 let state_,
     stages_,
     workflow,
+    workflows,
     application,
     workflow_stages_,
     reschedule_status = false,
@@ -70,35 +71,12 @@ function getStages() {
 function getApplicationSettings(application) {
     $('#wait').show();
     $.ajax({
-        type: "GET",
+        type: "get",
         url: "/settings/product/"+ application.workflowID,
         success: function (data) {
             if (data.response) {
                 const settings_obj_ = data.response;
-                if (settings_obj_.loan_requested_min) {
-                    settings_obj.loan_requested_min = settings_obj_.loan_requested_min;
-                    $('.loan_requested_min').text(numberToCurrencyformatter(settings_obj.loan_requested_min));
-                }
-                if (settings_obj_.loan_requested_max) {
-                    settings_obj.loan_requested_max = settings_obj_.loan_requested_max;
-                    $('.loan_requested_max').text(numberToCurrencyformatter(settings_obj.loan_requested_max));
-                }
-                if (settings_obj_.tenor_min) {
-                    settings_obj.tenor_min = settings_obj_.tenor_min;
-                    $('.tenor_min').text(numberToCurrencyformatter(settings_obj.tenor_min));
-                }
-                if (settings_obj_.tenor_max) {
-                    settings_obj.tenor_max = settings_obj_.tenor_max;
-                    $('.tenor_max').text(numberToCurrencyformatter(settings_obj.tenor_max));
-                }
-                if (settings_obj_.interest_rate_min) {
-                    settings_obj.interest_rate_min = settings_obj_.interest_rate_min;
-                    $('.interest_rate_min').text(numberToCurrencyformatter(settings_obj.interest_rate_min));
-                }
-                if (settings_obj_.interest_rate_max) {
-                    settings_obj.interest_rate_max = settings_obj_.interest_rate_max;
-                    $('.interest_rate_max').text(numberToCurrencyformatter(settings_obj.interest_rate_max));
-                }
+                setApplicationSetting(settings_obj_);
             }
             getFeeSettings();
             initCSVUpload(application);
@@ -108,9 +86,36 @@ function getApplicationSettings(application) {
     });
 }
 
+function setApplicationSetting(settings_obj_) {
+    if (settings_obj_.loan_requested_min) {
+        settings_obj.loan_requested_min = settings_obj_.loan_requested_min;
+        $('.loan_requested_min').text(numberToCurrencyformatter(settings_obj.loan_requested_min));
+    }
+    if (settings_obj_.loan_requested_max) {
+        settings_obj.loan_requested_max = settings_obj_.loan_requested_max;
+        $('.loan_requested_max').text(numberToCurrencyformatter(settings_obj.loan_requested_max));
+    }
+    if (settings_obj_.tenor_min) {
+        settings_obj.tenor_min = settings_obj_.tenor_min;
+        $('.tenor_min').text(numberToCurrencyformatter(settings_obj.tenor_min));
+    }
+    if (settings_obj_.tenor_max) {
+        settings_obj.tenor_max = settings_obj_.tenor_max;
+        $('.tenor_max').text(numberToCurrencyformatter(settings_obj.tenor_max));
+    }
+    if (settings_obj_.interest_rate_min) {
+        settings_obj.interest_rate_min = settings_obj_.interest_rate_min;
+        $('.interest_rate_min').text(numberToCurrencyformatter(settings_obj.interest_rate_min));
+    }
+    if (settings_obj_.interest_rate_max) {
+        settings_obj.interest_rate_max = settings_obj_.interest_rate_max;
+        $('.interest_rate_max').text(numberToCurrencyformatter(settings_obj.interest_rate_max));
+    }
+}
+
 function getFeeSettings() {
     $.ajax({
-        type: "GET",
+        type: "get",
         url: "/settings/fees",
         success: function (data) {
             let settings_obj = data.response,
@@ -223,7 +228,7 @@ function loadApplication(user_id){
             }
 
             if (files_count < 1){
-                $carousel_inner.append('<h3>No Documents Uploaded Yet!</h3>');
+                $carousel_inner.append('<br><h3 class="text-center">No Documents Uploaded Yet!</h3>');
             } else {
                 let count = 0,
                     pages = parseInt(((files_count).roundTo(4))/4);
@@ -268,6 +273,7 @@ function loadApplication(user_id){
                 });
             }
 
+            if (application.reschedule_status === 1) getReschedule(application.rescheduleID);
             getApplicationSettings(application);
             checkForExistingMandate(application);
             getFileDownloads();
@@ -285,12 +291,18 @@ function goToClientProfile() {
 
 function getWorkflows(data) {
     $.ajax({
-        type: "GET",
+        type: "get",
         url: "/workflows-all",
         success: function (response) {
-            localStorage.setItem("workflows",JSON.stringify(response.response));
+            workflows = response.response;
+            localStorage.setItem("workflows",JSON.stringify(workflows));
             let fullname = data.fullname || '';
-            workflow = (response.response)? ($.grep(response.response, function(e){ return e.ID === data.workflowID; }))[0] : {name:'Workflow'};
+            workflow = (workflows)? ($.grep(workflows, function(e){ return e.ID === data.workflowID; }))[0] : {name:'Workflow'};
+            $.each(workflows, (key, workflow) => {
+                if (workflow.status === 1)
+                    $('#workflow').append(`<option value="${workflow.ID}">${workflow.name}</option>`);
+            });
+            $('#workflow').val(workflow.ID);
             $("#workflow-div-title").text(fullname.toUpperCase()+" ("+workflow.name+")");
             if (workflow.client_information && workflow.client_information.indexOf('work_email') > -1 && data.status === 1) {
                 if (data.verify_work_email === 0)
@@ -601,6 +613,9 @@ $('.cancel').on('click', function(e) {
         });
 });
 
+$('.previous').on('click', function(e) {
+    previousStage();
+});
 
 function loadWorkflowState() {
     $.ajax({
@@ -614,10 +629,6 @@ function loadWorkflowState() {
 
             loadWorkflowStages(state);
             allWells.hide();
-
-            $('.previous').on('click', function(e) {
-                previousStage(state,states);
-            });
 
             $('#schedule').show();
             $('#files').show();
@@ -646,11 +657,13 @@ function loadAllWorkflowState(workflow_stages) {
                 let previous_stage = ($.grep(workflow_stages, function(e){ return e.stageID === state.previous_stage; }))[0] || {stage_name:'N/A'},
                     current_stage = ($.grep(workflow_stages, function(e){ return e.stageID === state.current_stage; }))[0] || {stage_name:''},
                     by = (state.agentID)? ' by '+state.agent : '';
+                if (current_stage.stage_name === 'Application Start') $processes.append('<hr style="border-top: 2px solid #d4d9df; margin-left: 29px;">');
                 $processes.append('<li>\n' +
                     '    <p><a href="#">'+current_stage.stage_name+'</a></p>\n' +
                     '    <p><a href="#">'+state.date_created+'</a></p>\n' +
                     '    <p>Moved from '+previous_stage.stage_name+' to '+current_stage.stage_name+by+'</p>\n' +
                     '</li>');
+                if (current_stage.stage_name === 'Disbursed') $processes.append('<hr style="border-top: 2px solid #d4d9df; margin-left: 29px;">');
             });
 
             read_write_2();
@@ -707,7 +720,7 @@ function nextStage(state, workflow_stages, action_stage, callback) {
     });
 }
 
-function previousStage(state,states) {
+function previousStage() {
     $.ajax({
         'url': '/user/revert_workflow_process/'+application_id,
         'type': 'get',
@@ -1583,15 +1596,28 @@ function initCSVUpload2(application, settings) {
                 if (loan_amount.round(2) < total_due_amount.round(2))
                     return notification('Total principal on the new schedule must be greater than Principal balance','','warning');
 
-                let schedule = validation.data;
                 $csvLoader.show();
+                $saveCSV.prop('disabled', true);
+                let schedule = validation.data;
                 $.ajax({
-                    'url': '/user/application/add-schedule/'+application_id,
+                    'url': '/user/application/reschedule/'+application_id,
                     'type': 'post',
-                    'data': {schedule:schedule},
+                    'data': {
+                        schedule: schedule,
+                        application: {
+                            userID: application.userID,
+                            duration: $('#term').val(),
+                            loan_amount: $('#amount').val(),
+                            workflowID: $('#workflow').val(),
+                            interest_rate: $('#interest-rate').val(),
+                            repayment_date: $('#repayment-date').val(),
+                            agentID: (JSON.parse(localStorage.user_obj)).ID
+                        }
+                    },
                     'success': function (data) {
                         $csvLoader.hide();
                         $csvUpload.val('');
+                        $saveCSV.prop('disabled', false);
                         notification('Reschedule added successfully','','success');
                         window.location.reload();
                     },
@@ -1610,6 +1636,8 @@ function initCSVUpload2(application, settings) {
     let total_new_schedule = 0,
         new_reschedule = $.grep(application.schedule,function(e){return e.status===2});
     if (new_reschedule && new_reschedule[0]){
+        $('#reschedule-actions').show();
+        $('#initiateRescheduleModalBtn').hide();
         let table = $("<table border='1' style='text-align: center;'/>");
         for (let i = 0; i < new_reschedule.length+2; i++) {
             let row,
@@ -1655,16 +1683,26 @@ function initCSVUpload2(application, settings) {
             }
             table.append(row);
         }
-        $dvCSV.html('');
-        $dvCSV.append(table);
         $('#amortization').hide();
-        $('#reschedule-total-text').text(`Disbursed Amount: ₦${numberToCurrencyFormatter_(total_new_schedule)}`);
+        $('#newReschedule').html('').append(table);
     }
 
-    $('#approveRescheduleModalBtn').bind('click', e => {
+    $('#workflow').bind('change', e => {
+        const workflowID = e.target.value,
+            workflow = ($.grep(workflows, e => { return e.ID === Number(workflowID); }))[0];
+        setApplicationSetting(workflow);
+        triggerAmortization();
+    });
+
+    $('#initiateRescheduleModalBtn').bind('click', e => {
+        $('#rescheduleModal').modal('show');
+    });
+    
+    $('#stage-actions2').delegate('#approveRescheduleModalBtn', 'click', e => {
         if (!new_reschedule || !new_reschedule[0])
             return notification('There is no reschedule available for approval!','','error');
         reschedule_status = true;
+        $('#disburseModal').modal('show');
         $('#editRepaymentDateBtn').hide();
         $('#disbursement-amount').prop('disabled', false);
         $('#disbursement-amount').val(numberToCurrencyformatter((total_new_schedule-total_due_amount).round(2)));
@@ -1726,20 +1764,31 @@ function initCSVUpload2(application, settings) {
         if (!new_reschedule || !new_reschedule[0])
             return notification('There is no reschedule available to delete!','','error');
 
-        $csvLoader.show();
-        $.ajax({
-            'url': '/user/application/reject-schedule/'+application_id,
-            'type': 'get',
-            'success': function (data) {
-                $csvLoader.hide();
-                notification('Reschedule deleted successfully','','success');
-                window.location.reload();
-            },
-            'error': function (err) {
-                $csvLoader.hide();
-                notification('Oops! An error occurred while deleting reschedule','','error');
-            }
-        });
+        swal({
+            title: "Are you sure?",
+            text: "Once rejected, this process is not reversible!",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true
+        })
+            .then(yes => {
+                if (yes) {
+                    $csvLoader.show();
+                    $.ajax({
+                        'url': `/user/application/reschedule/${application_id}/${application.rescheduleID}`,
+                        'type': 'delete',
+                        'success': function (data) {
+                            $csvLoader.hide();
+                            notification('Reschedule deleted successfully','','success');
+                            window.location.reload();
+                        },
+                        'error': function (err) {
+                            $csvLoader.hide();
+                            notification('Oops! An error occurred while deleting reschedule','','error');
+                        }
+                    });
+                }
+            });
     });
 }
 
@@ -1902,14 +1951,14 @@ function payOffLoan() {
 
 function checkForExistingMandate(data) {
     $.ajax({
-        type: 'GET',
+        type: 'get',
         url: `/preapproved-loan/get/${application_id}?key=applicationID`,
         success: function (response) {
             let mandate = response.data;
             const HOST = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
             if (mandate && mandate.ID) {
-                $('#viewMandate').show();
-                $('#setupDirectDebit').hide();
+                $('[id^=viewMandateBtn]').show();
+                $('#setupDirectDebitBtn').hide();
                 $('#mandateId').text(mandate.mandateId || 'N/A');
                 $('#requestId').text(mandate.requestId || 'N/A');
                 $('#isActive').text(mandate.remita.isActive || 'N/A');
@@ -1923,11 +1972,11 @@ function checkForExistingMandate(data) {
                     date2 = new Date(schedule[0]['interest_collect_date']);
                 today.setHours(0,0,0,0);
                 if (date1 < today || date2 < today) {
-                    $('#setupDirectDebit').hide();
+                    $('#setupDirectDebitBtn').hide();
                 } else {
-                    $('#setupDirectDebit').show();
+                    $('#setupDirectDebitBtn').show();
                 }
-                $('#viewMandate').hide();
+                $('[id^=viewMandateBtn]').hide();
             }
         }
     });
@@ -1940,7 +1989,7 @@ function copyLink() {
     notification('Link copied!', text.value, 'success');
 }
 
-$("#setupDirectDebit").click(function () {
+$("[id^=setupDirectDebitBtn]").click(function () {
     swal({
         title: "Are you sure?",
         text: "Once initiated, this process is not reversible!",
@@ -1948,7 +1997,7 @@ $("#setupDirectDebit").click(function () {
         buttons: true,
         dangerMode: true
     })
-        .then((yes) => {
+        .then(yes => {
             if (yes) {
                 let obj = {};
                 obj.userID = application.userID;
@@ -2585,7 +2634,7 @@ function showCommentHistory(id) {
 
 function otherClientInformation(clientID) {
     $.ajax({
-        type: "GET",
+        type: "get",
         url: "/client/payment-method/v2/"+ clientID,
         success: function (data) {
             let html = ``

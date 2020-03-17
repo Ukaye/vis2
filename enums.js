@@ -1,5 +1,14 @@
 let enums = {};
 
+enums.APPLICATION = {
+    STATUS: {
+        CANCELLED: 0,
+        ACTIVE: 1,
+        DISBURSED: 2,
+        RESCHEDULE: 3
+    }
+};
+
 enums.PREAPPLICATION = {
     STATUS: {
         REJECTED: 0,

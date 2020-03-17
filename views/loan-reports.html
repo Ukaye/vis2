@@ -7259,10 +7259,6 @@
         }
         let sum_avg = ind_avgs.reduce((acc, avrg) => acc + avrg, 0);
         let avg_rate = sum_avg/ind_avgs.length;
-//        let start = new_values[0].amount;
-//        let end = new_values[new_values.length - 1].amount;
-//        let avg = parseFloat(Math.pow((end/start), 1/new_values.length) - 1);
-//        let avg_rate = avg * 100;
         $('#growth-rate').html(avg_rate.toFixed(2)+'%');
     }
 
@@ -7364,7 +7360,6 @@
                         dataSource: {
                             "chart": {
                                 "caption": "Monthly Interest Received",
-//                            "subCaption": "In MMbbl = One Million barrels",
                                 "xAxisName": "Period",
                                 "yAxisName": "Interest Received (In Naira)",
                                 "numberSuffix": "",
@@ -7400,7 +7395,6 @@
                         dataSource: {
                             "chart": {
                                 "caption": "Monthly Interest Receivable",
-//                            "subCaption": "In MMbbl = One Million barrels",
                                 "xAxisName": "Period",
                                 "yAxisName": "Interest Receivable (In Naira)",
                                 "numberSuffix": "",

@@ -1783,6 +1783,7 @@ router.put('/change-password/:id', helperFunctions.verifyJWT, function (req, res
         query = `UPDATE clients SET ? WHERE ID = ${req.params.id}`;
     payload.password = bcrypt.hashSync(req.body.password, parseInt(process.env.SALT_ROUNDS));
     payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    if (req.body.fingerprint_enabled) payload.fingerprint_enabled = req.body.fingerprint_enabled;
     db.query(query, payload, function (error, results, fields) {
         if (error) {
             res.send({ "status": 500, "error": error, "response": null });

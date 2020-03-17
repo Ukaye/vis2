@@ -155,8 +155,9 @@
             font-style: italic;
             color: red;
         }
-        #loanSchedule, #dvCSV2 {
+        #loanSchedule, #dvCSV, #dvCSV2, #newReschedule, #schedule-preview {
             font-size: 14px !important;
+            margin: 15px 0;
         }
         #downloads .user-photo {
             height: 100px;
@@ -212,8 +213,8 @@
                                         More Actions
                                     </button>
                                     <div class="dropdown-menu">
-                                        <a class="dropdown-item" href="#" id="setupDirectDebit">Setup Direct Debit</a>
-                                        <a class="dropdown-item" href="#" id="viewMandate" data-toggle="modal" data-target="#viewMandateModal" style="display: none;">View Mandate</a>
+                                        <a class="dropdown-item" href="#" id="setupDirectDebitBtn">Setup Direct Debit</a>
+                                        <a class="dropdown-item" href="#" id="viewMandateBtn" data-toggle="modal" data-target="#viewMandateModal" style="display: none;">View Mandate</a>
                                         <a class="dropdown-item" href="#" id="generateLoanFile" onclick="generateLoanFile()">Generate Loan File</a>
                                         <a class="dropdown-item" href="#" onclick="printLoanSchedule()">Print Loan Schedule</a>
                                         <a class="dropdown-item" href="#" id="newOffer" data-toggle="modal" data-target="#newOfferModal" onclick="setDefaultOffer()">Make New Offer</a>
@@ -252,7 +253,8 @@
                         </div>
                         <script type="text/javascript">
                             let $transitions_toggle = $('.transitions-toggle');
-                            $transitions_toggle.click(function () {
+                            $transitions_toggle.click(e => {
+                                e.preventDefault();
                                 $('#transitions-list').toggle();
                                 $transitions_toggle.toggle();
                             });
@@ -294,6 +296,22 @@
                                             <h3 id="next-payment-date-text" class="mb-0"></h3>
                                             <p class="text-light">Next Payment Due Date</p>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row setup-content" id="schedule">
+                                <div class="col-xs-12">
+                                    <div id="disburse-alert" class="alert alert-success" role="alert" style="display: none;">
+                                        <h3 class="alert-heading">Loan has been disbursed!</h3>
+                                        <p>Notifications would be sent to the user accounts related to this loan application to provide updates on this loan application.</p>
+                                    </div>
+                                    <div class="col-md-12 well">
+                                        <h2 class="text-center">Loan Overview
+                                            <button id="collect-payment-button" class ="btn btn-primary" style="float: right; display: none;" onclick="goToLoanRepayment()">Collect Payment <i class="fa fa-money"></i></button>
+                                            <span id="principal-total-text" style="font-size: 20px; float: right; margin: 5px 5px 0 0;"></span>
+                                        </h2>
+                                        <div id="loanSchedule"></div>
+                                        <p id="reschedule-info" style="display: none;"></p>
                                     </div>
                                 </div>
                             </div>
@@ -417,24 +435,6 @@
                                     </script>
                                 </div>
                             </div>
-                            <div class="row setup-content" id="schedule">
-                                <div class="col-xs-12">
-                                    <div id="disburse-alert" class="alert alert-success" role="alert" style="display: none;">
-                                        <h3 class="alert-heading">Loan has been disbursed!</h3>
-                                        <p>Notifications would be sent to the user accounts related to this loan application to provide updates on this loan application.</p>
-                                        <!--<hr>-->
-                                        <!--<p class="mb-0">Please contact the admin for any issues with disbursement.</p>-->
-                                    </div>
-                                    <div class="col-md-12 well">
-                                        <h2 class="text-center">Loan Overview
-                                            <button id="collect-payment-button" class ="btn btn-primary" style="float: right; display: none;" onclick="goToLoanRepayment()">Collect Payment <i class="fa fa-money"></i></button>
-                                            <span id="principal-total-text" style="font-size: 20px; float: right; margin: 5px 5px 0 0;"></span>
-                                        </h2>
-                                        <div id="loanSchedule" style="margin-top: 30px;"></div>
-                                        <p id="reschedule-info" style="display: none;"></p>
-                                    </div>
-                                </div>
-                            </div>
                             <div class="row setup-content" id="generate-schedule" style="display: none;">
                                 <div class="col-xs-12">
                                     <div class="col-md-12 well">
@@ -456,7 +456,7 @@
                                                 </div>
                                             </div>
                                             <div class="col-sm-12">
-                                                <div id="dvCSV" style="margin-top: 30px;"></div>
+                                                <div id="dvCSV"></div>
                                                 <hr />
                                                 <button id="btn-2" class="next btn btn-primary btn-lg">Save & Proceed</button>
                                             </div>
@@ -467,75 +467,58 @@
                             <div class="row setup-content" id="generate-schedule-v2" style="display: none;">
                                 <div class="col-xs-12">
                                     <div class="col-md-12 well">
-                                        <h2 class="text-center" style="margin: 0 0 15px 200px;">Loan Reschedule
-                                            <span id="reschedule-total-text" style="font-size: 20px; float: right; margin: 5px 5px 0 0;"></span>
-                                            <select id="amortization" class="form-control" style="width: 200px; float: right;">
-                                                <option value="custom" selected="selected">Custom Balance (Manual)</option>
-                                                <option value="fixed">Fixed Balance (Automatic)</option>
-                                                <option value="standard">Reducing Balance (Automatic)</option>
-                                            </select>
-                                        </h2>
-                                        <p id="schedule-error-message" class="amortization-div" style="display: none;"></p>
-                                        <div class="row amortization-div" style="display: none;">
-                                            <div class="col-sm-6 form-group">
-                                                <label class="form-control-label">Loan Requested</label><strong style="color:red"> *</strong>
-                                                <div class="input-group">
-                                                    <div class="input-group-addon"><i class="fa fa-money"></i></div>
-                                                    <input type="number" id="amount" class="form-control" required="required" value="50000" min="1" max="100000000">
-                                                </div>
-                                                <small class="form-text text-muted">Min: <span class="loan_requested_min">1.00</span>(NGN) Max: <span class="loan_requested_max">100,000,000.00</span>(NGN)</small>
-                                            </div>
-                                            <div class="col-sm-6 form-group">
-                                                <label class="form-control-label">Interest Rate</label><strong style="color:red"> *</strong>
-                                                <div class="input-group">
-                                                    <div class="input-group-addon"><i class="fa fa-plus"></i></div>
-                                                    <input type="number" id="interest-rate" class="form-control" required="required" value="12" min="1" max="1000">
-                                                </div>
-                                                <small class="form-text text-muted">Min: <span class="interest_rate_min">1</span>%  Max: <span class="interest_rate_max">1000</span>% </small>
-                                            </div>
-                                            <div class="col-sm-6 form-group">
-                                                <label class="form-control-label">Tenor (monthly)</label><strong style="color:red"> *</strong>
-                                                <div class="input-group">
-                                                    <div class="input-group-addon"><i class="fa fa-money"></i></div>
-                                                    <input type="number" id="term" class="form-control" required="required" value="12" min="1" max="60">
-                                                </div>
-                                                <small class="form-text text-muted">Min: <span class="tenor_min">1</span>  Max: <span class="tenor_max">60</span> </small>
-                                            </div>
-                                            <div class="col-sm-6 form-group">
-                                                <label class="form-control-label">Payment Amount (Monthly)</label><strong style="color:red"> *</strong>
-                                                <div class="input-group">
-                                                    <div class="input-group-addon"><i class="fa fa-money"></i></div>
-                                                    <input type="number" id="payment-amount" class="form-control" required="required" disabled="disabled">
-                                                </div>
-                                            </div>
-                                            <div class="col-sm-6 form-group">
-                                                <label class="form-control-label">First Repayment Date</label>
-                                                <div class="input-group">
-                                                    <div class="input-group-addon"><i class="fa fa-calendar"></i></div>
-                                                    <input type="date" id="repayment-date" class="form-control" required="required">
-                                                </div>
-                                            </div>
-                                        </div>
                                         <div class="row">
-                                            <div class="col-sm-3">
-                                                <input type="file" id="csvUpload2" style="display: inline-block"/>
+                                            <h2 class="col-lg-12">
+                                                <button id="initiateRescheduleModalBtn" class="btn btn-primary" style="float: right;">Initiate <i class="fa fa-plus"></i></button>
+                                                <span class="text-center" style="margin: 0 auto; display: block;">Loan Reschedule</span>
+                                            </h2>
+                                            <div id="reschedule-actions" class="col-lg-12" style="display: none;">
+                                                <div class="row">
+                                                    <div class="col-lg-6" style="padding-top: 5px;">
+                                                        <strong id="reschedule-title" style="font-size: 20px;"></strong>
+                                                        <br>
+                                                        <div class="btn-group">
+                                                            <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                                More Actions
+                                                            </button>
+                                                            <div class="dropdown-menu">
+                                                                <a class="dropdown-item" href="#" id="setupDirectDebitBtn2">Setup New Mandate</a>
+                                                                <a class="dropdown-item" href="#" id="viewMandateBtn2" data-toggle="modal" data-target="#viewMandateModal">View Mandate</a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-lg-6">
+                                                        <div id="next-actions2" class="btn-group" style="float: right;">
+                                                            <button id="rejectCSV2" class ="btn btn-danger btn-lg" style="margin-right: 5px;"><i class="fa fa-times"></i></button>
+                                                            <button class ="previous2 btn btn-danger btn-lg"><i class="fa fa-backward"></i></button>
+                                                            <button id="current_stage2" class ="btn btn-warning btn-lg" disabled="disabled"></button>
+                                                            <button type="button" class="btn btn-success btn-lg dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                                <i class="fa fa-forward"></i>
+                                                            </button>
+                                                            <div id="stage-actions2" class="dropdown-menu" style="width: 100%;">
+                                                                <a id="stage-action2-default" class="dropdown-item next2" href="#">Save & Proceed</a>
+                                                            </div>
+                                                        </div>
+                                                        <span style="margin: 15px 10px; float: right;">
+                                                            <a href="#" class="pull-right transitions-toggle2">Show Transitions <i class="fa fa-chevron-down"></i></a>
+                                                            <a href="#" class="pull-right transitions-toggle2" style="display: none;">Hide Transitions <i class="fa fa-chevron-up"></i></a>
+                                                        </span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div class="col-sm-5">
-                                                <button id="rejectCSV2" class="btn btn-danger" style="float: right;">Reject <i class="fa fa-times"></i></button>
-                                                <button id="approveRescheduleModalBtn" class="btn btn-success" style="float: right;" 
-                                                    data-toggle="modal" data-target="#disburseModal">Approve <i class="fa fa-check"></i></button>
-                                                <button id="saveCSV2" class="btn btn-primary" style="float: right;">Add <i class="fa fa-plus"></i></button>
-                                                <button id="uploadCSV2" class="btn btn-info" style="float: right;">Preview <i class="fa fa-eye-slash"></i></button>
-                                                <i id="csvLoader2" class="fa fa-spinner fa-spin" style="display: none;"></i>
+                                            <script type="text/javascript">
+                                                let $transitions_toggle2 = $('.transitions-toggle2');
+                                                $transitions_toggle2.click(e => {
+                                                    e.preventDefault();
+                                                    $('#transitions-list2').toggle();
+                                                    $transitions_toggle2.toggle();
+                                                });
+                                            </script>
+                                            <div id="transitions-list2" class="col-lg-12" style="display: none;">
+                                                <ul id="workflow-ul-list2" class="nav nav-pills nav-justified thumbnail setup-panel"></ul>
                                             </div>
-                                            <div class="col-sm-4">
-                                                <a href="/Loan Schedule.csv" target="_blank" style="text-decoration: underline;">
-                                                    Download Loan Schedule Template <i class="fa fa-cloud-download"></i></a>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-sm-12">
-                                                <div id="dvCSV2" style="margin-top: 30px;"></div>
+                                            <div id="newReschedule" class="col-lg-12">
+                                                <h3 class="text-center">No loan reschedule process has been initiated!</h3>
                                             </div>
                                         </div>
                                     </div>
@@ -547,17 +530,13 @@
                                         <h2 class="text-center" style="margin-bottom: 15px;">Uploaded Documents</h2>
                                         <div id="Carousel" class="carousel slide">
                                             <ol class="carousel-indicators"></ol>
-
-                                            <!-- Carousel items -->
                                             <div class="carousel-inner"></div>
-
                                             <a data-slide="prev" href="#Carousel" class="left carousel-control">‹</a>
                                             <a data-slide="next" href="#Carousel" class="right carousel-control">›</a>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                         
                             <script type="text/javascript">
                                 $(document).ready(function() {
                                     $('#Carousel').carousel({
@@ -921,12 +900,6 @@
                     <div class="form-group">
                         <label class="form-control-label">Include unearned interest</label>
                         <div class="input-group">
-                            <!-- <div class="radio">
-                                <label><input type="radio" name="payoff-include-interest" value="daily">Daily</label>
-                            </div>
-                            <div class="radio">
-                                <label><input type="radio" name="payoff-include-interest" value="monthly">Monthly</label>
-                            </div> -->
                             <div class="radio">
                                 <label><input type="radio" name="payoff-include-interest" value="all">All</label>
                             </div>
@@ -1143,7 +1116,7 @@
                     </div>
                     <div class="row">
                         <div class="col-sm-12">
-                            <div id="schedule-preview" style="margin-top: 30px;"></div>
+                            <div id="schedule-preview"></div>
                         </div>
                     </div>
                 </div>
@@ -1151,6 +1124,103 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                 <button id="saveLoanOffer" type="button" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="rescheduleModal" tabindex="-1" role="dialog" aria-labelledby="rescheduleModalLabel">
+    <div class="modal-dialog" role="document" style="min-width: 90%;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="rescheduleModalLabel" style="width: 100%;">Request Loan Reschedule
+                    <a href="/Loan Schedule.csv" target="_blank" style="text-decoration: underline; float: right;">
+                    Download Loan Schedule Template <i class="fa fa-cloud-download"></i></a>
+                </h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <p id="schedule-error-message" class="amortization-div" style="display: none;"></p>
+                    <div class="row">
+                        <div class="col-sm-6 form-group">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <label class="form-control-label">Amortization Type</label><strong style="color:red"> *</strong>
+                                    <div class="input-group">
+                                        <div class="input-group-addon"><i class="fa fa-list"></i></div>
+                                        <select id="amortization" class="form-control">
+                                            <option value="custom" selected="selected">Custom Balance (Manual)</option>
+                                            <option value="fixed">Fixed Balance (Automatic)</option>
+                                            <option value="standard">Reducing Balance (Automatic)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-12">
+                                    <br><input type="file" id="csvUpload2" style="display: inline-block"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 form-group">
+                            <label class="form-control-label">Workflow</label><strong style="color:red"> *</strong>
+                            <div class="input-group">
+                                <div class="input-group-addon"><i class="fa fa-list"></i></div>
+                                <select id="workflow" class="form-control"></select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row amortization-div" style="display: none;">
+                        <div class="col-sm-6 form-group">
+                            <label class="form-control-label">Loan Requested</label><strong style="color:red"> *</strong>
+                            <div class="input-group">
+                                <div class="input-group-addon"><i class="fa fa-money"></i></div>
+                                <input type="number" id="amount" class="form-control" required="required" value="50000" min="1" max="100000000">
+                            </div>
+                            <small class="form-text text-muted">Min: <span class="loan_requested_min">1.00</span>(NGN) Max: <span class="loan_requested_max">100,000,000.00</span>(NGN)</small>
+                        </div>
+                        <div class="col-sm-6 form-group">
+                            <label class="form-control-label">Interest Rate</label><strong style="color:red"> *</strong>
+                            <div class="input-group">
+                                <div class="input-group-addon"><i class="fa fa-plus"></i></div>
+                                <input type="number" id="interest-rate" class="form-control" required="required" value="12" min="1" max="1000">
+                            </div>
+                            <small class="form-text text-muted">Min: <span class="interest_rate_min">1</span>%  Max: <span class="interest_rate_max">1000</span>% </small>
+                        </div>
+                        <div class="col-sm-6 form-group">
+                            <label class="form-control-label">Tenor (monthly)</label><strong style="color:red"> *</strong>
+                            <div class="input-group">
+                                <div class="input-group-addon"><i class="fa fa-money"></i></div>
+                                <input type="number" id="term" class="form-control" required="required" value="12" min="1" max="60">
+                            </div>
+                            <small class="form-text text-muted">Min: <span class="tenor_min">1</span>  Max: <span class="tenor_max">60</span> </small>
+                        </div>
+                        <div class="col-sm-6 form-group">
+                            <label class="form-control-label">Payment Amount (Monthly)</label><strong style="color:red"> *</strong>
+                            <div class="input-group">
+                                <div class="input-group-addon"><i class="fa fa-money"></i></div>
+                                <input type="number" id="payment-amount" class="form-control" required="required" disabled="disabled">
+                            </div>
+                        </div>
+                        <div class="col-sm-6 form-group">
+                            <label class="form-control-label">First Repayment Date</label>
+                            <div class="input-group">
+                                <div class="input-group-addon"><i class="fa fa-calendar"></i></div>
+                                <input type="date" id="repayment-date" class="form-control" required="required">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div id="dvCSV2"></div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button id="uploadCSV2" class="btn btn-info">Preview</button>
+                <button id="saveCSV2" class="btn btn-primary">Save</button>
+                <i id="csvLoader2" class="fa fa-spinner fa-spin" style="display: none;"></i>
             </div>
         </div>
     </div>
@@ -1199,6 +1269,7 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.3/jquery.fancybox.min.js"></script>
 <script src="/js/helper-functions.js"></script>
 <script src="/../menus/menu-items.js"></script>
+<script type="text/javascript" src="/../application/view-application/reschedule.js"></script>
 <script type="text/javascript" src="/../application/view-application/view-application.js"></script>
 <script src="../../js/loader.js"></script>
 <script src="../../js/notifications.js"></script>

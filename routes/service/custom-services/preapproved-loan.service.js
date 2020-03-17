@@ -6,6 +6,7 @@ const
     express = require('express'),
     router = express.Router(),
     SHA512 = require('js-sha512'),
+    enums = require('../../../enums'),
     helperFunctions = require('../../../helper-functions'),
     emailService = require('../custom-services/email.service');
 
@@ -230,37 +231,27 @@ router.get('/recommendations/get/:id', function (req, res, next) {
  * 2. Direct Debit Mandate Setup
  */
 router.post('/create', function (req, res, next) {
-    const HOST = `${req.protocol}://${req.get('host')}`;
     let data = {},
         postData = Object.assign({},req.body.application),
-        preapproved_loan = Object.assign({},req.body.preapproved_loan),
-        query =  'INSERT INTO applications Set ?',
-        endpoint = `/core-service/post?query=${query}`,
-        url = `${HOST}${endpoint}`;
+        preapproved_loan = Object.assign({},req.body.preapproved_loan);
     delete postData.email;
     delete postData.fullname;
     postData.status = 0;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
-    getApplicationID(req, query, postData, function (error, response) {
+    getApplicationID(req, postData, function (error, response) {
         if(error){
             res.send({status: 500, error: error, response: null});
         } else {
             let applicationID = req.body.applicationID || '(SELECT MAX(ID) from applications)';
-            query = `SELECT a.*, (SELECT u.phone FROM users u WHERE u.ID = (SELECT c.loan_officer FROM clients c WHERE c.ID = a.userID)) AS contact 
+            let query = `SELECT a.*, (SELECT u.phone FROM users u WHERE u.ID = (SELECT c.loan_officer FROM clients c WHERE c.ID = a.userID)) AS contact 
                     FROM applications a WHERE a.ID = ${applicationID}`;
-            endpoint = `/core-service/get`;
-            url = `${HOST}${endpoint}`;
-            axios.get(url, {
-                params: {
-                    query: query
-                }
-            }).
-            then(function (response_) {
+            db.query(query, (error, response_) => {
+                if (error)
+                    return res.send({status: 500, error: error, response: null});
+                
                 query =  'INSERT INTO preapproved_loans Set ?';
-                endpoint = `/core-service/post?query=${query}`;
-                url = `${HOST}${endpoint}`;
-                preapproved_loan.applicationID = req.body.applicationID ||  response_['data'][0]['ID'];
+                preapproved_loan.applicationID = req.body.applicationID ||  response_[0]['ID'];
                 preapproved_loan.date_created = postData.date_created;
                 preapproved_loan.expiry_date = moment().add(5, 'days').utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
                 preapproved_loan.hash = bcrypt.hashSync(postData.userID, parseInt(process.env.SALT_ROUNDS));
@@ -271,7 +262,7 @@ router.post('/create', function (req, res, next) {
                         data.name = req.body.fullname;
                         data.date = postData.date_created;
                         data.expiry = preapproved_loan.expiry_date;
-                        data.contact = response_['data'][0]['contact'];
+                        data.contact = response_[0]['contact'];
                         data.amount = helperFunctions.numberToCurrencyFormatter(postData.loan_amount);
                         data.offer_url = `${process.env.HOST || req.HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}`;
                         if (req.body.applicationID)
@@ -287,30 +278,31 @@ router.post('/create', function (req, res, next) {
                             mailOptions.subject = 'Mandate Setup';
                         }
                         emailService.send(mailOptions);
-                        return res.send(response_['data'][0]);
+                        return res.send(response_[0]);
                     }
                 });
-            }, err => {
-                res.send({status: 500, error: err, response: null});
-            })
-            .catch(function (error) {
-                res.send({status: 500, error: error, response: null});
             });
         }
     });
 });
 
-function getApplicationID(req, query, postData, callback) {
+function getApplicationID(req, postData, callback) {
     if (!req.body.applicationID) {
-        db.query(query, postData, function (error, response) {
-            if(error){
-                callback(error, null);
-            } else {
-                callback(null, response);
-            }
+        const query = 'INSERT INTO applications SET ?';
+        db.query(query, postData, (error, response) => {
+            if(error) return callback(error, null);
+            return callback(null, response);
         });
     } else {
-        callback(null, null);
+        const update = {
+                status: 0,
+                date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
+            },
+            query = `UPDATE preapproved_loans SET ? WHERE applicationID = ${req.body.applicationID}`;
+        db.query(query, update, (error, response) => {
+            if(error) return callback(error, null);
+            return callback(null, response);
+        });
     }
 }
 
@@ -501,7 +493,7 @@ router.post('/offer/accept/:id', function (req, res, next) {
                     query =  `UPDATE applications Set ? WHERE ID = ${application_id}`;
                     endpoint = `/core-service/post?query=${query}`;
                     url = `${HOST}${endpoint}`;
-                    application.status = 1;
+                    application.status = enums.APPLICATION.STATUS.ACTIVE;
                     application.date_modified = date;
                     db.query(query, application, function (error, application_response) {
                         if(error) {

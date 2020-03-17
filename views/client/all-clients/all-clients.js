@@ -561,8 +561,6 @@ function edit(){
             let folder = data[0].fullname + '_' + data[0].email;
             loadImages(data[0].images_folder);
 
-
-
             $('#first_name2').val(fullname.split(' ')[0]);
             $('#middle_name2').val(fullname.split(' ')[1]);
             $('#last_name2').val(fullname.split(' ')[2]);
@@ -673,8 +671,6 @@ function checkForEdit(){
                 let folder = data[0].fullname + '_' + data[0].email;
                 loadImages(data[0].images_folder);
 
-
-
                 $('#first_name2').val(data[0].first_name);
                 $('#middle_name2').val(data[0].middle_name);
                 $('#last_name2').val(data[0].last_name);
@@ -704,21 +700,6 @@ function checkForEdit(){
     }
 }
 
-// $("#phone").on("keyup", function () {
-//     let val = $("#phone").val();
-//     $("#phone").val(numbersOnly(val));
-// });
-//
-// $("#bvn").on("keyup", function () {
-//     let val = $("#bvn").val();
-//     $("#bvn").val(numbersOnly(val));
-// });
-//
-// $("#account").on("keyup", function () {
-//     let val = $("#account").val();
-//     $("#account").val(numbersOnly(val));
-// });
-
 $("#years_add").on("keyup", function () {
     let val = $("#years_add").val();
     $("#years_add").val(numbersOnly(val));
@@ -746,7 +727,6 @@ function submitDetails(){
     obj.middle_name = $.trim($('#middle_name').val());
     obj.last_name = $.trim($('#last_name').val());
     obj.fullname = $('#first_name').val() + ' '+ $('#middle_name').val() + ' ' +$('#last_name').val();
-    // obj.phone = numbersOnly($('#phone').val());
     obj.phone = $('#phone').val();
     obj.address = $('#address').val();
     obj.email = $('#email').val();
@@ -755,9 +735,7 @@ function submitDetails(){
     obj.marital_status = $('#marital_status').find('option:selected').attr('value');
     obj.loan_officer = $('#loan_officer').find('option:selected').attr('id');
     obj.branch = $('#branch').find('option:selected').attr('id');
-    // obj.bvn= numbersOnly($("#bvn").val());
     obj.bvn= $("#bvn").val();
-    // obj.account= numbersOnly($("#account").val());
     obj.account= $("#account").val();
     obj.bank = $('#bank').find('option:selected').attr('id');
     obj.client_state = $('#client_state').find('option:selected').attr('id');

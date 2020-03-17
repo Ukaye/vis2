@@ -16,7 +16,6 @@ var myTable = $('#vehicles-table')
             }, {
                 "bSortable": false
             }
-            //null, null, null, { "bSortable": false },
         ],
         "aaSorting": [],
         "bSearchable": false,
@@ -36,12 +35,10 @@ var myTable2 = $('#loan-table')
             }, {
                 "bSortable": false
             }
-            // , null, { "bSortable": false },
         ],
         "aaSorting": [],
         "bFilter": true,
         "bSearchable": false,
-        // "bInfo" : false,
         select: {
             style: 'multi'
         },
@@ -106,11 +103,6 @@ function loadDetails() {
             $('#guarantor_email').val(data[0].guarantor_email);
             $('#guarantor_address').val(data[0].guarantor_address);
             $('#gua_country').val(data[0].gua_country);
-
-            // var applications = data.message;
-            // results = applications;
-            // populateDataTable(applications);
-            // swal('Application archived successfully');
         },
         'error': function (err) {
             swal('Oops! An error occurred while retrieving details.');
@@ -126,12 +118,10 @@ function loadInfo() {
         'type': 'get',
         'data': {},
         'success': function (data) {
-            //                var details = JSON.parse(data);
             client_det = data;
             getBanks();
         },
         'error': function (err) {
-            //alert ('Error');
             console.log(err);
         }
     });
@@ -144,7 +134,6 @@ function populateCards() {
         $('.escrow-balance').text(parseFloat(obj.escrow).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
     let folder = obj.fullname + '_' + obj.email;
     loadImages(obj.images_folder);
-    // loadImages(obj.phone, obj.fullname);
     $('#fullname').html(obj.fullname);
     $('#phone').html(' ' + obj.phone);
     $('#email').html(' ' + obj.email);
@@ -224,7 +213,6 @@ function loadApplications() {
             populateLoanTable(data);
         },
         'error': function (err) {
-            //alert ('Error');
             console.log(err);
         }
     });
@@ -239,7 +227,6 @@ function loadActivities() {
             displayActivities(data);
         },
         'error': function (err) {
-            //alert ('Error');
             console.log(err);
         }
     });
@@ -295,8 +282,6 @@ function populateLoanTable(dets) {
         $("#loan-table").dataTable().fnClearTable();
     } else {
         jQuery.each(dets, function (k, v) {
-            //alert(k);
-            //alert(d1.toString('dd/mm/yyyy'));
             let stat;
             let view = ' <button type="button" class="btn btn-outline-primary" onclick="openViewWorkflowModal(' + v.ID + ')"><i class="fa fa-eye"></i> View Application</button>';
             if (v.close_status === 0) {
