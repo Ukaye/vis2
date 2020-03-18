@@ -3642,4 +3642,102 @@ router.get('/account/statement/get/:id', (req, res) => {
     });
 });
 
+router.post('/call-logs/sync/:id', helperFunctions.verifyJWT, function (req, res) {
+    db.getConnection((err, connection) => {
+        if (err) throw err;
+
+        let count = 0;
+        const call_logs = req.body,
+            query = 'INSERT INTO client_call_logs SET ?',
+            date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        async.forEach(call_logs, (call_log, callback) => {
+            call_log.date_created = date;
+            call_log.clientID = req.params.id;
+            connection.query(query, call_log, (error, response) => {
+                if (error) console.log(error);
+                else count++;
+                callback();
+            });
+        }, data => {
+            connection.release();
+            res.send({
+                "status": 200,
+                "error": null,
+                "response": `${count} call log(s) synced successfully`
+            });
+        });
+    });
+});
+
+router.get('/call-logs/get/:id', (req, res) => {
+    const query = `SELECT * FROM client_call_logs WHERE clientID = ${req.params.id}`;
+    db.query(query, (error, call_logs) => {
+        if (error) 
+            return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": call_logs
+        });
+    });
+});
+
+router.post('/contacts/sync/:id', helperFunctions.verifyJWT, function (req, res) {
+    db.getConnection((err, connection) => {
+        if (err) throw err;
+
+        let count = 0;
+        const contacts = req.body,
+            query = 'INSERT INTO client_contacts SET ?',
+            date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        async.forEach(contacts, (contact, callback) => {
+            contact.date_created = date;
+            contact.clientID = req.params.id;
+            if (contact.emailAddresses) 
+                contact.emailAddresses = JSON.stringify(contact.emailAddresses)
+            if (contact.phoneNumbers) 
+                contact.phoneNumbers = JSON.stringify(contact.phoneNumbers)
+            if (contact.postalAddresses) 
+                contact.postalAddresses = JSON.stringify(contact.postalAddresses)
+            if (contact.urlAddresses) 
+                contact.urlAddresses = JSON.stringify(contact.urlAddresses)
+            connection.query(query, contact, (error, response) => {
+                if (error) console.log(error);
+                else count++;
+                callback();
+            });
+        }, data => {
+            connection.release();
+            res.send({
+                "status": 200,
+                "error": null,
+                "response": `${count} contact(s) synced successfully`
+            });
+        });
+    });
+});
+
+router.get('/contacts/get/:id', (req, res) => {
+    const query = `SELECT * FROM client_contacts WHERE clientID = ${req.params.id}`;
+    db.query(query, (error, contacts) => {
+        if (error) 
+            return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": contacts
+        });
+    });
+});
+
 module.exports = router;
