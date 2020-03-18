@@ -3691,7 +3691,8 @@ router.post('/contacts/sync/:id', helperFunctions.verifyJWT, function (req, res)
     db.getConnection((err, connection) => {
         if (err) throw err;
 
-        let count = 0;
+        let count = 0,
+            errors = [];
         const contacts = req.body,
             query = 'INSERT INTO client_contacts SET ?',
             date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -3707,7 +3708,7 @@ router.post('/contacts/sync/:id', helperFunctions.verifyJWT, function (req, res)
             if (contact.urlAddresses) 
                 contact.urlAddresses = JSON.stringify(contact.urlAddresses)
             connection.query(query, contact, (error, response) => {
-                if (error) console.log(error);
+                if (error) errors.push(error);
                 else count++;
                 callback();
             });
@@ -3715,8 +3716,8 @@ router.post('/contacts/sync/:id', helperFunctions.verifyJWT, function (req, res)
             connection.release();
             res.send({
                 "status": 200,
-                "error": null,
-                "response": `${count} contact(s) synced successfully`
+                "error": errors,
+                "response": `${count} of ${contacts.length} contact(s) synced successfully`
             });
         });
     });
