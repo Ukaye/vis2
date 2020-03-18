@@ -3741,4 +3741,50 @@ router.get('/contacts/get/:id', (req, res) => {
     });
 });
 
+router.post('/locations/sync/:id', helperFunctions.verifyJWT, function (req, res) {
+    db.getConnection((err, connection) => {
+        if (err) throw err;
+
+        let count = 0;
+        const locations = req.body,
+            query = 'INSERT INTO client_locations SET ?',
+            date = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+        async.forEach(locations, (location, callback) => {
+            location.date_created = date;
+            location.clientID = req.params.id;
+            connection.query(query, location, (error, response) => {
+                if (error) console.log(error);
+                else count++;
+                callback();
+            });
+        }, data => {
+            connection.release();
+            res.send({
+                "status": 200,
+                "error": null,
+                "response": `${count} location(s) synced successfully`
+            });
+        });
+    });
+});
+
+router.get('/locations/get/:id', (req, res) => {
+    const query = `SELECT * FROM client_locations WHERE clientID = ${req.params.id}`;
+    db.query(query, (error, locations) => {
+        if (error) 
+            return res.send({
+                "status": 500,
+                "error": error,
+                "response": null
+            });
+
+        res.send({
+            "status": 200,
+            "error": null,
+            "response": locations
+        });
+    });
+});
+
+
 module.exports = router;
