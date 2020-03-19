@@ -2190,32 +2190,46 @@ router.put('/application/update/:id/:application_id', helperFunctions.verifyJWT,
 });
 
 router.get('/payment-method/initiate/:id', helperFunctions.verifyJWT, function (req, res) {
-    paystack.transaction.initialize({
-        email: req.user.email,
-        amount: 5000
-    })
-        .then(function (body) {
-            if (body.status) {
-                return res.send({
-                    "status": 200,
-                    "error": null,
-                    "response": body.data
-                });
-            } else {
-                return res.send({
-                    "status": 500,
-                    "error": null,
-                    "response": body.message
-                });
-            }
-        })
-        .catch(function (error) {
-            if (error) return res.send({
-                "status": 500,
-                "error": error,
-                "response": null
-            });
+    db.query(`SELECT email FROM clients WHERE ID = ${req.params.id}`, (error, client) => {
+        if (error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
         });
+
+        if (!client[0]) return res.send({
+            "status": 500,
+            "error": 'Client does not exist!',
+            "response": null
+        });
+
+        paystack.transaction.initialize({
+            email: client[0]['email'],
+            amount: 5000
+        })
+            .then(function (body) {
+                if (body.status) {
+                    return res.send({
+                        "status": 200,
+                        "error": null,
+                        "response": body.data
+                    });
+                } else {
+                    return res.send({
+                        "status": 500,
+                        "error": null,
+                        "response": body.message
+                    });
+                }
+            })
+            .catch(function (error) {
+                if (error) return res.send({
+                    "status": 500,
+                    "error": error,
+                    "response": null
+                });
+            });
+    });
 });
 
 router.post('/payment-method/create/:id', helperFunctions.verifyJWT, function (req, res) {
