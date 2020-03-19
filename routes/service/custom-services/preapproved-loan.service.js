@@ -299,9 +299,13 @@ function getApplicationID(req, postData, callback) {
                 date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
             },
             query = `UPDATE preapproved_loans SET ? WHERE applicationID = ${req.body.applicationID}`;
-        db.query(query, update, (error, response) => {
+        db.query(query, update, error => {
             if(error) return callback(error, null);
-            return callback(null, response);
+            query = `UPDATE remita_mandates SET ? WHERE applicationID = ${req.body.applicationID}`;
+            db.query(query, update, (error, response) => {
+                if(error) return callback(error, null);
+                return callback(null, response);
+            });
         });
     }
 }

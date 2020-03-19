@@ -6,7 +6,6 @@ $(document).ready(function () {
     loadInfo();
     loadActivities();
     bindInvestmentDataTable(application_id);
-    $("#map").css("position","fixed !important");
 });
 
 var myTable = $('#vehicles-table')
@@ -741,6 +740,7 @@ function getContacts() {
                 },
                 success: data => {
                     fnCallback(data);
+                    getLocations();
                 }
             });
         },
@@ -787,5 +787,50 @@ function getContacts() {
                 data: "jobTitle"
             }
         ]
+    });
+}
+
+function getLocations() {
+    $.ajax({
+        type: 'GET',
+        url: `/client/locations/get/${client_det[0]['ID']}`,
+        success: data => {
+            const map_template = `
+                <div id="map"></div>
+                <script>
+                    function initMap() {
+                        const locations = ${JSON.stringify(data.response)};
+                        const infowindow = new google.maps.InfoWindow();
+                        const map = new google.maps.Map(document.getElementById('map'), {
+                            center: {
+                                lat: Number(locations[0]['latitude']),
+                                lng: Number(locations[0]['longitude'])
+                            },
+                            zoom: 8
+                        });
+                    
+                        var marker;
+                        locations.forEach(location => {
+                            marker = new google.maps.Marker({
+                                position: {
+                                    lat: Number(location.latitude),
+                                    lng: Number(location.longitude)
+                                },
+                                map: map
+                            });
+                        
+                            google.maps.event.addListener(marker, 'click', (marker => {
+                                return () => {
+                                    infowindow.setContent('Datetime: '+timestampToDatetimeConverter(location.timestamp));
+                                    infowindow.open(map, marker);
+                                }
+                            })(marker));
+                        });
+                    }
+                </script>
+                <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCmBOAesi3bA6K8MbfsMJnr35MM7P8BEiQ&callback=initMap" async defer></script>
+            `;
+            $("#locations").html(map_template);
+        }
     });
 }

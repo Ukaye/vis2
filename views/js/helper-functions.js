@@ -280,3 +280,16 @@ function processDate(date) {
     let date_array = date.split(separator);
     return date_array[0]+'-'+date_array[1]+'-'+date_array[2];
 }
+
+function timestampToDatetimeConverter(UNIX_timestamp){
+    var a = new Date(UNIX_timestamp.substring(0,10) * 1000);
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var year = a.getFullYear();
+    var month = months[a.getMonth()];
+    var date = a.getDate();
+    var hour = a.getHours();
+    var min = a.getMinutes();
+    var sec = a.getSeconds();
+    var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+    return time;
+  }

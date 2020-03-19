@@ -457,7 +457,7 @@ router.post('/create', function (req, res) {
                 let duplicates = [];
                 if (postData.email == results[0]['email']) duplicates.push('email');
                 if (postData.phone == results[0]['phone']) duplicates.push('phone');
-                return res.send({ "status": 500, "error": `The ${duplicates[0] || username} is already in use by another user!`, "response": null });
+                return res.send({ "status": 500, "error": `The ${duplicates[0] || postData.username} is already in use by another user!`, "response": null });
             }
             let bvn = postData.bvn;
             delete postData.bvn;
