@@ -1695,6 +1695,7 @@ function initCSVUpload2(application, settings) {
     });
 
     $('#initiateRescheduleModalBtn').bind('click', e => {
+        $('#reschedule-balance').text($('#total-due-text').text());
         $('#rescheduleModal').modal('show');
     });
     
@@ -1702,10 +1703,25 @@ function initCSVUpload2(application, settings) {
         if (!new_reschedule || !new_reschedule[0])
             return notification('There is no reschedule available for approval!','','error');
         reschedule_status = true;
-        $('#disburseModal').modal('show');
-        $('#editRepaymentDateBtn').hide();
-        $('#disbursement-amount').prop('disabled', false);
-        $('#disbursement-amount').val(numberToCurrencyformatter((total_new_schedule-total_due_amount).round(2)));
+        const reschedule_disburse_amount = total_new_schedule - total_due_amount;
+        $('#disbursement-amount').val(numberToCurrencyformatter((reschedule_disburse_amount).round(2)));
+        $('#disbursement-date').val(formatDate(new Date()));
+        if (reschedule_disburse_amount === 0) {
+            swal({
+                title: "Are you sure?",
+                text: "Nothing will be posted to disbursements!",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true
+            })
+                .then(yes => {
+                    if (yes) $approveCSV.trigger('click');
+                });
+        } else {
+            $('#disburseModal').modal('show');
+            $('#editRepaymentDateBtn').hide();
+            $('#disbursement-amount').prop('disabled', false);
+        }
     });
 
     $approveCSV.bind("click", function () {
@@ -1715,9 +1731,6 @@ function initCSVUpload2(application, settings) {
         disbursal.bank = $('#funding').find(":selected").text();
         disbursal.disbursement_date = $('#disbursement-date').val();
         disbursal.disbursement_amount = currencyToNumberformatter($('#disbursement-amount').val());
-        if (disbursal.funding_source === "-- Select a Disbursement Bank --" || 
-            !disbursal.disbursement_date || !disbursal.disbursement_amount)
-            return notification('Kindly fill all required fields!','','warning');
         if ($('#fees-check').is(':checked')) {
             let $fees = $('#disbursement-fees');
             if (!$fees.val())
