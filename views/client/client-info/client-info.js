@@ -6,6 +6,7 @@ $(document).ready(function () {
     loadInfo();
     loadActivities();
     bindInvestmentDataTable(application_id);
+    $("#map").css("position","fixed !important");
 });
 
 var myTable = $('#vehicles-table')
@@ -256,10 +257,8 @@ function loadImages(folder) {
     $.ajax({
         'url': '/profile-images/' + folder + '/',
         'type': 'get',
-        'data': {},
         'success': function (data) {
-            console.log(data)
-            let res = JSON.parse(data);
+            let res = (data)? JSON.parse(data) : {response: {}};
             if (res.status == 500) {
                 $('#pic').append('<img src="assets/default_user_logo.png" width="180" height="170"/>');
             } else {
@@ -565,7 +564,7 @@ function getAccountStatement() {
         url: `/client/account/statement/get/${client_det[0]['ID']}`,
         success: function (response) {
             populateAccountStatement(response.response);
-            // getCallLogs();
+            getCallLogs();
         }
     });
 }
@@ -638,7 +637,101 @@ function getCallLogs() {
             $.ajax({
                 dataType: 'json',
                 type: 'get',
-                url: `/client/call_logs/get/${client_det[0]['ID']}`,
+                url: `/client/call-logs/get/${client_det[0]['ID']}`,
+                data: {
+                    limit: aoData[4].value,
+                    offset: aoData[3].value,
+                    draw: aoData[0].value,
+                    search_string: aoData[5].value.value,
+                    order: tableHeaders[aoData[2].value[0].column].query
+                },
+                success: data => {
+                    fnCallback(data);
+                    getContacts();
+                }
+            });
+        },
+        aaSorting: [
+            [4, 'desc']
+        ],
+        aoColumnDefs: [
+            {
+                sClass: "numericCol",
+                aTargets: [2],
+                sType: "numeric"
+            }
+        ],
+        columns: [
+            {
+                width: "30%",
+                data: "name"
+            },
+            {
+                width: "15%",
+                data: "phoneNumber"
+            },
+            {
+                width: "15%",
+                className: "text-right",
+                mRender: (data, type, full) => {
+                    return new Date(1000 * full.duration).toISOString().substr(11, 8);
+                }
+            },
+            {
+                width: "15%",
+                mRender: (data, type, full) => {
+                    if (full.type === 'INCOMING') return 'INCOMING <i class="fa fa-phone" style="color: green;"></i>';
+                    if (full.type === 'OUTGOING') return 'OUTGOING <i class="fa fa-phone" style="color: blue;"></i>';
+                    return `${full.type} <i class="fa fa-phone" style="color: red;"></i>`;
+                }
+            },
+            {
+                width: "25%",
+                data: "dateTime"
+            }
+        ]
+    });
+}
+
+function getContacts() {
+    table = $('#contacts').DataTable({
+        dom: 'Blfrtip',
+        bProcessing: true,
+        bServerSide: true,
+        buttons: [
+            'copy', 'csv', 'excel', 'pdf', 'print'
+        ],
+        fnServerData: (sSource, aoData, fnCallback) => {
+            let tableHeaders = [
+                {
+                    name: 'displayName',
+                    query: `ORDER BY displayName ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'emailAddresses',
+                    query: `ORDER BY emailAddresses ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'phoneNumbers',
+                    query: `ORDER BY phoneNumbers ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'company',
+                    query: `ORDER BY company ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'department',
+                    query: `ORDER BY department ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'jobTitle',
+                    query: `ORDER BY jobTitle ${aoData[2].value[0].dir}`
+                }
+            ];
+            $.ajax({
+                dataType: 'json',
+                type: 'get',
+                url: `/client/contacts/get/${client_det[0]['ID']}`,
                 data: {
                     limit: aoData[4].value,
                     offset: aoData[3].value,
@@ -652,35 +745,46 @@ function getCallLogs() {
             });
         },
         aaSorting: [
-            [4, 'desc']
+            [0, 'asc']
         ],
         columns: [
             {
-                width: "30%",
-                data: "name"
+                width: "25%",
+                data: "displayName"
             },
             {
-                width: "20%",
-                data: "phoneNumber"
+                width: "25%",
+                mRender: (data, type, full) => {
+                    let emails = [];
+                    const email_array = (full.emailAddresses)? JSON.parse(full.emailAddresses) : [];
+                    email_array.forEach(email_obj => {
+                        if(!emails[email_obj.email]) emails.push(email_obj.email.replace(/\s/g, ''))
+                    });
+                    return emails.join(',<br>');
+                }
             },
             {
                 width: "15%",
                 mRender: (data, type, full) => {
-                    return new Date(1000 * full.duration).toISOString().substr(11, 8);
+                    let phones = [];
+                    const phone_array = (full.phoneNumbers)? JSON.parse(full.phoneNumbers) : [];
+                    phone_array.forEach(phone_obj => {
+                        if(!phones[phone_obj.number]) phones.push(phone_obj.number.replace(/\s/g, ''))
+                    });
+                    return phones.join(',<br>');
                 }
             },
             {
-                width: "10%",
-                className: "text-right",
-                mRender: (data, type, full) => {
-                    if (full.type === 'INCOMING') return 'INCOMING <i class="fa fa-phone" style="color: green;"></i>';
-                    if (full.type === 'OUTGOING') return 'OUTGOING <i class="fa fa-phone" style="color: blue;"></i>';
-                    return `${full.type} <i class="fa fa-phone" style="color: red;"></i>`;
-                }
+                width: "15%",
+                data: "company"
             },
             {
-                width: "25%",
-                data: "dateTime"
+                width: "15%",
+                data: "department"
+            },
+            {
+                width: "15%",
+                data: "jobTitle"
             }
         ]
     });

@@ -3670,19 +3670,37 @@ router.post('/call-logs/sync/:id', helperFunctions.verifyJWT, function (req, res
 });
 
 router.get('/call-logs/get/:id', (req, res) => {
-    const query = `SELECT * FROM client_call_logs WHERE clientID = ${req.params.id}`;
-    db.query(query, (error, call_logs) => {
-        if (error) 
-            return res.send({
-                "status": 500,
-                "error": error,
-                "response": null
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let draw = req.query.draw;
+    let limit = req.query.limit;
+    let order = req.query.order;
+    let offset = req.query.offset;
+    let search_string = req.query.search_string.toUpperCase();
+    let query_condition = `FROM client_call_logs l WHERE clientID = ${req.params.id} AND l.name IS NOT NULL AND (upper(l.name) LIKE "${search_string}%" 
+        OR upper(l.phoneNumber) LIKE "${search_string}%" OR upper(l.type) LIKE "${search_string}%" OR upper(l.dateTime) LIKE "${search_string}%") `;
+    let endpoint = '/core-service/get';
+    let url = `${HOST}${endpoint}`;
+    let query = `SELECT l.* ${query_condition} ${order} LIMIT ${limit} OFFSET ${offset}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        query = `SELECT count(*) AS recordsTotal, (SELECT count(*) ${query_condition}) as recordsFiltered 
+            FROM client_call_logs WHERE clientID = ${req.params.id} AND name IS NOT NULL`;
+        endpoint = '/core-service/get';
+        url = `${HOST}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(payload => {
+            res.send({
+                draw: draw,
+                recordsTotal: payload.data[0].recordsTotal,
+                recordsFiltered: payload.data[0].recordsFiltered,
+                data: (response.data === undefined) ? [] : response.data
             });
-
-        res.send({
-            "status": 200,
-            "error": null,
-            "response": call_logs
         });
     });
 });
@@ -3724,19 +3742,38 @@ router.post('/contacts/sync/:id', helperFunctions.verifyJWT, function (req, res)
 });
 
 router.get('/contacts/get/:id', (req, res) => {
-    const query = `SELECT * FROM client_contacts WHERE clientID = ${req.params.id}`;
-    db.query(query, (error, contacts) => {
-        if (error) 
-            return res.send({
-                "status": 500,
-                "error": error,
-                "response": null
+    const HOST = `${req.protocol}://${req.get('host')}`;
+    let draw = req.query.draw;
+    let limit = req.query.limit;
+    let order = req.query.order;
+    let offset = req.query.offset;
+    let search_string = req.query.search_string.toUpperCase();
+    let query_condition = `FROM client_contacts l WHERE clientID = ${req.params.id} AND l.displayName IS NOT NULL 
+        AND (upper(l.displayName) LIKE "${search_string}%" OR upper(l.emailAddresses) LIKE "${search_string}%" OR upper(l.phoneNumbers) LIKE "${search_string}%" 
+        OR upper(l.company) LIKE "${search_string}%" OR upper(l.department) LIKE "${search_string}%" OR upper(l.jobTitle) LIKE "${search_string}%") `;
+    let endpoint = '/core-service/get';
+    let url = `${HOST}${endpoint}`;
+    let query = `SELECT l.* ${query_condition} ${order} LIMIT ${limit} OFFSET ${offset}`;
+    axios.get(url, {
+        params: {
+            query: query
+        }
+    }).then(response => {
+        query = `SELECT count(*) AS recordsTotal, (SELECT count(*) ${query_condition}) as recordsFiltered 
+            FROM client_contacts WHERE clientID = ${req.params.id} AND displayName IS NOT NULL`;
+        endpoint = '/core-service/get';
+        url = `${HOST}${endpoint}`;
+        axios.get(url, {
+            params: {
+                query: query
+            }
+        }).then(payload => {
+            res.send({
+                draw: draw,
+                recordsTotal: payload.data[0].recordsTotal,
+                recordsFiltered: payload.data[0].recordsFiltered,
+                data: (response.data === undefined) ? [] : response.data
             });
-
-        res.send({
-            "status": 200,
-            "error": null,
-            "response": contacts
         });
     });
 });

@@ -1,4 +1,4 @@
-function getReschedule(rescheduleID) {
+function getReschedule(rescheduleID, workflows) {
     $.ajax({
         type: "get",
         url: `/user/application-id/${rescheduleID}`,

@@ -273,7 +273,6 @@ function loadApplication(user_id){
                 });
             }
 
-            if (application.reschedule_status === 1) getReschedule(application.rescheduleID);
             getApplicationSettings(application);
             checkForExistingMandate(application);
             getFileDownloads();
@@ -310,6 +309,7 @@ function getWorkflows(data) {
                 if (data.verify_work_email === 1)
                     $('#loancirrus-id').append('<button class="badge badge-pill badge-success" onclick="showWorkEmail()">Work Email <br> Verifed</button>');
             }
+            if (application.reschedule_status === 1) getReschedule(application.rescheduleID, workflows);
         }
     });
 }
