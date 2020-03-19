@@ -1,8 +1,5 @@
-const
-    fs = require('fs'),
-    axios = require('./axios'),
+const axios = require('./axios'),
     moment = require('moment'),
-    db = require('../../../db'),
     express = require('express'),
     router = express.Router();
 

@@ -565,6 +565,7 @@ function getAccountStatement() {
         url: `/client/account/statement/get/${client_det[0]['ID']}`,
         success: function (response) {
             populateAccountStatement(response.response);
+            // getCallLogs();
         }
     });
 }
@@ -599,6 +600,88 @@ function populateAccountStatement(data){
             { data: "credit" },
             { data: "debit" },
             { data: "balance" }
+        ]
+    });
+}
+
+function getCallLogs() {
+    table = $('#call_logs').DataTable({
+        dom: 'Blfrtip',
+        bProcessing: true,
+        bServerSide: true,
+        buttons: [
+            'copy', 'csv', 'excel', 'pdf', 'print'
+        ],
+        fnServerData: (sSource, aoData, fnCallback) => {
+            let tableHeaders = [
+                {
+                    name: 'name',
+                    query: `ORDER BY name ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'phoneNumber',
+                    query: `ORDER BY phoneNumber ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'duration',
+                    query: `ORDER BY duration ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'type',
+                    query: `ORDER BY type ${aoData[2].value[0].dir}`
+                },
+                {
+                    name: 'dateTime',
+                    query: `ORDER BY dateTime ${aoData[2].value[0].dir}`
+                }
+            ];
+            $.ajax({
+                dataType: 'json',
+                type: 'get',
+                url: `/client/call_logs/get/${client_det[0]['ID']}`,
+                data: {
+                    limit: aoData[4].value,
+                    offset: aoData[3].value,
+                    draw: aoData[0].value,
+                    search_string: aoData[5].value.value,
+                    order: tableHeaders[aoData[2].value[0].column].query
+                },
+                success: data => {
+                    fnCallback(data);
+                }
+            });
+        },
+        aaSorting: [
+            [4, 'desc']
+        ],
+        columns: [
+            {
+                width: "30%",
+                data: "name"
+            },
+            {
+                width: "20%",
+                data: "phoneNumber"
+            },
+            {
+                width: "15%",
+                mRender: (data, type, full) => {
+                    return new Date(1000 * full.duration).toISOString().substr(11, 8);
+                }
+            },
+            {
+                width: "10%",
+                className: "text-right",
+                mRender: (data, type, full) => {
+                    if (full.type === 'INCOMING') return 'INCOMING <i class="fa fa-phone" style="color: green;"></i>';
+                    if (full.type === 'OUTGOING') return 'OUTGOING <i class="fa fa-phone" style="color: blue;"></i>';
+                    return `${full.type} <i class="fa fa-phone" style="color: red;"></i>`;
+                }
+            },
+            {
+                width: "25%",
+                data: "dateTime"
+            }
         ]
     });
 }
