@@ -1145,16 +1145,14 @@ router.post('/workflows', function(req, res, next) {
                         callback();
                     });
                 }, function (data) {
-                    connection.query('SELECT * FROM workflows AS w WHERE w.status <> 0 ORDER BY w.ID desc', function (error, results, fields) {
-                        connection.release();
-                        let payload = {}
-                        payload.category = 'Workflow'
-                        payload.userid = req.cookies.timeout
-                        payload.description = 'New Workflow Created'
-                        payload.affected = created_workflow
-                        notificationsService.log(req, payload)
-                        res.send({"status": 200, "error": null, "message": "Workflow with "+count+" stage(s) created successfully!", "response": results});
-                    });
+                    connection.release();
+                    let payload = {}
+                    payload.category = 'Workflow'
+                    payload.userid = req.cookies.timeout
+                    payload.description = 'New Workflow Created'
+                    payload.affected = created_workflow
+                    notificationsService.log(req, payload)
+                    res.send({"status": 200, "error": null, "message": "Workflow with "+count+" stage(s) created successfully!", "response": results[0]});
                 })
             })
         });
@@ -1199,16 +1197,14 @@ router.post('/workflows/:workflow_id', function(req, res, next) {
                                 callback();
                             });
                         }, function (data) {
-                            connection.query('SELECT * FROM workflows AS w WHERE w.status <> 0 ORDER BY w.ID desc', function (error, results, fields) {
-                                connection.release();
-                                let payload = {}
-                                payload.category = 'Workflow'
-                                payload.userid = req.cookies.timeout
-                                payload.description = 'New Workflow Created'
-                                payload.affected = created_workflow
-                                notificationsService.log(req, payload)
-                                res.send({"status": 200, "error": null, "message": "Workflow with "+count+" stage(s) created successfully!", "response": results});
-                            });
+                            connection.release();
+                            let payload = {}
+                            payload.category = 'Workflow'
+                            payload.userid = req.cookies.timeout
+                            payload.description = 'New Workflow Created'
+                            payload.affected = created_workflow
+                            notificationsService.log(req, payload)
+                            res.send({"status": 200, "error": null, "message": "Workflow with "+count+" stage(s) created successfully!", "response": results[0]});
                         })
                     })
                 });
@@ -1220,7 +1216,6 @@ router.post('/workflows/:workflow_id', function(req, res, next) {
 router.post('/edit-workflows/:workflow_id', function(req, res, next) {
     let count = 0,
         stages = req.body.stages,
-        workflow = req.body.workflow,
         workflow_id = req.params.workflow_id,
         date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
 
@@ -1284,6 +1279,7 @@ router.get('/workflows/:workflow_id', (req, res) => {
             res.send({"status": 500, "error": error, "response": null});
         } else {
             let result = result_[0];
+            if (!result) res.send({"status": 500, "error": "workflow not found!", "response": null});
             fs.readdir(path, (err, files) => {
                 if (err) files = [];
                 files = helperFunctions.removeFileDuplicates(path, files);
@@ -1294,7 +1290,16 @@ router.get('/workflows/:workflow_id', (req, res) => {
                     callback();
                 }, () => {
                     result.file_downloads = obj;
-                    res.send({"status": 200, "message": "Workflows fetched successfully!", "response": result});
+                    path = `files/workflow_images/`;
+                    fs.readdir(path, (err, files) => {
+                        if (err) files = [];
+                        files = helperFunctions.removeFileDuplicates(path, files);
+                        const image = (files.filter(file => {
+                            return file.indexOf(`${workflow_id}_${result.name.trim().replace(/ /g, '_')}`) > -1;
+                        }))[0];
+                        if (image) result.image = `${path}${image}`;
+                        res.send({"status": 200, "message": "Workflows fetched successfully!", "response": result});
+                    });
                 });
             });
         }

@@ -142,6 +142,9 @@ $('#document-download-div').on('click','.document-download-text', function (e) {
 $('.todolist').on('click','.remove-item', function (e) {
     archiveWorkflow(e);
 });
+$('#process-image-upload').click(function (e) {
+    archiveWorkflow(e);
+});
 $('#process-description').click(function (e) {
     archiveWorkflow(e);
 });
@@ -276,12 +279,14 @@ function addProcess() {
         data: JSON.stringify(data),
         contentType: "application/json",
         success: function (data) {
-            localStorage.removeItem('local_stages');
-            $('#process-name').val("");
-            $('#process-description').val("");
-            $('#wait').hide();
-            notification(data.message);
-            window.location.href = "/all-workflow";
+            uploadImage(data.response, () => {
+                localStorage.removeItem('local_stages');
+                $('#process-name').val("");
+                $('#process-description').val("");
+                $('#wait').hide();
+                notification(data.message);
+                // window.location.href = "/all-workflow";
+            });
         },
         'error': function (err) {
             console.log(err);
@@ -299,6 +304,13 @@ function init(stages){
             let workflow = data.response;
             $('#process-name').val(workflow.name);
             if (workflow.description) $('#process-description').val(workflow.description);
+            if (workflow.image) {
+                $('#process-image').html(`<hr><a class="thumbnail grouped_elements" rel="grouped_elements" data-toggle="tooltip" 
+                    data-placement="bottom" title="Click to Expand!" href="/${workflow.image}">
+                        <img src="/${workflow.image}" alt="Image"></a>`);
+            }
+            $('a.grouped_elements').fancybox();
+            $('.thumbnail').tooltip();
             if (workflow.client_information) {
                 $('#client-information').val(workflow.client_information.split(','));
                 $('#client-information').multiselect("refresh");
@@ -457,6 +469,27 @@ function uploadFile() {
         },
         error: function () {
             notification('Oops! An error occurred while uploading file', '', 'error');
+        }
+    });
+};
+
+function uploadImage(workflow, callback) {
+    const file = $(`#process-image-upload`)[0].files[0],
+        name = workflow.name.trim().replace(/ /g, '_');
+    if (!file) return callback();
+    const formData = new FormData();
+    formData.append('file', file);
+    $.ajax({
+        url: `/upload/document/${workflow.ID}/${name}/workflow_images`,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: () => {
+            callback();
+        },
+        error: error => {
+            notification(error, '', 'error');
         }
     });
 };

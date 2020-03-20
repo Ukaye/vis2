@@ -38,7 +38,7 @@ router.post('/document/:id/:name/:folder?', (req, res) => {
                         sampleFile.mv(file_url, function(err) {
                             if (err)
                                 return res.status(500).send(err);
-                            res.send({
+                            res.status(200).send({
                                 file:file_url, 
                                 data: sampleFile
                             });

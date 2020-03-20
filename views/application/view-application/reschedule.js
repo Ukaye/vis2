@@ -5,7 +5,7 @@ function getReschedule(rescheduleID, workflows) {
         success: data => {
             application2 = data.response;
             const workflow = ($.grep(workflows, function(e){ return e.ID === application2.workflowID; }))[0];
-            $('#reschedule-title').html(`Disbursed Amount: ₦${numberToCurrencyFormatter_(application2.loan_amount)} (${workflow.name})`);
+            $('#reschedule-title').html(`Total Amount: ₦${numberToCurrencyFormatter_(application2.loan_amount)} (${workflow.name})`);
             loadWorkflowState2();
         }
     });

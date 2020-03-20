@@ -3494,8 +3494,11 @@ router.post('/forgot-pin/get', (req, res) => {
 });
 
 router.get('/product/:product_id', helperFunctions.verifyJWT, (req, res) => {
-    let query = `SELECT w.*, (SELECT GROUP_CONCAT(NULLIF(s.document,"")) FROM workflow_stages s WHERE w.ID = s.workflowID) document 
-        FROM workflows w WHERE w.enable_client_product = 1 AND w.ID = ${req.params.product_id}`;
+    let obj = {},
+        product_id = req.params.product_id,
+        path = `files/workflow_download-${product_id}/`,
+        query = `SELECT w.*, (SELECT GROUP_CONCAT(NULLIF(s.document,"")) FROM workflow_stages s WHERE w.ID = s.workflowID) document 
+        FROM workflows w WHERE w.enable_client_product = 1 AND w.ID = ${product_id}`;
     db.query(query, function (error, product) {
         if (error)
             return res.send({
@@ -3503,11 +3506,40 @@ router.get('/product/:product_id', helperFunctions.verifyJWT, (req, res) => {
                 "error": error,
                 "response": null
             });
+            
+        product = product[0];
+        if (!product)
+            return res.send({
+                "status": 500,
+                "error": 'Product does not exist!',
+                "response": null
+            });
 
-        res.send({
-            "status": 200,
-            "error": null,
-            "response": product[0] ? product[0] : {}
+        fs.readdir(path, (err, files) => {
+            if (err) files = [];
+            files = helperFunctions.removeFileDuplicates(path, files);
+            async.forEach(files, (file, callback) => {
+                let filename = file.split('.')[0].split('_');
+                filename.shift();
+                obj[filename.join('_')] = path + file;
+                callback();
+            }, () => {
+                product.file_downloads = obj;
+                path = `files/workflow_images/`;
+                fs.readdir(path, (err, files) => {
+                    if (err) files = [];
+                    files = helperFunctions.removeFileDuplicates(path, files);
+                    const image = (files.filter(file => {
+                        return file.indexOf(`${product_id}_${product.name.trim().replace(/ /g, '_')}`) > -1;
+                    }))[0];
+                    product.image = `${process.env.HOST || req.HOST}/${(image)? `${path}${image}` : 'product.png'}`;
+                    res.send({
+                        "status": 200,
+                        "error": null,
+                        "response": product
+                    });
+                });
+            });
         });
     });
 });

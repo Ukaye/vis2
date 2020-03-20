@@ -1606,11 +1606,11 @@ function initCSVUpload2(application, settings) {
                         schedule: schedule,
                         application: {
                             userID: application.userID,
-                            duration: $('#term').val(),
-                            loan_amount: $('#amount').val(),
+                            duration: ($('#amortization').val() !== 'custom')? $('#term').val() : schedule.length,
+                            loan_amount: ($('#amortization').val() !== 'custom')? $('#amount').val() : loan_amount.round(2),
                             workflowID: $('#workflow').val(),
                             interest_rate: $('#interest-rate').val(),
-                            repayment_date: $('#repayment-date').val(),
+                            repayment_date: ($('#amortization').val() !== 'custom')? $('#repayment-date').val() : schedule[0]['interest_collect_date'],
                             agentID: (JSON.parse(localStorage.user_obj)).ID
                         }
                     },
