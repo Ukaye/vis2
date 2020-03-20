@@ -463,7 +463,7 @@ functions.resolveBVN = (bvn, callback) => {
         {
             url: `${process.env.PAYSTACK_BASE_URL}/bank/resolve_bvn/${bvn}`,
             headers: {
-                'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
+                'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY2 || process.env.PAYSTACK_SECRET_KEY}`
             }
         },
         (error, res, body) => {

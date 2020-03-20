@@ -1,0 +1,500 @@
+<!doctype html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang=""> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8" lang=""> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9" lang=""> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang=""> <!--<![endif]-->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Finratus Admin</title>
+    <meta name="description" content="Finratus Admin">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="apple-touch-icon" href="apple-icon.png">
+    <link rel="shortcut icon" href="favicon.png">
+    <link rel="stylesheet" href="assets/css/normalize.css">
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/tooltip.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.15/css/bootstrap-multiselect.css">
+    <link rel="stylesheet" href="assets/css/font-awesome.min.css">
+    <link rel="stylesheet" href="assets/css/themify-icons.css">
+    <link rel="stylesheet" href="assets/css/flag-icon.min.css">
+    <link rel="stylesheet" href="assets/css/cs-skin-elastic.css">
+    <link rel="stylesheet" href="assets/css/lib/datatable/dataTables.bootstrap.min.css">
+    <link rel="stylesheet" href="assets/scss/style.css">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600,700,800' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="assets/summernote/summernote.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.3/jquery.fancybox.min.css">
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
+    <style type="text/css">
+        .todolist{
+            background-color:#FFF;
+        }
+        .todolist h1{
+            margin:0;
+            padding-bottom:20px;
+            text-align:center;
+        }
+        li.ui-state-default{
+            background:#fff;
+            border:1px solid #ddd;
+            cursor: move;
+            padding: 0 15px;
+            -webkit-box-shadow: 0 10px 6px -6px #777;
+            -moz-box-shadow: 0 10px 6px -6px #777;
+            box-shadow: 0 10px 6px -6px #777;
+        }
+        li.ui-state-default:hover{
+            background: #efefef;
+        }
+        li.ui-state-default:last-child{
+            border-bottom:none;
+        }
+        .todo-footer{
+            background-color:#F4FCE8;
+            padding: 10px 20px;
+        }
+        #stages-table th:first-child, #stages-table td:first-child{
+            display: none;
+        }
+        a:hover {
+            color: #0056b3 !important;
+            text-decoration: underline !important;
+            cursor: pointer !important;
+        }
+        li.disabled, option.disabled {
+            background: #efefef;
+        }
+        li.ui-state-default > span > small{
+            margin-left: 15px;
+        }
+        li.ui-state-default > span{
+            display: inline-block;
+            padding: 15px 0;
+        }
+        li.ui-state-default > button{
+            margin-top: 8px;
+        }
+        .multiselect-native-select{
+            width: 90%;
+        }
+        .multiselect-native-select div.btn-group, .multiselect-native-select button.multiselect, ul.multiselect-container{
+            width: 100%;
+        }
+        .multiselect-native-select button.multiselect{
+            background: #ffffff;
+            color: #495057;
+            border: 1px solid #ced4da;
+            border-radius: .25rem;
+        }
+        .edit-item{
+            pointer-events: auto;
+            margin-right: 5px;
+        }
+        .disabled{
+            pointer-events:none;
+        }
+        .hide{
+            display: none;
+        }
+        #downloads .user-photo {
+            height: 100px;
+        }
+        .note-editable {
+            padding: 30px !important;
+        }
+    </style>
+</head>
+<body>
+<script src="../../menus/menu-items.js"></script>
+<script type="text/javascript" src="../../workflow/edit-workflow/edit-workflow1.js"></script>
+<!-- Left Panel -->
+<aside id="left-panel" class="left-panel" include-html="/includes/sidebar.html"></aside><!-- /#left-panel -->
+<!-- Left Panel -->
+
+<!-- Right Panel -->
+<div id="right-panel" class="right-panel">
+    <!-- Header-->
+    <header id="header" class="header" include-html="/includes/header.html"></header><!-- /header -->
+    <!-- Header-->
+
+    <div class="breadcrumbs">
+        <div class="col-sm-4">
+            <div class="page-header float-left">
+                <div class="page-title">
+                    <h1>Loan Workflow/Product</h1>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-8">
+            <div class="page-header float-right">
+                <div class="page-title">
+                    <ol class="breadcrumb text-right">
+                        <li><a href="#">Dashboard</a></li>
+                        <li><a href="#">Users</a></li>
+                        <li class="active">Loan Workflow/Product</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content mt-3">
+        <div class="animated fadeIn">
+            <div class="row">
+                <div id="user-form" class="col-xs-12 col-sm-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <strong>Edit Loan Product</strong> <small> Workflow Information</small>
+                        </div>
+                        <div class="card-body card-block">
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">Workflow Name <strong style="color:red"> *</strong></label>
+                                <div class="col-sm-9">
+                                    <div class="row">
+                                        <div class="col-sm-11 input-group">
+                                            <div class="input-group-addon"><i class="fa fa-sticky-note"></i></div>
+                                            <input id="process-name" class="form-control" required="required">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">Workflow Transitions <strong style="color:red"> *</strong></label>
+                                <div class="col-sm-9">
+                                    <div class="row">
+                                        <div class="col-sm-11">
+                                            <button id="addTransition" class="btn btn-outline-dark" data-toggle="modal" data-target="#addStage"><i class="fa fa-plus"></i>Add Transition</button>
+                                            <button id="checkAll" class="btn btn-danger"><i class="fa fa-remove"></i>Clear Transition</button>
+                                        </div>
+                                        <div class="col-sm-11" style="margin-top: 15px;">
+                                            <div class="alert alert-info" role="alert" data-original-title="" title="">A transition defines a change in your workflow from one stage to another. View transitions below. You can also <strong>drag and drop</strong> to re-order.</div>
+                                        </div>
+                                        <div class="col-sm-11 todolist">
+                                            <ul id="sortable" class="list-unstyled"></ul>
+                                        </div>
+                                        <div class="col-sm-11">
+                                            <div class="todo-footer">
+                                                Number of Transition(s): <strong><span class="count-todos"></span></strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">Workflow Image</label>
+                                <div class="col-sm-9">
+                                    <div class="row">
+                                        <div class="col-sm-11">
+                                            <div>
+                                                <input id="process-image-upload" class="form-control" type="file" accept="image/*" />
+                                                <small class="form-text text-muted">Image must be JPG/JPEG or PNG format, maximum 8MB</small>
+                                            </div>
+                                            <div id="process-image"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">Workflow description</label>
+                                <div class="col-sm-9">
+                                    <div class="row">
+                                        <div class="col-sm-11">
+                                            <textarea id="process-description" class="form-control" maxlength="1000" placeholder="Brief description"></textarea>
+                                            <small class="form-text text-muted">Maximum of 1000 characters</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">Required Client Information</label>
+                                <div class="col-sm-9">
+                                    <div class="row">
+                                        <div id="client-information-div" class="col-sm-11 input-group">
+                                            <div class="input-group-addon"><i class="fa fa-list"></i></div>
+                                            <select id="client-information" class="multiselect-ui form-control" multiple="multiple">
+                                                <option value="card">Card</option>
+                                                <option value="remita">Remita</option>
+                                                <option value="salary">Salary</option>
+                                                <option value="work_email">Work Email</option>
+                                                <option value="repayment_date">First Repayment Date</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">Email Notifications</label>
+                                <div class="col-sm-9">
+                                    <div class="row">
+                                        <div class="col-sm-11">
+                                            <label class="form-control-label" for="client-email">
+                                                <input id="client-email" type="checkbox"> Send email communications to Clients
+                                            </label>
+                                            <br>
+                                            <label class="form-control-label" for="admin-email">
+                                                <input id="admin-email" type="checkbox"> Send email communications to Admin users
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">Application Settings</label>
+                                <div class="col-sm-9">
+                                    <div class="row">
+                                        <div class="col-sm-11">
+                                            <label class="form-control-label" for="application-settings-option">
+                                                <input id="application-settings-option" type="checkbox"> Configure application settings
+                                            </label>
+                                            <div id="application-settings-div" style="display: none;">
+                                                <div class="panel push-down">
+                                                    <div class="panel-body">
+                                                        <div class="example-box-wrapper">
+                                                            <h6>Loan Requested</h6>
+                                                            <hr>
+                                                            <div class="row">
+                                                                <div class="form-group col-sm-6 col-md-6">
+                                                                    <label class="form-control-label">Min. Amount <span
+                                                                            class="text-danger">*</span></label>
+                                                                    <div class="input-group">
+                                                                        <input type="text" id="loan_requested_min"
+                                                                            class="form-control" placeholder="Minimum Amount">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="form-group col-sm-6 col-md-6">
+                                                                    <label class="form-control-label">Max. Amount <span
+                                                                            class="text-danger">*</span></label>
+                                                                    <div class="input-group">
+                                                                        <input type="text" id="loan_requested_max"
+                                                                            class="form-control" placeholder="Maximum Amount">
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <hr />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="panel push-down">
+                                                    <div class="panel-body">
+                                                        <div class="example-box-wrapper">
+                                                            <h6>Tenor (monthly)</h6>
+                                                            <hr>
+                                                            <div class="row">
+                                                                <div class="form-group col-sm-6 col-md-6">
+                                                                    <label class="form-control-label"> Min. Tenor <span
+                                                                            class="text-danger">*</span></label>
+                                                                    <div class="input-group">
+                                                                        <input type="text" id="tenor_min" class="form-control"
+                                                                            placeholder="Minimum Tenor">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="form-group col-sm-6 col-md-6">
+                                                                    <label class="form-control-label"> Max. Tenor <span
+                                                                            class="text-danger">*</span></label>
+                                                                    <div class="input-group">
+                                                                        <input type="text" id="tenor_max" class="form-control"
+                                                                            placeholder="Minimum Tenor">
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <hr />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="panel push-down">
+                                                    <div class="panel-body">
+                                                        <div class="example-box-wrapper">
+                                                            <h6>Interest Rate</h6>
+                                                            <hr>
+                                                            <div class="row">
+                                                                <div class="form-group col-sm-6 col-md-6">
+                                                                    <label class="form-control-label"> Min. Rate <span
+                                                                            class="text-danger">*</span></label>
+                                                                    <div class="input-group">
+                                                                        <input type="text" id="interest_rate_min" class="form-control"
+                                                                            placeholder="Minimum Rate">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="form-group col-sm-6 col-md-6">
+                                                                    <label class="form-control-label"> Max. Rate <span
+                                                                            class="text-danger">*</span></label>
+                                                                    <div class="input-group">
+                                                                        <input type="text" id="interest_rate_max" class="form-control"
+                                                                            placeholder="Minimum Rate">
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <hr />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <label class="form-control-label" for="admin-application-override">
+                                                    <input id="admin-application-override" type="checkbox"> Allow admin user to override customer acceptance
+                                                </label>
+                                                <br>
+                                                <label class="form-control-label" for="enable-client-product">
+                                                    <input id="enable-client-product" type="checkbox"> Display on Client Products List
+                                                </label>
+                                                <hr />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">General Document Downloads</label>
+                                <div class="col-sm-9">
+                                    <div class="row">
+                                        <div class="col-sm-11">
+                                            <div>
+                                                <select id="stage-downloads" class="form-control" required="required" style="margin: 15px 0;">
+                                                    <option selected="selected">-- Choose Document --</option>
+                                                </select>
+                                                <div>
+                                                    <input id="file-upload" type="file" style="width: 80%; float: left;" />
+                                                    <button class="btn btn-primary" style="width: 20%; float: right;" onclick="uploadFile()">Upload</button>
+                                                </div>
+                                                <small class="form-text text-muted">Supports all file formats, maximum 8MB</small>
+                                                <hr>
+                                            </div>
+                                            <div id="downloads"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="form-group row">
+                                <label class="col-sm-3 col-form-label">Terms and Conditions</label>
+                                <div class="col-sm-9">
+                                    <div class="row">
+                                        <div class="col-sm-11">
+                                            <div id="terms"></div>
+                                            <small class="form-text text-muted">Maximum of 5000 characters</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="form-group">
+                                <input type="submit" class="btn btn-success" value="Update Workflow" onclick="addProcess()"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div><!-- .animated -->
+    <div id="wait" style="width:150px;height:100px;position:fixed;top:50%;left:50%;padding:2px;z-index:99999;"><img src='spinner.gif' width="100" height="100" style="background-color: transparent"/></div>
+</div><!-- .content -->
+
+
+</div><!-- /#right-panel -->
+<!-- Right Panel -->
+
+<!-- Modal -->
+<div class="modal fade" id="addStage" tabindex="-1" role="dialog" aria-labelledby="addStageLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="addStageLabel">Transition</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label class="form-control-label">Transition Name</label><strong style="color:red"> *</strong><span id="stage-name-error" style="padding-left:50px; text-align: center"></span>
+                        <div class="input-group">
+                            <div class="input-group-addon"><i class="fa fa-list"></i></div>
+                            <input id="stage-name" type="text" class="form-control add-todo" placeholder="Transition Name" maxlength="50" required="required">
+                        </div>
+                        <small class="form-text text-muted">Maximum of 50 characters</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label">Start Stage</label><strong style="color:red"> *</strong>
+                        <div class="input-group">
+                            <select id="stage-template" class="form-control" required="required">
+                                <option selected="selected" value="-- Choose Action --">-- Choose Action --</option>
+                            </select>
+                        </div>
+                        <small class="form-text text-muted">Select the relevant template from the list of actions</small>
+                    </div>
+                    <div class="form-group">
+                        <a id="more-actions-link">
+                            <label class="form-control-label">
+                                <i class="fa fa-plus"></i> Next Stage(s)</label><strong style="color:red"> *</strong></a>
+                        <div id="stage-action-div"></div>
+                        <small class="form-text text-muted">Select other actions that can be performed at this stage</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-form-label">Approval Rights <strong style="color:red"> *</strong></label>
+                        <div class="input-group">
+                            <div class="input-group-addon"><i class="fa fa-user"></i></div>
+                            <select id="process-rights" class="multiselect-ui form-control" multiple="multiple" required="required"></select>
+                        </div>
+                    </div>
+                    <label class="form-control-label">Rules</label>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <a id="document-upload">
+                                <label class="form-control-label" style="display: block">
+                                    <i class="fa fa-plus"></i> Input Document Required
+                                </label></a><small class="form-text text-muted">&nbsp; (Maximum of 50 characters)</small>
+                        </div>
+                    </div>
+                    <div class="form-group" id="document-upload-div"></div>
+                    <div class="form-group">
+                        <div class="input-group">
+                            <a id="document-download">
+                                <label class="form-control-label" style="display: block">
+                                    <i class="fa fa-plus"></i> Output Document Required
+                                </label></a><small class="form-text text-muted">&nbsp; (Maximum of 50 characters)</small>
+                        </div>
+                    </div>
+                    <div class="form-group" id="document-download-div"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button id="add-stage" type="button" class="btn btn-primary" data-dismiss="modal">Add Transition</button>
+                <button id="edit-stage" type="button" class="btn btn-primary" data-dismiss="modal" style="display: none;">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Panel -->
+<div id="panels" include-html="/includes/notifications.html"></div>
+
+<script src="assets/js/popper.min.js"></script>
+<script src="assets/js/bootstrap.min.js"></script>
+<script src="assets/js/plugins.js"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/lib/data-table/datatables.min.js"></script>
+<script src="assets/js/lib/data-table/dataTables.bootstrap.min.js"></script>
+<script src="assets/js/lib/data-table/dataTables.buttons.min.js"></script>
+<script src="assets/js/lib/data-table/buttons.bootstrap.min.js"></script>
+<script src="assets/js/lib/data-table/jszip.min.js"></script>
+<script src="assets/js/lib/data-table/pdfmake.min.js"></script>
+<script src="assets/js/lib/data-table/vfs_fonts.js"></script>
+<script src="assets/js/lib/data-table/buttons.html5.min.js"></script>
+<script src="assets/js/lib/data-table/buttons.print.min.js"></script>
+<script src="assets/js/lib/data-table/buttons.colVis.min.js"></script>
+<script src="assets/js/lib/data-table/datatables-init.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-multiselect/0.9.15/js/bootstrap-multiselect.min.js"></script>
+<script src="assets/summernote/summernote.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.3/jquery.fancybox.min.js"></script>
+<script src="../../js/helper-functions.js"></script>
+<script type="text/javascript" src="../../workflow/edit-workflow/edit-workflow2.js"></script>
+<script src="../../js/loader.js"></script>
+<script src="../../js/notifications.js"></script>
+</body>
+</html>

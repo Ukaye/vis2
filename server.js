@@ -43,9 +43,10 @@ if (fs.existsSync('./files')) {
 let app = express(),
     cors = require('cors'),
     user = require('./routes/users'),
-    settings = require('./routes/service/custom-services/settings.service'),
+    index = require('./routes/index'),
     investment = require('./routes/investment'),
     core_service = require('./routes/service/core-service'),
+    settings = require('./routes/service/custom-services/settings.service'),
     client_service = require('./routes/service/custom-services/client.service'),
     investment_product_service = require('./routes/service/custom-services/investment-product.service'),
     investment_service = require('./routes/service/custom-services/investment.service'),
@@ -62,8 +63,8 @@ let app = express(),
     payment_service = require('./routes/service/custom-services/payment.service'),
     notification = require('./routes/notifications'),
     upload_service = require('./routes/service/custom-services/upload.service'),
-    index = require('./routes/index'),
-    atbmailer_service = require('./routes/service/custom-services/atbmailer.service');
+    atbmailer_service = require('./routes/service/custom-services/atbmailer.service'),
+    advert_service = require('./routes/service/custom-services/advert.service');
 
 app.use(compression());    
 app.engine('html', require('ejs').renderFile);
@@ -273,6 +274,7 @@ app.use('/payment', payment_service);
 app.use('/notifications', notification);
 app.use('/upload', upload_service);
 app.use('/atbmailer', atbmailer_service);
+app.use('/advert', advert_service);
 app.use('/files', express.static(__dirname + '/files'));
 
 app.get('/logon', function (req, res) {
@@ -569,12 +571,6 @@ app.get('/investment-statements/:id?', requireLogin, function (req, res) {
     });
 });
 
-// app.get('/mature-investments', requireLogin, function (req, res) {
-//     res.sendFile('investment/all-product/all-investment-products.html', {
-//         root: __dirname + '/views'
-//     });
-// });
-
 app.get('/all-commissions', requireLogin, function (req, res) {
     res.sendFile('commission/all-commissions/all-commissions.html', {
         root: __dirname + '/views'
@@ -715,6 +711,24 @@ app.get('/web-payments', requireLogin, function (req, res) {
 
 app.get('/client-bvn-verifications', requireLogin, function (req, res) {
     res.sendFile('/client-bvn-verification/client-bvn-verification.html', {
+        root: __dirname + '/views'
+    });
+});
+
+app.get('/add-advert', requireLogin, function (req, res) {
+    res.sendFile('advert/add-advert/add-advert.html', {
+        root: __dirname + '/views'
+    });
+});
+
+app.get('/all-advert', requireLogin, function (req, res) {
+    res.sendFile('advert/all-advert/all-advert.html', {
+        root: __dirname + '/views'
+    });
+});
+
+app.get('/edit-advert', requireLogin, function (req, res) {
+    res.sendFile('advert/edit-advert/edit-advert.html', {
         root: __dirname + '/views'
     });
 });
