@@ -170,28 +170,6 @@ function read_write_custom(){
     }
 }
 
-function read_write(){
-    let w,
-        perms = JSON.parse(localStorage.getItem("permissions")),
-        page = (window.location.pathname.split('/')[1].split('.'))[0],
-        clientsList = ($.grep(perms, function(e){return e.module_name === 'clientsList';}))[0],
-        editLoanOfficer = ($.grep(perms, function(e){return e.module_name === 'editLoanOfficer';}))[0];
-    perms.forEach(function (k){
-        if (k.module_name === page)
-            w = $.grep(perms, function(e){return e.id === parseInt(k.id);});
-    });
-    if (w && w[0] && (parseInt(w[0]['editable']) !== 1))
-        $(".write").hide();
-
-    if (!editLoanOfficer || editLoanOfficer['read_only'] !== '1')
-        $('#loan_officer').prop('disabled', true);
-    if (clientsList && clientsList['read_only'] === '1'){
-        loadUsers();
-    } else {
-        loadUsers((JSON.parse(localStorage.user_obj)).ID);
-    }
-}
-
 function loadMenus(){
     let modules = {};
     modules = JSON.parse(localStorage.getItem("modules"));
