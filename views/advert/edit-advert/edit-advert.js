@@ -83,7 +83,7 @@ function getAdvert() {
                 $('#custom_link').val(advert.action);
             }
             if (advert.client) {
-                $('#client').val(advert.client.split(','));
+                $('#client').val((advert.client === 'all')? clients : advert.client.split(','));
                 $('#client').multiselect("refresh");
             }
             if (advert.qualified === 1) $('#qualified').prop('checked', true);
