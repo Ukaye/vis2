@@ -21,8 +21,8 @@ router.get('/all', function (req, res) {
     let limit = req.query.limit;
     let page = ((req.query.page - 1) * 10 < 0) ? 0 : (req.query.page - 1) * 10;
     let search_string = (req.query.search_string === undefined) ? "" : req.query.search_string.toUpperCase();
-    let query = `SELECT ID,fullname FROM clients WHERE status = 1 AND (upper(email) LIKE "${search_string}%" OR 
-    upper(fullname) LIKE "${search_string}%") ORDER BY ID desc LIMIT ${limit} OFFSET ${page}`;
+    let query = `SELECT ID,fullname FROM clients WHERE status = 1 AND (upper(email) LIKE "%${search_string}%" OR 
+    upper(fullname) LIKE "%${search_string}%") ORDER BY ID desc LIMIT ${limit} OFFSET ${page}`;
     const endpoint = "/core-service/get";
     const url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -221,8 +221,8 @@ router.get('/corporates/get', function (req, res) {
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
     let query = `SELECT *, (SELECT fullname FROM clients WHERE ID = p.clientID) client FROM clients p 
-        WHERE p.client_type = 'corporate' AND (upper(p.name) LIKE "${search_string}%" OR upper(p.business_name) LIKE "${search_string}%" 
-        OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
+        WHERE p.client_type = 'corporate' AND (upper(p.name) LIKE "%${search_string}%" OR upper(p.business_name) LIKE "%${search_string}%" 
+        OR upper(p.ID) LIKE "%${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -231,8 +231,8 @@ router.get('/corporates/get', function (req, res) {
         }
     }).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM clients p 
-            WHERE p.client_type = 'corporate' AND (upper(p.name) LIKE "${search_string}%" OR upper(p.business_name) LIKE "${search_string}%" 
-            OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM clients WHERE client_type = 'corporate'`;
+            WHERE p.client_type = 'corporate' AND (upper(p.name) LIKE "%${search_string}%" OR upper(p.business_name) LIKE "%${search_string}%" 
+            OR upper(p.ID) LIKE "%${search_string}%")) as recordsFiltered FROM clients WHERE client_type = 'corporate'`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {
@@ -1135,8 +1135,8 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
         (SELECT COALESCE(SUM(amount), 0) FROM disbursement_history WHERE loan_id = a.ID) disbursement_amount
         FROM clients c, preapplications p LEFT JOIN applications a ON p.ID = a.preapplicationID AND a.userID = ${id} 
         LEFT JOIN application_schedules s ON s.ID = (SELECT MIN(ID) FROM application_schedules WHERE a.ID = applicationID AND payment_status = 0)
-        WHERE p.userID = ${id} AND p.userID = c.ID AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) 
-        LIKE "${search_string}%" OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
+        WHERE p.userID = ${id} AND p.userID = c.ID AND (upper(p.name) LIKE "%${search_string}%" OR upper(p.loan_amount) 
+        LIKE "%${search_string}%" OR upper(p.ID) LIKE "%${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -1145,8 +1145,8 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
         }
     }).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM preapplications p 
-                 WHERE p.userID = ${id} AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
-                 OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM preapplications WHERE userID = ${id}`;
+                 WHERE p.userID = ${id} AND (upper(p.name) LIKE "%${search_string}%" OR upper(p.loan_amount) LIKE "%${search_string}%" 
+                 OR upper(p.ID) LIKE "%${search_string}%")) as recordsFiltered FROM preapplications WHERE userID = ${id}`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {
@@ -1492,8 +1492,8 @@ router.get('/loans/get/:id', helperFunctions.verifyJWT, function (req, res) {
     let search_string = req.query.search_string.toUpperCase();
     let query = `SELECT p.*, c.fullname, c.phone FROM applications p, clients c 
                  WHERE p.userID = ${id} AND p.userID = c.ID AND p.status in (1,2) AND (upper(p.userID) 
-                 LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
-                 OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
+                 LIKE "%${search_string}%" OR upper(p.loan_amount) LIKE "%${search_string}%" 
+                 OR upper(p.ID) LIKE "%${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -1502,9 +1502,9 @@ router.get('/loans/get/:id', helperFunctions.verifyJWT, function (req, res) {
         }
     }).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM applications p 
-                 WHERE p.userID = ${id} AND p.status in (1,2) AND (upper(p.userID) LIKE "${search_string}%" 
-                 OR upper(p.loan_amount) LIKE "${search_string}%" 
-                 OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM applications 
+                 WHERE p.userID = ${id} AND p.status in (1,2) AND (upper(p.userID) LIKE "%${search_string}%" 
+                 OR upper(p.loan_amount) LIKE "%${search_string}%" 
+                 OR upper(p.ID) LIKE "%${search_string}%")) as recordsFiltered FROM applications 
                  WHERE userID = ${id} AND status in (1,2)`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
@@ -1645,8 +1645,8 @@ router.get('/applications/get', function (req, res) {
     let query_status = `(${enums.CLIENT_APPLICATION.STATUS.REJECTED},${enums.CLIENT_APPLICATION.STATUS.ACTIVE},${enums.CLIENT_APPLICATION.STATUS.APPROVED})`;
     let query = `SELECT p.*, c.fullname, c.phone FROM preapplications p, clients c WHERE p.userID = c.ID AND p.status in 
      ${query_status} AND p.ID NOT IN (SELECT a.preapplicationID FROM applications a WHERE p.ID = a.preapplicationID) AND p.creator_type = "client"
-     AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
-     OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
+     AND (upper(p.name) LIKE "%${search_string}%" OR upper(p.loan_amount) LIKE "%${search_string}%" 
+     OR upper(p.ID) LIKE "%${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -1656,8 +1656,8 @@ router.get('/applications/get', function (req, res) {
     }).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM preapplications p WHERE p.status in 
          ${query_status} AND p.ID NOT IN (SELECT a.preapplicationID FROM applications a WHERE p.ID = a.preapplicationID)  AND p.creator_type = "client"
-         AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
-         OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM preapplications p WHERE p.status in ${query_status} 
+         AND (upper(p.name) LIKE "%${search_string}%" OR upper(p.loan_amount) LIKE "%${search_string}%" 
+         OR upper(p.ID) LIKE "%${search_string}%")) as recordsFiltered FROM preapplications p WHERE p.status in ${query_status} 
          AND p.ID NOT IN (SELECT a.preapplicationID FROM applications a WHERE p.ID = a.preapplicationID) AND p.creator_type = "client"`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
@@ -3181,8 +3181,8 @@ router.get('/bvn/get', function (req, res, next) {
     let offset = req.query.offset;
     let search_string = req.query.search_string.toUpperCase();
     let query_condition = `FROM clients c WHERE c.bvn_otp IS NOT NULL AND c.bvn_input IS NOT NULL AND c.bvn_phone IS NOT NULL 
-        AND (upper(c.ID) LIKE "${search_string}%" OR upper(c.fullname) LIKE "${search_string}%" 
-        OR upper(c.bvn_phone) LIKE "${search_string}%" OR upper(c.bvn_input) LIKE "${search_string}%") `;
+        AND (upper(c.ID) LIKE "%${search_string}%" OR upper(c.fullname) LIKE "%${search_string}%" 
+        OR upper(c.bvn_phone) LIKE "%${search_string}%" OR upper(c.bvn_input) LIKE "%${search_string}%") `;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     end = moment(end).add(1, 'days').format("YYYY-MM-DD");
@@ -3722,8 +3722,8 @@ router.get('/call-logs/get/:id', (req, res) => {
     let order = req.query.order;
     let offset = req.query.offset;
     let search_string = req.query.search_string.toUpperCase();
-    let query_condition = `FROM client_call_logs l WHERE clientID = ${req.params.id} AND l.name IS NOT NULL AND (upper(l.name) LIKE "${search_string}%" 
-        OR upper(l.phoneNumber) LIKE "${search_string}%" OR upper(l.type) LIKE "${search_string}%" OR upper(l.dateTime) LIKE "${search_string}%") `;
+    let query_condition = `FROM client_call_logs l WHERE clientID = ${req.params.id} AND l.name IS NOT NULL AND (upper(l.name) LIKE "%${search_string}%" 
+        OR upper(l.phoneNumber) LIKE "%${search_string}%" OR upper(l.type) LIKE "%${search_string}%" OR upper(l.dateTime) LIKE "%${search_string}%") `;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     let query = `SELECT l.* ${query_condition} ${order} LIMIT ${limit} OFFSET ${offset}`;
@@ -3795,8 +3795,8 @@ router.get('/contacts/get/:id', (req, res) => {
     let offset = req.query.offset;
     let search_string = req.query.search_string.toUpperCase();
     let query_condition = `FROM client_contacts l WHERE clientID = ${req.params.id} AND l.displayName IS NOT NULL 
-        AND (upper(l.displayName) LIKE "${search_string}%" OR upper(l.emailAddresses) LIKE "${search_string}%" OR upper(l.phoneNumbers) LIKE "${search_string}%" 
-        OR upper(l.company) LIKE "${search_string}%" OR upper(l.department) LIKE "${search_string}%" OR upper(l.jobTitle) LIKE "${search_string}%") `;
+        AND (upper(l.displayName) LIKE "%${search_string}%" OR upper(l.emailAddresses) LIKE "%${search_string}%" OR upper(l.phoneNumbers) LIKE "%${search_string}%" 
+        OR upper(l.company) LIKE "%${search_string}%" OR upper(l.department) LIKE "%${search_string}%" OR upper(l.jobTitle) LIKE "%${search_string}%") `;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     let query = `SELECT l.* ${query_condition} ${order} LIMIT ${limit} OFFSET ${offset}`;
@@ -3869,8 +3869,9 @@ router.get('/locations/get/:id', (req, res) => {
     });
 });
 
-router.get('/adverts/:id', helperFunctions.verifyJWT, (req, res) => {
-    let adverts = [];
+router.get('/adverts/:id', (req, res) => {
+    let adverts = [],
+        advert_id = req.params.id,
         query = `SELECT a.* FROM adverts a WHERE a.status = ${enums.ADVERT.STATUS.ACTIVE} ORDER BY a.ID desc`;
     db.query(query, (error, response) => {
         if (error)
@@ -3881,7 +3882,8 @@ router.get('/adverts/:id', helperFunctions.verifyJWT, (req, res) => {
             });
 
         async.forEach(response, (advert, callback) => {
-            path = `files/advert_images/`;
+            if (!advert.client.split(',').includes(advert_id)) callback();
+            const path = `files/advert_images/`;
             fs.readdir(path, (err, files) => {
                 if (err) files = [];
                 files = helperFunctions.removeFileDuplicates(path, files);

@@ -722,7 +722,7 @@ app.get('/add-advert', requireLogin, function (req, res) {
 });
 
 app.get('/all-advert', requireLogin, function (req, res) {
-    res.sendFile('advert/all-advert/all-advert.html', {
+    res.sendFile('advert/all-adverts/all-adverts.html', {
         root: __dirname + '/views'
     });
 });

@@ -285,7 +285,7 @@ function addProcess() {
                 $('#process-description').val("");
                 $('#wait').hide();
                 notification(data.message);
-                // window.location.href = "/all-workflow";
+                window.location.href = "/all-workflow";
             });
         },
         'error': function (err) {
@@ -316,7 +316,6 @@ function init(stages){
                 $('#client-information').multiselect("refresh");
             }
             if (workflow.client_email === 1) $('#client-email').prop('checked', true);
-            if (workflow.admin_email === 1) $('#admin-email').prop('checked', true);
             if (workflow.admin_email === 1) $('#admin-email').prop('checked', true);
             if (workflow.application_settings_option === 1) {
                 $('#application-settings-option').prop('checked', true);

@@ -1,10 +1,9 @@
 $(document).ready(function() {
     getClients();
-    getProducts();
 });
 
-$('input[name=action]').change(function () {
-    const action_type = $('input[name=action]:checked').val();
+$('input[name=action_type]').change(function () {
+    const action_type = $('input[name=action_type]:checked').val();
     if (action_type === "product") {
         $('#product-div').show();
         $('#custom_link-div').hide();
@@ -15,7 +14,6 @@ $('input[name=action]').change(function () {
 });
 
 $('#application-settings-option').click(e => {
-    console.log('here')
     if ($('#application-settings-option').is(':checked')) {
         $('#application-settings-div').show();
     } else {
@@ -34,6 +32,7 @@ function getClients() {
             $('#client').multiselect({
                 includeSelectAllOption: true
             });
+            getProducts();
         }
     });
 }
@@ -44,7 +43,8 @@ function getProducts() {
         url: '/workflows',
         success: data => {
             data.response.forEach(product => {
-                $("#product").append(`<option value="${product.ID}">${product.name}</option>`);
+                if (product.enable_client_product === 1)
+                    $("#product").append(`<option value="${product.ID}">${product.name}</option>`);
             });
         }
     });
@@ -65,10 +65,11 @@ $("#interest_rate").on("keyup", e => {
 function postAdvert() {
     let advert = {};
     advert.title = $('#title').val();
-    advert.client = $('#client').val().join();
+    advert.client = $('#client').val();
     if (!advert.title || !advert.client)
         return notification('Kindly fill all required fields!', '', 'warning');
-    advert.action_type = $('input[name=action]:checked').val();
+    advert.client = advert.client.join();
+    advert.action_type = $('input[name=action_type]:checked').val();
     if (advert.action_type === "product") {
         advert.action = $('#product').val();
         if (!advert.action) return notification('Kindly select a product', '', 'warning');
@@ -77,7 +78,6 @@ function postAdvert() {
         if (!advert.action) return notification('Kindly input a custom link', '', 'warning');
     } 
     advert.qualified = ($('#qualified').is(':checked'))? 1 : 0;
-    advert.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
     advert.application_settings_option = ($('#application-settings-option').is(':checked'))? 1 : 0;
     if (advert.application_settings_option === 1) {
         advert.loan_requested = currencyToNumberformatter($('#loan_requested').val());
@@ -90,11 +90,12 @@ function postAdvert() {
         if (!advert.interest_rate || advert.interest_rate <= 0)
             return notification('Invalid interest rate','','warning');
     }
+    advert.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
 
     $('#wait').show();
     $.ajax({
-        type: 'POST',
-        url: '/adverts',
+        type: 'post',
+        url: '/advert/create',
         data: advert,
         success: data => {
             if (data.status !== 200) {
@@ -103,8 +104,8 @@ function postAdvert() {
             }
             uploadImage(data.response, () => {
                 $('#wait').hide();
-                notification(data.success, '', 'success');
-                // window.location.href = "/all-advert";
+                notification('Advert posted successfully!', '', 'success');
+                window.location.href = "/all-advert";
             });
         },
         'error': err => {
@@ -116,7 +117,7 @@ function postAdvert() {
 }
 
 function uploadImage(advert, callback) {
-    const file = $(`#image-upload`)[0].files[0],
+    const file = $(`#image_upload`)[0].files[0],
         title = advert.title.trim().replace(/ /g, '_');
     if (!file) return callback();
     const formData = new FormData();

@@ -51,8 +51,8 @@ router.get('/get', function (req, res, next) {
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
     let query = `SELECT p.*, c.fullname, c.phone FROM preapplications p, clients c 
-                 WHERE p.creator_type = 'admin' AND p.userID = c.ID AND p.status in (0,1,2) AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
-                 OR upper(p.ID) LIKE "${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
+                 WHERE p.creator_type = 'admin' AND p.userID = c.ID AND p.status in (0,1,2) AND (upper(p.name) LIKE "%${search_string}%" OR upper(p.loan_amount) LIKE "%${search_string}%" 
+                 OR upper(p.ID) LIKE "%${search_string}%") ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -61,8 +61,8 @@ router.get('/get', function (req, res, next) {
         }
     }).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM preapplications p 
-                 WHERE p.creator_type = 'admin' AND p.status in (0,1,2) AND (upper(p.name) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
-                 OR upper(p.ID) LIKE "${search_string}%")) as recordsFiltered FROM preapplications WHERE creator_type = 'admin' AND status in (0,1,2)`;
+                 WHERE p.creator_type = 'admin' AND p.status in (0,1,2) AND (upper(p.name) LIKE "%${search_string}%" OR upper(p.loan_amount) LIKE "%${search_string}%" 
+                 OR upper(p.ID) LIKE "%${search_string}%")) as recordsFiltered FROM preapplications WHERE creator_type = 'admin' AND status in (0,1,2)`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {

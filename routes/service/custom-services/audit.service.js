@@ -18,8 +18,8 @@ router.get('/get/:module', function (req, res, next) {
     let module = req.params.module;
     let search_string = req.query.search_string.toUpperCase();
     let query_condition = `FROM audit_logs a, clients c 
-        WHERE a.clientID = c.ID AND a.module = "${module}" AND (upper(c.fullname) LIKE "${search_string}%" OR upper(a.amount) LIKE "${search_string}%" 
-        OR upper(a.loanID) LIKE "${search_string}%" OR upper(a.bank) LIKE "${search_string}%") `;
+        WHERE a.clientID = c.ID AND a.module = "${module}" AND (upper(c.fullname) LIKE "%${search_string}%" OR upper(a.amount) LIKE "%${search_string}%" 
+        OR upper(a.loanID) LIKE "%${search_string}%" OR upper(a.bank) LIKE "%${search_string}%") `;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     end = moment(end).add(1, 'days').format("YYYY-MM-DD");

@@ -335,8 +335,8 @@ router.get('/get', function (req, res, next) {
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
     let query = `SELECT * FROM preapproved_loans p 
-                 WHERE upper(p.client) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
-                 OR upper(p.credit_score) LIKE "${search_string}%" ${order} LIMIT ${limit} OFFSET ${offset}`;
+                 WHERE upper(p.client) LIKE "%${search_string}%" OR upper(p.loan_amount) LIKE "%${search_string}%" 
+                 OR upper(p.credit_score) LIKE "%${search_string}%" ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -345,8 +345,8 @@ router.get('/get', function (req, res, next) {
         }
     }).then(response => {
         query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM preapproved_loans p 
-                 WHERE upper(p.client) LIKE "${search_string}%" OR upper(p.loan_amount) LIKE "${search_string}%" 
-                 OR upper(p.credit_score) LIKE "${search_string}%") as recordsFiltered FROM preapproved_loans`;
+                 WHERE upper(p.client) LIKE "%${search_string}%" OR upper(p.loan_amount) LIKE "%${search_string}%" 
+                 OR upper(p.credit_score) LIKE "%${search_string}%") as recordsFiltered FROM preapproved_loans`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
         axios.get(url, {

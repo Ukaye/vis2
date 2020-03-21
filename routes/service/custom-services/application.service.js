@@ -22,8 +22,8 @@ router.get('/get', function (req, res, next) {
     let search_string = req.query.search_string.toUpperCase();
     let query_condition = `FROM clients u, workflow_processes w, applications a LEFT JOIN corporates c ON a.userID = c.ID WHERE u.ID=a.userID 
          AND w.ID = (SELECT MAX(ID) FROM workflow_processes WHERE applicationID=a.ID AND status=1)
-        AND (upper(a.ID) LIKE "${search_string}%" OR upper(u.fullname) LIKE "${search_string}%" OR upper(u.phone) LIKE "${search_string}%" 
-        OR upper(a.loan_amount) LIKE "${search_string}%" OR upper(a.date_created) LIKE "${search_string}%") AND a.status <> ${enums.APPLICATION.STATUS.RESCHEDULE} `;
+        AND (upper(a.ID) LIKE "%${search_string}%" OR upper(u.fullname) LIKE "%${search_string}%" OR upper(u.phone) LIKE "%${search_string}%" 
+        OR upper(a.loan_amount) LIKE "%${search_string}%" OR upper(a.date_created) LIKE "%${search_string}%") AND a.status <> ${enums.APPLICATION.STATUS.RESCHEDULE} `;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     end = moment(end).add(1, 'days').format("YYYY-MM-DD");

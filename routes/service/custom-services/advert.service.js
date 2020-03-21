@@ -10,7 +10,7 @@ const
     emailService = require('./email.service'),
     helperFunctions = require('../../../helper-functions');
 
-router.post('/create', function (req, res, next) {
+router.post('/create', (req, res) => {
     let payload = req.body,
         query =  'INSERT INTO adverts Set ?';
     payload.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -37,7 +37,7 @@ router.post('/create', function (req, res, next) {
     });
 });
 
-router.get('/get', function (req, res, next) {
+router.get('/get', (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
@@ -45,7 +45,7 @@ router.get('/get', function (req, res, next) {
     let order = req.query.order;
     let search_string = req.query.search_string.toUpperCase();
     let query = `SELECT a.* FROM adverts a 
-                 WHERE upper(a.title) LIKE "${search_string}%" ${order} LIMIT ${limit} OFFSET ${offset}`;
+                 WHERE upper(a.title) LIKE "%${search_string}%" ${order} LIMIT ${limit} OFFSET ${offset}`;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     axios.get(url, {
@@ -53,7 +53,7 @@ router.get('/get', function (req, res, next) {
             query: query
         }
     }).then(response => {
-        query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM adverts a WHERE upper(a.title) LIKE "${search_string}%") 
+        query = `SELECT count(*) AS recordsTotal, (SELECT count(*) FROM adverts a WHERE upper(a.title) LIKE "%${search_string}%") 
             as recordsFiltered FROM adverts`;
         endpoint = '/core-service/get';
         url = `${HOST}${endpoint}`;
@@ -72,11 +72,10 @@ router.get('/get', function (req, res, next) {
     });
 });
 
-router.get('/get/:id', function (req, res, next) {
+router.get('/get/:id', (req, res) => {
     let advert_id = req.params.id,
         path = `files/advert_images/`,
-        query = `SELECT p.*, c.fullname, c.email, c.phone FROM adverts p 
-                INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${advert_id} AND p.creator_type = 'admin'`;
+        query = `SELECT a.* FROM adverts a WHERE a.ID = ${advert_id}`;
     db.query(query, (error, advert) => {
         if(error) return res.send({
             status: 500,
@@ -141,6 +140,34 @@ router.get('/deactivate/:id', (req, res) => {
         if (error)
             return res.send({status: 500, error: error, response: null});
         return res.send({status: 200, error: null, response: 'Advert deactivated successfully!'});
+    });
+});
+
+router.put('/update/:id', (req, res) => {
+    let payload = req.body,
+        advert_id =req.params.id,
+        query =  `UPDATE adverts Set ? WHERE ID = ${advert_id}`;
+    payload.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
+    db.query(query, payload, error => {
+        if(error) return res.send({
+            status: 500,
+            error: error,
+            response: null
+        });
+
+        query = `SELECT * from adverts WHERE ID = ${advert_id}`;
+        db.query(query, (error, advert) => {
+            if(error) return res.send({
+                status: 500,
+                error: error,
+                response: null
+            });
+            res.send({
+                status: 200,
+                error: null,
+                response: advert[0]
+            });
+        });
     });
 });
 

@@ -274,7 +274,7 @@ router.get('/logs/get', (req, res) => {
     let offset = req.query.offset;
     let search_string = req.query.search_string.toUpperCase();
     let query_condition = `FROM remita_debits_log l, users u WHERE l.status = 1 AND l.created_by = u.ID 
-        AND (upper(u.fullname) LIKE "${search_string}%" OR upper(l.totalAmount) LIKE "${search_string}%" OR upper(l.RRR) LIKE "${search_string}%") `;
+        AND (upper(u.fullname) LIKE "%${search_string}%" OR upper(l.totalAmount) LIKE "%${search_string}%" OR upper(l.RRR) LIKE "%${search_string}%") `;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     end = moment(end).add(1, 'days').format("YYYY-MM-DD");

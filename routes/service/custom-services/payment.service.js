@@ -15,8 +15,8 @@ router.get('/get/:payment_source', (req, res) => {
     let payment_source = req.params.payment_source;
     let search_string = req.query.search_string.toUpperCase();
     let query_condition = `FROM schedule_history s, clients c 
-        WHERE s.clientID = c.ID AND s.payment_source = "${payment_source}" AND (upper(c.fullname) LIKE "${search_string}%" OR upper(s.actual_amount) LIKE "${search_string}%" 
-        OR upper(s.applicationID) LIKE "${search_string}%") `;
+        WHERE s.clientID = c.ID AND s.payment_source = "${payment_source}" AND (upper(c.fullname) LIKE "%${search_string}%" OR upper(s.actual_amount) LIKE "%${search_string}%" 
+        OR upper(s.applicationID) LIKE "%${search_string}%") `;
     let endpoint = '/core-service/get';
     let url = `${HOST}${endpoint}`;
     end = moment(end).add(1, 'days').format("YYYY-MM-DD");
