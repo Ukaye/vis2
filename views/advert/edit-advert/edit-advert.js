@@ -2,6 +2,7 @@ $(document).ready(function() {
     getClients();
 });
 
+let clients;
 const urlParams = new URLSearchParams(window.location.search);
 const advert_id = urlParams.get('id');
 
@@ -30,7 +31,8 @@ function getClients() {
         type: 'get',
         url: '/user/clients-list-full',
         success: data => {
-            JSON.parse(data).forEach(client => {
+            clients = JSON.parse(data);
+            clients.forEach(client => {
                 $("#client").append(`<option value="${client.ID}">${client.fullname || '--'} (${client.email || client.phone})</option>`);
             });
             $('#client').multiselect({
@@ -117,7 +119,11 @@ function updateAdvert() {
     advert.client = $('#client').val();
     if (!advert.title || !advert.client)
         return notification('Kindly fill all required fields!', '', 'warning');
-    advert.client = advert.client.join();
+    if (advert.client.length === clients.length) {
+        advert.client = 'all';
+    } else {
+        advert.client = advert.client.join();
+    }
     advert.action_type = $('input[name=action_type]:checked').val();
     if (advert.action_type === "product") {
         advert.action = $('#product').val();

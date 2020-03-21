@@ -3,6 +3,7 @@ $(document).ready(function() {
 });
 
 let clients;
+
 $('input[name=action_type]').change(function () {
     const action_type = $('input[name=action_type]:checked').val();
     if (action_type === "product") {
