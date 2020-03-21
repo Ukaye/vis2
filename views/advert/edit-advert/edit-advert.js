@@ -88,6 +88,9 @@ function getAdvert() {
             if (advert.application_settings_option === 1) {
                 $('#application-settings-option').prop('checked', true);
                 $('#application-settings-div').show();
+            } else {
+                $('#application-settings-option').prop('checked', false);
+                $('#application-settings-div').hide();
             }
             if (advert.loan_requested) $('#loan_requested').val(numberToCurrencyformatter(advert.loan_requested));
             if (advert.tenor) $('#tenor').val(numberToCurrencyformatter(advert.tenor));
