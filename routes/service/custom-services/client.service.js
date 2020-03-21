@@ -3869,7 +3869,7 @@ router.get('/locations/get/:id', (req, res) => {
     });
 });
 
-router.get('/adverts/:id', (req, res) => {
+router.get('/adverts/:id', helperFunctions.verifyJWT, (req, res) => {
     let adverts = [],
         advert_id = req.params.id,
         query = `SELECT a.* FROM adverts a WHERE a.status = ${enums.ADVERT.STATUS.ACTIVE} ORDER BY a.ID desc`;
