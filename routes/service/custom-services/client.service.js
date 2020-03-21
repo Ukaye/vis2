@@ -3882,7 +3882,7 @@ router.get('/adverts/:id', helperFunctions.verifyJWT, (req, res) => {
             });
 
         async.forEach(response, (advert, callback) => {
-            if (!advert.client.split(',').includes(advert_id)) callback();
+            if (advert.client !== 'all' && !advert.client.split(',').includes(advert_id)) callback();
             const path = `files/advert_images/`;
             fs.readdir(path, (err, files) => {
                 if (err) files = [];
