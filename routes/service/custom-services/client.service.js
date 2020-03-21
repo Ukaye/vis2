@@ -831,7 +831,7 @@ sendBVNOTP = (client, bvn, phone, res) => {
                 res.send({
                     "status": 200,
                     "error": null,
-                    "response": `Your phone number is ${phone}. Kindly input the OTP sent to this phone number.`
+                    "response": `An OTP has been sent to ${phone}. Kindly check and input it.`
                 });
             });
         } else {

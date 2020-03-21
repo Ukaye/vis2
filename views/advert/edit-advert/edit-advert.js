@@ -52,10 +52,24 @@ function getProducts() {
                 if (product.enable_client_product === 1)
                     $("#product").append(`<option value="${product.ID}">${product.name}</option>`);
             });
+            getPurposes();
+        }
+    });
+}
+
+function getPurposes() {
+    $.ajax({
+        type: 'get',
+        url: '/settings/application/loan_purpose',
+        success: data => {
+            data.response.forEach(purpose => {
+                $("#loan_purpose").append(`<option value="${purpose.ID}">${purpose.title}</option>`);
+            });
             getAdvert();
         }
     });
 }
+
 
 function getAdvert() {
     $.ajax({
@@ -83,7 +97,7 @@ function getAdvert() {
                 $('#custom_link').val(advert.action);
             }
             if (advert.client) {
-                $('#client').val((advert.client === 'all')? clients : advert.client.split(','));
+                $('#client').val((advert.client === 'all')? clients.map(e => e.ID) : advert.client.split(','));
                 $('#client').multiselect("refresh");
             }
             if (advert.qualified === 1) $('#qualified').prop('checked', true);
@@ -97,6 +111,7 @@ function getAdvert() {
             if (advert.loan_requested) $('#loan_requested').val(numberToCurrencyformatter(advert.loan_requested));
             if (advert.tenor) $('#tenor').val(numberToCurrencyformatter(advert.tenor));
             if (advert.interest_rate) $('#interest_rate').val(numberToCurrencyformatter(advert.interest_rate));
+            if (advert.loan_purpose) $('#loan_purpose').val(advert.loan_purpose);
         }
     });
 }
@@ -138,12 +153,15 @@ function updateAdvert() {
         advert.loan_requested = currencyToNumberformatter($('#loan_requested').val());
         advert.tenor = currencyToNumberformatter($('#tenor').val());
         advert.interest_rate = currencyToNumberformatter($('#interest_rate').val());
+        advert.loan_purpose = $('#loan_purpose').val();
         if (!advert.loan_requested || advert.loan_requested <= 0)
             return notification('Invalid loan requested','','warning');
         if (!advert.tenor || advert.tenor <= 0)
             return notification('Invalid tenor','','warning');
         if (!advert.interest_rate || advert.interest_rate <= 0)
             return notification('Invalid interest rate','','warning');
+        if (!advert.loan_purpose)
+            return notification('Invalid loan purpose','','warning');
     }
     advert.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
 
