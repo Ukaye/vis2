@@ -276,7 +276,8 @@ function loadApplication(user_id){
             getApplicationSettings(application);
             checkForExistingMandate(application);
             getFileDownloads();
-            getLoansHistory()
+            getLoansHistory();
+            $('#wait').hide();
         },
         'error': function (err) {
             console.log(err);
@@ -1596,6 +1597,7 @@ function initCSVUpload2(application, settings) {
                 if (loan_amount.round(2) < total_due_amount.round(2))
                     return notification('Total principal on the new schedule must be greater than Principal balance','','warning');
 
+                $('#wait').show();
                 $csvLoader.show();
                 $saveCSV.prop('disabled', true);
                 let schedule = validation.data;
@@ -1615,6 +1617,7 @@ function initCSVUpload2(application, settings) {
                         }
                     },
                     'success': function (data) {
+                        $('#wait').hide();
                         $csvLoader.hide();
                         $csvUpload.val('');
                         $saveCSV.prop('disabled', false);
@@ -1703,9 +1706,8 @@ function initCSVUpload2(application, settings) {
         if (!new_reschedule || !new_reschedule[0])
             return notification('There is no reschedule available for approval!','','error');
         reschedule_status = true;
-        const reschedule_disburse_amount = total_new_schedule - total_due_amount;
+        const reschedule_disburse_amount = (total_new_schedule - total_due_amount).round(2);
         $('#disbursement-amount').val(numberToCurrencyformatter((reschedule_disburse_amount).round(2)));
-        $('#disbursement-date').val(formatDate(new Date()));
         if (reschedule_disburse_amount === 0) {
             swal({
                 title: "Are you sure?",
@@ -1715,7 +1717,10 @@ function initCSVUpload2(application, settings) {
                 dangerMode: true
             })
                 .then(yes => {
-                    if (yes) $approveCSV.trigger('click');
+                    if (yes) {
+                        $('#disbursement-date').val(formatDate(new Date()));
+                        $approveCSV.trigger('click');
+                    }
                 });
         } else {
             $('#disburseModal').modal('show');
@@ -1746,28 +1751,30 @@ function initCSVUpload2(application, settings) {
             buttons: true,
             dangerMode: true
         })
-            .then((yes) => {
+            .then(yes => {
                 if (yes) {
-                    $csvLoader.show();
-                    let reschedule_amount = (total_new_schedule-total_due_amount).round(2),
-                        loan_amount_update = (parseFloat(application.loan_amount)+reschedule_amount).round(2);
-                    $.ajax({
-                        'url': '/user/application/approve-schedule/'+application_id,
-                        'type': 'post',
-                        'data': {
-                            disbursal: disbursal,
-                            reschedule_amount: reschedule_amount, 
-                            loan_amount_update: loan_amount_update
-                        },
-                        'success': function (data) {
-                            $csvLoader.hide();
-                            notification('Reschedule approved successfully','','success');
-                            window.location.reload();
-                        },
-                        'error': function (err) {
-                            $csvLoader.hide();
-                            notification('Oops! An error occurred while approving reschedule','','error');
-                        }
+                    $('#wait').show();
+                    nextStage2(state_, workflow_stages_, 'disburse_stage_id', () => {
+                        let reschedule_amount = (total_new_schedule-total_due_amount).round(2),
+                            loan_amount_update = (parseFloat(application.loan_amount)+reschedule_amount).round(2);
+                        $.ajax({
+                            'url': '/user/application/approve-schedule/'+application_id,
+                            'type': 'post',
+                            'data': {
+                                disbursal: disbursal,
+                                reschedule_amount: reschedule_amount, 
+                                loan_amount_update: loan_amount_update
+                            },
+                            'success': function (data) {
+                                $('#wait').hide();
+                                notification('Reschedule approved successfully','','success');
+                                window.location.reload();
+                            },
+                            'error': function (err) {
+                                $csvLoader.hide();
+                                notification('Oops! An error occurred while approving reschedule','','error');
+                            }
+                        });
                     });
                 }
             });

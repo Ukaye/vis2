@@ -1,3 +1,5 @@
+let state2, workflow_stages2, disburse_stage_id2;
+
 function getReschedule(rescheduleID, workflows) {
     $.ajax({
         type: "get",
@@ -24,6 +26,7 @@ function loadWorkflowStages2(state) {
                 workflow_stages = data.response,
                 denied_stage_id = ($.grep(stages_, e => {return e.name === 'Denied';}))[0]['ID'],
                 disburse_stage_id = ($.grep(stages_, e => {return e.name === 'Disbursed';}))[0]['ID'];
+            disburse_stage_id2 = disburse_stage_id;
             workflow_stages.push({
                 approverID: 1,
                 name: "Denied",
@@ -38,7 +41,7 @@ function loadWorkflowStages2(state) {
                 stageID: disburse_stage_id,
                 workflowID:state.workflowID
             });
-            workflow_stages_ = workflow_stages;
+            workflow_stages2 = workflow_stages;
 
             let ul = document.getElementById('workflow-ul-list2'),
                 $last_btn = $("#btn-"+workflow_stages[workflow_stages.length-1]['stageID']),
@@ -134,6 +137,7 @@ function loadWorkflowState2() {
         'success': function (data) {
             let states = data.response,
                 state = states[states.length-1];
+            state2 = state;
             loadWorkflowStages2(state);
         },
         'error': function (err) {
@@ -144,6 +148,11 @@ function loadWorkflowState2() {
 }
 
 function nextStage2(state, workflow_stages, action_stage, callback) {
+    state = state2 || state;
+    workflow_stages = workflow_stages2 || workflow_stages;
+    action_stage = (action_stage === 'disburse_stage_id')? disburse_stage_id2 : action_stage;
+    if (!state || !workflow_stages || !action_stage)
+        return notification('Kindly try again, page is not fully loaded yet!','','warning');
     let stage = {};
     if (workflow_stages && action_stage){
         stage.previous_stage = state.current_stage;
@@ -155,13 +164,13 @@ function nextStage2(state, workflow_stages, action_stage, callback) {
                 return notification('Kindly upload required document ('+stage_documents+')','','warning');
         }
     }
-    $('#wait').show();
+    if (!callback) $('#wait').show();
     $.ajax({
         'url': '/user/workflow_process/'+application2.ID+'/'+state.workflowID,
         'type': 'post',
         'data': {stage: stage, user_role:localStorage.getItem('role'), agentID:(JSON.parse(localStorage.getItem("user_obj"))).ID},
         'success': function (data) {
-            $('#wait').hide();
+            if (!callback) $('#wait').hide();
             if (data.status === 200){
                 if (typeof callback === "function") return callback();
                 $('#document-upload').hide();
