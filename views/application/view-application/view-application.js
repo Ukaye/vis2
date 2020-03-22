@@ -1,7 +1,6 @@
 $(document).ready(function() {
     loadComments();
     getInformationRequests();
-    read_write_1();
     getCollectionBank();
     getStages();
 });
@@ -28,7 +27,10 @@ let state_,
     workflow,
     workflows,
     application,
+    denied_stage_id,
     workflow_stages_,
+    approved_stage_id,
+    disburse_stage_id,
     reschedule_status = false,
     settings_obj = {
         loan_requested_min: 1,
@@ -63,7 +65,11 @@ function getStages() {
         type: 'get',
         url: '/stages',
         success: data => {
+            read_write_1();
             stages_ = data;
+            denied_stage_id = ($.grep(stages_, e => {return e.name === 'Denied';}))[0]['ID'];
+            approved_stage_id = ($.grep(stages_, e => {return e.name === 'Approved';}))[0]['ID'];
+            disburse_stage_id = ($.grep(stages_, e => {return e.name === 'Disbursed';}))[0]['ID'];
         }
     });
 }
@@ -390,9 +396,7 @@ function loadWorkflowStages(state) {
         'type': 'get',
         'success': function (data) {
             let count = 0,
-                workflow_stages = data.response,
-                denied_stage_id = ($.grep(stages_, e => {return e.name === 'Denied';}))[0]['ID'],
-                disburse_stage_id = ($.grep(stages_, e => {return e.name === 'Disbursed';}))[0]['ID'];
+                workflow_stages = data.response;
             workflow_stages.push({
                 approverID: 1,
                 name: "Denied",
@@ -486,6 +490,9 @@ function loadWorkflowStages(state) {
             if (stage.stage_name === 'Denied') {
                 $("#current_stage").hide();
                 $("#next-actions").hide();
+                $("#autoDisburse").hide();
+                $("#autoApprove").hide();
+                $("#autoDeny").hide();
                 $("#schedule").hide();
                 $("#denied").show();
                 $("#files").hide();
@@ -520,6 +527,7 @@ function loadWorkflowStages(state) {
                 $("#next-actions").hide();
                 $("#autoDisburse").hide();
                 $("#autoApprove").hide();
+                $("#autoDeny").hide();
                 $('.previous').hide();
                 $('.cancel').hide();
                 $(".next").hide();
@@ -529,8 +537,10 @@ function loadWorkflowStages(state) {
             if (stage.stage_name === 'Pending Approval')
                 $('.next').text('Approved (Approved)');
 
-            if (stage.stage_name === 'Approved')
+            if (stage.stage_name === 'Approved') {
+                $('#autoDeny').hide();
                 $('#autoDisburse').prop('disabled', false);
+            }
 
             if (stage.stage_name === 'Approved' || stage.stage_name === 'Disbursed' || application.status === 2) {
                 $('#stage-actions').append('<a href="#" id="stage-action-0" class="dropdown-item" data-toggle="modal" data-target="#disburseModal">Disburse Loan</a>');
@@ -538,6 +548,7 @@ function loadWorkflowStages(state) {
                 $('#infoRequestModalBtn').hide();
                 $('#downloadsForm').hide();
                 $('#autoApprove').hide();
+                $('#autoDeny').hide();
                 $("#newOffer").hide();
             }
 
@@ -677,12 +688,7 @@ function loadAllWorkflowState(workflow_stages) {
 }
 
 function nextStage(state, workflow_stages, action_stage, callback) {
-    let stage = {};
-    if (workflow_stages && action_stage){
-        stage.previous_stage = state.current_stage;
-        stage.current_stage = parseInt(action_stage);
-    }
-    if (stage_documents[0]){
+    if (stage_documents[0] && action_stage !== 'denied_stage_id'){
         for (let i=0; i<stage_documents.length; i++){
             if (!(stage_documents[i].trim().replace(/ /g, '_') in application.files))
                 return notification('Kindly upload required document ('+stage_documents+')','','warning');
@@ -690,6 +696,12 @@ function nextStage(state, workflow_stages, action_stage, callback) {
     }
     if (!application.schedule || (application.schedule && !application.schedule[0]))
         return notification('Kindly upload loan schedule to proceed!','','warning');
+    let stage = {};
+    action_stage = (action_stage === 'denied_stage_id')? denied_stage_id : action_stage;
+    if (workflow_stages && action_stage){
+        stage.previous_stage = state.current_stage;
+        stage.current_stage = parseInt(action_stage);
+    }
     $('#wait').show();
     updatePreapplicationStatus(application.preapplicationID, state.next_stage, () => {
         $.ajax({
@@ -2709,10 +2721,26 @@ $('#autoApprove').click(e => {
     })
         .then(yes => {
             if (yes) {
-                let approved_stage_id = ($.grep(stages_, e => {return e.name === 'Approved';}))[0]['ID'];
                 if (!state_ || !workflow_stages_ || !approved_stage_id)
                     return notification('Kindly try again, page is not fully loaded yet!','','warning');
                 nextStage(state_, workflow_stages_, approved_stage_id);
+            }
+        });
+});
+
+$('#autoDeny').click(e => {
+    swal({
+        title: "Are you sure?",
+        text: "Proceed to move this loan to stage 'Denied'",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true
+    })
+        .then(yes => {
+            if (yes) {
+                if (!state_ || !workflow_stages_ || !denied_stage_id)
+                    return notification('Kindly try again, page is not fully loaded yet!','','warning');
+                nextStage(state_, workflow_stages_, 'denied_stage_id');
             }
         });
 });
@@ -2753,6 +2781,8 @@ function read_write_2(){
         $('#close_loan').hide();
     if (($.grep(perms, function(e){return e.module_name === 'autoApprove';}))[0]['read_only'] === '0')
         $('#autoApprove').hide();
+    if (($.grep(perms, function(e){return e.module_name === 'autoDeny';}))[0]['read_only'] === '0')
+        $('#autoDeny').hide();
     if (($.grep(perms, function(e){return e.module_name === 'autoDisburse';}))[0]['read_only'] === '0')
         $('#autoDisburse').hide();
     const makeLoanOffer = ($.grep(perms, function(e){return e.module_name === 'makeLoanOffer';}))[0];

@@ -3883,17 +3883,19 @@ router.get('/adverts/:id', helperFunctions.verifyJWT, (req, res) => {
 
         async.forEach(response, (advert, callback) => {
             if (advert.client !== 'all' && !advert.client.split(',').includes(advert_id)) callback();
-            const path = `files/advert_images/`;
-            fs.readdir(path, (err, files) => {
-                if (err) files = [];
-                files = helperFunctions.removeFileDuplicates(path, files);
-                const image = (files.filter(file => {
-                    return file.indexOf(`${advert.ID}_${advert.title.trim().replace(/ /g, '_')}`) > -1;
-                }))[0];
-                advert.image = `${process.env.HOST || req.HOST}/${(image)? `${path}${image}` : 'product.png'}`;
-                adverts.push(advert);
-                callback();
-            });
+            else {
+                const path = `files/advert_images/`;
+                fs.readdir(path, (err, files) => {
+                    if (err) files = [];
+                    files = helperFunctions.removeFileDuplicates(path, files);
+                    const image = (files.filter(file => {
+                        return file.indexOf(`${advert.ID}_${advert.title.trim().replace(/ /g, '_')}`) > -1;
+                    }))[0];
+                    advert.image = `${process.env.HOST || req.HOST}/${(image)? `${path}${image}` : 'product.png'}`;
+                    adverts.push(advert);
+                    callback();
+                });
+                }
         }, data => {
             res.send({
                 "status": 200,
