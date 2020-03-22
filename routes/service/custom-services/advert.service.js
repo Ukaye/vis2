@@ -104,7 +104,7 @@ router.get('/get/:id', (req, res) => {
                 const image = (files.filter(file => {
                     return file.indexOf(`${advert_id}_${advert.title.trim().replace(/ /g, '_')}`) > -1;
                 }))[0];
-                advert.image = `${path}${image}`;
+                if (image) advert.image = `${path}${image}`;
                 res.send({
                     "status": 200,
                     "error": null,

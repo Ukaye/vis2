@@ -1407,7 +1407,7 @@ function initCSVUpload2(application, settings) {
             loanAmount = parseFloat(loanAmount);
             interestRate = parseFloat(interestRate);
             if (duration < settings.tenor_min || duration > settings.tenor_max)
-                return $message.text(`Minimum tenor is ${numberToCurrencyformatter(settings.tenor_min)} (month)
+                return $message.text(`Minimum tenor is ${numberToCurrencyformatter(settings.tenor_min)} (months)
                      and Maximum is ${numberToCurrencyformatter(settings.tenor_max)} (months)`);
             if (interestRate < settings.interest_rate_min || interestRate > settings.interest_rate_max)
                 return $message.text(`Minimum interest rate is ${numberToCurrencyformatter(settings.interest_rate_min)}% 
@@ -2338,7 +2338,7 @@ function initNewLoanOffer(application, settings) {
             loanAmount = parseFloat(loanAmount);
             interestRate = parseFloat(interestRate);
             if (duration < settings.tenor_min || duration > settings.tenor_max)
-                return notification(`Minimum tenor is ${numberToCurrencyformatter(settings.tenor_min)} (month)
+                return notification(`Minimum tenor is ${numberToCurrencyformatter(settings.tenor_min)} (months)
                      and Maximum is ${numberToCurrencyformatter(settings.tenor_max)} (months)`,'','warning');
             if (interestRate < settings.interest_rate_min || interestRate > settings.interest_rate_max)
                 return notification(`Minimum interest rate is ${numberToCurrencyformatter(settings.interest_rate_min)}% 

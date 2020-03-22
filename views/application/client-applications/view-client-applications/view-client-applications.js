@@ -426,7 +426,7 @@
                 loanAmount = parseFloat(loanAmount);
                 interestRate = parseFloat(interestRate);
                 if (duration < settings.tenor_min || duration > settings.tenor_max)
-                    return $message.text(`Minimum tenor is ${numberToCurrencyformatter(settings.tenor_min)} (month)
+                    return $message.text(`Minimum tenor is ${numberToCurrencyformatter(settings.tenor_min)} (months)
                      and Maximum is ${numberToCurrencyformatter(settings.tenor_max)} (months)`,'','warning');
                 if (interestRate < settings.interest_rate_min || interestRate > settings.interest_rate_max)
                     return $message.text(`Minimum interest rate is ${numberToCurrencyformatter(settings.interest_rate_min)}% 
@@ -648,7 +648,7 @@
                     if (!user || isNaN(obj.workflowID) || !obj.loan_amount || !obj.interest_rate || !obj.duration || $purposes.val() === '-- Choose Loan Purpose --')
                         return notification('Kindly fill all required fields!','','warning');
                     if (parseFloat(obj.duration) < settings.tenor_min || parseFloat(obj.duration) > settings.tenor_max)
-                        return notification(`Minimum tenor is ${numberToCurrencyformatter(settings.tenor_min)} (month) 
+                        return notification(`Minimum tenor is ${numberToCurrencyformatter(settings.tenor_min)} (months) 
                         and Maximum is ${numberToCurrencyformatter(settings.tenor_max)} (months)`,'','warning');
                     if (parseFloat(obj.interest_rate) < settings.interest_rate_min || parseFloat(obj.interest_rate) > settings.interest_rate_max)
                         return notification(`Minimum interest rate is ${numberToCurrencyformatter(settings.interest_rate_min)}% 
@@ -999,7 +999,7 @@
             return callback(false);
         }
         if (parseFloat(obj.tenor) < settings.tenor_min || parseFloat(obj.tenor) > settings.tenor_max) {
-            notification(`Minimum tenor is ${numberToCurrencyformatter(settings.tenor_min)} (month) 
+            notification(`Minimum tenor is ${numberToCurrencyformatter(settings.tenor_min)} (months) 
                         and Maximum is ${numberToCurrencyformatter(settings.tenor_max)} (months)`,'','warning');
             return callback(false);
         }

@@ -2,20 +2,28 @@ $(document).ready(function() {
     getClients();
 });
 
-let clients;
+let clients,
+    products,
+    settings_obj = {},
+    action_type = 'product';
 
-$('input[name=action_type]').change(function () {
-    const action_type = $('input[name=action_type]:checked').val();
-    if (action_type === "product") {
+$('input[name=action_type]').change(() => {
+    action_type = $('input[name=action_type]:checked').val();
+    if (action_type === 'product') {
         $('#product-div').show();
         $('#custom_link-div').hide();
-    } else if (action_type === "custom_link") {
+    } else if (action_type === 'custom_link') {
         $('#product-div').hide();
         $('#custom_link-div').show();
-    } 
+    }
+    setApplicationSetting();
 });
 
-$('#application-settings-option').click(e => {
+$('#product').change(() => {
+    setApplicationSetting();
+});
+
+$('#application-settings-option').click(() => {
     if ($('#application-settings-option').is(':checked')) {
         $('#application-settings-div').show();
     } else {
@@ -45,10 +53,12 @@ function getProducts() {
         type: 'get',
         url: '/workflows',
         success: data => {
-            data.response.forEach(product => {
+            products = data.response;
+            products.forEach(product => {
                 if (product.enable_client_product === 1)
                     $("#product").append(`<option value="${product.ID}">${product.name}</option>`);
             });
+            setApplicationSetting();
             getPurposes();
         }
     });
@@ -64,6 +74,44 @@ function getPurposes() {
             });
         }
     });
+}
+
+function setApplicationSetting() {
+    const product = ($.grep(products, e => {return e.ID === Number($('#product').val())}))[0];
+    if (action_type === 'product' && product.application_settings_option === 1) {
+        if (product.loan_requested_min) {
+            settings_obj.loan_requested_min = product.loan_requested_min;
+            $('.loan_requested_min').text(numberToCurrencyformatter(settings_obj.loan_requested_min));
+        }
+        if (product.loan_requested_max) {
+            settings_obj.loan_requested_max = product.loan_requested_max;
+            $('.loan_requested_max').text(numberToCurrencyformatter(settings_obj.loan_requested_max));
+        }
+        if (product.tenor_min) {
+            settings_obj.tenor_min = product.tenor_min;
+            $('.tenor_min').text(numberToCurrencyformatter(settings_obj.tenor_min));
+        }
+        if (product.tenor_max) {
+            settings_obj.tenor_max = product.tenor_max;
+            $('.tenor_max').text(numberToCurrencyformatter(settings_obj.tenor_max));
+        }
+        if (product.interest_rate_min) {
+            settings_obj.interest_rate_min = product.interest_rate_min;
+            $('.interest_rate_min').text(numberToCurrencyformatter(settings_obj.interest_rate_min));
+        }
+        if (product.interest_rate_max) {
+            settings_obj.interest_rate_max = product.interest_rate_max;
+            $('.interest_rate_max').text(numberToCurrencyformatter(settings_obj.interest_rate_max));
+        }
+    } else {
+        settings_obj = {};
+        $('.loan_requested_min').text('None');
+        $('.loan_requested_max').text('None');
+        $('.tenor_min').text('None');
+        $('.tenor_max').text('None');
+        $('.interest_rate_min').text('None');
+        $('.interest_rate_max').text('None');
+    }
 }
 
 $("#loan_requested").on("keyup", e => {
@@ -112,6 +160,20 @@ function postAdvert() {
             return notification('Invalid interest rate','','warning');
         if (!advert.loan_purpose)
             return notification('Invalid loan purpose','','warning');
+        if (settings_obj) {
+            if (settings_obj.loan_requested_min && advert.loan_requested < settings_obj.loan_requested_min)
+                return notification(`Minimum loan amount is ₦${numberToCurrencyformatter(settings_obj.loan_requested_min)}`,'','warning');
+            if (settings_obj.loan_requested_max && advert.loan_requested > settings_obj.loan_requested_max)
+                return notification(`Maximum loan amount is ₦${numberToCurrencyformatter(settings_obj.loan_requested_max)}`,'','warning');
+            if (settings_obj.tenor_min && advert.tenor < settings_obj.tenor_min)
+                return notification(`Minimum tenor is ${numberToCurrencyformatter(settings_obj.tenor_min)} (months)`,'','warning');
+            if (settings_obj.tenor_max && advert.tenor > settings_obj.tenor_max)
+                return notification(`Maximum tenor is ${numberToCurrencyformatter(settings_obj.tenor_max)} (months)`,'','warning');
+            if (settings_obj.interest_rate_min && advert.interest_rate < settings_obj.interest_rate_min)
+                return notification(`Minimum interest rate is ${numberToCurrencyformatter(settings_obj.interest_rate_min)}%`,'','warning');
+            if (settings_obj.interest_rate_max && advert.interest_rate > settings_obj.interest_rate_max)
+                return notification(`Maximum interest rate is ${numberToCurrencyformatter(settings_obj.interest_rate_max)}%`,'','warning');
+        }
     }
     advert.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
 
