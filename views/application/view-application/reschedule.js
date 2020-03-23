@@ -1,4 +1,8 @@
-let state2, workflow_stages2, disburse_stage_id2;
+let state2,
+    workflow_stages2,
+    denied_stage_id2,
+    approved_stage_id2,
+    disburse_stage_id2;
 
 function getReschedule(rescheduleID, workflows) {
     $.ajax({
@@ -23,9 +27,12 @@ function loadWorkflowStages2(state) {
         'type': 'get',
         'success': function (data) {
             let count = 0,
-                workflow_stages = data.response,
-                denied_stage_id = ($.grep(stages_, e => {return e.name === 'Denied';}))[0]['ID'],
-                disburse_stage_id = ($.grep(stages_, e => {return e.name === 'Disbursed';}))[0]['ID'];
+                workflow_stages = data.response;
+            denied_stage_id = ($.grep(stages_, e => {return e.name === 'Denied';}))[0]['ID'],
+            approved_stage_id = ($.grep(stages_, e => {return e.name === 'Approved';}))[0]['ID']
+            disburse_stage_id = ($.grep(stages_, e => {return e.name === 'Disbursed';}))[0]['ID'];
+            denied_stage_id2 = denied_stage_id;
+            approved_stage_id2 = approved_stage_id;
             disburse_stage_id2 = disburse_stage_id;
             workflow_stages.push({
                 approverID: 1,
@@ -113,11 +120,19 @@ function loadWorkflowStages2(state) {
                     '<p class="list-group-item-text">'+stage.name+'<br> ('+stage.stage_name+')</p></a>';
             });
 
+            if (stage.stage_name === 'Approved') {
+                $('#autoDeny2').hide();
+                $('#autoDisburse2').prop('disabled', false);
+            }
+
             if (stage.stage_name === 'Pending Approval')
                 $('.next2').text('Approved (Approved)');
             
-            if (stage.stage_name === 'Approved' || stage.stage_name === 'Disbursed' || application2.status === 2)
+            if (stage.stage_name === 'Approved' || stage.stage_name === 'Disbursed' || application2.status === 2) {
                 $('#stage-actions2').append('<a href="#" id="approveRescheduleModalBtn" class="dropdown-item">Disburse Loan</a>');
+                $('#autoApprove2').hide();
+                $('#autoDeny2').hide();
+            }
         },
         'error': function (err) {
             console.log(err);
@@ -148,21 +163,25 @@ function loadWorkflowState2() {
 }
 
 function nextStage2(state, workflow_stages, action_stage, callback) {
-    state = state2 || state;
-    workflow_stages = workflow_stages2 || workflow_stages;
-    action_stage = (action_stage === 'disburse_stage_id')? disburse_stage_id2 : action_stage;
-    if (!state || !workflow_stages || !action_stage)
-        return notification('Kindly try again, page is not fully loaded yet!','','warning');
-    let stage = {};
-    if (workflow_stages && action_stage){
-        stage.previous_stage = state.current_stage;
-        stage.current_stage = parseInt(action_stage);
-    }
-    if (stage_documents[0]){
+    if (stage_documents[0] && action_stage !== 'denied_stage_id'){
         for (let i=0; i<stage_documents.length; i++){
             if (!(stage_documents[i].trim().replace(/ /g, '_') in application.files))
                 return notification('Kindly upload required document ('+stage_documents+')','','warning');
         }
+    }
+    if (!state || !workflow_stages || !action_stage)
+        return notification('Kindly try again, page is not fully loaded yet!','','warning');
+    state = state2 || state;
+    workflow_stages = workflow_stages2 || workflow_stages;
+    if (action_stage === 'denied_stage_id') {
+        action_stage = denied_stage_id2;
+    } else if (action_stage === 'disburse_stage_id') {
+        action_stage =  disburse_stage_id2;
+    }
+    let stage = {};
+    if (workflow_stages && action_stage){
+        stage.previous_stage = state.current_stage;
+        stage.current_stage = parseInt(action_stage);
     }
     if (!callback) $('#wait').show();
     $.ajax({
@@ -217,3 +236,52 @@ function previousStage() {
         }
     });
 }
+
+$('#autoApprove2').click(() => {
+    swal({
+        title: "Are you sure?",
+        text: "Proceed to move this reschedule to stage 'Approved'",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true
+    })
+        .then(yes => {
+            if (yes) {
+                if (!state_ || !workflow_stages_ || !approved_stage_id2)
+                    return notification('Kindly try again, page is not fully loaded yet!','','warning');
+                nextStage2(state_, workflow_stages_, approved_stage_id2);
+            }
+        });
+});
+
+$('#autoDeny2').click(() => {
+    swal({
+        title: "Are you sure?",
+        text: "Proceed to move this reschedule to stage 'Denied'",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true
+    })
+        .then(yes => {
+            if (yes) {
+                if (!state_ || !workflow_stages_ || !denied_stage_id2)
+                    return notification('Kindly try again, page is not fully loaded yet!', '', 'warning');
+                $('#wait').show();
+                nextStage2(state_, workflow_stages_, 'denied_stage_id', () => {
+                    $.ajax({
+                        'url': `/user/application/reschedule/${application_id}/${application.rescheduleID}`,
+                        'type': 'delete',
+                        'success': function (data) {
+                            $('#wait').show();
+                            notification('Reschedule denied successfully', '', 'success');
+                            window.location.reload();
+                        },
+                        'error': function (err) {
+                            $('#wait').show();
+                            notification('Oops! An error occurred while denying reschedule', '', 'error');
+                        }
+                    });
+                });
+            }
+        });
+});

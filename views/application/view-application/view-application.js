@@ -21,7 +21,6 @@ function getCollectionBank() {
 const urlParams = new URLSearchParams(window.location.search);
 const application_id = urlParams.get('id');
 
-
 let state_,
     stages_,
     workflow,
@@ -492,7 +491,6 @@ function loadWorkflowStages(state) {
                 $("#next-actions").hide();
                 $("#autoDisburse").hide();
                 $("#autoApprove").hide();
-                $("#autoDeny").hide();
                 $("#schedule").hide();
                 $("#denied").show();
                 $("#files").hide();
@@ -836,8 +834,6 @@ $('#stage-documents').change(function () {
     stage_file_name = this.value;
     fileUpload(this.value);
 });
-
-function formatBytes(a,b){if(0==a)return"0 Bytes";var c=1024,d=b||2,e=["Bytes","KB","MB","GB","TB","PB","EB","ZB","YB"],f=Math.floor(Math.log(a)/Math.log(c));return parseFloat((a/Math.pow(c,f)).toFixed(d))+" "+e[f]}
 
 $('#document-file').change(function () {
     let _self = this,
@@ -1714,7 +1710,15 @@ function initCSVUpload2(application, settings) {
         $('#rescheduleModal').modal('show');
     });
     
-    $('#stage-actions2').delegate('#approveRescheduleModalBtn', 'click', e => {
+    $('#stage-actions2').delegate('#approveRescheduleModalBtn', 'click', () => {
+        approveReschedule();
+    });
+    
+    $('#autoDisburse2').click(() => {
+        approveReschedule();
+    });
+
+    function approveReschedule() {
         if (!new_reschedule || !new_reschedule[0])
             return notification('There is no reschedule available for approval!','','error');
         reschedule_status = true;
@@ -1739,7 +1743,8 @@ function initCSVUpload2(application, settings) {
             $('#editRepaymentDateBtn').hide();
             $('#disbursement-amount').prop('disabled', false);
         }
-    });
+
+    }
 
     $approveCSV.bind("click", function () {
         if (!reschedule_status) return;
@@ -2779,12 +2784,18 @@ function read_write_2(){
         $('#rejectCSV2').hide();
     if (($.grep(perms, function(e){return e.module_name === 'close-loan';}))[0]['read_only'] === '0')
         $('#close_loan').hide();
-    if (($.grep(perms, function(e){return e.module_name === 'autoApprove';}))[0]['read_only'] === '0')
+    if (($.grep(perms, function(e){return e.module_name === 'autoApprove';}))[0]['read_only'] === '0') {
         $('#autoApprove').hide();
-    if (($.grep(perms, function(e){return e.module_name === 'autoDeny';}))[0]['read_only'] === '0')
+        $('#autoApprove2').hide();
+    }
+    if (($.grep(perms, function(e){return e.module_name === 'autoDeny';}))[0]['read_only'] === '0') {
         $('#autoDeny').hide();
-    if (($.grep(perms, function(e){return e.module_name === 'autoDisburse';}))[0]['read_only'] === '0')
+        $('#autoDeny2').hide();
+    }
+    if (($.grep(perms, function(e){return e.module_name === 'autoDisburse';}))[0]['read_only'] === '0') {
         $('#autoDisburse').hide();
+        $('#autoDisburse2').hide();
+    }
     const makeLoanOffer = ($.grep(perms, function(e){return e.module_name === 'makeLoanOffer';}))[0];
     if (makeLoanOffer && makeLoanOffer['read_only'] === '0') {
         $('#newOffer').hide();
