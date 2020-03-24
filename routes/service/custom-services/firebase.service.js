@@ -5,11 +5,10 @@ const firebase = {},
     fcm = new FCM(serverKey);
 
 firebase.send = payload => {
-    console.log(payload)
     if (!payload.to) return;
     const query = `SELECT firebase_token FROM clients WHERE email = "${payload.to}"`;
     db.query(query, client => {
-        console.log(client)
+        console.log(query)
         client = client[0];
         if (!client || !client.firebase_token) return;
         var message = {
@@ -19,9 +18,7 @@ firebase.send = payload => {
                 body: (payload.context && payload.context.message)? payload.context.message : ''
             }
         };
-        console.log('done')
         fcm.send(message, (error, response) => {
-            console.log('finished')
             if (error) console.log(error);
             console.log(response);
         });
