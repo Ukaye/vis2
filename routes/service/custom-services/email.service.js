@@ -30,10 +30,10 @@ email.send = function (mailOptions) {
     mailOptions.subject = `${process.env.TENANT}: ${mailOptions.subject}`;
     transporter.sendMail(mailOptions, error => {
         if (error) console.log(error);
+        setTimeout(() => {
+            firebaseService.send(mailOptions);
+        }, 5000);
     });
-    setTimeout(() => {
-        firebaseService.send(mailOptions);
-    }, 5000);
 };
 
 email.sendByDomain = function (domain, mailOptions) {
