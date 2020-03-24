@@ -31,7 +31,9 @@ email.send = function (mailOptions) {
     transporter.sendMail(mailOptions, error => {
         if (error) console.log(error);
     });
-    firebaseService(mailOptions);
+    setTimeout(() => {
+        firebaseService.send(mailOptions);
+    }, 5000);
 };
 
 email.sendByDomain = function (domain, mailOptions) {
