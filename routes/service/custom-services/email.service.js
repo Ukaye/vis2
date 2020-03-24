@@ -1,6 +1,7 @@
 let email = {},
     nodemailer = require('nodemailer'),
     hbs = require('nodemailer-express-handlebars'),
+    firebaseService = require('./firebase.service'),
     mailgunTransport = require('nodemailer-mailgun-transport'),
     mailgunOptions = {
         auth: {
@@ -27,9 +28,10 @@ email.send = function (mailOptions) {
     if (process.env.ADMIN_EMAIL) mailOptions.to = mailOptions.to.concat(`,${process.env.ADMIN_EMAIL}`);
     mailOptions.from = mailOptions.from || `${process.env.TENANT} <no-reply@app.finratus.com>`;
     mailOptions.subject = `${process.env.TENANT}: ${mailOptions.subject}`;
-    transporter.sendMail(mailOptions, function(error, info){
+    transporter.sendMail(mailOptions, error => {
         if (error) console.log(error);
     });
+    firebaseService(mailOptions);
 };
 
 email.sendByDomain = function (domain, mailOptions) {
