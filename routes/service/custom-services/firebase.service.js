@@ -7,7 +7,8 @@ const firebase = {},
 firebase.send = payload => {
     if (!payload.to) return;
     const query = `SELECT firebase_token FROM clients WHERE email = "${payload.to}"`;
-    db.query(query, client => {
+    db.query(query, (error, client) => {
+        console.log(error)
         console.log(query)
         client = client[0];
         if (!client || !client.firebase_token) return;
