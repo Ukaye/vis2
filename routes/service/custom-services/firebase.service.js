@@ -19,7 +19,6 @@ firebase.send = payload => {
         };
         fcm.send(message, (error, response) => {
             if (error) console.log(error);
-            console.log(response);
         });
     });
 };
