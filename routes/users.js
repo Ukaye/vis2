@@ -1335,16 +1335,16 @@ users.get('/user-dets/:id', function (req, res, next) {
 users.get('/client-dets/:id', function (req, res, next) {
     let query = 'SELECT *, (select fullname from users u where u.ID = clients.loan_officer) as officer, \n' +
         '(select branch_name from branches b where b.ID = clients.branch) as branchname, \n' +
-        '(SELECT sum(amount) FROM escrow WHERE clientID=clients.ID AND status=1) AS escrow ,  \n' +
+        '(SELECT COALESCE(sum(amount), 0) FROM escrow WHERE clientID=clients.ID AND status=1) AS escrow ,  \n' +
         '(select sum(loan_amount) from applications where userID = clients.ID and status = 2 and close_status = 0) as total_loans, \n' +
         '(select \n' +
         '(select sum(loan_amount) from applications where userID = clients.ID and status = 2 and close_status = 0) - \n' +
-        'sum(payment_amount)\n' +
+        'COALESCE(sum(payment_amount), 0)\n' +
         'from schedule_history\n' +
         'where applicationID in (select id from applications where userid = clients.ID and status = 2 and close_status = 0)\n' +
         'and status = 1) as total_balance, \n' +
         '(select \n' +
-        'sum(interest_amount)\n' +
+        'COALESCE(sum(interest_amount), 0)\n' +
         'from schedule_history\n' +
         'where applicationID in (select id from applications where userid = clients.ID and status = 2 and close_status = 0)\n' +
         'and status = 1) as total_interests\n' +
