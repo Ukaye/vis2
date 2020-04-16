@@ -14,7 +14,8 @@ let token,
     xeroFunctions = require('../routes/xero'),
     helperFunctions = require('../helper-functions'),
     notificationsService = require('./notifications-service'),
-    emailService = require('./service/custom-services/email.service');
+    emailService = require('./service/custom-services/email.service'),
+    firebaseService = require('./service/custom-services/firebase.service');
 
 users.get('/import-bulk-clients', function (req, res) {
     let clients = [],
@@ -2495,7 +2496,8 @@ users.get('/workflow_process_all/:application_id', function (req, res, next) {
     let query = `SELECT w.ID, w.workflowID, w.previous_stage, w.current_stage, w.next_stage, w.approval_status, w.date_created, w.applicationID, w.status,
     w.agentID, u.fullname AS agent, (SELECT role_name FROM user_roles WHERE ID = u.user_role) role, 
     (SELECT name FROM workflow_stages WHERE workflowID = w.workflowID AND stageID = w.current_stage) stage FROM workflow_processes AS w, users AS u 
-    WHERE w.applicationID = ${req.params.application_id} OR w.applicationID in (SELECT ID FROM applications WHERE rescheduleID = ${req.params.application_id}) AND w.agentID = u.ID GROUP BY w.ID`;
+    WHERE (w.applicationID = ${req.params.application_id} OR w.applicationID in (SELECT ID FROM applications WHERE rescheduleID = ${req.params.application_id})) 
+    AND w.agentID = u.ID GROUP BY w.ID`;
     db.query(query, (error, results) => {
         if (error) {
             res.send({ "status": 500, "error": error, "response": null });
@@ -2584,7 +2586,7 @@ users.post('/application/information-request/:id', (req, res) => {
             "response": null
         });
 
-        emailService.send({
+        const options = {
             to: email,
             subject: 'Information Request',
             template: 'default',
@@ -2592,7 +2594,9 @@ users.post('/application/information-request/:id', (req, res) => {
                 name: fullname,
                 message: `Additional information has been requested to proceed with your loan request. Description: ${payload.description || ''}`
             }
-        });
+        }
+        emailService.send(options);
+        firebaseService.send(options);
         return res.send({
             "status": 200,
             "error": null,
@@ -3876,7 +3880,7 @@ users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
                                         payment_date: invoice.payment_date,
                                         bank: invoice.xeroCollectionBank
                                     });
-                                    emailService.send({
+                                    const options = {
                                         to: payment.email,
                                         subject: 'Payment Confirmation',
                                         template: 'default',
@@ -3884,7 +3888,9 @@ users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
                                             name: payment.fullname,
                                             message: `Your payment of ₦${invoice.actual_amount} was confirmed successfully!`
                                         }
-                                    });
+                                    }
+                                    emailService.send(options);
+                                    firebaseService.send(options);
                                     res.send({ "status": 200, "message": "Payment confirmed successfully!", "response": history });
                                 }
                             });

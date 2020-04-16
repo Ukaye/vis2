@@ -7,7 +7,8 @@ const fs = require('fs'),
     router = express.Router(),
     enums = require('../../../enums'),
     notificationsService = require('../../notifications-service'),
-    emailService = require('../../service/custom-services/email.service');
+    emailService = require('../../service/custom-services/email.service'),
+    firebaseService = require('../../service/custom-services/firebase.service');
 
 router.get('/get', function (req, res, next) {
     const HOST = `${req.protocol}://${req.get('host')}`;
@@ -269,7 +270,7 @@ router.post('/loan-offer/:id', (req, res) => {
                             payload.description = 'New Schedule Uploaded for Loan Application';
                             payload.affected = req.params.id;
                             notificationsService.log(req, payload);
-                            emailService.send({
+                            const options = {
                                 to: app[0]['email'],
                                 subject: 'New Loan Offer',
                                 template: 'default',
@@ -277,7 +278,9 @@ router.post('/loan-offer/:id', (req, res) => {
                                     name: app[0]['fullname'],
                                     message: 'There is a new loan offer available for you!'
                                 }
-                            });
+                            }
+                            emailService.send(options);
+                            firebaseService.send(options);
                             return res.send({
                                 "status": 200,
                                 "error": null,

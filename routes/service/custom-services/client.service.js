@@ -12,7 +12,8 @@ const fs = require('fs'),
     helperFunctions = require('../../../helper-functions'),
     notificationsService = require('../../notifications-service'),
     paystack = require('paystack')(process.env.PAYSTACK_SECRET_KEY),
-    emailService = require('../../service/custom-services/email.service');
+    emailService = require('../../service/custom-services/email.service'),
+    firebaseService = require('../../service/custom-services/firebase.service');
 
 if (!process.env.HOST) process.env.HOST = 'https://x3.finratus.com';
 
@@ -1093,7 +1094,7 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, function (req,
                 query: query
             }
         }).then(response_ => {
-            emailService.send({
+            const options = {
                 to: req.user.email,
                 subject: 'Loan Request',
                 template: 'default',
@@ -1101,7 +1102,9 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, function (req,
                     name: req.user.fullname,
                     message: `Your loan request of ₦${helperFunctions.numberToCurrencyFormatter(postData.loan_amount)} has been received successfully!. Please note that we typically respond in less than one (1) minute. Check back by logging into your profile for update.`
                 }
-            });
+            }
+            emailService.send(options);
+            firebaseService.send(options);
             res.send({ status: 200, error: null, response: response_['data'][0] });
         }, err => {
             res.send({ status: 500, error: err, response: null });
@@ -1355,7 +1358,7 @@ router.get('/application/accept/:id/:application_id', helperFunctions.verifyJWT,
         db.query(query, payload, function (error, response) {
             if (error)
                 return res.send({ status: 500, error: error, response: null });
-            emailService.send({
+            const options = {
                 to: req.user.email,
                 subject: 'Loan Offer Accepted',
                 template: 'default',
@@ -1363,7 +1366,9 @@ router.get('/application/accept/:id/:application_id', helperFunctions.verifyJWT,
                     name: req.user.fullname,
                     message: 'Your loan offer acceptance was successful!'
                 }
-            });
+            }
+            emailService.send(options);
+            firebaseService.send(options);
             return res.send({ status: 200, error: null, response: 'Loan offer accepted successfully!' });
         });
     });
@@ -2010,7 +2015,7 @@ router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, fun
                                             payload.description = 'Loan Application Payment Confirmed';
                                             payload.affected = invoice_.app_id;
                                             notificationsService.log(req, payload);
-                                            emailService.send({
+                                            const options = {
                                                 to: req.user.email,
                                                 subject: 'Payment Received',
                                                 template: 'default',
@@ -2019,7 +2024,9 @@ router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, fun
                                                     message: `Your payment of ₦${helperFunctions.numberToCurrencyFormatter(invoice_.amount)} 
                                                         was received successfully!`
                                                 }
-                                            });
+                                            }
+                                            emailService.send(options);
+                                            firebaseService.send(options);
                                             return res.send({
                                                 "status": 200,
                                                 "error": null,
@@ -2430,7 +2437,7 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
                                             payload.description = 'Loan Application Payment Confirmed';
                                             payload.affected = invoice_.app_id;
                                             notificationsService.log(req, payload);
-                                            emailService.send({
+                                            const options = {
                                                 to: req.user.email,
                                                 subject: 'Payment Received',
                                                 template: 'default',
@@ -2439,7 +2446,9 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, funct
                                                     message: `Your payment of ₦${helperFunctions.numberToCurrencyFormatter(invoice_.amount)} 
                                                         was received successfully!`
                                                 }
-                                            });
+                                            }
+                                            emailService.send(options);
+                                            firebaseService.send(options);
                                             return res.send({
                                                 "status": 200,
                                                 "error": null,
@@ -2760,7 +2769,7 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
                                             payload.description = 'Loan Application Payment Confirmed';
                                             payload.affected = invoice_.app_id;
                                             notificationsService.log(req, payload);
-                                            emailService.send({
+                                            const options = {
                                                 to: req.user.email,
                                                 subject: 'Payment Received',
                                                 template: 'default',
@@ -2769,7 +2778,9 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
                                                     message: `Your payment of ₦${helperFunctions.numberToCurrencyFormatter(req.body.amount)} 
                                                         was received successfully!`
                                                 }
-                                            });
+                                            }
+                                            emailService.send(options);
+                                            firebaseService.send(options);
                                             return res.send({
                                                 "status": 200,
                                                 "error": null,
@@ -2979,7 +2990,7 @@ router.post('/application/verify/email/:id/:application_id/:type', helperFunctio
     data.date = moment().utcOffset('+0100').format('YYYY-MM-DD');
     data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
     data.verify_url = `${req.body.callback_url}?token=${token}&module=application`;
-    emailService.send({
+    const options = {
         to: req.user.email,
         subject: `${req.params.type} email confirmation`,
         template: 'default',
@@ -2988,7 +2999,9 @@ router.post('/application/verify/email/:id/:application_id/:type', helperFunctio
             message: `This is a reminder that your ${req.params.type} email (${email}) is pending verification. 
                 Kindly log in to your ${req.params.type} email for further instructions on how to proceed!`
         }
-    });
+    }
+    emailService.send(options);
+    firebaseService.send(options);
     emailService.send({
         to: email,
         subject: `${req.params.type} email confirmation`,
@@ -3126,7 +3139,7 @@ router.post('/application/verifyV2/email/:application_id/:type', (req, res) => {
         data.date = moment().utcOffset('+0100').format('YYYY-MM-DD');
         data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
         data.verify_url = `${process.env.CLIENT_HOST}/verify-email?token=${token}&module=application`;
-        emailService.send({
+        const options = {
             to: client.email,
             subject: `${req.params.type} email Confirmation`,
             template: 'default',
@@ -3135,7 +3148,9 @@ router.post('/application/verifyV2/email/:application_id/:type', (req, res) => {
                 message: `This is a reminder that your ${req.params.type} email (${email}) is pending verification. 
                         Kindly log in to your ${req.params.type} email for further instructions on how to proceed!`
             }
-        });
+        }
+        emailService.send(options);
+        firebaseService.send(options);
         emailService.send({
             to: email,
             subject: 'Email Confirmation',

@@ -8,6 +8,7 @@ const
     router = express.Router(),
     enums = require('../../../enums'),
     emailService = require('./email.service'),
+    firebaseService = require('./firebase.service'),
     helperFunctions = require('../../../helper-functions');
 
 router.post('/create', function (req, res, next) {
@@ -132,14 +133,16 @@ router.post('/approve/:id', function (req, res, next) {
             WHERE p.userID = c.ID AND p.ID = ${id}`;
         db.query(query, function (error, preapplication) {            
             if (preapplication && preapplication[0]) {
-                emailService.send({
+                const options = {
                     to: preapplication[0]['email'],
                     subject: 'Loan Request Accepted',
                     template: 'application',
                     context: {
                         name: preapplication[0]['fullname']
                     }
-                });
+                }
+                emailService.send(options);
+                firebaseService.send(options);
             }
         });
         return res.send({status: 200, error: null, response: response});

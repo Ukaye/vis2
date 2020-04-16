@@ -16,9 +16,7 @@ firebase.send = payload => {
                 title: payload.subject,
                 body: (payload.context && payload.context.message)? payload.context.message : ''
             },
-            data: {
-                name: 'Ola badoo'
-            }
+            data: { }
         };
         fcm.send(message, (error, response) => {
             if (error) console.log(error);
