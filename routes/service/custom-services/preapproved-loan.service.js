@@ -288,17 +288,17 @@ router.post('/create', function (req, res, next) {
 
 function getApplicationID(req, postData, callback) {
     if (!req.body.applicationID) {
-        let query = 'INSERT INTO applications SET ?';
+        const query = 'INSERT INTO applications SET ?';
         db.query(query, postData, (error, response) => {
             if(error) return callback(error, null);
             return callback(null, response);
         });
     } else {
         const update = {
-                status: 0,
-                date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
-            },
-            query = `UPDATE preapproved_loans SET ? WHERE applicationID = ${req.body.applicationID}`;
+            status: 0,
+            date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
+        };
+        let query = `UPDATE preapproved_loans SET ? WHERE applicationID = ${req.body.applicationID}`;
         db.query(query, update, error => {
             if(error) return callback(error, null);
             query = `UPDATE remita_mandates SET ? WHERE applicationID = ${req.body.applicationID}`;
