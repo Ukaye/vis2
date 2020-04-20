@@ -288,7 +288,7 @@ router.post('/create', function (req, res, next) {
 
 function getApplicationID(req, postData, callback) {
     if (!req.body.applicationID) {
-        const query = 'INSERT INTO applications SET ?';
+        let query = 'INSERT INTO applications SET ?';
         db.query(query, postData, (error, response) => {
             if(error) return callback(error, null);
             return callback(null, response);
