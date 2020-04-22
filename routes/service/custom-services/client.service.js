@@ -1103,8 +1103,6 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, function (req,
                     message: `Your loan request of ₦${helperFunctions.numberToCurrencyFormatter(postData.loan_amount)} has been received successfully!. Please note that we typically respond in less than one (1) minute. Check back by logging into your profile for update.`
                 }
             }
-            console.log(postData)
-            console.log(options)
             emailService.send(options);
             firebaseService.send(options);
             res.send({ status: 200, error: null, response: response_['data'][0] });
@@ -1732,7 +1730,7 @@ router.get('/application/getV2/:application_id', function (req, res) {
     });
 });
 
-router.get('/application/complete/:application_id', function (req, res) {
+router.post('/application/complete/:application_id', function (req, res) {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let payload = {},
         id = req.params.application_id,
@@ -1745,6 +1743,17 @@ router.get('/application/complete/:application_id', function (req, res) {
     db.query(query, payload, function (error, response) {
         if (error)
             return res.send({ status: 500, error: error, response: null });
+        const options = {
+            to: req.body.email,
+            subject: 'Loan Request Approved',
+            template: 'default',
+            context: {
+                name: req.body.fullname,
+                message: 'Congratulations! Your loan has been approved, and is pending your acceptance of the agreement.'
+            }
+        }
+        emailService.send(options);
+        firebaseService.send(options);
         return res.send({ status: 200, error: null, response: response });
     });
 });

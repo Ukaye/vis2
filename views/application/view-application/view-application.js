@@ -2132,7 +2132,11 @@ function updatePreapplicationStatus(id, stage, callback) {
     if (stage !== 2) return callback();
     $.ajax({
         'url': `/client/application/complete/${id}`,
-        'type': 'get',
+        'type': 'post',
+        'data': {
+            email: application.email,
+            fullname: application.fullname
+        },
         'success': function (data) {
             if (data.status === 500) console.log(data.error);
             callback();

@@ -3601,7 +3601,7 @@ Number.prototype.round = function (p) {
 
 users.post('/application/disburse/:id', function (req, res, next) {
     xeroFunctions.authorizedOperation(req, res, 'xero_loan_account', async () => {
-        db.query(`SELECT a.ID, a.preapplicationID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID, c.fullname, c.xeroContactID 
+        db.query(`SELECT a.ID, a.preapplicationID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID, c.email, c.fullname, c.xeroContactID 
             FROM applications a, clients c WHERE a.ID=${req.params.id} AND a.userID=c.ID`, function (error, app, fields) {
                 if (error) {
                     res.send({ "status": 500, "error": error, "response": null });
@@ -3679,6 +3679,17 @@ users.post('/application/disburse/:id', function (req, res, next) {
                                         payload.date_modified = data.date_modified;
                                         db.query(`UPDATE preapplications Set ? WHERE ID = ${application.preapplicationID}`, payload, error => {
                                             if (error) return res.send({ "status": 500, "error": error, "response": null });
+                                            const options = {
+                                                to: application.email,
+                                                subject: 'Loan Disbursed',
+                                                template: 'default',
+                                                context: {
+                                                    name: application.fullname,
+                                                    message: 'Congratulations! Your loan has been disbursed.'
+                                                }
+                                            }
+                                            emailService.send(options);
+                                            firebaseService.send(options);
                                             res.send({ "status": 200, "message": "Loan disbursed successfully!" });
                                         });
                                     }
