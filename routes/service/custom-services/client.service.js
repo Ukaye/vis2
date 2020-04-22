@@ -1103,6 +1103,8 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, function (req,
                     message: `Your loan request of ₦${helperFunctions.numberToCurrencyFormatter(postData.loan_amount)} has been received successfully!. Please note that we typically respond in less than one (1) minute. Check back by logging into your profile for update.`
                 }
             }
+            console.log(postData)
+            console.log(options)
             emailService.send(options);
             firebaseService.send(options);
             res.send({ status: 200, error: null, response: response_['data'][0] });
