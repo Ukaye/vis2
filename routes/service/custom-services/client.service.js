@@ -3435,17 +3435,41 @@ router.post('/v2/login', (req, res) => {
                     });
                 user.tenant = process.env.TENANT;
                 user.environment = process.env.STATUS;
+
                 let payload = {};
                 payload.category = 'Authentication';
                 payload.userid = user.ID;
                 payload.description = 'New User Login';
                 payload.affected = user.ID;
                 notificationsService.log(req, payload);
-                res.send({
-                    "status": 200,
-                    "error": null,
-                    "response": user
-                });
+                
+                let obj = {};
+                const path = `files/users/${user.images_folder}/`;
+                if (!fs.existsSync(path)) {
+                    user.files = {};
+                    return res.send({
+                        "status": 200,
+                        "error": null,
+                        "response": user
+                    });
+                } else {
+                    fs.readdir(path, (err, files) => {
+                        files = helperFunctions.removeFileDuplicates(path, files);
+                        async.forEach(files, (file, callback) => {
+                            let filename = file.split('.')[helperFunctions.getClientFilenameIndex(path, file)].split('_');
+                            filename.shift();
+                            obj[filename.join('_')] = `${process.env.HOST || req.HOST}/${path}${file}`;
+                            callback();
+                        }, data => {
+                            user.files = obj;
+                            return res.send({
+                                "status": 200,
+                                "error": null,
+                                "response": user
+                            });
+                        });
+                    });
+                }
             });
         } else {
             res.send({
