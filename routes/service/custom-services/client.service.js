@@ -3051,6 +3051,15 @@ router.get('/application/verify/email/:token', function (req, res) {
                 "error": error,
                 "response": null
             });
+            
+            const options = {
+                to: decoded.email,
+                subject: `${decoded.type} email verified`,
+                context: {
+                    message: `Your ${decoded.type} email has been verified successfully!.`
+                }
+            }
+            firebaseService.send(options);
             return res.send({
                 "status": 200,
                 "error": null,
