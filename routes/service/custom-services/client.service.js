@@ -2254,7 +2254,7 @@ router.post('/payment-method/create/:id', helperFunctions.verifyJWT, function (r
             if (body.status) {
                 if (body.data.status === 'success') {
                     let data = body.data.authorization;
-delete data['account_name']
+                    delete data['account_name']
                     data.userID = req.params.id;
                     data.reference = body.data.reference;
                     data.payment_channel = 'paystack';
@@ -2591,7 +2591,7 @@ router.post('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, func
                         if (err) throw err;
 
                         connection.query(`SELECT COALESCE(SUM(interest_amount), 0) amount FROM application_schedules 
-                    WHERE applicationID = ${req.params.loan_id} AND payment_status = 0 AND status = 1`, (error, close_interest) => {
+                            WHERE applicationID = ${req.params.loan_id} AND payment_status = 0 AND status = 1`, (error, close_interest) => {
                             let data = {
                                 close_amount: req.body.close_amount,
                                 close_comment: req.body.close_comment
@@ -3961,27 +3961,37 @@ router.post('/v2/verify/email/:id', helperFunctions.verifyJWT, function (req, re
         verify_email: enums.VERIFY_EMAIL.STATUS.NOT_VERIFIED,
         date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
     };
-    db.query(`UPDATE clients SET ? WHERE ID = ${req.params.id}`, payload, (error, response) => {
-        if (error)
-            return res.send({
-                "status": 500,
-                "error": error,
-                "response": null
-            });
-
-        emailService.send({
-            to: req.user.email,
-            subject: 'Email Confirmation',
-            template: 'default',
-            context: {
-                name: req.user.fullname,
-                message: `This is a reminder that your email is pending verification. To verify your email address, Kindly use this OTP: ${otp}`
-            }
+    let query = `SELECT email, fullname FROM clients WHERE ID = ${req.params.id}`;
+    db.query(query, (error, client) => {
+        if (!client[0]) return res.send({
+            "status": 500,
+            "error": 'User does not exist!',
+            "response": null
         });
-        return res.send({
-            "status": 200,
-            "error": null,
-            "response": `Verification email sent to ${req.user.email} successfully!`
+
+        query = `UPDATE clients SET ? WHERE ID = ${req.params.id}`;
+        db.query(query, payload, (error, response) => {
+            if (error)
+                return res.send({
+                    "status": 500,
+                    "error": error,
+                    "response": null
+                });
+    
+            emailService.send({
+                to: client[0].email,
+                subject: 'Email Confirmation',
+                template: 'default',
+                context: {
+                    name: client[0].fullname,
+                    message: `This is a reminder that your email is pending verification. To verify your email address, Kindly use this OTP: ${otp}`
+                }
+            });
+            return res.send({
+                "status": 200,
+                "error": null,
+                "response": `Verification email sent to ${client[0].email} successfully!`
+            });
         });
     });
 });
@@ -4028,48 +4038,58 @@ router.post('/v2/application/verify/email/:id/:application_id/:type', helperFunc
     if (!req.body.email || !req.params.application_id || !req.params.type)
         return res.status(500).send('Required parameter(s) not sent!');
     let email = req.body.email;
-    const otp = helperFunctions.generateOTP();
-    let payload = {
-        email_otp: otp,
-        date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
-    };
-    switch (req.params.type) {
-        case 'work': {
-            payload.verify_work_email = enums.VERIFY_EMAIL.STATUS.NOT_VERIFIED;
-            break;
-        }
-    }
-    db.query(`UPDATE preapplications SET ? WHERE ID = ${req.params.application_id}`, payload, error => {
-        if (error)
-            return res.send({
-                "status": 500,
-                "error": error,
-                "response": null
-            });
+    let query = `SELECT email, fullname FROM clients WHERE ID = ${req.params.id}`;
+    db.query(query, (error, client) => {
+        if (!client[0]) return res.send({
+            "status": 500,
+            "error": 'User does not exist!',
+            "response": null
+        });
 
-        emailService.send({
-            to: req.user.email,
-            subject: `${req.params.type} email confirmation`,
-            template: 'default',
-            context: {
-                name: req.user.fullname,
-                message: `This is a reminder that your ${req.params.type} email (${email}) is pending verification. 
-                    Kindly log in to your ${req.params.type} email for further instructions on how to proceed!`
+        const otp = helperFunctions.generateOTP();
+        let payload = {
+            email_otp: otp,
+            date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
+        };
+        switch (req.params.type) {
+            case 'work': {
+                payload.verify_work_email = enums.VERIFY_EMAIL.STATUS.NOT_VERIFIED;
+                break;
             }
-        });
-        emailService.send({
-            to: email,
-            subject: `${req.params.type} email confirmation`,
-            template: 'default',
-            context: {
-                name: req.user.fullname,
-                message: `This is a reminder that your email is pending verification. To verify to your email address, Kindly use this OTP: ${otp}`
-            }
-        });
-        return res.send({
-            "status": 200,
-            "error": null,
-            "response": `Verification email sent to ${email} successfully!`
+        }
+        query = `UPDATE preapplications SET ? WHERE ID = ${req.params.application_id}`;
+        db.query(query, payload, error => {
+            if (error)
+                return res.send({
+                    "status": 500,
+                    "error": error,
+                    "response": null
+                });
+    
+            emailService.send({
+                to: client[0].email,
+                subject: `${req.params.type} email confirmation`,
+                template: 'default',
+                context: {
+                    name: client[0].fullname,
+                    message: `This is a reminder that your ${req.params.type} email (${email}) is pending verification. 
+                        Kindly log in to your ${req.params.type} email for further instructions on how to proceed!`
+                }
+            });
+            emailService.send({
+                to: email,
+                subject: `${req.params.type} email confirmation`,
+                template: 'default',
+                context: {
+                    name: client[0].fullname,
+                    message: `This is a reminder that your email is pending verification. To verify to your email address, Kindly use this OTP: ${otp}`
+                }
+            });
+            return res.send({
+                "status": 200,
+                "error": null,
+                "response": `Verification email sent to ${email} successfully!`
+            });
         });
     });
 });
