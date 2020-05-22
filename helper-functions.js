@@ -616,7 +616,7 @@ functions.getMyXalaryEmployeePayslips = employee_id => {
 };
 
 functions.setupMyXalaryEmployeeBankAccount = (employee_id, bankaccount) => {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
         request.patch(
             {
                 url: `${process.env.MYXALARY_BASE_URL}/myx3/employee/bankaccount/setup/${employee_id}`,
