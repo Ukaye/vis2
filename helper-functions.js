@@ -562,7 +562,8 @@ functions.getMyXalaryEmployee = (company_id, employee_id) => {
                 url: `${process.env.MYXALARY_BASE_URL}/myx3/employee/get/${company_id}/${employee_id}`,
                 headers: {
                     'Authorization': `Bearer ${process.env.MYXALARY_SECRET_KEY}`
-                }
+                },
+                json: true
             },
             (error, res, body) => resolve(body.employee || false))
     });
@@ -576,7 +577,8 @@ functions.syncMyXalaryClient = (client_id, employee_id, client_payload) => {
                 headers: {
                     'Authorization': `Bearer ${process.env.MYXALARY_SECRET_KEY}`
                 },
-                body: client_payload
+                body: client_payload,
+                json: true
             },
             (error, res, body) => {
                 if (error) reject(error);
@@ -592,7 +594,8 @@ functions.getMyXalaryClient = client_id => {
                 url: `${process.env.MYXALARY_BASE_URL}/myx3/client/get/${client_id}`,
                 headers: {
                     'Authorization': `Bearer ${process.env.MYXALARY_SECRET_KEY}`
-                }
+                },
+                json: true
             },
             (error, res, body) => resolve(body.response || false))
     });
@@ -605,7 +608,8 @@ functions.getMyXalaryEmployeePayslips = employee_id => {
                 url: `${process.env.MYXALARY_BASE_URL}/myx3/employee/payslips/get/${employee_id}`,
                 headers: {
                     'Authorization': `Bearer ${process.env.MYXALARY_SECRET_KEY}`
-                }
+                },
+                json: true
             },
             (error, res, body) => resolve(body.response || false))
     });
@@ -619,7 +623,8 @@ functions.setupMyXalaryEmployeeBankAccount = (employee_id, bankaccount) => {
                 headers: {
                     'Authorization': `Bearer ${process.env.MYXALARY_SECRET_KEY}`
                 },
-                body: bankaccount
+                body: bankaccount,
+                json: true
             },
             (error, res, body) => {
                 if (error) reject(error);
