@@ -559,7 +559,7 @@ functions.getMyXalaryEmployee = (company_id, employee_id) => {
     return new Promise(resolve => {
         request.get(
             {
-                url: `${process.env.MYXALARY_BASE_URL}/employees/viewEmployee/${company_id}/${employee_id}`,
+                url: `${process.env.MYXALARY_BASE_URL}/myx3/employee/get/${company_id}/${employee_id}`,
                 headers: {
                     'Authorization': `Bearer ${process.env.MYXALARY_SECRET_KEY}`
                 }
