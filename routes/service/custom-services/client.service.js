@@ -914,7 +914,7 @@ router.get('/get/:id', (req, res) => {
         (select coalesce(sum(payment_amount), 0) from schedule_history where applicationID in 
             (select id from applications where userid = clients.ID and status = 2) and status = 1)) total_active_loan_balance
         FROM clients WHERE ID = ${req.params.id}`;
-    db.query(query, (error, response) => {
+    db.query(query, async (error, response) => {
         if (error) return res.send({
             "status": 500,
             "error": error,
@@ -928,6 +928,10 @@ router.get('/get/:id', (req, res) => {
             "error": 'User does not exist!',
             "response": null
         });
+
+        const myxalary = await helperFunctions.getMyXalaryClient(result.ID);
+        if (myxalary) result.myxalary = myxalary;
+
         const path = `files/users/${result.images_folder}/`;
         if (!fs.existsSync(path)) {
             result.files = {};
