@@ -555,4 +555,77 @@ functions.paymentChargeStatus = (reference, callback) => {
 
 functions.generateOTP = () => Math.floor(100000 + Math.random() * 900000);
 
+functions.getMyXalaryEmployee = (company_id, employee_id) => {
+    return new Promise(resolve => {
+        request.get(
+            {
+                url: `${process.env.MYXALARY_BASE_URL}/employees/viewEmployee/${company_id}/${employee_id}`,
+                headers: {
+                    'Authorization': `Bearer ${process.env.MYXALARY_SECRET_KEY}`
+                }
+            },
+            (error, res, body) => resolve(body.employee || false))
+    });
+};
+
+functions.syncMyXalaryClient = (client_id, employee_id, client_payload) => {
+    return new Promise((resolve, reject) => {
+        request.put(
+            {
+                url: `${process.env.MYXALARY_BASE_URL}/myx3/client/sync/${client_id}/${employee_id}`,
+                headers: {
+                    'Authorization': `Bearer ${process.env.MYXALARY_SECRET_KEY}`
+                },
+                body: client_payload
+            },
+            (error, res, body) => {
+                if (error) reject(error);
+                resolve(body);
+            })
+    });
+};
+
+functions.getMyXalaryClient = client_id => {
+    return new Promise(resolve => {
+        request.get(
+            {
+                url: `${process.env.MYXALARY_BASE_URL}/myx3/client/get/${client_id}`,
+                headers: {
+                    'Authorization': `Bearer ${process.env.MYXALARY_SECRET_KEY}`
+                }
+            },
+            (error, res, body) => resolve(body.response || false))
+    });
+};
+
+functions.getMyXalaryEmployeePayslips = employee_id => {
+    return new Promise(resolve => {
+        request.get(
+            {
+                url: `${process.env.MYXALARY_BASE_URL}/myx3/employee/payslips/get/${employee_id}`,
+                headers: {
+                    'Authorization': `Bearer ${process.env.MYXALARY_SECRET_KEY}`
+                }
+            },
+            (error, res, body) => resolve(body.response || false))
+    });
+};
+
+functions.setupMyXalaryEmployeeBankAccount = (employee_id, bankaccount) => {
+    return new Promise(resolve => {
+        request.patch(
+            {
+                url: `${process.env.MYXALARY_BASE_URL}/myx3/employee/bankaccount/setup/${employee_id}`,
+                headers: {
+                    'Authorization': `Bearer ${process.env.MYXALARY_SECRET_KEY}`
+                },
+                body: bankaccount
+            },
+            (error, res, body) => {
+                if (error) reject(error);
+                resolve(body);
+            })
+    });
+};
+
 module.exports = functions;

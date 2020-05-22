@@ -17,7 +17,7 @@ const fs = require('fs'),
 
 if (!process.env.HOST) process.env.HOST = 'https://x3.finratus.com';
 
-router.get('/all', function (req, res) {
+router.get('/all', (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let page = ((req.query.page - 1) * 10 < 0) ? 0 : (req.query.page - 1) * 10;
@@ -41,7 +41,7 @@ router.get('/all', function (req, res) {
         });
 });
 
-router.post('/mandate/setup', function (req, res) {
+router.post('/mandate/setup', (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let end = req.body.end,
         bank = req.body.bank,
@@ -122,7 +122,7 @@ router.post('/mandate/setup', function (req, res) {
     });
 });
 
-router.get('/mandate/stop/:applicationID', function (req, res) {
+router.get('/mandate/stop/:applicationID', (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT mandateId, requestId FROM remita_mandates WHERE applicationID = ${req.params.applicationID} AND status = 1`,
         endpoint = '/core-service/get',
@@ -161,7 +161,7 @@ router.get('/mandate/stop/:applicationID', function (req, res) {
     });
 });
 
-router.post('/corporate/create', function (req, res) {
+router.post('/corporate/create', (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let postData = req.body,
         query = `SELECT * FROM clients WHERE name = '${postData.name}'`,
@@ -214,7 +214,7 @@ router.post('/corporate/create', function (req, res) {
         });
 });
 
-router.get('/corporates/get', function (req, res) {
+router.get('/corporates/get', (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
@@ -258,7 +258,7 @@ router.get('/corporates/get', function (req, res) {
     });
 });
 
-router.get('/corporate/get/:id', function (req, res) {
+router.get('/corporate/get/:id', (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT *, (SELECT fullname FROM clients WHERE ID = p.clientID) client FROM clients 
         WHERE ID = ${req.params.id} AND client_type = 'corporate'`,
@@ -275,7 +275,7 @@ router.get('/corporate/get/:id', function (req, res) {
     });
 });
 
-router.post('/corporate/disable/:id', function (req, res) {
+router.post('/corporate/disable/:id', (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `UPDATE clients Set ? WHERE ID = ${req.params.id} AND client_type = 'corporate'`;
     let endpoint = `/core-service/post?query=${query}`;
@@ -301,7 +301,7 @@ router.post('/corporate/disable/:id', function (req, res) {
     });
 });
 
-router.post('/corporate/enable/:id', function (req, res) {
+router.post('/corporate/enable/:id', (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `UPDATE clients Set ? WHERE ID = ${req.params.id} AND client_type = 'corporate'`;
     let endpoint = `/core-service/post?query=${query}`;
@@ -327,7 +327,7 @@ router.post('/corporate/enable/:id', function (req, res) {
     });
 });
 
-router.post('/bad_cheque', function (req, res) {
+router.post('/bad_cheque', (req, res) => {
     let data = req.body;
     data.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     db.query('INSERT INTO bad_cheques SET ?', data, function (error, result) {
@@ -357,7 +357,7 @@ router.post('/bad_cheque', function (req, res) {
     });
 });
 
-router.get('/bad_cheque/:clientID', function (req, res) {
+router.get('/bad_cheque/:clientID', (req, res) => {
     db.query(`SELECT * FROM bad_cheques WHERE status = 1 AND clientID = ${req.params.clientID}`, function (error, results) {
         if (error) {
             res.send({
@@ -375,7 +375,7 @@ router.get('/bad_cheque/:clientID', function (req, res) {
     });
 });
 
-router.delete('/bad_cheque/:id', function (req, res) {
+router.delete('/bad_cheque/:id', (req, res) => {
     db.query(`SELECT * FROM bad_cheques WHERE status = 1 AND ID = ${req.params.id}`, function (error, cheque) {
         if (error) {
             res.send({
@@ -421,7 +421,7 @@ router.delete('/bad_cheque/:id', function (req, res) {
     });
 });
 
-router.get('/corporates-v2/get', function (req, res) {
+router.get('/corporates-v2/get', (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT ID, name, email, status, date_created from clients WHERE status = 1 AND client_type = 'corporate' ORDER BY name asc`,
         endpoint = '/core-service/get',
@@ -436,7 +436,7 @@ router.get('/corporates-v2/get', function (req, res) {
 });
 
 /* Add New Client */
-router.post('/create', function (req, res) {
+router.post('/create', (req, res) => {
     let id;
     let postData = req.body,
         query = 'INSERT INTO clients Set ?',
@@ -586,7 +586,7 @@ router.post('/create', function (req, res) {
     });
 });
 
-router.post('/login', function (req, res) {
+router.post('/login', (req, res) => {
     let username = req.body.username,
         password = req.body.password;
     if (!username || !password) return res.status(500).send('Required parameter(s) not sent!');
@@ -663,7 +663,7 @@ router.post('/login', function (req, res) {
     });
 });
 
-router.put('/update/:id', helperFunctions.verifyJWT, function (req, res) {
+router.put('/update/:id', helperFunctions.verifyJWT, (req, res) => {
     let postData = req.body;
     let bvn = postData.bvn;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -845,7 +845,7 @@ sendBVNOTP = (client, bvn, phone, res) => {
     });
 }
 
-router.get('/enable/:id', helperFunctions.verifyJWT, function (req, res) {
+router.get('/enable/:id', helperFunctions.verifyJWT, (req, res) => {
     let postData = req.body;
     postData.status = enums.CLIENT.STATUS.ACTIVE;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -875,7 +875,7 @@ router.get('/enable/:id', helperFunctions.verifyJWT, function (req, res) {
     });
 });
 
-router.delete('/disable/:id', helperFunctions.verifyJWT, function (req, res) {
+router.delete('/disable/:id', helperFunctions.verifyJWT, (req, res) => {
     let postData = req.body;
     postData.status = enums.CLIENT.STATUS.INACTIVE;
     postData.date_modified = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
@@ -905,7 +905,7 @@ router.delete('/disable/:id', helperFunctions.verifyJWT, function (req, res) {
     });
 });
 
-router.get('/get/:id', function (req, res) {
+router.get('/get/:id', (req, res) => {
     let query = `SELECT *, (select fullname from users u where u.ID = clients.loan_officer) loan_officer,
         (select branch_name from branches b where b.ID = clients.branch) branch, 
         (select count(*) from applications where userID = clients.ID and status = 2) total_active_loan_count, 
@@ -957,7 +957,7 @@ router.get('/get/:id', function (req, res) {
     });
 });
 
-router.get('/products', helperFunctions.verifyJWT, function (req, res) {
+router.get('/products', helperFunctions.verifyJWT, (req, res) => {
     let query = 'SELECT w.*, (SELECT GROUP_CONCAT(NULLIF(s.document,"")) FROM workflow_stages s WHERE w.ID = s.workflowID) document ' +
         'FROM workflows w WHERE w.status <> 0 AND w.enable_client_product = 1 ORDER BY w.ID desc';
     db.query(query, function (error, results) {
@@ -977,7 +977,7 @@ router.get('/products', helperFunctions.verifyJWT, function (req, res) {
 });
 
 //File Upload - New Client (Image and Signature)
-router.post('/upload/:id/:item', helperFunctions.verifyJWT, function (req, res) {
+router.post('/upload/:id/:item', helperFunctions.verifyJWT, (req, res) => {
     if (!req.files) return res.status(500).send('No file was found!');
     if (!req.params.id || !req.params.item) return res.status(500).send('Required parameter(s) not sent!');
 
@@ -1064,7 +1064,7 @@ router.post('/upload/:id/:item', helperFunctions.verifyJWT, function (req, res) 
     });
 });
 
-router.post('/application/create/:id', helperFunctions.verifyJWT, function (req, res) {
+router.post('/application/create/:id', helperFunctions.verifyJWT, (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let postData = req.body,
         query = 'INSERT INTO preapplications Set ?',
@@ -1115,7 +1115,7 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, function (req,
     });
 });
 
-router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, res) {
+router.get('/applications/get/:id', helperFunctions.verifyJWT, (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let id = req.params.id;
     let limit = req.query.limit;
@@ -1183,7 +1183,7 @@ router.get('/applications/get/:id', helperFunctions.verifyJWT, function (req, re
     });
 });
 
-router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
+router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT p.*, c.fullname, c.email, c.phone FROM preapplications p 
                 INNER JOIN clients c ON p.userID = c.ID WHERE p.ID = ${req.params.application_id} AND p.userID = ${req.params.id}`,
@@ -1327,7 +1327,7 @@ router.get('/application/get/:id/:application_id', helperFunctions.verifyJWT, fu
     });
 });
 
-router.get('/application/accept/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
+router.get('/application/accept/:id/:application_id', helperFunctions.verifyJWT, (req, res) => {
     let payload = {},
         id = req.params.id,
         application_id = req.params.application_id,
@@ -1374,7 +1374,7 @@ router.get('/application/accept/:id/:application_id', helperFunctions.verifyJWT,
     });
 });
 
-router.get('/application/decline/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
+router.get('/application/decline/:id/:application_id', helperFunctions.verifyJWT, (req, res) => {
     let payload = {},
         id = req.params.id,
         application_id = req.params.application_id,
@@ -1419,7 +1419,7 @@ router.get('/application/decline/:id/:application_id', helperFunctions.verifyJWT
     });
 });
 
-router.post('/application/upload/:id/:application_id/:name', helperFunctions.verifyJWT, function (req, res) {
+router.post('/application/upload/:id/:application_id/:name', helperFunctions.verifyJWT, (req, res) => {
     let id = req.params.id,
         name = req.params.name,
         sampleFile = req.files.file,
@@ -1485,7 +1485,7 @@ router.post('/application/upload/:id/:application_id/:name', helperFunctions.ver
     });
 });
 
-router.get('/loans/get/:id', helperFunctions.verifyJWT, function (req, res) {
+router.get('/loans/get/:id', helperFunctions.verifyJWT, (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let id = req.params.id;
     let limit = req.query.limit;
@@ -1530,7 +1530,7 @@ router.get('/loans/get/:id', helperFunctions.verifyJWT, function (req, res) {
     });
 });
 
-router.get('/loan/get/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
+router.get('/loan/get/:id/:application_id', helperFunctions.verifyJWT, (req, res) => {
     let obj = {},
         id = req.params.id,
         application_id = req.params.application_id,
@@ -1605,7 +1605,7 @@ router.get('/loan/get/:id/:application_id', helperFunctions.verifyJWT, function 
     });
 });
 
-router.post('/application/createV2', function (req, res) {
+router.post('/application/createV2', (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let postData = req.body,
         query = 'INSERT INTO preapplications Set ?',
@@ -1638,7 +1638,7 @@ router.post('/application/createV2', function (req, res) {
     });
 });
 
-router.get('/applications/get', function (req, res) {
+router.get('/applications/get', (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let limit = req.query.limit;
     let offset = req.query.offset;
@@ -1683,7 +1683,7 @@ router.get('/applications/get', function (req, res) {
     });
 });
 
-router.get('/application/getV2/:application_id', function (req, res) {
+router.get('/application/getV2/:application_id', (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`,
         path = `files/client_application-${req.params.application_id}/`;
     let query = `SELECT p.*, c.fullname, c.email, c.phone FROM preapplications p 
@@ -1730,7 +1730,7 @@ router.get('/application/getV2/:application_id', function (req, res) {
     });
 });
 
-router.post('/application/complete/:application_id', function (req, res) {
+router.post('/application/complete/:application_id', (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let payload = {},
         id = req.params.application_id,
@@ -1758,7 +1758,7 @@ router.post('/application/complete/:application_id', function (req, res) {
     });
 });
 
-router.post('/application/approve/:application_id', function (req, res) {
+router.post('/application/approve/:application_id', (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let payload = req.body,
         id = req.params.application_id,
@@ -1775,7 +1775,7 @@ router.post('/application/approve/:application_id', function (req, res) {
     });
 });
 
-router.get('/application/reject/:application_id', function (req, res) {
+router.get('/application/reject/:application_id', (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let payload = {},
         id = req.params.application_id,
@@ -1792,7 +1792,7 @@ router.get('/application/reject/:application_id', function (req, res) {
     });
 });
 
-router.put('/change-password/:id', helperFunctions.verifyJWT, function (req, res) {
+router.put('/change-password/:id', helperFunctions.verifyJWT, (req, res) => {
     let payload = {},
         query = `UPDATE clients SET ? WHERE ID = ${req.params.id}`;
     payload.password = bcrypt.hashSync(req.body.password, parseInt(process.env.SALT_ROUNDS));
@@ -1807,7 +1807,7 @@ router.put('/change-password/:id', helperFunctions.verifyJWT, function (req, res
     });
 });
 
-router.get('/ownerships', function (req, res) {
+router.get('/ownerships', (req, res) => {
     return res.send({
         "status": 200,
         "error": null,
@@ -1815,7 +1815,7 @@ router.get('/ownerships', function (req, res) {
     });
 });
 
-router.post('/verify/email/:id', helperFunctions.verifyJWT, function (req, res) {
+router.post('/verify/email/:id', helperFunctions.verifyJWT, (req, res) => {
     if (!req.body.callback_url) return res.status(500).send('Required parameter(s) not sent!');
     let data = {};
     const expiry_days = 1,
@@ -1846,7 +1846,7 @@ router.post('/verify/email/:id', helperFunctions.verifyJWT, function (req, res) 
     });
 });
 
-router.get('/verify/email/:token', function (req, res) {
+router.get('/verify/email/:token', (req, res) => {
     if (!req.params.token) return res.status(500).send('Required parameter(s) not sent!');
     jwt.verify(req.params.token, process.env.SECRET_KEY, function (err, decoded) {
         if (err) return res.send({
@@ -1875,7 +1875,7 @@ router.get('/verify/email/:token', function (req, res) {
     });
 });
 
-router.get('/logout', function (req, res) {
+router.get('/logout', (req, res) => {
     delete req.user;
     delete process.env.HOST || req.HOST;
     return res.send({
@@ -1885,7 +1885,7 @@ router.get('/logout', function (req, res) {
     });
 });
 
-router.get('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, function (req, res) {
+router.get('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, (req, res) => {
     return res.send('This api has been deprecated!');
     db.query(`SELECT s.*, a.status app_status, a.close_status, ROUND((s.interest_amount + s.payment_amount), 2) 
         amount FROM application_schedules s, applications a WHERE s.ID = ${req.params.invoice_id} 
@@ -1947,7 +1947,7 @@ router.get('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, functi
     });
 });
 
-router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, function (req, res) {
+router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, (req, res) => {
     db.query(`SELECT s.*, a.ID app_id, a.userID, ROUND((s.interest_amount + s.payment_amount), 2) amount, 
     c.loan_officer, c.branch FROM application_schedules s, applications a, clients c WHERE s.ID = ${req.params.invoice_id} 
     AND s.applicationID = a.ID AND a.userID = ${req.params.id} AND a.userID = c.ID`, function (error, schedule) {
@@ -2072,7 +2072,7 @@ router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, fun
     });
 });
 
-router.get('/preapproved-loan/create/:id/:loan_id', helperFunctions.verifyJWT, function (req, res) {
+router.get('/preapproved-loan/create/:id/:loan_id', helperFunctions.verifyJWT, (req, res) => {
     db.query(`SELECT a.userID, a.workflowID, a.loan_amount, a.interest_rate, a.duration, a.repayment_date, c.fullname client, 
     c.email, (SELECT u.phone FROM users u WHERE u.ID = (SELECT c.loan_officer FROM clients c WHERE c.ID = a.userID)) AS contact 
     FROM applications a, clients c WHERE a.ID = ${req.params.loan_id} AND a.userID = ${req.params.id} AND a.userID = c.ID`, (error, app) => {
@@ -2138,7 +2138,7 @@ router.get('/preapproved-loan/create/:id/:loan_id', helperFunctions.verifyJWT, f
     });
 });
 
-router.get('/preapproved-loan/get/:id/:loan_id/:key?', helperFunctions.verifyJWT, function (req, res) {
+router.get('/preapproved-loan/get/:id/:loan_id/:key?', helperFunctions.verifyJWT, (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;
     let query = `SELECT p.*, c.fullname, c.email, c.salary, c.phone, c.bank, c.account, r.mandateId, r.requestId, 
         r.remitaTransRef, r.authParams FROM preapproved_loans p INNER JOIN clients c ON p.userID = c.ID 
@@ -2186,7 +2186,7 @@ router.get('/preapproved-loan/get/:id/:loan_id/:key?', helperFunctions.verifyJWT
     });
 });
 
-router.put('/application/update/:id/:application_id', helperFunctions.verifyJWT, function (req, res) {
+router.put('/application/update/:id/:application_id', helperFunctions.verifyJWT, (req, res) => {
     db.query(`UPDATE preapplications Set ? WHERE ID = ${req.params.application_id}
         AND userID = ${req.params.id}`, req.body, function (error, response) {
         if (error) {
@@ -2205,7 +2205,7 @@ router.put('/application/update/:id/:application_id', helperFunctions.verifyJWT,
     });
 });
 
-router.get('/payment-method/initiate/:id', helperFunctions.verifyJWT, function (req, res) {
+router.get('/payment-method/initiate/:id', helperFunctions.verifyJWT, (req, res) => {
     db.query(`SELECT email FROM clients WHERE ID = ${req.params.id}`, (error, client) => {
         if (error) return res.send({
             "status": 500,
@@ -2248,7 +2248,7 @@ router.get('/payment-method/initiate/:id', helperFunctions.verifyJWT, function (
     });
 });
 
-router.post('/payment-method/create/:id', helperFunctions.verifyJWT, function (req, res) {
+router.post('/payment-method/create/:id', helperFunctions.verifyJWT, (req, res) => {
     paystack.transaction.verify(req.body.reference)
         .then(function (body) {
             if (body.status) {
@@ -2316,7 +2316,7 @@ router.post('/payment-method/create/:id', helperFunctions.verifyJWT, function (r
         });
 });
 
-router.get('/payment-method/get/:id', helperFunctions.verifyJWT, function (req, res) {
+router.get('/payment-method/get/:id', helperFunctions.verifyJWT, (req, res) => {
     db.query(`SELECT * FROM client_payment_methods WHERE userID = ${req.params.id} AND status = 1`,
         (error, payment_methods) => {
             if (error) return res.send({
@@ -2331,7 +2331,7 @@ router.get('/payment-method/get/:id', helperFunctions.verifyJWT, function (req, 
             });
         });
 });
-router.get('/payment-method/v2/:id',  function (req, res) {
+router.get('/payment-method/v2/:id',  (req, res) => {
     db.query(`SELECT * FROM client_payment_methods WHERE userID = ${req.params.id} AND status = 1`,
         (error, payment_methods) => {
             if (error) return res.send({
@@ -2347,7 +2347,7 @@ router.get('/payment-method/v2/:id',  function (req, res) {
         });
 });
 
-router.delete('/payment-method/delete/:id/:payment_method_id', helperFunctions.verifyJWT, function (req, res) {
+router.delete('/payment-method/delete/:id/:payment_method_id', helperFunctions.verifyJWT, (req, res) => {
     db.query(`UPDATE client_payment_methods SET status = 0 
     WHERE ID = ${req.params.payment_method_id} AND userID = ${req.params.id}`,
         (error, response) => {
@@ -2364,7 +2364,7 @@ router.delete('/payment-method/delete/:id/:payment_method_id', helperFunctions.v
         });
 });
 
-router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, function (req, res) {
+router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, (req, res) => {
     db.query(`SELECT s.*, a.ID app_id, a.userID, ROUND((COALESCE(s.interest_amount, 0) + COALESCE(s.payment_amount, 0)), 2) amount, 
     c.loan_officer, c.branch FROM application_schedules s, applications a, clients c WHERE s.ID = ${req.params.invoice_id} 
     AND s.applicationID = a.ID AND a.userID = ${req.params.id} AND a.userID = c.ID`, function (error, schedule) {
@@ -2578,7 +2578,7 @@ router.get('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req,
     });
 });
 
-router.post('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, function (req, res) {
+router.post('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req, res) => {
     paystack.transaction.charge({
         email: req.user.email,
         authorization_code: req.body.authorization_code,
@@ -2925,7 +2925,7 @@ router.put('/forgot-password/update', (req, res) => {
     });
 });
 
-router.get('/branches', helperFunctions.verifyJWT, function (req, res) {
+router.get('/branches', helperFunctions.verifyJWT, (req, res) => {
     let query = 'SELECT * FROM branches';
     db.query(query, function (error, results) {
         if (error)
@@ -2943,7 +2943,7 @@ router.get('/branches', helperFunctions.verifyJWT, function (req, res) {
     });
 });
 
-router.get('/states', helperFunctions.verifyJWT, function (req, res) {
+router.get('/states', helperFunctions.verifyJWT, (req, res) => {
     let query = 'SELECT * FROM state';
     db.query(query, function (error, results) {
         if (error)
@@ -2961,7 +2961,7 @@ router.get('/states', helperFunctions.verifyJWT, function (req, res) {
     });
 });
 
-router.get('/countries', helperFunctions.verifyJWT, function (req, res) {
+router.get('/countries', helperFunctions.verifyJWT, (req, res) => {
     let query = 'SELECT * FROM country';
     db.query(query, function (error, results) {
         if (error)
@@ -2979,7 +2979,7 @@ router.get('/countries', helperFunctions.verifyJWT, function (req, res) {
     });
 });
 
-router.post('/application/verify/email/:id/:application_id/:type', helperFunctions.verifyJWT, function (req, res) {
+router.post('/application/verify/email/:id/:application_id/:type', helperFunctions.verifyJWT, (req, res) => {
     if (!req.body.callback_url || !req.body.email || !req.params.type || !req.params.application_id)
         return res.status(500).send('Required parameter(s) not sent!');
     let data = {},
@@ -3025,7 +3025,7 @@ router.post('/application/verify/email/:id/:application_id/:type', helperFunctio
     });
 });
 
-router.get('/application/verify/email/:token', function (req, res) {
+router.get('/application/verify/email/:token', (req, res) => {
     if (!req.params.token) return res.status(500).send('Required parameter(s) not sent!');
     jwt.verify(req.params.token, process.env.SECRET_KEY, function (err, decoded) {
         if (err) return res.send({
@@ -3060,7 +3060,7 @@ router.get('/application/verify/email/:token', function (req, res) {
     });
 });
 
-router.get('/banks', function (req, res) {
+router.get('/banks', (req, res) => {
     let banks = require('../../../banks.json');
     paystack.subaccount.listBanks()
         .then(body => {
@@ -3414,7 +3414,7 @@ router.post('/v2/login', (req, res) => {
                 pin_reset_status: enums.PIN_RESET.STATUS.TRUE,
                 date_modified: moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a')
             };
-            db.query(`UPDATE clients SET ? WHERE ID = ${user.ID}`, payload, (error, response) => {
+            db.query(`UPDATE clients SET ? WHERE ID = ${user.ID}`, payload, async error => {
                 if (error)
                     return res.send({
                         "status": 500,
@@ -3435,6 +3435,9 @@ router.post('/v2/login', (req, res) => {
                     });
                 user.tenant = process.env.TENANT;
                 user.environment = process.env.STATUS;
+
+                const myxalary = await helperFunctions.getMyXalaryClient(user.ID);
+                if (myxalary) user.myxalary = myxalary;
 
                 let payload = {};
                 payload.category = 'Authentication';
@@ -3736,7 +3739,7 @@ router.get('/account/statement/get/:id', (req, res) => {
     });
 });
 
-router.post('/call-logs/sync/:id', helperFunctions.verifyJWT, function (req, res) {
+router.post('/call-logs/sync/:id', helperFunctions.verifyJWT, (req, res) => {
     db.getConnection((err, connection) => {
         if (err) throw err;
 
@@ -3799,7 +3802,7 @@ router.get('/call-logs/get/:id', (req, res) => {
     });
 });
 
-router.post('/contacts/sync/:id', helperFunctions.verifyJWT, function (req, res) {
+router.post('/contacts/sync/:id', helperFunctions.verifyJWT, (req, res) => {
     db.getConnection((err, connection) => {
         if (err) throw err;
 
@@ -3872,7 +3875,7 @@ router.get('/contacts/get/:id', (req, res) => {
     });
 });
 
-router.post('/locations/sync/:id', helperFunctions.verifyJWT, function (req, res) {
+router.post('/locations/sync/:id', helperFunctions.verifyJWT, (req, res) => {
     db.getConnection((err, connection) => {
         if (err) throw err;
 
@@ -3954,7 +3957,7 @@ router.get('/adverts/:id', helperFunctions.verifyJWT, (req, res) => {
     });
 });
 
-router.post('/v2/verify/email/:id', helperFunctions.verifyJWT, function (req, res) {
+router.post('/v2/verify/email/:id', helperFunctions.verifyJWT, (req, res) => {
     const otp = helperFunctions.generateOTP();
     const payload = {
         email_otp: otp,
@@ -3996,7 +3999,7 @@ router.post('/v2/verify/email/:id', helperFunctions.verifyJWT, function (req, re
     });
 });
 
-router.get('/v2/verify/email/:id/:otp', helperFunctions.verifyJWT, function (req, res) {
+router.get('/v2/verify/email/:id/:otp', helperFunctions.verifyJWT, (req, res) => {
     if (!req.params.otp) return res.status(500).send('Required parameter(s) not sent!');
     let query = `SELECT email_otp FROM clients WHERE ID = ${req.params.id}`;
     db.query(query, (error, client) => {
@@ -4034,7 +4037,7 @@ router.get('/v2/verify/email/:id/:otp', helperFunctions.verifyJWT, function (req
     });
 });
 
-router.post('/v2/application/verify/email/:id/:application_id/:type', helperFunctions.verifyJWT, function (req, res) {
+router.post('/v2/application/verify/email/:id/:application_id/:type', helperFunctions.verifyJWT, (req, res) => {
     if (!req.body.email || !req.params.application_id || !req.params.type)
         return res.status(500).send('Required parameter(s) not sent!');
     let email = req.body.email;
@@ -4094,7 +4097,7 @@ router.post('/v2/application/verify/email/:id/:application_id/:type', helperFunc
     });
 });
 
-router.get('/v2/application/verify/email/:id/:application_id/:type/:otp', function (req, res) {
+router.get('/v2/application/verify/email/:id/:application_id/:type/:otp', helperFunctions.verifyJWT, (req, res) => {
     if (!req.params.application_id || !req.params.type || !req.params.otp)
         return res.status(500).send('Required parameter(s) not sent!');
 
@@ -4137,6 +4140,80 @@ router.get('/v2/application/verify/email/:id/:application_id/:type/:otp', functi
             });
         });
     });
+});
+
+router.get('/myxalary/invite/:id/:invite_code', helperFunctions.verifyJWT, async (req, res) => {
+    if (!req.params.invite_code) return res.status(500).send('Required parameter(s) not sent!');
+
+    const invite_array = req.params.invite_code.split('-');
+    const company_id = invite_array[0];
+    const employee_id = invite_array[1];
+    const employee = await helperFunctions.getMyXalaryEmployee(company_id, employee_id);
+    if (!employee) return res.send({
+        "status": 500,
+        "error": 'Invalid invite code!',
+        "response": null
+    });
+
+    const query = `SELECT address, dob, marital_status FROM clients WHERE ID = ${req.params.id}`;
+    db.query(query, (error, client) => {
+        if (error) return res.send({
+            "status": 500,
+            "error": error,
+            "response": null
+        });
+
+        if (!client[0]) return res.send({
+            "status": 500,
+            "error": 'User does not exist!',
+            "response": null
+        });
+
+        helperFunctions.syncMyXalaryClient(req.params.id, employee._id, client[0])
+            .then(body => res.send({
+                "status": 200,
+                "error": null,
+                "response": body.message
+            }))
+            .catch(error => res.send({
+                "status": 500,
+                "error": error.message,
+                "response": null
+            }));
+    });
+});
+
+router.get('/myxalary/payslips/get/:id/:employee_id', helperFunctions.verifyJWT, async (req, res) => {
+    if (!req.params.employee_id) return res.status(500).send('Required parameter(s) not sent!');
+
+    const payslips = await helperFunctions.getMyXalaryEmployeePayslips(req.params.employee_id);
+    if (!payslips) return res.send({
+        "status": 500,
+        "error": 'No payslip found!',
+        "response": null
+    });
+    
+    return res.send({
+        "status": 200,
+        "error": null,
+        "response": payslips
+    })
+});
+
+router.patch('/myxalary/bankaccount/setup/:id/:employee_id', helperFunctions.verifyJWT, (req, res) => {
+    if (!req.params.employee_id) return res.status(500).send('Required parameter(s) not sent!');
+
+    helperFunctions.setupMyXalaryEmployeeBankAccount(req.params.employee_id, req.body)
+        .then(body => res.send({
+            "status": 200,
+            "error": null,
+            "response": body.message
+        }))
+        .catch(error => res.send({
+            "status": 500,
+            "error": error.message,
+            "response": null
+        }));
 });
 
 module.exports = router;
