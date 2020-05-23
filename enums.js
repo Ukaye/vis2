@@ -131,5 +131,29 @@ enums.ADVERT = {
     }
 };
 
+enums.PAYROLL = {
+    STATUS: {
+        ACTIVE: 1,
+        REVIEWED: 2,
+        APPROVED: 3,
+        REJECTED: 4
+    },
+    STATUS_: {
+        1: 'Active',
+        2: 'Reviewed',
+        3: 'Approved',
+        4: 'Rejected'
+    },
+    PAYMENT_STATUS: {
+        NOT_PAID: 0,
+        PAID: 1,
+        PROCESSED: 2
+    },
+    PAYMENT_STATUS_: {
+        0: 'Not Paid',
+        1: 'Paid',
+        2: 'Processed'
+    }
+};
 
 module.exports = enums;

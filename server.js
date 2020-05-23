@@ -64,7 +64,8 @@ let app = express(),
     notification = require('./routes/notifications'),
     upload_service = require('./routes/service/custom-services/upload.service'),
     atbmailer_service = require('./routes/service/custom-services/atbmailer.service'),
-    advert_service = require('./routes/service/custom-services/advert.service');
+    advert_service = require('./routes/service/custom-services/advert.service'),
+    myxalary_service = require('./routes/service/custom-services/myxalary.service');
 
 app.use(compression());    
 app.engine('html', require('ejs').renderFile);
@@ -275,6 +276,7 @@ app.use('/notifications', notification);
 app.use('/upload', upload_service);
 app.use('/atbmailer', atbmailer_service);
 app.use('/advert', advert_service);
+app.use('/myxalary', myxalary_service);
 app.use('/files', express.static(__dirname + '/files'));
 
 app.get('/logon', function (req, res) {
@@ -727,8 +729,21 @@ app.get('/all-advert', requireLogin, function (req, res) {
     });
 });
 
+
 app.get('/edit-advert', requireLogin, function (req, res) {
     res.sendFile('advert/edit-advert/edit-advert.html', {
+        root: __dirname + '/views'
+    });
+});
+
+app.get('/all-processed-payrolls', requireLogin, function (req, res) {
+    res.sendFile('myxalary/all-processed-payrolls/all-processed-payrolls.html', {
+        root: __dirname + '/views'
+    });
+});
+
+app.get('/view-payroll/:id?', requireLogin, function (req, res) {
+    res.sendFile('myxalary/view-payroll/view-payroll.html', {
         root: __dirname + '/views'
     });
 });

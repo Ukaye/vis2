@@ -633,4 +633,49 @@ functions.setupMyXalaryEmployeeBankAccount = (employee_id, bankaccount) => {
     });
 };
 
+functions.getMyXalaryPayroll = payroll_id => {
+    return new Promise(resolve => {
+        request.get(
+            {
+                url: `${process.env.MYXALARY_BASE_URL}/myx3/payroll/get/${payroll_id}`,
+                headers: {
+                    'Authorization': `Bearer ${process.env.MYXALARY_SECRET_KEY}`
+                },
+                json: true
+            },
+            (error, res, body) => resolve(body.response || false))
+    });
+};
+
+functions.getMyXalaryProcessedPayrolls = () => {
+    return new Promise(resolve => {
+        request.get(
+            {
+                url: `${process.env.MYXALARY_BASE_URL}/myx3/payroll/processed/get`,
+                headers: {
+                    'Authorization': `Bearer ${process.env.MYXALARY_SECRET_KEY}`
+                },
+                json: true
+            },
+            (error, res, body) => resolve(body.response || false))
+    });
+};
+
+functions.completeMyXalaryPayrollPayment = payroll_id => {
+    return new Promise((resolve, reject) => {
+        request.get(
+            {
+                url: `${process.env.MYXALARY_BASE_URL}/myx3/payroll/payment/complete/${payroll_id}`,
+                headers: {
+                    'Authorization': `Bearer ${process.env.MYXALARY_SECRET_KEY}`
+                },
+                json: true
+            },
+            (error, res, body) => {
+                if (error) reject(error);
+                resolve(body);
+            })
+    });
+};
+
 module.exports = functions;
