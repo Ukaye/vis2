@@ -17,8 +17,8 @@ getPayroll = () => {
                 payroll.billingLog.reference.data.status: false;
             $('#payroll-name').text(`${payroll.month} (${payroll.year})`);
             $('#billing-log-status').text(`${(billing_log_status || 'none').toUpperCase()}`);
-            $('#payslip-gross-total').text(`₦${numberToCurrencyformatter(sumArrayObjects(payroll.payslips, 'gross'))}`);
-            $('#payslip-net-total').text(`₦${numberToCurrencyformatter(sumArrayObjects(payroll.payslips, 'net'))}`);
+            $('#payslip-gross-total').text(`₦${numberToCurrencyformatter(sumArrayObjects(payroll.payslips, 'gross').round(2))}`);
+            $('#payslip-net-total').text(`₦${numberToCurrencyformatter(sumArrayObjects(payroll.payslips, 'net').round(2))}`);
             $('#payslip-payment-date').text(formatDate(payroll.paymentDate));
             populateDataTable(payroll.payslips);
         },
@@ -31,12 +31,12 @@ populateDataTable = data => {
     let processed_data = [];
     $.each(data, (index, obj) => {
         obj.fullname = `${obj.employeeID.firstName} ${obj.employeeID.lastName}`;
-        obj.gross = `₦${numberToCurrencyformatter(obj.gross)}`;
-        obj.net = `₦${numberToCurrencyformatter(obj.net)}`;
-        obj.bonus = `₦${numberToCurrencyformatter(obj.bonus)}`;
-        obj.deduction = `₦${numberToCurrencyformatter(obj.deduction)}`;
-        obj.tax = `₦${numberToCurrencyformatter(obj.tax)}`;
-        obj.pension = `₦${numberToCurrencyformatter(obj.pension)}`;
+        obj.gross = `₦${numberToCurrencyformatter(obj.gross.round(2))}`;
+        obj.net = `₦${numberToCurrencyformatter(obj.net.round(2))}`;
+        obj.bonus = `₦${numberToCurrencyformatter(obj.bonus.round(2))}`;
+        obj.deduction = `₦${numberToCurrencyformatter(obj.deduction.round(2))}`;
+        obj.tax = `₦${numberToCurrencyformatter(obj.tax.round(2))}`;
+        obj.pension = `₦${numberToCurrencyformatter(obj.pension.round(2))}`;
         processed_data.push(obj);
     });
     $('#bootstrap-data-table').DataTable({

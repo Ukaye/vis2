@@ -20,8 +20,8 @@ populateDataTable = data => {
     let processed_data = [];
     $.each(data, (index, obj) => {
         obj.name = `${obj.month}(${obj.year})`;
-        obj.totalGrossSalary = `₦${numberToCurrencyformatter(obj.totalGrossSalary)}`;
-        obj.totalNetSalary = `₦${numberToCurrencyformatter(obj.totalNetSalary)}`;
+        obj.totalGrossSalary = `₦${numberToCurrencyformatter(obj.totalGrossSalary.round(2))}`;
+        obj.totalNetSalary = `₦${numberToCurrencyformatter(obj.totalNetSalary.round(2))}`;
         obj.createdAt = new Date(obj.createdAt).toLocaleDateString();
         obj.actions = `<a class="btn btn-sm btn-info" href="/view-payroll?id=${encodeURIComponent(obj._id)}">View</a>`;
         processed_data.push(obj);
