@@ -736,8 +736,8 @@ app.get('/edit-advert', requireLogin, function (req, res) {
     });
 });
 
-app.get('/all-processed-payrolls', requireLogin, function (req, res) {
-    res.sendFile('myxalary/all-processed-payrolls/all-processed-payrolls.html', {
+app.get('/processed-payrolls', requireLogin, function (req, res) {
+    res.sendFile('myxalary/processed-payrolls/processed-payrolls.html', {
         root: __dirname + '/views'
     });
 });

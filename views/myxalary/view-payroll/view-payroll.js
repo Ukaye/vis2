@@ -77,7 +77,7 @@ completePayment = () => {
                         $('#wait').hide();
                         notification('Bulk transfer initiated successfully', data.response, 'success', 5000);
                         setTimeout(() => {
-                            window.location.href = '/all-processed-payrolls';
+                            window.location.href = '/processed-payrolls';
                         }, 5000);
                     },
                     'error': error => notification(error.response, '', 'error')
