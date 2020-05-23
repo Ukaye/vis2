@@ -13,8 +13,10 @@ getPayroll = () => {
         success: data => {
             $('#wait').hide();
             const payroll = data.response;
+            const billing_log_status = payroll.billingLog.reference.status?
+                payroll.billingLog.reference.data.status: false;
             $('#payroll-name').text(`${payroll.month} (${payroll.year})`);
-            $('#payslip-count').text(payroll.payslips.length);
+            $('#billing-log-status').text(`${(billing_log_status || 'none').toUpperCase()}`);
             $('#payslip-gross-total').text(`₦${numberToCurrencyformatter(sumArrayObjects(payroll.payslips, 'gross'))}`);
             $('#payslip-net-total').text(`₦${numberToCurrencyformatter(sumArrayObjects(payroll.payslips, 'net'))}`);
             $('#payslip-payment-date').text(formatDate(payroll.paymentDate));
