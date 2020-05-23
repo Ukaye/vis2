@@ -13,6 +13,7 @@ getPayroll = () => {
         success: data => {
             $('#wait').hide();
             const payroll = data.response;
+            $('#payroll-name').text(`${payroll.month} (${payroll.year})`);
             $('#payslip-count').text(payroll.payslips.length);
             $('#payslip-gross-total').text(`₦${numberToCurrencyformatter(sumArrayObjects(payroll.payslips, 'gross'))}`);
             $('#payslip-net-total').text(`₦${numberToCurrencyformatter(sumArrayObjects(payroll.payslips, 'net'))}`);
