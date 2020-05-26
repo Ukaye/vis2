@@ -678,4 +678,15 @@ functions.completeMyXalaryPayrollPayment = payroll_id => {
     });
 };
 
+functions.verifySecretKey = (req, res, next) => {
+    try {
+        const secret_key = req.header('Authorization').replace('Bearer ', '');
+        if (secret_key !== process.env.SECRET_KEY)
+            return res.status(400).send({ message: 'Invalid Secret Key' });
+        next();
+    } catch (error) {
+        return res.status(400).send({ message: 'Authentication required' });
+    }
+}
+
 module.exports = functions;

@@ -6,18 +6,18 @@ const firebase = {},
 
 firebase.send = payload => {
     if (!payload.to) return;
-    const query = `SELECT firebase_token FROM clients WHERE email = "${payload.to}"`;
+    const query = `SELECT firebase_token FROM clients WHERE username = "${payload.to}"`;
     db.query(query, (error, client) => {
         client = client[0];
         if (!client || !client.firebase_token) return;
-        var message = {
+        let message = {
             to: client.firebase_token,
             notification: {
                 title: payload.subject,
                 body: (payload.context && payload.context.message)? payload.context.message : ''
-            },
-            data: { }
+            }
         };
+        if (payload.data) message.data = payload.data;
         fcm.send(message, (error, response) => {
             if (error) console.log(error);
         });

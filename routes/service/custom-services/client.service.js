@@ -4201,7 +4201,7 @@ router.get('/myxalary/payslips/get/:id/:employee_id', helperFunctions.verifyJWT,
         "status": 200,
         "error": null,
         "response": payslips
-    })
+    });
 });
 
 router.patch('/myxalary/bankaccount/setup/:id/:employee_id', helperFunctions.verifyJWT, (req, res) => {
@@ -4218,6 +4218,35 @@ router.patch('/myxalary/bankaccount/setup/:id/:employee_id', helperFunctions.ver
             "error": error.message,
             "response": null
         }));
+});
+
+router.post('/notification/push/:id', helperFunctions.verifySecretKey, (req, res) => {
+    if (!req.params.id || !req.body) return res.status(500).send('Required parameter(s) not sent!');
+    const { subject, message, data } = req.body;
+    const query = `SELECT username FROM clients WHERE ID = ${req.params.id}`;
+    db.query(query, (error, client) => {
+        if (!client[0]) return res.send({
+            "status": 500,
+            "error": 'User does not exist!',
+            "response": null
+        });
+
+        const options = {
+            to: client[0].username,
+            subject: subject,
+            context: {
+                message: message
+            },
+            data: data
+        }
+        firebaseService.send(options);
+    
+        return res.send({
+            "status": 200,
+            "error": null,
+            "response": 'Push notification queued successfully!'
+        });
+    });
 });
 
 module.exports = router;
