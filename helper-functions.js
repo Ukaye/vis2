@@ -689,4 +689,11 @@ functions.verifySecretKey = (req, res, next) => {
     }
 }
 
+// functions.getClientDueLoans = client_id => {
+//     return new Promise(resolve => {
+//         const query = `SELECT * FROM applications WHERE userID = ${client_id} AND status = 2 AND close_status = 0`;
+//         db.query()
+//     });
+// };
+
 module.exports = functions;

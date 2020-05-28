@@ -15,7 +15,7 @@ getPayroll = () => {
             const payroll = data.response;
             const billing_log_status = payroll.billingLog.reference.status?
                 payroll.billingLog.reference.data.status: false;
-            $('#payroll-name').text(`${payroll.month} (${payroll.year})`);
+            $('#payroll-name').text(`${payroll.month} (${payroll.year}) ${payroll.companyID.companyName}`);
             $('#billing-log-status').text(`${(billing_log_status || 'none').toUpperCase()}`);
             $('#payslip-gross-total').text(`₦${numberToCurrencyformatter(sumArrayObjects(payroll.payslips, 'gross').round(2))}`);
             $('#payslip-net-total').text(`₦${numberToCurrencyformatter(sumArrayObjects(payroll.payslips, 'net').round(2))}`);
@@ -31,6 +31,8 @@ populateDataTable = data => {
     let processed_data = [];
     $.each(data, (index, obj) => {
         obj.fullname = `${obj.employeeID.firstName} ${obj.employeeID.lastName}`;
+        const clientID = obj.employeeID.myx3ID? obj.employeeID.myx3ID : false;
+        obj.myx3ID = clientID? `<a href="/client-info?id=${clientID}">${padWithZeroes(clientID, 6)}</a>`: 'N/A';
         obj.gross = `₦${numberToCurrencyformatter(obj.gross.round(2))}`;
         obj.net = `₦${numberToCurrencyformatter(obj.net.round(2))}`;
         obj.bonus = `₦${numberToCurrencyformatter(obj.bonus.round(2))}`;
@@ -52,6 +54,7 @@ populateDataTable = data => {
         ],
         columns: [
             { data: "fullname" },
+            { data: "myx3ID" },
             { data: "gross" },
             { data: "net" },
             { data: "bonus" },

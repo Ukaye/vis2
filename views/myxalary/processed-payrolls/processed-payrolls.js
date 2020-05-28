@@ -20,6 +20,7 @@ populateDataTable = data => {
     let processed_data = [];
     $.each(data, (index, obj) => {
         obj.name = `${obj.month}(${obj.year})`;
+        obj.companyName = obj.companyID.companyName;
         obj.totalGrossSalary = `₦${numberToCurrencyformatter(obj.totalGrossSalary.round(2))}`;
         obj.totalNetSalary = `₦${numberToCurrencyformatter(obj.totalNetSalary.round(2))}`;
         obj.createdAt = new Date(obj.createdAt).toLocaleDateString();
@@ -39,7 +40,7 @@ populateDataTable = data => {
         ],
         columns: [
             { data: "name" },
-            { data: "employeeType" },
+            { data: "companyName" },
             { data: "paymentType" },
             { data: "totalGrossSalary" },
             { data: "totalNetSalary" },
