@@ -13,7 +13,7 @@ getPayroll = () => {
         success: data => {
             $('#wait').hide();
             const payroll = data.response;
-            const billing_log_status = payroll.billingLog.reference.status?
+            const billing_log_status = (payroll.billingLog && payroll.billingLog.reference.status)?
                 payroll.billingLog.reference.data.status: false;
             $('#payroll-name').text(`${payroll.month} (${payroll.year}) ${payroll.companyID.companyName}`);
             $('#billing-log-status').text(`${(billing_log_status || 'none').toUpperCase()}`);
