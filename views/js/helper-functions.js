@@ -14,7 +14,11 @@ $(document).ready(() => {
 })
 
 function getBaseUrl() {
-    if (location.hostname === 'x3.finratus.com') {
+    if (
+        location.hostname === 'x3.finratus.com' || 
+        location.hostname === 'micash.finratus.com'
+        )
+    {
         return 'https://login.remita.net/remita/ecomm/mandate';
     } else {
         return 'http://www.remitademo.net/remita/ecomm/mandate';
