@@ -13,7 +13,7 @@ $(document).ready(() => {
     });
 })
 
-function getBaseUrl() {
+function getRemitaBaseUrl() {
     if (
         location.hostname === 'x3.finratus.com' || 
         location.hostname === 'micash.finratus.com'

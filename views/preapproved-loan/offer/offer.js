@@ -86,7 +86,7 @@
 
     function generateMandateForm(data) {
         let $viewMandate = $('#viewMandate'),
-            form_url = `${getBaseUrl()}/form/${data.merchantId}/${data.remita_hash}/${data.mandateId}/${data.requestId}/rest.reg`;
+            form_url = `${getRemitaBaseUrl()}/form/${data.merchantId}/${data.remita_hash}/${data.mandateId}/${data.requestId}/rest.reg`;
         $viewMandate.show();
         $viewMandate.attr('href', form_url);
         $('#remitaDirectDebit').find('.setup-content').html(`
