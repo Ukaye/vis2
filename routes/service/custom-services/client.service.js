@@ -4177,7 +4177,8 @@ router.get('/myxalary/invite/:id/:invite_code', helperFunctions.verifyJWT, async
             .then(body => res.send({
                 "status": 200,
                 "error": null,
-                "response": body.message
+                "response": body.message,
+                "payload": body.response
             }))
             .catch(error => res.send({
                 "status": 500,
