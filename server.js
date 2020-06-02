@@ -97,12 +97,20 @@ app.use(session({
 }));
 
 app.use((req, res, next) => {
+    // hotServerReset(req);
     if (process.env.STATUS && process.env.STATUS !== 'test')
         req.HOST = `https://${req.get('host')}`;
     if (Number(req.headers['content-length']) > Number(process.env.FILE_SIZE_LIMIT))
         return res.status(413).send('File exceeds the maximum upload size limit!');
     next();
 });
+
+function hotServerReset (req) {
+    req.cookies = {};
+    req.session.reset();
+    req.session = {};
+    console.log('Hot Server Reset');
+}
 
 app.post('/login', function (req, res) {
     let user = [],
