@@ -840,7 +840,7 @@ $('#document-file').change(function () {
         $images_preview = $('#images-preview'),
         $files_preview = $('#files-preview');
     if (this.files[0].type && (this.files[0].type).split('/') && ((this.files[0].type).split('/'))[0]){
-        if (((this.files[0].type).split('/'))[0] !== 'image'){
+        // if (((this.files[0].type).split('/'))[0] !== 'image'){
             $images_preview.hide();
             $files_preview.show();
             $files_preview.find('tbody').html('');
@@ -888,12 +888,12 @@ $('#document-file').change(function () {
                 e.preventDefault();
                 $files_preview.find('tbody').html('');
             });
-        } else {
-            $images_preview.show();
-            $files_preview.hide();
-            $files_preview.find('tbody').html('');
-            $images_preview.find('tbody').html('');
-        }
+        // } else {
+        //     $images_preview.show();
+        //     $files_preview.hide();
+        //     $files_preview.find('tbody').html('');
+        //     $images_preview.find('tbody').html('');
+        // }
     } else {
         return notification('Kindly upload a valid file format','','warning');
     }

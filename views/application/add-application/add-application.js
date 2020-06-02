@@ -57,9 +57,6 @@
                     }
                 }
                 preApplicationHash = response;
-                console.log(response)
-                console.log(workFlowHash)
-                console.log(response.product)
               
                if(response.product) {
                 $('#workflow_block').html(`..... getting name for ${response.product}`)
@@ -237,13 +234,13 @@
             url: "/workflows",
             success: function (response) {
                 $.each(response.response, function (key, val) {
-                  
                     workFlowHash[val.ID] = val;
                     $("#workflows").append('<option value = "' + val.ID + '"">' + val.name + '</option>');
                 });
             }
         });
     }
+
     function getWorkflowInput(ID) {
         const default_settings_obj = {
             loan_requested_min: 1,
@@ -259,76 +256,66 @@
                 settings_obj[key] = default_settings_obj[key]
             }
         })
-
- 
-
-
-
         setSettings();
 
-       const clientInformation =  workFlowHash[ID].client_information
-  const clientInformationArr_ = clientInformation ? clientInformation.split(','): [];
-  clientInformationArr = clientInformationArr_;
-  let HtmlToAppend = ''
-  for (let info of clientInformationArr_) {
-
-    console.log(info)
-    let obj = {
-        title: '',
-        placeholder: '',
-        id:'',
-        fa: ''
-    }
-         switch (info) {
-            case 'salary':
-                obj = {
-                    title:'Enter Client Salary',
-                    placeholder:'Enter Salary',
-                    id:'salary',
-                    fa: 'fa-money'
+        const clientInformation =  workFlowHash[ID].client_information
+        const clientInformationArr_ = clientInformation ? clientInformation.split(','): [];
+        clientInformationArr = clientInformationArr_;
+        let HtmlToAppend = ''
+        for (let info of clientInformationArr_) {
+            let obj = {
+                title: '',
+                placeholder: '',
+                id:'',
+                fa: ''
+            }
+                switch (info) {
+                    case 'salary':
+                        obj = {
+                            title:'Enter Client Salary',
+                            placeholder:'Enter Salary',
+                            id:'salary',
+                            fa: 'fa-money'
+                        }
+                        
+                        break;
+                    case "work_email":
+                            obj = {
+                                title:'Enter Client Work Email',
+                                placeholder:'Enter Client Work Email',
+                                id:'work_email',
+                                fa: 'fa-envelope'
+                            }
+                        
+                        break;
+                
+                    default:
+                        break;
                 }
-                
-                break;
-            case "work_email":
-                    obj = {
-                        title:'Enter Client Work Email',
-                        placeholder:'Enter Client Work Email',
-                        id:'work_email',
-                        fa: 'fa-envelope'
-                    }
-                
-                break;
-        
-            default:
-                break;
+            
+                if(!obj.title) {
+                    continue;
+                }
+                HtmlToAppend += `        
+                    <div class='col-6 mb-2'> 
+                <label class="col-form-label">${obj.title} <strong style="color:red"> *</strong></label>
+                <div class="input-group">
+                    <div class="input-group-addon"><i class="fa ${obj.fa}"></i></div>
+                    <input placeholder='${obj.placeholder}' id="${obj.id}" value="${preApplicationHash[obj.id] || ''}" class="form-control" required="required" />
+            
+            </div>              
+            </div>              
+                `
+            
+
+            
+            
+            
         }
-    
-        if(!obj.title) {
-            continue;
-        }
-         HtmlToAppend += `        
-            <div class='col-6 mb-2'> 
-        <label class="col-form-label">${obj.title} <strong style="color:red"> *</strong></label>
-        <div class="input-group">
-            <div class="input-group-addon"><i class="fa ${obj.fa}"></i></div>
-            <input placeholder='${obj.placeholder}' id="${obj.id}" value="${preApplicationHash[obj.id] || ''}" class="form-control" required="required" />
-    
-    </div>              
-    </div>              
-        `
-    
-
-      
-    
-    
-  }
-
-  const extraStuffEls = document.querySelectorAll('.extrastuff')
-
-  extraStuffEls.forEach(extraStuffEl => extraStuffEl.innerHTML = HtmlToAppend)
-
-
+        const extraStuffEls = document.querySelectorAll('.extrastuff')
+        extraStuffEls.forEach(extraStuffEl => extraStuffEl.innerHTML = HtmlToAppend)
     }
+
     $("#workflows").change(e => {
         getWorkflowInput(e.target.value)
     })
@@ -403,6 +390,7 @@
             $('#interest_rate_max_').text(numberToCurrencyformatter(settings_obj.interest_rate_max));
         }
     }
+
     function getApplicationSettings() {
         $('#wait').show();
         $.ajax({
@@ -729,7 +717,6 @@
 
         $("#addApplication").click(function () {
             const settings = settings_obj;
-                console.log(settings)
             if (!schedule[0])
                 return notification('Please upload a valid CSV file.', '', 'warning');
             validateSchedule(schedule, function (validation) {
