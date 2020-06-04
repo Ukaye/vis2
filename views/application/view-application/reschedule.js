@@ -285,3 +285,67 @@ $('#autoDeny2').click(() => {
             }
         });
 });
+
+$("#setupDirectDebitBtn2").click(function () {
+    swal({
+        title: "Are you sure?",
+        text: "Once initiated, this process is not reversible!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true
+    })
+        .then(yes => {
+            if (yes) {
+                let obj = {};
+                obj.userID = application2.userID;
+                obj.workflowID = application2.workflowID;
+                obj.loan_amount = application2.loan_amount;
+                obj.interest_rate = application2.interest_rate;
+                obj.duration = application2.duration;
+                obj.repayment_date = application2.repayment_date;
+                obj.agentID = (JSON.parse(localStorage.getItem("user_obj"))).ID;
+
+                let preapproved_loan = Object.assign({}, obj);
+                delete preapproved_loan.agentID;
+                preapproved_loan.client = application2.fullname;
+                preapproved_loan.average_loan = '';
+                preapproved_loan.credit_score = '';
+                preapproved_loan.defaults = '';
+                preapproved_loan.invoices_due = '';
+                preapproved_loan.offer_duration = application2.duration;
+                preapproved_loan.offer_loan_amount = application2.loan_amount;
+                preapproved_loan.offer_first_repayment_date = application2.repayment_date;
+                preapproved_loan.offer_interest_rate = application2.interest_rate;
+                preapproved_loan.months_left = '';
+                preapproved_loan.salary_loan = '';
+                preapproved_loan.created_by = (JSON.parse(localStorage.getItem("user_obj"))).ID;
+
+                $('#wait').show();
+                $.ajax({
+                    'url': '/preapproved-loan/create',
+                    'type': 'post',
+                    'data': {
+                        application: obj,
+                        email: application2.email,
+                        applicationID: application.ID,
+                        fullname: application2.fullname,
+                        preapproved_loan: preapproved_loan
+                    },
+                    'success': function (response) {
+                        $('#wait').hide();
+                        if(response.status === 500) {
+                            notification('No internet connection', '', 'error');
+                        } else {
+                            notification(`Offer successfully sent to ${application2.email}`,'','success');
+                            window.location.reload();
+                        }
+                    },
+                    'error': function (err) {
+                        console.log(err);
+                        $('#wait').hide();
+                        notification('No internet connection','','error');
+                    }
+                });
+            }
+        });
+});

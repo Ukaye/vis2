@@ -2026,7 +2026,7 @@ function copyLink() {
     notification('Link copied!', text.value, 'success');
 }
 
-$("[id^=setupDirectDebitBtn]").click(function () {
+$("#setupDirectDebitBtn").click(function () {
     swal({
         title: "Are you sure?",
         text: "Once initiated, this process is not reversible!",
