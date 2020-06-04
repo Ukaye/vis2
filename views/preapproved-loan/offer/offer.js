@@ -13,7 +13,6 @@
     let bank,
         banks,
         payment_amount,
-        first_repayment_date,
         preapproved_loan = {};
 
     if (application_id) {
@@ -28,11 +27,17 @@
             success: function (response) {
                 preapproved_loan = response.data;
                 if (preapproved_loan && !($.isEmptyObject(preapproved_loan)) && preapproved_loan.schedule){
+                    let schedule = preapproved_loan.schedule.filter(invoice => invoice.status === 2);
+                    if (schedule[0]) {
+                        preapproved_loan.schedule = schedule.map(invoice => {
+                            invoice.status = 1;
+                            return invoice;
+                        });
+                    }
                     $('#client-text').text(preapproved_loan.client);
                     $('#loan-amount-text').text(`₦${numberToCurrencyformatter(preapproved_loan.loan_amount)}`);
                     $('#tenor-text').text(`${numberToCurrencyformatter(preapproved_loan.duration)} month(s)`);
-                    first_repayment_date = preapproved_loan.repayment_date || preapproved_loan.schedule[0]['payment_collect_date'];
-                    $('#first-repayment-text').text(first_repayment_date);
+                    $('#first-repayment-text').text(preapproved_loan.schedule[0]['payment_collect_date']);
                    // $('#expiry-text').html(`Please note that this loan is only valid till <strong>${preapproved_loan.expiry_date}</strong>`);
                     $('#fullname').text(preapproved_loan.fullname);
                     $('#email').text(preapproved_loan.email);
@@ -225,9 +230,9 @@
             .then((yes) => {
                 if (yes) {
                     if (bank.authorization === 'OTP') notification('You would receive an OTP from your bank to proceed!', '', 'warning');
-                    let start = first_repayment_date,
-                        end_ = new Date(first_repayment_date),
-                        end = formatDate(end_.setDate(end_.getDate() + ((Number(preapproved_loan.duration) + 1) * 30)));
+                    let start = preapproved_loan.schedule[0]['payment_collect_date'],
+                        end_ = new Date(preapproved_loan.schedule[preapproved_loan.schedule.length-1]['payment_collect_date']),
+                        end = formatDate(end_.setDate(end_.getDate() + 30));
                     $.ajax({
                         'url': `/client/mandate/setup`,
                         'type': 'post',
