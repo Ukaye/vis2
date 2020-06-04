@@ -15,7 +15,7 @@ const fs = require('fs'),
     emailService = require('../../service/custom-services/email.service'),
     firebaseService = require('../../service/custom-services/firebase.service');
 
-if (!process.env.HOST) process.env.HOST = 'https://x3.finratus.com';
+if (!process.env.HOST) process.env.HOST = 'https://x3l.finratus.com';
 
 router.get('/all', (req, res) => {
     const HOST = `${req.protocol}://${req.get('host')}`;

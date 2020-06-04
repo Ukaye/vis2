@@ -15,7 +15,7 @@ $(document).ready(() => {
 
 function getRemitaBaseUrl() {
     if (
-        location.hostname === 'x3.finratus.com' || 
+        location.hostname === 'x3l.finratus.com' || 
         location.hostname === 'micash.finratus.com'
         )
     {
