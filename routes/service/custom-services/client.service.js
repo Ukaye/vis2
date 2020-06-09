@@ -2385,8 +2385,8 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, (req,
         });
 
         const invoice_ = schedule[0],
-            amount = (parseFloat(invoice_.amount) + helperFunctions.calculatePaystackFee(invoice_.amount)) * 100;
-
+            amount = (parseFloat(invoice_.amount) + helperFunctions.calculatePaystackFee(invoice_.amount)).round(2) * 100;
+console.log(amount)
         paystack.transaction.charge({
             authorization_code: req.body.authorization_code,
             email: req.user.email,
@@ -2394,15 +2394,6 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, (req,
         })
             .then(function (body) {
                 if (body.status) {
-                    console.log(invoice_)
-                    console.log(body.data.amount)
-                    console.log(amount)
-                    if (body.data.amount !== amount)
-                        return res.send({
-                            "status": 500,
-                            "error": 'Payment amount does not match the invoice amount!',
-                            "response": null
-                        });
                     if (body.data.status === 'success') {
                         let data = {
                             actual_payment_amount: invoice_.payment_amount,
@@ -2589,7 +2580,7 @@ router.post('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req
     paystack.transaction.charge({
         email: req.user.email,
         authorization_code: req.body.authorization_code,
-        amount: (parseFloat(req.body.close_amount) + helperFunctions.calculatePaystackFee(req.body.close_amount)) * 100
+        amount: (parseFloat(req.body.close_amount) + helperFunctions.calculatePaystackFee(req.body.close_amount)).round(2) * 100
     })
         .then(function (body) {
             if (body.status) {
@@ -2719,7 +2710,7 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
         paystack.transaction.charge({
             email: req.user.email,
             authorization_code: req.body.authorization_code,
-            amount: (parseFloat(req.body.amount) + helperFunctions.calculatePaystackFee(req.body.amount)) * 100
+            amount: (parseFloat(req.body.amount) + helperFunctions.calculatePaystackFee(req.body.amount)).round(2) * 100
         })
             .then(function (body) {
                 if (body.status) {
