@@ -2385,12 +2385,12 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, (req,
         });
 
         const invoice_ = schedule[0],
-            amount = (parseFloat(invoice_.amount) + helperFunctions.calculatePaystackFee(invoice_.amount)).round(2) * 100;
-console.log(amount)
+            amount = (parseFloat(invoice_.amount) + helperFunctions.calculatePaystackFee(invoice_.amount)) * 100;
+
         paystack.transaction.charge({
             authorization_code: req.body.authorization_code,
             email: req.user.email,
-            amount: amount
+            amount: amount.round(2)
         })
             .then(function (body) {
                 if (body.status) {
@@ -2577,10 +2577,11 @@ router.get('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req,
 });
 
 router.post('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req, res) => {
+    const amount = (parseFloat(req.body.close_amount) + helperFunctions.calculatePaystackFee(req.body.close_amount)) * 100;
     paystack.transaction.charge({
         email: req.user.email,
         authorization_code: req.body.authorization_code,
-        amount: (parseFloat(req.body.close_amount) + helperFunctions.calculatePaystackFee(req.body.close_amount)).round(2) * 100
+        amount: amount.round(2)
     })
         .then(function (body) {
             if (body.status) {
@@ -2707,10 +2708,11 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
                 "response": 'Amount is more than the repayment due for this invoice!'
             });
 
+        const amount = (parseFloat(req.body.amount) + helperFunctions.calculatePaystackFee(req.body.amount)) * 100;
         paystack.transaction.charge({
             email: req.user.email,
             authorization_code: req.body.authorization_code,
-            amount: (parseFloat(req.body.amount) + helperFunctions.calculatePaystackFee(req.body.amount)).round(2) * 100
+            amount: amount.round(2)
         })
             .then(function (body) {
                 if (body.status) {
