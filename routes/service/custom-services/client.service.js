@@ -2394,6 +2394,9 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, (req,
         })
             .then(function (body) {
                 if (body.status) {
+                    console.log(invoice_)
+                    console.log(body.data.amount)
+                    console.log(amount)
                     if (body.data.amount !== amount)
                         return res.send({
                             "status": 500,

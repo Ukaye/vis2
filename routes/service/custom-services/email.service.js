@@ -30,7 +30,6 @@ email.send = function (mailOptions) {
     mailOptions.subject = `${process.env.TENANT}: ${mailOptions.subject}`;
     transporter.sendMail(mailOptions, error => {
         if (error) console.log(error);
-        // firebaseService.send(mailOptions);
     });
 };
 
