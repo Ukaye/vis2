@@ -1776,10 +1776,11 @@ users.post('/apply', function (req, res) {
             res.send({ "status": 500, "error": error, "response": null });
         } else {
             if (!workflow_id) {
-                emailService.send({
+                email.sendByDomain(process.env.LOAN35_MAILGUN_DOMAIN,
+                {
                     to: req.body.email,
                     subject: 'Application Successful',
-                    template: 'main'
+                    template: 'loan35-mail'
                 });
                 return res.send({ "status": 200, "message": "New Application Added!" });
             }
@@ -1843,10 +1844,10 @@ users.post('/contact', function (req, res) {
     let mailOptions = {
         to: 'getloan@loan35.com',
         subject: 'Feedback: ' + data.subject,
-        template: 'contact',
+        template: 'loan35-contact',
         context: data
     };
-    emailService.send(mailOptions);
+    email.sendByDomain(process.env.LOAN35_MAILGUN_DOMAIN, mailOptions);
     return res.send({ "status": 200, "message": "Feedback sent successfully!" });
 });
 
@@ -1859,10 +1860,10 @@ users.post('/sendmail', function (req, res) {
         from: 'ATB Cisco <solutions@atbtechsoft.com>',
         to: 'sibironke@atbtechsoft.com',
         subject: 'ATB Cisco Application: ' + data.name,
-        template: 'mail',
+        template: 'cisco-mail',
         context: data
     };
-    emailService.send(mailOptions);
+    email.sendByDomain('app.atbtechsoft.com', mailOptions);
     return res.send("OK");
 });
 

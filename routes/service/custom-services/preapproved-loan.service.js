@@ -506,13 +506,13 @@ router.post('/offer/accept/:id', function (req, res, next) {
                             let mailOptions = {
                                 to: email,
                                 subject: 'Application Successful',
-                                template: 'main',
+                                template: 'application',
                                 context: {
                                     name: fullname,
                                     date: date
                                 }
                             };
-                            emailService.send(mailOptions);
+                            email.send(mailOptions);
                             helperFunctions.getNextWorkflowProcess(false,workflow_id,false, function (process, stage) {
                                 query =  'INSERT INTO workflow_processes Set ?';
                                 endpoint = `/core-service/post?query=${query}`;

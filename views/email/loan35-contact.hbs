@@ -14,25 +14,23 @@
         button {
             width: auto;
             padding: 10px 30px;
-            background: #303030;
+            background: #FE3F3E;
             border-radius: 2px;
             color: #fff;
             outline: none;
             border: none;
             cursor: pointer;
-            font-size: 18px;
+            font-size: 22px;
         }
         a{
             outline:none;
             color:;
             text-decoration:underline;
         }
-
         .img-fluid {
             max-width: 100%;
             height: auto
         }
-
         a:hover{text-decoration:none !important;}
         .nav a:hover{text-decoration:underline !important;}
         .title a:hover{text-decoration:underline !important;}
@@ -62,6 +60,7 @@
                 line-height:0 !important;
             }
             td[class="img-flex"] img{
+                width:100% !important;
                 height:auto !important;
             }
             td[class="aligncenter"]{text-align:center !important;}
@@ -97,6 +96,7 @@
 </head>
 <body style="margin:0; padding:0;" bgcolor="#eaeced">
 <table style="min-width:320px;" width="100%" cellspacing="0" cellpadding="0" bgcolor="#eaeced">
+    <!-- fix for gmail -->
     <tr>
         <td class="hide">
             <table width="600" cellpadding="0" cellspacing="0" style="width:600px !important;">
@@ -113,38 +113,50 @@
                     <td data-bgcolor="bg-module" bgcolor="#eaeced">
                         <table class="flexible" width="600" align="center" style="margin:0 auto;" cellpadding="0" cellspacing="0">
                             <tr>
-                                <td class="img-flex">
-                                    <img src="https://x3l.finratus.com/fin-ratus-logo.svg" style="vertical-align:top;margin:100px 200px;" width="200" height="auto" alt="" />
-                                </td>
+                                <td class="img-flex"><img src="http://loan35.com/images/img-header-2.jpg" style="vertical-align:top;" width="600" height="306" alt="" /></td>
                             </tr>
                             <tr>
                                 <td data-bgcolor="bg-block" class="holder" style="padding:58px 60px 52px;" bgcolor="#f9f9f9">
                                     <table width="100%" cellpadding="0" cellspacing="0">
                                         <tr>
                                             <td data-color="title" data-size="size title" data-min="25" data-max="45" data-link-color="link title color" data-link-style="text-decoration:none; color:#292c34;" class="title" align="center" style="font:bold 25px/28px Arial, Helvetica, sans-serif; color:#FE3F3E; padding:0 0 24px;">
-                                                Dear {{name}},
+                                                Dear Loan35 Team,
                                             </td>
                                         </tr>
-
                                         <tr>
                                             <td data-color="text" data-size="size text" data-min="10" data-max="26" data-link-color="link text color" data-link-style="font-weight:normal; text-decoration:underline; color:#40aceb;" align="center" style="font:normal 16px/25px Arial, Helvetica, sans-serif; color:#1d1d1d; padding:0 0 23px;">
-                                                This is a reminder that your email is pending verification. <br> To verify to your email address, Please click on the following link: <a href="{{verify_url}}"><button>Verify Email</button></a>
+                                                <p><strong>Fullname: </strong>{{fullname}}</p>
+                                                <p><strong>Email: </strong>{{email}}</p>
+                                                <p><strong>Subject: </strong>{{subject}}</p>
+                                                <p><strong>Message: </strong>{{message}}</p>
+                                                <p><strong>Date: </strong>{{date}}</p>
+                                                <p>Kindly address as soon as possible.</p>
+                                            </td>
                                         </tr>
                                         <tr>
                                             <td data-color="text" data-size="size text" data-min="10" data-max="26" data-link-color="link text color" data-link-style="font-weight:normal; text-decoration:underline; color:#40aceb;" align="center" style="font:normal 16px/25px Arial, Helvetica, sans-serif; color:#1d1d1d; padding:0 0 23px;">
-                                                This link expires on <strong>{{expiry}}</strong>.
+                                                Please click on the button below to visit the website
                                                 <br>
                                                 <br>
-                                                Alternatively, you can copy and paste this link <pre style="word-break: break-all;">{{verify_url}}</em></pre> in your browser.
+                                                <a href="http://loan35.com/"><button>More Info</button></a>
+                                            </td>
                                         </tr>
-
+                                        <tr>
+                                            <td>
+                                                <h6>We offer access to quick and easy loan through our simple application process. Whether you are looking to purchase stuff, ease cash flow, or something else, we have a highly competitive loan offer for you.</h6>
+                                            </td>
+                                        </tr>
                                     </table>
                                 </td>
                             </tr>
+                            <!--<tr><td height="28"></td></tr>-->
                         </table>
                     </td>
                 </tr>
             </table>
+
+            <!--<tr>-->
+            <!--<td data-bgcolor="bg-module" bgcolor="#eaeced">-->
             <table class="flexible" width="600" align="center" style="margin-top:0" cellpadding="0" cellspacing="0">
                 <tr>
                     <td class="footer" style="padding:0 0 10px;">
@@ -153,8 +165,22 @@
                                 <th class="tfoot" width="400" align="left" style="vertical-align:top; padding:0;">
                                     <table width="100%" cellpadding="0" cellspacing="0">
                                         <tr>
-                                            <td data-color="text" data-link-color="link text color" data-link-style="text-decoration:underline; color:#797c82;" class="aligncenter" style="font:12px/16px Arial, Helvetica, sans-serif; color:#797c82; padding:10px 0;">
-                                                <span style="float: right">Finratus, 2019. &nbsp; All Rights Reserved. <a target="_blank" style="text-decoration:underline; color:#797c82;" href="sr_unsubscribe">Unsubscribe.</a></span>
+                                            <td data-color="text" data-link-color="link text color" data-link-style="text-decoration:underline; color:#797c82;" class="aligncenter" style="font:12px/16px Arial, Helvetica, sans-serif; color:#797c82; padding:0 0 10px;">
+                                                <span style="text-align: center; color: #ac1354;">
+													<br>
+														<a target="_blank" style="text-decoration:none;" href="https://LinkedIn.com/company/getloan35/">
+															<img src="http://loan35.com/images/linked-icon.png" border="0" style="font:12px/15px Arial, Helvetica, sans-serif; color:#797c82; margin-right: 20px;" align="left" vspace="0" hspace="0" width="18" class="img-fluid" alt="in" />
+														</a>
+														<a target="_blank" style="text-decoration:none;" href="https://www.instagram.com/getloan35/">
+															<img src="http://loan35.com/images/instagram-icon.png" border="0" style="font:12px/15px Arial, Helvetica, sans-serif; color:#797c82; margin-right: 20px;" align="left" vspace="0" hspace="0" width="18" class="img-fluid" alt="g+" /></a>
+														<a target="_blank" style="text-decoration:none;" href="https://www.facebook.com/getloan35/">
+															<img src="http://loan35.com/images/facebook-icon.png" border="0" style="font:12px/15px Arial, Helvetica, sans-serif; color:#797c82; margin-right: 20px;" align="left" vspace="0" hspace="0" width="9" class="img-fluid"  alt="fb" />
+														</a>
+														<a target="_blank" style="text-decoration:none;" href="https://twitter.com/getloan35">
+															<img src="http://loan35.com/images/twitter-icon.png" border="0" style="font:12px/15px Arial, Helvetica, sans-serif; color:#797c82;  margin-right: 20px;" align="left" vspace="0" hspace="0" width="22" class="img-fluid" alt="tw" />
+														</a>
+                                                </span>
+                                                <span style="float: right">Loan35, 2018. &nbsp; All Rights Reserved. <a target="_blank" style="text-decoration:underline; color:#797c82;" href="sr_unsubscribe">Unsubscribe.</a></span>
                                             </td>
                                         </tr>
                                     </table>
@@ -164,8 +190,12 @@
                     </td>
                 </tr>
             </table>
+            <!--</td>-->
+            <!--</tr>-->
+            <!--</table>-->
         </td>
     </tr>
+    <!-- fix for gmail -->
     <tr>
         <td style="line-height:0;"><div style="display:none; white-space:nowrap; font:15px/1px courier;">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</div></td>
     </tr>
