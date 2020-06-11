@@ -492,7 +492,7 @@ router.post('/create', (req, res) => {
                                                 payload.description = 'New Client Created';
                                                 payload.affected = id;
                                                 notificationsService.log(req, payload);
-                                                email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
+                                                emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
                                                     to: postData.email,
                                                     subject: 'Signup Successful!',
                                                     template: 'myx3-client',
@@ -546,7 +546,7 @@ router.post('/create', (req, res) => {
                                         payload.description = 'New Client Created';
                                         payload.affected = id;
                                         notificationsService.log(req, payload);
-                                        email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
+                                        emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
                                             to: postData.email,
                                             subject: 'Signup Successful!',
                                             template: 'myx3-client',
@@ -858,7 +858,7 @@ router.get('/enable/:id', helperFunctions.verifyJWT, (req, res) => {
                 "response": null
             });
 
-        email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
+        emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
             to: req.user.email,
             subject: 'Account Enabled',
             template: 'myx3-default',
@@ -888,7 +888,7 @@ router.delete('/disable/:id', helperFunctions.verifyJWT, (req, res) => {
                 "response": null
             });
 
-        email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
+        emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
             to: req.user.email,
             subject: 'Account Disabled',
             template: 'myx3-default',
@@ -1081,8 +1081,7 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, (req, res) => 
     postData.status = enums.CLIENT_APPLICATION.STATUS.ACTIVE;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     postData.creator_type = 'client';
-
- 
+console.log(postData)
     db.query(query, postData, function (error, results) {
         if (error) return res.send({
             "status": 500,
@@ -1093,6 +1092,7 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, (req, res) => 
         query = `SELECT * from preapplications WHERE ID = (SELECT MAX(ID) from preapplications)`;
         endpoint = `/core-service/get`;
         url = `${HOST}${endpoint}`;
+        console.log(req.user)
         axios.get(url, {
             params: {
                 query: query
@@ -1107,13 +1107,15 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, (req, res) => 
                     message: `Your loan request of ₦${helperFunctions.numberToCurrencyFormatter(postData.loan_amount)} has been received successfully!. Please note that we typically respond in less than one (1) minute. Check back by logging into your profile for update.`
                 }
             }
-            email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, options);
+            emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, options);
             firebaseService.send(options);
             res.send({ status: 200, error: null, response: response_['data'][0] });
         }, err => {
+            console.log('err',err)
             res.send({ status: 500, error: err, response: null });
         })
             .catch(error => {
+                console.log('error',error)
                 res.send({ status: 500, error: error, response: null });
             });
     });
@@ -1371,7 +1373,7 @@ router.get('/application/accept/:id/:application_id', helperFunctions.verifyJWT,
                     message: 'Your loan offer acceptance was successful!'
                 }
             }
-            email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, options);
+            emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, options);
             firebaseService.send(options);
             return res.send({ status: 200, error: null, response: 'Loan offer accepted successfully!' });
         });
@@ -1409,7 +1411,7 @@ router.get('/application/decline/:id/:application_id', helperFunctions.verifyJWT
         db.query(query, payload, function (error, response) {
             if (error)
                 return res.send({ status: 500, error: error, response: null });
-            email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
+            emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
                 to: req.user.email,
                 subject: 'Loan Offer Declined',
                 template: 'myx3-default',
@@ -1756,7 +1758,7 @@ router.post('/application/complete/:application_id', (req, res) => {
                 message: 'Congratulations! Your loan has been approved, and is pending your acceptance of the agreement.'
             }
         }
-        email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, options);
+        emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, options);
         firebaseService.send(options);
         return res.send({ status: 200, error: null, response: response });
     });
@@ -1837,7 +1839,7 @@ router.post('/verify/email/:id', helperFunctions.verifyJWT, (req, res) => {
     data.date = moment().utcOffset('+0100').format('YYYY-MM-DD');
     data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
     data.verify_url = `${req.body.callback_url}?token=${token}&module=client`;
-    email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
+    emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
         to: req.user.email,
         subject: 'Email Confirmation',
         template: 'myx3-verify-email',
@@ -2040,7 +2042,7 @@ router.post('/invoice/paymentV2/:id/:invoice_id', helperFunctions.verifyJWT, (re
                                                         was received successfully!`
                                                 }
                                             }
-                                            email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, options);
+                                            emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, options);
                                             firebaseService.send(options);
                                             return res.send({
                                                 "status": 200,
@@ -2126,7 +2128,7 @@ router.get('/preapproved-loan/create/:id/:loan_id', helperFunctions.verifyJWT, (
                 data.contact = contact;
                 data.amount = helperFunctions.numberToCurrencyFormatter(preapproved_loan.loan_amount);
                 data.offer_url = `${process.env.HOST || req.HOST}/offer?t=${encodeURIComponent(preapproved_loan.hash)}&i=${req.params.loan_id}`;
-                email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
+                emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
                     to: email,
                     subject: `Mandate Setup`,
                     template: 'myx3-mandate',
@@ -2456,7 +2458,7 @@ router.post('/invoice/payment/:id/:invoice_id', helperFunctions.verifyJWT, (req,
                                                         was received successfully!`
                                                 }
                                             }
-                                            email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, options);
+                                            emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, options);
                                             firebaseService.send(options);
                                             return res.send({
                                                 "status": 200,
@@ -2790,7 +2792,7 @@ router.post('/invoice/part-payment/:id/:invoice_id', helperFunctions.verifyJWT, 
                                                         was received successfully!`
                                                 }
                                             }
-                                            email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, options);
+                                            emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, options);
                                             firebaseService.send(options);
                                             return res.send({
                                                 "status": 200,
@@ -2882,7 +2884,7 @@ router.post('/forgot-password/get', (req, res) => {
         data.date = moment().utcOffset('+0100').format('YYYY-MM-DD');
         data.expiry = moment(data.date).add(expiry_days, 'days').utcOffset('+0100').format('YYYY-MM-DD');
         data.forgot_url = `${req.body.callback_url}?token=${token}&module=password`;
-        email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
+        emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
             to: client.email,
             subject: 'Forgot Password Request',
             template: 'myx3-forgot',
@@ -3011,8 +3013,8 @@ router.post('/application/verify/email/:id/:application_id/:type', helperFunctio
                 Kindly log in to your ${req.params.type} email for further instructions on how to proceed!`
         }
     }
-    email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, options);
-    email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
+    emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, options);
+    emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
         to: email,
         subject: `${req.params.type} email confirmation`,
         template: 'myx3-verify-email',
@@ -3160,9 +3162,9 @@ router.post('/application/verifyV2/email/:application_id/:type', (req, res) => {
                         Kindly log in to your ${req.params.type} email for further instructions on how to proceed!`
             }
         }
-        email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, options);
+        emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, options);
         firebaseService.send(options);
-        email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
+        emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
             to: email,
             subject: 'Email Confirmation',
             template: 'myx3-verify-email',
@@ -3328,7 +3330,7 @@ router.post('/v2/create', (req, res) => {
                                     payload.description = 'New Client Created';
                                     payload.affected = id;
                                     notificationsService.log(req, payload);
-                                    email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
+                                    emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
                                         to: postData.email,
                                         subject: 'Signup Successful!',
                                         template: 'myx3-client',
@@ -3981,7 +3983,7 @@ router.post('/v2/verify/email/:id', helperFunctions.verifyJWT, (req, res) => {
                     "response": null
                 });
     
-            email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
+            emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
                 to: client[0].email,
                 subject: 'Email Confirmation',
                 template: 'myx3-default',
@@ -4069,7 +4071,7 @@ router.post('/v2/application/verify/email/:id/:application_id/:type', helperFunc
                     "response": null
                 });
     
-            email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
+            emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
                 to: client[0].email,
                 subject: `${req.params.type} email confirmation`,
                 template: 'myx3-default',
@@ -4079,7 +4081,7 @@ router.post('/v2/application/verify/email/:id/:application_id/:type', helperFunc
                         Kindly log in to your ${req.params.type} email for further instructions on how to proceed!`
                 }
             });
-            email.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
+            emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, {
                 to: email,
                 subject: `${req.params.type} email confirmation`,
                 template: 'myx3-default',

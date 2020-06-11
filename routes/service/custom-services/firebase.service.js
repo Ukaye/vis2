@@ -3,7 +3,7 @@ const firebase = {},
     db = require('../../../db'),
     serverKey = require('../../../firebase-key.json'),
     fcm = new FCM(serverKey);
-console.log(new Date())
+
 firebase.send = payload => {
     if (!payload.to) return;
     const query = `SELECT firebase_token FROM clients 

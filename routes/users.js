@@ -1776,7 +1776,7 @@ users.post('/apply', function (req, res) {
             res.send({ "status": 500, "error": error, "response": null });
         } else {
             if (!workflow_id) {
-                email.sendByDomain(process.env.LOAN35_MAILGUN_DOMAIN,
+                emailService.sendByDomain(process.env.LOAN35_MAILGUN_DOMAIN,
                 {
                     to: req.body.email,
                     subject: 'Application Successful',
@@ -1847,7 +1847,7 @@ users.post('/contact', function (req, res) {
         template: 'loan35-contact',
         context: data
     };
-    email.sendByDomain(process.env.LOAN35_MAILGUN_DOMAIN, mailOptions);
+    emailService.sendByDomain(process.env.LOAN35_MAILGUN_DOMAIN, mailOptions);
     return res.send({ "status": 200, "message": "Feedback sent successfully!" });
 });
 
@@ -1863,7 +1863,7 @@ users.post('/sendmail', function (req, res) {
         template: 'cisco-mail',
         context: data
     };
-    email.sendByDomain('app.atbtechsoft.com', mailOptions);
+    emailService.sendByDomain('app.atbtechsoft.com', mailOptions);
     return res.send("OK");
 });
 
