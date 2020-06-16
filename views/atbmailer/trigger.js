@@ -55,7 +55,7 @@ function saveTrigger() {
             emailContent: $('#emailContent').summernote('code')
         }
 
-        if(($emailSender).val() === 'solutions@atbtechsoft.com') {
+        if(obj.emailSender === 'solutions@atbtechsoft.com') {
             obj.emailSenderName = 'ATB Techsoft Solutions'
         }
         
