@@ -56,6 +56,16 @@ router.post('/trigger/send', function(req, res, next) {
 
     const mailData = req.body
 
+    if(mailData.emailSender !== '') {
+        msg = {
+            from: { name: 'ATB Techsoft Solutions', address: mailData.emailSender },
+            to: mailData.emailRecipients,
+            subject: mailData.emailSubject,
+            html: mailData.emailContent
+            };
+            emailService.send(msg)   
+    }
+
     let query = `SELECT trigger_subject, trigger_content FROM email_templates WHERE trigger_name = '${mailData.triggerName}'`
         db.query(query, function(error, results) {
             if(error) {

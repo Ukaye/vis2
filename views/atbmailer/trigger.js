@@ -47,11 +47,18 @@ function saveTrigger() {
     }
 
     function sendEmail() {
+
         let obj = {
+            emailSender: $(emailSender).val(),
             emailSubject: $(emailSubject).val(),
             emailRecipients: $(emailRecipients).val(),
             emailContent: $('#emailContent').summernote('code')
         }
+
+        if(($emailSender).val() === 'solutions@atbtechsoft.com') {
+            obj.emailSenderName = 'ATB Techsoft Solutions'
+        }
+        
 
         if(obj.emailSubject === '' || obj.emailRecipients === '') {
             return swal('Kindly fill all required fields!', '', 'warning');
