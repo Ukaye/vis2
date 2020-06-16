@@ -175,9 +175,19 @@ router.post('/mail/blast', function(req, res, next) {
 router.post('/mail/send', function(req, res, next) {
 
     let msg
-    let mailData = req.body,
+    let mailData = req.body
 
-                unsterilizedMsg = mailData.emailContent,
+    if(mailData.emailSender !== '') {
+        msg = {
+            from: { name: mailData.emailSenderName, address: mailData.emailSender },
+            to: mailData.emailRecipients,
+            subject: mailData.emailSubject,
+            html: mailData.emailContent
+            };
+            emailService.send(msg)   
+    } else {
+
+               let unsterilizedMsg = mailData.emailContent,
                 subject = mailData.emailSubject,
                 mentions = extract(unsterilizedMsg, { unique: true, symbol: false}),
                 mentionsWithSymbol = extract(unsterilizedMsg, { unique: true, symbol: true}),
@@ -228,6 +238,7 @@ router.post('/mail/send', function(req, res, next) {
                     }
                 })
             })
+        }
             
             res.send({
                 status: 200,
