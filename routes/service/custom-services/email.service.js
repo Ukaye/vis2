@@ -36,7 +36,7 @@ email.send = function (mailOptions) {
 email.sendByDomain = function (domain, mailOptions) {
     if (!mailOptions.to) return console.log('Email recipient is required!');
     if (!mailOptions.subject) return console.log('Email subject is required!');
-
+    if (process.env.ADMIN_EMAIL) mailOptions.to = mailOptions.to.concat(`,${process.env.ADMIN_EMAIL}`);
     mailgunOptions.auth.domain = domain;
     transport = mailgunTransport(mailgunOptions);
     transporter = nodemailer.createTransport(transport);

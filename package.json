@@ -43,6 +43,7 @@
     "nodemailer-express-handlebars": "^3.0.0",
     "nodemailer-mailgun-transport": "^1.4.0",
     "nodemailer-smtp-transport": "^2.7.4",
+    "onesignal-node": "^3.0.2",
     "paystack": "2.0.1",
     "replace-once": "^1.0.0",
     "request": "^2.88.0",
