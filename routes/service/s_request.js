@@ -194,7 +194,8 @@ async function transactionalAlert(id, isWallet) {
                     `${orgName[0].name} ${data[0].name} Transaction Alert` :
                     `${orgName[0].name} Wallet Transaction Alert`,
                 template: 'txn-alert',
-                context: emailObject
+                context: emailObject,
+                tenancy: true
             });
         }
     }

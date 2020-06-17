@@ -271,7 +271,8 @@ router.post('/create', function (req, res, next) {
                             to: req.body.email,
                             subject: 'Loan Application Offer',
                             template: 'offer',
-                            context: data
+                            context: data,
+                            tenancy: true
                         };
                         if (req.body.applicationID) {
                             mailOptions.template = 'mandate';

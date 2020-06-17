@@ -1814,7 +1814,8 @@ users.post('/apply', function (req, res) {
                                     name: req.body.name,
                                     date: postData.date_created,
                                     message: `Your loan request has been reviewed${required_docs}. Please log in to my X3${x3_link} to proceed!`
-                                }
+                                },
+                                tenancy: true
                             };
                             sendApplyEmail(mailOptions, workflow_id);
                             if (stage) helperFunctions.workflowApprovalNotification(process, stage, workflow_id);
@@ -1831,8 +1832,7 @@ function sendApplyEmail(mailOptions, workflow_id) {
     let query = `SELECT * FROM workflows WHERE ID = ${workflow_id}`;
     db.query(query, (error, worklow) => {
         if (!worklow || !worklow[0] || worklow[0]['client_email'] === 1)
-            return emailService.send(mailOptions);
-        return;
+            emailService.send(mailOptions);
     });
 }
 
@@ -2594,7 +2594,8 @@ users.post('/application/information-request/:id', (req, res) => {
             context: {
                 name: fullname,
                 message: `Additional information has been requested to proceed with your loan request. Description: ${payload.description || ''}`
-            }
+            },
+            tenancy: true
         }
         emailService.send(options);
         firebaseService.send(options);
@@ -3687,7 +3688,8 @@ users.post('/application/disburse/:id', function (req, res, next) {
                                                 context: {
                                                     name: application.fullname,
                                                     message: 'Congratulations! Your loan has been disbursed.'
-                                                }
+                                                },
+                                                tenancy: true
                                             }
                                             emailService.send(options);
                                             firebaseService.send(options);
@@ -3899,7 +3901,8 @@ users.put('/application/invoice-history/:id/:invoice_id', (req, res) => {
                                         context: {
                                             name: payment.fullname,
                                             message: `Your payment of ₦${invoice.actual_amount} was confirmed successfully!`
-                                        }
+                                        },
+                                        tenancy: true
                                     }
                                     emailService.send(options);
                                     firebaseService.send(options);
@@ -3978,7 +3981,8 @@ users.get('/application/payment-reversal/:id/:invoice_id', function (req, res, n
                                     //         name: result[0]['fullname'],
                                     //         message: `Your payment of ₦${helperFunctions.numberToCurrencyFormatter(result[0]['actual_amount'])} 
                                     //             was reversed!`
-                                    //     }
+                                    //     },
+                                    //     tenancy: true
                                     // });
                                     res.send({ "status": 200, "message": "Payment reversed successfully!", "response": history });
                                 }
@@ -4323,7 +4327,8 @@ users.get('/forgot-password/:username', function (req, res) {
             to: user.email,
             subject: 'Forgot Password Request',
             template: 'forgot',
-            context: user
+            context: user,
+            tenancy: true
         };
         emailService.send(mailOptions);
         return res.send({ "status": 200, "message": "Forgot Password request sent successfully!" });

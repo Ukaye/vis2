@@ -139,7 +139,8 @@ router.post('/approve/:id', function (req, res, next) {
                     template: 'application',
                     context: {
                         name: preapplication[0]['fullname']
-                    }
+                    },
+                    tenancy: true
                 }
                 emailService.send(options);
                 firebaseService.send(options);

@@ -277,7 +277,8 @@ router.post('/loan-offer/:id', (req, res) => {
                                 context: {
                                     name: app[0]['fullname'],
                                     message: 'There is a new loan offer available for you!'
-                                }
+                                },
+                                tenancy: true
                             }
                             emailService.send(options);
                             firebaseService.send(options);
