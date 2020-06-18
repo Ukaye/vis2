@@ -13,7 +13,7 @@ firebase.send = payload => {
     db.query(query, async (error, client) => {
         client = client[0];
         if (!client || !client.onesignal_id) return;
-
+console.log(client)
         let notification = {
             headings: {
               'en': payload.subject,
@@ -25,6 +25,7 @@ firebase.send = payload => {
         };
         if (payload.data) notification.data = payload.data;
         const response = await oneSignal.createNotification(notification);
+        console.log(response)
     });
 };
 

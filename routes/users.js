@@ -3692,6 +3692,7 @@ users.post('/application/disburse/:id', function (req, res, next) {
                                                 tenancy: true
                                             }
                                             emailService.send(options);
+                                            console.log(options)
                                             firebaseService.send(options);
                                             res.send({ "status": 200, "message": "Loan disbursed successfully!" });
                                         });
