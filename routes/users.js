@@ -3692,7 +3692,6 @@ users.post('/application/disburse/:id', function (req, res, next) {
                                                 tenancy: true
                                             }
                                             emailService.send(options);
-                                            console.log(options)
                                             firebaseService.send(options);
                                             res.send({ "status": 200, "message": "Loan disbursed successfully!" });
                                         });
@@ -4093,7 +4092,7 @@ users.post('/application/pay-off/:id/:agentID', function (req, res, next) {
         db.getConnection(function (err, connection) {
             if (err) throw err;
 
-            connection.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID 
+            connection.query(`SELECT a.ID, a.loan_amount amount, a.userID clientID, c.loan_officer loan_officerID, c.branch branchID, c.email, c.fullname 
                 FROM applications a, clients c WHERE a.ID = ${req.params.id} AND a.userID = c.ID`, (error, app) => {
                     if (error) {
                         res.send({ "status": 500, "error": error, "response": null });
@@ -4193,6 +4192,19 @@ users.post('/application/pay-off/:id/:agentID', function (req, res, next) {
                                             payload.description = 'Loan Application Paid Off';
                                             payload.affected = req.params.id;
                                             notificationsService.log(req, payload);
+
+                                            const options = {
+                                                to: application.email,
+                                                subject: 'Loan Paid Off',
+                                                template: 'default',
+                                                context: {
+                                                    name: application.fullname,
+                                                    message: 'Congratulations! Your loan has been paid off.'
+                                                },
+                                                tenancy: true
+                                            }
+                                            emailService.send(options);
+                                            firebaseService.send(options);
                                             res.send({ "status": 200, "message": "Application pay off successful!" });
                                         });
                                     }

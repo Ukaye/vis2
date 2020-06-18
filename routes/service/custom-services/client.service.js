@@ -2647,6 +2647,17 @@ router.post('/application/pay-off/:id/:loan_id', helperFunctions.verifyJWT, (req
                                         payload.description = 'Loan Application Paid Off';
                                         payload.affected = req.params.id;
                                         notificationsService.log(req, payload);
+                                        const options = {
+                                            to: req.user.email,
+                                            subject: 'Loan Paid Off',
+                                            template: 'myx3-default',
+                                            context: {
+                                                name: req.user.fullname,
+                                                message: 'Congratulations! Your loan has been paid off.'
+                                            }
+                                        }
+                                        emailService.sendByDomain(process.env.MYX3_MAILGUN_DOMAIN, options);
+                                        firebaseService.send(options);
                                         res.send({
                                             "status": 200,
                                             "error": null,
