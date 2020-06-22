@@ -4259,4 +4259,21 @@ router.post('/notification/push/:id', helperFunctions.verifySecretKey, (req, res
     });
 });
 
+router.get('/myxalary/attendance/dashboard/get/:id/:employee_id', helperFunctions.verifyJWT, async (req, res) => {
+    if (!req.params.employee_id) return res.status(500).send('Required parameter(s) not sent!');
+
+    const attendance = await helperFunctions.getMyXalaryAttendanceDashboard(req.params.employee_id);
+    if (!attendance) return res.send({
+        "status": 500,
+        "error": 'No attendance found!',
+        "response": null
+    });
+    
+    return res.send({
+        "status": 200,
+        "error": null,
+        "response": attendance
+    });
+});
+
 module.exports = router;

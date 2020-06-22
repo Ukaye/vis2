@@ -696,4 +696,18 @@ functions.verifySecretKey = (req, res, next) => {
 //     });
 // };
 
+functions.getMyXalaryAttendanceDashboard = employee_id => {
+    return new Promise(resolve => {
+        request.get(
+            {
+                url: `${process.env.MYXALARY_BASE_URL}/myx3/attendance/dashboard/${employee_id}`,
+                headers: {
+                    'Authorization': `Bearer ${process.env.MYXALARY_SECRET_KEY}`
+                },
+                json: true
+            },
+            (error, res, body) => resolve(body.response || false))
+    });
+};
+
 module.exports = functions;
