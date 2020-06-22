@@ -1083,12 +1083,13 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, (req, res) => 
     postData.creator_type = 'client';
 console.log(postData)
     db.query(query, postData, function (error, results) {
+        console.log(error)
+        console.log(results)
         if (error) return res.send({
             "status": 500,
             "error": error,
             "response": null
         });
-        console.log(results)
         query = `SELECT * from preapplications WHERE ID = (SELECT MAX(ID) from preapplications)`;
         endpoint = `/core-service/get`;
         url = `${HOST}${endpoint}`;
