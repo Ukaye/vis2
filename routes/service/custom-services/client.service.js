@@ -1081,6 +1081,7 @@ router.post('/application/create/:id', helperFunctions.verifyJWT, (req, res) => 
     postData.status = enums.CLIENT_APPLICATION.STATUS.ACTIVE;
     postData.date_created = moment().utcOffset('+0100').format('YYYY-MM-DD h:mm:ss a');
     postData.creator_type = 'client';
+console.log(req.user)
 console.log(postData)
     db.query(query, postData, function (error, results) {
         console.log(error)
