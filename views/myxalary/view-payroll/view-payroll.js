@@ -78,7 +78,8 @@ populateDataTables = data => {
         $('#split').append(`
             <h4 class="col-lg-12">
                 <span style="float: left;">SECTION ${i}</span>
-                <button onclick="completePayment(${i})" class="btn btn-success" style="float: right;">
+                <button onclick="completePayment(${i})" class="btn btn-success" 
+                    style="float: right;" ${(i === data.payment_split_index + 1)? '' : 'disabled'}>
                     Initiate Bulk Transfer ${i}
                 </button>
             </h4>
@@ -122,7 +123,8 @@ completePayment = (splitID) => {
                     success: data => {
                         $('#wait').hide();
                         notification('Bulk transfer initiated successfully', data.response, 'success', 5000);
-                        if (!splitID) setTimeout(() => window.location.href = '/processed-payrolls', 5000);
+                        if (splitID) setTimeout(() => window.location.reload(), 5000);
+                        else setTimeout(() => window.location.href = '/processed-payrolls', 5000);
                     },
                     'error': error => notification(error.response, '', 'error')
                 });
