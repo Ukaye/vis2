@@ -28,7 +28,7 @@ router.get('/payroll/get/:id', async (req, res) => {
 });
 
 router.get('/payroll/payment/complete/:id', (req, res) => {
-    helperFunctions.completeMyXalaryPayrollPayment(req.params.id)
+    helperFunctions.completeMyXalaryPayrollPayment(req.params.id, req.query.splitID)
         .then(body => res.send({
             "status": 200,
             "error": null,

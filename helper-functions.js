@@ -661,11 +661,13 @@ functions.getMyXalaryProcessedPayrolls = () => {
     });
 };
 
-functions.completeMyXalaryPayrollPayment = payroll_id => {
+functions.completeMyXalaryPayrollPayment = (payroll_id, split_id) => {
     return new Promise((resolve, reject) => {
+        let url = `${process.env.MYXALARY_BASE_URL}/myx3/payroll/payment/complete/${payroll_id}?`;
+        if (split_id) url = url.concat(`splitID=${split_id}`);
         request.get(
             {
-                url: `${process.env.MYXALARY_BASE_URL}/myx3/payroll/payment/complete/${payroll_id}`,
+                url: url,
                 headers: {
                     'Authorization': `Bearer ${process.env.MYXALARY_SECRET_KEY}`
                 },
