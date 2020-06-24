@@ -9,14 +9,17 @@ getPayrolls = () => {
         type: 'get',
         success: data => {
             $('#wait').hide();
-            populateDataTable(data.response);
+            let payrolls = data.response;
+            const payment_status = $('#payment-status-filter').val();
+            if (payment_status) payrolls = payrolls.filter(payroll => payroll.payment_status === payment_status);
+            populateDataTable(payrolls);
         },
         error: error => console.log(error)
     });
 }
 
 populateDataTable = data => {
-    $("#bootstrap-data-table").DataTable().clear();
+    $("#payrolls").DataTable().clear();
     let processed_data = [];
     $.each(data, (index, obj) => {
         obj.name = `${obj.month}(${obj.year})`;
@@ -27,7 +30,7 @@ populateDataTable = data => {
         obj.actions = `<a class="btn btn-sm btn-info" href="/view-payroll?id=${encodeURIComponent(obj._id)}">View</a>`;
         processed_data.push(obj);
     });
-    $('#bootstrap-data-table').DataTable({
+    $('#payrolls').DataTable({
         dom: 'Blfrtip',
         bDestroy: true,
         data: processed_data,

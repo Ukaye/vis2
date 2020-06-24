@@ -20,14 +20,21 @@ getPayroll = () => {
             $('#payslip-gross-total').text(`₦${numberToCurrencyformatter(sumArrayObjects(payroll.payslips, 'gross').round(2))}`);
             $('#payslip-net-total').text(`₦${numberToCurrencyformatter(sumArrayObjects(payroll.payslips, 'net').round(2))}`);
             $('#payslip-payment-date').text(formatDate(payroll.paymentDate));
-            populateDataTable(payroll.payslips);
+            if (payroll.paymentType === 'once') {
+                $('#once').show();
+                $('#initiate-bulk-transfer').show();
+                populateDataTable('#payslips', payroll.payslips);
+            } else if (payroll.paymentType === 'split') {
+                $('#split').show();
+                populateDataTables(payroll);
+            }
         },
         error: error => console.log(error)
     });
 }
 
-populateDataTable = data => {
-    $("#bootstrap-data-table").DataTable().clear();
+populateDataTable = (id, data) => {
+    $(id).DataTable().clear();
     let processed_data = [];
     $.each(data, (index, obj) => {
         obj.fullname = `${obj.employeeID.firstName} ${obj.employeeID.lastName}`;
@@ -41,7 +48,7 @@ populateDataTable = data => {
         obj.pension = `₦${numberToCurrencyformatter(obj.pension.round(2))}`;
         processed_data.push(obj);
     });
-    $('#bootstrap-data-table').DataTable({
+    $(id).DataTable({
         dom: 'Blfrtip',
         bDestroy: true,
         data: processed_data,
@@ -65,7 +72,38 @@ populateDataTable = data => {
     });
 }
 
-completePayment = () => {
+populateDataTables = data => {
+    for (let i = 1; i <= data.splitCount; i++) {
+        let payslips = data.payslips.filter(payslip => payslip.splitID === i);
+        $('#split').append(`
+            <h4 class="col-lg-12">
+                <span style="float: left;">SECTION ${i}</span>
+                <button onclick="completePayment(${i})" class="btn btn-success" style="float: right;">
+                    Initiate Bulk Transfer ${i}
+                </button>
+            </h4>
+            <span class="clearfix"></span>
+            <table id="payslips-${i}" class="col-lg-12 table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>Fullname</th>
+                        <th>Client ID</th>
+                        <th>Gross Amount</th>
+                        <th>Net Amount</th>
+                        <th>Bonus</th>
+                        <th>Deduction</th>
+                        <th>Tax</th>
+                        <th>Pension</th>
+                    </tr>
+                </thead>
+            </table>
+            <hr>
+        `);
+        populateDataTable(`#payslips-${i}`, payslips);
+    }
+}
+
+completePayment = (splitID) => {
     swal({
         title: "Are you sure?",
         text: "Once initiated, this process is not reversible!",
@@ -75,16 +113,16 @@ completePayment = () => {
     })
         .then(yes => {
             if (yes) {
+                let url = `/myxalary/payroll/payment/complete/${payroll_id}?`;
+                if (splitID) url = url.concat(`splitID=${splitID}`);
                 $('#wait').show();
                 $.ajax({
-                    url: `/myxalary/payroll/payment/complete/${payroll_id}`,
+                    url: url,
                     type: 'get',
                     success: data => {
                         $('#wait').hide();
                         notification('Bulk transfer initiated successfully', data.response, 'success', 5000);
-                        setTimeout(() => {
-                            window.location.href = '/processed-payrolls';
-                        }, 5000);
+                        if (!splitID) setTimeout(() => window.location.href = '/processed-payrolls', 5000);
                     },
                     'error': error => notification(error.response, '', 'error')
                 });

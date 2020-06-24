@@ -86,10 +86,15 @@
                     <div id="user-table" class="col-md-12">
                         <div class="card">
                             <div class="card-header">
-                                <strong class="card-title">Processed Payrolls</strong>
+                                <strong class="card-title" style="float: left;">Processed Payrolls</strong>
+                                <select id="payment-status-filter" onchange="getPayrolls()" class="form-control" style="float: right; width:200px; margin: 0 5px;">
+                                    <option value="" selected="selected">All</option>
+                                    <option value="Paid">Paid</option>
+                                    <option value="Processed">Processed</option>
+                                </select>
                             </div>
                             <div class="card-body">
-                                <table id="bootstrap-data-table" class="table table-striped table-bordered">
+                                <table id="payrolls" class="table table-striped table-bordered">
                                     <thead>
                                         <tr>
                                             <th>Payroll Month</th>

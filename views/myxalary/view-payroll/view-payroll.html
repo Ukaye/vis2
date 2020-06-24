@@ -91,7 +91,8 @@
                             <div class="card-header">
                                 <strong class="card-title">
                                     <span id="payroll-name"></span> Payroll Breakdown
-                                    <button onclick="completePayment()" class="btn btn-success" style="float: right;">
+                                    <button id="initiate-bulk-transfer" onclick="completePayment()" 
+                                        class="btn btn-success" style="float: right; display: none;">
                                         Initiate Bulk Transfer
                                     </button>
                                 </strong>
@@ -131,20 +132,23 @@
                                         </div>
                                     </div>
                                 </div>
-                                <table id="bootstrap-data-table" class="table table-striped table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th>Fullname</th>
-                                            <th>Client ID</th>
-                                            <th>Gross Amount</th>
-                                            <th>Net Amount</th>
-                                            <th>Bonus</th>
-                                            <th>Deduction</th>
-                                            <th>Tax</th>
-                                            <th>Pension</th>
-                                        </tr>
-                                    </thead>
-                                </table>
+                                <div id="once" style="display: none;">
+                                    <table id="payslips" class="table table-striped table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>Fullname</th>
+                                                <th>Client ID</th>
+                                                <th>Gross Amount</th>
+                                                <th>Net Amount</th>
+                                                <th>Bonus</th>
+                                                <th>Deduction</th>
+                                                <th>Tax</th>
+                                                <th>Pension</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                                <div id="split" style="display: none;"></div>
                             </div>
                         </div>
                     </div>
